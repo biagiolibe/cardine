@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
 import json
 import re
@@ -283,11 +284,17 @@ def ensure_not_already_prepared(root: Path, current: str) -> None:
 
 
 def protocol_version(root: Path) -> int:
-    source = (root / "scripts" / "meridian.py").read_text(encoding="utf-8")
-    match = re.search(r"^PROTOCOL_VERSION\s*=\s*(\d+)\s*$", source, re.MULTILINE)
-    if not match:
-        raise ReleaseError("could not read PROTOCOL_VERSION from scripts/meridian.py")
-    return int(match.group(1))
+    path = root / "src/cardine/shared/constants.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "PROTOCOL_VERSION"
+            for target in node.targets
+        ):
+            value = ast.literal_eval(node.value)
+            if type(value) is int:
+                return value
+    raise ReleaseError("could not read PROTOCOL_VERSION from src/cardine/shared/constants.py")
 
 
 def render_changelog(changelog: str, version: str, kind: str, body: str) -> str:

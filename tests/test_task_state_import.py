@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
-import task_state
+import cardine.tasks.state as task_state
 
 
 class TaskStateImportTest(unittest.TestCase):

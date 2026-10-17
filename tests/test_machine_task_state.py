@@ -14,7 +14,8 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
-import task_state
+import cardine.shared.errors as shared_errors
+import cardine.tasks.state as task_state
 
 SHA = "a" * 40
 AT = "2026-10-11T12:00:00Z"
@@ -167,7 +168,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(calls, [self.path])
 
     def test_missing_stop(self):
-        with self.assertRaises(meridian.MeridianStop) as caught:
+        with self.assertRaises(shared_errors.MeridianStop) as caught:
             self.read()
         self.assertTrue(str(caught.exception).startswith("BLOCKED TASK_STATE_MISSING:"))
         self.assertIn("meridian task state import 001", str(caught.exception))

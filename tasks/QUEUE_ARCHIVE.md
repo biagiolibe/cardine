@@ -13,3 +13,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work items 2 and 3.
 | `[x]` | 001 | Make the evidence tests independent of Meridian task records | 🔴 P1 | — | [001](done/001-self-contained-evidence-tests.md) |
 | `[x]` | 002 | Add `pyproject.toml` and the `cardine` package skeleton | 🔴 P1 | — | [002](done/002-package-skeleton.md) |
 | `[x]` | 003 | Plan the split of `meridian.py` into the Cardine modules | 🔴 P1 | 002 | [003](done/003-module-split-plan.md) |
+
+### Phase 2 — Module split
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.md`.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 004 | Extract the leaf modules (split plan E01) | 🔴 P1 | 003 | [004](done/004-extract-leaf-modules.md) |

@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+import cardine.integration.decision as integration_decision
+import cardine.shared.errors as shared_errors
 import project_console  # noqa: E402
 
 
@@ -99,8 +101,8 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         main_dependencies: tuple[str, ...] = (),
         task_surfaces: tuple[str, ...] = (),
         main_surfaces: tuple[str, ...] = (),
-    ) -> meridian.IntegrationValidationDecision:
-        return meridian.decide_integration_validation(
+    ) -> integration_decision.IntegrationValidationDecision:
+        return integration_decision.decide_integration_validation(
             evidence_complete=True,
             validated_task_commit=validated_task_commit or task_commit,
             current_task_commit=task_commit,
@@ -120,7 +122,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
     def run_candidate_gate(
         self,
         branch: str,
-        decision: meridian.IntegrationValidationDecision,
+        decision: integration_decision.IntegrationValidationDecision,
         *,
         smoke_command: tuple[str, ...] | None = None,
     ) -> tuple[bool, list[str]]:
@@ -135,7 +137,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         if passed and smoke_command is not None:
             invoked.append("smoke")
             passed = subprocess.run(smoke_command, cwd=self.primary, check=False).returncode == 0
-        if passed and decision.outcome == meridian.IntegrationValidationOutcome.FULL:
+        if passed and decision.outcome == integration_decision.IntegrationValidationOutcome.FULL:
             invoked.append("complete baseline")
         if not passed:
             self.git("merge", "--abort")
@@ -199,7 +201,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: DONE"))
         decision = self.validation_decision(task_commit)
 
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.REUSE)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.REUSE)
         passed, invoked = self.run_candidate_gate("task-055", decision)
         self.assertTrue(passed)
         self.assertEqual(invoked, ["git diff --check"])
@@ -212,7 +214,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         self.git("commit", "-m", "advance main independently")
         decision = self.validation_decision(task_commit, main_paths=("independent.txt",))
 
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.BOUNDED)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BOUNDED)
         passed, invoked = self.run_candidate_gate("task-055", decision)
         self.assertTrue(passed)
         self.assertNotIn("complete baseline", invoked)
@@ -230,7 +232,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
             main_dependencies=("runtime",),
         )
 
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.FULL)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.FULL)
         passed, invoked = self.run_candidate_gate("task-055", decision)
         self.assertTrue(passed)
         self.assertIn("complete baseline", invoked)
@@ -246,7 +248,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         decision = self.validation_decision(
             current_commit, validated_task_commit=validated_commit
         )
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.BLOCKED)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BLOCKED)
 
 
 class BoundedWorktreeLifecycleTest(unittest.TestCase):
@@ -317,7 +319,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_prepare_blocks_inherited_budget_spends(self):
         state = self.retired_budget({"diagnostic": 2, "captures:AC1": 1})
-        with self.assertRaisesRegex(meridian.MeridianError, "BLOCKED BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION.*diagnostic.*resume:"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION.*diagnostic.*resume:"):
             self.prepare()
         self.assertEqual(meridian.load_budget_state(self.primary), state)
         self.assertEqual(len(meridian._git_worktrees(self.primary)), 1)
@@ -353,11 +355,11 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_new_budget_attempt_requires_reason_and_retired_worktree(self):
         for reason in (None, "", "   "):
-            with self.assertRaisesRegex(meridian.MeridianError, "non-empty --reason"):
+            with self.assertRaisesRegex(shared_errors.MeridianError, "non-empty --reason"):
                 meridian.prepare_task_worktree("056", self.worktree_root, self.primary,
                                                new_attempt=True, reason=reason)
         self.prepare()
-        with self.assertRaisesRegex(meridian.MeridianError, "registered task worktree"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "registered task worktree"):
             meridian.prepare_task_worktree("056", self.worktree_root, self.primary,
                                            new_attempt=True, reason="Approved")
         self.assertEqual(meridian.load_budget_state(self.primary), {})
@@ -392,8 +394,8 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         main_dependencies: tuple[str, ...] = (),
         task_surfaces: tuple[str, ...] = (),
         main_surfaces: tuple[str, ...] = (),
-    ) -> meridian.IntegrationValidationDecision:
-        return meridian.decide_integration_validation(
+    ) -> integration_decision.IntegrationValidationDecision:
+        return integration_decision.decide_integration_validation(
             evidence_complete=True,
             validated_task_commit=validated_task_commit or task_commit,
             current_task_commit=task_commit,
@@ -413,7 +415,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def run_candidate_gate(
         self,
         branch: str,
-        decision: meridian.IntegrationValidationDecision,
+        decision: integration_decision.IntegrationValidationDecision,
         *,
         smoke_command: tuple[str, ...] | None = None,
     ) -> tuple[bool, list[str]]:
@@ -427,7 +429,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         if passed and smoke_command is not None:
             invoked.append("smoke")
             passed = subprocess.run(smoke_command, cwd=self.primary, check=False).returncode == 0
-        if passed and decision.outcome == meridian.IntegrationValidationOutcome.FULL:
+        if passed and decision.outcome == integration_decision.IntegrationValidationOutcome.FULL:
             invoked.append("complete baseline")
         if not passed:
             self.git("merge", "--abort")
@@ -470,7 +472,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(before, self.snapshot(worktree))
         self.assertEqual(self.resume()["base_commit"], self.base)
         self.assertEqual(before, self.snapshot(worktree))
-        with self.assertRaisesRegex(meridian.MeridianError, "BLOCKED STALE_WORKTREE_BASE:"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED STALE_WORKTREE_BASE:"):
             self.prepare()
         closure, _ = meridian.closure_status("056", self.worktree_root, self.primary)
         self.assertEqual(closure["stop_reason"], "STALE_WORKTREE_BASE")
@@ -519,7 +521,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         before = evidence_path.read_bytes()
         os.chdir(self.primary)
         self.assertEqual(meridian.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C5")
-        with self.assertRaisesRegex(meridian.MeridianError, "BLOCKED EVIDENCE_MISMATCH:"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED EVIDENCE_MISMATCH:"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(evidence_path.read_bytes(), before)
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
@@ -536,7 +538,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         for path, contents in mutations:
             with self.subTest(path=path.name):
                 path.write_text(contents, encoding="utf-8")
-                with self.assertRaisesRegex(meridian.MeridianError, "BLOCKED WRONG_WORKTREE:"):
+                with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
                     meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
                 self.assertEqual(state_path.read_bytes(), original)
                 path.unlink()
@@ -546,12 +548,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                 state[field] = "unrelated"
                 state_path.write_text(json.dumps(state), encoding="utf-8")
                 before = state_path.read_bytes()
-                with self.assertRaisesRegex(meridian.MeridianError, "BLOCKED WRONG_WORKTREE:"):
+                with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
                     meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
                 self.assertEqual(state_path.read_bytes(), before)
                 state_path.write_bytes(original)
         self.git("switch", "-c", "unrelated", cwd=worktree)
-        with self.assertRaisesRegex(meridian.MeridianError, "BLOCKED WRONG_WORKTREE:"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
             meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
     def test_task_commits_and_normal_main_advancement_are_not_stale(self) -> None:
@@ -565,14 +567,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.git("commit", "-m", "main work")
         self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
-        with self.assertRaisesRegex(meridian.MeridianError, "unproven-fast-forward"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
             meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
         # Even after main contains the task commit, ancestry alone cannot prove recovery.
         self.git("merge", "task-056", "--no-edit")
         self.git("merge", "main", "--ff-only", cwd=worktree)
         self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
-        with self.assertRaisesRegex(meridian.MeridianError, "unproven-fast-forward"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
             meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
     def test_base_repair_requires_intact_fast_forward_reflog(self) -> None:
@@ -580,7 +582,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.git("reflog", "expire", "--expire=now", "refs/heads/task-056")
         self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
-        with self.assertRaisesRegex(meridian.MeridianError, "unproven-fast-forward"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
             meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
     def dirty_worktree(self) -> tuple[dict[str, object], Path]:
@@ -603,7 +605,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_resume_accepts_a_dirty_worktree_and_changes_nothing(self) -> None:
         prepared, worktree = self.dirty_worktree()
         before = self.snapshot(worktree)
-        with self.assertRaisesRegex(meridian.MeridianError, "existing task worktree is dirty and was retained"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "existing task worktree is dirty and was retained"):
             self.prepare()
         resumed = self.resume()
         self.assertEqual(self.snapshot(worktree), before)
@@ -645,7 +647,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         state_path = next((self.primary / ".git/meridian-worktrees").glob("*.json"))
         original = state_path.read_text(encoding="utf-8")
         state_path.write_text(original.replace('"branch": "task-056"', '"branch": "other"'), encoding="utf-8")
-        with self.assertRaises(meridian.MeridianStop) as raised:
+        with self.assertRaises(shared_errors.MeridianStop) as raised:
             self.resume()
         self.assertEqual(raised.exception.code, "WRONG_WORKTREE")
         message = str(raised.exception)
@@ -670,7 +672,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             resumed["state_repair"],
             f"meridian worktree prepare 056 --project {self.primary.resolve()} --format json",
         )
-        with self.assertRaisesRegex(meridian.MeridianError, "dirty and was retained"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "dirty and was retained"):
             self.prepare()
         self.git("checkout", "--", "README.md", cwd=worktree)
         (worktree / "new.txt").unlink()
@@ -694,7 +696,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertFalse({"resumed", "dirty", "changed_paths"} & set(self.prepare()))
 
     def test_resume_without_a_worktree_creates_nothing(self) -> None:
-        with self.assertRaisesRegex(meridian.MeridianError, "nothing to resume"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "nothing to resume"):
             self.resume()
         self.assertEqual(self.git("branch", "--list", "task-056").stdout, "")
         self.assertEqual(list(self.worktree_root.rglob("task-056")), [])
@@ -705,31 +707,31 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         state_path = next((self.primary / ".git/meridian-worktrees").glob("*.json"))
         original = state_path.read_text(encoding="utf-8")
         state_path.write_text(original.replace('"branch": "task-056"', '"branch": "other"'), encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "lifecycle state mismatch"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "lifecycle state mismatch"):
             self.resume()
         state_path.write_text(original, encoding="utf-8")
         for name in ("meridian-integration.lock", "meridian-integration.json"):
             with self.subTest(retained=name):
                 retained = self.primary / ".git" / name
                 retained.write_text(json.dumps({"task_id": "056"}), encoding="utf-8")
-                with self.assertRaisesRegex(meridian.MeridianError, "integration lease or staged merge"):
+                with self.assertRaisesRegex(shared_errors.MeridianError, "integration lease or staged merge"):
                     self.resume()
                 retained.unlink()
         self.git("checkout", "-b", "elsewhere", cwd=worktree)
-        with self.assertRaisesRegex(meridian.MeridianError, "canonical worktree mismatch"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "canonical worktree mismatch"):
             self.resume()
         self.git("checkout", "task-056", cwd=worktree)
         self.git("commit", "--allow-empty", "-m", "advance", cwd=worktree)
         self.assertTrue(self.resume()["dirty"])
         self.git("worktree", "remove", "--force", str(worktree))
-        with self.assertRaisesRegex(meridian.MeridianError, "partial task state"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "partial task state"):
             self.resume()
         self.git("branch", "-D", "task-056")
         collision = Path(str(prepared["worktree"]))
         collision.mkdir(parents=True)
-        with self.assertRaisesRegex(meridian.MeridianError, "nothing to resume"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "nothing to resume"):
             self.resume()
-        with self.assertRaisesRegex(meridian.MeridianError, "worktree path collision"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "worktree path collision"):
             self.prepare()
 
     def test_console_resume_directive_is_accepted_by_prepare_resume(self) -> None:
@@ -874,7 +876,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         path.unlink()
         self.assertEqual(meridian.candidate_validation_declaration(self.primary), ("undeclared", {}))
         path.write_text('{"version": 1, "state": "declared", "outcomes": {}}', encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "outcomes must declare"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "outcomes must declare"):
             meridian.candidate_validation_declaration(self.primary)
 
     def test_undeclared_validation_stops_before_lease_or_merge(self) -> None:
@@ -896,7 +898,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         (self.primary / ".meridian/candidate-validation.json").unlink()
         self.git("add", ".meridian/candidate-validation.json")
         self.git("commit", "-m", "remove declaration")
-        with self.assertRaisesRegex(meridian.MeridianError, "UNDECLARED_VALIDATION_COMMANDS"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "UNDECLARED_VALIDATION_COMMANDS"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = meridian.resolve_task_identity(self.primary, "056", "existing")
         _state, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
@@ -927,12 +929,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "scope": "bounded", "commands": ["python3 scripts/check_repository.py"],
         }), encoding="utf-8")
 
-        with self.assertRaisesRegex(meridian.MeridianError, r"git diff --check"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
             meridian.finalize_task_integration("056", validation_path, self.primary)
         (self.primary / ".meridian/candidate-validation.json").write_text(
             json.dumps({"version": 1, "state": "none"}), encoding="utf-8"
         )
-        with self.assertRaisesRegex(meridian.MeridianError, r"git diff --check"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
             meridian.finalize_task_integration("056", validation_path, self.primary)
 
         _state, lease_path, integration_path = meridian._lifecycle_paths(
@@ -1285,7 +1287,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         original_queue = queue.read_text(encoding="utf-8")
         (self.primary / "PROJECT_PLAN.md").write_text("Task 056: TODO\n", encoding="utf-8")
 
-        with self.assertRaisesRegex(meridian.MeridianError, r"unrecognized completion row"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, r"unrecognized completion row"):
             meridian._apply_task_completion_rows(self.primary, identity)
 
         self.assertEqual(queue.read_text(encoding="utf-8"), original_queue)
@@ -1477,7 +1479,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         state_path, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
         references = self.git("show-ref").stdout
         worktree_state = state_path.read_text(encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, r"paths changed after validation: .*other.md"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, r"paths changed after validation: .*other.md"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)
         self.assertEqual(self.git("show-ref").stdout, references)
@@ -1544,14 +1546,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        with self.assertRaisesRegex(meridian.MeridianError, "queue link for task 056"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "queue link for task 056"):
             meridian.resolve_task_identity(self.primary, "056", "existing")
         recovered = meridian.abort_task_integration("056", self.primary)
         self.assertEqual(recovered["status"], "aborted")
         self.assertFalse(lease_path.exists())
 
     def test_missing_validation_evidence_is_blocked(self) -> None:
-        decision = meridian.decide_integration_validation(
+        decision = integration_decision.decide_integration_validation(
             evidence_complete=False,
             validated_task_commit="",
             current_task_commit="task",
@@ -1560,10 +1562,10 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             validated_base_is_task_ancestor=True,
             full_validation_required=False,
         )
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.BLOCKED)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BLOCKED)
 
     def test_governance_only_commit_after_validation_keeps_evidence_current(self) -> None:
-        decision = meridian.decide_integration_validation(
+        decision = integration_decision.decide_integration_validation(
             evidence_complete=True,
             validated_task_commit="validated",
             current_task_commit="accepted",
@@ -1574,7 +1576,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             relevant_tree_unchanged_after_validation=True,
             full_validation_required=False,
         )
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.REUSE)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.REUSE)
 
     def test_missing_smoke_configuration_does_not_expand_gate(self) -> None:
         task = self.create_task("task-055")
@@ -1602,7 +1604,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: DONE"))
         decision = self.validation_decision(task_commit, full_required=True)
 
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.FULL)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.FULL)
         passed, invoked = self.run_candidate_gate("task-055", decision)
         self.assertTrue(passed)
         self.assertIn("complete baseline", invoked)
@@ -1615,7 +1617,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.git("commit", "-m", "advance main")
 
         decision = self.validation_decision(task_commit, assessment_complete=False)
-        self.assertEqual(decision.outcome, meridian.IntegrationValidationOutcome.BLOCKED)
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BLOCKED)
 
     def test_lean_completion_matrix_handles_links_records_and_plan_rows(self) -> None:
         links = {"active": "[056](056-lifecycle.md)", "archived": "[056](done/056-lifecycle.md)", "absent": "—"}
@@ -1645,7 +1647,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                             if archived_record:
                                 active.rename(done)
                             if not plan_present:
-                                with self.assertRaisesRegex(meridian.MeridianError, "unrecognized completion row"):
+                                with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
                                     meridian._apply_task_completion_rows(self.primary, identity)
                                 continue
                             meridian._apply_task_completion_rows(self.primary, identity)
@@ -1921,7 +1923,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, r"source.py"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, r"source.py"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = meridian.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, staged = meridian._lifecycle_paths(self.primary, identity)
@@ -1977,7 +1979,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         original = queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "REQUIRED")
         queue.write_text(original, encoding="utf-8")
         identity = meridian.resolve_task_identity(self.primary, "056", "existing")
-        with self.assertRaisesRegex(meridian.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+        with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
 
@@ -2009,7 +2011,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
                 if label == "approve":
                     result = meridian._apply_task_completion_rows(self.primary, identity)
                 else:
-                    with self.assertRaisesRegex(meridian.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+                    with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
                         meridian._apply_task_completion_rows(self.primary, identity)
                 row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
                 if label == "approve":
@@ -2060,7 +2062,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         archived = self.primary / "tasks/done/056-lifecycle.md"
         archived.parent.mkdir(exist_ok=True)
         identity.task_path.rename(archived)
-        with self.assertRaisesRegex(meridian.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+        with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             meridian._apply_task_completion_rows(self.primary, identity)
         row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
         self.assertIn("| QUEUED | REQUIRED |", row)
@@ -2087,7 +2089,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         original = queue.read_text(encoding="utf-8").replace("| 1 | 056 | P0 | QUEUED |", "| 1 | 056 | P0 | UNKNOWN |")
         queue.write_text(original, encoding="utf-8")
         identity = meridian.resolve_task_identity(self.primary, "056", "existing")
-        with self.assertRaisesRegex(meridian.MeridianError, "unrecognized completion row"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
             meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
 
@@ -2119,7 +2121,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         )
         queue.write_text(original, encoding="utf-8")
         identity = meridian.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-        with self.assertRaisesRegex(meridian.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+        with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
         identity.review_path.parent.mkdir(exist_ok=True)
@@ -2153,7 +2155,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         for label, (contents, message) in cases.items():
             with self.subTest(label=label):
                 queue.write_text(contents, encoding="utf-8")
-                with self.assertRaisesRegex(meridian.MeridianError, message):
+                with self.assertRaisesRegex(shared_errors.MeridianError, message):
                     meridian._apply_task_completion_rows(self.primary, identity)
                 self.assertEqual(queue.read_text(encoding="utf-8"), contents)
 

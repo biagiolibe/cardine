@@ -26,6 +26,7 @@ class ReleasePrepareTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         for directory in (".claude-plugin", "releases", "migrations", "scripts", "tests"):
             (self.root / directory).mkdir()
+        (self.root / "src/cardine/shared").mkdir(parents=True)
         (self.root / "VERSION").write_text("1.0.0\n", encoding="utf-8")
         (self.root / ".claude-plugin/plugin.json").write_text('{"version": "1.0.0"}\n', encoding="utf-8")
         (self.root / "releases/1.0.0.json").write_text(json.dumps({
@@ -34,7 +35,7 @@ class ReleasePrepareTest(unittest.TestCase):
             "baselineChanged": False, "migrations": [],
         }), encoding="utf-8")
         self.write_changelog("### Added\n\n- New command.")
-        (self.root / "scripts/meridian.py").write_text("PROTOCOL_VERSION = 2\n", encoding="utf-8")
+        (self.root / "src/cardine/shared/constants.py").write_text("PROTOCOL_VERSION = 2\n", encoding="utf-8")
         (self.root / "scripts/check_repository.py").write_text("", encoding="utf-8")
         (self.root / "scripts/prepare_release.py").write_text("", encoding="utf-8")
         self.git("init", "-q", "-b", "main")
@@ -183,7 +184,7 @@ class ReleasePrepareTest(unittest.TestCase):
     def test_template_change_and_protocol_gate(self) -> None:
         (self.root / "migrations/001-test.json").write_text('{"id":"001-test","to":"1.1.0"}', encoding="utf-8")
         self.write_changelog("### Upgrade notes\n\n- Apply the migration.")
-        (self.root / "scripts/meridian.py").write_text("PROTOCOL_VERSION = 3\n", encoding="utf-8")
+        (self.root / "src/cardine/shared/constants.py").write_text("PROTOCOL_VERSION = 3\n", encoding="utf-8")
         self.git("add", ".")
         self.git("commit", "-qm", "migration")
         with redirect_stderr(io.StringIO()):

@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+import cardine.shared.errors as shared_errors
 
 
 class UsageReportTest(unittest.TestCase):
@@ -116,5 +117,5 @@ class UsageReportTest(unittest.TestCase):
         self.assertNotIn("PRIVATE UNKNOWN MESSAGE", rendered)
 
     def test_since_rejects_invalid_dates(self) -> None:
-        with self.assertRaisesRegex(meridian.MeridianError, "ISO date"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "ISO date"):
             meridian.usage_report("codex", None, "not-a-date", False, self.home)

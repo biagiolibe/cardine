@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+import cardine.shared.constants as shared_constants
 
 
 class ValidationEvidenceTest(unittest.TestCase):
@@ -59,7 +60,7 @@ class ValidationEvidenceTest(unittest.TestCase):
 
     def test_passing_sharded_record_is_bound_to_commit_and_tree(self) -> None:
         report, code = meridian.check_validation_evidence(self.write(self.record()), self.project, self.commit)
-        self.assertEqual(code, meridian.VALIDATION_EXIT_PASSED)
+        self.assertEqual(code, shared_constants.VALIDATION_EXIT_PASSED)
         self.assertEqual(report, {"status": "VALIDATION_PASSED", "level": "T2_SHARDED", "reasons": []})
 
     def test_invalid_proofs_name_the_failing_field(self) -> None:
@@ -69,7 +70,7 @@ class ValidationEvidenceTest(unittest.TestCase):
                 record = self.record()
                 record[field] = value
                 report, code = meridian.check_validation_evidence(self.write(record), self.project, self.commit)
-                self.assertEqual(code, meridian.VALIDATION_EXIT_FAILED)
+                self.assertEqual(code, shared_constants.VALIDATION_EXIT_FAILED)
                 self.assertTrue(any(reason.startswith(field + ":") for reason in report["reasons"]))
 
     def test_running_record_never_invokes_subprocess(self) -> None:
@@ -78,7 +79,7 @@ class ValidationEvidenceTest(unittest.TestCase):
         record.update({"status": "running", "started_at": "2026-10-02T10:00:00Z", "log": "logs/113.txt"})
         with mock.patch.object(meridian.subprocess, "run") as run:
             report, code = meridian.check_validation_evidence(self.write(record), self.project, None)
-        self.assertEqual(code, meridian.VALIDATION_EXIT_PENDING)
+        self.assertEqual(code, shared_constants.VALIDATION_EXIT_PENDING)
         self.assertEqual(report["status"], "VALIDATION_RUNNING")
         run.assert_not_called()
 
@@ -86,5 +87,5 @@ class ValidationEvidenceTest(unittest.TestCase):
         record = self.record()
         record.update({"level": "T3_ATTESTED", "attested_by": "developer", "statement": "I ran it."})
         report, code = meridian.check_validation_evidence(self.write(record), self.project, self.commit)
-        self.assertEqual(code, meridian.VALIDATION_EXIT_FAILED)
+        self.assertEqual(code, shared_constants.VALIDATION_EXIT_FAILED)
         self.assertIn("attested_on: is required for T3_ATTESTED", report["reasons"])
