@@ -39,4 +39,4 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | split row E11 | [007](007-recover-partial-worktree-cleanup.md) |
+| `[ ]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | — | [007](007-recover-partial-worktree-cleanup.md) |
