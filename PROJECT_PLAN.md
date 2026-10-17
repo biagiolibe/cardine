@@ -42,3 +42,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 016 — Extract merge, recording, transition, template audit, and closure status modules (split plan E11).
 - `[ ]` 007 — Recover worktree cleanup after a partial removal.
 - `[ ]` 017 — Record wall-clock time and the real CI command in CI evidence.
+- `[ ]` 018 — Resume a Lean closure without state through `task close`.

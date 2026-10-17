@@ -56,6 +56,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[ ]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | 016 | [007](007-recover-partial-worktree-cleanup.md) |
+| `[ ]` | 018 | Resume a Lean closure without state through `task close` | 🟡 P2 | 016 | [018](018-lean-closure-resume-uses-task-close.md) |
 
 ### Phase 7 — Development tooling defects
 
