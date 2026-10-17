@@ -392,6 +392,13 @@ task branch once, reads the checks through `gh`, and reports what is missing
 until they pass. Without the option, `direct` mode keeps no forge dependency.
 This option is part of 1.0.
 
+After the task lands and `main` is pushed, `cardine run` deletes the remote
+task branch it pushed, and only when that branch still points at a commit that
+`main` contains. Deleting a branch stays denied to agents; the lifecycle
+command does it as part of cleanup. In Meridian, `worktree cleanup` removed
+only the local branch, so every pushed `task-NNN` branch stayed on the
+remote.
+
 **Scope.** Cardine 1.0 builds the landing mode into the design and ships only
 `direct`. These parts are in 1.0:
 
