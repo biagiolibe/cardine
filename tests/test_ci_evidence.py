@@ -21,11 +21,27 @@ import meridian  # noqa: E402
 
 class CiEvidenceTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True, check=True).stdout.strip()
-        self.tree = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True, capture_output=True, check=True).stdout.strip()
         self.temporary = tempfile.TemporaryDirectory()
-        self.output = Path(self.temporary.name) / "evidence.json"
         self.addCleanup(self.temporary.cleanup)
+        self.project = Path(self.temporary.name) / "project"
+        self.project.mkdir()
+        (self.project / "tasks").mkdir()
+        (self.project / "tasks/114-evidence.md").write_text(
+            "> **ID**: `114`\n", encoding="utf-8"
+        )
+        self.git("init", "-q", "-b", "main")
+        self.git("config", "user.name", "Evidence Test")
+        self.git("config", "user.email", "evidence@example.invalid")
+        self.git("add", "tasks")
+        self.git("-c", "commit.gpgsign=false", "commit", "-qm", "Add evidence task fixture")
+        self.commit = self.git("rev-parse", "HEAD")
+        self.tree = self.git("rev-parse", "HEAD^{tree}")
+        self.output = Path(self.temporary.name) / "evidence.json"
+
+    def git(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=self.project, text=True, capture_output=True, check=True
+        ).stdout.strip()
 
     def run_script(self, responses: list[tuple[object | None, str | None]], *extra: str, clock=None) -> tuple[int, dict[str, str]]:
         with mock.patch.object(ci_evidence.shutil, "which", return_value="gh"), \
@@ -45,7 +61,7 @@ class CiEvidenceTest(unittest.TestCase):
         self.assertEqual((code, outcome), (0, {"status": "passed"}))
         record = json.loads(self.output.read_text(encoding="utf-8"))
         self.assertEqual(record["ci"], {"run_id": "42", "run_url": run["url"], "workflow": "Validate repository", "conclusion": "success", "head_sha": self.commit})
-        report, verified = meridian.check_validation_evidence(self.output, ROOT, self.commit)
+        report, verified = meridian.check_validation_evidence(self.output, self.project, self.commit)
         self.assertEqual((verified, report["status"]), (meridian.VALIDATION_EXIT_PASSED, "VALIDATION_PASSED"))
 
     def test_in_progress_then_success_polls_without_real_sleep(self) -> None:
