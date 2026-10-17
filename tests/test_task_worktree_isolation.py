@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+from cardine.integration import projections as owner_integration_projections
+from cardine.shared import journal as owner_shared_journal
 from cardine.shared import budget as owner_shared_budget
 import cardine.integration.decision as integration_decision
 import cardine.shared.errors as shared_errors
@@ -348,7 +350,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(ledger["056"]["attempt"], 2)
         self.assertEqual(task.read_bytes(), original)
         self.assertIn("Attempt 2", meridian.budget_show(self.primary, "056"))
-        journal = meridian.canonical_git_common_dir(self.primary) / meridian.JOURNAL_NAME
+        journal = meridian.canonical_git_common_dir(self.primary) / owner_shared_journal.JOURNAL_NAME
         event = next(json.loads(line) for line in journal.read_text().splitlines()
                      if json.loads(line)["command"] == "worktree prepare new-attempt")
         self.assertEqual(event["task"], "056")
@@ -1100,7 +1102,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| Status | ID | Title | Dependencies | Estimate |\n|---|---|---|---|---|\n"
             "| `[x]` | 090 | Done | — | 1h |\n"
         )
-        warnings = meridian._queue_archival_warnings(issue_example)
+        warnings = owner_integration_projections._queue_archival_warnings(issue_example)
         self.assertEqual(len(warnings), 1)
         self.assertIn("## Phase 2 — Wrong level", warnings[0])
         self.assertIn("heading level 2", warnings[0])
@@ -1108,7 +1110,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "### Phase 3 — Column order\n\n"
             "| ID | Status | Title |\n|---|---|---|\n| 090 | `[x]` | Done |\n"
         )
-        warnings = meridian._queue_archival_warnings(column_order)
+        warnings = owner_integration_projections._queue_archival_warnings(column_order)
         self.assertEqual(len(warnings), 1)
         self.assertIn("### Phase 3 — Column order", warnings[0])
         self.assertIn("expected columns", warnings[0])
@@ -1119,9 +1121,9 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| Status | ID | Title |\n|---|---|---|\n| `[x]` | 056 | Lifecycle |\n\n"
             "#### Nested\n\n| Status | ID |\n|---|---|\n| `[ ]` | 057 |\n"
         )
-        self.assertEqual(meridian._queue_archival_warnings(contents), [])
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents), [])
         notes = "## Notes\n\n| Term | Meaning |\n|---|---|\n| a | b |\n"
-        self.assertEqual(meridian._queue_archival_warnings(notes), [])
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(notes), [])
 
     def test_queue_archival_warnings_report_a_section_held_open_by_inconclusive(self) -> None:
         header = (
@@ -1133,14 +1135,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| 1 | 056 | P0 | INCONCLUSIVE | SPIKE | — | [056](056.md) |\n"
             "| 2 | 057 | P0 | ACCEPTED | NOT_REQUIRED | — | [057](057.md) |\n"
         )
-        warnings = meridian._queue_archival_warnings(held, "governed-sdd")
+        warnings = owner_integration_projections._queue_archival_warnings(held, "governed-sdd")
         self.assertEqual(len(warnings), 1)
         self.assertIn("INCONCLUSIVE", warnings[0])
         self.assertIn("056", warnings[0])
         self.assertNotIn("057", warnings[0])
         queued = held.replace("ACCEPTED", "QUEUED")
-        self.assertEqual(meridian._queue_archival_warnings(queued, "governed-sdd"), [])
-        retained, archive = meridian._archive_completed_queue_sections(
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(queued, "governed-sdd"), [])
+        retained, archive = owner_integration_projections._archive_completed_queue_sections(
             held, self.primary / "tasks/QUEUE.md", self.primary / "tasks/QUEUE_ARCHIVE.md", "governed-sdd"
         )
         self.assertEqual(retained, held)
@@ -1291,7 +1293,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         (self.primary / "PROJECT_PLAN.md").write_text("Task 056: TODO\n", encoding="utf-8")
 
         with self.assertRaisesRegex(shared_errors.MeridianError, r"unrecognized completion row"):
-            meridian._apply_task_completion_rows(self.primary, identity)
+            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
 
         self.assertEqual(queue.read_text(encoding="utf-8"), original_queue)
 
@@ -1303,7 +1305,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
             encoding="utf-8",
         )
-        meridian._apply_task_completion_rows(self.primary, identity)
+        owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         archive = self.primary / "tasks/QUEUE_ARCHIVE.md"
         self.assertEqual(queue.read_text(encoding="utf-8"), "\n")
         self.assertIn("### Phase 1 — Closing", archive.read_text(encoding="utf-8"))
@@ -1327,7 +1329,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                 for status in terminals + open_states:
                     with self.subTest(mode=mode, nested=nested, status=status):
                         contents = "### Phase\n" + header + closed + "\n" + nested + header + row(status)
-                        retained, archive = meridian._archive_completed_queue_sections(
+                        retained, archive = owner_integration_projections._archive_completed_queue_sections(
                             contents, self.primary / "custom/QUEUE.md", self.primary / "archive.md", mode
                         )
                         if status in terminals:
@@ -1339,26 +1341,26 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                             self.assertIsNone(archive)
                 for malformed in (header + row("UNKNOWN"), header.splitlines()[0] + "\n", header + row(terminals[0]).replace(" | B |", " | B | extra |")):
                     contents = "### Ambiguous\n" + header + closed + "\n" + nested + malformed
-                    retained, archive = meridian._archive_completed_queue_sections(
+                    retained, archive = owner_integration_projections._archive_completed_queue_sections(
                         contents, self.primary / "QUEUE.md", self.primary / "archive.md", mode
                     )
                     self.assertEqual(retained, contents)
                     self.assertIsNone(archive)
-                    warnings = meridian._queue_archival_warnings(contents, mode)
+                    warnings = owner_integration_projections._queue_archival_warnings(contents, mode)
                     self.assertEqual(len(warnings), 1)
                     self.assertIn("### Ambiguous", warnings[0])
 
     def test_archival_mixed_boundaries_do_not_duplicate_nested_content(self) -> None:
         table = "| Status | ID | Title |\n|---|---|---|\n| `[x]` | A | Done |\n"
         contents = "# Queue\n## Parent\n### One\n" + table + "#### Notes\nText\n### Two\n" + table + "# Later\nKeep me\n"
-        retained, archive = meridian._archive_completed_queue_sections(
+        retained, archive = owner_integration_projections._archive_completed_queue_sections(
             contents, self.primary / "QUEUE.md", self.primary / "archive.md"
         )
         self.assertEqual(retained, "# Queue\n## Parent\n# Later\nKeep me\n")
         self.assertEqual((archive or "").count("#### Notes"), 1)
         self.assertEqual((archive or "").count(table), 2)
         self.assertNotIn("Keep me", archive or "")
-        self.assertEqual(meridian._queue_archival_warnings(contents), [])
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents), [])
 
     def test_issue_8_archival_does_not_carry_later_open_phase(self) -> None:
         contents = (
@@ -1371,14 +1373,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "|---|---|---|---|---|---|---|\n"
             "| 1 | B-SPIKE | P0 | QUEUED | SPIKE | — | B.md |\n"
         )
-        retained, archive = meridian._archive_completed_queue_sections(
+        retained, archive = owner_integration_projections._archive_completed_queue_sections(
             contents, self.primary / "docs/QUEUE.md", self.primary / "archive.md", "governed-sdd"
         )
         self.assertIn("B-SPIKE", retained)
         self.assertNotIn("B-SPIKE", archive or "")
         self.assertIn("A.md", archive or "")
         self.assertNotIn("tasks/QUEUE.md", archive or "")
-        warnings = meridian._queue_archival_warnings(contents, "governed-sdd")
+        warnings = owner_integration_projections._queue_archival_warnings(contents, "governed-sdd")
         self.assertEqual(len(warnings), 1)
         self.assertIn("## Phase B", warnings[0])
 
@@ -1390,7 +1392,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| `[x]` | 056 | Lifecycle |\n| `[ ]` | 057 | Follow-up |\n"
         )
         queue.write_text(contents, encoding="utf-8")
-        archived, archive_contents = meridian._archive_completed_queue_sections(
+        archived, archive_contents = owner_integration_projections._archive_completed_queue_sections(
             contents, queue, self.primary / "tasks/QUEUE_ARCHIVE.md"
         )
         self.assertEqual(archived, contents)
@@ -1404,7 +1406,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             queue.read_text(encoding="utf-8").replace("`[ ]`", "`[/]`"), encoding="utf-8"
         )
         plan.write_text("- `[/]` 056 — Lifecycle\n", encoding="utf-8")
-        meridian._apply_task_completion_rows(self.primary, identity)
+        owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertIn("| `[x]` | 056 | Lifecycle |", queue.read_text(encoding="utf-8"))
         self.assertEqual(plan.read_text(encoding="utf-8"), "- `[x]` 056 — Lifecycle\n")
 
@@ -1416,7 +1418,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| `[x]` | 056 | Lifecycle |\n| `[/]` | 057 | Follow-up |\n"
         )
         queue.write_text(contents, encoding="utf-8")
-        archived, archive_contents = meridian._archive_completed_queue_sections(
+        archived, archive_contents = owner_integration_projections._archive_completed_queue_sections(
             contents, queue, self.primary / "tasks/QUEUE_ARCHIVE.md"
         )
         self.assertEqual(archived, contents)
@@ -1428,12 +1430,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "### Phase 1 — Closing\n\n"
             "| Status | ID | Title |\n|---|---|---|\n| `[x]` | 056 | Lifecycle |\n"
         )
-        archived, archive_contents = meridian._archive_completed_queue_sections(
+        archived, archive_contents = owner_integration_projections._archive_completed_queue_sections(
             contents, queue, self.primary / "tasks/QUEUE_ARCHIVE.md"
         )
         archive = self.primary / "tasks/QUEUE_ARCHIVE.md"
         archive.write_text(archive_contents or "", encoding="utf-8")
-        repeated_queue, repeated_archive = meridian._archive_completed_queue_sections(
+        repeated_queue, repeated_archive = owner_integration_projections._archive_completed_queue_sections(
             archived, queue, archive
         )
         self.assertEqual(repeated_queue, archived)
@@ -1449,11 +1451,11 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "| Status | ID | Title |\n|---|---|---|\n| [x] | 057 | Malformed status |\n"
         )
         queue.write_text(contents, encoding="utf-8")
-        result = meridian._apply_task_completion_rows(self.primary, identity)
+        result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         retained = queue.read_text(encoding="utf-8")
         self.assertEqual(result["status"], "COMPLETED")
         self.assertIn(contents[contents.index("### Phase 2"):], retained)
-        warnings = meridian._queue_archival_warnings(retained)
+        warnings = owner_integration_projections._queue_archival_warnings(retained)
         self.assertEqual(len(warnings), 1)
         self.assertIn("### Phase 2 — Malformed", warnings[0])
         self.assertIn("unrecognized task row", warnings[0])
@@ -1651,9 +1653,9 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                                 active.rename(done)
                             if not plan_present:
                                 with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
-                                    meridian._apply_task_completion_rows(self.primary, identity)
+                                    owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                                 continue
-                            meridian._apply_task_completion_rows(self.primary, identity)
+                            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                             row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
                             self.assertIn("| `[x]` | 056 |", row)
                             if link_name != "absent":
@@ -1805,11 +1807,11 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         )
         queue.write_text(contents, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        result = meridian._apply_task_completion_rows(self.primary, identity)
+        result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(result["status"], "COMPLETED")
         self.assertIn("ANSWERED | SPIKE", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
         inconclusive = contents.replace("QUEUED", "INCONCLUSIVE")
-        retained, archive = meridian._archive_completed_queue_sections(
+        retained, archive = owner_integration_projections._archive_completed_queue_sections(
             inconclusive, queue, self.primary / "tasks/QUEUE_ARCHIVE.md", "governed-sdd"
         )
         self.assertEqual(retained, inconclusive)
@@ -1969,7 +1971,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
                             )
                             if archived_record:
                                 active.rename(done)
-                            meridian._apply_task_completion_rows(self.primary, identity)
+                            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                             row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
                             self.assertIn("| ACCEPTED | NOT_REQUIRED |", row)
                             if link_name != "absent":
@@ -1983,7 +1985,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         queue.write_text(original, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-            meridian._apply_task_completion_rows(self.primary, identity)
+            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
 
     def test_governed_required_review_uses_the_latest_attempt(self) -> None:
@@ -2012,10 +2014,10 @@ class GovernedCompletionRowsTest(unittest.TestCase):
                 else:
                     review.write_text(record, encoding="utf-8")
                 if label == "approve":
-                    result = meridian._apply_task_completion_rows(self.primary, identity)
+                    result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                 else:
                     with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-                        meridian._apply_task_completion_rows(self.primary, identity)
+                        owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                 row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
                 if label == "approve":
                     self.assertIn("| ACCEPTED | REQUIRED |", row)
@@ -2047,7 +2049,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "## Attempt 2 — APPROVE\n\n- Approved by: owner\n- Reviewed commit: `abc`\n- Base `main` commit: `def`\n",
             encoding="utf-8",
         )
-        result = meridian._apply_task_completion_rows(self.primary, identity)
+        result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
         self.assertEqual(result["status"], "COMPLETED")
         self.assertIn("| ACCEPTED | REQUIRED |", row)
@@ -2066,7 +2068,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         archived.parent.mkdir(exist_ok=True)
         identity.task_path.rename(archived)
         with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-            meridian._apply_task_completion_rows(self.primary, identity)
+            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
         self.assertIn("| QUEUED | REQUIRED |", row)
         self.assertIn("[056](056-lifecycle.md)", row)
@@ -2083,7 +2085,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             encoding="utf-8",
         )
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        meridian._apply_task_completion_rows(self.primary, identity)
+        owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertIn("| ACCEPTED |", queue.read_text(encoding="utf-8"))
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
 
@@ -2093,7 +2095,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         queue.write_text(original, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
-            meridian._apply_task_completion_rows(self.primary, identity)
+            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
 
     def test_governed_project_shaped_queue_updates_only_status_and_is_not_archived(self) -> None:
@@ -2108,7 +2110,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
         task = identity.task_path
         task.write_text("# Task 056\n\nReview: NOT REQUIRED\n", encoding="utf-8")
-        result = meridian._apply_task_completion_rows(self.primary, identity)
+        result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         expected = original.replace("QUEUED", "ACCEPTED")
         self.assertEqual(queue.read_text(encoding="utf-8"), expected)
         self.assertEqual(result["status"], "COMPLETED")
@@ -2125,11 +2127,11 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         queue.write_text(original, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
         with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-            meridian._apply_task_completion_rows(self.primary, identity)
+            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
         identity.review_path.parent.mkdir(exist_ok=True)
         identity.review_path.write_text("## Attempt 1 — APPROVE\n", encoding="utf-8")
-        result = meridian._apply_task_completion_rows(self.primary, identity)
+        result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(result["status"], "COMPLETED")
         self.assertEqual(queue.read_text(encoding="utf-8"), original.replace("QUEUED", "ACCEPTED"))
 
@@ -2159,7 +2161,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             with self.subTest(label=label):
                 queue.write_text(contents, encoding="utf-8")
                 with self.assertRaisesRegex(shared_errors.MeridianError, message):
-                    meridian._apply_task_completion_rows(self.primary, identity)
+                    owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                 self.assertEqual(queue.read_text(encoding="utf-8"), contents)
 
 

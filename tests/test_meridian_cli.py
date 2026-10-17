@@ -31,6 +31,8 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.release import update as owner_release_update
+from cardine.shared import journal as owner_shared_journal
 from cardine.hosts import claude as owner_hosts_claude
 from cardine.shared import budget as owner_shared_budget
 from cardine.shared import project as owner_shared_project
@@ -74,7 +76,7 @@ class SelfCheckPluginRefTest(unittest.TestCase):
                 path.write_text(raw, encoding="utf-8")
             elif settings is not None:
                 path.write_text(json.dumps(settings), encoding="utf-8")
-            report = meridian.plugin_ref_report(path, latest)
+            report = owner_release_update.plugin_ref_report(path, latest)
             expected_files = [path.name] if raw is not None or settings is not None else []
             self.assertEqual([item.name for item in Path(directory).iterdir()], expected_files)
         return report
@@ -109,12 +111,12 @@ class SelfCheckPluginRefTest(unittest.TestCase):
             path.write_text(json.dumps(self.declared("stable")), encoding="utf-8")
             output = io.StringIO()
             with redirect_stdout(output):
-                result = meridian.run_self_check(ROOT, urlopen_fn=mock.Mock(return_value=FakeLatestReleaseResponse(payload)), settings_path=path)
+                result = owner_release_update.run_self_check(ROOT, urlopen_fn=mock.Mock(return_value=FakeLatestReleaseResponse(payload)), settings_path=path)
             self.assertEqual(result, 0)
             self.assertIn("Plugin ref: stable", output.getvalue())
             output = io.StringIO()
             with redirect_stdout(output):
-                result = meridian.run_self_check(ROOT, urlopen_fn=mock.Mock(side_effect=URLError("offline")), settings_path=path)
+                result = owner_release_update.run_self_check(ROOT, urlopen_fn=mock.Mock(side_effect=URLError("offline")), settings_path=path)
             self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
             self.assertIn("Plugin ref: stable", output.getvalue())
 
@@ -127,7 +129,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         opener = mock.Mock(return_value=FakeLatestReleaseResponse(encoded))
         output = io.StringIO()
         with redirect_stdout(output):
-            result = meridian.run_self_check(ROOT, urlopen_fn=opener)
+            result = owner_release_update.run_self_check(ROOT, urlopen_fn=opener)
         return result, output.getvalue(), opener
 
     def test_up_to_date_release(self) -> None:
@@ -162,7 +164,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         opener = mock.Mock(side_effect=URLError("offline"))
         output = io.StringIO()
         with redirect_stdout(output):
-            result = meridian.run_self_check(ROOT, urlopen_fn=opener)
+            result = owner_release_update.run_self_check(ROOT, urlopen_fn=opener)
 
         self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
@@ -177,7 +179,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         opener = mock.Mock(return_value=response)
         output = io.StringIO()
         with redirect_stdout(output):
-            result = meridian.run_self_check(ROOT, urlopen_fn=opener)
+            result = owner_release_update.run_self_check(ROOT, urlopen_fn=opener)
 
         self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
@@ -187,7 +189,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         opener = mock.Mock(side_effect=BadStatusLine("garbled status"))
         output = io.StringIO()
         with redirect_stdout(output):
-            result = meridian.run_self_check(ROOT, urlopen_fn=opener)
+            result = owner_release_update.run_self_check(ROOT, urlopen_fn=opener)
 
         self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
@@ -205,7 +207,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         )
         output = io.StringIO()
         with redirect_stdout(output):
-            result = meridian.run_self_check(ROOT, urlopen_fn=opener)
+            result = owner_release_update.run_self_check(ROOT, urlopen_fn=opener)
 
         self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
@@ -241,7 +243,7 @@ class SelfCheckLatestTest(unittest.TestCase):
                     "--check-latest",
                 ],
             ),
-            mock.patch.object(meridian, "urlopen", return_value=response) as opener,
+            mock.patch.object(owner_release_update, "urlopen", return_value=response) as opener,
             redirect_stdout(output),
         ):
             result = meridian.main()
@@ -253,7 +255,7 @@ class SelfCheckLatestTest(unittest.TestCase):
     def test_self_check_without_opt_in_flag_never_opens_network(self) -> None:
         with (
             mock.patch.object(sys, "argv", ["meridian", "self-check"]),
-            mock.patch.object(meridian, "urlopen") as opener,
+            mock.patch.object(owner_release_update, "urlopen") as opener,
             redirect_stderr(io.StringIO()),
             self.assertRaises(SystemExit) as raised,
         ):
@@ -9298,11 +9300,11 @@ class LifecycleJournalTest(unittest.TestCase):
 
     def test_rotation_keeps_one_previous_file(self) -> None:
         directory = self.project / ".git"
-        self.journal.write_text("x" * (meridian.JOURNAL_MAX_BYTES + 1), encoding="utf-8")
+        self.journal.write_text("x" * (owner_shared_journal.JOURNAL_MAX_BYTES + 1), encoding="utf-8")
         (directory / "meridian-journal.1.jsonl").write_text("older\n", encoding="utf-8")
-        meridian.append_journal_line(self.project, {"version": 1, "command": "check"})
+        owner_shared_journal.append_journal_line(self.project, {"version": 1, "command": "check"})
         rotated = directory / "meridian-journal.1.jsonl"
-        self.assertEqual(rotated.stat().st_size, meridian.JOURNAL_MAX_BYTES + 1)
+        self.assertEqual(rotated.stat().st_size, owner_shared_journal.JOURNAL_MAX_BYTES + 1)
         self.assertEqual(self.lines(), [{"command": "check", "version": 1}])
         self.assertEqual(
             sorted(path.name for path in directory.glob("meridian-journal*")),

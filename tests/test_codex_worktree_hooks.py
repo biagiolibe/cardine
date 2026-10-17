@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.shared import journal as owner_shared_journal
 
 CLI = ROOT / "scripts/meridian.py"
 
@@ -73,7 +74,7 @@ class CodexWorktreeHooksTest(unittest.TestCase):
             git("commit", "-m", "seed hooks")
             worktree = Path(directory) / "task"
             git("worktree", "add", "-b", "task-222", str(worktree))
-            journal = primary / ".git" / meridian.JOURNAL_NAME
+            journal = primary / ".git" / owner_shared_journal.JOURNAL_NAME
             journal.write_text("")
             hooks = json.loads((primary / ".codex/hooks.json").read_text())["hooks"]
             payload = {"cwd": str(worktree), "tool_name": "Bash",

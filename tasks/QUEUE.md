@@ -43,7 +43,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[x]` | 009 | Extract protocol, Claude host, budget, project, and catalog modules (split plan E04) | 🔴 P1 | 008 | [009](done/009-extract-protocol-and-catalog.md) |
 | `[x]` | 010 | Extract migration, identity, file, router, and authority modules (split plan E05) | 🔴 P1 | 009 | [010](done/010-extract-identity-and-router.md) |
 | `[x]` | 011 | Extract stop rendering, manifest, marker history, worktree storage, and Codex host modules (split plan E06) | 🔴 P1 | 010 | [011](done/011-extract-manifest-and-worktree-storage.md) |
-| `[ ]` | 012 | Extract projection, update, verdict, context, and journal modules (split plan E07) | 🔴 P1 | 011 | [012](012-extract-verdict-and-journal.md) |
+| `[x]` | 012 | Extract projection, update, verdict, context, and journal modules (split plan E07) | 🔴 P1 | 011 | [012](done/012-extract-verdict-and-journal.md) |
 | `[ ]` | 013 | Extract evidence, marker audit, migration audit, worktree path, and skill modules (split plan E08) | 🔴 P1 | 012 | [013](013-extract-evidence-and-worktree-paths.md) |
 | `[ ]` | 014 | Extract flow, task audit, contract, importer, and budget command modules (split plan E09) | 🔴 P1 | 013 | [014](014-extract-contract-and-importer.md) |
 | `[ ]` | 015 | Extract preflight, worktree checkout, integration evidence, execution, and setup modules (split plan E10) | 🔴 P1 | 014 | [015](015-extract-worktree-checkout-and-execution.md) |

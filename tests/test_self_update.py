@@ -12,6 +12,8 @@ from urllib.error import URLError, HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine.release import update as owner_release_update
+from cardine.shared import journal as owner_shared_journal
 import cardine.shared.errors as shared_errors
 from cardine.hosts import codex as owner_hosts_codex
 
@@ -52,7 +54,7 @@ class SelfUpdateTest(unittest.TestCase):
     def run_update(self, **kwargs):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            result = meridian.run_self_update(self.root, urlopen_fn=self.opener, **kwargs)
+            result = owner_release_update.run_self_update(self.root, urlopen_fn=self.opener, **kwargs)
         self.output = output.getvalue()
         return result
 
@@ -137,7 +139,7 @@ class SelfUpdateTest(unittest.TestCase):
 
     def test_plugin_cache(self):
         with self.assertRaises(shared_errors.MeridianStop) as error:
-            meridian.run_self_update(self.base / '.claude/plugins/cache/meridian/1.3.0', apply=True)
+            owner_release_update.run_self_update(self.base / '.claude/plugins/cache/meridian/1.3.0', apply=True)
         self.assertEqual(error.exception.code, 'SELF_UPDATE_PLUGIN_CACHE')
         self.assertIn('/plugin marketplace update meridian', str(error.exception))
 
@@ -147,7 +149,7 @@ class SelfUpdateTest(unittest.TestCase):
         def read(root):
             calls.append(root)
             return original(root) if len(calls) == 1 else '0.0.0'
-        with patch.object(meridian, 'read_raw_version', side_effect=read):
+        with patch.object(owner_release_update, 'read_raw_version', side_effect=read):
             with self.assertRaises(shared_errors.MeridianStop) as error:
                 self.run_update(apply=True)
         self.assertEqual(error.exception.code, 'SELF_UPDATE_VERIFY')
@@ -173,7 +175,7 @@ class SelfUpdateTest(unittest.TestCase):
         with patch.object(sys, 'argv', ['meridian', '--framework-root', str(self.root),
                                       'self-update', '--check']), patch.object(
                 meridian, 'run_self_update', return_value=0) as update:
-            self.assertEqual(meridian._run_cli(meridian.LifecycleJournalEntry()), 0)
+            self.assertEqual(meridian._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
         update.assert_called_once_with(Path(meridian.__file__).resolve().parents[1],
                                        apply=False, target_tag=None)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):

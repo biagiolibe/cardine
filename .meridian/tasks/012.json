@@ -1,0 +1,14 @@
+{
+  "status": "DONE",
+  "task_id": "012",
+  "transitions": [
+    {
+      "at": "2026-10-17T21:29:03.522188Z",
+      "commit": "75e1b08a97a66bb0c22006992f65d508ca02927f",
+      "from": "QUEUED",
+      "to": "DONE"
+    }
+  ],
+  "version": 1,
+  "workflow": "lean-delivery"
+}
