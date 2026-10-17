@@ -453,115 +453,38 @@ from cardine.worktree.storage import (  # noqa: E402
     _dirty_summary,
     _proven_stale_base,
 )
-
-
-def _normalized_local_repository_name(value: str) -> str:
-    normalized = unicodedata.normalize("NFKC", value).strip().lower()
-    normalized = re.sub(r"[^a-z0-9]+", "-", normalized).strip("-")
-    if not normalized:
-        raise MeridianError("local repository name cannot be normalized safely")
-    return normalized
-
-
-def repository_identity(project_root: Path, remote_url: str | None = None) -> RepositoryIdentity:
-    """Derive a repository-qualified namespace without machine-specific state."""
-    if remote_url is None:
-        completed = subprocess.run(
-            ["git", "-C", str(project_root), "config", "--get", "remote.origin.url"],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        remote_url = completed.stdout.strip() if completed.returncode == 0 else ""
-    if remote_url:
-        candidate = remote_url.strip()
-        if "://" not in candidate and re.match(r"^[^/@:]+@[^/:]+:.+$", candidate):
-            user_host, remote_path = candidate.split(":", 1)
-            host = user_host.rsplit("@", 1)[-1]
-            parts = [part for part in remote_path.strip("/").split("/") if part]
-        else:
-            parsed = urlparse(candidate)
-            host = parsed.hostname or ""
-            parts = [part for part in parsed.path.strip("/").split("/") if part]
-        if len(parts) >= 2 and host:
-            repository = parts[-1][:-4] if parts[-1].endswith(".git") else parts[-1]
-            owner_parts = [_safe_component(part, "remote owner") for part in parts[:-1]]
-            if any("--" in part for part in owner_parts):
-                raise MeridianError("remote owner contains an ambiguous namespace separator")
-            owner = "--".join(owner_parts)
-            return RepositoryIdentity(
-                _safe_component(host, "remote host"),
-                owner,
-                _safe_component(repository, "repository name"),
-            )
-
-    common = canonical_git_common_dir(project_root)
-    try:
-        repository_name = git_output(project_root, "rev-parse", "--show-toplevel").split("/")[-1]
-    except MeridianError:
-        repository_name = project_root.resolve().name
-    repository = _normalized_local_repository_name(repository_name)
-    digest = hashlib.sha256(os.fsencode(common)).hexdigest()[:12]
-    return RepositoryIdentity("local", "repositories", f"{repository}-{digest}")
-
-
-def _task_worktree_path_for_identity(
-    project_root: Path,
-    worktree_root: Path,
-    identity: ResolvedTaskIdentity,
-) -> Path:
-    root = worktree_root.expanduser().resolve()
-    if root == Path(root.anchor) or root == Path.home().resolve():
-        raise MeridianError("worktree root must be a dedicated directory, not the filesystem root or home")
-    repository = repository_identity(project_root)
-    result = (
-        root
-        / repository.remote_host
-        / repository.owner
-        / repository.repository
-        / identity.branch_name
-    )
-    if root not in result.parents:
-        raise MeridianError("derived worktree path escapes the configured root")
-    resolved_result = result.resolve()
-    if root not in resolved_result.parents:
-        raise MeridianError("derived worktree path escapes the configured root through a symlink")
-    return result
-
-
-def handoff_worktree_value(worktree_root: Path, path: Path) -> str:
-    """Machine-independent handoff value: the path relative to the worktree root."""
-    return path.relative_to(worktree_root.expanduser().resolve()).as_posix()
-
-
-def task_worktree_path(project_root: Path, worktree_root: Path | None, task_id: str) -> Path:
-    """Compatibility derivation for callers that may be planning a new task."""
-    return _task_worktree_path_for_identity(
-        project_root,
-        _effective_worktree_root(worktree_root),
-        resolve_task_identity(project_root, task_id, "new"),
-    )
-
-
-def validate_worktree_collision(project_root: Path, path: Path, task_id: str) -> None:
-    """Reject an existing path unless it is the exact expected linked worktree."""
-    if not path.exists():
-        return
-    expected_common = canonical_git_common_dir(project_root)
-    try:
-        actual_common = canonical_git_common_dir(path)
-        branch = git_output(path, "branch", "--show-current")
-    except MeridianError as error:
-        raise MeridianError(f"worktree path collision at {path}: {error}") from error
-    try:
-        expected_branch = resolve_task_identity(project_root, task_id, "existing").branch_name
-    except MeridianError:
-        expected_branch = resolve_task_identity(project_root, task_id, "new").branch_name
-    if actual_common != expected_common or branch != expected_branch:
-        raise MeridianError(
-            f"worktree path collision at {path}: expected {expected_common} on {expected_branch}, "
-            f"found {actual_common} on {branch or 'detached HEAD'}"
-        )
+from cardine.tasks.evidence import (  # noqa: E402
+    validation_commands,
+    require_named_validation_commands,
+)
+from cardine.templates.marker_audit import (  # noqa: E402
+    audit_capability_markers,
+    HEADING,
+    marker_headings,
+    audit_duplicate_headings,
+    audit_capability_moves,
+)
+from cardine.templates.migration_audit import (  # noqa: E402
+    validate_capability_moves,
+    removals_for_managed_file,
+)
+from cardine.worktree.paths import (  # noqa: E402
+    _normalized_local_repository_name,
+    repository_identity,
+    _task_worktree_path_for_identity,
+    handoff_worktree_value,
+    task_worktree_path,
+    validate_worktree_collision,
+)
+from cardine.hosts.skills import (  # noqa: E402
+    _directory_setup_state,
+    CODEX_SKILL_NAMES,
+    _framework_skill_links,
+    _aggregate_skill_state,
+    _stale_codex_skill_warnings,
+    _setup_codex_state,
+    codex_profile_root_mismatch,
+)
 
 
 def _validation_reason(reasons: list[str], condition: bool, reason: str) -> None:
@@ -2119,116 +2042,6 @@ def advance_task_closure(
             raise MeridianError(f"unexpected closure state at {step}; run closure-status")
 
 
-def _directory_setup_state(root: Path) -> tuple[str, str]:
-    if not root.exists():
-        return "missing", f"create {root} with mode 0700"
-    if not root.is_dir():
-        return "blocked", f"worktree root exists but is not a directory: {root}"
-    details = root.stat()
-    if hasattr(os, "getuid") and details.st_uid != os.getuid():
-        return "blocked", f"worktree root is not owned by the current user: {root}"
-    mode = stat.S_IMODE(details.st_mode)
-    if mode != 0o700:
-        return "repair-required", f"set mode 0700 on {root} (currently {mode:04o})"
-    return "ready", "no directory change"
-
-
-CODEX_SKILL_NAMES = ("meridian-lean-delivery", "meridian-governed-sdd")
-
-
-def _framework_skill_links(framework_root: Path, home: Path) -> tuple[tuple[str, Path, str, str], ...]:
-    target_root = (framework_root / "skills").resolve()
-    checkout = _run_git(framework_root, "rev-parse", "--show-toplevel")
-    if checkout.returncode != 0 or Path(checkout.stdout.strip()).resolve() != framework_root.resolve():
-        reason = "framework root is not the root of a Git checkout"
-        return tuple((name, home / ".agents/skills" / name, "skipped", reason) for name in CODEX_SKILL_NAMES)
-    missing_assets = [name for name in CODEX_SKILL_NAMES if not (target_root / name / "SKILL.md").is_file()]
-    if missing_assets:
-        reason = "framework checkout does not contain " + ", ".join(
-            f"skills/{name}/SKILL.md" for name in missing_assets
-        )
-        return tuple((name, home / ".agents/skills" / name, "skipped", reason) for name in CODEX_SKILL_NAMES)
-    links: list[tuple[str, Path, str, str]] = []
-    for name in CODEX_SKILL_NAMES:
-        path = home / ".agents/skills" / name
-        target = target_root / name
-        if path.is_symlink():
-            observed = os.readlink(path)
-            state = "ready" if path.resolve() == target else "conflict"
-            detail = str(target) if state == "ready" else f"points to {observed} (expected {target})"
-        elif path.exists():
-            state = "blocked"
-            detail = f"path exists as {('directory' if path.is_dir() else 'regular file')}"
-        else:
-            state = "missing"
-            detail = f"create symlink to {target}"
-        links.append((name, path, state, detail))
-    return tuple(links)
-
-
-def _aggregate_skill_state(links: tuple[tuple[str, Path, str, str], ...]) -> str:
-    states = {state for _, _, state, _ in links}
-    if "blocked" in states:
-        return "blocked"
-    if "conflict" in states:
-        return "conflict"
-    if states == {"skipped"}:
-        return "skipped"
-    if "missing" in states:
-        return "missing"
-    return "ready"
-
-
-def _stale_codex_skill_warnings(home: Path) -> list[str]:
-    return [
-        f"stale Codex skill copy: {path}"
-        for path in sorted((home / ".codex/skills").glob("meridian-*"))
-    ]
-
-
-def _setup_codex_state(plan: CodexConfigurationPlan) -> str:
-    if plan.status in ("ready", "repair-required", "repair-and-replace-required"):
-        return plan.status
-    text = plan.current_text or ""
-    try:
-        parsed = tomllib.loads(text)
-    except tomllib.TOMLDecodeError:
-        return "blocked"
-    permissions = parsed.get("permissions")
-    existing = permissions.get(CODEX_PERMISSION_PROFILE) if isinstance(permissions, dict) else None
-    if isinstance(existing, dict) and _codex_markers_intact(text):
-        expected = _codex_expected_profile(plan.worktree_root)
-        differing = [key for key in sorted(set(existing) | set(expected)) if existing.get(key) != expected.get(key)]
-        roots = existing.get("workspace_roots")
-        enabled_roots = (
-            [value for value, allowed in roots.items() if allowed is True]
-            if isinstance(roots, dict)
-            else []
-        )
-        if differing == ["workspace_roots"] and len(enabled_roots) == 1:
-            return "different-root"
-        return "blocked"
-    return "unconfigured"
-
-
-def codex_profile_root_mismatch(config_path: Path, resolved_root: Path) -> str | None:
-    if not config_path.is_file():
-        return None
-    try:
-        parsed = tomllib.loads(config_path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError):
-        return None
-    permissions = parsed.get("permissions")
-    profile = permissions.get(CODEX_PERMISSION_PROFILE) if isinstance(permissions, dict) else None
-    roots = profile.get("workspace_roots") if isinstance(profile, dict) else None
-    if not isinstance(roots, dict):
-        return None
-    enabled = [Path(value).expanduser().resolve() for value, allowed in roots.items() if allowed is True]
-    if len(enabled) == 1 and enabled[0] != resolved_root:
-        return f"profile={enabled[0]} resolved={resolved_root}"
-    return None
-
-
 def plan_setup(
     worktree_root: Path | None,
     codex_config: Path,
@@ -2758,336 +2571,12 @@ def codex_doctor(
     return result
 
 
-def validate_capability_moves(framework_root: Path, mode: str) -> list[str]:
-    """Validate move declarations against the exact current release templates."""
-    managed = {item.target: item.source for item in managed_files(framework_root, mode)}
-    requirements = capability_requirements(framework_root)
-    errors = []
-    seen_sources: set[tuple[Path, str, int]] = set()
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        moves = data.get("capabilityMoves", [])
-        if not moves:
-            continue
-        if not isinstance(moves, list):
-            errors.append(f"{path.name}: capabilityMoves must be an array")
-            continue
-        for index, raw in enumerate(moves):
-            label = f"{path.name}: capabilityMoves[{index}]"
-            if not isinstance(raw, dict) or set(raw) != {"stage", "source", "target"}:
-                errors.append(f"{label} must contain exactly stage, source, and target")
-                continue
-            if raw["stage"] not in ("additive", "retirement"):
-                errors.append(f"{label} has an unsupported stage")
-                continue
-            locations = []
-            for side in ("source", "target"):
-                value = raw[side]
-                required = {"path", "capability", "capabilityVersion", "markerSha256"}
-                if not isinstance(value, dict) or set(value) != required:
-                    errors.append(f"{label}.{side} has an invalid shape")
-                    break
-                try:
-                    location = (
-                        Path(str(value["path"])),
-                        str(value["capability"]),
-                        int(value["capabilityVersion"]),
-                        str(value["markerSha256"]),
-                    )
-                except (TypeError, ValueError):
-                    errors.append(f"{label}.{side} has invalid scalar values")
-                    break
-                if not re.fullmatch(r"[0-9a-f]{64}", location[3]):
-                    errors.append(f"{label}.{side}.markerSha256 is not a SHA-256 digest")
-                    break
-                if location[0] not in managed:
-                    errors.append(f"{label}.{side}.path is not a managed path")
-                    break
-                template_text = managed[location[0]].read_text(encoding="utf-8")
-                superseding_version = max(
-                    (
-                        int(version)
-                        for capability, version in CAPABILITY_MARKER.findall(template_text)
-                        if capability == location[1] and int(version) > location[2]
-                    ),
-                    default=None,
-                )
-                superseded_target = (
-                    side == "target"
-                    and superseding_version is not None
-                    and requirements.get(location[1], (0, ""))[0] == superseding_version
-                    and len(marker_blocks(template_text, location[1], superseding_version)) == 1
-                )
-                if not (side == "source" and not marker_blocks(template_text, location[1], location[2])) and not (raw["stage"] == "retirement" and side == "source") and not exact_marker_matches(template_text, location[1], location[2], location[3]) and not superseded_target:
-                    errors.append(f"{label}.{side} does not name one exact marker in the release template")
-                    break
-                locations.append(location)
-            if len(locations) != 2:
-                continue
-            source, target = locations
-            if source[:3] == target[:3]:
-                errors.append(f"{label} has an identical source and target location")
-            if source[:3] in seen_sources and raw["stage"] != "retirement":
-                errors.append(f"{label} duplicates a declared source marker")
-            seen_sources.add(source[:3])
-            if source[0] not in {Path(item) for item in data.get("managedPaths", [])} or target[0] not in {
-                Path(item) for item in data.get("managedPaths", [])
-            }:
-                errors.append(f"{label} source and target must both be listed in managedPaths")
-    return errors
-
-
-def removals_for_managed_file(
-    framework_root: Path, migration_ids_to_find: list[str], target: Path
-) -> list[tuple[str, int, str | None]]:
-    """(capability, version, supersededBy) triples a pending upgrade should
-    retire from this one managed file — `pending_capability_removals`
-    filtered to the entries whose migration declares this file among its
-    `managedPaths`."""
-    result = [
-        (capability, version, superseded_by)
-        for capability, version, superseded_by, managed_paths in pending_capability_removals(
-            framework_root, migration_ids_to_find
-        )
-        if str(target) in managed_paths
-    ]
-    for move in declared_capability_moves(framework_root, migration_ids_to_find):
-        if move.stage == "retirement" and move.source_path == target:
-            result.append((move.source_capability, move.source_version, None))
-    return result
-
-
 # Pre-marker capabilities (001, 002) shipped as bare phrases before migration
 # 006 introduced markers. A project adopted between their release and 006 is
 # legitimately compliant but has no marker to find; without this fallback,
 # every such already-adopted project would regress to fully MISSING. Each
 # entry proves only that v1 was implemented — the version that predates
 # markers entirely — never a later one.
-
-
-def audit_capability_markers(
-    project_root: Path, framework_root: Path, mode: str
-) -> list[tuple[str, str]]:
-    """Phase 4 of migrations/CAPABILITY_MARKERS.md: protected-region integrity.
-
-    For every capability marker found in a project's managed files, compare
-    its exact bracketed content against the framework's own current template
-    for that same file — not a project-wide search, since two files can
-    carry different canonical text for the same capability (a workflow
-    section in AGENTS.md is not the same text as a template file's body).
-    `PASS` means unmodified; `FAIL` means the protected text was edited
-    outside `meridian upgrade`; `SKIP` means the project's marker version
-    predates what the current template carries, so there is nothing current
-    to verify against yet (a staleness question for `upgrade`, not a drift
-    question for this audit). Also reports `FAIL` when a single file carries
-    more than one version of the same capability — the symptom left behind
-    when a version bump was appended instead of replacing the version it
-    superseded, so an already-damaged project is found instead of left to
-    accumulate a growing set of contradictory pairs.
-    """
-    retired_versions = retired_capability_versions(framework_root)
-    results: list[tuple[str, str]] = []
-    for item in managed_files(framework_root, mode):
-        local = project_root / item.target
-        if not local.is_file():
-            continue
-        local_text = local.read_text(encoding="utf-8")
-        local_pairs = marker_pairs(local_text)
-        versions_by_name: dict[str, list[int]] = {}
-        for capability, version in local_pairs:
-            versions_by_name.setdefault(capability, []).append(version)
-        for capability, versions in versions_by_name.items():
-            if len(versions) > 1:
-                results.append(
-                    (
-                        "FAIL",
-                        f"{item.target}: capability={capability} carries {len(versions)} versions "
-                        f"({', '.join(f'v{v}' for v in sorted(versions))}) in the same file — a "
-                        "superseded marker was left in place instead of replaced; reconcile by hand",
-                    )
-                )
-        for capability, version_text in CAPABILITY_MARKER.findall(local_text):
-            version = int(version_text)
-            local_block = extract_marker_block(local_text, capability, version)
-            template_text = item.source.read_text(encoding="utf-8")
-            template_block = extract_marker_block(template_text, capability, version)
-            if template_block is None and (capability, version) in retired_versions:
-                results.append(
-                    (
-                        "FAIL",
-                        f"{item.target}: capability={capability} v{version} is retired but still "
-                        "present here; run `meridian upgrade`, or reconcile by hand if this file was "
-                        "outside the retiring migration's `managedPaths`",
-                    )
-                )
-            elif template_block is None:
-                results.append(
-                    (
-                        "SKIP",
-                        f"{item.target}: capability={capability} v{version} — the current framework "
-                        "template has no matching version to verify against here (likely stale; "
-                        "run `meridian upgrade` first)",
-                    )
-                )
-            elif local_block == template_block:
-                results.append(
-                    ("PASS", f"{item.target}: capability={capability} v{version} matches the released text")
-                )
-            else:
-                results.append(
-                    (
-                        "FAIL",
-                        f"{item.target}: capability={capability} v{version} — protected content does not "
-                        "match the released text for this version; possible unauthorized edit",
-                    )
-                )
-    return sorted(results, key=lambda pair: pair[1])
-
-
-HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
-
-
-def marker_headings(text: str) -> list[tuple[str, int, str | None]]:
-    """(capability, version, nearest preceding heading text) for every marker
-    in `text`. `None` when a marker appears before any heading in the file.
-    """
-    headings = [(match.start(), match.group(2).strip()) for match in HEADING.finditer(text)]
-    result: list[tuple[str, int, str | None]] = []
-    for match in CAPABILITY_MARKER.finditer(text):
-        capability, version = match.group(1), int(match.group(2))
-        heading = None
-        for offset, title in headings:
-            if offset <= match.start():
-                heading = title
-            else:
-                break
-        result.append((capability, int(version), heading))
-    return result
-
-
-def audit_duplicate_headings(project_root: Path, framework_root: Path, mode: str) -> list[tuple[str, str]]:
-    """Task 007's duplication-detection half: flag a capability whose marker
-    sits under more than one distinct heading *within the same managed file*
-    — the mechanical signature of an accidental duplicate paste, or a
-    section split in two without updating the marker placement.
-
-    Deliberately scoped to one file at a time, not across a project's whole
-    managed-files set: the same capability legitimately appears under
-    different heading names in different documents by design (for example
-    `ci-verified-validation` under "Code Review and Integration Prompt" in
-    `docs/CODE_REVIEW_PROMPT.md` and under "Completion Report" in
-    `docs/COMPLETION_REPORT_TEMPLATE.md` — one canonical rule, several
-    consuming documents, not a drifted duplicate). A cross-file heuristic
-    was tried against these templates and produced five false positives on
-    exactly that intentional pattern before this scope was chosen. This does
-    not (and cannot) catch a *paraphrased* duplicate with no shared marker at
-    all, such as the reviewer-integrator-identity triplication that
-    motivated this task — that is invisible to any mechanical check and
-    remains a human review concern; this only catches the structural case a
-    marker can see.
-    """
-    results: list[tuple[str, str]] = []
-    for item in managed_files(framework_root, mode):
-        local = project_root / item.target
-        if not local.is_file():
-            continue
-        by_capability: dict[str, set[str]] = {}
-        for capability, _version, heading in marker_headings(local.read_text(encoding="utf-8")):
-            if heading is not None:
-                by_capability.setdefault(capability, set()).add(heading)
-        for capability, headings in sorted(by_capability.items()):
-            if len(headings) > 1:
-                results.append(
-                    (
-                        "FAIL",
-                        f"{item.target}: capability={capability} appears under {len(headings)} "
-                        f"distinct headings ({', '.join(sorted(headings))}) in this file — merge "
-                        "into one canonical location, or retire the duplicate via a migration's "
-                        "`removes`/`supersededBy`",
-                    )
-                )
-    return results
-
-
-def audit_capability_moves(project_root: Path, framework_root: Path, mode: str) -> list[tuple[str, str]]:
-    """Verify that declared additive relocations retain both exact copies."""
-    if mode != "governed-sdd":
-        return []
-    try:
-        applied = {
-            str(item)
-            for item in load_manifest(
-                project_root, framework_root, defer_surface_gaps=True
-            ).get("appliedMigrations", [])
-        }
-    except MeridianError:
-        if (project_root / MANIFEST_PATH).is_file():
-            raise
-        return []
-    results = []
-    moves = [move for move in declared_capability_moves(framework_root) if move.migration in applied]
-    retired_sources = {
-        (move.source_path, move.source_capability, move.source_version)
-        for move in moves
-        if move.stage == "retirement"
-    }
-    for move in moves:
-        if move.stage == "additive" and (move.source_path, move.source_capability, move.source_version) in retired_sources:
-            continue
-        source = project_root / move.source_path
-        target = project_root / move.target_path
-        if move.stage == "additive":
-            for path, capability, version, digest, side in (
-                (source, move.source_capability, move.source_version, move.source_sha256, "source"),
-                (target, move.target_capability, move.target_version, move.target_sha256, "target"),
-            ):
-                text = path.read_text(encoding="utf-8") if path.is_file() else ""
-                if side == "source" and path == project_root / "CLAUDE.md" and is_agents_pointer(text):
-                    continue
-                if not exact_marker_matches(text, capability, version, digest):
-                    results.append(
-                        (
-                            "FAIL",
-                            f"capability move {move.migration}: {side} {path.relative_to(project_root)} "
-                            f"for capability={capability} v{version} is missing, modified, or duplicated",
-                        )
-                    )
-        else:
-            source_text = source.read_text(encoding="utf-8") if source.is_file() else ""
-            target_text = target.read_text(encoding="utf-8") if target.is_file() else ""
-            if marker_blocks(source_text, move.source_capability, move.source_version):
-                results.append(
-                    (
-                        "FAIL",
-                        f"capability move {move.migration}: retired source {move.source_path} is still present",
-                    )
-                )
-            target_matches = exact_marker_matches(
-                target_text, move.target_capability, move.target_version, move.target_sha256
-            )
-            if not target_matches:
-                template = framework_root / "templates" / "workflows" / mode / move.target_path
-                template_text = template.read_text(encoding="utf-8") if template.is_file() else ""
-                superseding_versions = [
-                    int(version)
-                    for capability, version in CAPABILITY_MARKER.findall(template_text)
-                    if capability == move.target_capability and int(version) > move.target_version
-                ]
-                if superseding_versions:
-                    current_version = max(superseding_versions)
-                    target_matches = (
-                        extract_marker_block(target_text, move.target_capability, current_version)
-                        == extract_marker_block(template_text, move.target_capability, current_version)
-                        is not None
-                    )
-            if not target_matches:
-                results.append(
-                    (
-                        "FAIL",
-                        f"capability move {move.migration}: target {move.target_path} is missing, modified, or duplicated",
-                    )
-                )
-    return results
 
 
 def _audit_evidence_reference(
@@ -6694,35 +6183,6 @@ def execution_deliver(project_root: Path, task_id: str) -> dict[str, object]:
         if completed.returncode:
             raise stop_error("EVIDENCE_INCOMPLETE", f"delivery {args[0]} failed: {completed.stderr.strip()}; actual state READY_FOR_REVIEW, pending delivery; inspect git status, commit only state/projection, then rerun execution deliver", task_id=task_id, project=canonical_project_root(project_root))
     return delivery_readiness(project_root, task_id)
-
-
-def validation_commands(text: str) -> dict[str, str]:
-    """Read named, literal validation commands from one task's Validation block."""
-    section = re.search(r"^## Validation\s*$\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
-    if section is None:
-        return {}
-    commands: dict[str, str] = {}
-    for match in re.finditer(r"^- `([^`]+)`: `([^`]+)`\s*$", section.group(1), re.MULTILINE):
-        command_id, command = match.groups()
-        commands[command_id] = command
-    return commands
-
-
-def require_named_validation_commands(text: str) -> None:
-    """Reject free-form Validation entries that the execution runner cannot run."""
-    section = re.search(r"^## Validation\s*$\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
-    if section is None:
-        return
-    entries = [line for line in section.group(1).splitlines() if line.startswith("- ")]
-    if entries and len(validation_commands(text)) != len(entries):
-        named = re.compile(r"^- `[^`]+`: `[^`]+`\s*$")
-        unnamed = [line for line in entries if not named.match(line)]
-        raise stop_error(
-            "VALIDATION_ENTRY_FORMAT",
-            "rule: every entry in the task's ## Validation section must be a named literal command; "
-            "accepted form: - `validation-id`: `literal command`; found: "
-            + "; ".join(repr(line) for line in unnamed or entries),
-        )
 
 
 def record_validation(project_root: Path, task_id: str, command_id: str, command: str, status: int,

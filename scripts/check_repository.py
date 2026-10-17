@@ -20,6 +20,7 @@ from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
 from cardine.templates import files as owner_templates_files
+from cardine.templates import migration_audit as owner_templates_migration_audit
 from cardine.templates import migrations as owner_templates_migrations
 from cardine.templates import manifest as owner_templates_manifest
 
@@ -548,7 +549,7 @@ def check_migrations(root: Path = ROOT) -> None:
     # migration may lag behind VERSION but must never be ahead of it.
     if meridian.version_key(previous_to) > meridian.version_key(current_version):
         fail("a migration must never target a version ahead of the current release")
-    for error in meridian.validate_capability_moves(root, "governed-sdd"):
+    for error in owner_templates_migration_audit.validate_capability_moves(root, "governed-sdd"):
         fail(f"invalid capability move: {error}")
 
 
