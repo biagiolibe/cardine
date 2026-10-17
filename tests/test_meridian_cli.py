@@ -31,6 +31,10 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.hosts import claude as owner_hosts_claude
+from cardine.shared import budget as owner_shared_budget
+from cardine.shared import project as owner_shared_project
+from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.stops import registry as stops_registry
 from cardine.templates import markers as templates_markers
@@ -5064,7 +5068,7 @@ Evidence plan:
         self.assertEqual(result.stdout.strip(), "TASK-016: diagnostic 2/3")
         self.assertIn("commit its deletion", result.stderr)
         self.assertFalse(legacy.exists())
-        self.assertEqual(json.loads(meridian.budget_state_path(self.project).read_text(encoding="utf-8"))["TASK-016:1"]["diagnostic"], 2)
+        self.assertEqual(json.loads(owner_shared_budget.budget_state_path(self.project).read_text(encoding="utf-8"))["TASK-016:1"]["diagnostic"], 2)
         self.assertNotEqual(subprocess.run(("git", "-C", str(self.project), "ls-files", "--error-unmatch", ".meridian/budget.json"), capture_output=True, text=True, check=False).returncode, 0)
         second = self.run_cli("budget", "spend", "TASK-016", "diagnostic")
         self.assertEqual(second.returncode, 0, second.stderr)
@@ -6326,9 +6330,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertTrue(configured["preserve"])
         self.assertEqual(
             configured["permissions"]["allow"],
-            ["Bash(existing command)", *meridian.CLAUDE_PROJECT_ALLOWLIST],
+            ["Bash(existing command)", *owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST],
         )
-        self.assertEqual(configured["permissions"]["deny"], list(meridian.CLAUDE_PROJECT_DENYLIST))
+        self.assertEqual(configured["permissions"]["deny"], list(owner_hosts_claude.CLAUDE_PROJECT_DENYLIST))
         repeated = meridian.plan_setup(
             root,
             self.codex_config,
@@ -6345,37 +6349,37 @@ class WorktreeRootSetupTest(unittest.TestCase):
         settings.parent.mkdir(parents=True)
         settings.write_text(
             json.dumps({"permissions": {
-                "allow": list(meridian.CLAUDE_PROJECT_ALLOWLIST),
+                "allow": list(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST),
                 "deny": ["Bash(rm:*)", "Bash(git tag:*)"],
             }}),
             encoding="utf-8",
         )
-        plan = meridian.plan_claude_project_allowlist(project)
+        plan = owner_hosts_claude.plan_claude_project_allowlist(project)
         self.assertEqual(plan.status, "approval-required")
         self.assertNotIn("Bash(git tag:*)", plan.detail)
         self.assertIn("Bash(git rebase:*)", plan.detail)
-        self.assertTrue(meridian.apply_claude_project_allowlist(plan))
+        self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(plan))
         deny = json.loads(settings.read_text(encoding="utf-8"))["permissions"]["deny"]
         self.assertEqual(deny[:2], ["Bash(rm:*)", "Bash(git tag:*)"])
         self.assertEqual(len(deny), len(set(deny)))
-        self.assertEqual(set(deny), {"Bash(rm:*)", *meridian.CLAUDE_PROJECT_DENYLIST})
-        again = meridian.plan_claude_project_allowlist(project)
+        self.assertEqual(set(deny), {"Bash(rm:*)", *owner_hosts_claude.CLAUDE_PROJECT_DENYLIST})
+        again = owner_hosts_claude.plan_claude_project_allowlist(project)
         self.assertEqual(again.status, "ready")
-        self.assertFalse(meridian.apply_claude_project_allowlist(again))
+        self.assertFalse(owner_hosts_claude.apply_claude_project_allowlist(again))
 
     def test_setup_blocks_a_malformed_deny_list(self) -> None:
         project = self.home / "project"
         settings = project / ".claude/settings.local.json"
         settings.parent.mkdir(parents=True)
         settings.write_text(json.dumps({"permissions": {"deny": "Bash(rm:*)"}}), encoding="utf-8")
-        self.assertEqual(meridian.plan_claude_project_allowlist(project).status, "blocked")
+        self.assertEqual(owner_hosts_claude.plan_claude_project_allowlist(project).status, "blocked")
 
     def test_claude_deny_rules_cover_the_denied_actions_and_spare_the_lifecycle(self) -> None:
         def matches(rule: str, command: str) -> bool:
             prefix = rule.removeprefix("Bash(").removesuffix(":*)")
             return command == prefix or command.startswith(prefix + " ")
 
-        deny = meridian.CLAUDE_PROJECT_DENYLIST
+        deny = owner_hosts_claude.CLAUDE_PROJECT_DENYLIST
         for denied in (
             "git push --force origin main",
             "git push -f origin main",
@@ -6402,7 +6406,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "git commit -m message",
         ):
             self.assertFalse(any(matches(rule, needed) for rule in deny), needed)
-        for rule in meridian.CLAUDE_PROJECT_ALLOWLIST:
+        for rule in owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST:
             self.assertNotIn(rule, deny)
 
     def test_setup_advises_about_direct_hook_registration_with_plugin_enabled(self) -> None:
@@ -6454,8 +6458,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
         missing = meridian.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(missing["claude-project-allowlist"], "approval-required")
-        claude_plan = meridian.plan_claude_project_allowlist(project)
-        self.assertTrue(meridian.apply_claude_project_allowlist(claude_plan))
+        claude_plan = owner_hosts_claude.plan_claude_project_allowlist(project)
+        self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(claude_plan))
         ready = meridian.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(ready["claude-project-allowlist"], "ready")
 
@@ -6493,7 +6497,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertTrue(gaps["validation-command-policy"].startswith("gap: "))
 
     def test_claude_allowlist_covers_only_the_declared_command_surface(self) -> None:
-        allowlist = set(meridian.CLAUDE_PROJECT_ALLOWLIST)
+        allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
         for command in (
             "Bash(git push origin main)",
             "Bash(meridian worktree evidence:*)",
@@ -6534,7 +6538,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertIsNotNone(match)
         codex_subcommands = set(re.findall(r'"([^"]+)"', match.group(1)))
-        allowlist = set(meridian.CLAUDE_PROJECT_ALLOWLIST)
+        allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
         claude_subcommands = {
             command.removeprefix("Bash(meridian execution ").removesuffix(":*)")
             for command in allowlist
@@ -7215,7 +7219,7 @@ class ProjectDeclarationTest(unittest.TestCase):
         for declaration in ({"version": 2}, {"version": 1, "unknown": True}, {"version": 1, "locations": {"queue": "/tmp/QUEUE.md"}}, {"version": 1, "locations": {"queue": "../QUEUE.md"}}):
             self.write(declaration)
             with self.subTest(declaration=declaration), self.assertRaises(shared_errors.MeridianError):
-                meridian.read_project_declaration(self.project)
+                owner_shared_project.read_project_declaration(self.project)
 
     def test_declaration_overrides_legacy_and_cli_fields(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text("<!-- MERIDIAN:BEGIN capability=execution-assets v2 -->\n<!-- MERIDIAN:END -->\nTask files live at `legacy/tasks/<TASK-ID>.md`; queue is `legacy/QUEUE.md`.\n", encoding="utf-8")
@@ -7346,7 +7350,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
 
 class CapabilityProfileManifestTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.catalog = meridian.load_capability_catalog(ROOT)
+        self.catalog = owner_templates_catalog.load_capability_catalog(ROOT)
 
     def manifest(self, mode: str = "lean-delivery") -> dict[str, object]:
         profile = self.catalog.profile("meridian-self-hosting")
@@ -7634,8 +7638,8 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 self.assertEqual(written["workflowMode"], mode)
                 self.assertNotIn("mode", written)
                 loaded = meridian.load_manifest(project, ROOT)
-                self.assertEqual(meridian.manifest_workflow_mode(loaded), mode)
-                self.assertEqual(len(meridian.parse_capability_profiles(loaded, self.catalog)), 1)
+                self.assertEqual(owner_templates_catalog.manifest_workflow_mode(loaded), mode)
+                self.assertEqual(len(owner_templates_catalog.parse_capability_profiles(loaded, self.catalog)), 1)
 
     def test_legacy_mode_and_migration_history_do_not_fabricate_capabilities(self) -> None:
         legacy = {
@@ -7919,7 +7923,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             catalog_path.write_text(
                 json.dumps(catalog, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
-            custom_catalog = meridian.load_capability_catalog(framework)
+            custom_catalog = owner_templates_catalog.load_capability_catalog(framework)
             self.catalog = custom_catalog
             manifest = self.installed_project(project)
             declaration = manifest["capabilityProfiles"]["meridian-self-hosting"][
@@ -8095,7 +8099,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         meridian.bootstrap_capability_profile(self.project, self.framework, self.PROFILE, apply=True)
         self.expected = self.read_manifest()
-        self.catalog = meridian.load_capability_catalog(self.framework)
+        self.catalog = owner_templates_catalog.load_capability_catalog(self.framework)
         # A manifest written before the catalog gained the completion report template.
         old = json.loads(json.dumps(self.expected))
         declaration = old["capabilityProfiles"][self.PROFILE]["capabilities"][self.CAPABILITY]

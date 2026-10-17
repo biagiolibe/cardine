@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+from cardine.shared import budget as owner_shared_budget
 import cardine.integration.decision as integration_decision
 import cardine.shared.errors as shared_errors
 import project_console  # noqa: E402
@@ -314,14 +315,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.git("worktree", "remove", prepared["worktree"])
         self.git("branch", "-d", prepared["branch"])
         state = {"056": {"attempt": 1, "lastStatus": "UNKNOWN"}, "056:1": counters}
-        meridian.write_budget_state(self.primary, state)
+        owner_shared_budget.write_budget_state(self.primary, state)
         return state
 
     def test_prepare_blocks_inherited_budget_spends(self):
         state = self.retired_budget({"diagnostic": 2, "captures:AC1": 1})
         with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION.*diagnostic.*resume:"):
             self.prepare()
-        self.assertEqual(meridian.load_budget_state(self.primary), state)
+        self.assertEqual(owner_shared_budget.load_budget_state(self.primary), state)
         self.assertEqual(len(meridian._git_worktrees(self.primary)), 1)
 
     def test_prepare_retired_without_spends(self):
@@ -339,7 +340,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "--new-attempt", "--reason", "Developer approved redesign", "--format", "json",
         ], cwd=self.primary, text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        ledger = meridian.load_budget_state(self.primary)
+        ledger = owner_shared_budget.load_budget_state(self.primary)
         self.assertEqual(ledger["056:1"], state["056:1"])
         self.assertEqual(ledger["056:2"], {})
         self.assertEqual(ledger["056"]["attempt"], 2)
@@ -362,7 +363,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         with self.assertRaisesRegex(shared_errors.MeridianError, "registered task worktree"):
             meridian.prepare_task_worktree("056", self.worktree_root, self.primary,
                                            new_attempt=True, reason="Approved")
-        self.assertEqual(meridian.load_budget_state(self.primary), {})
+        self.assertEqual(owner_shared_budget.load_budget_state(self.primary), {})
 
     def prepare(self) -> dict[str, object]:
         return meridian.prepare_task_worktree("056", self.worktree_root, self.primary)

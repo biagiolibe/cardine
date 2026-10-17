@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.templates import markers as templates_markers
 import cardine.shared.errors as shared_errors
@@ -471,7 +472,7 @@ class ConsumerProfileTest(unittest.TestCase):
         return code, output.getvalue()
 
     def test_catalog_ships_a_consumer_profile_per_mode(self) -> None:
-        catalog = meridian.load_capability_catalog(ROOT)
+        catalog = owner_templates_catalog.load_capability_catalog(ROOT)
         for profile_id, mode in (
             ("governed-sdd-consumer", "governed-sdd"),
             ("lean-delivery-consumer", "lean-delivery"),
@@ -552,7 +553,7 @@ class ConsumerProfileTest(unittest.TestCase):
 
     def test_bootstrap_does_not_launder_a_drifted_copy_under_the_strict_profile(self) -> None:
         project = self.legacy_project("lean-delivery")
-        catalog = meridian.load_capability_catalog(ROOT)
+        catalog = owner_templates_catalog.load_capability_catalog(ROOT)
         for capability_id, _version in catalog.profile("meridian-self-hosting").capabilities:
             for surface in catalog.capability(capability_id).managed_surfaces:
                 destination = project / surface.path

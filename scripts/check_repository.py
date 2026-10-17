@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
 from cardine.shared import constants
+from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
 
 # Deliberately not directly inside migrations/: `meridian.py`'s
@@ -477,7 +478,7 @@ def check_plugin_version(root: Path = ROOT) -> None:
 
 def check_capability_catalog(root: Path = ROOT) -> None:
     try:
-        catalog = meridian.load_capability_catalog(root)
+        catalog = catalog_provider.load_capability_catalog(root)
     except meridian.MeridianError as error:
         fail(f"invalid capability catalog: {error}")
     profile = catalog.profile("meridian-self-hosting")
@@ -815,8 +816,8 @@ def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
     """Return managed-copy and installation-evidence drift without host probes."""
     try:
         manifest = meridian.load_manifest(root, root)
-        catalog = meridian.load_capability_catalog(root)
-        profiles = meridian.parse_capability_profiles(manifest, catalog)
+        catalog = catalog_provider.load_capability_catalog(root)
+        profiles = catalog_provider.parse_capability_profiles(manifest, catalog)
     except meridian.MeridianError as error:
         return [str(error)]
     managed_files = manifest["managedFiles"]
