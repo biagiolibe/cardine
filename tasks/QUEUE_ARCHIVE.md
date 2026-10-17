@@ -21,3 +21,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 004 | Extract the leaf modules (split plan E01) | 🔴 P1 | 003 | [004](done/004-extract-leaf-modules.md) |
+
+### Phase 3 — CI repair after the first extraction
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.md`.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 005 | Make the module inventory test pass in a shallow clone | 🔴 P1 | 004 | [005](done/005-shallow-clone-inventory-baseline.md) |
