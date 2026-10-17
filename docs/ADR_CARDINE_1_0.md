@@ -10,8 +10,9 @@ trademark registration, task state only in JSON, the new repository, the
 `lean` and `governed` presets, and pipx as the primary installer. Contoso and
 Fabrikam are fictitious names for the maintainer's two private projects.
 Decision 11, landing modes and pull requests, was added and accepted on the
-same day, as were the release-tooling requirements in work item 12 and the
-order of work items 4 and 5.*
+same day, as were the release-tooling requirements in work item 12, the
+order of work items 4 and 5, quick tasks under decision 4, and CI before
+landing under decision 11.*
 
 ## Context
 
@@ -158,7 +159,10 @@ Fabrikam.
 remains the only source of truth for status, transitions, and review verdicts,
 as `docs/ADR_MACHINE_TASK_STATE.md` decided. It is validated by a schema and
 written only by the CLI. `cardine task new` creates it with the task, so it
-cannot be missing.
+cannot be missing. A quick task is a minimal task that `cardine task new`
+creates in the same way; no lifecycle step runs for a task without a
+registered state file. Meridian's Lean rules allowed a quick task without a
+task file, while worktree preparation refused any unregistered task ID.
 
 Cardine removes the duplicates that coexist with it in Meridian:
 
@@ -377,6 +381,16 @@ get the forge's full CI and a public record. In `pull-request` mode `main`
 changes only through the pull request. `cardine doctor` checks that the
 branch ruleset requires the pull request's checks and reviews, and it never
 changes the ruleset.
+
+**CI before landing in `direct` mode.** Local validation can pass where the
+project's CI fails, for example in a shallow checkout, on another operating
+system, or in a clean environment. Meridian task 004 landed that way and left
+`main` red. A project can therefore require, as an option with a project
+default that one task can override, that `cardine run` lands a task only after
+the project's CI is green on the exact task commit. `cardine run` pushes the
+task branch once, reads the checks through `gh`, and reports what is missing
+until they pass. Without the option, `direct` mode keeps no forge dependency.
+This option is part of 1.0.
 
 **Scope.** Cardine 1.0 builds the landing mode into the design and ships only
 `direct`. These parts are in 1.0:

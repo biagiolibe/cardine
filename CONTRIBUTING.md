@@ -148,13 +148,14 @@ A plain repository check never rewrites digests. See
 to refresh them.
 
 CI runs the same validation suite on pull requests, pushes to `main`, and
-pushes to `task-*` branches. Runs are on Linux, so macOS-only tests are skipped.
+pushes to `task-*` branches, on Linux and macOS.
 Push a task branch before expecting a CI run, then use
 `python3 scripts/ci_evidence.py --commit <sha> --task <TASK-ID> --output <path>`
 to capture a successful exact-commit run as T1 CI evidence. Add `--wait SECONDS`
-to poll for a new run. Until Task 115 records whether task-branch pushes are
-covered by standing authorization, a missing run remains `unavailable`; do not
-work around it by pushing the branch.
+to poll for a new run. `Proceed with <TASK-ID>` authorizes one plain
+`git push origin <task-branch>` for this evidence, as `AGENTS.md`, `CLAUDE.md`,
+and `PROJECT_WORKFLOW.md` state. A task contract may require this evidence
+before integration.
 
 For changes under `bin/`, `migrations/`, or `scripts/meridian.py`, also run the
 sequential suite:
