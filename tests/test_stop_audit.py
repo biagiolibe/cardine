@@ -15,6 +15,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.shared import journal as owner_shared_journal
 import stop_audit  # noqa: E402
 
 NOW = datetime(2026, 10, 5, 12, 0, 0, tzinfo=timezone.utc)
@@ -26,7 +27,7 @@ class StopAuditTest(unittest.TestCase):
         self.project = Path(self.temporary.name).resolve()
         subprocess.run(["git", "init", "-q", "-b", "main", str(self.project)], check=True)
         (self.project / "PROJECT_WORKFLOW.md").write_text("workflow\n", encoding="utf-8")
-        self.journal = self.project / ".git" / meridian.JOURNAL_NAME
+        self.journal = self.project / ".git" / owner_shared_journal.JOURNAL_NAME
 
     def tearDown(self) -> None:
         self.temporary.cleanup()

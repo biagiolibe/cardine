@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from cardine.integration import projections as owner_integration_projections
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 
@@ -51,8 +52,8 @@ class StateArchivalTest(unittest.TestCase):
 
     def archive_queue(self, contents: str, mode: str = "lean-delivery", *, with_state: bool = True):
         report: list[dict[str, object]] = []
-        resolver = meridian._queue_state_resolver(self.root, mode) if with_state else None
-        retained, archived = meridian._archive_completed_queue_sections(
+        resolver = owner_integration_projections._queue_state_resolver(self.root, mode) if with_state else None
+        retained, archived = owner_integration_projections._archive_completed_queue_sections(
             contents, self.queue, self.archive, mode, resolve_state=resolver, report=report)
         return retained, archived, {str(item["section"]): item for item in report}
 
@@ -118,7 +119,7 @@ class StateArchivalTest(unittest.TestCase):
                 retained, archived, report = self.archive_queue(contents, with_state=with_state)
                 self.assertEqual(
                     (retained, archived),
-                    meridian._archive_completed_queue_sections(contents, self.queue, self.archive))
+                    owner_integration_projections._archive_completed_queue_sections(contents, self.queue, self.archive))
                 self.assertIn("| `[x]` | B | Done |", archived or "")
                 self.assertNotIn("| `[x]` | A | Done |", archived or "")
                 self.assertTrue(report["### Level three"]["archive"])
@@ -200,9 +201,9 @@ class StateArchivalTest(unittest.TestCase):
         self.state("B", "QUEUED")
         contents = ("## Closed\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n"
                     "## Open\n\n" + LEAN_HEADER + "| `[ ]` | B | Waiting |\n")
-        resolver = meridian._queue_state_resolver(self.root, "lean-delivery")
-        self.assertEqual(meridian._queue_archival_warnings(contents, "lean-delivery", resolver), [])
-        self.assertEqual(len(meridian._queue_archival_warnings(contents, "lean-delivery")), 2)
+        resolver = owner_integration_projections._queue_state_resolver(self.root, "lean-delivery")
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents, "lean-delivery", resolver), [])
+        self.assertEqual(len(owner_integration_projections._queue_archival_warnings(contents, "lean-delivery")), 2)
 
 
 class IncludeTerminalImportTest(unittest.TestCase):

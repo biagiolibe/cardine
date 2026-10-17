@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.shared import context as owner_shared_context
 from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
@@ -139,7 +140,7 @@ def check_template_context_sizes() -> None:
         for role in meridian.CONTEXT_SIZE_ROLES[mode]:
             if role not in rows:
                 fail(f"context-size ceiling is missing for {mode}/{role}")
-            report = meridian.context_size_report(project, role)
+            report = owner_shared_context.context_size_report(project, role)
             actual = int(report["total"]["bytes"])
             if actual > rows[role]:
                 fail(f"context-size ceiling exceeded for {mode}/{role}: {actual} bytes > {rows[role]} bytes")

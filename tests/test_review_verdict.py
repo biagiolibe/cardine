@@ -11,6 +11,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from cardine.review import verdict as owner_review_verdict
 
 
 class ReviewVerdictTest(unittest.TestCase):
@@ -165,10 +166,10 @@ class ReviewVerdictTest(unittest.TestCase):
 
         with mock.patch.object(meridian.os, "replace", side_effect=OSError("write failed")):
             with self.assertRaises(OSError):
-                meridian.record_review_verdict(self.root, "001", "APPROVE")
+                owner_review_verdict.record_review_verdict(self.root, "001", "APPROVE")
         self.assertEqual(self.snapshot(), before)
         with mock.patch.object(meridian.os, "replace", side_effect=replace):
-            meridian.record_review_verdict(self.root, "001", "APPROVE")
+            owner_review_verdict.record_review_verdict(self.root, "001", "APPROVE")
         self.assertEqual(replacements, [self.path])
 
 

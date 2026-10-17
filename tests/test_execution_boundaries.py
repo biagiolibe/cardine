@@ -10,6 +10,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine.review import verdict as owner_review_verdict
 import cardine.shared.errors as shared_errors
 import project_console
 from cardine.tasks import identity as owner_tasks_identity
@@ -243,7 +244,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         original = self.state()
         self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_start(self.worker, '001'))
         self.assertEqual(self.state(), original)
-        meridian.record_review_verdict(self.worker, '001', 'CHANGES_REQUESTED', body='Fix code')
+        owner_review_verdict.record_review_verdict(self.worker, '001', 'CHANGES_REQUESTED', body='Fix code')
         self.commit('Request changes')
         self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_start(self.worker, '001'))
         meridian.transition_task_state(self.worker, '001', 'IN_PROGRESS')
@@ -251,7 +252,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         meridian.run_validation(self.worker, '001', 'check')
         self.commit('Renew evidence')
         meridian.execution_deliver(self.worker, '001')
-        meridian.record_review_verdict(self.worker, '001', 'APPROVE', body='Approved')
+        owner_review_verdict.record_review_verdict(self.worker, '001', 'APPROVE', body='Approved')
         self.commit('Approve')
         self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_start(self.worker, '001'))
 

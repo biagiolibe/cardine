@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from cardine.shared import context as owner_shared_context
 import cardine.shared.errors as shared_errors
 import cardine.tasks.state as task_state
 from cardine.shared import authority as owner_shared_authority
@@ -235,23 +236,23 @@ class MachineTaskStateTest(unittest.TestCase):
             self.assertEqual(self.read()["status"], "QUEUED")
 
     def test_context_size_and_read_guard_sets_exclude_state_files(self):
-        before = meridian.context_size_report(self.root, "implementation")
+        before = owner_shared_context.context_size_report(self.root, "implementation")
         self.write(self.state())
         self.record.write_text(self.record.read_text() + "\n## Authority\n\n- `.meridian/tasks/001.json`#State\n")
         with mock.patch.object(owner_shared_authority, "extract_spec_heading", side_effect=AssertionError("state startup read")):
-            report = meridian.context_size_report(self.root, "implementation", task_id="001")
+            report = owner_shared_context.context_size_report(self.root, "implementation", task_id="001")
         self.assertNotIn(".meridian/tasks/001.json", [item["path"] for item in report["files"]])
         for role in ("implementation", "review"):
-            after = meridian.context_size_report(self.root, role)
+            after = owner_shared_context.context_size_report(self.root, role)
             self.assertEqual(before["total"], after["total"])
             self.assertNotIn(".meridian/tasks/001.json", [item["path"] for item in after["files"]])
         # Even accidental routed Markdown citations into the state directory are excluded.
         fake = self.path.with_suffix(".md")
         fake.write_text("large state payload\n" * 1000)
         (self.root / "AGENTS.md").write_text("Read `.meridian/tasks/001.md`.\n")
-        report = meridian.context_size_report(self.root, "implementation")
+        report = owner_shared_context.context_size_report(self.root, "implementation")
         self.assertNotIn(".meridian/tasks/001.md", [item["path"] for item in report["files"]])
-        self.assertNotIn(Path(".meridian/tasks/001.md"), meridian.context_router_files(self.root))
+        self.assertNotIn(Path(".meridian/tasks/001.md"), owner_shared_context.context_router_files(self.root))
         for unsafe in ("../001", "/001", "..", "bad id"):
             with self.assertRaises(task_state.TaskStateInvalid):
                 task_state.state_path(self.root, unsafe)
