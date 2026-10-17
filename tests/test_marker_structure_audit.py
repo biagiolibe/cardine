@@ -21,6 +21,7 @@ from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.templates import markers as templates_markers
 import cardine.shared.errors as shared_errors
+from cardine.templates import marker_audit as owner_templates_marker_audit
 from cardine.templates import migrations as owner_templates_migrations
 
 CLI = ROOT / "scripts" / "meridian.py"
@@ -136,7 +137,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             copy_tree(ROOT / "templates/workflows/governed-sdd", project)
-            results = meridian.audit_capability_markers(project, ROOT, "governed-sdd")
+            results = owner_templates_marker_audit.audit_capability_markers(project, ROOT, "governed-sdd")
             self.assertFalse([item for item in results if item[0] != "PASS"], results)
             names = " ".join(detail for _status, detail in results)
             for capability in (

@@ -51,6 +51,10 @@ from cardine.hosts import codex as owner_hosts_codex
 from cardine.stops import render as owner_stops_render
 from cardine.templates import manifest as owner_templates_manifest
 from cardine.templates import marker_history as owner_templates_marker_history
+from cardine.templates import migration_audit as owner_templates_migration_audit
+from cardine.templates import marker_audit as owner_templates_marker_audit
+from cardine.worktree import paths as owner_worktree_paths
+from cardine.hosts import skills as owner_hosts_skills
 from cardine.worktree import storage as owner_worktree_storage
 
 
@@ -3841,9 +3845,9 @@ class CapabilityRetirementTest(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        for_agents = meridian.removals_for_managed_file(framework, ["001-retire"], Path("AGENTS.md"))
+        for_agents = owner_templates_migration_audit.removals_for_managed_file(framework, ["001-retire"], Path("AGENTS.md"))
         self.assertEqual(for_agents, [("old-rule", 1, "new-rule")])
-        for_unrelated = meridian.removals_for_managed_file(
+        for_unrelated = owner_templates_migration_audit.removals_for_managed_file(
             framework, ["001-retire"], Path("docs/UNRELATED.md")
         )
         self.assertEqual(for_unrelated, [])
@@ -5491,7 +5495,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
                 destination = project / path.relative_to(source)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
-        results = meridian.audit_duplicate_headings(project, ROOT, "governed-sdd")
+        results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "governed-sdd")
         self.assertEqual(results, [])
 
     def test_flags_a_capability_duplicated_under_two_headings_in_one_file(self) -> None:
@@ -5515,7 +5519,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
         original = owner_templates_files.managed_files
         owner_templates_files.managed_files = lambda framework_root, mode: [FakeManagedFile(Path("PROJECT_WORKFLOW.md"))]
         try:
-            results = meridian.audit_duplicate_headings(project, ROOT, "governed-sdd")
+            results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "governed-sdd")
         finally:
             owner_templates_files.managed_files = original
         self.assertEqual(len(results), 1)
@@ -5548,7 +5552,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
             FakeManagedFile(Path("CLAUDE.md")),
         ]
         try:
-            results = meridian.audit_duplicate_headings(project, ROOT, "governed-sdd")
+            results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "governed-sdd")
         finally:
             owner_templates_files.managed_files = original
         self.assertEqual(results, [])
@@ -5659,27 +5663,27 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         first = self.repository("first", "git@github.com:acme/one.git")
         second = self.repository("second", "https://gitlab.example/acme/two.git")
         worktrees = (self.root / "worktrees").resolve()
-        first_path = meridian.task_worktree_path(first, worktrees, "TASK-054")
-        second_path = meridian.task_worktree_path(second, worktrees, "task-054")
+        first_path = owner_worktree_paths.task_worktree_path(first, worktrees, "TASK-054")
+        second_path = owner_worktree_paths.task_worktree_path(second, worktrees, "task-054")
         self.assertEqual(first_path.relative_to(worktrees).parts, ("github.com", "acme", "one", "task-054"))
         self.assertEqual(second_path.relative_to(worktrees).parts, ("gitlab.example", "acme", "two", "task-054"))
         self.assertNotEqual(first_path, second_path)
 
     def test_local_identity_contains_name_and_common_directory_hash(self) -> None:
         project = self.repository("local-project")
-        identity = meridian.repository_identity(project)
+        identity = owner_worktree_paths.repository_identity(project)
         self.assertEqual((identity.remote_host, identity.owner), ("local", "repositories"))
         self.assertRegex(identity.repository, r"^local-project-[0-9a-f]{12}$")
-        self.assertEqual(identity, meridian.repository_identity(project))
+        self.assertEqual(identity, owner_worktree_paths.repository_identity(project))
 
     def test_unsafe_identity_task_and_root_are_rejected(self) -> None:
         project = self.repository("safe", "git@example.com:../repo.git")
         with self.assertRaises(shared_errors.MeridianError):
-            meridian.repository_identity(project)
+            owner_worktree_paths.repository_identity(project)
         with self.assertRaises(shared_errors.MeridianError):
             owner_tasks_identity.canonical_task_id("../054")
         with self.assertRaises(shared_errors.MeridianError):
-            meridian.task_worktree_path(self.repository("other"), Path.home(), "054")
+            owner_worktree_paths.task_worktree_path(self.repository("other"), Path.home(), "054")
 
     def test_existing_path_for_another_repository_is_a_collision(self) -> None:
         first = self.repository("one", "git@github.com:acme/shared.git")
@@ -5687,7 +5691,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         path = self.root / "existing"
         subprocess.run(["git", "-C", str(first), "worktree", "add", "-b", "task-054", str(path), "main"], check=True, capture_output=True)
         with self.assertRaisesRegex(shared_errors.MeridianError, "collision"):
-            meridian.validate_worktree_collision(second, path, "054")
+            owner_worktree_paths.validate_worktree_collision(second, path, "054")
 
     def test_namespaced_symlink_escape_is_rejected(self) -> None:
         project = self.repository("safe", "git@github.com:acme/repo.git")
@@ -5697,7 +5701,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         outside.mkdir()
         (worktrees / "github.com").symlink_to(outside, target_is_directory=True)
         with self.assertRaisesRegex(shared_errors.MeridianError, "symlink"):
-            meridian.task_worktree_path(project, worktrees, "054")
+            owner_worktree_paths.task_worktree_path(project, worktrees, "054")
 
     def test_config_apply_preserves_text_backs_up_and_is_idempotent(self) -> None:
         config = self.root / "config.toml"
@@ -5993,7 +5997,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.codex_config.write_text(owner_hosts_codex._codex_managed_block(other) + "\n", encoding="utf-8")
         different = meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
         self.assertEqual(different.codex_state, "different-root")
-        self.assertIn("profile=", meridian.codex_profile_root_mismatch(self.codex_config, root) or "")
+        self.assertIn("profile=", owner_hosts_skills.codex_profile_root_mismatch(self.codex_config, root) or "")
 
         damaged = self.codex_config.read_text(encoding="utf-8").replace(meridian.CODEX_MANAGED_END + "\n", "")
         self.codex_config.write_text(damaged, encoding="utf-8")
@@ -6017,7 +6021,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(plan.meridian_root_state, "ready")
         self.assertFalse((self.home / ".agents").exists())
         self.assertTrue(meridian.apply_setup(plan))
-        for name in meridian.CODEX_SKILL_NAMES:
+        for name in owner_hosts_skills.CODEX_SKILL_NAMES:
             link = self.home / ".agents/skills" / name
             self.assertTrue(link.is_symlink())
             self.assertEqual(link.resolve(), (ROOT / "skills" / name).resolve())
@@ -6044,7 +6048,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_setup_skips_skill_links_outside_a_git_checkout_and_warns_about_stale_copy(self) -> None:
         framework = self.home / "plugin-cache"
-        for name in meridian.CODEX_SKILL_NAMES:
+        for name in owner_hosts_skills.CODEX_SKILL_NAMES:
             (framework / "skills" / name).mkdir(parents=True)
             (framework / "skills" / name / "SKILL.md").write_text("skill\n", encoding="utf-8")
         stale = self.home / ".codex/skills/meridian-lean-delivery"
@@ -6200,7 +6204,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         unrelated_home = self.home / "unrelated-home"
         skills = unrelated_home / ".agents/skills"
         skills.mkdir(parents=True)
-        for name in meridian.CODEX_SKILL_NAMES:
+        for name in owner_hosts_skills.CODEX_SKILL_NAMES:
             (skills / name).symlink_to(unrelated_home / "elsewhere")
 
         checked = subprocess.run(
