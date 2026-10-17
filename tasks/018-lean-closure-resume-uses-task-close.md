@@ -26,36 +26,36 @@ unchanged and lead to the next step.
 
 ## Acceptance Criteria
 
-- [ ] For a Lean task whose record is not archived and whose state file is
+- [x] For a Lean task whose record is not archived and whose state file is
   missing at the task commit, `advance` stops at C6 with
   `TASK_STATE_MISSING`. Its `commands` and `resume` name, in order:
   `meridian task close <TASK-ID>` run in the registered task worktree, a
   commit of the staged closure records, and the same `advance` command again.
   Each command runs unchanged from the location it names.
-- [ ] Following those commands in a test fixture brings the task to the
+- [x] Following those commands in a test fixture brings the task to the
   next closure step (stage), with the record archived under `tasks/done/` and
   the DONE state tracked at the task commit.
-- [ ] When the record is already archived but the state file is missing, the
+- [x] When the record is already archived but the state file is missing, the
   stop names that state and a resume that does not call `task close`, which
   refuses archived records. The handoff states the chosen recovery.
-- [ ] Governed SDD keeps its current resume for this stop.
-- [ ] The registry entry for `TASK_STATE_MISSING` in
+- [x] Governed SDD keeps its current resume for this stop.
+- [x] The registry entry for `TASK_STATE_MISSING` in
   `capabilities/stop-codes-v1.json` and its summary describe the Lean
   closure resume. The stop-code checks in `scripts/check_repository.py` pass.
-- [ ] `tests/test_task_integration_state.py`
+- [x] `tests/test_task_integration_state.py`
   (`test_advance_state_gate_runs_before_stage`) asserts the new Lean resume
   instead of `meridian task transition 056 DONE`. Its other assertions stay:
   no stage call, no tree change in either checkout, no merge head.
-- [ ] The fix stays inside existing function bodies, so the module inventory
+- [x] The fix stays inside existing function bodies, so the module inventory
   tests stay green.
-- [ ] **CI before integration.** Push the task branch once (`git push origin
+- [x] **CI before integration.** Push the task branch once (`git push origin
   task-018`, authorized by `Proceed with`) as soon as the implementation
   commit passes `python3 scripts/run_tests.py --parallel`, and write the
   handoff while CI runs. Then record `T1_CI` evidence for that exact commit
   with `python3 scripts/ci_evidence.py --commit <sha> --task 018 --output
   <path> --wait 900`. Integrate only when that evidence reports a successful
   run on both operating systems.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -102,3 +102,9 @@ Moving `advance_task_closure` to `cardine.lifecycle.closure` (split row E12).
 - `python3 scripts/run_tests.py --parallel`
 - `git diff --check`
 - `python3 scripts/ci_evidence.py --commit <task commit> --task 018 --output <path> --wait 900`
+
+## Completion
+
+Implemented and validated at `18d18818189520734907c25d3ec1f364ebed1760`.
+See `tasks/handoffs/018.md` for local validation, successful CI on both operating
+systems, and the archived-record recovery choice.
