@@ -22,17 +22,17 @@ remains in this repository.
 
 ## Acceptance Criteria
 
-- [ ] No Meridian task record remains under `tasks/`: both files above are
+- [x] No Meridian task record remains under `tasks/`: both files above are
   deleted, and `tasks/done/` holds no file.
-- [ ] `tests/test_validation_evidence.py` and `tests/test_ci_evidence.py` pass.
+- [x] `tests/test_validation_evidence.py` and `tests/test_ci_evidence.py` pass.
   They no longer depend on task records, `HEAD`, or the tree of this
   repository: each test creates a temporary Git project that holds its own task
   record and commit.
-- [ ] The tests still prove what they proved before: a passing record bound to
+- [x] The tests still prove what they proved before: a passing record bound to
   the commit and tree is accepted, each invalid field is named, and
   `scripts/ci_evidence.py` writes a record that the verifier accepts.
-- [ ] No change under `scripts/`.
-- [ ] `python3 scripts/check_repository.py`, `python3 scripts/run_tests.py
+- [x] No change under `scripts/`.
+- [x] `python3 scripts/check_repository.py`, `python3 scripts/run_tests.py
   --parallel`, and `git diff --check` pass.
 
 ## Relevant Files
@@ -65,3 +65,14 @@ Any change to evidence semantics or to `scripts/`.
 - `python3 scripts/check_repository.py`
 - `python3 scripts/run_tests.py --parallel`
 - `git diff --check`
+
+## Completion Evidence
+
+- Implemented in `aa0a62d11ba3a50d0b6ede654c1e85360e6d8825` against base
+  `c0abcbea22a1f00b5e3d4b5487b982e8865cd9bb`.
+- Each test creates its own temporary Git repository, task record, commit, and
+  tree. Existing evidence assertions are preserved; no script changed.
+- Both imported Meridian records were deleted. `tasks/done/` was absent before
+  lifecycle closure; archiving this native Cardine task will populate it again.
+- Required repository, parallel-suite, and whitespace checks passed. See
+  `tasks/handoffs/001.md` for commands, results, and the environment skip.
