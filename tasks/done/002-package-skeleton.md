@@ -17,29 +17,29 @@ Meridian 1.4.0; this task only adds the packaging around it.
 
 ## Acceptance Criteria
 
-- [ ] `pyproject.toml` declares the package `cardine`, `requires-python =
+- [x] `pyproject.toml` declares the package `cardine`, `requires-python =
   ">=3.12"`, the MIT license, and one console script, `cardine`. No console
   script is named `meridian`: in agent sessions `meridian` on `PATH` is the
   released Meridian CLI, and a second one would shadow it.
-- [ ] The package version is read from `VERSION` at build time; `VERSION`
+- [x] The package version is read from `VERSION` at build time; `VERSION`
   stays the only source of truth. `VERSION` remains `1.4.0`: its reset to a
   `0.x` version waits for work item 4, because `check_repository.py` ties it
   to the plugin version, the release ledger, and the migration targets.
-- [ ] `src/cardine/__init__.py` and `src/cardine/cli.py` exist. `cardine`
+- [x] `src/cardine/__init__.py` and `src/cardine/cli.py` exist. `cardine`
   runs the existing CLI of `scripts/meridian.py` with this checkout as the
   framework root. `bin/meridian` and `scripts/meridian.py` keep working
   unchanged.
-- [ ] After an editable install, `cardine --version` prints this checkout's
+- [x] After an editable install, `cardine --version` prints this checkout's
   `VERSION`, also when `MERIDIAN_ROOT` points at another Meridian checkout. A
   test covers that case. Agents validate in a temporary virtual environment,
   never with a user-level `pipx` install: the task worktree is removed after
   integration and would leave a broken command.
-- [ ] `.github/workflows/validate.yml` adds, on both operating systems, an
+- [x] `.github/workflows/validate.yml` adds, on both operating systems, an
   editable install followed by `cardine --version`.
-- [ ] `README.md` or `CONTRIBUTING.md` states that the package must not be
+- [x] `README.md` or `CONTRIBUTING.md` states that the package must not be
   published from this state, and documents the editable install for
   development.
-- [ ] `python3 scripts/check_repository.py`, `python3 scripts/run_tests.py
+- [x] `python3 scripts/check_repository.py`, `python3 scripts/run_tests.py
   --parallel`, and `git diff --check` pass.
 
 ## Relevant Files

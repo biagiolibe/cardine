@@ -27,6 +27,9 @@ MARKER_BASELINE_PATH = ROOT / "migrations" / "marker-baselines" / "CAPABILITY_MA
 REQUIRED_FILES = (
     "README.md",
     "VERSION",
+    "pyproject.toml",
+    "src/cardine/__init__.py",
+    "src/cardine/cli.py",
     "LICENSE",
     "CONTRIBUTING.md",
     ".claude-plugin/plugin.json",

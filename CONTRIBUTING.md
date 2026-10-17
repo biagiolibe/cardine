@@ -5,6 +5,26 @@ Thanks for helping improve Meridian.
 Participation follows the [code of conduct](CODE_OF_CONDUCT.md). Report suspected
 vulnerabilities privately using the [security policy](SECURITY.md).
 
+## Cardine development package
+
+This package skeleton is for editable development only. Do not publish this
+state to PyPI: framework assets and non-editable installation are not yet
+supported. `VERSION` remains the build-time version source at `1.4.0` until
+the later compatibility-removal work item.
+
+Use a temporary virtual environment (Python 3.12 or later):
+
+```bash
+python3 -m venv /tmp/cardine-dev-venv
+/tmp/cardine-dev-venv/bin/python -m pip install --editable .
+/tmp/cardine-dev-venv/bin/cardine --version
+```
+
+The `cardine` command runs this checkout's existing CLI, even if
+`MERIDIAN_ROOT` names another checkout. The existing `bin/meridian` and
+`scripts/meridian.py` entry points remain available. Do not install a task
+worktree with user-level `pipx`: removing the worktree would break the command.
+
 ## Repository layout
 
 ```text

@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - run: python3 -m pip install --editable .
+      - run: cardine --version
       - run: python3 scripts/check_repository.py
       - run: python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .
       - run: python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
