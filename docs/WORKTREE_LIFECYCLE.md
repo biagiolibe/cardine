@@ -155,6 +155,18 @@ commands, but host policy never changes their repository, identity, path, or
 state checks. Every command exits `0` on success, `2` for a blocked lifecycle
 transition, and `64` for command-line usage errors.
 
+Cleanup writes to the primary checkout's `.git` directory to remove the
+worktree registration, delete the merged branch, and remove lifecycle state.
+Sandboxed hosts may deny these writes even after Git has removed the worktree
+directory. Grant access to that `.git` directory and rerun the exact cleanup
+resume command. Cleanup recovers a missing, prunable registration with a
+non-force `git worktree remove <path>` for that task alone; it never prunes
+other worktrees. It also recovers a removed registration or deleted branch,
+retaining the integration, pushed-main, clean-primary, and inactive-integration
+gates. When the branch is already gone, tracked terminal task state on `main`
+is required. Successful recovery reports `recovered_from` and keeps an empty,
+unregistered directory for host Stop hooks.
+
 ## Commands
 
 Routine closure uses `advance`, which the managed workflow text names. The

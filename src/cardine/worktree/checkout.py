@@ -267,10 +267,14 @@ def inspect_task_worktree(
         branch = registered.get("branch", "").removeprefix("refs/heads/")
         if branch != identity.branch_name:
             errors.append("branch-mismatch")
-        status = _run_git(expected, "status", "--porcelain")
-        clean = status.returncode == 0 and not status.stdout
-        if not clean:
-            errors.append("dirty-worktree")
+        if not expected.exists():
+            clean = False
+            errors.append("missing-worktree")
+        else:
+            status = _run_git(expected, "status", "--porcelain")
+            clean = status.returncode == 0 and not status.stdout
+            if not clean:
+                errors.append("dirty-worktree")
     if state:
         if state.get("task_id") != identity.canonical_id:
             errors.append("state-task-mismatch")
