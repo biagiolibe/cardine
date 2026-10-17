@@ -1,6 +1,9 @@
 """Task-state and commit-bound review gates run before integration mutations."""
 
 import json
+import os
+import subprocess
+import sys
 import unittest
 from unittest import mock
 import shlex
@@ -277,8 +280,12 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING" if missing else "TASK_STATE_INVALID")
                 if missing:
                     command = shlex.split(result["commands"][0])
-                    self.assertEqual(command[:5], ["meridian", "task", "transition", "056", "DONE"])
+                    self.assertEqual(command[:3], ["cd", str(self.worker), "&&"])
+                    self.assertEqual(command[command.index("meridian"):command.index("meridian") + 4],
+                                     ["meridian", "task", "close", "056"])
                     self.assertEqual(command[command.index("--project") + 1], str(self.worker))
+                    self.assertEqual(len(result["commands"]), 3)
+                    self.assertEqual(result["resume"], " && ".join(result["commands"]))
                 for path, tree in before.items():
                     self.assertEqual(self.git("write-tree", cwd=path).stdout, tree)
                 self.assertFalse(owner_worktree_storage._merge_head_path(self.primary).exists())
@@ -292,6 +299,57 @@ class TaskIntegrationStateTest(unittest.TestCase):
         stage.assert_not_called()
         self.assertTrue(blocked)
         self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
+
+    def test_advance_missing_state_recovery_commands_run_unchanged(self):
+        for archived in (False, True):
+            with self.subTest(archived=archived):
+                if archived:
+                    # The first recovery was aborted after proving the next step.
+                    (self.worker / ".meridian/tasks/056.json").unlink()
+                    self.commit()
+                else:
+                    self.start(workflow="lean-delivery")
+                    handoff = self.worker / "tasks/handoffs/056.md"
+                    handoff.parent.mkdir(exist_ok=True)
+                    handoff.write_text("Validated task completion.\n")
+                    self.commit()
+                result, blocked = meridian.advance_task_closure(
+                    "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+                self.assertTrue(blocked)
+                self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
+                self.assertIn("task transition 056 DONE" if archived else "task close 056", result["resume"])
+                if archived:
+                    self.assertNotIn("task close", result["resume"])
+                # Supply the CLI from this source tree through PATH, then execute
+                # exactly the emitted shell commands, including their locations.
+                bin_dir = self.root / "bin"
+                bin_dir.mkdir(exist_ok=True)
+                cli = bin_dir / "meridian"
+                cli.write_text("#!/bin/sh\nexec " + shlex.join([
+                    sys.executable, str(fixtures.ROOT / "scripts/meridian.py")]) + ' "$@"\n')
+                cli.chmod(0o755)
+                env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"])
+                for command in result["commands"]:
+                    completed = subprocess.run(command, shell=True, cwd=self.root, env=env,
+                                               text=True, capture_output=True)
+                    self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                advanced = json.loads(completed.stdout)
+                self.assertIn("C6", advanced["performed"])
+                self.assertEqual(advanced["step"], "C7")
+                self.assertFalse((self.worker / "tasks/056-lifecycle.md").exists())
+                self.git("cat-file", "-e", "HEAD:tasks/done/056-lifecycle.md", cwd=self.worker)
+                state = json.loads(self.git("show", "HEAD:.meridian/tasks/056.json", cwd=self.worker).stdout)
+                self.assertEqual(state["status"], "DONE")
+                owner_integration_merge.abort_task_integration("056", self.primary)
+
+    def test_advance_governed_missing_state_keeps_import_resume(self):
+        self.start()
+        result, blocked = meridian.advance_task_closure(
+            "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+        self.assertTrue(blocked)
+        expected = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
+        self.assertEqual(result["resume"], expected)
+        self.assertEqual(result["commands"], [expected])
 
     def test_advance_terminal_state_reaches_stage(self):
         self.start(workflow="lean-delivery")
