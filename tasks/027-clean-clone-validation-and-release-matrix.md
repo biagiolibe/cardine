@@ -30,36 +30,36 @@ stays in Cardine's 1.0 scope.
 
 ## Acceptance Criteria
 
-- [ ] `python3 scripts/run_tests.py --parallel --clean-clone` clones the
+- [x] `python3 scripts/run_tests.py --parallel --clean-clone` clones the
   current `HEAD` with `git clone --depth 1 --no-local` into a new temporary
   directory. It runs `python3 scripts/check_repository.py` and the parallel
   suite there, with the same environment isolation the runner already
   applies, and removes the clone afterwards.
-- [ ] The clean-clone run refuses to start when the working tree has
+- [x] The clean-clone run refuses to start when the working tree has
   uncommitted changes, so it always tests a commit. Its result line names the
   commit, the coverage `total` and `digest`, and the outcome.
-- [ ] A test proves that the clean-clone run sees only committed files: an
+- [x] A test proves that the clean-clone run sees only committed files: an
   untracked file in the source checkout is absent from the clone. A test also
   reproduces the task 004 class: a check that needs history beyond the
   shallow commit fails in the clean clone and passes in the full checkout.
-- [ ] `.github/workflows/release.yml` runs the repository check and the
+- [x] `.github/workflows/release.yml` runs the repository check and the
   sequential suite on `ubuntu-latest` and `macos-latest` in a matrix job. The
   job that publishes the release depends on both and runs only when both pass.
-- [ ] `.github/workflows/validate.yml` runs on `ubuntu-latest` only, as a
+- [x] `.github/workflows/validate.yml` runs on `ubuntu-latest` only, as a
   non-blocking signal on pushes to `main` and on pull requests.
-- [ ] `CONTRIBUTING.md` states the new rules:
+- [x] `CONTRIBUTING.md` states the new rules:
   - a task validates locally and in a clean clone;
   - no task waits for CI;
   - the release gate runs on both platforms.
 
   It drops the step that pushes a task branch for `T1_CI` evidence, and the
   rule that a task contract may require that evidence.
-- [ ] `docs/PLATFORM_SUPPORT.md` says that macOS and Linux are validated by
+- [x] `docs/PLATFORM_SUPPORT.md` says that macOS and Linux are validated by
   the release gate, and that each push to `main` runs CI on Linux.
-- [ ] `.meridian/candidate-validation.json` is unchanged.
+- [x] `.meridian/candidate-validation.json` is unchanged.
   `scripts/ci_evidence.py` and its tests stay, for projects that require CI
   before landing.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
