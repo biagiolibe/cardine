@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
 from cardine.shared import journal as owner_shared_journal
 import stop_audit  # noqa: E402
+from cardine.shared import flow as owner_shared_flow
 
 NOW = datetime(2026, 10, 5, 12, 0, 0, tzinfo=timezone.utc)
 
@@ -104,7 +105,7 @@ class StopAuditTest(unittest.TestCase):
     def test_flow_report_counts_unbacked_without_inventing_a_task(self) -> None:
         self.seed(self.blocked("PRIMARY_DIRTY"))
         self.run_audit("BLOCKED WRONG_WORKTREE")
-        report = meridian.flow_report(self.project, None, NOW)
+        report = owner_shared_flow.flow_report(self.project, None, NOW)
         self.assertEqual(report["unbacked_blocks"], 1)
         self.assertEqual(report["totals"]["stops"], 1)
         self.assertEqual(report["totals"]["tasks"], 0)
@@ -168,10 +169,10 @@ class StopAuditTest(unittest.TestCase):
         self.seed(self.blocked("PRIMARY_DIRTY"), old)
         self.run_audit("BLOCKED WRONG_WORKTREE\nBLOCKED ACCEPTANCE_UNMET")
         stop_audit.audit(self.codex_input("BLOCKED WRONG_WORKTREE"), NOW, host="codex")
-        report = meridian.flow_report(self.project, None, NOW)
+        report = owner_shared_flow.flow_report(self.project, None, NOW)
         self.assertEqual(report["unbacked_blocks"], 3)
         self.assertEqual(report["blocks_by_host"], {"claude": {"unbacked": 2, "declared": 1}, "codex": {"unbacked": 1, "declared": 0}})
-        text = meridian.format_flow_report(report)
+        text = owner_shared_flow.format_flow_report(report)
         self.assertIn("Unbacked stop reports: claude=2, codex=1", text)
         self.assertIn("Declared stop reports: claude=1, codex=0", text)
 
