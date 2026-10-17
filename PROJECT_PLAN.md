@@ -30,4 +30,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 003 — Plan the split of `meridian.py` into the Cardine modules.
 - `[x]` 004 — Extract the leaf modules (split plan E01).
 - `[x]` 005 — Make the module inventory test pass in a shallow clone.
-- `[ ]` 006 — Extract text, version, Git, JSON, and model modules (split plan E02).
+- `[x]` 006 — Extract text, version, Git, JSON, and model modules (split plan E02).

@@ -29,3 +29,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 005 | Make the module inventory test pass in a shallow clone | 🔴 P1 | 004 | [005](done/005-shallow-clone-inventory-baseline.md) |
+
+### Phase 4 — Module split, provider extractions
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.md`.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 006 | Extract text, version, Git, JSON, and model modules (split plan E02) | 🔴 P1 | 005 | [006](done/006-extract-shared-git-and-models.md) |

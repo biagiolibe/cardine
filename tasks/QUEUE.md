@@ -32,11 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 4 — Module split, provider extractions
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.md`.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 006 | Extract text, version, Git, JSON, and model modules (split plan E02) | 🔴 P1 | 005 | [006](006-extract-shared-git-and-models.md) |

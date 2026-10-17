@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.shared import git as shared_git  # noqa: E402
 
 
 class TaskStateLookupTest(unittest.TestCase):
@@ -56,7 +57,8 @@ class TaskStateLookupTest(unittest.TestCase):
             calls += 1
             return original(*args, **kwargs)
 
-        with mock.patch.object(meridian, "_git_worktrees", return_value=self.records), \
+        with mock.patch.object(shared_git, "_git_worktrees", return_value=self.records), \
+             mock.patch.object(meridian, "_git_worktrees", return_value=self.records), \
              mock.patch.object(meridian, "canonical_project_root", return_value=self.root), \
              mock.patch.object(meridian, "_task_authorities", side_effect=counted):
             states = meridian.registered_worktree_task_states(self.root)

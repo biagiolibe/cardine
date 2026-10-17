@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import argparse
 import ast
-import contextlib
-import contextvars
 import copy
 import difflib
 import hashlib
@@ -22,7 +20,7 @@ import sys
 import tempfile
 import tomllib
 import unicodedata
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from http.client import HTTPException
@@ -102,6 +100,78 @@ from cardine.shared.errors import (  # noqa: E402
 )
 from cardine.shared.hashing import (  # noqa: E402
     sha256,
+)
+from cardine.shared.text import (  # noqa: E402
+    read_task_field,
+    HEADING_LINE,
+    extract_heading_block,
+)
+from cardine.release.version import (  # noqa: E402
+    SemVer,
+    _SEMVER_IDENTIFIER,
+    _SEMVER_PATTERN,
+    parse_semver,
+    read_raw_version,
+    require_release_version,
+    read_version,
+    version_key,
+    semver_precedence_key,
+    release_kind_from_body,
+)
+from cardine.shared.git import (  # noqa: E402
+    git_output,
+    canonical_git_common_dir,
+    _run_git,
+    _SHARED_WORKTREES,
+    parse_worktree_records,
+    shared_worktree_records,
+    _git_worktrees,
+    canonical_project_root,
+    primary_project_root,
+    TASK_BRANCH_OPEN_STATUSES,
+    current_branch,
+)
+from cardine.shared.jsonio import (  # noqa: E402
+    _write_json_atomic,
+    _read_json_object,
+)
+from cardine.shared.models import (  # noqa: E402
+    CODEX_PERMISSION_PROFILE,
+    CODEX_MANAGED_BEGIN,
+    CODEX_MANAGED_END,
+    SAFE_PATH_COMPONENT,
+    CANDIDATE_VALIDATION_PATH,
+    WORKTREE_STATE_DIRECTORY,
+    INTEGRATION_LEASE_NAME,
+    INTEGRATION_STATE_NAME,
+    STRUCTURED_TASK_ID,
+    NUMERIC_TASK_ALIAS,
+    CANDIDATE_VALIDATION_OUTCOMES,
+    RepositoryIdentity,
+    TaskIdentityPolicy,
+    TaskIdentityContext,
+    ResolvedTaskIdentity,
+    ResolvedWorktreeRoot,
+    CodexConfigurationPlan,
+    ClaudeConfigurationPlan,
+    CodexUserRulesPlan,
+    SetupPlan,
+    CatalogSurface,
+    CatalogCapability,
+    CatalogProfile,
+    CapabilityCatalog,
+    EvidenceSnapshot,
+    DeclaredSurface,
+    CapabilityDeclaration,
+    CapabilityProfileDeclaration,
+    AuditResult,
+    ManagedFile,
+    PlanItem,
+    Capability,
+    CapabilityMove,
+    ReviewRecord,
+    AdoptionState,
+    ProjectLocations,
 )
 
 
@@ -284,122 +354,7 @@ def append_journal_line(project_root: Path, line: Mapping[str, object]) -> None:
         os.close(descriptor)
 
 
-CODEX_PERMISSION_PROFILE = "meridian-worktrees"
-CODEX_MANAGED_BEGIN = "# MERIDIAN:BEGIN worktree-permissions v1"
-CODEX_MANAGED_END = "# MERIDIAN:END worktree-permissions"
-SAFE_PATH_COMPONENT = re.compile(r"[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?")
-CANDIDATE_VALIDATION_PATH = Path(".meridian/candidate-validation.json")
 _LEGACY_LOCATION_WARNING_PROJECTS: set[Path] = set()
-WORKTREE_STATE_DIRECTORY = "meridian-worktrees"
-INTEGRATION_LEASE_NAME = "meridian-integration.lock"
-INTEGRATION_STATE_NAME = "meridian-integration.json"
-STRUCTURED_TASK_ID = re.compile(
-    r"M(?P<milestone>[1-9][0-9]*)-(?P<workstream>[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)-"
-    r"(?P<ordinal>00[1-9]|0[1-9][0-9]|[1-9][0-9]{2})"
-)
-NUMERIC_TASK_ALIAS = re.compile(r"(?:task-)?([0-9]+)", re.IGNORECASE)
-CANDIDATE_VALIDATION_OUTCOMES = ("REUSE", "BOUNDED", "FULL")
-
-
-@dataclass(frozen=True)
-class RepositoryIdentity:
-    remote_host: str
-    owner: str
-    repository: str
-
-
-@dataclass(frozen=True)
-class TaskIdentityPolicy:
-    version: int
-    mode: str
-
-
-@dataclass(frozen=True)
-class TaskIdentityContext:
-    """Inputs shared by multiple identity resolutions in one command."""
-    policy: TaskIdentityPolicy
-    locations: "ProjectLocations"
-    authorities: dict[str, "_TaskAuthority"]
-
-
-@dataclass(frozen=True)
-class ResolvedTaskIdentity:
-    policy_version: int
-    mode: str
-    kind: str
-    canonical_id: str
-    branch_name: str
-    artifact_stem: str
-    semantic_tuple: dict[str, object] | None
-    task_path: Path
-    queue_path: Path
-    handoff_path: Path
-    review_path: Path
-
-    def budget_key(self, attempt: int) -> str:
-        if attempt < 1:
-            raise MeridianError("budget attempt must be positive")
-        return f"{self.canonical_id}:{attempt}"
-
-    def as_json(self, project_root: Path, attempt: int = 1) -> dict[str, object]:
-        project_root = project_root.resolve()
-
-        def display(path: Path) -> str:
-            try:
-                return str(path.relative_to(project_root))
-            except ValueError:
-                return str(path)
-
-        return {
-            "policy_version": self.policy_version,
-            "mode": self.mode,
-            "kind": self.kind,
-            "canonical_id": self.canonical_id,
-            "branch_name": self.branch_name,
-            "artifact_stem": self.artifact_stem,
-            "semantic_tuple": self.semantic_tuple,
-            "task_path": display(self.task_path),
-            "queue_path": display(self.queue_path),
-            "handoff_path": display(self.handoff_path),
-            "review_path": display(self.review_path),
-            "budget_key": self.budget_key(attempt),
-        }
-
-
-@dataclass(frozen=True)
-class ResolvedWorktreeRoot:
-    path: Path
-    source: str
-    config_path: Path
-
-
-@dataclass(frozen=True)
-class CodexConfigurationPlan:
-    status: str
-    config_path: Path
-    worktree_root: Path
-    current_model: str
-    proposed_text: str | None
-    detail: str
-    current_text: str | None = None
-
-
-@dataclass(frozen=True)
-class ClaudeConfigurationPlan:
-    status: str
-    settings_path: Path
-    proposed_settings: dict[str, object] | None
-    detail: str
-    current_text: str | None = None
-
-
-@dataclass(frozen=True)
-class CodexUserRulesPlan:
-    path: Path
-    status: str
-    current_text: str
-    proposed_text: str | None
-    warnings: tuple[str, ...]
 
 
 CODEX_USER_RULES = '''# MERIDIAN:BEGIN codex-user-rules v1
@@ -502,123 +457,6 @@ def apply_codex_user_rules(plan: CodexUserRulesPlan) -> bool:
     return True
 
 
-@dataclass(frozen=True)
-class SetupPlan:
-    user_rules: CodexUserRulesPlan
-    resolution: ResolvedWorktreeRoot
-    codex_config: Path
-    directory_state: str
-    codex_state: str
-    codex_plan: CodexConfigurationPlan | None
-    codex_detail: str
-    claude_state: str
-    claude_plan: ClaudeConfigurationPlan | None
-    claude_detail: str
-    claude_hook_duplicates: tuple[str, ...]
-    candidate_validation_state: str
-    candidate_validation_path: Path
-    candidate_validation_proposal: dict[str, object] | None
-    project_declaration_state: str
-    project_declaration_path: Path
-    project_declaration_proposal: dict[str, object] | None
-    task_identity_mode: str | None
-    task_identity_state: str
-    task_identity_path: Path
-    task_identity_proposal: dict[str, object] | None
-    task_identity_detail: str
-    config_action: str
-    framework_root: Path
-    skill_links: tuple[tuple[str, Path, str, str], ...]
-    skill_links_state: str
-    meridian_root_state: str
-    changes: tuple[str, ...]
-    warnings: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class CatalogSurface:
-    path: str
-    forms: tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class CatalogCapability:
-    capability_id: str
-    version: int
-    workflow_modes: tuple[str, ...]
-    self_hosting_eligible: bool
-    host_profiles: tuple[tuple[str, str], ...]
-    installation_forms: tuple[str, ...]
-    managed_surfaces: tuple[CatalogSurface, ...]
-    evidence_requirements: tuple[tuple[str, tuple[str, ...]], ...]
-    dependencies: tuple[tuple[str, int], ...]
-
-
-@dataclass(frozen=True)
-class CatalogProfile:
-    profile_id: str
-    version: int
-    capabilities: tuple[tuple[str, int], ...]
-    verification_probe: str
-    host_probes: tuple[tuple[str, str], ...]
-    workflow_modes: tuple[str, ...] = ()
-
-
-@dataclass(frozen=True)
-class CapabilityCatalog:
-    catalog_version: int
-    capabilities: tuple[CatalogCapability, ...]
-    profiles: tuple[CatalogProfile, ...]
-
-    def capability(self, capability_id: str) -> CatalogCapability | None:
-        return next(
-            (item for item in self.capabilities if item.capability_id == capability_id),
-            None,
-        )
-
-    def profile(self, profile_id: str) -> CatalogProfile | None:
-        return next((item for item in self.profiles if item.profile_id == profile_id), None)
-
-
-@dataclass(frozen=True)
-class EvidenceSnapshot:
-    state: str
-    evidence: tuple[str, ...]
-    not_applicable_rationale: str | None
-    verified_at: str | None = None
-    verifier_version: str | None = None
-
-
-@dataclass(frozen=True)
-class DeclaredSurface:
-    path: str
-    form: str
-
-
-@dataclass(frozen=True)
-class CapabilityDeclaration:
-    capability_id: str
-    required_version: int
-    managed_surface: tuple[DeclaredSurface, ...]
-    installation: EvidenceSnapshot
-    host_activation: tuple[tuple[str, EvidenceSnapshot], ...]
-    verification: EvidenceSnapshot
-
-
-@dataclass(frozen=True)
-class CapabilityProfileDeclaration:
-    profile_id: str
-    profile_version: int
-    capabilities: tuple[CapabilityDeclaration, ...]
-
-
-@dataclass(frozen=True)
-class AuditResult:
-    status: str
-    identity: str
-    detail: str
-
-
 def _safe_component(value: str, label: str) -> str:
     """Return one unambiguous, portable path component."""
     normalized = unicodedata.normalize("NFKC", value).strip().lower()
@@ -646,25 +484,6 @@ def canonical_task_id(value: str) -> str:
     if int(number) <= 0 or number != str(int(number)).zfill(len(number)):
         raise MeridianError(f"ambiguous task ID: {value!r}")
     return f"task-{number}"
-
-
-def git_output(project_root: Path, *arguments: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(project_root), *arguments],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if completed.returncode != 0:
-        raise MeridianError(completed.stderr.strip() or f"git {' '.join(arguments)} failed")
-    return completed.stdout.strip()
-
-
-def canonical_git_common_dir(project_root: Path) -> Path:
-    common = Path(git_output(project_root, "rev-parse", "--git-common-dir"))
-    if not common.is_absolute():
-        common = project_root / common
-    return common.resolve()
 
 
 def repository_identity(project_root: Path, remote_url: str | None = None) -> RepositoryIdentity:
@@ -766,15 +585,6 @@ def validate_worktree_collision(project_root: Path, path: Path, task_id: str) ->
             f"worktree path collision at {path}: expected {expected_common} on {expected_branch}, "
             f"found {actual_common} on {branch or 'detached HEAD'}"
         )
-
-
-def _run_git(project_root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", "-C", str(project_root), *arguments],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
 
 
 def _validation_reason(reasons: list[str], condition: bool, reason: str) -> None:
@@ -884,59 +694,6 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
 
 # `git worktree list` reads identically from any registered worktree, so a
 # read-only scope may share one parse between every lifecycle reader it calls.
-_SHARED_WORKTREES: contextvars.ContextVar[dict[Path, list[dict[str, str]]] | None] = (
-    contextvars.ContextVar("meridian_shared_worktrees", default=None))
-
-
-def parse_worktree_records(output: str) -> list[dict[str, str]]:
-    """Parse `git worktree list --porcelain` output into one mapping per worktree."""
-    records: list[dict[str, str]] = []
-    current: dict[str, str] = {}
-    for line in output.splitlines() + [""]:
-        if not line:
-            if current:
-                records.append(current)
-                current = {}
-            continue
-        key, _, value = line.partition(" ")
-        current[key] = value
-    return records
-
-
-@contextlib.contextmanager
-def shared_worktree_records(records: list[dict[str, str]]) -> Iterator[None]:
-    """Answer worktree-list reads from `records` for a read-only scope.
-
-    Any registered worktree path is answered without running Git; other paths
-    (for example a subdirectory) still run Git once and are remembered. Use
-    only for scopes that change no worktree registration.
-    """
-    known = {Path(item["worktree"]).resolve(): records for item in records if "worktree" in item}
-    token = _SHARED_WORKTREES.set(known)
-    try:
-        yield
-    finally:
-        _SHARED_WORKTREES.reset(token)
-
-
-def _git_worktrees(project_root: Path) -> list[dict[str, str]]:
-    shared = _SHARED_WORKTREES.get()
-    if shared is None:
-        return parse_worktree_records(git_output(project_root, "worktree", "list", "--porcelain"))
-    key = project_root.resolve()
-    if key not in shared:
-        shared[key] = parse_worktree_records(
-            git_output(project_root, "worktree", "list", "--porcelain"))
-    return shared[key]
-
-
-def canonical_project_root(path: Path) -> Path:
-    """Return the first registered worktree, which is Meridian's primary checkout."""
-    candidate = path.expanduser().resolve()
-    records = _git_worktrees(candidate)
-    if not records or "worktree" not in records[0]:
-        raise MeridianError(f"cannot identify the primary checkout from {candidate}")
-    return Path(records[0]["worktree"]).resolve()
 
 
 def _verified_lifecycle_project(supplied_project: Path | None = None) -> Path:
@@ -1029,34 +786,6 @@ def _lifecycle_paths(project_root: Path, identity: ResolvedTaskIdentity) -> tupl
 
 def _merge_head_path(project_root: Path) -> Path:
     return Path(git_output(project_root, "rev-parse", "--git-path", "MERGE_HEAD")).resolve()
-
-
-def _write_json_atomic(path: Path, value: dict[str, object], *, exclusive: bool = False) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    encoded = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
-    if exclusive:
-        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(encoded)
-        return
-    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(encoded)
-        os.replace(temporary, path)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
-
-
-def _read_json_object(path: Path, label: str) -> dict[str, object]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise MeridianError(f"cannot read {label} at {path}: {error}") from error
-    if not isinstance(value, dict):
-        raise MeridianError(f"{label} must be a JSON object: {path}")
-    return value
 
 
 def _branch_commit(project_root: Path, branch: str) -> str | None:
@@ -4309,165 +4038,6 @@ def codex_doctor(
         else "mismatch"
     )
     return result
-
-
-@dataclass(frozen=True)
-class ManagedFile:
-    source: Path
-    target: Path
-
-
-@dataclass(frozen=True)
-class PlanItem:
-    file: ManagedFile
-    action: str
-    detail: str
-    problems: tuple[str, ...] = ()
-    backup: Path | None = None
-    profile_surface: tuple[str, str] | None = None
-
-
-@dataclass(frozen=True)
-class Capability:
-    migration: str
-    present: bool
-    evidence: str
-
-
-@dataclass(frozen=True)
-class CapabilityMove:
-    """One declared relocation of an exact protected marker block."""
-
-    stage: str
-    source_path: Path
-    source_capability: str
-    source_version: int
-    source_sha256: str
-    target_path: Path
-    target_capability: str
-    target_version: int
-    target_sha256: str
-    migration: str
-
-
-@dataclass(frozen=True)
-class ReviewRecord:
-    verdict: str
-    attempt: int
-    unchecked: int
-
-
-@dataclass(frozen=True)
-class AdoptionState:
-    action: str
-    missing: list[Capability]
-    review: "ReviewRecord | None"
-    reason: str
-
-
-@dataclass(frozen=True)
-class ProjectLocations:
-    queue: Path
-    task_roots: tuple[Path, ...]
-    adr_log: Path
-    handoff_root: Path
-    review_root: Path
-    plan: Path
-
-
-@dataclass(frozen=True)
-class SemVer:
-    major: int
-    minor: int
-    patch: int
-    prerelease: str = ""
-    build: str = ""
-
-    def __str__(self) -> str:
-        text = f"{self.major}.{self.minor}.{self.patch}"
-        if self.prerelease:
-            text += f"-{self.prerelease}"
-        if self.build:
-            text += f"+{self.build}"
-        return text
-
-
-_SEMVER_IDENTIFIER = r"[0-9A-Za-z-]+"
-_SEMVER_PATTERN = re.compile(
-    r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
-    rf"(?:-({_SEMVER_IDENTIFIER}(?:\.{_SEMVER_IDENTIFIER})*))?"
-    rf"(?:\+({_SEMVER_IDENTIFIER}(?:\.{_SEMVER_IDENTIFIER})*))?"
-)
-
-
-def parse_semver(value: str) -> SemVer:
-    """Parse `MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]`.
-
-    Used only for display and the persist-time guard; `version_key()` remains the
-    comparator for upgrade planning.
-    """
-    match = _SEMVER_PATTERN.fullmatch(value)
-    if match is None:
-        raise MeridianError(f"invalid framework version: {value}")
-    major, minor, patch, prerelease, build = match.groups()
-    return SemVer(int(major), int(minor), int(patch), prerelease or "", build or "")
-
-
-def read_raw_version(framework_root: Path) -> str:
-    version_file = framework_root / "VERSION"
-    if not version_file.is_file():
-        raise MeridianError(f"framework VERSION file is missing: {version_file}")
-    return version_file.read_text(encoding="utf-8").strip()
-
-
-def require_release_version(framework_root: Path) -> None:
-    """Reject a prerelease framework VERSION before it can become durable."""
-    version = parse_semver(read_raw_version(framework_root))
-    if version.prerelease:
-        raise MeridianError(
-            f"framework VERSION {version} is a prerelease; a prerelease version cannot be "
-            "persisted into a manifest, migration, or release record"
-        )
-
-
-def read_version(framework_root: Path) -> str:
-    """Return the framework version without build metadata, which never becomes durable."""
-    raw = read_raw_version(framework_root)
-    match = _SEMVER_PATTERN.fullmatch(raw)
-    if match is not None and match.group(5):
-        return raw.split("+", 1)[0]
-    return raw
-
-
-def version_key(value: str) -> tuple[int, ...]:
-    try:
-        return tuple(int(part) for part in value.split("."))
-    except ValueError as error:
-        raise MeridianError(f"invalid framework version: {value}") from error
-
-
-def semver_precedence_key(version: SemVer) -> tuple[object, ...]:
-    """Return a SemVer precedence key; build metadata is intentionally ignored."""
-    prerelease: tuple[tuple[int, object], ...]
-    if version.prerelease:
-        prerelease = tuple(
-            (0, int(identifier)) if identifier.isdigit() else (1, identifier)
-            for identifier in version.prerelease.split(".")
-        )
-        release_rank = 0
-    else:
-        prerelease = ()
-        release_rank = 1
-    return (version.major, version.minor, version.patch, release_rank, prerelease)
-
-
-def release_kind_from_body(body: str) -> str:
-    first_line = next((line.strip() for line in body.splitlines() if line.strip()), "")
-    if first_line.startswith("CLI-only release:"):
-        return "CLI-only"
-    if first_line.startswith("Template-changing release:"):
-        return "template-changing"
-    raise ValueError("release body has no recognized kind line")
 
 
 def fetch_latest_release(
@@ -9012,17 +8582,6 @@ BUDGET_FIELD_NAMES = {
 }
 
 
-def primary_project_root(project_root: Path) -> Path:
-    """Use the canonical checkout when Git knows this project has worktrees.
-
-    Lightweight fixtures and pre-Git setup still use their supplied directory.
-    """
-    try:
-        return canonical_project_root(project_root)
-    except MeridianError:
-        return project_root.expanduser().resolve()
-
-
 def proposed_project_identity(project_root: Path) -> dict[str, str]:
     """Derive a stable setup proposal even before a directory is a Git repository."""
     try:
@@ -9436,13 +8995,6 @@ def task_identity_json(project_root: Path, identity: ResolvedTaskIdentity) -> di
     if meta.get("lastStatus") == "READY_FOR_REVIEW" and status == "IN_PROGRESS":
         attempt += 1
     return identity.as_json(project_root, attempt)
-
-
-def read_task_field(text: str, field: str) -> str | None:
-    match = re.search(rf"^{re.escape(field)}:\s*(.+)$", text, re.MULTILINE)
-    if not match:
-        return None
-    return match.group(1).strip()
 
 
 def profile_cap(project_root: Path, kind: str) -> int:
@@ -9978,31 +9530,6 @@ def next_milestone_task_identity(
     return resolve_task_identity(
         project_root, f"M{milestone}-{workstream}-{highest + 1:03d}", "new", context=context
     )
-
-
-HEADING_LINE = re.compile(r"^(#{1,6})[ \t]+(.*)$", re.MULTILINE)
-
-
-def extract_heading_block(text: str, matches_title) -> tuple[str, str] | None:
-    """Return `(excerpt, heading title)` for the first heading satisfying
-    `matches_title(title)`, bounded by the next heading at the same or a
-    shallower level, or EOF. Shared by ADR-log, spec, and task-Authority
-    lookups so heading-range extraction is written exactly once.
-    """
-    headings = [
-        (match.start(), len(match.group(1)), match.group(2).strip())
-        for match in HEADING_LINE.finditer(text)
-    ]
-    for index, (start, level, title) in enumerate(headings):
-        if not matches_title(title):
-            continue
-        end = len(text)
-        for later_start, later_level, _ in headings[index + 1:]:
-            if later_level <= level:
-                end = later_start
-                break
-        return text[start:end].rstrip("\n") + "\n", title
-    return None
 
 
 def find_adr_log(project_root: Path) -> Path:
@@ -11087,17 +10614,6 @@ def verify_host_impact_completion_evidence(text: str) -> None:
             "HOST_IMPACT_EVIDENCE_MISSING",
             "enforced profile is missing Completion evidence: " + ", ".join(missing),
         )
-
-
-TASK_BRANCH_OPEN_STATUSES = ("QUEUED", "IN_PROGRESS", "CHANGES_REQUESTED", "READY_FOR_REVIEW")
-
-
-def current_branch(project_root: Path) -> str | None:
-    """Return the checked-out branch name, or None outside Git or on a detached HEAD."""
-    try:
-        return git_output(project_root, "symbolic-ref", "--short", "-q", "HEAD") or None
-    except MeridianError:
-        return None
 
 
 def execution_preflight(project_root: Path, task_id: str) -> str:
