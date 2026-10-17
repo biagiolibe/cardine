@@ -32,3 +32,11 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 5 — Lifecycle defects carried from Meridian 1.4.0
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | split row E11 | [007](007-recover-partial-worktree-cleanup.md) |

@@ -11,8 +11,9 @@ trademark registration, task state only in JSON, the new repository, the
 Fabrikam are fictitious names for the maintainer's two private projects.
 Decision 11, landing modes and pull requests, was added and accepted on the
 same day, as were the release-tooling requirements in work item 12, the
-order of work items 4 and 5, quick tasks under decision 4, and CI before
-landing under decision 11.*
+order of work items 4 and 5, quick tasks under decision 4, CI before
+landing under decision 11, and the queue-briefing requirements in work items
+6, 7, and 9.*
 
 ## Context
 
@@ -433,15 +434,33 @@ touches code that is about to be deleted.
 5. Rename identifiers: command, environment variables, `.cardine/`, markers,
    Git-internal files, worktree root.
 6. Single workflow: one template set, task contract fields, states, review
-   option, `spike` class.
+   option, `spike` class. The preset comes from the project configuration,
+   never from the shape of the queue file. In Meridian 1.4.0 the per-turn
+   briefing chose the Governed SDD format only when the queue contained a
+   governed table. A Governed SDD project that had archived every closed
+   phase got the Lean Delivery header and a total of 0. A regression test
+   covers a project whose queue lists no task: the briefing still names the
+   project's preset.
 7. Single source of truth: state in the task JSON, generated queue and plan
-   status.
+   status. The generated status lists a task as startable only when its state
+   is `queued` and its dependencies are met. A task that is `in_progress` or
+   `in_review` never appears as startable. Meridian 1.4.0 listed a task under
+   review also as "Queued (startable)", because the briefing derived active
+   and review tasks from the worktrees but startable tasks only from the
+   queue table. Totals count task states, not queue rows, so archiving a
+   phase never changes them. Regression tests cover a queued task with met
+   dependencies whose state is `in_progress`, the same with `in_review`, and
+   a project whose queue lists no task while its task states record done
+   tasks.
 8. `cardine run` engine: next step, resume, directory independence, runnable
    commands, validation retry limit. Rebuild the console on this engine. Build
    integration around the landing mode, with `direct` as its only 1.0 mode
    (decision 11).
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
-   hooks.
+   hooks. The per-turn queue briefing is one Python implementation that
+   prints the status that work item 7 generates. It computes no task state of
+   its own. The regression tests of work items 6 and 7 run against the hook
+   output on both hosts.
 10. Meridian conversion: open tasks, ADRs, configuration.
 11. Documentation: README positioning, quick start, agent reference.
 12. Release: GitHub and PyPI publication from one script. Preparing Meridian

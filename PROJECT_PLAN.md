@@ -31,3 +31,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 004 — Extract the leaf modules (split plan E01).
 - `[x]` 005 — Make the module inventory test pass in a shallow clone.
 - `[x]` 006 — Extract text, version, Git, JSON, and model modules (split plan E02).
+- `[ ]` 007 — Recover worktree cleanup after a partial removal.
