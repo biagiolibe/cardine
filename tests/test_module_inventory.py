@@ -83,9 +83,8 @@ class ModuleInventoryTest(unittest.TestCase):
             ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", "src/cardine", "tests"],
             cwd=ROOT, text=True,
         ).splitlines()
-        baseline_tests = set(subprocess.check_output(
-            ["git", "ls-tree", "-r", "--name-only", "ceb84fd", "--", "tests"], cwd=ROOT, text=True,
-        ).splitlines())
+        baseline = json.loads((ROOT / "tests/fixtures/module_split_baseline.json").read_text())
+        baseline_tests = set(baseline["tests"])
         for name in sorted(set(tracked)):
             if name.endswith(".py") and (name.startswith("src/cardine/") or name not in baseline_tests):
                 with self.subTest(path=name):
