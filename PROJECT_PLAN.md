@@ -28,3 +28,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 001 — Make the evidence tests independent of Meridian task records.
 - `[x]` 002 — Add `pyproject.toml` and the `cardine` package skeleton.
 - `[x]` 003 — Plan the split of `meridian.py` into the Cardine modules.
+- `[ ]` 004 — Extract the leaf modules (split plan E01).

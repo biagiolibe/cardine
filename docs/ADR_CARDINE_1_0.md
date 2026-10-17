@@ -456,7 +456,7 @@ touches code that is about to be deleted.
 | Risk | Mitigation |
 | --- | --- |
 | Scope grows during the rewrite ("second system") | This ADR is the 1.0 scope; new ideas wait until after 1.0. |
-| Behavior is lost while the code is split | Item 3 is mechanical, with the existing suite of more than 1,000 tests unchanged. |
+| Behavior is lost while the code is split | Item 3 is mechanical. The existing suite of more than 1,000 tests stays green with its assertions unchanged; tests change only their imports, patch targets, and file locations (`docs/MODULE_SPLIT_PLAN.md`). |
 | The single workflow misses a Governed SDD use | The parity table in decision 3 and the field-trial exit criterion in decision 10. |
 | The `cardine` PyPI name is taken meanwhile | Publish a `0.0.1` placeholder first. |
 | A trademark conflict with a business using the name | Registration is deferred until after 1.0. EU and Italian registers must be checked before registration. |
