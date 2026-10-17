@@ -1,0 +1,18 @@
+{
+  "id": "005-ci-verified-validation",
+  "from": "1.1.1",
+  "to": "1.1.2",
+  "description": "Reviewer trusts a completed CI run for the exact task-branch commit as validation evidence instead of re-running it locally; without CI, the reviewer performs its own diff-scoped validation rather than trusting a bare implementer self-report.",
+  "capability": "ci-verified-validation",
+  "capabilityVersion": 1,
+  "managedPaths": [
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md"
+  ],
+  "verification": [
+    "A reviewer with a completed, surface-covering CI run for the exact commit under review does not re-run the same checks locally",
+    "A reviewer with no such CI run performs its own validation scoped to the diff surface rather than trusting a bare implementer self-report",
+    "A completion or review report names exact commands and exit status, or a CI check run, rather than an unfalsifiable pass/fail assertion"
+  ]
+}

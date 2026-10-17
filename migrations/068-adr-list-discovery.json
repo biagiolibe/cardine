@@ -1,0 +1,60 @@
+{
+  "id": "068-adr-list-discovery",
+  "from": "1.2.14",
+  "to": "1.2.15",
+  "description": "Directs Governed SDD agents to discover the ADR that governs a question with `meridian adr list`, and archives queue sections from task state.",
+  "delta": "The context policy's minimal-read-only-status block and the implementation, remediation, and review procedures' bounded-context-readers blocks each add one sentence naming `meridian adr list`, which prints one line per ADR with its ID, title, and status. No gate, role, or review rule changes; `meridian adr show` and `meridian context authority` remain the readers of an ADR's body. The worktree-lifecycle block replaces the conservative queue-section archival text with the state-based rule: a section that lists task rows closes when every row's state file is terminal (DONE in Lean Delivery; ACCEPTED, ANSWERED, or INCONCLUSIVE in Governed SDD), at any heading level and whatever the table shape; a row without a state file keeps the `###` table rule and a mixed section needs both rules to agree. The adoption text names `meridian task state import --include-terminal` and that integrate stage reports every archived and retained section. No gate is relaxed and INCONCLUSIVE still does not satisfy a dependency.",
+  "capabilities": [
+    {
+      "capability": "minimal-read-only-status",
+      "capabilityVersion": 3
+    },
+    {
+      "capability": "bounded-context-readers",
+      "capabilityVersion": 2
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 6
+    }
+  ],
+  "capabilityVersions": [
+    {
+      "capability": "minimal-read-only-status",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "bounded-context-readers",
+      "capabilityVersion": 2,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 6,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 6,
+      "workflowMode": "lean-delivery"
+    }
+  ],
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/REMEDIATION.md",
+    "docs/workflows/REVIEW.md",
+    "docs/WORKTREE_LIFECYCLE.md"
+  ],
+  "upgradeNotes": [
+    "Run upgrade --apply to install the ADR discovery sentence (Governed SDD) and the state-based queue archival rule in docs/WORKTREE_LIFECYCLE.md (both modes); adapted archival text may conflict. Then run `meridian task state import --include-terminal` to preview state for terminal legacy tasks and repeat with --apply so their sections archive by state. No protocolVersion change."
+  ],
+  "verification": [
+    "a clean Governed SDD upgrade installs minimal-read-only-status v3 in the context policy and bounded-context-readers v2 in the implementation, remediation, and review procedures while preserving consumer-owned text",
+    "meridian adr list prints one line per ADR and agrees with meridian adr show on which entries exist",
+    "a section whose task rows all have terminal state files archives at any heading level, an INCONCLUSIVE spike closes its section, and a project without state files archives exactly as before",
+    "integrate stage reports every archived and retained section with its reason",
+    "python3 scripts/check_repository.py and python3 scripts/run_tests.py --parallel pass"
+  ]
+}

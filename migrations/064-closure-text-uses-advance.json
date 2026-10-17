@@ -1,0 +1,219 @@
+{
+  "id": "064-closure-text-uses-advance",
+  "from": "1.2.9",
+  "to": "1.2.11",
+  "description": "Replaces the closure procedure in the managed git-workflow text with a short rule that drives closure through meridian worktree advance, and lets the shipped Codex rules and codex doctor cover that command. It also gives every stop that managed text tells an agent to return a registered code, so no managed line returns a bare BLOCKED. It also registers a Codex Stop hook that runs the stop audit with the host named on each audit line.",
+  "capabilities": [
+    {
+      "capability": "code-review-prompt",
+      "capabilityVersion": 2
+    },
+    {
+      "capability": "codex-worktree-access",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "execution-evidence-profile",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "host-impact-routing",
+      "capabilityVersion": 2
+    },
+    {
+      "capability": "investigation-scope",
+      "capabilityVersion": 2
+    },
+    {
+      "capability": "lifecycle-orchestration",
+      "capabilityVersion": 10
+    },
+    {
+      "capability": "manual-verification-precondition",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "owner-acceptance-workflow",
+      "capabilityVersion": 3
+    },
+    {
+      "capability": "rejected-attempt-restart",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "review-remediation-record",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "reviewer-integrator-identity",
+      "capabilityVersion": 3
+    },
+    {
+      "capability": "spike-routing",
+      "capabilityVersion": 2
+    },
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 15
+    },
+    {
+      "capability": "task-worktree-boundary",
+      "capabilityVersion": 9
+    },
+    {
+      "capability": "task-worktree-integration",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "task-worktree-remediation",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "task-worktree-review-procedure",
+      "capabilityVersion": 11
+    },
+    {
+      "capability": "workflow-mode-lock",
+      "capabilityVersion": 2
+    }
+  ],
+  "delta": "The git-workflow block (v13 in the Governed SDD PROJECT_WORKFLOW.md, v12 in the three Lean Delivery workflow files) no longer lists the closure order, the evidence, stage, candidate validation, finalize, push, and cleanup steps, or the closure stop codes. It tells the agent to verify the acceptance criteria, run validation, and commit the completion record and handoff; then, from the primary checkout, run meridian worktree advance <TASK-ID> with each validation result and --accepted, perform exactly its action_required, rerun it with the results (candidate validation uses --candidate-command and --candidate-exit-code), and report its BLOCKED line when it stops. The single-step commands stay documented in docs/WORKTREE_LIFECYCLE.md for diagnosis and manual recovery. The deny list, the authority of Proceed with, the stops and denials rules, the governance-file ownership rule, the Governed SDD review-gate rules, and the Validation skips: rule are unchanged; a Governed SDD review gate is reported by advance as a human action. Both .codex/rules/meridian.rules templates allow meridian worktree advance, and meridian codex doctor probes it with the other lifecycle commands. Every managed line that tells an agent to return BLOCKED now names a registered stop code from the stop registry (for example WORKFLOW_UNREADABLE, WRONG_WORKTREE, EVIDENCE_MISMATCH, BUDGET_EXHAUSTED, SCOPE_CHANGE_REQUIRED, RULE_CONFLICT). The git-workflow block's stops rule accepts a judgment stop that the workflow names with its code, and a gate that contradicts another rule stops with BLOCKED RULE_CONFLICT. The Governed SDD workflow documents and the Lean Delivery workflow carry the same codes, and the affected capability markers are bumped as listed. Both .codex/hooks.json templates add a Stop hook that runs `meridian hook stop-audit --host codex` with a 5 second timeout and keep the PreToolUse read-guard entry unchanged. `meridian hook stop-audit` accepts --host claude|codex (default claude), every unbacked_block and declared_block journal line records the host (lines without one are read as claude), and meridian report flow reports both kinds per host.",
+  "managedPaths": [
+    ".codex/hooks.json",
+    ".codex/rules/meridian.rules",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "PROJECT_WORKFLOW.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/OPERATOR_PROMPTS.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/LIFECYCLE.md",
+    "docs/workflows/REMEDIATION.md",
+    "docs/workflows/REVIEW.md",
+    "tasks/TASK_BLUEPRINT.md"
+  ],
+  "verification": [
+    "a clean Governed SDD upgrade installs git-workflow v13 and a clean Lean Delivery upgrade installs git-workflow v12, each directing closure through meridian worktree advance and no longer listing the closure order or stop codes",
+    "an upgraded project's .codex/rules/meridian.rules allows meridian worktree advance and keeps its local rules",
+    "meridian codex doctor probes meridian worktree advance with the other lifecycle commands",
+    "no managed text line tells an agent to return a bare BLOCKED; python3 scripts/check_repository.py fails on one",
+    "an upgraded project's .codex/hooks.json registers the Codex Stop hook next to the unchanged PreToolUse read guard",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests pass"
+  ],
+  "capabilityVersions": [
+    {
+      "capability": "git-workflow",
+      "capabilityVersion": 13,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "git-workflow",
+      "capabilityVersion": 12,
+      "workflowMode": "lean-delivery"
+    },
+    {
+      "capability": "code-review-prompt",
+      "capabilityVersion": 2,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "codex-worktree-access",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "execution-evidence-profile",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "host-impact-routing",
+      "capabilityVersion": 2,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "investigation-scope",
+      "capabilityVersion": 2,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "lifecycle-orchestration",
+      "capabilityVersion": 10,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "manual-verification-precondition",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "owner-acceptance-workflow",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "rejected-attempt-restart",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "review-remediation-record",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "reviewer-integrator-identity",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "spike-routing",
+      "capabilityVersion": 2,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 15,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-boundary",
+      "capabilityVersion": 9,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-integration",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-remediation",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-review-procedure",
+      "capabilityVersion": 11,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "workflow-mode-lock",
+      "capabilityVersion": 2,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "bounded-worktree-lifecycle",
+      "capabilityVersion": 5,
+      "workflowMode": "lean-delivery"
+    },
+    {
+      "capability": "codex-worktree-access",
+      "capabilityVersion": 4,
+      "workflowMode": "lean-delivery"
+    }
+  ]
+}

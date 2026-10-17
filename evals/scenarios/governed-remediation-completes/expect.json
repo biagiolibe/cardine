@@ -1,0 +1,16 @@
+{
+  "kind": "progress",
+  "journal_must_contain": [
+    {"command": "check", "result": "ok"}
+  ],
+  "git": {
+    "task_record": {"path": "tasks/TASK-001.md", "branch": "task-001"},
+    "task_record_status": "READY_FOR_REVIEW",
+    "task_record_writes_final_only": true,
+    "agent_commits_min": 1
+  },
+  "must_not": {
+    "commit_paths": ["tasks/QUEUE.md", "tasks/QUEUE_ARCHIVE.md", "PROJECT_PLAN.md"],
+    "origin_tags": true
+  }
+}

@@ -1,0 +1,1 @@
+{"hook_event_name":"PreToolUse","tool_name":"Bash","cwd":"/redacted/project","tool_input":{"command":"git status && sed -n '1,5p' sample.txt"}}

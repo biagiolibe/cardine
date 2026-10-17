@@ -1,0 +1,24 @@
+{
+  "id": "001-review-remediation-record",
+  "from": "1.0.0",
+  "to": "1.0.1",
+  "description": "Adds durable reviewer evidence and the CHANGES_REQUESTED return path to IN_PROGRESS.",
+  "capability": "review-remediation-record",
+  "capabilityVersion": 1,
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "PROJECT_WORKFLOW.md",
+    "docs/AUDIT_PROMPT_READ_ONLY.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/OPERATOR_PROMPTS.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/REVIEW_RECORD_TEMPLATE.md",
+    "tasks/QUEUE.md"
+  ],
+  "verification": [
+    "Review REQUIRED task returning CHANGES_REQUESTED creates tasks/reviews/<TASK-ID>.md",
+    "task and queue return to IN_PROGRESS in the review-handoff commit"
+  ]
+}

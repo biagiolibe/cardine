@@ -1,0 +1,96 @@
+{
+  "agent_commits": [
+    {
+      "paths": [
+        ".meridian/execution-evidence.json",
+        "tasks/handoffs/TASK-001.md"
+      ],
+      "sha": "d84964c1a98a681dce3c6e71d13925ea563d49a1"
+    },
+    {
+      "paths": [
+        "GREETING.md",
+        "tasks/TASK-001.md",
+        "tasks/handoffs/TASK-001.md",
+        "tasks/reviews/TASK-001.md"
+      ],
+      "sha": "60e81b52d96e2e55eb668ff3a9150e178a04bba7"
+    }
+  ],
+  "journal": [
+    {
+      "command": "prepare",
+      "exit": 0,
+      "result": "ok",
+      "step": "check",
+      "task": "TASK-001",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "check",
+      "exit": 0,
+      "result": "ok",
+      "step": "implement",
+      "task": "TASK-001",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "check",
+      "exit": 2,
+      "result": "blocked",
+      "step": "repair-or-abort",
+      "stop_code": "WRONG_WORKTREE",
+      "task": "TASK-001",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "check",
+      "exit": 0,
+      "result": "ok",
+      "step": "implement",
+      "task": "TASK-001",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    }
+  ],
+  "local_main": "5183865ab1797a5d942e99542996549004fd8b5c",
+  "local_main_merges": [],
+  "local_refs": {
+    "refs/heads/main": "5183865ab1797a5d942e99542996549004fd8b5c",
+    "refs/heads/task-001": "d84964c1a98a681dce3c6e71d13925ea563d49a1",
+    "refs/remotes/origin/main": "5183865ab1797a5d942e99542996549004fd8b5c"
+  },
+  "origin_deleted_refs": [],
+  "origin_main": "5183865ab1797a5d942e99542996549004fd8b5c",
+  "origin_main_contains": {},
+  "origin_main_files": [
+    ".claudeignore",
+    ".gitignore",
+    ".meridian/candidate-validation.json",
+    ".meridian/manifest.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LANGUAGE_POLICY.md",
+    "PROJECT_PLAN.md",
+    "PROJECT_WORKFLOW.md",
+    "README.md",
+    "TECH_DESIGN.md",
+    "tasks/QUEUE.md",
+    "tasks/TASK-001.md",
+    "tasks/TASK_BLUEPRINT.md"
+  ],
+  "origin_refs": {
+    "refs/heads/main": "5183865ab1797a5d942e99542996549004fd8b5c"
+  },
+  "origin_rewritten_refs": [],
+  "primary_files_after": {},
+  "primary_files_before": {},
+  "primary_status": "",
+  "task_record_final_status": "READY_FOR_REVIEW",
+  "task_record_status_writes": [
+    "READY_FOR_REVIEW"
+  ]
+}

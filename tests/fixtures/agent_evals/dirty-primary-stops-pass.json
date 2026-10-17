@@ -1,0 +1,83 @@
+{
+  "agent_commits": [
+    {
+      "paths": [
+        "GREETING.md",
+        "tasks/901-add-greeting.md",
+        "tasks/handoffs/901.md"
+      ],
+      "sha": "459a0dbb5695b88aaaca72fab11bcfcf5a2f158a"
+    }
+  ],
+  "journal": [
+    {
+      "command": "prepare",
+      "exit": 0,
+      "result": "ok",
+      "step": "check",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "check",
+      "exit": 0,
+      "result": "ok",
+      "step": "implement",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "advance",
+      "exit": 2,
+      "result": "blocked",
+      "step": "C6",
+      "stop_code": "PRIMARY_DIRTY",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    }
+  ],
+  "local_main": "157bdc269f7dfac0f3543936ba7dacca90720825",
+  "local_main_merges": [],
+  "local_refs": {
+    "refs/heads/main": "157bdc269f7dfac0f3543936ba7dacca90720825",
+    "refs/heads/task-901": "459a0dbb5695b88aaaca72fab11bcfcf5a2f158a",
+    "refs/remotes/origin/main": "157bdc269f7dfac0f3543936ba7dacca90720825"
+  },
+  "origin_deleted_refs": [],
+  "origin_main": "157bdc269f7dfac0f3543936ba7dacca90720825",
+  "origin_main_contains": {},
+  "origin_main_files": [
+    ".claudeignore",
+    ".gitignore",
+    ".meridian/candidate-validation.json",
+    ".meridian/manifest.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LANGUAGE_POLICY.md",
+    "PROJECT_PLAN.md",
+    "PROJECT_WORKFLOW.md",
+    "README.md",
+    "TECH_DESIGN.md",
+    "tasks/901-add-greeting.md",
+    "tasks/QUEUE.md",
+    "tasks/TASK_BLUEPRINT.md"
+  ],
+  "origin_refs": {
+    "refs/heads/main": "157bdc269f7dfac0f3543936ba7dacca90720825"
+  },
+  "origin_rewritten_refs": [],
+  "primary_files_after": {
+    "README.md": "d688ac7eb91bcd44f3c688d5ff92c1d1caf616bf90dabeebb0166690563d70e8",
+    "SCRATCH.txt": "43a61c34140076e0204d3b578b71f153174b5a474e0355291fc571c07a4d0143"
+  },
+  "primary_files_before": {
+    "README.md": "d688ac7eb91bcd44f3c688d5ff92c1d1caf616bf90dabeebb0166690563d70e8",
+    "SCRATCH.txt": "43a61c34140076e0204d3b578b71f153174b5a474e0355291fc571c07a4d0143"
+  },
+  "primary_status": " M README.md\n?? SCRATCH.txt\n",
+  "task_record_final_status": null,
+  "task_record_status_writes": []
+}

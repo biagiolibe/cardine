@@ -1,0 +1,27 @@
+{
+  "id": "023-spike-task-class",
+  "from": "1.1.19",
+  "to": "1.1.20",
+  "description": "Adds a `SPIKE` task class so an implementation task that discovers it cannot evaluate its own acceptance criteria without first resolving an unknown has a named, bounded place to route to, instead of investigating inside its own branch and budget. `task-lifecycle` v2 adds the `QUEUED -> IN_PROGRESS -> ANSWERED | INCONCLUSIVE` lifecycle and states which of those two satisfies a dependency. `review-policy` v2 adds `SPIKE` as a third case alongside `Review: REQUIRED`/`NOT_REQUIRED`, resolving the prior policy's prohibition on `NOT_REQUIRED` for unresolved design questions by giving spikes their own self-administered close-out gate rather than exempting them from review discipline entirely. `task-blueprint` v5 adds the spike shape (`Class`, `Question`, `Budget`, `Deliverable`, `Branch`) inside the existing single marker, and a new `spike-routing` v1 block in `AGENTS.md`/`CLAUDE.md`'s Implementation workflow adds the routing rule as a numbered step inside the same heading `role-scoped-agent-rules` already tells every session to read, so the rule is reachable without a second capability bump.",
+  "capabilities": [
+    { "capability": "task-lifecycle", "capabilityVersion": 2 },
+    { "capability": "review-policy", "capabilityVersion": 2 },
+    { "capability": "task-blueprint", "capabilityVersion": 5 },
+    { "capability": "spike-routing", "capabilityVersion": 1 }
+  ],
+  "delta": "In PROJECT_WORKFLOW.md: task-lifecycle v1 -> v2 adds the SPIKE lifecycle diagram and the ANSWERED/INCONCLUSIVE dependency-satisfaction rule, plus a note that queue-briefing-style tooling does not count SPIKE rows. review-policy v1 -> v2 adds SPIKE as a third case with its own self-administered close-out gate (does the deliverable answer Question within Budget?), replacing the prior blanket prohibition on NOT_REQUIRED for unresolved design questions as applied to spikes specifically. In tasks/TASK_BLUEPRINT.md: task-blueprint v4 -> v5 adds a `Class: [omit / SPIKE]` field and a 'Spike shape' section (Question/Budget/Deliverable/Branch) inside the existing marker, and a spike line in the Completion section. In AGENTS.md (and the regenerated CLAUDE.md): a new spike-routing v1 block is inserted as step 2 of the Implementation workflow's numbered list (existing steps 2-8 renumbered 3-9), requiring BLOCKED with a named spike task when an acceptance criterion cannot be evaluated without first discovering an unknown; step 4 (branch creation) and step 7 (completion status) gain one sentence each covering the SPIKE case.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "tasks/TASK_BLUEPRINT.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "verification": [
+    "PROJECT_WORKFLOW.md carries MERIDIAN:BEGIN capability=task-lifecycle v2 and capability=review-policy v2 markers",
+    "tasks/TASK_BLUEPRINT.md carries a single MERIDIAN:BEGIN capability=task-blueprint v5 marker containing the spike shape",
+    "AGENTS.md and CLAUDE.md carry a MERIDIAN:BEGIN capability=spike-routing v1 marker inside the Implementation workflow section",
+    "The four design questions in tasks/010-spike-task-class.md are answered in the shipped text: ANSWERED satisfies a dependency and INCONCLUSIVE does not; a spike's throwaway branch may contain code, only the branch itself is never merged; the routing rule prevents a spike-inside-a-task side-channel by requiring BLOCKED with a named separate spike task; SPIKE is a named third case in review-policy rather than a conflict with NOT_REQUIRED",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

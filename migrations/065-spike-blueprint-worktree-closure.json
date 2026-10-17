@@ -1,0 +1,45 @@
+{
+  "id": "065-spike-blueprint-worktree-closure",
+  "from": "1.2.11",
+  "to": "1.2.12",
+  "description": "Aligns the SPIKE blueprint with dedicated task worktrees and governed integration, and delivers lifecycle recovery and archival documentation.",
+  "delta": "Replace the ambiguous throwaway Branch field and direct-to-main deliverable instruction with a canonical task branch and a separate optional local throwaway probe branch. Probe code is never merged or pushed; the canonical branch carries the deliverable and permitted lifecycle/evidence records through ordinary governed closure. Existing consumer task records are not rewritten. Add concise lifecycle documentation for proven commit-less fast-forward STALE_WORKTREE_BASE recovery with repair-base and renewed validation evidence, the exact Governed SDD SPIKE execution-evidence ledger exception, and conservative ### queue-section archival with recognized terminal rows and warnings for retained open or ambiguous sections. Both worktree-lifecycle markers become v3; other lifecycle template text is unchanged.",
+  "managedPaths": [
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/WORKTREE_LIFECYCLE.md"
+  ],
+  "verification": [
+    "The managed task-blueprint v16 distinguishes canonical task and local probe branches.",
+    "SPIKE deliverables use ordinary governed worktree closure rather than direct commits to main.",
+    "Consumer-owned text and historical task records remain unchanged.",
+    "Both managed lifecycle documents carry worktree-lifecycle v3 and explain repair-base and conservative queue-section archival.",
+    "Only the Governed SDD lifecycle document adds the SPIKE canonical execution-evidence ledger exception."
+  ],
+  "capabilities": [
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 16
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 3
+    }
+  ],
+  "capabilityVersions": [
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 16,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 3,
+      "workflowMode": "lean-delivery"
+    }
+  ]
+}

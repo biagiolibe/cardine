@@ -1,0 +1,43 @@
+# Meridian task-worktree command approval policy.
+#
+# Codex loads this project-local file only after the project's .codex layer is
+# trusted in ~/.codex/config.toml. Execpolicy controls prompts; it does not
+# widen filesystem access or remove .git protection.
+
+prefix_rule(pattern=["git", ["status", "diff", "log", "show", "rev-parse", "merge-base", "branch", "add"]], decision="allow")
+prefix_rule(pattern=["git", "switch"], decision="allow")
+prefix_rule(pattern=["git", "commit", "-m"], decision="allow")
+prefix_rule(pattern=["git", "merge", "--ff-only"], decision="allow")
+prefix_rule(pattern=["git", "push", "origin", "main"], decision="allow")
+prefix_rule(pattern=["git", "worktree", "list"], decision="allow")
+prefix_rule(pattern=["git", "worktree", ["add", "remove", "prune"]], decision="prompt")
+
+prefix_rule(pattern=["meridian", ["context", "locations", "adr", "budget", "audit"]], decision="allow")
+prefix_rule(pattern=["meridian", "codex", ["doctor", "worktree-path"]], decision="allow")
+prefix_rule(pattern=["meridian", "worktree", ["path", "prepare", "check", "cleanup"]], decision="allow")
+prefix_rule(pattern=["meridian", "worktree", "integrate", ["stage", "finalize", "abort"]], decision="allow")
+
+# Unattended-closure additions. These rules never run or write outside what the
+# task worktree already permits; the commands they name stay inside the sandbox.
+prefix_rule(pattern=["meridian", "worktree", ["evidence", "closure-status", "advance"]], decision="allow")
+# Prefixes match leading tokens only, so `git mv` cannot be limited to the
+# `tasks/done/` destination: any move inside the worktree is allowed. Forced
+# moves, which overwrite an existing path, keep prompting.
+prefix_rule(pattern=["git", "mv"], decision="allow")
+prefix_rule(pattern=["git", "mv", ["-f", "--force"]], decision="prompt")
+# The execution evidence profile's validation commands, and the bounded-output
+# pipeline pieces they use. Output filters read standard input; the inspection
+# tools below only read. Forms that write or execute stay unmatched and keep
+# prompting: `sed` (`-i`, `w`, `e`), `rg` (`--pre`, `-z`), `find` (`-exec`,
+# `-delete`, `-fprint`), `git grep -O`, and `mv`.
+prefix_rule(pattern=["python3", "scripts/check_repository.py"], decision="allow")
+prefix_rule(pattern=["python3", "-m", "unittest", "discover", "-s", "tests"], decision="allow")
+prefix_rule(pattern=["set", "-o", "pipefail"], decision="allow")
+prefix_rule(pattern=[["ls", "cat", "head", "tail", "wc", "pwd", "grep"]], decision="allow")
+
+# Verified Lean execution start; delivery remains a Governed operation.
+prefix_rule(pattern=["meridian", "execution", "start"], decision="allow")
+
+prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease", "--delete", "--mirror"]], decision="forbidden")
+prefix_rule(pattern=["git", "branch", ["-D", "--delete", "--force", "-f"]], decision="prompt")
+prefix_rule(pattern=["git", ["reset", "rebase", "cherry-pick"]], decision="forbidden")

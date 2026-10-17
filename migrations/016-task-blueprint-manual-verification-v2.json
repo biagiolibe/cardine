@@ -1,0 +1,16 @@
+{
+  "id": "016-task-blueprint-manual-verification-v2",
+  "from": "1.1.12",
+  "to": "1.1.13",
+  "description": "Bumps the task-blueprint capability to declare whether a task needs manual or visual verification, alongside the existing Review field. This lets the implementer check evidence availability before writing any code (see migration 017's manual-verification-precondition capability), instead of discovering the gap only after finishing an implementation that automated checks already passed.",
+  "capability": "task-blueprint",
+  "capabilityVersion": 2,
+  "delta": "Add a `Manual verification: [none / required]` field immediately after `Review` in the task blueprint's field block. No other field changes.",
+  "managedPaths": [
+    "tasks/TASK_BLUEPRINT.md"
+  ],
+  "verification": [
+    "tasks/TASK_BLUEPRINT.md's MERIDIAN:BEGIN capability=task-blueprint v2 marker declares `Manual verification: [none / required]` immediately after `Review: REQUIRED`",
+    "No other field in the blueprint's field block changed"
+  ]
+}

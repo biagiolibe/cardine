@@ -1,0 +1,20 @@
+{
+  "id": "008-review-remediation-record-v2",
+  "from": "1.1.4",
+  "to": "1.1.5",
+  "description": "Removes the hardcoded tasks/reviews/<TASK-ID>.md path from the review-remediation-record capability's canonical text, referencing PROJECT_WORKFLOW.md's new canonical-locations declaration instead, so a project with different directory conventions can carry the exact canonical text and pass meridian audit without changing its real file layout.",
+  "capability": "review-remediation-record",
+  "capabilityVersion": 2,
+  "delta": "Replace the literal `tasks/reviews/<TASK-ID>.md` path in AGENTS.md/CLAUDE.md's Review-remediation workflow section and docs/REVIEW_RECORD_TEMPLATE.md with a reference to the review-record location PROJECT_WORKFLOW.md declares (default unchanged: tasks/reviews/<TASK-ID>.md). Also adds the shared Canonical locations paragraph to PROJECT_WORKFLOW.md's Execution assets section. No behavioral change for a project that keeps the default locations.",
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/REVIEW_RECORD_TEMPLATE.md",
+    "PROJECT_WORKFLOW.md"
+  ],
+  "verification": [
+    "AGENTS.md, CLAUDE.md, and docs/REVIEW_RECORD_TEMPLATE.md carry a MERIDIAN:BEGIN capability=review-remediation-record v2 marker with no hardcoded tasks/reviews/<TASK-ID>.md path inside it",
+    "PROJECT_WORKFLOW.md's Execution assets section declares the project's canonical task/queue/review-record locations",
+    "A project that declares a different review-record location still carries byte-identical v2 protected text and passes meridian audit"
+  ]
+}

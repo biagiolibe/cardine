@@ -1,0 +1,11 @@
+{
+  "version": "1.2.13",
+  "releaseDate": "2026-10-12",
+  "gitTag": "v1.2.13",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.13",
+  "baselineChanged": true,
+  "migrations": [
+    "066-machine-task-state-adoption"
+  ]
+}

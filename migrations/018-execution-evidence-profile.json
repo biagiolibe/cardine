@@ -1,0 +1,22 @@
+{
+  "id": "018-execution-evidence-profile",
+  "from": "1.1.14",
+  "to": "1.1.15",
+  "description": "Adds the stack-agnostic execution-evidence-profile capability after observed agent sessions spent disproportionate context on duplicate instruction reads, verbose successful-command output, premature full diagnostics, monolithic diffs, and redundant visual-tool calls. The protected policy requires proportional output, progressive diagnostics, complete per-hunk review, planned manual evidence, and reuse of unchanged successful validation. The new project-owned execution profile records the stack-specific commands, log procedures, capture channels, and runtime choices without putting framework- or language-specific rules in Meridian templates.",
+  "capabilities": [
+    { "capability": "execution-evidence-profile", "capabilityVersion": 1 }
+  ],
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md",
+    "docs/OPERATOR_PROMPTS.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries a MERIDIAN:BEGIN capability=execution-evidence-profile v1 marker that requires project-specific output/evidence procedures while preserving required validation, independent review, and manual acceptance evidence",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md is a managed, project-owned configuration surface for context reuse, concise successful validation output, failure diagnostics, per-hunk diff inspection, manual evidence, and runtime settings; it contains no framework-, language-, or tool-specific command",
+    "AGENTS.md, CLAUDE.md, the governed-SDD operator prompts, and both governed-SDD skills direct implementation and review sessions to the project-owned profile",
+    "The protected policy requires all changed hunks to be inspected and every required validation command to run; it reduces only redundant context and output volume"
+  ]
+}

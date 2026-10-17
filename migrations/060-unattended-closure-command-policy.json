@@ -1,0 +1,28 @@
+{
+  "id": "060-unattended-closure-command-policy",
+  "from": "1.2.5",
+  "to": "1.2.6",
+  "description": "Completes the Codex command policy for unattended task closure, distributes Lean Delivery's worktree lifecycle document, and aligns candidate-validation instructions for both workflows with project-declared command fragments.",
+  "delta": "Both workflow templates update .codex/rules/meridian.rules, docs/WORKTREE_LIFECYCLE.md, and docs/EXECUTION_EVIDENCE_PROFILE.md. Lean Delivery also updates PROJECT_WORKFLOW.md and now manages its lifecycle document; when that newly managed document already exists without a baseline, upgrade preserves the old copy in a collision-safe adjacent backup and replaces it with the template. Governed SDD also updates docs/COMPLETION_REPORT_TEMPLATE.md, docs/LIFECYCLE_ORCHESTRATION.md, and docs/workflows/REVIEW.md. The Codex rules allow meridian worktree evidence and closure-status, git mv, the exact repository validation commands, and read-only inspection tools; forced moves and write-capable or program-executing forms keep prompting. Candidate-validation documentation directs each consumer to its unmanaged .meridian/candidate-validation.json, which upgrade never writes.",
+  "managedPaths": [
+    ".codex/rules/meridian.rules",
+    "PROJECT_WORKFLOW.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "adoptExistingPaths": [
+    "docs/WORKTREE_LIFECYCLE.md"
+  ],
+  "verification": [
+    "an adopter project with local rules appended receives the new rules by upgrade --apply and keeps its local rules",
+    "codex execpolicy check allows each added command and still prompts for git mv -f and leaves sed -i and rg --pre unmatched",
+    "meridian codex doctor reports each new rule group as ready or as a named gap",
+    "a Lean project upgraded from 1.2.5 receives the current lifecycle document when its copy is absent or unchanged, while a local edit follows the normal three-way merge or conflict path",
+    "a packaged legacy Lean baseline without the lifecycle document remains adoptable and receives the current document",
+    "an upgraded project receives no candidate-validation declaration; meridian setup proposes it only after explicit --apply consent",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests pass"
+  ]
+}

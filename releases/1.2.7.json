@@ -1,0 +1,11 @@
+{
+  "version": "1.2.7",
+  "releaseDate": "2026-10-04",
+  "gitTag": "v1.2.7",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.7",
+  "baselineChanged": true,
+  "migrations": [
+    "061-governed-phase-reads"
+  ]
+}

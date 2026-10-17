@@ -1,0 +1,22 @@
+{
+  "id": "012-agents-claude-residual-capabilities",
+  "from": "1.1.8",
+  "to": "1.1.9",
+  "description": "Backfills capability tracking for the remaining independently-changeable sections of AGENTS.md/CLAUDE.md: command-triggers, review-mode-boundary, owner-acceptance-workflow, implementer-reviewer-handoff, reviewer-integrator-identity. Also parameterizes review-mode-boundary's previously hardcoded tasks/reviews/<TASK-ID>.md path (a brand-new v1 capability, so introduced already parameterized rather than needing its own later v2). ### Implementation workflow's steps 1-4 and 6-8 remain untracked: the marker grammar has no nesting, and step 5 already carries validation-scoping's marker inside that same numbered section.",
+  "capabilities": [
+    { "capability": "command-triggers", "capabilityVersion": 1 },
+    { "capability": "review-mode-boundary", "capabilityVersion": 1 },
+    { "capability": "owner-acceptance-workflow", "capabilityVersion": 1 },
+    { "capability": "implementer-reviewer-handoff", "capabilityVersion": 1 },
+    { "capability": "reviewer-integrator-identity", "capabilityVersion": 1 }
+  ],
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "verification": [
+    "AGENTS.md and CLAUDE.md wrap their Command triggers, Review-mode boundary, Owner-acceptance workflow, Implementer-to-reviewer handoff, and Reviewer-integrator identity sections each in their own MERIDIAN:BEGIN/END marker at v1",
+    "review-mode-boundary's marked text references PROJECT_WORKFLOW.md's canonical locations instead of a hardcoded tasks/reviews/<TASK-ID>.md path",
+    "### Implementation workflow's steps 1-4 and 6-8 remain outside any marker"
+  ]
+}

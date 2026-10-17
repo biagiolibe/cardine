@@ -1,0 +1,18 @@
+{
+  "id": "003-framework-updater",
+  "from": "1.0.2",
+  "to": "1.1.0",
+  "description": "Introduces the Meridian lockfile, baseline snapshots, and deterministic managed-file upgrades.",
+  "managedPaths": [
+    ".meridian/manifest.json",
+    ".meridian/baselines/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "PROJECT_WORKFLOW.md",
+    "docs/"
+  ],
+  "verification": [
+    "meridian upgrade --check",
+    "project baseline checks"
+  ]
+}

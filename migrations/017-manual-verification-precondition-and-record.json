@@ -1,0 +1,22 @@
+{
+  "id": "017-manual-verification-precondition-and-record",
+  "from": "1.1.13",
+  "to": "1.1.14",
+  "description": "Adds two capabilities addressing a lifecycle failure mode caught in real use: a task requiring manual/visual proof passed every automated check before it discovered, mid-implementation, that the evidence itself was unavailable, forcing a wasted resumption session. `manual-verification-precondition` makes the implementer confirm evidence availability before writing any code, and prefer a deterministic test over a GUI check as primary acceptance evidence when one exists. `manual-verification-record` gives the completion report and the durable review record a dedicated, reusable field for that evidence (a named screenshot, the view checked, and the result) instead of an unstructured mention a reviewer would have to reconstruct.",
+  "capabilities": [
+    { "capability": "manual-verification-precondition", "capabilityVersion": 1 },
+    { "capability": "manual-verification-record", "capabilityVersion": 1 }
+  ],
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/REVIEW_RECORD_TEMPLATE.md"
+  ],
+  "verification": [
+    "AGENTS.md and CLAUDE.md carry a MERIDIAN:BEGIN capability=manual-verification-precondition v1 marker inside step 1 of the Implementation workflow, requiring an evidence-availability check before any implementation when the task declares Manual verification: required, and preferring a deterministic test as primary acceptance evidence when one exists",
+    "docs/COMPLETION_REPORT_TEMPLATE.md carries a MERIDIAN:BEGIN capability=manual-verification-record v1 marker requiring a named screenshot path, view checked, and result, and its illustrative fenced example includes a Manual verification field",
+    "docs/REVIEW_RECORD_TEMPLATE.md carries a MERIDIAN:BEGIN capability=manual-verification-record v1 marker requiring the reviewer to independently confirm the screenshot and record the same three parts, placed outside the existing review-remediation-record marker to avoid nesting",
+    "tasks/TASK_BLUEPRINT.md's Manual verification field (migration 016) is the only source of whether these two capabilities' precondition and record requirements apply to a given task"
+  ]
+}

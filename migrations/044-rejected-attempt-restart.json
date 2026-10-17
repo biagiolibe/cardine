@@ -1,0 +1,13 @@
+{
+  "id": "044-rejected-attempt-restart",
+  "from": "1.1.40",
+  "to": "1.1.41",
+  "description": "Adds the governed-SDD authority-change restart procedure for rejected implementation attempts.",
+  "capabilities": [
+    {"capability": "rejected-attempt-restart", "capabilityVersion": 3},
+    {"capability": "command-triggers", "capabilityVersion": 3}
+  ],
+  "delta": "An explicitly authorized authority-change restart archives the rejected tip, requires an accepted design amendment, and creates a fresh retry from main without reusing rejected implementation artifacts.",
+  "managedPaths": ["AGENTS.md", "CLAUDE.md", "PROJECT_WORKFLOW.md", "docs/LIFECYCLE_ORCHESTRATION.md", "docs/workflows/LIFECYCLE.md", "docs/workflows/REMEDIATION.md"],
+  "verification": ["`python3 -m unittest discover -s tests -v` passes", "a clean governed-SDD upgrade from 1.1.40 installs the restart policy while preserving consumer-owned text outside protected regions", "`python3 scripts/check_repository.py` passes"]
+}

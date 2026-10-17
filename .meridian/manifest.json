@@ -1,0 +1,368 @@
+{
+  "appliedMigrations": [
+    "001-review-remediation-record",
+    "002-lifecycle-orchestration",
+    "003-framework-updater",
+    "004-validation-scoping",
+    "005-ci-verified-validation",
+    "006-capability-markers",
+    "007-validation-capability-markers",
+    "008-review-remediation-record-v2",
+    "009-lifecycle-orchestration-v2",
+    "010-project-workflow-baseline-capabilities",
+    "011-whole-file-baseline-capabilities",
+    "012-agents-claude-residual-capabilities",
+    "013-language-policy-v2",
+    "014-minimal-read-only-status",
+    "015-role-scoped-agent-rules",
+    "016-task-blueprint-manual-verification-v2",
+    "017-manual-verification-precondition-and-record",
+    "018-execution-evidence-profile",
+    "019-marker-aware-capability-insertion",
+    "020-reasoning-budget-contract",
+    "021-concrete-execution-budgets",
+    "022-executable-probe-precondition",
+    "023-spike-task-class",
+    "024-evidence-tiers-and-routing",
+    "025-retire-role-scoped-agent-rules",
+    "026-bound-the-queue-read",
+    "027-execution-validation-wrapper",
+    "028-ready-for-review-gate",
+    "029-resolved-execution-contract",
+    "030-isolated-exploration-evidence",
+    "031-execution-command-gate",
+    "032-pointer-aware-upgrades",
+    "033-deduplicate-merged-markers",
+    "034-operator-prompts-location-aware",
+    "035-tech-design-alignment-prompt",
+    "036-explicit-claude-agents-pointer",
+    "037-additive-role-procedures",
+    "038-compact-entry-point-routers",
+    "039-authority-excerpt-command",
+    "040-pretooluse-read-guard",
+    "041-codex-command-approval-rules",
+    "042-codex-read-guard-hook",
+    "043-host-impact-task-declaration",
+    "044-rejected-attempt-restart",
+    "045-isolated-task-worktrees",
+    "046-integration-validation-evidence-reuse",
+    "047-codex-worktree-access",
+    "048-manifest-capability-profile-schema",
+    "049-task-identity-policy",
+    "050-review-worktree-preflight",
+    "051-bounded-worktree-lifecycle",
+    "052-install-meridian-self-hosting-surfaces",
+    "053-codex-profile-repair-guidance",
+    "054-machine-independent-worktree-handoff",
+    "055-unified-worktree-root-and-setup",
+    "056-manual-governed-proceed-worktree",
+    "057-self-referential-handoff-commits",
+    "058-lean-closure-procedure",
+    "059-governed-closure-procedure",
+    "060-unattended-closure-command-policy",
+    "061-governed-phase-reads",
+    "062-primary-project-declaration-and-review-authority",
+    "063-retire-reasoning-budget-contract",
+    "064-closure-text-uses-advance",
+    "065-spike-blueprint-worktree-closure",
+    "066-machine-task-state-adoption",
+    "067-execution-boundaries",
+    "068-adr-list-discovery",
+    "069-lean-task-close",
+    "070-worktree-template-delivery"
+  ],
+  "capabilityProfiles": {
+    "meridian-self-hosting": {
+      "capabilities": {
+        "context-budgeting": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "sha256:a695d47805ad8907667f5412247afd28ac6ec134f5111a6e0f2141d5d5179a47"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_BUDGET_POLICY.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "execution-evidence": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "sha256:151b1559c0b74a236ef5e3be25ff5e6926cc57ee4e4857edea34cea39b4bdcd2",
+              "sha256:a695d47805ad8907667f5412247afd28ac6ec134f5111a6e0f2141d5d5179a47",
+              "sha256:d8dc3de99bd73d9ce8685e845772245d43741a4234f00c3de336547159517d71"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_BUDGET_POLICY.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "docs/EXECUTION_EVIDENCE_PROFILE.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "docs/COMPLETION_REPORT_TEMPLATE.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "language-policy": {
+          "hostActivation": {
+            "claude-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            },
+            "codex-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            }
+          },
+          "installation": {
+            "evidence": [
+              "sha256:65fc7654c6d37865fae03290b4c21304efee616bbb8615fa298c3e55abfdf558"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "LANGUAGE_POLICY.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "minimal-read-only-status": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "sha256:a695d47805ad8907667f5412247afd28ac6ec134f5111a6e0f2141d5d5179a47"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_BUDGET_POLICY.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "queue-briefing": {
+          "hostActivation": {
+            "claude-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            }
+          },
+          "installation": {
+            "evidence": [
+              "sha256:770dea958f4bc2d992b9beb7e6a166eeed3cf69911d11bceee72253c50611219",
+              "sha256:f885921c50166e83d64fff6a110f5ee0a6df49c7ae2c675c5b80f5df9e5dad15"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "shared-source",
+              "path": "hooks/queue-briefing.sh"
+            },
+            {
+              "form": "shared-source",
+              "path": "hooks/hooks.json"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "read-guard": {
+          "hostActivation": {
+            "claude-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            },
+            "codex-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            }
+          },
+          "installation": {
+            "evidence": [
+              "sha256:770dea958f4bc2d992b9beb7e6a166eeed3cf69911d11bceee72253c50611219",
+              "sha256:80e7c15e6133c0286613fe4ccf5e73b1a2e229fbffbf24c128f1395f3d012e7b",
+              "sha256:847edfa3d042fd061bffc1490fdfb5eced57ed250d815584609b8343839a8d01"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "shared-source",
+              "path": "hooks/read-guard.sh"
+            },
+            {
+              "form": "shared-source",
+              "path": "hooks/hooks.json"
+            },
+            {
+              "form": "managed-copy",
+              "path": ".codex/hooks.json"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "validation-scoping": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "sha256:65972a1168e0a638b357e879882612dba756a6c3552ee26cddb4cab10deeabfa",
+              "sha256:a695d47805ad8907667f5412247afd28ac6ec134f5111a6e0f2141d5d5179a47"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_BUDGET_POLICY.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "PROJECT_WORKFLOW.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "worktree-safety": {
+          "hostActivation": {
+            "codex-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            }
+          },
+          "installation": {
+            "evidence": [
+              "sha256:5759299cfb8023140f992b48260ce5d24acca24d7c13f8fc39ea6da087540a41",
+              "sha256:65972a1168e0a638b357e879882612dba756a6c3552ee26cddb4cab10deeabfa",
+              "sha256:e9d686c023b217e33e3b856574e10b54dc29926b468cc958dc32396581bc6e48",
+              "sha256:ec8088df963462e4c1ab3e4a4060450ca062fd51370ea56970403755656bb432"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "PROJECT_WORKFLOW.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "AGENTS.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "CLAUDE.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": ".codex/rules/meridian.rules"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        }
+      },
+      "profileVersion": 1
+    }
+  },
+  "frameworkVersion": "1.4.0",
+  "managedFiles": {
+    ".codex/hooks.json": "80e7c15e6133c0286613fe4ccf5e73b1a2e229fbffbf24c128f1395f3d012e7b",
+    ".codex/rules/meridian.rules": "5759299cfb8023140f992b48260ce5d24acca24d7c13f8fc39ea6da087540a41",
+    "AGENTS.md": "ec8088df963462e4c1ab3e4a4060450ca062fd51370ea56970403755656bb432",
+    "CLAUDE.md": "e9d686c023b217e33e3b856574e10b54dc29926b468cc958dc32396581bc6e48",
+    "LANGUAGE_POLICY.md": "65fc7654c6d37865fae03290b4c21304efee616bbb8615fa298c3e55abfdf558",
+    "PROJECT_WORKFLOW.md": "65972a1168e0a638b357e879882612dba756a6c3552ee26cddb4cab10deeabfa",
+    "docs/COMPLETION_REPORT_TEMPLATE.md": "d8dc3de99bd73d9ce8685e845772245d43741a4234f00c3de336547159517d71",
+    "docs/CONTEXT_BUDGET_POLICY.md": "a695d47805ad8907667f5412247afd28ac6ec134f5111a6e0f2141d5d5179a47",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md": "151b1559c0b74a236ef5e3be25ff5e6926cc57ee4e4857edea34cea39b4bdcd2",
+    "docs/WORKTREE_LIFECYCLE.md": "e69a62dfa3a6ac25e2e883d554a19fb677924fc80ed3fda5b72b39f4f96e2a9e"
+  },
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.4.0",
+  "workflowMode": "lean-delivery"
+}

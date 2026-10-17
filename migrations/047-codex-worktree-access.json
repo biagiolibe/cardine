@@ -1,0 +1,23 @@
+{
+  "id": "047-codex-worktree-access",
+  "from": "1.1.43",
+  "to": "1.1.44",
+  "description": "Adds repository-qualified shared task-worktree roots and an explicit Codex permission-profile configurator and preflight.",
+  "capabilities": [
+    {"capability": "codex-worktree-access", "capabilityVersion": 1},
+    {"capability": "git-workflow", "capabilityVersion": 4},
+    {"capability": "task-worktree-boundary", "capabilityVersion": 2}
+  ],
+  "delta": "Task worktree paths now live below a user-selected shared root and are namespaced by repository identity. Codex configuration is planned read-only and applied only explicitly through an atomic, backup-preserving permission-profile update. Both workflows receive the same bounded command policy, and host preflight reports trust, filesystem access, policy activation, and Git metadata independently.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    ".codex/rules/meridian.rules"
+  ],
+  "verification": [
+    "path and collision tests cover remote namespaces, equal task IDs, and deterministic local fallback identities",
+    "configuration tests cover check/apply idempotence, comment preservation, backup creation, atomic failure, and conflicting models",
+    "both workflow command policies pass the Codex execpolicy decision table",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests -v pass"
+  ]
+}

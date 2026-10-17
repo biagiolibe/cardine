@@ -1,0 +1,21 @@
+{
+  "id": "039-authority-excerpt-command",
+  "from": "1.1.35",
+  "to": "1.1.36",
+  "description": "Gives a session a way to read exactly the ADR/spec sections a task cites instead of opening the whole log (docs/PROPOSAL_CONTEXT_ENFORCEMENT.md, M1: ~8k tokens to read ADR-0059..0063 in consumer project A when only two of the five were cited). `meridian adr show <ADR-ID>` prints exactly one ADR section, resolved through the same execution-assets-zone resolver as the queue and task-root locations (a project may declare a non-default ADR log with an `ADR log is \\`<path>\\`` sentence). `meridian context authority <TASK-ID>` parses the task's `Authority` bullets, resolves every `ADR-NNNN` token cited anywhere in a bullet through `adr show` and every `` `path`#Heading `` citation through the same heading-range extraction against that path, and names (rather than silently skips) any bullet content it cannot resolve. `authority-excerpt v1` in docs/CONTEXT_BUDGET_POLICY.md points a session at this resolved excerpt as the normal path, naming the conditions that still justify opening the source file directly. hooks/queue-briefing.sh's governed IN_PROGRESS branch appends the active task's resolved Authority (source + heading only, not the excerpt body) next to its existing budget echo. The CLI/hook change runs from $CLAUDE_PLUGIN_ROOT, not a per-project copy, so every project sees the new command and hook line immediately regardless of its own locked VERSION; only the policy text explaining it arrives on upgrade to 1.1.36.",
+  "capabilities": [
+    { "capability": "authority-excerpt", "capabilityVersion": 1 }
+  ],
+  "delta": "In docs/CONTEXT_BUDGET_POLICY.md: a new capability=authority-excerpt v1 marker is added as item 6 of the existing 'Task-first loading' numbered list, pointing at `meridian context authority` as the normal path and naming when opening the ADR log or a spec file directly is still justified. scripts/meridian.py (framework tooling, no per-project copy) gains `resolve_project_locations().adr_log`, heading-range extraction shared by ADR-log/spec/Authority lookups, and the `meridian adr show` / `meridian context authority` commands. hooks/queue-briefing.sh's governed-SDD IN_PROGRESS branch gains a resolved-Authority echo; the Lean Delivery branch is unchanged.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries a MERIDIAN:BEGIN capability=authority-excerpt v1 marker inside the Task-first loading section",
+    "`meridian adr show <ADR-ID> --project <path>` prints exactly one ADR section and exits non-zero, naming the ID and the file searched, on an unknown ID",
+    "`meridian context authority <TASK-ID> --project <path>` resolves every ADR-ID and `path#Heading` citation in the task's Authority bullets and names any entry it cannot resolve, without a non-zero exit for the whole command",
+    "hooks/queue-briefing.sh's governed IN_PROGRESS branch echoes the active task's resolved Authority (source + heading, not the excerpt body)",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

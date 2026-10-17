@@ -1,0 +1,24 @@
+{
+  "id": "031-execution-command-gate",
+  "from": "1.1.27",
+  "to": "1.1.28",
+  "description": "Makes Meridian execution commands mandatory rather than merely available. Implementers must record declared validation, budgeted evidence, and broad exploration through the execution CLI; review-required tasks must pass ready-check before READY_FOR_REVIEW. Nonterminal legacy tasks must reconcile their generated execution contract before substantive work.",
+  "capabilities": [
+    { "capability": "execution-command-gate", "capabilityVersion": 1 },
+    { "capability": "task-blueprint", "capabilityVersion": 11 }
+  ],
+  "delta": "AGENTS.md and CLAUDE.md add the execution-command gate. tasks/TASK_BLUEPRINT.md changes task-blueprint v10 to v11 and records that execution commands are required. `meridian execution reconcile <TASK-ID> --apply` refreshes only the generated execution-contract block of a nonterminal task; terminal task records remain historical and are not retrofitted with invented evidence.",
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "tasks/TASK_BLUEPRINT.md"
+  ],
+  "verification": [
+    "AGENTS.md and CLAUDE.md carry capability=execution-command-gate v1",
+    "tasks/TASK_BLUEPRINT.md carries capability=task-blueprint v11",
+    "execution preflight rejects a legacy generated contract until meridian execution reconcile is applied",
+    "execution reconcile never rewrites an ACCEPTED, ANSWERED, or INCONCLUSIVE task",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

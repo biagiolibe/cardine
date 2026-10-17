@@ -1,0 +1,19 @@
+# Project-local command approval additions for the Meridian task lifecycle.
+#
+# Kept outside the managed meridian.rules copy so `meridian upgrade` does not
+# see drift. Rules combine with meridian.rules and the most restrictive
+# matching decision wins, so the forbidden push rules there still apply.
+
+# Lifecycle commands that meridian.rules does not list yet.
+prefix_rule(pattern=["meridian", "worktree", ["evidence", "closure-status", "advance"]], decision="allow")
+prefix_rule(pattern=["python3", "scripts/meridian.py", "worktree", ["path", "prepare", "check", "evidence", "closure-status", "cleanup"]], decision="allow")
+prefix_rule(pattern=["python3", "scripts/meridian.py", "worktree", "integrate", ["stage", "finalize", "abort"]], decision="allow")
+prefix_rule(pattern=["python3", "scripts/meridian.py", "worktree", "advance"], decision="allow")
+
+# Refresh a task branch from main inside its own worktree.
+prefix_rule(pattern=["git", "merge", "main"], decision="allow")
+
+# Project validation commands.
+prefix_rule(pattern=["python3", "scripts/check_repository.py"], decision="allow")
+prefix_rule(pattern=["python3", "scripts/run_tests.py", "--parallel"], decision="allow")
+prefix_rule(pattern=["python3", "-m", "unittest", "discover", "-s", "tests"], decision="allow")

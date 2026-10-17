@@ -1,0 +1,17 @@
+{
+  "id": "041-codex-command-approval-rules",
+  "from": "1.1.37",
+  "to": "1.1.38",
+  "description": "Adds the governed-SDD managed file `.codex/rules/meridian.rules`. In a trusted Codex project layer it allows the routine governed Git commands and a narrow read-only/validation Meridian command set, while force-push forms are forbidden and destructive branch deletion remains prompted. The file is intentionally unmarked: project-specific local rules are expected to be appended and are preserved by the ordinary three-way merge rather than capability-marker audit.",
+  "delta": "Add `.codex/rules/meridian.rules` to governed-SDD's managed-file set only. The new template documents trust activation, offline decision checking, combined user-level rules, and the working-directory alternative to unsupported `git -C <path>` prefixes. It deliberately leaves state-changing Meridian commands, rebases, hard resets, amend commits, fetches, and reviewer author overrides to normal approval or a project-local literal rule.",
+  "managedPaths": [
+    ".codex/rules/meridian.rules"
+  ],
+  "verification": [
+    "`templates/workflows/governed-sdd/.codex/rules/meridian.rules` contains only well-formed single-line `prefix_rule` entries and is enumerated for governed-SDD, not Lean Delivery",
+    "`codex execpolicy check --rules templates/workflows/governed-sdd/.codex/rules/meridian.rules -- <command...>` matches the rules decision table when Codex is on PATH; the test reports an explicit skip otherwise",
+    "a consumer without `.codex/` plans ADD and creates `.codex/rules/meridian.rules`; a pre-created local copy plans CONFLICT and is not overwritten",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

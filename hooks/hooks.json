@@ -1,0 +1,39 @@
+{
+  "description": "Meridian \u2014 display language-policy and task-queue briefings at the start of each prompt, guard unranged large-file reads, and record unbacked BLOCKED reports, in Meridian projects",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/queue-briefing.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/read-guard.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/stop-audit.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

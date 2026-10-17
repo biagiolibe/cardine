@@ -1,0 +1,180 @@
+{
+  "id": "066-machine-task-state-adoption",
+  "from": "1.2.12",
+  "to": "1.2.13",
+  "description": "Deliver command-owned task status, review verdicts, and explicit legacy state import.",
+  "delta": "Managed review, remediation, implementation, owner acceptance, and closure use task transition and review verdict. Machine state is the authority; headings and Status fields are human-readable projections, never edited by hand. Each task branch owns its state file. Lean closure names DONE only where machine state is required. Existing records are preserved.",
+  "capabilities": [
+    {
+      "capability": "audit-prompt",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "code-review-prompt",
+      "capabilityVersion": 3
+    },
+    {
+      "capability": "execution-command-gate",
+      "capabilityVersion": 3
+    },
+    {
+      "capability": "git-workflow",
+      "capabilityVersion": 14
+    },
+    {
+      "capability": "implementer-reviewer-handoff",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "lifecycle-orchestration",
+      "capabilityVersion": 11
+    },
+    {
+      "capability": "owner-acceptance-workflow",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "review-mode-boundary",
+      "capabilityVersion": 3
+    },
+    {
+      "capability": "review-remediation-record",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "roles",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 17
+    },
+    {
+      "capability": "task-lifecycle",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "task-worktree-integration",
+      "capabilityVersion": 6
+    },
+    {
+      "capability": "task-worktree-review-procedure",
+      "capabilityVersion": 12
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 4
+    }
+  ],
+  "capabilityVersions": [
+    {
+      "capability": "audit-prompt",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "code-review-prompt",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "execution-command-gate",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "git-workflow",
+      "capabilityVersion": 14,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "implementer-reviewer-handoff",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "lifecycle-orchestration",
+      "capabilityVersion": 11,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "owner-acceptance-workflow",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "review-mode-boundary",
+      "capabilityVersion": 3,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "review-remediation-record",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "roles",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 17,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-lifecycle",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-integration",
+      "capabilityVersion": 6,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-review-procedure",
+      "capabilityVersion": 12,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "git-workflow",
+      "capabilityVersion": 13,
+      "workflowMode": "lean-delivery"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 4,
+      "workflowMode": "lean-delivery"
+    }
+  ],
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "PROJECT_WORKFLOW.md",
+    "docs/AUDIT_PROMPT_READ_ONLY.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/REVIEW_RECORD_TEMPLATE.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/LIFECYCLE.md",
+    "docs/workflows/REMEDIATION.md",
+    "docs/workflows/REVIEW.md",
+    "tasks/TASK_BLUEPRINT.md"
+  ],
+  "upgradeNotes": [
+    "Run meridian task state import --project <path> --format json, inspect every state proposal and its queue, record, and review evidence, reconcile reported disagreements through the workflow, then repeat with --apply. Existing state files and terminal legacy tasks are skipped."
+  ],
+  "verification": [
+    "Preview and apply import on open tasks; disagreeing evidence stops with TASK_STATE_INVALID and does not write.",
+    "Governed SDD review and Accept use review verdict; remediation and lifecycle use task transition; no manual status or verdict edits.",
+    "Marker baselines and audit match the new capability versions; consumer project A and consumer project B copies upgrade without BLOCKED."
+  ]
+}

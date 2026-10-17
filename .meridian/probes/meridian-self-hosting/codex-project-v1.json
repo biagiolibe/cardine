@@ -1,0 +1,19 @@
+{
+  "checks": [
+    {"behavior": "fresh-session instruction loading", "capability": "language-policy", "dimensions": ["project-trust", "configuration-layer", "instruction-load"]},
+    {"behavior": "large read denial before command execution", "capability": "read-guard", "dimensions": ["hook-configuration", "project-trust", "filesystem-access", "command-result", "read-guard-behavior"]},
+    {"behavior": "worktree command allow and destructive command refusal", "capability": "worktree-safety", "dimensions": ["project-trust", "filesystem-access", "execpolicy-decision", "command-result"]}
+  ],
+  "configurationLayer": "trusted project-local .codex hooks and rules",
+  "evidenceArtifact": null,
+  "fallback": "Keep activation UNVERIFIED and require manual approval plus the host-neutral worktree lifecycle checks.",
+  "host": "Codex CLI",
+  "hostProfile": "codex-project",
+  "hostVersion": "unverified for this repository",
+  "invocationMode": "interactive trusted project session",
+  "observationTime": null,
+  "profileId": "meridian-self-hosting",
+  "profileVersion": 1,
+  "schemaVersion": 1,
+  "state": "UNVERIFIED"
+}

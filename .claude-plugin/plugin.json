@@ -1,0 +1,10 @@
+{
+  "name": "meridian",
+  "version": "1.4.0",
+  "description": "Explicit tasks, isolated worktrees, verified integration. A delivery workflow for AI coding agents.",
+  "license": "MIT",
+  "author": {
+    "name": "Biagio Liberto",
+    "url": "https://github.com/biagiolibe"
+  }
+}

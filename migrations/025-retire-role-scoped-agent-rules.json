@@ -1,0 +1,20 @@
+{
+  "id": "025-retire-role-scoped-agent-rules",
+  "from": "1.1.21",
+  "to": "1.1.22",
+  "description": "Retires role-scoped-agent-rules v1 (docs/AUDIT_TOKEN_EFFICIENCY.md F5, docs/PLAN_TOKEN_EFFICIENCY.md W3.2): under Claude Code's CLAUDE.md auto-injection the file enters the session in full before the rule is ever read, so it saves nothing for CLAUDE.md, and for AGENTS.md the rule's own fallback clause ('if the mapping is otherwise unclear, read the whole file instead') means it degrades to the unoptimized behavior under exactly the conditions where a session is least sure what it is reading -- a conditional saving that vanishes under uncertainty, costing ~1.4 KB of always-loaded policy text. First real exercise of task 007's retirement path: no supersededBy, since nothing replaces this rule -- it is a pure deletion, not a merge.",
+  "removes": [
+    { "capability": "role-scoped-agent-rules", "capabilityVersion": 1 }
+  ],
+  "delta": "In docs/CONTEXT_BUDGET_POLICY.md: the entire 'Role-scoped agent-rules reading' section (the capability=role-scoped-agent-rules v1 marker, delimiters included) is deleted. Nothing else in the file changes; no other capability's text or position is affected.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md no longer carries a MERIDIAN:BEGIN capability=role-scoped-agent-rules marker at any version",
+    "Every other capability marker in docs/CONTEXT_BUDGET_POLICY.md is unchanged",
+    "meridian upgrade on a fixture project locked before this migration removes the block cleanly when the project's copy is unmodified, and reports a blocking conflict (not a silent discard) when the project's copy of the block was locally modified",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

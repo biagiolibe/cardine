@@ -1,0 +1,17 @@
+{
+  "id": "036-explicit-claude-agents-pointer",
+  "from": "1.1.32",
+  "to": "1.1.33",
+  "description": "Replaces the prose-dependent CLAUDE.md-to-AGENTS.md pointer signature with an explicit versioned marker. A project can keep a compact, project-owned Claude entry point while the upgrader still verifies that AGENTS.md holds every shared capability marker and CLAUDE.md holds none. Existing legacy pointers remain recognized so the contract is backward-compatible.",
+  "delta": "The Meridian upgrader recognizes exactly one <!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 --> marker as an explicit CLAUDE.md pointer. It retains the prior four-phrase prose signature as a legacy fallback. Both forms are rejected if CLAUDE.md carries capability markers; pointer verification still requires AGENTS.md to match every shared marker in the current CLAUDE.md template.",
+  "managedPaths": [
+    "CLAUDE.md"
+  ],
+  "verification": [
+    "A CLAUDE.md with exactly one MERIDIAN:CLAUDE-AGENTS-POINTER v1 marker and no capability markers is preserved by meridian upgrade when AGENTS.md contains every shared marker",
+    "Legacy prose-based CLAUDE.md pointers remain preserved by meridian upgrade",
+    "A duplicate explicit pointer marker or any capability marker in CLAUDE.md prevents pointer recognition",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

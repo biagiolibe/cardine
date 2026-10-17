@@ -1,0 +1,18 @@
+{
+  "id": "028-ready-for-review-gate",
+  "from": "1.1.24",
+  "to": "1.1.25",
+  "description": "Makes the execution handoff a required gate before a review-required task may move to READY_FOR_REVIEW. The gate combines the task execution preflight with the structured completion-handoff check, preventing a status-only transition from hiding missing validation, budget, or task/queue consistency evidence.",
+  "capabilities": [
+    { "capability": "task-blueprint", "capabilityVersion": 8 },
+    { "capability": "execution-assets", "capabilityVersion": 2 }
+  ],
+  "delta": "tasks/TASK_BLUEPRINT.md changes task-blueprint v7 to v8: the Review: REQUIRED completion path now requires `meridian execution ready-check` before setting task and queue state to READY_FOR_REVIEW. PROJECT_WORKFLOW.md changes execution-assets v1 to v2 and declares `tasks/handoffs/<TASK-ID>.md` as the canonical completion-handoff location.",
+  "managedPaths": ["tasks/TASK_BLUEPRINT.md", "PROJECT_WORKFLOW.md", "docs/COMPLETION_REPORT_TEMPLATE.md"],
+  "verification": [
+    "tasks/TASK_BLUEPRINT.md carries capability=task-blueprint v8 and names meridian execution ready-check before READY_FOR_REVIEW",
+    "meridian execution ready-check rejects incomplete handoff or invalid preflight and passes only when both gates pass",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "019-marker-aware-capability-insertion",
+  "from": "1.1.15",
+  "to": "1.1.16",
+  "description": "Makes framework upgrade marker-aware when a line-based three-way merge conflicts solely because a project moved intact pre-existing protected blocks and the target template adds new protected capability blocks. The upgrade appends only the new byte-identical marker blocks to the local file; it never edits, moves, or replaces local text. Any missing pre-existing marker or altered protected block remains a blocking conflict.",
+  "managedPaths": [
+    "scripts/meridian.py"
+  ],
+  "verification": [
+    "A project that relocates an unchanged existing marker and upgrades to a template that adds a new marker receives an APPEND-MARKERS plan item instead of a conflict",
+    "Applying APPEND-MARKERS preserves the local text, appends the new marker byte-for-byte, and adds any new managed file",
+    "Any changed or missing inherited protected marker still returns a blocking conflict"
+  ]
+}

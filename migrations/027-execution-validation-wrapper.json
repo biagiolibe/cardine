@@ -1,0 +1,22 @@
+{
+  "id": "027-execution-validation-wrapper",
+  "from": "1.1.23",
+  "to": "1.1.24",
+  "description": "Adds named literal validation commands to governed tasks and an execution wrapper that runs only those commands, preserving the task-declared output bound and exit-status handling while recording the result in project-local execution evidence. Budgeted diagnostics, captures, and context expansions now require a durable evidence-gap record; captures additionally name their acceptance criterion and artifact. Completion handoffs now expose budget use explicitly, so a reviewer can reject a report that silently omits diagnostic, capture, or context-expansion consumption.",
+  "capabilities": [
+    { "capability": "task-blueprint", "capabilityVersion": 7 }
+  ],
+  "delta": "tasks/TASK_BLUEPRINT.md changes its Validation section from an unstructured command placeholder to named literal commands, names `meridian execution validate <TASK-ID> <validation-id> --project .` as the required runner, and requires `meridian execution evidence` before a budgeted diagnostic, capture, or context expansion. docs/COMPLETION_REPORT_TEMPLATE.md adds a Budget usage field. The framework CLI adds execution preflight, validation execution, durable validation-result recording, evidence-gap/capture provenance recording, and completion-handoff checks.",
+  "managedPaths": [
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md"
+  ],
+  "verification": [
+    "tasks/TASK_BLUEPRINT.md carries capability=task-blueprint v7 and declares named literal validation commands",
+    "meridian execution validate runs only a task-declared validation ID and records its exit status",
+    "meridian execution evidence requires an evidence gap and captures additionally record criterion and artifact",
+    "meridian execution handoff-check rejects a report missing Budget usage",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

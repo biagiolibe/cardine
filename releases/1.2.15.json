@@ -1,0 +1,11 @@
+{
+  "version": "1.2.15",
+  "releaseDate": "2026-10-14",
+  "gitTag": "v1.2.15",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.15",
+  "baselineChanged": true,
+  "migrations": [
+    "068-adr-list-discovery"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "006-capability-markers",
+  "from": "1.1.2",
+  "to": "1.1.3",
+  "description": "Wraps the review-remediation-record (001) and lifecycle-orchestration (002) capability text in versioned MERIDIAN:BEGIN/END markers, so a future upgrade can tell a cosmetic merge conflict from a real gap instead of relying only on file-hash comparison. Detection and verification code are unchanged in this migration; see migrations/CAPABILITY_MARKERS.md.",
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/REVIEW_RECORD_TEMPLATE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md"
+  ],
+  "verification": [
+    "AGENTS.md and CLAUDE.md wrap their Review-remediation workflow section in <!-- MERIDIAN:BEGIN capability=review-remediation-record v1 --> / <!-- MERIDIAN:END -->",
+    "AGENTS.md and CLAUDE.md wrap their Autonomous lifecycle orchestration section in <!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v1 --> / <!-- MERIDIAN:END -->",
+    "docs/REVIEW_RECORD_TEMPLATE.md and docs/LIFECYCLE_ORCHESTRATION.md wrap their entire body (after the H1 title) in the matching marker pair",
+    "detect_capabilities() behavior and its existing tests are unaffected: the wrapped text still contains the literal Address review / Run lifecycle phrases"
+  ]
+}

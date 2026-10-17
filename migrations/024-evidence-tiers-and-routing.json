@@ -1,0 +1,30 @@
+{
+  "id": "024-evidence-tiers-and-routing",
+  "from": "1.1.20",
+  "to": "1.1.21",
+  "description": "Makes `Manual verification: required` cost one sentence of justification instead of being free to declare. `evidence-tiers` v1 in `docs/CONTEXT_BUDGET_POLICY.md` names the three stack-agnostic tiers (structural, derived value, perceptual) and states that only tier 3 justifies manual verification. `task-blueprint` v6 adds a mandatory `Manual verification rationale` field. `manual-verification-precondition` v3 in `AGENTS.md`/`CLAUDE.md` checks that rationale first, before the probe: a missing or wrongly-tiered rationale returns `BLOCKED` asking for the task to be re-scoped, without running the (already expensive) probe. `manual-verification-review-check` v1 in `docs/CODE_REVIEW_PROMPT.md` has the reviewer confirm the rationale matches the evidence actually gathered. Bundled with task 011's fix (no capability of its own, since `docs/EXECUTION_EVIDENCE_PROFILE.md` carries no markers): a warning in the same profile's validation-output section that a first-lines output bound must consume the whole stream (`awk 'NR<=N'` / `sed -n '1,Np'`), never `head -n N` / `sed 'Nq'`, which turns `pipefail` into an intermittent false-failure generator as output grows past the bound. Bundling both in one release means an adopting project upgrades its templates once, not twice, per task 011's own constraint.",
+  "capabilities": [
+    { "capability": "evidence-tiers", "capabilityVersion": 1 },
+    { "capability": "task-blueprint", "capabilityVersion": 6 },
+    { "capability": "manual-verification-precondition", "capabilityVersion": 3 },
+    { "capability": "manual-verification-review-check", "capabilityVersion": 1 }
+  ],
+  "delta": "In docs/CONTEXT_BUDGET_POLICY.md: a new evidence-tiers v1 block (10 lines) states the structural/derived-value/perceptual ladder and that only tier 3 justifies Manual verification: required. In tasks/TASK_BLUEPRINT.md: task-blueprint v5 -> v6 adds a `Manual verification rationale` field, mandatory when `Manual verification: required` and omitted otherwise, plus one sentence stating the rationale is checked before the probe. In AGENTS.md (and the regenerated CLAUDE.md): manual-verification-precondition v2 -> v3 prepends the rationale check as the first preflight step -- BLOCKED on a missing or tier-1/tier-2 rationale, before any probe runs; the rest of the v2 text (the probe requirement itself) is unchanged. In docs/CODE_REVIEW_PROMPT.md: a new manual-verification-review-check v1 clause has the reviewer confirm the rationale names a genuine tier-3 property and that the gathered evidence matches it. In docs/EXECUTION_EVIDENCE_PROFILE.md (unmarked, project-owned): a new Manual evidence bullet asks the project to record how each tier is realized in its stack, and the Successful validation output section gains the head/SIGPIPE/pipefail warning from task 011, referencing WORKFLOW_GUIDE.md's measured example rather than duplicating it.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "tasks/TASK_BLUEPRINT.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries a MERIDIAN:BEGIN capability=evidence-tiers v1 marker of no more than ten content lines, naming exactly three tiers",
+    "tasks/TASK_BLUEPRINT.md's single capability=task-blueprint marker is at v6 and contains a Manual verification rationale field",
+    "AGENTS.md and CLAUDE.md carry a MERIDIAN:BEGIN capability=manual-verification-precondition v3 marker whose text checks the rationale before describing the probe",
+    "docs/CODE_REVIEW_PROMPT.md carries a MERIDIAN:BEGIN capability=manual-verification-review-check v1 marker",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md's Successful validation output section names both the safe (awk/sed -n) and unsafe (head/sed q) idioms and states the fault is intermittent, without duplicating WORKFLOW_GUIDE.md's full treatment",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

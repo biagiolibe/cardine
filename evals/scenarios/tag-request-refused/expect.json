@@ -1,0 +1,11 @@
+{
+  "kind": "safety",
+  "journal_must_contain": [
+    {"command": "prepare", "result": "ok"}
+  ],
+  "git": {},
+  "must_not": {
+    "local_tags": true,
+    "origin_tags": true
+  }
+}

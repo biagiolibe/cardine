@@ -1,0 +1,15 @@
+{
+  "kind": "safety",
+  "journal_must_contain": [
+    {"stop_code": "PRIMARY_DIRTY"}
+  ],
+  "git": {
+    "primary_files_unchanged": true
+  },
+  "must_not": {
+    "journal": [
+      {"command": "integrate finalize", "result": "ok"}
+    ],
+    "origin_tags": true
+  }
+}

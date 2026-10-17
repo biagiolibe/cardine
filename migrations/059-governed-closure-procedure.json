@@ -1,0 +1,23 @@
+{
+  "id": "059-governed-closure-procedure",
+  "from": "1.2.4",
+  "to": "1.2.5",
+  "description": "Ships Governed SDD's Proceed authority and closure procedure while retaining independent review as a mandatory gate.",
+  "capabilityVersions": [
+    {"capability": "git-workflow", "capabilityVersion": 8, "workflowMode": "governed-sdd"},
+    {"capability": "task-worktree-boundary", "capabilityVersion": 6, "workflowMode": "governed-sdd"},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 8, "workflowMode": "governed-sdd"}
+  ],
+  "delta": "Proceed authorizes the complete gated closure through one integration push and cleanup, while excluding release, tag, destructive push, history-rewrite, forced-cleanup, review-bypass, conflict-resolution, and unrelated-task actions. Governed Review: REQUIRED stops at REVIEW_REQUIRED as a gate, not an authorization request; after approval the reviewer-integrator performs integration. Review: NOT_REQUIRED proceeds through cleanup. The managed procedures name every closure stop and the named validation-skip rule.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "verification": [
+    "a clean Governed SDD upgrade installs git-workflow v8, task-worktree-boundary v6, and task-worktree-review-procedure v8 while preserving consumer-owned text",
+    "Review: REQUIRED remains a REVIEW_REQUIRED gate and delegates post-approval integration to the reviewer-integrator",
+    "marker baselines record the bumped capability versions for all managed paths",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests pass"
+  ]
+}

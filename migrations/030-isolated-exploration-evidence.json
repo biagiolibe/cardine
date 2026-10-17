@@ -1,0 +1,25 @@
+{
+  "id": "030-isolated-exploration-evidence",
+  "from": "1.1.26",
+  "to": "1.1.27",
+  "description": "Adds a bounded, host-agnostic isolated-exploration record for broad uncertain-yield research, and makes completion handoff checks cross-check declared validation and exploration claims against durable execution evidence rather than accepting report prose alone.",
+  "capabilities": [
+    { "capability": "isolated-exploration", "capabilityVersion": 1 },
+    { "capability": "task-blueprint", "capabilityVersion": 10 }
+  ],
+  "delta": "CONTEXT_BUDGET_POLICY.md adds isolated-exploration rules. EXECUTION_EVIDENCE_PROFILE.md adds the Investigation scope default. tasks/TASK_BLUEPRINT.md changes task-blueprint v9 to v10 and documents `meridian execution investigate`. COMPLETION_REPORT_TEMPLATE.md requires an Isolated exploration line. The CLI records bounded investigation evidence and handoff/ready checks require successful declared validation records and consistent exploration records.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md",
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries capability=isolated-exploration v1",
+    "tasks/TASK_BLUEPRINT.md carries capability=task-blueprint v10 and documents meridian execution investigate",
+    "meridian execution investigate records question, bounded scope, sources, and finding",
+    "execution handoff-check rejects a report whose validation or exploration claims lack matching durable evidence",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

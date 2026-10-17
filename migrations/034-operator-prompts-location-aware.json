@@ -1,0 +1,18 @@
+{
+  "id": "034-operator-prompts-location-aware",
+  "from": "1.1.30",
+  "to": "1.1.31",
+  "description": "Makes the Governed-SDD operator cookbook location-aware and less duplicative. Prompts resolve queue, task, and review-record paths from PROJECT_WORKFLOW.md rather than assuming template paths; the two overlapping design prompts become one; design visibly routes unresolved questions to a bounded SPIKE; and a read-only upgrade-inspection prompt prevents maintenance checks from accidentally invoking adoption or an applying upgrade.",
+  "delta": "docs/OPERATOR_PROMPTS.md adds a location-resolution preamble, replaces hardcoded tasks/QUEUE.md, tasks/TASK_BLUEPRINT.md, and tasks/reviews/<TASK-ID>.md references with canonical project-declared records, combines 'Design a change or decompose a milestone' and 'Design the next milestone or phase', adds the SPIKE shape to the combined design prompt, and adds a read-only 'Inspect a Meridian framework upgrade' prompt. No normative workflow rule, protected capability text, command behavior, or project-specific document is changed.",
+  "managedPaths": [
+    "docs/OPERATOR_PROMPTS.md"
+  ],
+  "verification": [
+    "The governed-SDD operator cookbook resolves canonical locations from PROJECT_WORKFLOW.md and names meridian locations --project . as an optional resolver",
+    "The cookbook no longer hardcodes tasks/QUEUE.md, tasks/TASK_BLUEPRINT.md, or tasks/reviews/<TASK-ID>.md",
+    "The combined design prompt names the bounded SPIKE Question, Budget, and non-production Deliverable",
+    "The upgrade-inspection prompt runs only meridian upgrade --project . --check and explicitly forbids apply, adopt, and finalize-adoption",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

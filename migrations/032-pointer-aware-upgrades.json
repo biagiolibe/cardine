@@ -1,0 +1,20 @@
+{
+  "id": "032-pointer-aware-upgrades",
+  "from": "1.1.28",
+  "to": "1.1.29",
+  "description": "Lets a governed project intentionally keep CLAUDE.md as an AGENTS.md pointer when every shared capability marker is current in AGENTS.md, avoiding duplicate injected context and false merge conflicts. It also marks Investigation scope as an independently mergeable profile capability; an exact unmarked local rule is promoted in place rather than duplicated, and protected prose differing only by hard line wrapping is safely normalized to its canonical block.",
+  "capabilities": [
+    { "capability": "investigation-scope", "capabilityVersion": 1 }
+  ],
+  "delta": "docs/EXECUTION_EVIDENCE_PROFILE.md wraps the Investigation scope default in capability=investigation-scope v1. The upgrader preserves an explicitly declared CLAUDE.md pointer when AGENTS.md contains every shared current marker, promotes an exact pre-marker Investigation scope rule in a customized profile into the protected block rather than appending a duplicate, and normalizes only protected prose whose paragraph content and fenced blocks remain unchanged.",
+  "managedPaths": [
+    "CLAUDE.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md"
+  ],
+  "verification": [
+    "A declared CLAUDE.md pointer remains unchanged during upgrade when AGENTS.md carries every shared current marker",
+    "A customized execution-evidence profile receives exactly one capability=investigation-scope v1 block",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

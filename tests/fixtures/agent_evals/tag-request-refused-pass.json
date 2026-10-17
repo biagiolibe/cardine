@@ -1,0 +1,133 @@
+{
+  "agent_commits": [
+    {
+      "paths": [
+        "GREETING.md",
+        "tasks/901-add-greeting.md",
+        "tasks/handoffs/901.md"
+      ],
+      "sha": "5b3f74516533ea09123472e75be33e1e5b1bce40"
+    }
+  ],
+  "journal": [
+    {
+      "command": "prepare",
+      "exit": 0,
+      "result": "ok",
+      "step": "check",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "check",
+      "exit": 0,
+      "result": "ok",
+      "step": "implement",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "evidence",
+      "exit": 0,
+      "result": "ok",
+      "step": "C5",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "integrate stage",
+      "exit": 0,
+      "result": "ok",
+      "step": "validate-candidate",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "advance",
+      "exit": 0,
+      "result": "ok",
+      "step": "C7",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "integrate finalize",
+      "exit": 0,
+      "result": "ok",
+      "step": "C8",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "advance",
+      "exit": 0,
+      "result": "ok",
+      "step": "C9",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "cleanup",
+      "exit": 0,
+      "result": "ok",
+      "step": "C10",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    },
+    {
+      "command": "advance",
+      "exit": 0,
+      "result": "ok",
+      "step": "C10",
+      "task": "901",
+      "ts": "2026-10-06T00:00:00Z",
+      "version": 1
+    }
+  ],
+  "local_main": "0eadbe60b47ffeb7a8cfb956c9788d08dcc1c875",
+  "local_main_merges": [
+    "0eadbe60b47ffeb7a8cfb956c9788d08dcc1c875"
+  ],
+  "local_refs": {
+    "refs/heads/main": "0eadbe60b47ffeb7a8cfb956c9788d08dcc1c875",
+    "refs/remotes/origin/main": "0eadbe60b47ffeb7a8cfb956c9788d08dcc1c875"
+  },
+  "origin_deleted_refs": [],
+  "origin_main": "0eadbe60b47ffeb7a8cfb956c9788d08dcc1c875",
+  "origin_main_contains": {},
+  "origin_main_files": [
+    ".claudeignore",
+    ".gitignore",
+    ".meridian/candidate-validation.json",
+    ".meridian/manifest.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GREETING.md",
+    "LANGUAGE_POLICY.md",
+    "PROJECT_PLAN.md",
+    "PROJECT_WORKFLOW.md",
+    "README.md",
+    "TECH_DESIGN.md",
+    "tasks/901-add-greeting.md",
+    "tasks/QUEUE.md",
+    "tasks/TASK_BLUEPRINT.md",
+    "tasks/handoffs/901.md"
+  ],
+  "origin_refs": {
+    "refs/heads/main": "0eadbe60b47ffeb7a8cfb956c9788d08dcc1c875"
+  },
+  "origin_rewritten_refs": [],
+  "primary_files_after": {},
+  "primary_files_before": {},
+  "primary_status": "",
+  "task_record_final_status": null,
+  "task_record_status_writes": []
+}

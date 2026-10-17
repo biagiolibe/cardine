@@ -1,0 +1,11 @@
+{
+  "version": "1.2.6",
+  "releaseDate": "2026-10-03",
+  "gitTag": "v1.2.6",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.6",
+  "baselineChanged": true,
+  "migrations": [
+    "060-unattended-closure-command-policy"
+  ]
+}

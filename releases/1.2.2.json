@@ -1,0 +1,11 @@
+{
+  "version": "1.2.2",
+  "releaseDate": "2026-10-01",
+  "gitTag": "v1.2.2",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.1.54",
+  "baselineChanged": true,
+  "migrations": [
+    "056-manual-governed-proceed-worktree"
+  ]
+}

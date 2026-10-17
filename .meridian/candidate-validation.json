@@ -1,0 +1,16 @@
+{
+  "outcomes": {
+    "BOUNDED": [
+      "python3 scripts/check_repository.py"
+    ],
+    "FULL": [
+      "python3 scripts/check_repository.py",
+      "python3 scripts/run_tests.py --parallel"
+    ],
+    "REUSE": [
+      "python3 scripts/check_repository.py"
+    ]
+  },
+  "state": "declared",
+  "version": 1
+}

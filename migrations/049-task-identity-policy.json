@@ -1,0 +1,18 @@
+{
+  "id": "049-task-identity-policy",
+  "from": "1.1.45",
+  "to": "1.1.46",
+  "description": "Adds the optional closed task-identity policy declaration and shared resolver guidance while preserving opaque mode when no declaration exists.",
+  "capabilities": [
+    {"capability": "task-identity-policy", "capabilityVersion": 1}
+  ],
+  "delta": "Lean Delivery and Governed SDD identify .meridian/task-identity.json as the sole optional identity declaration and state that absence selects opaque mode. The migration never creates that project-owned file or rewrites task and queue identities.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md"
+  ],
+  "verification": [
+    "both workflow templates carry task-identity-policy v1",
+    "upgrade planning changes only managed workflow guidance and never creates .meridian/task-identity.json",
+    "resolver and CLI tests cover opaque compatibility, milestone identities, ambiguity, collisions, malformed declarations, and exit codes"
+  ]
+}

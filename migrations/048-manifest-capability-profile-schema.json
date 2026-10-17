@@ -1,0 +1,19 @@
+{
+  "description": "Introduces manifest protocol v2 with canonical workflowMode and validated capability-profile declarations backed by the versioned capability catalog.",
+  "from": "1.1.44",
+  "id": "048-manifest-capability-profile-schema",
+  "managedPaths": [],
+  "schemaTransition": {
+    "catalogVersion": 1,
+    "fromProtocolVersion": 1,
+    "legacyWorkflowModeField": "mode",
+    "toProtocolVersion": 2,
+    "workflowModeField": "workflowMode"
+  },
+  "to": "1.1.45",
+  "verification": [
+    "legacy protocol v1 manifests load without inferred capability declarations",
+    "protocol v2 writers emit workflowMode and preserve appliedMigrations as historical provenance",
+    "Lean and Governed capability-profile declarations pass schema, compatibility, invalid-state, and round-trip tests"
+  ]
+}

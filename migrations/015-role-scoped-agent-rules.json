@@ -1,0 +1,17 @@
+{
+  "id": "015-role-scoped-agent-rules",
+  "from": "1.1.11",
+  "to": "1.1.12",
+  "description": "Adds a governed-SDD capability that scopes how much of AGENTS.md/CLAUDE.md a session reads by its role. Every role reads a shared core (introductory rules through \"Command triggers\", plus \"Owner-acceptance workflow\"); an implementer additionally reads the implementation-side sections, a reviewer-integrator the review-side sections, and the orchestrator does not read the file at all beyond confirming its own trigger phrases. Sections are matched by heading text, with an explicit fallback to reading the whole file when a heading is missing or the mapping is unclear.",
+  "capability": "role-scoped-agent-rules",
+  "capabilityVersion": 1,
+  "delta": "Add the Role-scoped agent-rules reading section to docs/CONTEXT_BUDGET_POLICY.md. Does not restructure AGENTS.md/CLAUDE.md or move any existing capability marker between files; it only narrows which sections of those files a session reads by role.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries a MERIDIAN:BEGIN capability=role-scoped-agent-rules v1 marker defining the shared core and the implementer/reviewer/orchestrator additional reads by heading name",
+    "The marker states an explicit fallback to reading the whole file when a named heading is missing, renamed, or the mapping is unclear",
+    "AGENTS.md and CLAUDE.md are unchanged by this migration; no capability marker moves file"
+  ]
+}

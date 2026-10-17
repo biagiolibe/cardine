@@ -1,0 +1,21 @@
+{
+  "id": "053-codex-profile-repair-guidance",
+  "from": "1.1.49",
+  "to": "1.1.51",
+  "description": "Adds the bounded recovery procedure for a Codex permission profile whose Meridian ownership markers were damaged by a host rewrite.",
+  "capabilities": [
+    {
+      "capability": "codex-worktree-access",
+      "capabilityVersion": 2
+    }
+  ],
+  "delta": "Both workflows now state that `meridian codex configure --check` reports a named `repair-required` state when the effective profile is identical and only Meridian's ownership markers are damaged, that the printed diff must be reviewed and `--apply` confirmed explicitly, that any divergent profile stays BLOCKED with the diverging fields named, and that repair never proves a running session loaded the profile.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md"
+  ],
+  "verification": [
+    "upgrade from codex-worktree-access v1 installs the recovery paragraph in both Lean Delivery and Governed SDD while preserving consumer-owned text",
+    "repair tests cover the observed Codex app rewrite, damaged marker shapes, idempotence, exclusive private backups, and blocked divergent profiles",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests -v pass"
+  ]
+}

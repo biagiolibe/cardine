@@ -1,0 +1,17 @@
+{
+  "id": "035-tech-design-alignment-prompt",
+  "from": "1.1.31",
+  "to": "1.1.32",
+  "description": "Adds a read-only Tech-design alignment operator prompt. It gives a project-design chat a bounded current-state briefing before answering design, scope, architecture, roadmap, or future-work questions, without silently turning that preparation into task selection or implementation.",
+  "delta": "docs/OPERATOR_PROMPTS.md adds section 1a, 'Align tech design for questions and future work (read-only)'. The prompt reads only the local authorities, canonical queue's non-terminal entries, direct dependencies, Git state, and active milestone authority; it requires evidence-gated expansion and a concise readiness brief, and explicitly forbids mutations, task/ADR creation, review, validation, roadmap invention, or implementation.",
+  "managedPaths": [
+    "docs/OPERATOR_PROMPTS.md"
+  ],
+  "verification": [
+    "The governed-SDD operator cookbook contains a read-only Tech-design alignment prompt",
+    "The prompt produces a concise readiness brief naming constraints, active work, dependencies, open questions, risks, and evidence gaps",
+    "The prompt permits expanded reads only for a stated evidence gap and forbids mutations, task/ADR creation, implementation, review, validation, and roadmap invention",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

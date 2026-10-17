@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meridian.local/schemas/capability-catalog-v1.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "capabilities": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "dependencies": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "version": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "version"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "evidenceRequirements": {
+            "additionalProperties": false,
+            "properties": {
+              "hostActivation": {
+                "$ref": "#/$defs/stringList"
+              },
+              "installation": {
+                "$ref": "#/$defs/stringList"
+              },
+              "verification": {
+                "$ref": "#/$defs/stringList"
+              }
+            },
+            "required": [
+              "installation",
+              "hostActivation",
+              "verification"
+            ],
+            "type": "object"
+          },
+          "hostProfiles": {
+            "additionalProperties": {
+              "additionalProperties": false,
+              "properties": {
+                "evidenceKind": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "evidenceKind"
+              ],
+              "type": "object"
+            },
+            "type": "object"
+          },
+          "installationForms": {
+            "items": {
+              "enum": [
+                "managed-copy",
+                "shared-source",
+                "declaration-only"
+              ]
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "managedSurfaces": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "forms": {
+                  "items": {
+                    "enum": [
+                      "managed-copy",
+                      "shared-source",
+                      "declaration-only"
+                    ]
+                  },
+                  "minItems": 1,
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "path": {
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "forms"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "selfHostingEligible": {
+            "type": "boolean"
+          },
+          "version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "workflowModes": {
+            "items": {
+              "enum": [
+                "lean-delivery",
+                "governed-sdd"
+              ]
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "version",
+          "workflowModes",
+          "selfHostingEligible",
+          "hostProfiles",
+          "installationForms",
+          "managedSurfaces",
+          "evidenceRequirements",
+          "dependencies"
+        ],
+        "type": "object"
+      },
+      "minProperties": 1,
+      "type": "object"
+    },
+    "catalogVersion": {
+      "const": 1
+    },
+    "profiles": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "additionalProperties": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "minProperties": 1,
+            "type": "object"
+          },
+          "hostProbes": {
+            "additionalProperties": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "verificationProbe": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "workflowModes": {
+            "items": {
+              "enum": [
+                "governed-sdd",
+                "lean-delivery"
+              ]
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "version",
+          "capabilities",
+          "hostProbes",
+          "verificationProbe"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "catalogVersion",
+    "capabilities",
+    "profiles"
+  ],
+  "title": "Meridian capability catalog v1",
+  "type": "object",
+  "$defs": {
+    "stringList": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    }
+  }
+}

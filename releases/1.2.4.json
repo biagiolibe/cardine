@@ -1,0 +1,11 @@
+{
+  "version": "1.2.4",
+  "releaseDate": "2026-10-03",
+  "gitTag": "v1.2.4",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.4",
+  "baselineChanged": true,
+  "migrations": [
+    "058-lean-closure-procedure"
+  ]
+}

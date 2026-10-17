@@ -1,0 +1,19 @@
+{
+  "id": "009-lifecycle-orchestration-v2",
+  "from": "1.1.5",
+  "to": "1.1.6",
+  "description": "Removes the hardcoded tasks/reviews/<TASK-ID>.md path from the lifecycle-orchestration capability's canonical text in docs/LIFECYCLE_ORCHESTRATION.md, referencing PROJECT_WORKFLOW.md's canonical-locations declaration (added by migration 008) instead. The AGENTS.md/CLAUDE.md marked section for this capability has no hardcoded path and is unchanged in content, but its marker is relabeled to v2 for consistency: detection requires every occurrence of a capability's marker to agree on version, or the lowest one found would report the capability as stale.",
+  "capability": "lifecycle-orchestration",
+  "capabilityVersion": 2,
+  "delta": "Replace the literal tasks/reviews/<TASK-ID>.md path in docs/LIFECYCLE_ORCHESTRATION.md's handoff-interface sentence with a reference to PROJECT_WORKFLOW.md's canonical locations. Relabel the unchanged AGENTS.md/CLAUDE.md marker from v1 to v2 to match. No behavioral change for a project that keeps the default locations.",
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md"
+  ],
+  "verification": [
+    "docs/LIFECYCLE_ORCHESTRATION.md carries a MERIDIAN:BEGIN capability=lifecycle-orchestration v2 marker with no hardcoded tasks/reviews/<TASK-ID>.md path inside it",
+    "AGENTS.md and CLAUDE.md carry a MERIDIAN:BEGIN capability=lifecycle-orchestration v2 marker with unchanged content",
+    "A project that declares a different review-record location still carries byte-identical v2 protected text and passes meridian audit"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "id": "051-bounded-worktree-lifecycle",
+  "from": "1.1.47",
+  "to": "1.1.48",
+  "description": "Installs the host-neutral bounded worktree lifecycle, prepare-before-worker routing, candidate-bound integration evidence, and exact Codex command rules.",
+  "capabilities": [
+    {"capability": "bounded-worktree-lifecycle", "capabilityVersion": 1},
+    {"capability": "git-workflow", "capabilityVersion": 6},
+    {"capability": "lifecycle-orchestration", "capabilityVersion": 7},
+    {"capability": "task-worktree-boundary", "capabilityVersion": 3},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 4},
+    {"capability": "task-worktree-review", "capabilityVersion": 4},
+    {"capability": "task-worktree-remediation", "capabilityVersion": 2}
+  ],
+  "delta": "All workflow modes use meridian worktree prepare, check, integrate stage/finalize/abort, and cleanup. Coordinators prepare before launching a worker; workers must bind to and check the exact existing path before reading task material. Validation remains outside the allowlisted lifecycle command and is bound to the staged candidate tree.",
+  "managedPaths": [
+    ".codex/rules/meridian.rules",
+    "PROJECT_WORKFLOW.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/REVIEW.md",
+    "docs/workflows/REMEDIATION.md"
+  ],
+  "verification": [
+    "real temporary repositories cover prepare, check, stage, finalize, abort, and cleanup",
+    "worker routing rejects primary and substitute worktrees before task reads",
+    "Codex rules allow only the named Meridian lifecycle action prefixes and retain restrictive raw Git rules",
+    "python3 scripts/check_repository.py and the complete unit suite pass"
+  ]
+}

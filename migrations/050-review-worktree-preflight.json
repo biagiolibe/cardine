@@ -1,0 +1,26 @@
+{
+  "id": "050-review-worktree-preflight",
+  "from": "1.1.46",
+  "to": "1.1.47",
+  "description": "Removes the contradictory primary-checkout review procedure and makes verified registered-task-worktree preflight the first substantive review action.",
+  "capabilities": [
+    {"capability": "implementer-reviewer-handoff", "capabilityVersion": 2},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 3},
+    {"capability": "task-worktree-review", "capabilityVersion": 3},
+    {"capability": "git-workflow", "capabilityVersion": 5},
+    {"capability": "lifecycle-orchestration", "capabilityVersion": 6}
+  ],
+  "delta": "The handoff now records only durable completion evidence and sequential worktree ownership. Review begins by reading that handoff and verifying the registered absolute task-worktree path, branch, HEAD, cleanliness, validated commits, ancestry, and stopped implementer before any task, implementation, or diff read. Sessions launched in the primary checkout root every review operation in the verified task worktree and never switch the primary checkout.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "verification": [
+    "upgrade from implementer-reviewer-handoff v1 and task-worktree-review-procedure v2 installs the corrected blocks while preserving consumer-owned text",
+    "repository checks reject retired primary-checkout review instructions",
+    "template tests cover primary-checkout launch, valid registered worktree progression, and fail-closed missing, mismatched, dirty, or handoff-disagreeing worktrees",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

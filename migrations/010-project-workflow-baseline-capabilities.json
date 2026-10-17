@@ -1,0 +1,24 @@
+{
+  "id": "010-project-workflow-baseline-capabilities",
+  "from": "1.1.6",
+  "to": "1.1.7",
+  "description": "Wraps PROJECT_WORKFLOW.md's eight independent rule sections in versioned MERIDIAN:BEGIN/END markers, backfilling capability tracking for the single most important managed file — it carries the GOVERNED_SDD mode lock itself — which had none until now. Purely additive: no section's content changes, only markers are added around pre-existing text.",
+  "capabilities": [
+    { "capability": "workflow-mode-lock", "capabilityVersion": 1 },
+    { "capability": "document-precedence", "capabilityVersion": 1 },
+    { "capability": "task-lifecycle", "capabilityVersion": 1 },
+    { "capability": "execution-assets", "capabilityVersion": 1 },
+    { "capability": "roles", "capabilityVersion": 1 },
+    { "capability": "review-policy", "capabilityVersion": 1 },
+    { "capability": "git-workflow", "capabilityVersion": 1 },
+    { "capability": "execution-discipline", "capabilityVersion": 1 }
+  ],
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md"
+  ],
+  "verification": [
+    "Each of PROJECT_WORKFLOW.md's eight ## sections is wrapped in its own MERIDIAN:BEGIN/END marker pair with the capability ids listed above, each at v1",
+    "The Reviewer-integrator identity subsection stays folded inside the git-workflow marker rather than getting its own",
+    "PROJECT_WORKFLOW.md's content is otherwise byte-identical to before this migration"
+  ]
+}

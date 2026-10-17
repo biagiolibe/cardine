@@ -1,0 +1,15 @@
+{
+  "id": "042-codex-read-guard-hook",
+  "from": "1.1.38",
+  "to": "1.1.39",
+  "description": "Adds the governed-SDD project-local Codex PreToolUse Bash hook for Meridian's advisory-safe large-file read guard.",
+  "delta": "Add `.codex/hooks.json` to governed-SDD managed files. The hook invokes `meridian hook read-guard --host codex`; it recognizes only documented static read commands, blocks over-budget effective line totals with stderr plus structured deny output, and allows all unknown or failed parses.",
+  "managedPaths": [
+    ".codex/hooks.json"
+  ],
+  "verification": [
+    "`python3 -m unittest discover -s tests -v` passes",
+    "a trusted governed-SDD Codex project blocks `cat` of a file over its Read-guard threshold and leaves a chained command unexecuted",
+    "`python3 scripts/check_repository.py` passes"
+  ]
+}

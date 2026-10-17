@@ -1,0 +1,11 @@
+# Editor/IDE config — not project source.
+.vscode/
+.idea/
+
+# OS cruft.
+.DS_Store
+
+# VCS internals — use git commands, not direct reads.
+.git/
+
+# Aggiungere qui build artifact, lockfile e altri file generati specifici dello stack.

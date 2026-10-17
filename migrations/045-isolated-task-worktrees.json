@@ -1,0 +1,39 @@
+{
+  "id": "045-isolated-task-worktrees",
+  "from": "1.1.41",
+  "to": "1.1.42",
+  "description": "Makes a deterministic linked worktree the execution boundary for every task and adds parallel-safe serialized integration.",
+  "capabilities": [
+    {"capability": "roles", "capabilityVersion": 2},
+    {"capability": "git-workflow", "capabilityVersion": 2},
+    {"capability": "task-worktree-boundary", "capabilityVersion": 1},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 1},
+    {"capability": "task-worktree-remediation", "capabilityVersion": 1},
+    {"capability": "lifecycle-orchestration", "capabilityVersion": 4},
+    {"capability": "task-worktree-lifecycle", "capabilityVersion": 1},
+    {"capability": "task-worktree-review", "capabilityVersion": 1},
+    {"capability": "task-worktree-integration", "capabilityVersion": 1},
+    {"capability": "task-worktree-handoff", "capabilityVersion": 1},
+    {"capability": "audit-prompt", "capabilityVersion": 2}
+  ],
+  "delta": "Every task now runs in a deterministic linked worktree with one sequential writer; handoffs identify that worktree and its commits; review reuses it without switching the primary checkout; and final integration serializes validated no-fast-forward merge commits while retaining blocked task state.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/AUDIT_PROMPT_READ_ONLY.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/LIFECYCLE.md",
+    "docs/workflows/REMEDIATION.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "verification": [
+    "`python3 -m unittest discover -s tests -v` passes, including two worktrees created from one main commit and serial combined-tree integration",
+    "a clean upgrade from 1.1.41 installs the isolated-worktree capabilities while preserving consumer-owned text outside protected regions",
+    "`python3 scripts/check_repository.py` passes"
+  ]
+}

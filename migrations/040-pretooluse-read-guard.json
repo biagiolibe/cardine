@@ -1,0 +1,23 @@
+{
+  "id": "040-pretooluse-read-guard",
+  "from": "1.1.36",
+  "to": "1.1.37",
+  "description": "Mechanically enforces the file-read discipline docs/CONTEXT_BUDGET_POLICY.md already states in prose (docs/PROPOSAL_CONTEXT_ENFORCEMENT.md, M2/D1: a whole-file Read of a large source file and of the ADR log both happened in the measured session even though the need was never ambiguous). hooks/read-guard.sh is a new PreToolUse hook for the Read tool: in a Meridian project (PROJECT_WORKFLOW.md present), it denies an unranged Read of a file past a configurable line-count threshold (default 400, `Read-guard threshold` in docs/EXECUTION_EVIDENCE_PROFILE.md) unless the file is exempt -- LANGUAGE_POLICY.md, the active task's own file and every source its `Authority` bullets name (reusing task 034's `meridian context authority` resolution when the framework provides it), or a file a project's docs/workflows/ENTRY_ROUTER.md declares always-loaded. The denial names the line count, the threshold, and the two cheap alternatives (`grep -n` then a ranged Read, or task 034's `meridian context authority`/`meridian adr show` for an ADR log or spec file); on any parse or resolution failure the hook allows the read rather than blocking on an internal error. `read-guard v1` in docs/CONTEXT_BUDGET_POLICY.md notes the mechanical backing for the existing 'read only the task's Authority entries' rule without restating it.",
+  "capabilities": [
+    { "capability": "read-guard", "capabilityVersion": 1 }
+  ],
+  "delta": "In docs/CONTEXT_BUDGET_POLICY.md: a new capability=read-guard v1 marker is added as item 7 of the existing 'Task-first loading' numbered list. In docs/EXECUTION_EVIDENCE_PROFILE.md's template: a documented, overridable `Read-guard threshold` setting (default 400) alongside the existing profile settings. hooks/read-guard.sh (new; framework tooling, no per-project copy) implements the guard, and hooks/hooks.json registers it on PreToolUse for the Read tool alongside the existing UserPromptSubmit queue-briefing hook.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries a MERIDIAN:BEGIN capability=read-guard v1 marker inside the Task-first loading section",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md's template documents an overridable `Read-guard threshold` setting with a default of 400",
+    "hooks/read-guard.sh denies an unranged Read of a file past the threshold in a Meridian project, allows it with offset/limit or under the threshold, allows an exempted file, and allows (inactive) outside a Meridian project",
+    "hooks/read-guard.sh allows the read on any parse or resolution failure rather than blocking on an internal error",
+    "hooks/hooks.json registers hooks/read-guard.sh on PreToolUse for the Read tool",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

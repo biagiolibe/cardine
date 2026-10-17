@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meridian.local/schemas/task-state-v1.schema.json",
+  "title": "Meridian task state v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "task_id",
+    "workflow",
+    "status",
+    "transitions"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\\\s]+$"
+    },
+    "workflow": {
+      "type": "string",
+      "enum": [
+        "lean-delivery",
+        "governed-sdd"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "QUEUED",
+        "IN_PROGRESS",
+        "CHANGES_REQUESTED",
+        "READY_FOR_REVIEW",
+        "ACCEPTED",
+        "ANSWERED",
+        "INCONCLUSIVE",
+        "DONE"
+      ]
+    },
+    "transitions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "from",
+          "to",
+          "commit",
+          "at"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "IN_PROGRESS",
+              "CHANGES_REQUESTED",
+              "READY_FOR_REVIEW",
+              "ACCEPTED",
+              "ANSWERED",
+              "INCONCLUSIVE",
+              "DONE"
+            ]
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "IN_PROGRESS",
+              "CHANGES_REQUESTED",
+              "READY_FOR_REVIEW",
+              "ACCEPTED",
+              "ANSWERED",
+              "INCONCLUSIVE",
+              "DONE"
+            ]
+          },
+          "commit": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$",
+            "minLength": 40,
+            "maxLength": 40
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|\\+00:00)$"
+          }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "verdict",
+        "attempt",
+        "reviewed_commit",
+        "approved_by"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "verdict": {
+          "enum": [
+            null,
+            "APPROVE",
+            "CHANGES_REQUESTED",
+            "BLOCKED"
+          ]
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reviewed_commit": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$",
+              "minLength": 40,
+              "maxLength": 40
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approved_by": {
+          "enum": [
+            null,
+            "reviewer",
+            "owner"
+          ]
+        }
+      }
+    }
+  }
+}

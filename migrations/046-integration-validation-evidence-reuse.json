@@ -1,0 +1,28 @@
+{
+  "id": "046-integration-validation-evidence-reuse",
+  "from": "1.1.42",
+  "to": "1.1.43",
+  "description": "Reuses commit-bound task validation evidence during serialized worktree integration and replaces unconditional complete combined-tree validation with a deterministic bounded gate and conservative escalation rules.",
+  "capabilities": [
+    {"capability": "git-workflow", "capabilityVersion": 3},
+    {"capability": "lifecycle-orchestration", "capabilityVersion": 5},
+    {"capability": "task-worktree-review", "capabilityVersion": 2},
+    {"capability": "task-worktree-integration", "capabilityVersion": 2},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 2},
+    {"capability": "task-worktree-handoff", "capabilityVersion": 2}
+  ],
+  "delta": "Completion handoffs bind validation commands and success evidence to validated task/base commits and declare integration surfaces. Integration reuses unchanged-base evidence, records deterministic independence for advanced main, always runs git diff --check plus an optional declared smoke command, and escalates to full validation only for explicit or material interaction risk while preserving review and forge gates.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "verification": [
+    "decision-table and temporary-repository tests cover evidence reuse, advanced-main comparisons, stale commits, optional smoke behavior, escalation, and clean abort",
+    "a clean upgrade from 1.1.42 installs all v2/v3/v5 integration-evidence capabilities while preserving consumer-owned text outside protected regions",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

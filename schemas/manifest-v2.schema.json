@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meridian.local/schemas/manifest-v2.schema.json",
+  "properties": {
+    "appliedMigrations": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "capabilityProfiles": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "additionalProperties": {
+              "$ref": "#/$defs/capabilityDeclaration"
+            },
+            "minProperties": 1,
+            "type": "object"
+          },
+          "profileVersion": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profileVersion",
+          "capabilities"
+        ],
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "frameworkVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "managedFiles": {
+      "additionalProperties": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "protocolVersion": {
+      "const": 2
+    },
+    "workflowBaselineVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "workflowMode": {
+      "enum": [
+        "lean-delivery",
+        "governed-sdd"
+      ]
+    }
+  },
+  "required": [
+    "protocolVersion",
+    "workflowMode",
+    "frameworkVersion",
+    "managedFiles",
+    "appliedMigrations"
+  ],
+  "title": "Meridian manifest protocol v2",
+  "type": "object",
+  "$defs": {
+    "capabilityDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "hostActivation": {
+          "additionalProperties": {
+            "$ref": "#/$defs/hostSnapshot"
+          },
+          "type": "object"
+        },
+        "installation": {
+          "$ref": "#/$defs/installationSnapshot"
+        },
+        "managedSurface": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "form": {
+                "enum": [
+                  "managed-copy",
+                  "shared-source",
+                  "declaration-only"
+                ]
+              },
+              "path": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "form"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "requiredVersion": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "verification": {
+          "$ref": "#/$defs/verificationSnapshot"
+        }
+      },
+      "required": [
+        "requiredVersion",
+        "managedSurface",
+        "installation",
+        "hostActivation",
+        "verification"
+      ],
+      "type": "object"
+    },
+    "evidence": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "hostSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "notApplicableRationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "enum": [
+            "ENFORCED",
+            "ADVISORY",
+            "UNSUPPORTED",
+            "UNVERIFIED",
+            "NOT_APPLICABLE"
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "evidence",
+        "notApplicableRationale"
+      ],
+      "type": "object"
+    },
+    "installationSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "notApplicableRationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "enum": [
+            "INSTALLED",
+            "MISSING",
+            "DRIFTED",
+            "NOT_APPLICABLE"
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "evidence",
+        "notApplicableRationale"
+      ],
+      "type": "object"
+    },
+    "verificationSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "notApplicableRationale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "enum": [
+            "PASS",
+            "ADVISORY",
+            "UNVERIFIED",
+            "NOT_APPLICABLE",
+            "FAIL"
+          ]
+        },
+        "verifiedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verifierVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "evidence",
+        "verifiedAt",
+        "verifierVersion",
+        "notApplicableRationale"
+      ],
+      "type": "object"
+    }
+  }
+}

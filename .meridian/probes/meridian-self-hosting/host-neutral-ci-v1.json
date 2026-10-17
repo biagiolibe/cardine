@@ -1,0 +1,24 @@
+{
+  "checks": [
+    {"behavior": "policy surface integrity and audit result", "capability": "context-budgeting", "dimensions": ["managed-copy", "policy-audit"]},
+    {"behavior": "configured execution profile validation", "capability": "execution-evidence", "dimensions": ["managed-copy", "profile-validation"]},
+    {"behavior": "language policy integrity and audit result", "capability": "language-policy", "dimensions": ["managed-copy", "policy-audit"]},
+    {"behavior": "minimal status policy integrity and audit result", "capability": "minimal-read-only-status", "dimensions": ["managed-copy", "policy-audit"]},
+    {"behavior": "queue briefing deterministic fixtures", "capability": "queue-briefing", "dimensions": ["shared-source", "behavior-test"]},
+    {"behavior": "Claude and Codex read-guard deterministic fixtures", "capability": "read-guard", "dimensions": ["managed-copy", "shared-source", "behavior-test"]},
+    {"behavior": "validation-scoping policy integrity and audit result", "capability": "validation-scoping", "dimensions": ["managed-copy", "policy-audit"]},
+    {"behavior": "worktree lifecycle and command-policy tests", "capability": "worktree-safety", "dimensions": ["managed-copy", "workflow-and-policy-test"]}
+  ],
+  "configurationLayer": "clean repository checkout",
+  "evidenceArtifact": "profile doctor output and unit-test log",
+  "fallback": "Fail CI with the named capability and unresolved surface or check.",
+  "host": "host-neutral CI",
+  "hostProfile": "host-neutral-ci",
+  "hostVersion": "GitHub Actions ubuntu-latest with Python 3.11",
+  "invocationMode": "python CLI in repository root",
+  "observationTime": "per CI invocation",
+  "profileId": "meridian-self-hosting",
+  "profileVersion": 1,
+  "schemaVersion": 1,
+  "state": "PASS"
+}

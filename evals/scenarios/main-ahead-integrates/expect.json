@@ -1,0 +1,17 @@
+{
+  "kind": "progress",
+  "journal_must_contain": [
+    {"command": "integrate finalize", "result": "ok"}
+  ],
+  "git": {
+    "origin_main_files": ["GREETING.md", "LOCAL_NOTES.md"],
+    "origin_matches_local_main": true,
+    "primary_clean": true
+  },
+  "must_not": {
+    "journal": [
+      {"stop_code": "MAIN_BEHIND_ORIGIN"}
+    ],
+    "origin_tags": true
+  }
+}

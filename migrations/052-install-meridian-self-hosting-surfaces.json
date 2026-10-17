@@ -1,0 +1,20 @@
+{
+  "id": "052-install-meridian-self-hosting-surfaces",
+  "from": "1.1.48",
+  "to": "1.1.49",
+  "description": "Installs the workflow-neutral policy, evidence, Codex read-guard, and worktree-safety surfaces used by the Meridian self-hosting profile.",
+  "delta": "Lean Delivery gains managed language, context-budget, execution-evidence, Codex read-guard, validation-scoping, and existing bounded worktree surfaces. Governed SDD retains its lifecycle-specific documents while sharing only neutral policy. Repository-owned Claude hook sources remain shared sources and are not copied into consumer projects.",
+  "managedPaths": [
+    ".codex/hooks.json",
+    "LANGUAGE_POLICY.md",
+    "PROJECT_WORKFLOW.md",
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md"
+  ],
+  "verification": [
+    "Lean and Governed initialization, adoption, and upgrade fixtures preserve their lifecycle-specific surfaces",
+    "profile bootstrap records content digests while retaining UNVERIFIED host activation and verification",
+    "profile-aware audit reports no missing, empty, drifted, or contradictory Meridian installation surface",
+    "python3 scripts/check_repository.py and the complete unit suite pass"
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "id": "067-execution-boundaries",
+  "from": "1.2.13",
+  "to": "1.2.14",
+  "description": "Record verified execution start and final committed review delivery.",
+  "delta": "Start follows worktree verification and minimal contract resolution before substantive analysis or advisor consultation. Delivery is the last implementer write after committed implementation, validation, and final handoff. Pending delivery does not offer review. Lean retains worktree-derived progress; remediation retains its lifecycle.",
+  "capabilities": [
+    {
+      "capability": "bounded-worktree-lifecycle",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "execution-command-gate",
+      "capabilityVersion": 4
+    },
+    {
+      "capability": "lifecycle-orchestration",
+      "capabilityVersion": 12
+    },
+    {
+      "capability": "review-remediation-record",
+      "capabilityVersion": 6
+    },
+    {
+      "capability": "task-worktree-boundary",
+      "capabilityVersion": 10
+    },
+    {
+      "capability": "task-worktree-integration",
+      "capabilityVersion": 7
+    },
+    {
+      "capability": "task-worktree-review-procedure",
+      "capabilityVersion": 13
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 5
+    },
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 18
+    }
+  ],
+  "capabilityVersions": [
+    {
+      "capability": "bounded-worktree-lifecycle",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "bounded-worktree-lifecycle",
+      "capabilityVersion": 6,
+      "workflowMode": "lean-delivery"
+    },
+    {
+      "capability": "execution-command-gate",
+      "capabilityVersion": 4,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "lifecycle-orchestration",
+      "capabilityVersion": 12,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "review-remediation-record",
+      "capabilityVersion": 6,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-boundary",
+      "capabilityVersion": 10,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-integration",
+      "capabilityVersion": 7,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "task-worktree-review-procedure",
+      "capabilityVersion": 13,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 5,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-lifecycle",
+      "capabilityVersion": 5,
+      "workflowMode": "lean-delivery"
+    },
+    {
+      "capability": "task-blueprint",
+      "capabilityVersion": 18,
+      "workflowMode": "governed-sdd"
+    }
+  ],
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/REMEDIATION.md",
+    "docs/workflows/REVIEW.md",
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/REVIEW_RECORD_TEMPLATE.md",
+    ".codex/rules/meridian.rules"
+  ],
+  "upgradeNotes": [
+    "Run upgrade --apply, resolve adapted start/delivery text conflicts, then restart agent sessions. Explicit Resume preserves the original start event and requires dirty-diff inspection. READY_FOR_REVIEW is reviewable only after clean committed delivery; pending delivery/changes retains lifecycle status. No protocolVersion change."
+  ],
+  "verification": [
+    "Start failures create no transition; repeated start preserves history.",
+    "Delivery checks committed handoff and source-bound validation, makes only state/projection commit, and is idempotent.",
+    "Console refreshes uncommitted IN_PROGRESS and offers review only after valid committed delivery."
+  ]
+}

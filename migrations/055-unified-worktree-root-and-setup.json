@@ -1,0 +1,26 @@
+{
+  "id": "055-unified-worktree-root-and-setup",
+  "from": "1.1.52",
+  "to": "1.1.53",
+  "description": "Makes task-worktree root selection a machine-level resolution policy and removes the per-command root requirement from adopter workflow instructions.",
+  "capabilities": [
+    {"capability": "codex-worktree-access", "capabilityVersion": 3},
+    {"capability": "bounded-worktree-lifecycle", "capabilityVersion": 3},
+    {"capability": "task-worktree-boundary", "capabilityVersion": 4},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 6},
+    {"capability": "task-worktree-remediation", "capabilityVersion": 3}
+  ],
+  "delta": "Codex worktree access now directs operators to the read-only `meridian setup --check` plan and one explicitly consented `meridian setup --apply`; Claude Code needs no host configuration. Bounded lifecycle, implementation, review, and remediation commands omit `--worktree-root` and rely on the shared resolver while preserving the explicit option for legacy cleanup. Worktree lifecycle documentation records the precedence order, default, and rule that old worktrees remain in place.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/workflows/IMPLEMENTATION.md",
+    "docs/workflows/REVIEW.md",
+    "docs/workflows/REMEDIATION.md"
+  ],
+  "verification": [
+    "upgrade installs only the bumped managed capability regions and preserves project-owned text",
+    "adopter workflow commands use the resolved root while retaining an explicit old-root cleanup path",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests pass"
+  ]
+}

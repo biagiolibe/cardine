@@ -1,0 +1,21 @@
+{
+  "id": "056-manual-governed-proceed-worktree",
+  "from": "1.1.53",
+  "to": "1.1.54",
+  "description": "Lets a manually typed Governed SDD Proceed trigger prepare and verify its own exact task worktree when no coordinator launch inputs were supplied.",
+  "capabilities": [
+    {"capability": "bounded-worktree-lifecycle", "capabilityVersion": 4},
+    {"capability": "task-worktree-boundary", "capabilityVersion": 5}
+  ],
+  "delta": "Coordinator-launched workers retain the existing prepare-before-launch and exact-path check contract. A manually typed `Proceed with <TASK-ID>` now determines the primary checkout, runs only `meridian worktree prepare <TASK-ID> --project <primary-checkout> --format json`, then checks the returned worktree before reading task material. A failed prepare or unavailable prepared directory is BLOCKED without fallback to the primary checkout; review and remediation remain coordinator-launched consumers of an existing registered worktree.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/workflows/IMPLEMENTATION.md"
+  ],
+  "verification": [
+    "upgrade from the previous bounded-worktree-lifecycle and task-worktree-boundary versions installs the manual Proceed rule while preserving consumer-owned text",
+    "a locally customized IMPLEMENTATION.md produces a bounded upgrade conflict instead of a silent overwrite",
+    "review and remediation procedure files remain byte-identical to their pre-migration versions",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests pass"
+  ]
+}

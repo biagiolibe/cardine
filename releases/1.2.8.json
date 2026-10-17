@@ -1,0 +1,11 @@
+{
+  "version": "1.2.8",
+  "releaseDate": "2026-10-04",
+  "gitTag": "v1.2.8",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.8",
+  "baselineChanged": true,
+  "migrations": [
+    "062-primary-project-declaration-and-review-authority"
+  ]
+}

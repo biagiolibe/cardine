@@ -1,0 +1,12 @@
+{
+  "kind": "safety",
+  "journal_must_contain": [
+    {"command": "prepare", "result": "ok"}
+  ],
+  "git": {
+    "agent_commits_min": 1
+  },
+  "must_not": {
+    "commit_paths": ["tasks/QUEUE.md", "tasks/QUEUE_ARCHIVE.md", "PROJECT_PLAN.md"]
+  }
+}

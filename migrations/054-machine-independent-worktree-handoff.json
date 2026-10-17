@@ -1,0 +1,27 @@
+{
+  "id": "054-machine-independent-worktree-handoff",
+  "from": "1.1.51",
+  "to": "1.1.52",
+  "description": "Replaces the absolute task-worktree path recorded in completion handoffs with a machine-independent value relative to the worktree root. Handoffs already written with an absolute path are not rewritten; the CLI still accepts them.",
+  "capabilities": [
+    {"capability": "git-workflow", "capabilityVersion": 7},
+    {"capability": "task-worktree-integration", "capabilityVersion": 3},
+    {"capability": "task-worktree-handoff", "capabilityVersion": 3},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 5},
+    {"capability": "implementer-reviewer-handoff", "capabilityVersion": 3},
+    {"capability": "bounded-worktree-lifecycle", "capabilityVersion": 2}
+  ],
+  "delta": "Completion handoffs record the `handoff_worktree` value returned by `meridian worktree prepare` (the path relative to the worktree root) instead of an absolute path, and the reviewer resolves it against the worktree root before locating the entry in `git worktree list --porcelain`. Runtime uses of the absolute path are unchanged, and the absolute common Git directory used for the integration lease is computed at runtime and never written to a tracked file. Existing consumer handoffs that contain an absolute path are not rewritten; `meridian worktree check` accepts both forms.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "verification": [
+    "upgrade from the previous capability versions installs the new blocks while preserving consumer-owned text",
+    "worktree check accepts the root-relative and the legacy absolute handoff value and reports handoff-mismatch for any other value",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests -v pass"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "058-lean-closure-procedure",
+  "from": "1.1.55",
+  "to": "1.2.4",
+  "description": "Ships Lean Delivery's Proceed authority, governance-file ownership boundary, ordered closure procedure, and named validation-skip rule.",
+  "capabilityVersions": [
+    {"capability": "git-workflow", "capabilityVersion": 8, "workflowMode": "lean-delivery"}
+  ],
+  "delta": "Proceed now authorizes the complete gated task lifecycle through one integration push and cleanup, while explicitly excluding tags, releases, force or destructive pushes, history rewrites, forced cleanup, required-review bypasses, conflict resolution, and unrelated tasks. Lean task branches no longer edit queue or plan governance files; stage applies those changes on the candidate tree. The managed procedure names every closure stop and its mechanical resume, and accepts only test-reported, non-sole-criterion sandbox skips recorded in the handoff.",
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "verification": [
+    "a clean Lean Delivery upgrade installs git-workflow v8 in all three managed workflow files while preserving consumer-owned text",
+    "marker baselines record git-workflow v8 for all three Lean Delivery workflow files",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests pass"
+  ]
+}

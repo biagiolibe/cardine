@@ -1,0 +1,21 @@
+{
+  "id": "057-self-referential-handoff-commits",
+  "from": "1.1.54",
+  "to": "1.1.55",
+  "description": "Documents the descriptive form for completion-handoff commit fields that cannot contain their own SHA, and teaches reviewer preflight to resolve it against the registered task branch HEAD.",
+  "capabilities": [
+    {"capability": "task-worktree-handoff", "capabilityVersion": 4},
+    {"capability": "task-worktree-review-procedure", "capabilityVersion": 7}
+  ],
+  "delta": "A handoff committed in its implementation commit may identify that self-referential commit descriptively by subject and branch. A later lifecycle-only correction names earlier commits by full SHA and describes only its new commit; it never amends or force-pushes. Reviewer preflight resolves a descriptive current task commit to the registered task branch HEAD, verifies its subject, and still blocks any value naming another commit.",
+  "managedPaths": [
+    "docs/COMPLETION_REPORT_TEMPLATE.md",
+    "docs/workflows/REVIEW.md"
+  ],
+  "verification": [
+    "upgrade from the previous capability versions installs both managed blocks while preserving consumer-owned text",
+    "marker baselines record task-worktree-handoff v4 and task-worktree-review-procedure v7",
+    "meridian worktree check and meridian execution handoff-check continue resolving commits from Git rather than handoff commit-field prose",
+    "python3 scripts/check_repository.py and python3 -m unittest discover -s tests -v pass"
+  ]
+}

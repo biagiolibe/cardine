@@ -1,0 +1,29 @@
+name: Validate repository
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - task-*
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 scripts/check_repository.py
+      - run: python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .
+      - run: python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
+      - run: python3 scripts/run_tests.py --parallel

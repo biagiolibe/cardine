@@ -1,0 +1,757 @@
+{
+  "version": 1,
+  "stops": [
+    {
+      "code": "STALE_WORKTREE_BASE",
+      "class": "tool",
+      "workflows": ["lean-delivery", "governed-sdd"],
+      "step": "C4",
+      "emitter": "`meridian worktree check`; `prepare`; `closure-status`",
+      "human_decision": false,
+      "resume": "meridian worktree repair-base {task_id} --project {project} --format json",
+      "tool_hint": "meridian worktree repair-base",
+      "kind": "stop",
+      "summary": "a proven commit-less main fast-forward left an obsolete task base",
+      "test": "tests.test_task_worktree_isolation.BoundedWorktreeLifecycleTest.test_stale_base_check_and_repair"
+    },
+    {
+      "code": "ACCEPTANCE_UNMET",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C1",
+      "emitter": "agent judgment; `meridian worktree closure-status` also reports it when the task branch has no commits",
+      "human_decision": false,
+      "resume": "complete the task and rerun task validation",
+      "tool_hint": "meridian worktree closure-status",
+      "kind": "stop",
+      "summary": "the task has no completed work or an acceptance criterion is unmet"
+    },
+    {
+      "code": "VALIDATION_FAILED",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C2",
+      "emitter": "a task-declared validation command that exits non-zero",
+      "human_decision": false,
+      "resume": "fix the failure on the task branch and rerun the failing command",
+      "kind": "stop",
+      "summary": "a task validation command failed"
+    },
+    {
+      "code": "REVIEW_REQUIRED",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C3",
+      "emitter": "a review the task or the developer declared as required",
+      "human_decision": true,
+      "resume": "obtain the independent review, then continue at C4",
+      "kind": "stop",
+      "summary": "a required independent review is outstanding"
+    },
+    {
+      "code": "WRONG_WORKTREE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C4",
+      "emitter": "`meridian worktree closure-status`; `meridian worktree check`; `meridian worktree prepare` on a mismatched lifecycle state file; `meridian execution start/deliver/ready-check`; `meridian task close` (project mismatches override the default resume with the original invocation targeting the registered worktree)",
+      "human_decision": false,
+      "resume": "meridian worktree prepare {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "the task worktree, branch, or lifecycle state is missing or does not match",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_closure_status_covers_lifecycle_states_without_mutation"
+    },
+    {
+      "code": "EVIDENCE_INCOMPLETE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C5",
+      "emitter": "`meridian worktree closure-status`",
+      "human_decision": false,
+      "resume": "record machine evidence",
+      "kind": "stop",
+      "summary": "machine evidence for the validated task commit is missing or incomplete",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_closure_status_text_reports_incomplete_evidence_through_the_registry"
+    },
+    {
+      "code": "PRIMARY_DIRTY",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`meridian worktree closure-status`; `meridian worktree integrate stage`",
+      "human_decision": false,
+      "resume": "clean the primary checkout and run integration stage",
+      "kind": "stop",
+      "summary": "the primary checkout has uncommitted changes",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_integrate_stage_reports_primary_dirty_through_the_registry"
+    },
+    {
+      "code": "MAIN_BEHIND_ORIGIN",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`meridian worktree integrate stage`",
+      "human_decision": false,
+      "resume": "bring local main up to the fetched origin/main without rewriting history, then rerun meridian worktree integrate stage {task_id} --project {project} --evidence {evidence} --format json",
+      "kind": "stop",
+      "summary": "local main is behind the fetched origin/main",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_integrate_stage_blocks_when_fetched_origin_main_is_ahead"
+    },
+    {
+      "code": "LEASE_HELD",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`meridian worktree closure-status`; `meridian worktree integrate stage`",
+      "human_decision": false,
+      "resume": "meridian worktree integrate abort {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "an integration lease is already held",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_integrate_stage_reports_a_held_lease_through_the_registry"
+    },
+    {
+      "code": "INTEGRATION_CONFLICT",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`meridian worktree integrate stage`",
+      "human_decision": true,
+      "resume": "the developer resolves the conflict on the task branch, then rerun meridian worktree integrate stage {task_id} --project {project} --evidence {evidence} --format json",
+      "kind": "stop",
+      "summary": "the merge of the task branch into main conflicts",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_integrate_stage_reports_an_integration_conflict_through_the_registry"
+    },
+    {
+      "code": "CANDIDATE_VALIDATION_FAILED",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C7",
+      "emitter": "a declared candidate validation command that exits non-zero",
+      "human_decision": false,
+      "resume": "meridian worktree integrate abort {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "a candidate validation command failed"
+    },
+    {
+      "code": "EVIDENCE_MISMATCH",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C8",
+      "emitter": "`meridian worktree integrate finalize`",
+      "human_decision": false,
+      "resume": "meridian worktree integrate abort {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "candidate validation evidence does not match the staged candidate",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_integrate_finalize_reports_an_evidence_mismatch_through_the_registry"
+    },
+    {
+      "code": "PUSH_PENDING",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C9",
+      "emitter": "`meridian worktree closure-status`",
+      "human_decision": false,
+      "resume": "git push origin main",
+      "kind": "status",
+      "summary": "local main is ahead of origin/main and must be pushed",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_closure_status_covers_lifecycle_states_without_mutation"
+    },
+    {
+      "code": "PUSH_REJECTED",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C9",
+      "emitter": "`git push origin main` exiting non-zero",
+      "human_decision": true,
+      "resume": "the developer decides; never force the push and never rebase",
+      "kind": "stop",
+      "summary": "origin rejected the push of main"
+    },
+    {
+      "code": "CLEANUP_BLOCKED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C10",
+      "emitter": "`meridian worktree cleanup`",
+      "human_decision": false,
+      "resume": "rerun meridian worktree cleanup {task_id} --project {project} --format json after the named condition clears",
+      "kind": "stop",
+      "summary": "cleanup preconditions are not met",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_cleanup_reports_blocked_cleanup_through_the_registry"
+    },
+    {
+      "code": "UNDECLARED_VALIDATION_COMMANDS",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`meridian worktree integrate stage`; `meridian worktree integrate finalize`",
+      "human_decision": true,
+      "resume": "write declared candidate validation fragments or state none in .meridian/candidate-validation.json, then rerun the interrupted meridian worktree integrate step",
+      "kind": "stop",
+      "summary": "the project has not declared its candidate validation commands",
+      "test": "tests.test_meridian_cli.WorktreeLifecycleCliTest.test_integrate_stage_reports_undeclared_validation_commands_through_the_registry"
+    },
+    {
+      "code": "EXECUTION_CONTRACT_UNRESOLVED",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`; `meridian execution contract`",
+      "human_decision": false,
+      "resume": "meridian execution reconcile {task_id} --apply --project .",
+      "kind": "stop",
+      "summary": "the task has no current resolved execution contract",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "EXECUTION_PROFILE_MISSING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution contract`; `meridian execution reconcile`; `meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "human_decision": true,
+      "resume": "add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked meridian execution command",
+      "kind": "stop",
+      "summary": "the execution evidence profile that the contract derives from is missing",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "VALIDATION_ENTRY_FORMAT",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution contract`; `meridian execution reconcile`; `meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "human_decision": false,
+      "resume": "rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the blocked meridian execution command",
+      "kind": "stop",
+      "summary": "a task Validation entry is not a named literal command",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "TASK_RECORD_INCOMPLETE",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "human_decision": false,
+      "resume": "add the listed sections or fields to the task record, then rerun meridian execution preflight {task_id} --project .",
+      "kind": "stop",
+      "summary": "the task record lacks a section or field the preflight requires",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "TASK_STATUS_REJECTED",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution preflight`; `meridian execution reconcile`; `meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "human_decision": false,
+      "resume": "bring the task to QUEUED or IN_PROGRESS through its lifecycle, then rerun the blocked meridian execution command",
+      "kind": "stop",
+      "summary": "the task status is not one the execution command accepts",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "QUEUE_STATUS_MISMATCH",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "human_decision": false,
+      "resume": "change only the document the message says this actor may change so the statuses are accepted, then rerun meridian execution preflight {task_id} --project .",
+      "kind": "stop",
+      "summary": "the task record status disagrees with its queue row",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_locations_and_preflight_use_the_declared_queue"
+    },
+    {
+      "code": "EXECUTION_EVIDENCE_ARGUMENTS",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution evidence`; `meridian execution investigate`; `meridian budget spend`",
+      "human_decision": false,
+      "resume": "rerun the meridian execution evidence command with the missing options",
+      "kind": "stop",
+      "summary": "an execution evidence, investigation, or budget command lacks a required option or has an invalid one",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_REPORT_MISSING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "write the completion report, then run meridian execution handoff-check {task_id} <report> --project .",
+      "kind": "stop",
+      "summary": "the completion report file does not exist",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_FIELDS_MISSING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "add each missing field as `- <Field>: <value>`, then rerun meridian execution handoff-check {task_id} <report> --project .",
+      "kind": "stop",
+      "summary": "required handoff fields are missing",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_FIELD_FORMAT",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "rewrite each listed field as `- <Field>: <value>`, then rerun meridian execution handoff-check {task_id} <report> --project .",
+      "kind": "stop",
+      "summary": "a required handoff field has text between its name and the colon",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_TASK_MISMATCH",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "correct the report heading to name this task, then rerun meridian execution handoff-check {task_id} <report> --project .",
+      "kind": "stop",
+      "summary": "the completion report does not identify the task",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_VALIDATION_FAILING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "fix the failing validation and report its passing result, then rerun meridian execution handoff-check {task_id} <report> --project .",
+      "kind": "stop",
+      "summary": "the report declares a failing validation",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_VALIDATION_EVIDENCE_MISSING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "run meridian execution validate {task_id} <validation-id> --project . for each listed ID, then rerun the handoff check",
+      "kind": "stop",
+      "summary": "a declared validation has no successful durable record",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_EXPLORATION_MISMATCH",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "correct the Isolated exploration field or record the investigation with meridian execution investigate {task_id}, then rerun the handoff check",
+      "kind": "stop",
+      "summary": "the Isolated exploration field disagrees with the durable investigation records",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "HANDOFF_EXPLORATION_SUMMARY_MISSING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "add each listed question and finding to the report, then rerun meridian execution handoff-check {task_id} <report> --project .",
+      "kind": "stop",
+      "summary": "the report omits a recorded exploration question or finding",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops"
+    },
+    {
+      "code": "COMMAND_REFUSED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "any `meridian` command that refuses to run without a more specific code",
+      "human_decision": false,
+      "resume": "correct the condition that the detail names, then rerun the same meridian command",
+      "kind": "stop",
+      "summary": "a meridian command refused to run because a precondition on its inputs or on the project state is not met",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_uncoded_command_refusal_reports_command_refused"
+    },
+    {
+      "code": "OS_ACCESS_FAILED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "any `meridian` command whose file or process access fails at the operating-system level",
+      "human_decision": false,
+      "resume": "fix the access problem that the detail names, then rerun the same meridian command",
+      "kind": "stop",
+      "summary": "an operating-system call failed while a meridian command read or wrote a file",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_operating_system_failure_reports_os_access_failed"
+    },
+    {
+      "code": "VALIDATION_ID_UNDECLARED",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution validate`",
+      "human_decision": false,
+      "resume": "rerun meridian execution validate with a validation ID listed in the task's Validation section, or declare the command there first",
+      "kind": "stop",
+      "summary": "the requested validation ID is not declared in the task record",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_validation_runs_only_a_declared_literal_command_and_records_status"
+    },
+    {
+      "code": "BUDGET_EXHAUSTED",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian budget spend`; `meridian execution investigate`",
+      "human_decision": true,
+      "resume": "report this stop and ask the developer to raise the cap or re-scope the task; never raise the cap yourself",
+      "kind": "stop",
+      "summary": "a task budget cap is reached and the requested use would exceed it",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_spend_returns_non_zero_and_names_blocked_once_cap_is_used"
+    },
+    {
+      "code": "HOST_IMPACT_DECLARATION_INVALID",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution preflight`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "correct the task's Host impact declaration as the detail names, then rerun the blocked meridian execution command",
+      "kind": "stop",
+      "summary": "the task's Host impact declaration is malformed or incomplete",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_execution_preflight_validates_host_impact_declarations"
+    },
+    {
+      "code": "HOST_IMPACT_EVIDENCE_MISSING",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian execution preflight`; `meridian execution ready-check`",
+      "human_decision": false,
+      "resume": "add a Completion evidence entry for each listed profile to the task's Host impact section, then rerun the blocked meridian execution command",
+      "kind": "stop",
+      "summary": "an enforced host-impact profile has no completion evidence",
+      "test": "tests.test_meridian_cli.BudgetCliTest.test_ready_check_requires_evidence_only_for_enforced_host_profiles"
+    },
+    {
+      "code": "UPGRADE_BLOCKED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "`meridian upgrade --check`; `meridian upgrade --apply`",
+      "human_decision": true,
+      "resume": "resolve each conflict or router requirement that the plan lists, then rerun meridian upgrade --check",
+      "kind": "stop",
+      "summary": "the upgrade plan has a conflict or an unmet router requirement and changed no file",
+      "test": "tests.test_meridian_cli.MeridianCliTest.test_check_reports_multiple_merge_conflicts"
+    },
+    {
+      "code": "ADOPTION_BLOCKED",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "`meridian adopt --assisted`",
+      "human_decision": true,
+      "resume": "resolve the adoption review record that the detail names manually, then restart the assisted adoption loop",
+      "kind": "stop",
+      "summary": "the assisted adoption state cannot advance without a developer decision",
+      "test": "tests.test_meridian_cli.MeridianCliTest.test_address_review_and_retry_limit"
+    },
+    {
+      "code": "WORKFLOW_UNREADABLE",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "agent judgment before the first mutation: a local workflow document cannot be read or contradicts another",
+      "human_decision": true,
+      "resume": "ask the developer to restore or reconcile the workflow documents, then restart from the same command",
+      "kind": "stop",
+      "summary": "a required workflow document is missing, unreadable, or contradicts another before any mutation"
+    },
+    {
+      "code": "RULE_CONFLICT",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "agent judgment: a gate contradicts another rule, or an authority is in conflict",
+      "human_decision": true,
+      "resume": "report both rules and ask the developer which governs; never write false state to satisfy a gate",
+      "kind": "stop",
+      "summary": "a gate seems to contradict another rule or authority, so neither can be followed without breaking the other"
+    },
+    {
+      "code": "CONTRACT_EXHAUSTED",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "agent judgment: the task's diagnostic, evidence, or context-expansion allowance is used up; `meridian budget spend` reports the counted form as BUDGET_EXHAUSTED",
+      "human_decision": true,
+      "resume": "report this stop and ask the developer to raise the allowance or re-scope the task; never raise it yourself",
+      "kind": "stop",
+      "summary": "the task's declared allowance for diagnostics, evidence, or context expansion is exhausted"
+    },
+    {
+      "code": "SCOPE_CHANGE_REQUIRED",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "agent judgment: the task cannot continue without new or amended authority or scope, or without a spike task",
+      "human_decision": true,
+      "resume": "report the missing authority, scope, or spike task and ask the developer to amend the task; change no ref or status",
+      "kind": "stop",
+      "summary": "the task cannot continue without new or amended authority, scope, or a spike task"
+    },
+    {
+      "code": "REVIEW_LOOP_EXHAUSTED",
+      "class": "judgment",
+      "workflows": [
+        "governed-sdd"
+      ],
+      "emitter": "agent judgment after two consecutive CHANGES_REQUESTED verdicts",
+      "human_decision": true,
+      "resume": "report the review-record path and unresolved findings; the developer resolves the scope or authority issue and restarts the lifecycle",
+      "kind": "stop",
+      "summary": "two consecutive CHANGES_REQUESTED verdicts leave findings unresolved"
+    },
+    {
+      "code": "TASK_STATE_MISSING",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "shared task-state reader; `meridian task transition`",
+      "human_decision": false,
+      "resume": "meridian task state import {task_id} --project {project} --apply --include-terminal",
+      "tool_hint": "meridian task transition",
+      "kind": "stop",
+      "summary": "a task has no tracked state file; resume uses --project <canonical-task-worktree> when registered, otherwise --project <primary-checkout>",
+      "test": "tests.test_machine_task_state.MachineTaskStateTest.test_missing_stop"
+    },
+    {
+      "code": "TASK_STATE_INVALID",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "shared task-state reader; `meridian task transition`",
+      "human_decision": false,
+      "resume": "fix the named state field, then meridian task transition {task_id} <STATUS> --project {project} --format json",
+      "tool_hint": "meridian task transition",
+      "kind": "stop",
+      "summary": "a task state field or transition history is invalid",
+      "test": "tests.test_machine_task_state.MachineTaskStateTest.test_invalid_stop"
+    },
+    {
+      "code": "REVIEW_NOT_APPROVED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian worktree integrate stage",
+      "human_decision": false,
+      "resume": "meridian review verdict {task_id} APPROVE --project {project} --format json",
+      "tool_hint": "meridian review verdict",
+      "kind": "stop",
+      "summary": "a required review verdict is absent or not APPROVE",
+      "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_missing_verdict_stop"
+    },
+    {
+      "code": "REVIEW_STALE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian worktree integrate stage",
+      "human_decision": false,
+      "resume": "review the current task commit, then meridian review verdict {task_id} APPROVE --project {project} --format json",
+      "tool_hint": "meridian review verdict",
+      "kind": "stop",
+      "summary": "the reviewed commit is not an ancestor or code changed after approval",
+      "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_stale_review_stop"
+    },
+    {
+      "code": "SELF_UPDATE_PLUGIN_CACHE",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian self-update",
+      "human_decision": false,
+      "resume": "inspect the framework checkout, then rerun meridian self-update --check",
+      "kind": "stop",
+      "summary": "plugin cache is owned by the plugin manager"
+    },
+    {
+      "code": "SELF_UPDATE_DIRTY",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian self-update",
+      "human_decision": false,
+      "resume": "inspect the framework checkout, then rerun meridian self-update --check",
+      "kind": "stop",
+      "summary": "framework checkout has local changes"
+    },
+    {
+      "code": "SELF_UPDATE_BRANCH",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian self-update",
+      "human_decision": false,
+      "resume": "inspect the framework checkout, then rerun meridian self-update --check",
+      "kind": "stop",
+      "summary": "framework checkout is not an eligible branch"
+    },
+    {
+      "code": "SELF_UPDATE_TARGET",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian self-update",
+      "human_decision": false,
+      "resume": "inspect the framework checkout, then rerun meridian self-update --check",
+      "kind": "stop",
+      "summary": "target is not a matching published release tag"
+    },
+    {
+      "code": "SELF_UPDATE_NON_FF",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian self-update",
+      "human_decision": false,
+      "resume": "inspect the framework checkout, then rerun meridian self-update --check",
+      "kind": "stop",
+      "summary": "stable cannot fast-forward"
+    },
+    {
+      "code": "SELF_UPDATE_VERIFY",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "meridian self-update",
+      "human_decision": false,
+      "resume": "inspect the framework checkout, then rerun meridian self-update --check",
+      "kind": "stop",
+      "summary": "self-update Git operation or final verification failed"
+    },
+    {
+      "code": "BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION",
+      "class": "tool",
+      "workflows": [
+        "governed-sdd",
+        "lean-delivery"
+      ],
+      "emitter": "`meridian worktree prepare`",
+      "human_decision": true,
+      "resume": "only after explicit developer authorization, run meridian worktree prepare {task_id} --project {project} --new-attempt --reason \"<developer reason>\" --format json",
+      "kind": "stop",
+      "summary": "a retired task attempt has inherited budget spends and needs developer authorization for a new attempt",
+      "test": "tests.test_task_worktree_isolation.BoundedWorktreeLifecycleTest.test_prepare_blocks_inherited_budget_spends"
+    }
+  ]
+}

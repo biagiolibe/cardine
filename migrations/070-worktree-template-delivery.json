@@ -1,0 +1,59 @@
+{
+  "id": "070-worktree-template-delivery",
+  "from": "1.3.0",
+  "to": "1.4.0",
+  "description": "Deliver command locations, retired-worktree budgets, and handoff correction re-delivery rules.",
+  "delta": "Add versioned managed blocks for the Lean and Governed command location links and tables, Governed budget attempts after worktree retirement, and Governed handoff-only correction re-delivery.",
+  "capabilityVersions": [
+    {
+      "capability": "worktree-command-locations",
+      "capabilityVersion": 1,
+      "workflowMode": "lean-delivery"
+    },
+    {
+      "capability": "worktree-command-locations",
+      "capabilityVersion": 1,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "worktree-budget-retirement",
+      "capabilityVersion": 1,
+      "workflowMode": "governed-sdd"
+    },
+    {
+      "capability": "handoff-correction-redelivery",
+      "capabilityVersion": 1,
+      "workflowMode": "governed-sdd"
+    }
+  ],
+  "managedPaths": [
+    "PROJECT_WORKFLOW.md",
+    "docs/WORKTREE_LIFECYCLE.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md"
+  ],
+  "upgradeNotes": [
+    "Run meridian upgrade --apply to update PROJECT_WORKFLOW.md and docs/WORKTREE_LIFECYCLE.md in both modes, plus docs/COMPLETION_REPORT_TEMPLATE.md in Governed SDD. Adapted command locations, budget-retirement, or handoff-correction text may conflict and need owner reconciliation. No minimum framework or protocolVersion change."
+  ],
+  "verification": [
+    "Upgrade pristine 1.3.0 Lean and Governed projects with the real migrations; verify command links and tables, Governed budget retirement, and conflict-free Governed handoff re-delivery.",
+    "Release prepare and publish preflight reject CLI-only releases with template changes since the previous release tag, naming changed files; non-template-only changes remain CLI-only.",
+    "With VERSION 1.4.0, python3 scripts/release.py prepare --bump minor --dry-run reports that 1.4.0 is already prepared and names publish --confirm v1.4.0.",
+    "python3 scripts/check_repository.py",
+    "python3 scripts/run_tests.py --parallel",
+    "git diff --check"
+  ],
+  "capabilities": [
+    {
+      "capability": "worktree-command-locations",
+      "capabilityVersion": 1
+    },
+    {
+      "capability": "worktree-budget-retirement",
+      "capabilityVersion": 1
+    },
+    {
+      "capability": "handoff-correction-redelivery",
+      "capabilityVersion": 1
+    }
+  ]
+}

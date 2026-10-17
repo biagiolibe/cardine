@@ -1,0 +1,24 @@
+{
+  "id": "020-reasoning-budget-contract",
+  "from": "1.1.16",
+  "to": "1.1.17",
+  "description": "Makes a governed task's Reasoning declaration an exact permitted runtime cap instead of a minimum or informal recommendation. It adds low for focused mechanical work, requires written rationale for high, explicit developer authorization for xhigh, and requires implementer/reviewer preflight to stop and relaunch when the effective worker setting differs from or cannot confirm the task cap. The lifecycle orchestrator remains at the lowest available effort because it delegates substantive work.",
+  "capabilities": [
+    { "capability": "task-blueprint", "capabilityVersion": 3 },
+    { "capability": "reasoning-budget-contract", "capabilityVersion": 1 },
+    { "capability": "lifecycle-orchestration", "capabilityVersion": 3 }
+  ],
+  "managedPaths": [
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/OPERATOR_PROMPTS.md"
+  ],
+  "verification": [
+    "The task blueprint permits low, medium, high, and xhigh and defines Reasoning as the exact permitted worker-runtime cap",
+    "The context policy requires a preflight equality check, blocks an unconfirmable or mismatched setting before substantive work, and forbids automatic escalation",
+    "High has a written rationale and xhigh carries explicit developer authorization",
+    "Lifecycle orchestration configures fresh implementer and reviewer sessions to the exact task cap while retaining the lowest available effort for the coordinator"
+  ]
+}

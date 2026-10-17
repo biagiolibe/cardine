@@ -1,0 +1,20 @@
+{
+  "id": "043-host-impact-task-declaration",
+  "from": "1.1.39",
+  "to": "1.1.40",
+  "description": "Adds the governed-SDD host-impact declaration to new task records and routes host-sensitive work to preserve evidence-qualified claims.",
+  "capabilities": [
+    { "capability": "task-blueprint", "capabilityVersion": 12 },
+    { "capability": "host-impact-routing", "capabilityVersion": 1 }
+  ],
+  "delta": "Task blueprint v12 adds mutually exclusive NOT_APPLICABLE and REQUIRED host-impact declaration shapes. Implementation routing v1 explains classification and blocks a host-sensitive task that cannot obtain its required evidence, without adding lifecycle parsing or host enforcement.",
+  "managedPaths": [
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/workflows/IMPLEMENTATION.md"
+  ],
+  "verification": [
+    "`python3 -m unittest discover -s tests -v` passes",
+    "a clean governed-SDD upgrade from 1.1.39 installs both host-impact declaration shapes and host-impact routing while preserving consumer-owned text outside protected regions",
+    "`python3 scripts/check_repository.py` passes"
+  ]
+}

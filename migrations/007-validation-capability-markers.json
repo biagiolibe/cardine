@@ -1,0 +1,20 @@
+{
+  "id": "007-validation-capability-markers",
+  "from": "1.1.3",
+  "to": "1.1.4",
+  "description": "Wraps the validation-scoping (004) and ci-verified-validation (005) capability text in versioned MERIDIAN:BEGIN/END markers, mirroring migration 006's treatment of 001/002. Also genericizes a Rust-specific example in the validation-scope rule. Detection and verification code are unchanged in this migration's content; the capability/capabilityVersion fields were backfilled directly onto migrations 004 and 005.",
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/PULL_REQUEST_POLICY.md",
+    "docs/CODE_REVIEW_PROMPT.md",
+    "docs/COMPLETION_REPORT_TEMPLATE.md"
+  ],
+  "verification": [
+    "AGENTS.md and CLAUDE.md wrap the validation-scoping clause inline within their Implementation workflow step 5 in <!-- MERIDIAN:BEGIN capability=validation-scoping v1 --> / <!-- MERIDIAN:END -->",
+    "docs/CONTEXT_BUDGET_POLICY.md wraps its entire Validation scope section body in the same marker pair",
+    "docs/PULL_REQUEST_POLICY.md wraps its entire Validation evidence for review section body, and docs/CODE_REVIEW_PROMPT.md and docs/COMPLETION_REPORT_TEMPLATE.md wrap their ci-verified-validation-specific text, in <!-- MERIDIAN:BEGIN capability=ci-verified-validation v1 --> / <!-- MERIDIAN:END -->",
+    "detect_capabilities() and its existing tests are unaffected: the wrapped text still reads identically once markers (invisible HTML comments) are ignored"
+  ]
+}

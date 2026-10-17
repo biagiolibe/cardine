@@ -1,0 +1,21 @@
+{
+  "id": "002-lifecycle-orchestration",
+  "from": "1.0.1",
+  "to": "1.0.2",
+  "description": "Adds Run lifecycle orchestration with isolated implementer and reviewer sessions.",
+  "capability": "lifecycle-orchestration",
+  "capabilityVersion": 1,
+  "managedPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "PROJECT_WORKFLOW.md",
+    "docs/AUDIT_PROMPT_READ_ONLY.md",
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/LIFECYCLE_ORCHESTRATION.md",
+    "docs/OPERATOR_PROMPTS.md"
+  ],
+  "verification": [
+    "Run lifecycle <TASK-ID> delegates implementation and review to distinct sessions",
+    "orchestrator stops after two consecutive CHANGES_REQUESTED verdicts"
+  ]
+}

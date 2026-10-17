@@ -1,0 +1,19 @@
+{
+  "checks": [
+    {"behavior": "fresh-session language instruction loading", "capability": "language-policy", "dimensions": ["shared-source-integrity", "plugin-activation"]},
+    {"behavior": "prompt-submit queue briefing", "capability": "queue-briefing", "dimensions": ["shared-source-integrity", "plugin-activation", "permission-behavior", "queue-briefing"]},
+    {"behavior": "native Read denial for an unranged large file", "capability": "read-guard", "dimensions": ["shared-source-integrity", "plugin-activation", "permission-behavior", "read-guard-behavior"]}
+  ],
+  "configurationLayer": "direct or marketplace plugin activation for this repository",
+  "evidenceArtifact": null,
+  "fallback": "Keep activation UNVERIFIED and use explicit bounded reads plus manual queue and language-policy briefing.",
+  "host": "Claude Code",
+  "hostProfile": "claude-project",
+  "hostVersion": "unverified for this repository",
+  "invocationMode": "interactive plugin project session",
+  "observationTime": null,
+  "profileId": "meridian-self-hosting",
+  "profileVersion": 1,
+  "schemaVersion": 1,
+  "state": "UNVERIFIED"
+}

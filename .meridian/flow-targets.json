@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "unbacked_blocks": {"window": 20, "max": 0},
+  "lead_time_regression": {"window": 20, "max_percent": 10},
+  "friction_share": {"window": 20, "max_percent": 30}
+}

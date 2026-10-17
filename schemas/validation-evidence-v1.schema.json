@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meridian.local/schemas/validation-evidence-v1.schema.json",
+  "title": "Meridian validation evidence v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "task_id", "status", "level", "commit", "tree", "command", "tests_run", "produced_at"],
+  "properties": {
+    "version": {"const": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["running", "unavailable", "failed", "passed"]},
+    "level": {"enum": ["T1_CI", "T2_SHARDED", "T3_ATTESTED"]},
+    "commit": {"type": "string", "minLength": 1},
+    "tree": {"type": "string", "minLength": 1},
+    "command": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "exit_code": {"type": "integer"},
+    "tests_run": {"type": "integer"},
+    "produced_at": {"type": "string", "minLength": 1},
+    "started_at": {"type": "string", "minLength": 1},
+    "log": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "ci": {"type": "object", "required": ["run_id", "run_url", "workflow", "conclusion", "head_sha"]},
+    "shards": {"type": "array", "minItems": 1},
+    "total": {"type": "integer"},
+    "digest": {"type": "string", "minLength": 1},
+    "attested_by": {"const": "developer"},
+    "attested_on": {"type": "string", "format": "date"},
+    "statement": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "running"}}}, "then": {"required": ["started_at", "log"]}},
+    {"if": {"properties": {"status": {"const": "unavailable"}}}, "then": {"required": ["reason"]}},
+    {"if": {"properties": {"status": {"enum": ["failed", "passed"]}}}, "then": {"required": ["exit_code"]}},
+    {"if": {"properties": {"level": {"const": "T1_CI"}}}, "then": {"required": ["ci"]}},
+    {"if": {"properties": {"level": {"const": "T2_SHARDED"}}}, "then": {"required": ["shards", "total", "digest"]}},
+    {"if": {"properties": {"level": {"const": "T3_ATTESTED"}}}, "then": {"required": ["attested_by", "attested_on", "statement"]}}
+  ]
+}

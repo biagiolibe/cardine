@@ -1,0 +1,11 @@
+{
+  "version": "1.4.0",
+  "releaseDate": "2026-10-17",
+  "gitTag": "v1.4.0",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.4.0",
+  "baselineChanged": true,
+  "migrations": [
+    "070-worktree-template-delivery"
+  ]
+}

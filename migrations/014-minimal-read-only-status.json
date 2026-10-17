@@ -1,0 +1,18 @@
+{
+  "id": "014-minimal-read-only-status",
+  "from": "1.1.10",
+  "to": "1.1.11",
+  "description": "Adds a governed-SDD capability that distinguishes a lightweight, read-only project-status report from a conformance audit. The policy limits default evidence to mode confirmation, non-terminal queue state, direct dependency readiness, and Git state; it requires a stated evidence gap before expanding context. The operator cookbook supplies the corresponding narrow status prompt, while the Codex and Claude Code skills route explicit status requests through the policy.",
+  "capability": "minimal-read-only-status",
+  "capabilityVersion": 1,
+  "delta": "Add the Minimal read-only status policy section and replace the cookbook's broad status-report read list with the policy-directed minimal profile. Explicit status requests use this profile; audits remain unchanged.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md",
+    "docs/OPERATOR_PROMPTS.md"
+  ],
+  "verification": [
+    "docs/CONTEXT_BUDGET_POLICY.md carries a MERIDIAN:BEGIN capability=minimal-read-only-status v1 marker that defines minimal sources, prohibited broad reads, and an evidence-gap gate for expansion",
+    "docs/OPERATOR_PROMPTS.md's read-only status prompt invokes the minimal profile and no longer mandates broad workflow, architecture, policy, ADR, specification, completion-report, or Git-history loading",
+    "The status profile explicitly distinguishes a status report from a conformance audit"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "version": "1.2.14",
+  "releaseDate": "2026-10-12",
+  "gitTag": "v1.2.14",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.14",
+  "baselineChanged": true,
+  "migrations": [
+    "067-execution-boundaries"
+  ]
+}

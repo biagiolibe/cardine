@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "retirements": [
+    {
+      "capability": "reasoning-budget-contract",
+      "retiredIn": "1.2.9",
+      "phrases": [
+        "fresh session at the declared value",
+        "effective setting equals the task's",
+        "Reasoning justification",
+        "reasoning cap",
+        "## Reasoning profile"
+      ],
+      "files": [
+        "docs/EXECUTION_EVIDENCE_PROFILE.md",
+        "docs/CONTEXT_BUDGET_POLICY.md"
+      ],
+      "remedy": "Remove the retired reasoning text from project-owned sections by hand."
+    }
+  ]
+}

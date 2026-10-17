@@ -1,0 +1,15 @@
+{
+  "id": "033-deduplicate-merged-markers",
+  "from": "1.1.29",
+  "to": "1.1.30",
+  "description": "Repairs a safe but invalid three-way-merge outcome where a project and framework independently added the same protected marker at different locations. Upgrade collapses only byte-identical copies of the current template marker and refuses to choose between divergent copies.",
+  "managedPaths": [
+    "docs/CONTEXT_BUDGET_POLICY.md"
+  ],
+  "verification": [
+    "meridian upgrade --check reports deduplication only for byte-identical duplicate protected markers",
+    "meridian audit passes after the deduplicated upgrade",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

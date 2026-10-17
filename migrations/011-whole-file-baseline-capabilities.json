@@ -1,0 +1,23 @@
+{
+  "id": "011-whole-file-baseline-capabilities",
+  "from": "1.1.7",
+  "to": "1.1.8",
+  "description": "Backfills capability tracking for four single-purpose managed files that had none: LANGUAGE_POLICY.md, tasks/TASK_BLUEPRINT.md, docs/CODE_ORGANIZATION.md, and docs/AUDIT_PROMPT_READ_ONLY.md. Each is wrapped whole (its full body after the H1 title) in one MERIDIAN:BEGIN/END marker, since each is a single cohesive policy rather than a bundle of independent rules. Purely additive: no file's content changed.",
+  "capabilities": [
+    { "capability": "language-policy", "capabilityVersion": 1 },
+    { "capability": "task-blueprint", "capabilityVersion": 1 },
+    { "capability": "code-organization", "capabilityVersion": 1 },
+    { "capability": "audit-prompt", "capabilityVersion": 1 }
+  ],
+  "managedPaths": [
+    "LANGUAGE_POLICY.md",
+    "tasks/TASK_BLUEPRINT.md",
+    "docs/CODE_ORGANIZATION.md",
+    "docs/AUDIT_PROMPT_READ_ONLY.md"
+  ],
+  "verification": [
+    "LANGUAGE_POLICY.md, tasks/TASK_BLUEPRINT.md, docs/CODE_ORGANIZATION.md, and docs/AUDIT_PROMPT_READ_ONLY.md each wrap their entire body (after the H1 title) in a single MERIDIAN:BEGIN/END marker for the matching capability id, at v1",
+    "Each file's content is otherwise byte-identical to before this migration",
+    "scripts/check_repository.py's language-policy literal-string checks still pass unchanged"
+  ]
+}

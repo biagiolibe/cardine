@@ -1,0 +1,11 @@
+{
+  "version": "1.2.12",
+  "releaseDate": "2026-10-10",
+  "gitTag": "v1.2.12",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.12",
+  "baselineChanged": true,
+  "migrations": [
+    "065-spike-blueprint-worktree-closure"
+  ]
+}

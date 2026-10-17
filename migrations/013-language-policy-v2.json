@@ -1,0 +1,16 @@
+{
+  "id": "013-language-policy-v2",
+  "from": "1.1.9",
+  "to": "1.1.10",
+  "description": "Corrective migration: the language-policy v1 marker (migration 011) wrongly included the per-project '**Conversation language:** `[Conversation language]`' declaration inside the protected region. meridian-init.md step 9 replaces that placeholder with the project's actual chosen language during initialization, so every real, correctly initialized project would diverge from canon on that exact line and fail meridian audit. Moves the marker to start after the declaration line, so the declaration stays outside the protected region while the surrounding rule text (how to use the language, when to change it, the English-only mandate) remains canonical.",
+  "capability": "language-policy",
+  "capabilityVersion": 2,
+  "delta": "Move the MERIDIAN:BEGIN marker to after the '**Conversation language:** `[Conversation language]`' line instead of before it. No other text changes.",
+  "managedPaths": [
+    "LANGUAGE_POLICY.md"
+  ],
+  "verification": [
+    "LANGUAGE_POLICY.md's language-policy marker starts after the Conversation language declaration line, not before it",
+    "A project with its conversation-language placeholder filled in (per meridian-init.md step 9) still carries byte-identical v2 protected text and passes meridian audit"
+  ]
+}

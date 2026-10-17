@@ -1,0 +1,15 @@
+{
+  "id": "029-resolved-execution-contract",
+  "from": "1.1.25",
+  "to": "1.1.26",
+  "description": "Adds a profile-derived execution contract to each governed task. The contract stores the execution-evidence profile digest, resolved budgets, and validation IDs; preflight refuses a missing or stale contract so implementation cannot proceed on profile instructions that were never resolved into the task.",
+  "capabilities": [{ "capability": "task-blueprint", "capabilityVersion": 9 }],
+  "delta": "tasks/TASK_BLUEPRINT.md changes task-blueprint v8 to v9 and adds the generated Execution contract — resolved block. The CLI adds `meridian execution contract`, and preflight compares the task's recorded profile digest against the current project profile.",
+  "managedPaths": ["tasks/TASK_BLUEPRINT.md"],
+  "verification": [
+    "tasks/TASK_BLUEPRINT.md carries capability=task-blueprint v9 and includes the generated execution contract block",
+    "execution preflight blocks a missing or stale profile digest and passes a matching contract",
+    "python3 -m unittest discover -s tests -v passes",
+    "python3 scripts/check_repository.py passes"
+  ]
+}

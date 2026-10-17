@@ -1,0 +1,11 @@
+{
+  "version": "1.2.5",
+  "releaseDate": "2026-10-03",
+  "gitTag": "v1.2.5",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.2.5",
+  "baselineChanged": true,
+  "migrations": [
+    "059-governed-closure-procedure"
+  ]
+}
