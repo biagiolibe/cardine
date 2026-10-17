@@ -18,27 +18,27 @@ and every record claims a command and a test count that CI never ran.
 
 ## Acceptance Criteria
 
-- [ ] `produced_at` is the UTC wall-clock time at which the record is
+- [x] `produced_at` is the UTC wall-clock time at which the record is
   written, in the `YYYY-MM-DDTHH:MM:SSZ` form that other Meridian evidence
   uses.
-- [ ] The polling deadline keeps using a monotonic clock. The wall clock and
+- [x] The polling deadline keeps using a monotonic clock. The wall clock and
   the deadline clock are separate injectable parameters of `run`, so a test
   can fix each one.
-- [ ] `command` records the command that the `Validate repository` workflow
+- [x] `command` records the command that the `Validate repository` workflow
   runs for the test suite, `python3 scripts/run_tests.py --parallel`, read
   from one constant that a test compares with `.github/workflows/validate.yml`.
   The record no longer claims `python3 -m unittest discover -s tests`.
-- [ ] `tests_run` is no longer the constant `1`. Either it records a count
+- [x] `tests_run` is no longer the constant `1`. Either it records a count
   that the CI run proves, or the record states that the count is unknown in a
   form that `validation_evidence_reasons` in `scripts/meridian.py` and
   `schemas/validation-evidence-v1.schema.json` accept. The handoff names the
   choice.
-- [ ] Tests in `tests/test_ci_evidence.py` prove the timestamp with a fixed
+- [x] Tests in `tests/test_ci_evidence.py` prove the timestamp with a fixed
   wall clock that differs from the monotonic clock, and prove the command
   constant matches the workflow.
-- [ ] Existing T1 records under `.git/meridian-worktrees/` and
+- [x] Existing T1 records under `.git/meridian-worktrees/` and
   `tasks/handoffs/` are not rewritten.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -80,3 +80,11 @@ Other evidence levels, CI workflow changes, and the module split.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 -m unittest tests.test_ci_evidence tests.test_validation_evidence -v`
 - `git diff --check`
+
+## Completion
+
+Implemented in `d3cde4ca3934cd19e78127fd6283515b30937202`.
+`tests_run: null` explicitly represents an unknown CI count; the schema and
+verifier allow it only for T1_CI. T2_SHARDED and T3_ATTESTED retain integer
+counts. Existing historical records were not rewritten. See
+`tasks/handoffs/017.md` for validation evidence.
