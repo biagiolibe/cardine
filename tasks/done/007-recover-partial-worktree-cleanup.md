@@ -24,55 +24,55 @@ This task brings cleanup in line with both.
 
 ## Acceptance Criteria
 
-- [ ] `inspect_task_worktree` reports a registered worktree whose directory
+- [x] `inspect_task_worktree` reports a registered worktree whose directory
   does not exist as `missing-worktree`, not `dirty-worktree`. A directory that
   exists and has changes still reports `dirty-worktree`.
-- [ ] **Registered, directory missing.** When `git worktree list --porcelain`
+- [x] **Registered, directory missing.** When `git worktree list --porcelain`
   lists the task worktree as `prunable` and every other cleanup gate holds
   (task commit in `main`, `main` proven pushed, primary checkout clean, no
   integration lease or staged integration), cleanup removes that one entry with
   a non-force `git worktree remove <path>`, then continues as a normal cleanup.
   It never runs the repository-wide `git worktree prune`, which would also drop
   other missing worktrees under the shared worktree root.
-- [ ] **Unregistered, branch and state present.** Cleanup treats the
+- [x] **Unregistered, branch and state present.** Cleanup treats the
   worktree as removed and proves integration from the task branch tip
   (`git merge-base --is-ancestor <branch> main`), since no registered `HEAD`
   exists any more.
-- [ ] **Branch already deleted, state present.** Cleanup removes the lifecycle
+- [x] **Branch already deleted, state present.** Cleanup removes the lifecycle
   state file only when the worktree is unregistered, no lease or staged
   integration exists, and the tracked task state on `main` records the task as
   done. The `task_commit` in the lifecycle state file is the branch tip at
   preparation time, so it is not proof of integration.
-- [ ] Each recovered path keeps the empty directory for Codex Stop hooks,
+- [x] Each recovered path keeps the empty directory for Codex Stop hooks,
   deletes the branch only with non-force `git branch -d`, removes the lifecycle
   state file, and returns `status: cleaned` with a field that names the partial
   state it recovered from.
-- [ ] A worktree directory that exists and is dirty is never force-removed,
+- [x] A worktree directory that exists and is dirty is never force-removed,
   and an unmerged branch is never deleted, in any of these states.
-- [ ] When `git worktree remove` fails after the directory is already gone,
+- [x] When `git worktree remove` fails after the directory is already gone,
   the `CLEANUP_BLOCKED` stop names the partial state and states that cleanup
   needs write access to the primary checkout's `.git` directory. Its resume
   command is the same cleanup command, which then succeeds once that access is
   available. A test proves the resume succeeds.
-- [ ] `docs/WORKTREE_LIFECYCLE.md` states that cleanup writes to the primary
+- [x] `docs/WORKTREE_LIFECYCLE.md` states that cleanup writes to the primary
   checkout's `.git` directory and that sandboxed hosts may deny that write.
-- [ ] Regression tests cover:
+- [x] Regression tests cover:
   - the directory deleted while the registration remains (`prunable`);
   - the registration removed while the branch and state remain;
   - the branch deleted while the state remains;
   - a second task's missing worktree, which cleanup leaves registered;
   - an existing dirty worktree, which still stops with `dirty-worktree`.
-- [ ] The fix lives in the owner modules that split rows E10 and E11 assign:
+- [x] The fix lives in the owner modules that split rows E10 and E11 assign:
   `cardine.worktree.checkout` for `inspect_task_worktree` and
   `cardine.integration.merge` for `cleanup_task_worktree`. The module
   inventory tests stay green.
-- [ ] **CI before integration.** After validation, push the task branch once
+- [x] **CI before integration.** After validation, push the task branch once
   (`git push origin task-007`, authorized by `Proceed with`) and record
   `T1_CI` evidence for the exact task commit with `python3
   scripts/ci_evidence.py --commit <sha> --task 007 --output <path> --wait 900`.
   Integrate only when that evidence reports a successful run on both operating
   systems.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -119,3 +119,11 @@ cleanup command, which `cardine run` will call.
 - `python3 scripts/run_tests.py --parallel`
 - `git diff --check`
 - `python3 scripts/ci_evidence.py --commit <task commit> --task 007 --output <path> --wait 900`
+
+## Completion evidence
+
+Implemented in `331cb1e0da16e4496c3a59bd84ed334388394e48`. All required
+local checks passed, including 1,122 tests without failures, errors, or skips.
+T1_CI passed for that exact commit on both operating systems in
+[Validate repository #39077403276](https://github.com/biagiolibe/cardine/actions/runs/39077403276).
+See `tasks/handoffs/007.md` for commands, recovery coverage, and limitations.

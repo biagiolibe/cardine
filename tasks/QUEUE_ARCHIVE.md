@@ -53,3 +53,12 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[x]` | 014 | Extract flow, task audit, contract, importer, and budget command modules (split plan E09) | 🔴 P1 | 013 | [014](done/014-extract-contract-and-importer.md) |
 | `[x]` | 015 | Extract preflight, worktree checkout, integration evidence, execution, and setup modules (split plan E10) | 🔴 P1 | 014 | [015](done/015-extract-worktree-checkout-and-execution.md) |
 | `[x]` | 016 | Extract merge, recording, transition, template audit, and closure status modules (split plan E11) | 🔴 P1 | 015 | [016](done/016-extract-merge-and-transitions.md) |
+
+### Phase 6 — Lifecycle defects carried from Meridian 1.4.0
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | 016 | [007](done/007-recover-partial-worktree-cleanup.md) |
+| `[x]` | 018 | Resume a Lean closure without state through `task close` | 🟡 P2 | 016 | [018](done/018-lean-closure-resume-uses-task-close.md) |

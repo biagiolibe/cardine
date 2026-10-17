@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+import shutil
 import sys
 import tempfile
 import unittest
@@ -864,6 +865,130 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertNotEqual(self.git("show-ref", "--verify", "refs/heads/task-056", check=False).returncode, 0)
         repeated = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertTrue(repeated["already_cleaned"])
+
+    def assert_cleanup_finished(self, prepared, recovered_from):
+        result = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        self.assertEqual(result["status"], "cleaned")
+        self.assertEqual(result["recovered_from"], recovered_from)
+        worktree = Path(prepared["worktree"])
+        self.assertTrue(worktree.is_dir())
+        self.assertEqual(list(worktree.iterdir()), [])
+        self.assertNotIn(str(worktree), self.git("worktree", "list", "--porcelain").stdout)
+        self.assertNotEqual(self.git("rev-parse", "--verify", "task-056", check=False).returncode, 0)
+        state, _, _ = owner_worktree_storage._lifecycle_paths(
+            self.primary, owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing"))
+        self.assertFalse(state.exists())
+        self.assertTrue(owner_integration_merge.cleanup_task_worktree(
+            "056", self.worktree_root, self.primary)["already_cleaned"])
+
+    def test_cleanup_recovers_prunable_entry_without_pruning_other_worktrees(self):
+        prepared = self.prepare()
+        worktree = Path(prepared["worktree"])
+        other = self.create_task("other")
+        shutil.rmtree(other)
+        shutil.rmtree(worktree)
+        inspection, ready = owner_worktree_checkout.inspect_task_worktree(
+            "056", self.worktree_root, self.primary, require_effective_worktree=False)
+        self.assertFalse(ready)
+        self.assertEqual(inspection["errors"], ["missing-worktree"])
+        self.assertIn("prunable", self.git("worktree", "list", "--porcelain").stdout)
+        self.assert_cleanup_finished(prepared, "registered-directory-missing")
+        self.assertIn(str(other), self.git("worktree", "list", "--porcelain").stdout)
+
+    def test_cleanup_recovers_unregistered_worktree(self):
+        prepared = self.prepare()
+        self.git("worktree", "remove", prepared["worktree"])
+        self.assert_cleanup_finished(prepared, "unregistered-worktree")
+
+    def test_cleanup_missing_branch_requires_tracked_terminal_state(self):
+        prepared = self.prepare()
+        self.git("worktree", "remove", prepared["worktree"])
+        self.git("branch", "-d", prepared["branch"])
+        with self.assertRaisesRegex(shared_errors.MeridianError, "tracked task state on main must be done"):
+            owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        state = {"version": 1, "task_id": "056", "workflow": "lean-delivery",
+                 "status": "QUEUED", "transitions": []}
+        path = self.primary / ".meridian/tasks/056.json"
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(state), encoding="utf-8")
+        self.git("add", ".meridian/tasks/056.json")
+        self.git("commit", "-m", "track queued state")
+        with self.assertRaisesRegex(shared_errors.MeridianError, "nonterminal tracked task state"):
+            owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        state.update(status="DONE", transitions=[{"from": "QUEUED", "to": "DONE",
+                     "at": "2026-10-17T00:00:00Z", "commit": self.base}])
+        path.write_text(json.dumps(state), encoding="utf-8")
+        with self.assertRaisesRegex(shared_errors.MeridianError, "primary checkout must be clean"):
+            owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        self.git("add", ".meridian/tasks/056.json")
+        self.git("commit", "-m", "track terminal state")
+        self.assert_cleanup_finished(prepared, "branch-already-deleted")
+
+    def test_cleanup_retains_dirty_and_unmerged_worktrees(self):
+        prepared = self.prepare()
+        worktree = Path(prepared["worktree"])
+        (worktree / "README.md").write_text("changed", encoding="utf-8")
+        inspection, ready = owner_worktree_checkout.inspect_task_worktree(
+            "056", self.worktree_root, self.primary, require_effective_worktree=False)
+        self.assertFalse(ready)
+        self.assertEqual(inspection["errors"], ["dirty-worktree"])
+        with self.assertRaisesRegex(shared_errors.MeridianError, "dirty-worktree"):
+            owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        self.assertEqual((worktree / "README.md").read_text(), "changed")
+        self.git("add", "README.md", cwd=worktree)
+        self.git("commit", "-m", "unmerged task", cwd=worktree)
+        for partial in ("registered", "missing", "unregistered"):
+            with self.subTest(partial=partial):
+                if partial == "missing":
+                    shutil.rmtree(worktree)
+                elif partial == "unregistered":
+                    self.git("worktree", "remove", str(worktree))
+                with self.assertRaisesRegex(shared_errors.MeridianError, "not integrated into main"):
+                    owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+                self.assertEqual(self.git("rev-parse", "--verify", "task-056").returncode, 0)
+
+    def test_cleanup_recovery_preserves_all_other_gates(self):
+        prepared = self.prepare()
+        shutil.rmtree(prepared["worktree"])
+        _, lease, integration = owner_worktree_storage._lifecycle_paths(
+            self.primary, owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing"))
+        for gate in (lease, integration, self.primary / ".git/MERGE_HEAD"):
+            with self.subTest(gate=gate):
+                gate.write_text("{}", encoding="utf-8")
+                with self.assertRaisesRegex(shared_errors.MeridianError, "integration lease or staged merge"):
+                    owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+                gate.unlink()
+        self.git("remote", "add", "origin", str(self.root / "remote.git"))
+        with self.assertRaisesRegex(shared_errors.MeridianError, "not proven pushed"):
+            owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        self.git("update-ref", "refs/remotes/origin/main", self.base)
+        self.assert_cleanup_finished(prepared, "registered-directory-missing")
+
+    def test_cleanup_resume_after_directory_removed_but_git_write_denied(self):
+        prepared = self.prepare()
+        worktree = Path(prepared["worktree"])
+        run_git = owner_integration_merge._run_git
+
+        def deny_removal(project, *arguments):
+            if arguments[:2] == ("worktree", "remove"):
+                shutil.rmtree(worktree)
+                return subprocess.CompletedProcess(arguments, 128, "", "Permission denied")
+            return run_git(project, *arguments)
+
+        with mock.patch.object(owner_integration_merge, "_run_git", side_effect=deny_removal):
+            with self.assertRaisesRegex(shared_errors.MeridianError,
+                    r"CLEANUP_BLOCKED.*registered-directory-missing.*write access.*primary checkout's .git") as caught:
+                owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        resume = str(caught.exception).split("resume: ", 1)[1].strip()
+        # Run the emitted arguments using the repository CLI entry point.
+        import shlex
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/meridian.py"),
+                                 *shlex.split(resume)[1:]], cwd=self.primary, text=True, capture_output=True,
+                                env={**os.environ, "MERIDIAN_WORKTREE_ROOT": str(self.worktree_root)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["recovered_from"], "registered-directory-missing")
+        self.assertTrue(worktree.is_dir())
+        self.assertEqual(list(worktree.iterdir()), [])
 
     def test_candidate_validation_commands_cover_each_decision(self) -> None:
         baseline = "set -o pipefail; python3 scripts/check_repository.py 2>&1 | tail -n 200"

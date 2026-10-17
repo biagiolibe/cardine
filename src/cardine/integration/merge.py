@@ -503,14 +503,20 @@ def cleanup_task_worktree(
     identity = resolve_task_identity(project_root, task_id, "existing")
     root = _effective_worktree_root(worktree_root)
     expected = _task_worktree_path_for_identity(project_root, root, identity)
-    state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
-    registered_paths = {Path(item["worktree"]).resolve() for item in _git_worktrees(project_root)}
+    lifecycle_state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
+    registered = next((item for item in _git_worktrees(project_root)
+                       if Path(item["worktree"]).resolve() == expected), None)
+    branch_commit = _branch_commit(project_root, identity.branch_name)
+    absent_or_empty = not expected.exists() or (expected.is_dir() and not any(expected.iterdir()))
+    if lease_path.exists() or integration_path.exists() or _merge_head_path(project_root).exists():
+        raise stop_error("CLEANUP_BLOCKED", "cleanup is blocked while an integration lease or staged merge is active", task_id=identity.canonical_id, project=project_root)
     if (
-        expected not in registered_paths
-        and (not expected.exists() or (expected.is_dir() and not any(expected.iterdir())))
-        and _branch_commit(project_root, identity.branch_name) is None
-        and not state_path.exists()
+        registered is None
+        and absent_or_empty
+        and branch_commit is None
+        and not lifecycle_state_path.exists()
     ):
+        expected.mkdir(parents=True, exist_ok=True)
         return {"version": 1, "task_id": identity.canonical_id, "status": "cleaned", "already_cleaned": True}
     inspection, ready = inspect_task_worktree(
         identity.canonical_id,
@@ -518,14 +524,39 @@ def cleanup_task_worktree(
         project_root,
         require_effective_worktree=False,
     )
-    if lease_path.exists() or integration_path.exists():
-        raise stop_error("CLEANUP_BLOCKED", "cleanup is blocked while an integration lease or staged merge is active", task_id=identity.canonical_id, project=project_root)
-    if not ready:
+    recovered_from = None
+    allowed_errors: set[str] = set()
+    if registered is not None and not expected.exists() and "prunable" in registered:
+        recovered_from = "registered-directory-missing"
+        allowed_errors = {"missing-worktree"}
+    elif registered is None and absent_or_empty:
+        recovered_from = "unregistered-worktree" if branch_commit else "branch-already-deleted"
+        allowed_errors = {"unregistered-worktree"}
+    if not ready and (not allowed_errors or set(inspection["errors"]) - allowed_errors):
         raise stop_error("CLEANUP_BLOCKED", f"cleanup preflight failed: {', '.join(inspection['errors'])}", task_id=identity.canonical_id, project=project_root)
     if git_output(project_root, "status", "--porcelain"):
         raise stop_error("CLEANUP_BLOCKED", "primary checkout must be clean", task_id=identity.canonical_id, project=project_root)
-    task_commit = str(inspection["task_commit"])
-    if _run_git(project_root, "merge-base", "--is-ancestor", task_commit, "main").returncode != 0:
+    task_commit = str(inspection["task_commit"]) if registered is not None else branch_commit
+    if task_commit is None:
+        # Preparation's lifecycle task_commit predates implementation. Only a
+        # tracked terminal task state on main can prove closure without a ref.
+        try:
+            relative = state_path(project_root, identity.canonical_id).relative_to(project_root)
+            shown = _run_git(project_root, "show", f"main:{relative.as_posix()}")
+            if shown.returncode != 0:
+                raise MeridianError("missing tracked task state")
+            workflow = detect_mode(project_root)
+            spike = read_task_field(identity.task_path.read_text(encoding="utf-8"), "Class") == "SPIKE"
+            state = read_task_state(
+                project_root, identity.canonical_id, workflow, spike=spike, review_required=None,
+                stop_factory=stop_error, text=shown.stdout,
+            )
+            terminal = ("ANSWERED", "INCONCLUSIVE") if spike else ("ACCEPTED",) if workflow == "governed-sdd" else ("DONE",)
+            if state["status"] not in terminal:
+                raise MeridianError(f"nonterminal tracked task state: {state['status']}")
+        except MeridianError as error:
+            raise stop_error("CLEANUP_BLOCKED", f"branch already deleted; tracked task state on main must be done: {error}", task_id=identity.canonical_id, project=project_root) from error
+    elif _run_git(project_root, "merge-base", "--is-ancestor", task_commit, "main").returncode != 0:
         raise stop_error("CLEANUP_BLOCKED", "task commit is not integrated into main", task_id=identity.canonical_id, project=project_root)
     origin = _run_git(project_root, "remote", "get-url", "origin")
     if origin.returncode == 0:
@@ -534,18 +565,25 @@ def cleanup_task_worktree(
             project_root, "merge-base", "--is-ancestor", "main", "refs/remotes/origin/main"
         ).returncode != 0:
             raise stop_error("CLEANUP_BLOCKED", "local main is not proven pushed to origin/main", task_id=identity.canonical_id, project=project_root)
-    removed = _run_git(project_root, "worktree", "remove", str(inspection["worktree"]))
-    if removed.returncode != 0:
-        raise stop_error(
-            "CLEANUP_BLOCKED", removed.stderr.strip() or "worktree removal failed; branch was retained", task_id=identity.canonical_id, project=project_root
-        )
+    if registered is not None:
+        removed = _run_git(project_root, "worktree", "remove", str(expected))
+        if removed.returncode != 0:
+            partial = "registered-directory-missing" if not expected.exists() else "registered-directory-present"
+            raise stop_error(
+                "CLEANUP_BLOCKED", f"{partial}: worktree removal failed; cleanup needs write access to the primary checkout's .git directory; {removed.stderr.strip()}", task_id=identity.canonical_id, project=project_root,
+                resume=f"meridian worktree cleanup {shlex.quote(identity.canonical_id)} --project {shlex.quote(str(project_root))} --worktree-root {shlex.quote(str(root))} --format json"
+            )
     # Codex launches Stop hooks with the session path as cwd, even after cleanup.
     # Keep an empty, unregistered directory so the host can start the hook.
-    expected.mkdir(exist_ok=True)
-    deleted = _run_git(project_root, "branch", "-d", identity.branch_name)
-    if deleted.returncode != 0:
-        raise stop_error(
-            "CLEANUP_BLOCKED", deleted.stderr.strip() or "non-force branch deletion failed", task_id=identity.canonical_id, project=project_root
-        )
-    _remove_owned_file(state_path)
-    return {"version": 1, "task_id": identity.canonical_id, "status": "cleaned"}
+    expected.mkdir(parents=True, exist_ok=True)
+    if branch_commit is not None:
+        deleted = _run_git(project_root, "branch", "-d", identity.branch_name)
+        if deleted.returncode != 0:
+            raise stop_error(
+                "CLEANUP_BLOCKED", deleted.stderr.strip() or "non-force branch deletion failed", task_id=identity.canonical_id, project=project_root
+            )
+    _remove_owned_file(lifecycle_state_path)
+    result = {"version": 1, "task_id": identity.canonical_id, "status": "cleaned"}
+    if recovered_from:
+        result["recovered_from"] = recovered_from
+    return result

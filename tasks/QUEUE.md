@@ -33,15 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 6 — Lifecycle defects carried from Meridian 1.4.0
-
-Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | 016 | [007](007-recover-partial-worktree-cleanup.md) |
-| `[x]` | 018 | Resume a Lean closure without state through `task close` | 🟡 P2 | 016 | [018](done/018-lean-closure-resume-uses-task-close.md) |
-
 ### Phase 7 — Development tooling defects
 
 Authority: `docs/ADR_CARDINE_1_0.md`, decision 11.
