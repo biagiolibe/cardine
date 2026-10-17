@@ -38,7 +38,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 012 — Extract projection, update, verdict, context, and journal modules (split plan E07).
 - `[x]` 013 — Extract evidence, marker audit, migration audit, worktree path, and skill modules (split plan E08).
 - `[x]` 014 — Extract flow, task audit, contract, importer, and budget command modules (split plan E09).
-- `[ ]` 015 — Extract preflight, worktree checkout, integration evidence, execution, and setup modules (split plan E10).
+- `[x]` 015 — Extract preflight, worktree checkout, integration evidence, execution, and setup modules (split plan E10).
 - `[ ]` 016 — Extract merge, recording, transition, template audit, and closure status modules (split plan E11).
 - `[ ]` 007 — Recover worktree cleanup after a partial removal.
 - `[ ]` 017 — Record wall-clock time and the real CI command in CI evidence.

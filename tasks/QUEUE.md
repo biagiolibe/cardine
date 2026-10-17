@@ -46,7 +46,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[x]` | 012 | Extract projection, update, verdict, context, and journal modules (split plan E07) | 🔴 P1 | 011 | [012](done/012-extract-verdict-and-journal.md) |
 | `[x]` | 013 | Extract evidence, marker audit, migration audit, worktree path, and skill modules (split plan E08) | 🔴 P1 | 012 | [013](done/013-extract-evidence-and-worktree-paths.md) |
 | `[x]` | 014 | Extract flow, task audit, contract, importer, and budget command modules (split plan E09) | 🔴 P1 | 013 | [014](done/014-extract-contract-and-importer.md) |
-| `[ ]` | 015 | Extract preflight, worktree checkout, integration evidence, execution, and setup modules (split plan E10) | 🔴 P1 | 014 | [015](015-extract-worktree-checkout-and-execution.md) |
+| `[x]` | 015 | Extract preflight, worktree checkout, integration evidence, execution, and setup modules (split plan E10) | 🔴 P1 | 014 | [015](done/015-extract-worktree-checkout-and-execution.md) |
 | `[ ]` | 016 | Extract merge, recording, transition, template audit, and closure status modules (split plan E11) | 🔴 P1 | 015 | [016](016-extract-merge-and-transitions.md) |
 
 ### Phase 6 — Lifecycle defects carried from Meridian 1.4.0

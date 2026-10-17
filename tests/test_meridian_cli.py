@@ -60,6 +60,8 @@ from cardine.shared import budget_commands as owner_shared_budget_commands
 from cardine.shared import flow as owner_shared_flow
 from cardine.tasks import audit as owner_tasks_audit
 from cardine.tasks import contract as owner_tasks_contract
+from cardine.hosts import setup as owner_hosts_setup
+from cardine.tasks import preflight as owner_tasks_preflight
 
 
 class FakeLatestReleaseResponse:
@@ -4098,7 +4100,7 @@ class BudgetCliTest(unittest.TestCase):
 
     def append_contract(self, task_id: str) -> None:
         path = self.project / "tasks" / f"{task_id}.md"
-        path.write_text(path.read_text(encoding="utf-8") + "\n" + meridian.execution_contract(self.project, task_id) + "\n", encoding="utf-8")
+        path.write_text(path.read_text(encoding="utf-8") + "\n" + owner_tasks_preflight.execution_contract(self.project, task_id) + "\n", encoding="utf-8")
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -4209,7 +4211,7 @@ class BudgetCliTest(unittest.TestCase):
         )
         nested_task = self.project / "docs/tasks/M19/TASK-007.md"
         nested_task.write_text(
-            nested_task.read_text(encoding="utf-8") + "\n" + meridian.execution_contract(self.project, "TASK-007") + "\n",
+            nested_task.read_text(encoding="utf-8") + "\n" + owner_tasks_preflight.execution_contract(self.project, "TASK-007") + "\n",
             encoding="utf-8",
         )
         locations = self.run_cli("locations", "--field", "queue")
@@ -4440,7 +4442,7 @@ Evidence plan:
             "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n## Completion\n",
             encoding="utf-8",
         )
-        legacy_contract = meridian.execution_contract(self.project, "TASK-014").replace(
+        legacy_contract = owner_tasks_preflight.execution_contract(self.project, "TASK-014").replace(
             "- Execution commands: `required via meridian execution`", ""
         )
         task.write_text(task.read_text(encoding="utf-8").replace("## Completion", legacy_contract + "\n\n## Completion"), encoding="utf-8")
@@ -5882,7 +5884,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_check_is_read_only_and_reports_unconfigured_state(self) -> None:
         root = self.home / "custom"
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             root,
             self.codex_config,
             environment=self.environment,
@@ -5890,7 +5892,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         output = io.StringIO()
         with redirect_stdout(output):
-            meridian.print_setup_plan(plan)
+            owner_hosts_setup.print_setup_plan(plan)
         self.assertEqual(plan.directory_state, "missing")
         self.assertEqual(plan.codex_state, "unconfigured")
         self.assertIn("worktree-root-source: --worktree-root", output.getvalue())
@@ -5931,10 +5933,10 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertFalse(self.codex_config.exists())
 
     def test_apply_creates_private_default_root_without_user_config_and_is_idempotent(self) -> None:
-        first = meridian.plan_setup(
+        first = owner_hosts_setup.plan_setup(
             None, self.codex_config, environment=self.environment, home=self.home
         )
-        self.assertTrue(meridian.apply_setup(first))
+        self.assertTrue(owner_hosts_setup.apply_setup(first))
         root = self.home / ".meridian/worktrees"
         self.assertTrue(root.is_dir())
         self.assertEqual(stat.S_IMODE(root.stat().st_mode), 0o700)
@@ -5944,20 +5946,20 @@ class WorktreeRootSetupTest(unittest.TestCase):
             ["meridian-worktrees"]["workspace_roots"],
             {str(root): True},
         )
-        second = meridian.plan_setup(
+        second = owner_hosts_setup.plan_setup(
             None, self.codex_config, environment=self.environment, home=self.home
         )
         self.assertEqual((second.directory_state, second.codex_state, second.changes), ("ready", "ready", ("none",)))
-        self.assertFalse(meridian.apply_setup(second))
+        self.assertFalse(owner_hosts_setup.apply_setup(second))
 
     def test_custom_root_is_persisted_and_private_permissions_are_repaired(self) -> None:
         root = self.home / "custom"
         root.mkdir(mode=0o755)
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             root, self.codex_config, environment=self.environment, home=self.home
         )
         self.assertEqual(plan.directory_state, "repair-required")
-        self.assertTrue(meridian.apply_setup(plan))
+        self.assertTrue(owner_hosts_setup.apply_setup(plan))
         self.assertEqual(stat.S_IMODE(root.stat().st_mode), 0o700)
         self.assertEqual(
             json.loads(self.user_config.read_text(encoding="utf-8")),
@@ -5968,13 +5970,13 @@ class WorktreeRootSetupTest(unittest.TestCase):
     def test_apply_refuses_a_non_directory_root_before_any_write(self) -> None:
         root = self.home / "not-a-directory"
         root.write_text("keep\n", encoding="utf-8")
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             root, self.codex_config, environment=self.environment, home=self.home
         )
         self.assertEqual(plan.directory_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
         with self.assertRaisesRegex(shared_errors.MeridianError, "not a directory"):
-            meridian.apply_setup(plan)
+            owner_hosts_setup.apply_setup(plan)
         self.assertEqual(root.read_text(encoding="utf-8"), "keep\n")
         self.assertFalse(self.user_config.exists())
         self.assertFalse(self.codex_config.exists())
@@ -5982,33 +5984,33 @@ class WorktreeRootSetupTest(unittest.TestCase):
     def test_every_codex_setup_state_including_damaged_profile_root_replacement(self) -> None:
         root = self.home / "root"
         root.mkdir(mode=0o700)
-        unconfigured = meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
+        unconfigured = owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
         self.assertEqual(unconfigured.codex_state, "unconfigured")
-        meridian.apply_setup(unconfigured)
+        owner_hosts_setup.apply_setup(unconfigured)
         self.assertEqual(
-            meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home).codex_state,
+            owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home).codex_state,
             "ready",
         )
 
         text = self.codex_config.read_text(encoding="utf-8")
         self.codex_config.write_text(text.replace(meridian.CODEX_MANAGED_END + "\n", ""), encoding="utf-8")
         self.assertEqual(
-            meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home).codex_state,
+            owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home).codex_state,
             "repair-required",
         )
 
         other = self.home / "other"
         self.codex_config.write_text(owner_hosts_codex._codex_managed_block(other) + "\n", encoding="utf-8")
-        different = meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
+        different = owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
         self.assertEqual(different.codex_state, "different-root")
         self.assertIn("profile=", owner_hosts_skills.codex_profile_root_mismatch(self.codex_config, root) or "")
 
         damaged = self.codex_config.read_text(encoding="utf-8").replace(meridian.CODEX_MANAGED_END + "\n", "")
         self.codex_config.write_text(damaged, encoding="utf-8")
-        combined = meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
+        combined = owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
         self.assertEqual(combined.codex_state, "repair-and-replace-required")
         self.assertIn("replaces the one configured worktree root", combined.codex_detail)
-        self.assertTrue(meridian.apply_setup(combined))
+        self.assertTrue(owner_hosts_setup.apply_setup(combined))
         self.assertEqual(
             tomllib.loads(self.codex_config.read_text(encoding="utf-8"))["permissions"]
             ["meridian-worktrees"]["workspace_roots"],
@@ -6018,35 +6020,35 @@ class WorktreeRootSetupTest(unittest.TestCase):
     def test_setup_plans_and_applies_codex_skill_links_idempotently(self) -> None:
         root = self.home / "root"
         environment = {**self.environment, "MERIDIAN_ROOT": str(ROOT)}
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             root, self.codex_config, environment=environment, home=self.home, framework_root=ROOT
         )
         self.assertEqual(plan.skill_links_state, "missing")
         self.assertEqual(plan.meridian_root_state, "ready")
         self.assertFalse((self.home / ".agents").exists())
-        self.assertTrue(meridian.apply_setup(plan))
+        self.assertTrue(owner_hosts_setup.apply_setup(plan))
         for name in owner_hosts_skills.CODEX_SKILL_NAMES:
             link = self.home / ".agents/skills" / name
             self.assertTrue(link.is_symlink())
             self.assertEqual(link.resolve(), (ROOT / "skills" / name).resolve())
-        again = meridian.plan_setup(
+        again = owner_hosts_setup.plan_setup(
             root, self.codex_config, environment=environment, home=self.home, framework_root=ROOT
         )
         self.assertEqual(again.skill_links_state, "ready")
-        self.assertFalse(meridian.apply_setup(again))
+        self.assertFalse(owner_hosts_setup.apply_setup(again))
 
     def test_setup_refuses_conflicting_or_blocked_skill_links(self) -> None:
         skills = self.home / ".agents/skills"
         skills.mkdir(parents=True)
         (skills / "meridian-lean-delivery").symlink_to(self.home / "elsewhere")
         (skills / "meridian-governed-sdd").mkdir()
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             self.home / "root", self.codex_config, environment=self.environment, home=self.home, framework_root=ROOT
         )
         self.assertEqual(plan.skill_links_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
         with self.assertRaisesRegex(shared_errors.MeridianError, "setup is blocked"):
-            meridian.apply_setup(plan)
+            owner_hosts_setup.apply_setup(plan)
         self.assertFalse((self.home / "root").exists())
         self.assertFalse(self.codex_config.exists())
 
@@ -6058,12 +6060,12 @@ class WorktreeRootSetupTest(unittest.TestCase):
         stale = self.home / ".codex/skills/meridian-lean-delivery"
         stale.parent.mkdir(parents=True)
         stale.write_text("stale\n", encoding="utf-8")
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             self.home / "root", self.codex_config, environment=self.environment, home=self.home, framework_root=framework
         )
         self.assertEqual(plan.skill_links_state, "skipped")
         self.assertTrue(any(str(stale) in warning for warning in plan.warnings))
-        self.assertFalse(meridian.apply_setup(plan) and (self.home / ".agents").exists())
+        self.assertFalse(owner_hosts_setup.apply_setup(plan) and (self.home / ".agents").exists())
 
     def test_setup_reports_meridian_root_environment_states(self) -> None:
         root = self.home / "root"
@@ -6073,7 +6075,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             ({**self.environment, "MERIDIAN_ROOT": str(self.home / "other")}, "mismatch"),
         ):
             with self.subTest(expected=expected):
-                plan = meridian.plan_setup(
+                plan = owner_hosts_setup.plan_setup(
                     root,
                     self.codex_config,
                     environment=environment,
@@ -6092,7 +6094,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     encoding="utf-8",
                 )
                 root = self.home / f"{workflow_mode}-root"
-                unchecked = meridian.plan_setup(
+                unchecked = owner_hosts_setup.plan_setup(
                     root,
                     self.codex_config,
                     environment=self.environment,
@@ -6100,7 +6102,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     project_root=project,
                 )
                 self.assertEqual(unchecked.task_identity_state, "not-requested")
-                self.assertFalse(meridian.apply_setup(unchecked) and (project / shared_constants.TASK_IDENTITY_PATH).exists())
+                self.assertFalse(owner_hosts_setup.apply_setup(unchecked) and (project / shared_constants.TASK_IDENTITY_PATH).exists())
                 self.assertFalse((project / shared_constants.TASK_IDENTITY_PATH).exists())
 
                 for choice in ("opaque", "milestone"):
@@ -6110,7 +6112,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                         (ROOT / "templates/workflows" / workflow_mode / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8"),
                         encoding="utf-8",
                     )
-                    plan = meridian.plan_setup(
+                    plan = owner_hosts_setup.plan_setup(
                         self.home / f"{workflow_mode}-{choice}-root",
                         self.home / f"{workflow_mode}-{choice}.toml",
                         task_identity=choice,
@@ -6120,10 +6122,10 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     )
                     output = io.StringIO()
                     with redirect_stdout(output):
-                        meridian.print_setup_plan(plan)
+                        owner_hosts_setup.print_setup_plan(plan)
                     self.assertEqual(plan.task_identity_state, "planned")
                     self.assertIn(f"task identity mode {choice}", output.getvalue())
-                    self.assertTrue(meridian.apply_setup(plan))
+                    self.assertTrue(owner_hosts_setup.apply_setup(plan))
                     self.assertEqual(
                         json.loads((choice_project / shared_constants.TASK_IDENTITY_PATH).read_text(encoding="utf-8")),
                         {"version": 1, "mode": choice},
@@ -6236,7 +6238,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         project.mkdir()
         root = self.home / "root"
         with self.assertRaisesRegex(shared_errors.MeridianError, "unsupported task identity mode"):
-            meridian.plan_setup(
+            owner_hosts_setup.plan_setup(
                 root,
                 self.codex_config,
                 task_identity="invalid",
@@ -6250,7 +6252,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         identity_path.parent.mkdir()
         identity_path.write_text('{"version": 1, "mode": "opaque"}\n', encoding="utf-8")
         before = identity_path.read_bytes()
-        identical = meridian.plan_setup(
+        identical = owner_hosts_setup.plan_setup(
             root,
             self.codex_config,
             task_identity="opaque",
@@ -6262,7 +6264,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertIn("already set to opaque", identical.task_identity_detail)
         self.assertIsNone(identical.task_identity_proposal)
 
-        different = meridian.plan_setup(
+        different = owner_hosts_setup.plan_setup(
             root,
             self.codex_config,
             task_identity="milestone",
@@ -6273,7 +6275,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(different.task_identity_state, "different")
         self.assertIn("requested milestone", different.task_identity_detail)
         self.assertIsNone(different.task_identity_proposal)
-        self.assertTrue(meridian.apply_setup(different))
+        self.assertTrue(owner_hosts_setup.apply_setup(different))
         self.assertEqual(identity_path.read_bytes(), before)
 
     def test_setup_task_identity_blocks_malformed_existing_declaration(self) -> None:
@@ -6281,7 +6283,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         identity_path = project / shared_constants.TASK_IDENTITY_PATH
         identity_path.parent.mkdir(parents=True)
         identity_path.write_text("not json\n", encoding="utf-8")
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             self.home / "root",
             self.codex_config,
             task_identity="milestone",
@@ -6291,7 +6293,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertEqual(plan.task_identity_state, "blocked")
         with self.assertRaisesRegex(shared_errors.MeridianError, "invalid task identity declaration"):
-            meridian.apply_setup(plan)
+            owner_hosts_setup.apply_setup(plan)
         self.assertEqual(identity_path.read_text(encoding="utf-8"), "not json\n")
 
     def test_setup_milestone_identity_is_reported_by_the_resolver(self) -> None:
@@ -6302,7 +6304,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "| ID | Status | Task file |\n|---|---|---|\n| M2-API-001 | TODO | [M2-API-001](M2-API-001.md) |\n",
             encoding="utf-8",
         )
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             self.home / "root",
             self.codex_config,
             task_identity="milestone",
@@ -6310,7 +6312,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             home=self.home,
             project_root=project,
         )
-        self.assertTrue(meridian.apply_setup(plan))
+        self.assertTrue(owner_hosts_setup.apply_setup(plan))
         checked = subprocess.run(
             [sys.executable, str(CLI), "task", "identity", "check", "M2-API-001", "--project", str(project), "--format", "json"],
             text=True,
@@ -6330,7 +6332,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         root = self.home / "root"
 
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             root,
             self.codex_config,
             environment=self.environment,
@@ -6344,7 +6346,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertIn("defense in depth", plan.claude_detail)
         self.assertEqual(json.loads(settings.read_text(encoding="utf-8"))["permissions"]["allow"], ["Bash(existing command)"])
         self.assertNotIn("deny", json.loads(settings.read_text(encoding="utf-8"))["permissions"])
-        self.assertTrue(meridian.apply_setup(plan))
+        self.assertTrue(owner_hosts_setup.apply_setup(plan))
         configured = json.loads(settings.read_text(encoding="utf-8"))
         self.assertTrue(configured["preserve"])
         self.assertEqual(
@@ -6352,7 +6354,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             ["Bash(existing command)", *owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST],
         )
         self.assertEqual(configured["permissions"]["deny"], list(owner_hosts_claude.CLAUDE_PROJECT_DENYLIST))
-        repeated = meridian.plan_setup(
+        repeated = owner_hosts_setup.plan_setup(
             root,
             self.codex_config,
             environment=self.environment,
@@ -6360,7 +6362,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             project_root=project,
         )
         self.assertEqual(repeated.claude_state, "ready")
-        self.assertFalse(meridian.apply_setup(repeated))
+        self.assertFalse(owner_hosts_setup.apply_setup(repeated))
 
     def test_setup_keeps_user_deny_entries_and_adds_each_missing_rule_once(self) -> None:
         project = self.home / "project"
@@ -6437,7 +6439,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "hooks": {"UserPromptSubmit": [{"command": "/tmp/queue-briefing.sh"}]},
         }), encoding="utf-8")
 
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             self.home / "root", self.codex_config, environment=self.environment,
             home=self.home, project_root=project,
         )
@@ -6453,7 +6455,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         settings.write_text("not json\n", encoding="utf-8")
         root = self.home / "root"
 
-        plan = meridian.plan_setup(
+        plan = owner_hosts_setup.plan_setup(
             root,
             self.codex_config,
             environment=self.environment,
@@ -6464,7 +6466,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(plan.claude_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
         with self.assertRaisesRegex(shared_errors.MeridianError, "malformed Claude settings"):
-            meridian.apply_setup(plan)
+            owner_hosts_setup.apply_setup(plan)
         self.assertFalse(root.exists())
         self.assertFalse(self.codex_config.exists())
         self.assertEqual(settings.read_text(encoding="utf-8"), "not json\n")
@@ -6475,11 +6477,11 @@ class WorktreeRootSetupTest(unittest.TestCase):
         root = self.home / "root"
         root.mkdir()
 
-        missing = meridian.codex_doctor(project, self.codex_config, root, home=self.home)
+        missing = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(missing["claude-project-allowlist"], "approval-required")
         claude_plan = owner_hosts_claude.plan_claude_project_allowlist(project)
         self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(claude_plan))
-        ready = meridian.codex_doctor(project, self.codex_config, root, home=self.home)
+        ready = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(ready["claude-project-allowlist"], "ready")
 
     def _trusted_project_with_rules(self, rules_text: str) -> tuple[Path, Path]:
@@ -6498,7 +6500,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
     def test_codex_doctor_probes_every_closure_policy_group(self) -> None:
         rules = (ROOT / "templates/workflows/lean-delivery/.codex/rules/meridian.rules").read_text(encoding="utf-8")
         project, root = self._trusted_project_with_rules(rules)
-        ready = meridian.codex_doctor(project, self.codex_config, root, home=self.home)
+        ready = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(ready["lifecycle-command-policy"], "ready")
         for key in ("archive-rename-policy", "inspection-command-policy", "validation-command-policy"):
             self.assertEqual(ready[key], "ready", key)
@@ -6509,7 +6511,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         legacy = re.sub(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", "\n", rules, flags=re.DOTALL)
         self.assertNotEqual(legacy, rules)
         project, root = self._trusted_project_with_rules(legacy)
-        gaps = meridian.codex_doctor(project, self.codex_config, root, home=self.home)
+        gaps = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(gaps["lifecycle-command-policy"], "blocked")
         self.assertEqual(gaps["archive-rename-policy"], "gap: git mv")
         self.assertTrue(gaps["inspection-command-policy"].startswith("gap: "))
@@ -6659,7 +6661,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertIn(f'-"{old_root}" = true', checked.stdout)
         self.assertIn(f'+"{self.worktrees}" = true', checked.stdout)
         self.assertEqual(self.config.read_text(encoding="utf-8"), original)
-        report = meridian.codex_doctor(self.root, self.config, self.worktrees)
+        report = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
         self.assertEqual(report["permission-model"], "repair-and-replace-required")
         self.assertEqual(report["profile-ownership"], "repair-and-replace-required")
 
@@ -6866,7 +6868,7 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def test_doctor_reports_ownership_separately_from_root_access(self) -> None:
         self.config.write_text(self.rewritten(), encoding="utf-8")
-        report = meridian.codex_doctor(self.root, self.config, self.worktrees)
+        report = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
         self.assertEqual(report["permission-model"], "repair-required")
         self.assertEqual(report["profile-ownership"], "repair-required")
         self.assertEqual(report["worktree-root-write"], "ready")
@@ -6874,21 +6876,21 @@ class CodexProfileRepairTest(unittest.TestCase):
 
         other_root = self.root / "other-root"
         self.config.write_text(owner_hosts_codex._codex_managed_block(other_root) + "\n", encoding="utf-8")
-        different = meridian.codex_doctor(self.root, self.config, self.worktrees)
+        different = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
         self.assertEqual(
             different["codex-root-mismatch"],
             f"profile={other_root} resolved={self.worktrees}",
         )
 
         self.config.write_text(self.rewritten(tables=self.profile_tables(extends='":read-only"')), encoding="utf-8")
-        blocked = meridian.codex_doctor(self.root, self.config, self.worktrees)
+        blocked = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
         self.assertEqual(blocked["permission-model"], "blocked")
         self.assertEqual(blocked["profile-ownership"], "blocked")
         self.assertEqual(blocked["worktree-root-write"], "approval-required")
 
     def test_doctor_reports_skill_links_and_meridian_root_without_writing(self) -> None:
         before = sorted(path.relative_to(self.root) for path in self.root.rglob("*"))
-        report = meridian.codex_doctor(
+        report = owner_hosts_setup.codex_doctor(
             self.root,
             self.config,
             self.worktrees,
@@ -7285,7 +7287,7 @@ class ProjectDeclarationTest(unittest.TestCase):
 
     def test_setup_marks_missing_identity_incomplete_and_proposes_it(self) -> None:
         self.write({"version": 1, "locations": {"queue": "docs/QUEUE.md"}})
-        plan = meridian.plan_setup(None, self.project / "config.toml", home=self.project, framework_root=ROOT, project_root=self.project)
+        plan = owner_hosts_setup.plan_setup(None, self.project / "config.toml", home=self.project, framework_root=ROOT, project_root=self.project)
         self.assertEqual(plan.project_declaration_state, "advisory-incomplete")
         self.assertEqual(plan.project_declaration_proposal["project"]["slug"], "project")
 

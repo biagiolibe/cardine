@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import meridian
+from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import flow as owner_shared_flow
 
 BLOCKED_LINE = re.compile(r"^[\s>*_`-]*BLOCKED ([A-Z][A-Z0-9_]*)\b", re.MULTILINE)
@@ -66,7 +67,7 @@ def session_start(payload: dict, now: datetime) -> datetime:
 
 def active_task(cwd: Path) -> str | None:
     """The task of the registered task worktree the hook runs in; `None` from the primary checkout."""
-    active = meridian.active_worktree_task(cwd)
+    active = active_worktree_task(cwd)
     task = active.get("task_id") if isinstance(active, dict) else None
     return task if isinstance(task, str) else None
 

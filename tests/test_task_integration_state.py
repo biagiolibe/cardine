@@ -13,6 +13,7 @@ import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.stops import render as owner_stops_render
 from cardine.worktree import storage as owner_worktree_storage
+from cardine.worktree import checkout as owner_worktree_checkout
 
 
 class TaskIntegrationStateTest(unittest.TestCase):
@@ -35,7 +36,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "--allow-empty", "-m", "configure task")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()
-        prepared = meridian.prepare_task_worktree("056", self.worktree_root, self.primary)
+        prepared = owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
         self.worker = Path(prepared["worktree"])
         if not spike:
             (self.worker / "feature.txt").write_text("approved code\n")

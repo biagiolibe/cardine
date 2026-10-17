@@ -10,6 +10,9 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine.lifecycle import execution as owner_lifecycle_execution
+from cardine.tasks import preflight as owner_tasks_preflight
+from cardine.worktree import checkout as owner_worktree_checkout
 from cardine.review import verdict as owner_review_verdict
 import cardine.shared.errors as shared_errors
 import project_console
@@ -34,7 +37,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.record = Path('tasks/001.md')
         text = '# Task 001 — Example\n\n> **ID**: `001`\n\nStatus: QUEUED\nClass: NORMAL\nReview: REQUIRED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n- `check`: `true`\n'
         (self.primary / self.record).write_text(text)
-        text += meridian.execution_contract(self.primary, '001') + '\n'
+        text += owner_tasks_preflight.execution_contract(self.primary, '001') + '\n'
         (self.primary / self.record).write_text(text)
         self.git('add', '.', cwd=self.primary)
         self.git('commit', '-qm', 'Initial', cwd=self.primary)
@@ -44,7 +47,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.env = mock.patch.dict(os.environ, {'MERIDIAN_WORKTREE_ROOT': str(Path(self.temp.name) / 'worktrees')})
         self.env.start()
         self.addCleanup(self.env.stop)
-        prepared = meridian.prepare_task_worktree('001', None, self.primary)
+        prepared = owner_worktree_checkout.prepare_task_worktree('001', None, self.primary)
         self.worker = Path(prepared['worktree'])
         os.chdir(self.worker)
 
@@ -152,7 +155,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 report.write(f'\n{correction} correction.\n')
             self.commit(f'{correction} handoff correction')
             corrected = self.git('rev-parse', 'HEAD')
-            self.assert_stop('EVIDENCE_INCOMPLETE', lambda: meridian.delivery_readiness(self.worker, '001'))
+            self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_execution.delivery_readiness(self.worker, '001'))
             result = meridian.execution_deliver(self.worker, '001')
             self.assertNotEqual(result['commit'], delivered)
             self.assertNotEqual(result['commit'], corrected)
@@ -160,7 +163,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
             self.assertEqual(self.git('log', '-1', '--format=%s'), 'Deliver 001 for review')
             self.assertEqual(self.git('diff', '--name-only', 'HEAD^', 'HEAD'), '')
             self.assertEqual(self.state(), original)
-            self.assertEqual(meridian.delivery_readiness(self.worker, '001'), result)
+            self.assertEqual(owner_lifecycle_execution.delivery_readiness(self.worker, '001'), result)
             self.assertEqual(meridian.execution_deliver(self.worker, '001'), result)
             self.assertEqual(self.git('status', '--porcelain'), '')
 
@@ -201,7 +204,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 report.write_text(original.replace('- Current task commit: `Deliver 001 for review`\n', field))
                 self.commit('Malformed handoff fixture')
                 head = self.git('rev-parse', 'HEAD')
-                for action in (meridian.delivery_readiness, meridian.execution_deliver):
+                for action in (owner_lifecycle_execution.delivery_readiness, meridian.execution_deliver):
                     with self.assertRaises(shared_errors.MeridianStop) as caught:
                         action(self.worker, '001')
                     self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
