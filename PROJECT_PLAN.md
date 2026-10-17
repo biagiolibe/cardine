@@ -43,3 +43,11 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 007 — Recover worktree cleanup after a partial removal.
 - `[ ]` 017 — Record wall-clock time and the real CI command in CI evidence.
 - `[ ]` 018 — Resume a Lean closure without state through `task close`.
+- `[ ]` 019 — Extract lifecycle, upgrade support, merge, and adoption modules (split plan E12).
+- `[ ]` 020 — Extract console models, launch, and snapshot (split plan C01).
+- `[ ]` 021 — Extract console state, render, and entry, and split the console tests (split plan C02).
+- `[ ]` 022 — Extract upgrade, adopt command, and CLI, and switch the entry points (split plan E13).
+- `[ ]` 023 — Split the `MeridianCliTest` class by responsibility.
+- `[ ]` 024 — Move the remaining `test_meridian_cli.py` classes to domain test files.
+- `[ ]` 025 — Split `test_task_worktree_isolation.py`.
+- `[ ]` 026 — Verify the completed module split (split plan V01).
