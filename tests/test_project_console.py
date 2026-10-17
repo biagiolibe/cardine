@@ -2406,6 +2406,7 @@ class SnapshotCostTest(RepoCase):
 
     def test_lifecycle_readers_skip_resolution_when_given_an_identity(self) -> None:
         import meridian
+        import cardine.shared.errors as shared_errors
         self.populate()
         identity = meridian.resolve_task_identity(self.project, "TASK-001", "existing")
         with mock.patch.object(Path, "cwd", return_value=self.project), \
@@ -2415,7 +2416,7 @@ class SnapshotCostTest(RepoCase):
                 "TASK-001", None, self.project, identity=identity)
             self.assertEqual(report["task_id"], "TASK-001")
             # No lifecycle state was prepared, so the read ends on that, not on resolution.
-            with self.assertRaisesRegex(meridian.MeridianError, "worktree lifecycle state"):
+            with self.assertRaisesRegex(shared_errors.MeridianError, "worktree lifecycle state"):
                 meridian.lifecycle_started_at("TASK-001", self.project, identity=identity)
 
     def test_snapshot_is_identical_with_and_without_caches(self) -> None:

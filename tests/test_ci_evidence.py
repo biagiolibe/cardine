@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import ci_evidence  # noqa: E402
 import meridian  # noqa: E402
+import cardine.shared.constants as shared_constants
 
 
 class CiEvidenceTest(unittest.TestCase):
@@ -62,7 +63,7 @@ class CiEvidenceTest(unittest.TestCase):
         record = json.loads(self.output.read_text(encoding="utf-8"))
         self.assertEqual(record["ci"], {"run_id": "42", "run_url": run["url"], "workflow": "Validate repository", "conclusion": "success", "head_sha": self.commit})
         report, verified = meridian.check_validation_evidence(self.output, self.project, self.commit)
-        self.assertEqual((verified, report["status"]), (meridian.VALIDATION_EXIT_PASSED, "VALIDATION_PASSED"))
+        self.assertEqual((verified, report["status"]), (shared_constants.VALIDATION_EXIT_PASSED, "VALIDATION_PASSED"))
 
     def test_in_progress_then_success_polls_without_real_sleep(self) -> None:
         running, passed = self.run_data(status="in_progress", conclusion=None), self.run_data()

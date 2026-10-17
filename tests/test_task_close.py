@@ -11,6 +11,7 @@ import test_execution_boundaries as boundaries
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+import cardine.shared.errors as shared_errors
 
 
 class TaskCloseTest(unittest.TestCase):
@@ -95,7 +96,7 @@ class TaskCloseTest(unittest.TestCase):
         (self.worker / 'PROJECT_WORKFLOW.md').write_text('GOVERNED_SDD\n')
         self.commit('Select Governed')
         self.refused('TASK_STATUS_REJECTED')
-        with self.assertRaisesRegex(meridian.MeridianStop, 'meridian task transition'):
+        with self.assertRaisesRegex(shared_errors.MeridianStop, 'meridian task transition'):
             meridian.close_task(self.worker, '001')
 
     def test_resume_archived_done_with_staged_and_committed_closure(self):

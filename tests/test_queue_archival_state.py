@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+import cardine.shared.errors as shared_errors
 
 SHA = "a" * 40
 AT = "2026-10-14T12:00:00Z"
@@ -172,7 +173,7 @@ class StateArchivalTest(unittest.TestCase):
         self.assertNotIn("### Inner", report)
 
     def test_dependency_satisfaction_is_unchanged_by_archival_from_state(self) -> None:
-        from console_workflow import PROFILES, parse_queue
+        from cardine.shared.console_workflow import PROFILES, parse_queue
 
         (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n", encoding="utf-8")
         self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
@@ -244,7 +245,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
     def test_disagreeing_texts_stop_before_writing_anything(self) -> None:
         (self.root / "tasks/done/001.md").write_text(
             "# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n", encoding="utf-8")
-        with self.assertRaises(meridian.MeridianStop) as raised:
+        with self.assertRaises(shared_errors.MeridianStop) as raised:
             meridian.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         self.assertFalse((self.root / ".meridian/tasks").exists())
@@ -261,7 +262,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         review = meridian.resolve_task_identity(self.root, "001", "existing").review_path
         review.parent.mkdir(parents=True, exist_ok=True)
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — Remediation\n", encoding="utf-8")
-        with self.assertRaises(meridian.MeridianStop) as raised:
+        with self.assertRaises(shared_errors.MeridianStop) as raised:
             meridian.import_task_states(self.root, [], include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — APPROVE\n", encoding="utf-8")

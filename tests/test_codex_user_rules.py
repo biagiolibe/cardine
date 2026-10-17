@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+import cardine.shared.errors as shared_errors
 
 
 class CodexUserRulesTest(unittest.TestCase):
@@ -62,7 +63,7 @@ class CodexUserRulesTest(unittest.TestCase):
             "# MERIDIAN:BEGIN codex-user-rules broken\n# MERIDIAN:END codex-user-rules\n",
         ):
             self.write(text)
-            with self.assertRaisesRegex(meridian.MeridianStop, "BLOCKED COMMAND_REFUSED.*damaged"):
+            with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED COMMAND_REFUSED.*damaged"):
                 meridian.plan_setup(None, self.home / "config.toml", home=self.home, environment={}, project_root=self.home)
             self.assertFalse((self.home / ".meridian/worktrees").exists())
             self.assertEqual(self.rules.read_bytes().decode(), text)
@@ -79,7 +80,7 @@ class CodexUserRulesTest(unittest.TestCase):
     def test_apply_refuses_changed_foreign_rules(self):
         plan = meridian.plan_codex_user_rules(self.rules)
         self.write("# appeared later\n")
-        with self.assertRaisesRegex(meridian.MeridianError, "changed since planning"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "changed since planning"):
             meridian.apply_codex_user_rules(plan)
         self.assertEqual(self.rules.read_text(), "# appeared later\n")
 

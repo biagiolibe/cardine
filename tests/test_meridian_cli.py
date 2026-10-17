@@ -31,6 +31,9 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+import cardine.shared.constants as shared_constants
+import cardine.shared.errors as shared_errors
+import cardine.shared.hashing as shared_hashing
 
 
 class FakeLatestReleaseResponse:
@@ -96,7 +99,7 @@ class SelfCheckPluginRefTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 result = meridian.run_self_check(ROOT, urlopen_fn=mock.Mock(side_effect=URLError("offline")), settings_path=path)
-            self.assertEqual(result, meridian.SELF_CHECK_UNKNOWN)
+            self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
             self.assertIn("Plugin ref: stable", output.getvalue())
 
 
@@ -124,7 +127,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         self.assertIn("Status: UP_TO_DATE", output)
         request = opener.call_args.args[0]
         self.assertEqual(opener.call_args.kwargs["timeout"], 3.0)
-        self.assertEqual(request.full_url, meridian.LATEST_RELEASE_URL)
+        self.assertEqual(request.full_url, shared_constants.LATEST_RELEASE_URL)
         self.assertIsNone(request.get_header("Authorization"))
 
     def test_update_available_release(self) -> None:
@@ -135,7 +138,7 @@ class SelfCheckLatestTest(unittest.TestCase):
             }
         )
 
-        self.assertEqual(result, meridian.SELF_CHECK_UPDATE_AVAILABLE)
+        self.assertEqual(result, shared_constants.SELF_CHECK_UPDATE_AVAILABLE)
         self.assertIn("Kind: template-changing", output)
         self.assertIn("Status: UPDATE_AVAILABLE", output)
 
@@ -145,7 +148,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         with redirect_stdout(output):
             result = meridian.run_self_check(ROOT, urlopen_fn=opener)
 
-        self.assertEqual(result, meridian.SELF_CHECK_UNKNOWN)
+        self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
         self.assertIn("network error: offline", output.getvalue())
 
@@ -160,7 +163,7 @@ class SelfCheckLatestTest(unittest.TestCase):
         with redirect_stdout(output):
             result = meridian.run_self_check(ROOT, urlopen_fn=opener)
 
-        self.assertEqual(result, meridian.SELF_CHECK_UNKNOWN)
+        self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
         self.assertIn("network error:", output.getvalue())
 
@@ -170,14 +173,14 @@ class SelfCheckLatestTest(unittest.TestCase):
         with redirect_stdout(output):
             result = meridian.run_self_check(ROOT, urlopen_fn=opener)
 
-        self.assertEqual(result, meridian.SELF_CHECK_UNKNOWN)
+        self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
         self.assertIn("network error: garbled status", output.getvalue())
 
     def test_rate_limited_is_unknown(self) -> None:
         opener = mock.Mock(
             side_effect=HTTPError(
-                meridian.LATEST_RELEASE_URL,
+                shared_constants.LATEST_RELEASE_URL,
                 403,
                 "rate limit exceeded",
                 hdrs=None,
@@ -188,14 +191,14 @@ class SelfCheckLatestTest(unittest.TestCase):
         with redirect_stdout(output):
             result = meridian.run_self_check(ROOT, urlopen_fn=opener)
 
-        self.assertEqual(result, meridian.SELF_CHECK_UNKNOWN)
+        self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output.getvalue())
         self.assertIn("GitHub returned HTTP 403", output.getvalue())
 
     def test_malformed_response_is_unknown(self) -> None:
         result, output, _ = self.run_check(b"not-json")
 
-        self.assertEqual(result, meridian.SELF_CHECK_UNKNOWN)
+        self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
         self.assertIn("Status: UNKNOWN", output)
         self.assertIn("malformed response", output)
 
@@ -408,19 +411,19 @@ class MeridianCliTest(unittest.TestCase):
             f"- {lifecycle_triggers}: `docs/workflows/LIFECYCLE.md`.\n"
             "- Explicit audit: `docs/AUDIT_PROMPT_READ_ONLY.md`.\n"
         )
-        router_path = self.project / meridian.ENTRY_ROUTER_PATH
+        router_path = self.project / shared_constants.ENTRY_ROUTER_PATH
         router_path.parent.mkdir(parents=True, exist_ok=True)
         router_path.write_text(router, encoding="utf-8")
-        (self.project / meridian.ENTRY_ROUTER_MAP_PATH).write_text(
-            json.dumps(meridian.ENTRY_ROUTER_ROUTES, indent=2) + "\n", encoding="utf-8"
+        (self.project / shared_constants.ENTRY_ROUTER_MAP_PATH).write_text(
+            json.dumps(shared_constants.ENTRY_ROUTER_ROUTES, indent=2) + "\n", encoding="utf-8"
         )
-        for route, relative in meridian.ENTRY_ROUTER_ROUTES.items():
+        for route, relative in shared_constants.ENTRY_ROUTER_ROUTES.items():
             target = self.project / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             text = target.read_text(encoding="utf-8") if target.is_file() else "# Routed procedure\n"
             missing = [
                 token
-                for token in meridian.ENTRY_ROUTER_SAFEGUARDS[route]
+                for token in shared_constants.ENTRY_ROUTER_SAFEGUARDS[route]
                 if token not in text.lower()
             ]
             if missing:
@@ -799,7 +802,7 @@ class MeridianCliTest(unittest.TestCase):
         self.assertEqual((parsed.major, parsed.minor, parsed.patch), (1, 2, 3))
         self.assertEqual((parsed.prerelease, parsed.build), ("rc.1", "build.9"))
         for invalid in ("1.2", "1.2.3-", "01.2.3", "v1.2.3", "1.2.3+"):
-            with self.assertRaises(meridian.MeridianError):
+            with self.assertRaises(shared_errors.MeridianError):
                 meridian.parse_semver(invalid)
 
     def test_lock_and_apply_clean_template_upgrade(self) -> None:
@@ -876,7 +879,7 @@ class MeridianCliTest(unittest.TestCase):
         manifest_after = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest_after["frameworkVersion"], "1.1.1")
         self.assertEqual(manifest_after["workflowBaselineVersion"], "1.1.0")
-        self.assertEqual(manifest_after["protocolVersion"], meridian.PROTOCOL_VERSION)
+        self.assertEqual(manifest_after["protocolVersion"], shared_constants.PROTOCOL_VERSION)
         self.assertEqual(
             {
                 key: value
@@ -917,9 +920,9 @@ class MeridianCliTest(unittest.TestCase):
             ("audit", ("audit", "--mode", "governed-sdd")),
         )
         cases = (
-            ("newer", meridian.PROTOCOL_VERSION + 1, 2),
-            ("equal", meridian.PROTOCOL_VERSION, 0),
-            ("lower", meridian.PROTOCOL_VERSION - 1, 0),
+            ("newer", shared_constants.PROTOCOL_VERSION + 1, 2),
+            ("equal", shared_constants.PROTOCOL_VERSION, 0),
+            ("lower", shared_constants.PROTOCOL_VERSION - 1, 0),
             ("missing", None, 0),
         )
 
@@ -951,7 +954,7 @@ class MeridianCliTest(unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         manifest_path = self.project / ".meridian/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        manifest["protocolVersion"] = meridian.PROTOCOL_VERSION + 1
+        manifest["protocolVersion"] = shared_constants.PROTOCOL_VERSION + 1
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
@@ -979,7 +982,7 @@ class MeridianCliTest(unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         manifest_path = self.project / ".meridian/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        manifest["protocolVersion"] = meridian.PROTOCOL_VERSION - 1
+        manifest["protocolVersion"] = shared_constants.PROTOCOL_VERSION - 1
         manifest_path.write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
@@ -989,7 +992,7 @@ class MeridianCliTest(unittest.TestCase):
 
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         rewritten = json.loads(manifest_path.read_text(encoding="utf-8"))
-        self.assertEqual(rewritten["protocolVersion"], meridian.PROTOCOL_VERSION)
+        self.assertEqual(rewritten["protocolVersion"], shared_constants.PROTOCOL_VERSION)
 
     def test_manifest_protocol_version_must_be_an_integer(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
@@ -2952,8 +2955,8 @@ worktree before the branch only after validated integration succeeds.
             self.assertEqual((self.project / target).read_text(encoding="utf-8"), expected)
         self.assertEqual(meridian.audit_entry_router(self.project), [])
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["managedFiles"]["AGENTS.md"], meridian.sha256(self.project / "AGENTS.md"))
-        self.assertEqual(manifest["managedFiles"]["CLAUDE.md"], meridian.sha256(self.project / "CLAUDE.md"))
+        self.assertEqual(manifest["managedFiles"]["AGENTS.md"], shared_hashing.sha256(self.project / "AGENTS.md"))
+        self.assertEqual(manifest["managedFiles"]["CLAUDE.md"], shared_hashing.sha256(self.project / "CLAUDE.md"))
 
         noop = self.run_cli("upgrade", "--check")
         self.assertEqual(noop.returncode, 0, noop.stdout + noop.stderr)
@@ -3917,9 +3920,9 @@ class GenerateClaudeMdTest(unittest.TestCase):
         self.assertIn("First-ever wording.", generated)
 
     def test_generator_raises_when_the_anchor_heading_is_missing(self) -> None:
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
 
     def test_cli_check_and_write_round_trip_on_a_stale_copy(self) -> None:
@@ -3987,13 +3990,13 @@ class GeneratedEntryRouterTest(unittest.TestCase):
             encoding="utf-8",
         )
         (workflows / "ENTRY_ROUTER_MAP.json").write_text(
-            json.dumps(meridian.ENTRY_ROUTER_ROUTES, indent=2) + "\n", encoding="utf-8"
+            json.dumps(shared_constants.ENTRY_ROUTER_ROUTES, indent=2) + "\n", encoding="utf-8"
         )
-        for route, path in meridian.ENTRY_ROUTER_ROUTES.items():
+        for route, path in shared_constants.ENTRY_ROUTER_ROUTES.items():
             target = self.project / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(
-                "# Routed procedure\n\n" + " ".join(meridian.ENTRY_ROUTER_SAFEGUARDS[route]) + "\n",
+                "# Routed procedure\n\n" + " ".join(shared_constants.ENTRY_ROUTER_SAFEGUARDS[route]) + "\n",
                 encoding="utf-8",
             )
 
@@ -4011,7 +4014,7 @@ class GeneratedEntryRouterTest(unittest.TestCase):
         self.assertIn("<!-- Claude host metadata -->", outputs[Path("CLAUDE.md")])
         self.assertNotIn("<!-- Claude host metadata -->", outputs[Path("AGENTS.md")])
         overlay.write_text("Read this extra instruction.\n", encoding="utf-8")
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.entry_router_outputs(self.project)
 
     def test_audit_reports_generated_drift_missing_route_and_budget_failure(self) -> None:
@@ -4023,15 +4026,15 @@ class GeneratedEntryRouterTest(unittest.TestCase):
         (self.project / "AGENTS.md").write_text(outputs[Path("AGENTS.md")], encoding="utf-8")
         (self.project / "docs/workflows/ENTRY_ROUTER_MAP.json").write_text("{}\n", encoding="utf-8")
         self.assertTrue(any("route map must declare exactly" in detail for _status, detail in meridian.audit_entry_router(self.project)))
-        self.router.write_text("x" * (meridian.ENTRY_ROUTER_BUDGET_BYTES + 1), encoding="utf-8")
-        with self.assertRaises(meridian.MeridianError):
+        self.router.write_text("x" * (shared_constants.ENTRY_ROUTER_BUDGET_BYTES + 1), encoding="utf-8")
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.entry_router_outputs(self.project)
 
     def test_generator_refuses_to_emit_a_pointer(self) -> None:
         self.router.write_text(
             "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\nRead `AGENTS.md`.\n", encoding="utf-8"
         )
-        with self.assertRaisesRegex(meridian.MeridianError, "must not emit a Claude-to-AGENTS pointer"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "must not emit a Claude-to-AGENTS pointer"):
             meridian.entry_router_outputs(self.project)
 
     def test_cli_checks_and_writes_both_entry_points(self) -> None:
@@ -4932,7 +4935,7 @@ Evidence plan:
             "recorded, 1 more requested; do not raise the cap; resume: report this stop and ask the developer to "
             "raise the cap or re-scope the task; never raise the cap yourself",
         )
-        with self.assertRaises(meridian.MeridianStop) as invalid:
+        with self.assertRaises(shared_errors.MeridianStop) as invalid:
             meridian.budget_spend(self.project, "TASK-003", "captures", amount=0)
         self.assertEqual(
             str(invalid.exception),
@@ -5014,7 +5017,7 @@ Evidence plan:
 
         self.write_task("TASK-015", "IN_PROGRESS", **{"Investigation scope": "3"})
         meridian.budget_spend(self.project, "TASK-015", "investigations", amount=2)
-        with self.assertRaises(meridian.MeridianError) as raised:
+        with self.assertRaises(shared_errors.MeridianError) as raised:
             meridian.budget_spend(self.project, "TASK-015", "investigations", amount=2)
         message = str(raised.exception)
         self.assertIn("BLOCKED", message)
@@ -5653,11 +5656,11 @@ class CodexWorktreeAccessTest(unittest.TestCase):
 
     def test_unsafe_identity_task_and_root_are_rejected(self) -> None:
         project = self.repository("safe", "git@example.com:../repo.git")
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.repository_identity(project)
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.canonical_task_id("../054")
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.task_worktree_path(self.repository("other"), Path.home(), "054")
 
     def test_existing_path_for_another_repository_is_a_collision(self) -> None:
@@ -5665,7 +5668,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         second = self.repository("two", "git@github.com:acme/shared.git")
         path = self.root / "existing"
         subprocess.run(["git", "-C", str(first), "worktree", "add", "-b", "task-054", str(path), "main"], check=True, capture_output=True)
-        with self.assertRaisesRegex(meridian.MeridianError, "collision"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "collision"):
             meridian.validate_worktree_collision(second, path, "054")
 
     def test_namespaced_symlink_escape_is_rejected(self) -> None:
@@ -5675,7 +5678,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         outside = self.root / "outside"
         outside.mkdir()
         (worktrees / "github.com").symlink_to(outside, target_is_directory=True)
-        with self.assertRaisesRegex(meridian.MeridianError, "symlink"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "symlink"):
             meridian.task_worktree_path(project, worktrees, "054")
 
     def test_config_apply_preserves_text_backs_up_and_is_idempotent(self) -> None:
@@ -5749,17 +5752,17 @@ class CodexWorktreeAccessTest(unittest.TestCase):
     def test_conflicting_and_malformed_configuration_is_blocked(self) -> None:
         config = self.root / "config.toml"
         config.write_text('sandbox_mode = "workspace-write"\n', encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "legacy"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "legacy"):
             meridian.plan_codex_configuration(config, self.root / "worktrees")
         config.write_text("broken = [\n", encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "malformed"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "malformed"):
             meridian.plan_codex_configuration(config, self.root / "worktrees")
 
     def test_managed_requirements_must_allow_the_profile(self) -> None:
         config = self.root / "config.toml"
         requirements = self.root / "requirements.toml"
         requirements.write_text('[allowed_permission_profiles]\nother = true\n', encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "managed"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "managed"):
             meridian.plan_codex_configuration(config, self.root / "worktrees", requirements)
         requirements.write_text('[allowed_permission_profiles]\nmeridian-worktrees = true\n', encoding="utf-8")
         self.assertEqual(
@@ -5830,7 +5833,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_conflicting_explicit_and_environment_values_name_both_sources(self) -> None:
         with self.assertRaisesRegex(
-            meridian.MeridianError, r"--worktree-root supplied .*MERIDIAN_WORKTREE_ROOT supplied"
+            shared_errors.MeridianError, r"--worktree-root supplied .*MERIDIAN_WORKTREE_ROOT supplied"
         ):
             self.resolve(self.home / "explicit", MERIDIAN_WORKTREE_ROOT=str(self.home / "environment"))
 
@@ -5843,12 +5846,12 @@ class WorktreeRootSetupTest(unittest.TestCase):
         ):
             with self.subTest(value=value):
                 self.user_config.write_text(json.dumps(value), encoding="utf-8")
-                with self.assertRaises(meridian.MeridianError):
+                with self.assertRaises(shared_errors.MeridianError):
                     self.resolve()
         self.user_config.unlink()
-        with self.assertRaisesRegex(meridian.MeridianError, "filesystem root"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "filesystem root"):
             self.resolve(Path("/"))
-        with self.assertRaisesRegex(meridian.MeridianError, "home"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "home"):
             self.resolve(self.home)
 
     def test_check_is_read_only_and_reports_unconfigured_state(self) -> None:
@@ -5944,7 +5947,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertEqual(plan.directory_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
-        with self.assertRaisesRegex(meridian.MeridianError, "not a directory"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "not a directory"):
             meridian.apply_setup(plan)
         self.assertEqual(root.read_text(encoding="utf-8"), "keep\n")
         self.assertFalse(self.user_config.exists())
@@ -6016,7 +6019,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertEqual(plan.skill_links_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
-        with self.assertRaisesRegex(meridian.MeridianError, "setup is blocked"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "setup is blocked"):
             meridian.apply_setup(plan)
         self.assertFalse((self.home / "root").exists())
         self.assertFalse(self.codex_config.exists())
@@ -6054,7 +6057,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                 self.assertEqual(plan.meridian_root_state, expected)
 
     def test_setup_task_identity_is_opt_in_and_supports_both_workflows(self) -> None:
-        for workflow_mode in meridian.WORKFLOW_MODES:
+        for workflow_mode in shared_constants.WORKFLOW_MODES:
             with self.subTest(workflow_mode=workflow_mode):
                 project = self.home / workflow_mode
                 project.mkdir()
@@ -6071,8 +6074,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     project_root=project,
                 )
                 self.assertEqual(unchecked.task_identity_state, "not-requested")
-                self.assertFalse(meridian.apply_setup(unchecked) and (project / meridian.TASK_IDENTITY_PATH).exists())
-                self.assertFalse((project / meridian.TASK_IDENTITY_PATH).exists())
+                self.assertFalse(meridian.apply_setup(unchecked) and (project / shared_constants.TASK_IDENTITY_PATH).exists())
+                self.assertFalse((project / shared_constants.TASK_IDENTITY_PATH).exists())
 
                 for choice in ("opaque", "milestone"):
                     choice_project = self.home / f"{workflow_mode}-{choice}"
@@ -6096,7 +6099,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     self.assertIn(f"task identity mode {choice}", output.getvalue())
                     self.assertTrue(meridian.apply_setup(plan))
                     self.assertEqual(
-                        json.loads((choice_project / meridian.TASK_IDENTITY_PATH).read_text(encoding="utf-8")),
+                        json.loads((choice_project / shared_constants.TASK_IDENTITY_PATH).read_text(encoding="utf-8")),
                         {"version": 1, "mode": choice},
                     )
 
@@ -6163,7 +6166,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertIn("task-identity: planned", checked.stdout)
         self.assertIn('task-identity-proposal: {"mode": "milestone", "version": 1}', checked.stdout)
-        identity_path = project / meridian.TASK_IDENTITY_PATH
+        identity_path = project / shared_constants.TASK_IDENTITY_PATH
         self.assertFalse(identity_path.exists())
 
         applied = subprocess.run(
@@ -6206,7 +6209,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         project = self.home / "project"
         project.mkdir()
         root = self.home / "root"
-        with self.assertRaisesRegex(meridian.MeridianError, "unsupported task identity mode"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "unsupported task identity mode"):
             meridian.plan_setup(
                 root,
                 self.codex_config,
@@ -6215,9 +6218,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
                 home=self.home,
                 project_root=project,
             )
-        self.assertFalse((project / meridian.TASK_IDENTITY_PATH).exists())
+        self.assertFalse((project / shared_constants.TASK_IDENTITY_PATH).exists())
 
-        identity_path = project / meridian.TASK_IDENTITY_PATH
+        identity_path = project / shared_constants.TASK_IDENTITY_PATH
         identity_path.parent.mkdir()
         identity_path.write_text('{"version": 1, "mode": "opaque"}\n', encoding="utf-8")
         before = identity_path.read_bytes()
@@ -6249,7 +6252,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_setup_task_identity_blocks_malformed_existing_declaration(self) -> None:
         project = self.home / "project"
-        identity_path = project / meridian.TASK_IDENTITY_PATH
+        identity_path = project / shared_constants.TASK_IDENTITY_PATH
         identity_path.parent.mkdir(parents=True)
         identity_path.write_text("not json\n", encoding="utf-8")
         plan = meridian.plan_setup(
@@ -6261,7 +6264,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             project_root=project,
         )
         self.assertEqual(plan.task_identity_state, "blocked")
-        with self.assertRaisesRegex(meridian.MeridianError, "invalid task identity declaration"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "invalid task identity declaration"):
             meridian.apply_setup(plan)
         self.assertEqual(identity_path.read_text(encoding="utf-8"), "not json\n")
 
@@ -6434,7 +6437,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
         self.assertEqual(plan.claude_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
-        with self.assertRaisesRegex(meridian.MeridianError, "malformed Claude settings"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "malformed Claude settings"):
             meridian.apply_setup(plan)
         self.assertFalse(root.exists())
         self.assertFalse(self.codex_config.exists())
@@ -6594,7 +6597,7 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def assert_blocked_unchanged(self, text: str, pattern: str) -> None:
         self.config.write_text(text, encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, pattern):
+        with self.assertRaisesRegex(shared_errors.MeridianError, pattern):
             meridian.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(self.config.read_text(encoding="utf-8"), text)
 
@@ -6725,7 +6728,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         plan = meridian.plan_codex_configuration(self.config, self.worktrees)
         changed = self.rewritten() + "# edited after planning\n"
         self.config.write_text(changed, encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "changed since"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "changed since"):
             meridian.apply_codex_configuration(plan)
         self.assertEqual(self.config.read_text(encoding="utf-8"), changed)
 
@@ -6773,7 +6776,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assert_blocked_unchanged(self.rewritten(tables=dotted), "exactly one plain")
         self.assert_blocked_unchanged(self.rewritten() + self.profile_tables(), "malformed")
         self.config.write_text(f'sandbox_mode = "workspace-write"\n{self.rewritten()}', encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "legacy"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "legacy"):
             meridian.plan_codex_configuration(self.config, self.worktrees)
 
     def test_stray_markers_without_a_profile_remain_blocked(self) -> None:
@@ -6942,9 +6945,9 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.write_queue([("LEGACY-7", "LEGACY-7.md")])
         legacy = meridian.resolve_task_identity(self.project, "LEGACY-7", "existing")
         self.assertEqual(legacy.kind, "legacy-opaque")
-        with self.assertRaisesRegex(meridian.MeridianError, "unknown"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "unknown"):
             meridian.resolve_task_identity(self.project, "OTHER-7", "existing")
-        with self.assertRaisesRegex(meridian.MeridianError, "must use"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "must use"):
             meridian.resolve_task_identity(self.project, "OTHER-7", "new")
         created = meridian.resolve_task_identity(self.project, "m31-build-999", "new")
         self.assertEqual((created.canonical_id, created.kind), ("M31-BUILD-999", "structured"))
@@ -6981,7 +6984,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         for declaration in malformed:
             with self.subTest(declaration=declaration):
                 identity.write_text(declaration, encoding="utf-8")
-                with self.assertRaises(meridian.MeridianError):
+                with self.assertRaises(shared_errors.MeridianError):
                     meridian.resolve_task_identity(self.project, "TASK-001", "new")
 
     def test_ambiguity_collisions_mixed_case_and_traversal_are_rejected(self) -> None:
@@ -6989,16 +6992,16 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.add_task("M2-API-001")
         self.add_task("M2-Api-002")
         self.write_queue([("M2-API-001", "M2-API-001.md"), ("M2-Api-002", "M2-Api-002.md")])
-        with self.assertRaisesRegex(meridian.MeridianError, "canonical uppercase"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "canonical uppercase"):
             meridian.resolve_task_identity(self.project, "M2-Api-002", "existing")
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.resolve_task_identity(self.project, "../M2-API-001", "existing")
 
         self.declare("opaque")
         self.add_task("TASK-007")
         self.add_task("007")
         self.write_queue([("TASK-007", "TASK-007.md"), ("007", "007.md")])
-        with self.assertRaisesRegex(meridian.MeridianError, "collision"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "collision"):
             meridian.resolve_task_identity(self.project, "TASK-007", "existing")
 
     def test_mismatched_duplicate_and_unsafe_authorities_are_rejected(self) -> None:
@@ -7006,17 +7009,17 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.add_task("M4-API-001")
         self.add_task("M4-API-002")
         self.write_queue([("M4-API-001", "M4-API-002.md")])
-        with self.assertRaisesRegex(meridian.MeridianError, "disagree"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "disagree"):
             meridian.resolve_task_identity(self.project, "M4-API-001", "existing")
 
         duplicate = self.project / "tasks/nested/M4-API-001.md"
         duplicate.parent.mkdir()
         duplicate.write_text("ID: M4-API-001\n", encoding="utf-8")
-        with self.assertRaisesRegex(meridian.MeridianError, "ambiguous"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "ambiguous"):
             meridian.resolve_task_identity(self.project, "M4-API-001", "existing")
 
         self.declare("opaque")
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.resolve_task_identity(self.project, "foo..bar", "new")
 
     def test_structured_grammar_rejects_noncanonical_new_ids(self) -> None:
@@ -7026,7 +7029,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
             "M1-API_-001", "M1-API-000", "M1-API-1000", "M1-API-01",
         )
         for task_id in invalid:
-            with self.subTest(task_id=task_id), self.assertRaises(meridian.MeridianError):
+            with self.subTest(task_id=task_id), self.assertRaises(shared_errors.MeridianError):
                 meridian.resolve_task_identity(self.project, task_id, "new")
 
     def test_cli_json_exit_codes_and_read_only_behavior(self) -> None:
@@ -7140,7 +7143,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertIn("ambiguous", ambiguous.stderr)
 
     def test_migration_delivers_only_managed_guidance_and_never_opts_in(self) -> None:
-        for mode in meridian.WORKFLOW_MODES:
+        for mode in shared_constants.WORKFLOW_MODES:
             template = ROOT / "templates/workflows" / mode / "PROJECT_WORKFLOW.md"
             self.assertIn("capability=task-identity-policy v1", template.read_text(encoding="utf-8"))
 
@@ -7181,7 +7184,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         workflow = (consumer / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         self.assertIn("capability=task-identity-policy v1", workflow)
         self.assertIn("Consumer-owned note.", workflow)
-        self.assertFalse((consumer / meridian.TASK_IDENTITY_PATH).exists())
+        self.assertFalse((consumer / shared_constants.TASK_IDENTITY_PATH).exists())
 
 
 class ProjectDeclarationTest(unittest.TestCase):
@@ -7208,7 +7211,7 @@ class ProjectDeclarationTest(unittest.TestCase):
         self.assertEqual((locations.queue, locations.task_roots, locations.plan), (Path("docs/QUEUE.md"), (Path("work/tasks"),), Path("docs/PLAN.md")))
         for declaration in ({"version": 2}, {"version": 1, "unknown": True}, {"version": 1, "locations": {"queue": "/tmp/QUEUE.md"}}, {"version": 1, "locations": {"queue": "../QUEUE.md"}}):
             self.write(declaration)
-            with self.subTest(declaration=declaration), self.assertRaises(meridian.MeridianError):
+            with self.subTest(declaration=declaration), self.assertRaises(shared_errors.MeridianError):
                 meridian.read_project_declaration(self.project)
 
     def test_declaration_overrides_legacy_and_cli_fields(self) -> None:
@@ -7377,7 +7380,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 },
             }
         return {
-            "protocolVersion": meridian.PROTOCOL_VERSION,
+            "protocolVersion": shared_constants.PROTOCOL_VERSION,
             "frameworkVersion": "1.1.0",
             "workflowMode": mode,
             "managedFiles": {},
@@ -7404,7 +7407,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 if not path.exists():
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text(f"surface: {surface['path']}\n", encoding="utf-8")
-                digest = meridian.sha256(path)
+                digest = shared_hashing.sha256(path)
                 surface_digests.append(f"sha256:{digest}")
                 if surface["form"] == "managed-copy":
                     managed_files[surface["path"]] = digest
@@ -7588,7 +7591,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("CI_GATE profile=unknown-profile worst=FAIL", output.getvalue())
 
     def test_live_manifest_has_no_host_claim_or_machine_specific_path(self) -> None:
-        manifest_text = (ROOT / meridian.MANIFEST_PATH).read_text(encoding="utf-8")
+        manifest_text = (ROOT / shared_constants.MANIFEST_PATH).read_text(encoding="utf-8")
         manifest = json.loads(manifest_text)
         capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]
         self.assertNotIn(str(Path.home()), manifest_text)
@@ -7607,23 +7610,23 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         self.assertEqual(manifest_schema["properties"]["protocolVersion"]["const"], 2)
         self.assertEqual(
             tuple(manifest_schema["properties"]["workflowMode"]["enum"]),
-            meridian.WORKFLOW_MODES,
+            shared_constants.WORKFLOW_MODES,
         )
         self.assertEqual(
             tuple(
                 manifest_schema["$defs"]["installationSnapshot"]["properties"]["state"]["enum"]
             ),
-            meridian.INSTALLATION_STATES,
+            shared_constants.INSTALLATION_STATES,
         )
         self.assertEqual(catalog_schema["properties"]["catalogVersion"]["const"], 1)
 
     def test_lean_and_governed_profiles_round_trip_through_the_current_writer(self) -> None:
-        for mode in meridian.WORKFLOW_MODES:
+        for mode in shared_constants.WORKFLOW_MODES:
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
                 project = Path(directory)
                 manifest = self.manifest(mode)
                 meridian.write_manifest(project, manifest, ROOT)
-                written = json.loads((project / meridian.MANIFEST_PATH).read_text(encoding="utf-8"))
+                written = json.loads((project / shared_constants.MANIFEST_PATH).read_text(encoding="utf-8"))
                 self.assertEqual(written["protocolVersion"], 2)
                 self.assertEqual(written["workflowMode"], mode)
                 self.assertNotIn("mode", written)
@@ -7652,7 +7655,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def test_conflicting_mode_aliases_are_rejected(self) -> None:
         manifest = self.manifest()
         manifest["mode"] = "governed-sdd"
-        with self.assertRaisesRegex(meridian.MeridianError, "mode and workflowMode conflict"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "mode and workflowMode conflict"):
             meridian.validate_manifest(manifest, self.catalog)
 
     def test_invalid_state_empty_surface_and_missing_positive_evidence_are_rejected(self) -> None:
@@ -7667,7 +7670,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         no_evidence["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["language-policy"]["installation"]["state"] = "INSTALLED"
         cases.append((no_evidence, "INSTALLED requires evidence"))
         for manifest, message in cases:
-            with self.subTest(message=message), self.assertRaisesRegex(meridian.MeridianError, message):
+            with self.subTest(message=message), self.assertRaisesRegex(shared_errors.MeridianError, message):
                 meridian.validate_manifest(manifest, self.catalog)
 
     def test_not_applicable_requires_a_catalog_backed_rationale(self) -> None:
@@ -7680,7 +7683,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         }
         meridian.validate_manifest(manifest, self.catalog)
         hosts["codex-project"]["notApplicableRationale"] = None
-        with self.assertRaisesRegex(meridian.MeridianError, "catalog-backed rationale"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "catalog-backed rationale"):
             meridian.validate_manifest(manifest, self.catalog)
 
     def test_upgrade_check_reads_profile_without_writing_or_promoting_state(self) -> None:
@@ -7710,7 +7713,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             ]
             locked = subprocess.run(command, text=True, capture_output=True, check=False)
             self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
-            manifest_path = project / meridian.MANIFEST_PATH
+            manifest_path = project / shared_constants.MANIFEST_PATH
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["capabilityProfiles"] = self.manifest("governed-sdd")["capabilityProfiles"]
             manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -7772,7 +7775,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertEqual(after, before)
 
     def test_cross_mode_audit_accepts_complete_declarations_and_reports_counts(self) -> None:
-        for mode in meridian.WORKFLOW_MODES:
+        for mode in shared_constants.WORKFLOW_MODES:
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
                 project = Path(directory)
                 self.installed_project(project, mode)
@@ -7785,7 +7788,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 self.assertEqual(return_code, 0, output)
                 self.assertIn("PASS", output)
                 self.assertIn("SUMMARY worst=PASS", output)
-                for state in meridian.AUDIT_STATES:
+                for state in shared_constants.AUDIT_STATES:
                     self.assertRegex(output, rf"\b{state}=\d+")
                 self.assertNotIn("No capability markers found", output)
 
@@ -7827,7 +7830,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "capabilities"
             ]["language-policy"]
             declaration["managedSurface"] = []
-            (project / meridian.MANIFEST_PATH).write_text(
+            (project / shared_constants.MANIFEST_PATH).write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
 
@@ -7843,7 +7846,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "capabilities"
             ]["language-policy"]["hostActivation"]["codex-project"]
             activation["evidence"] = ["positive-claim-without-an-artifact"]
-            (project / meridian.MANIFEST_PATH).write_text(
+            (project / shared_constants.MANIFEST_PATH).write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
 
@@ -7866,7 +7869,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "notApplicableRationale": None,
             }
             capabilities["read-guard"]["verification"]["verifierVersion"] = "0.0.0"
-            (project / meridian.MANIFEST_PATH).write_text(
+            (project / shared_constants.MANIFEST_PATH).write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
 
@@ -7890,7 +7893,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "evidence": [],
                 "notApplicableRationale": None,
             }
-            (project / meridian.MANIFEST_PATH).write_text(
+            (project / shared_constants.MANIFEST_PATH).write_text(
                 json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
 
@@ -7907,7 +7910,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             framework = root / "framework"
             project = root / "project"
             shutil.copytree(ROOT, framework)
-            catalog_path = framework / meridian.CAPABILITY_CATALOG_PATH
+            catalog_path = framework / shared_constants.CAPABILITY_CATALOG_PATH
             catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
             catalog["capabilities"]["language-policy"]["workflowModes"] = ["governed-sdd"]
             catalog_path.write_text(
@@ -8015,7 +8018,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             manifest = {
-                "protocolVersion": meridian.PROTOCOL_VERSION,
+                "protocolVersion": shared_constants.PROTOCOL_VERSION,
                 "frameworkVersion": meridian.read_version(ROOT),
                 "workflowMode": "lean-delivery",
                 "managedFiles": {},
@@ -8130,7 +8133,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         return manifest["capabilityProfiles"][self.PROFILE]["capabilities"][self.CAPABILITY]
 
     def test_strict_validation_still_rejects_the_older_surface(self) -> None:
-        with self.assertRaisesRegex(meridian.MeridianError, "must completely match the catalog surface"):
+        with self.assertRaisesRegex(shared_errors.MeridianError, "must completely match the catalog surface"):
             meridian.validate_manifest(self.old, self.catalog)
 
         gaps: list[tuple[str, str, tuple[str, ...]]] = []
@@ -8222,7 +8225,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
             unknown_path, unsupported_form, duplicate_path, swapped_path,
             wrong_profile_version, wrong_capability_version, missing_capability,
         ):
-            with self.subTest(change=change.__name__), self.assertRaises(meridian.MeridianError):
+            with self.subTest(change=change.__name__), self.assertRaises(shared_errors.MeridianError):
                 meridian.validate_manifest(mutated(change), self.catalog, [])
 
 
@@ -8623,9 +8626,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             meridian.format_stop("PUSH_PENDING", "main is ahead"),
             "BLOCKED PUSH_PENDING: main is ahead; resume: git push origin main",
         )
-        with self.assertRaises(meridian.InternalStopError):
+        with self.assertRaises(shared_errors.InternalStopError):
             meridian.format_stop("NOT_A_REGISTERED_CODE", "detail", resume="x")
-        with self.assertRaises(meridian.InternalStopError):
+        with self.assertRaises(shared_errors.InternalStopError):
             meridian.stop_resume("WRONG_WORKTREE", task_id="056")
 
     def test_stop_registry_covers_closure_codes_and_names_real_tests(self) -> None:
@@ -9425,7 +9428,7 @@ class FlowReportTest(unittest.TestCase):
         self.assertEqual([task["task"] for task in report["tasks"]], ["056"])  # type: ignore[index]
         self.assertEqual(report["tasks"][0]["lead_time_seconds"], 10 * 86400)  # type: ignore[index]
         self.assertEqual(report["stops_by_code"], {"PRIMARY_DIRTY": 1})
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             meridian.flow_report(self.project, "yesterday", self.now)
 
     def test_origin_shares_with_archive_and_unknown(self) -> None:
@@ -9484,7 +9487,7 @@ class FlowReportTest(unittest.TestCase):
     def test_unreadable_targets_file_is_an_error(self) -> None:
         (self.project / ".meridian" / "flow-targets.json").write_text('{"version": 2}', encoding="utf-8")
         self.integrated(1)
-        with self.assertRaises(meridian.MeridianError):
+        with self.assertRaises(shared_errors.MeridianError):
             self.report()
 
     def test_removal_candidates_are_unemitted_tool_codes(self) -> None:

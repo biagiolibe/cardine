@@ -1,0 +1,2536 @@
+{
+  "commit": "ceb84fdd88d2e0819ab42f6b1d6e5266fffff8fd",
+  "source": "scripts/meridian.py",
+  "bindings": [
+    {
+      "name": "SCRIPTS_ROOT",
+      "kind": "Assign",
+      "line": 38
+    },
+    {
+      "name": "MANIFEST_PATH",
+      "kind": "Assign",
+      "line": 46
+    },
+    {
+      "name": "VALIDATION_EVIDENCE_SCHEMA_PATH",
+      "kind": "Assign",
+      "line": 47
+    },
+    {
+      "name": "VALIDATION_EXIT_PASSED",
+      "kind": "Assign",
+      "line": 48
+    },
+    {
+      "name": "VALIDATION_EXIT_PENDING",
+      "kind": "Assign",
+      "line": 49
+    },
+    {
+      "name": "VALIDATION_EXIT_FAILED",
+      "kind": "Assign",
+      "line": 50
+    },
+    {
+      "name": "CAPABILITY_CATALOG_VERSION",
+      "kind": "Assign",
+      "line": 51
+    },
+    {
+      "name": "CAPABILITY_CATALOG_PATH",
+      "kind": "Assign",
+      "line": 52
+    },
+    {
+      "name": "BASELINES_PATH",
+      "kind": "Assign",
+      "line": 53
+    },
+    {
+      "name": "ADOPTION_REVIEW_PATH",
+      "kind": "Assign",
+      "line": 54
+    },
+    {
+      "name": "PROTOCOL_VERSION",
+      "kind": "Assign",
+      "line": 57
+    },
+    {
+      "name": "LEGACY_PROTOCOL_VERSION",
+      "kind": "Assign",
+      "line": 58
+    },
+    {
+      "name": "WORKFLOW_MODES",
+      "kind": "Assign",
+      "line": 59
+    },
+    {
+      "name": "INSTALLATION_FORMS",
+      "kind": "Assign",
+      "line": 60
+    },
+    {
+      "name": "STRICT_DIGEST_PROFILES",
+      "kind": "Assign",
+      "line": 64
+    },
+    {
+      "name": "PROJECT_EDITABLE_MANAGED_PATHS",
+      "kind": "Assign",
+      "line": 67
+    },
+    {
+      "name": "INSTALLATION_STATES",
+      "kind": "Assign",
+      "line": 76
+    },
+    {
+      "name": "HOST_ACTIVATION_STATES",
+      "kind": "Assign",
+      "line": 77
+    },
+    {
+      "name": "VERIFICATION_STATES",
+      "kind": "Assign",
+      "line": 78
+    },
+    {
+      "name": "AUDIT_STATES",
+      "kind": "Assign",
+      "line": 79
+    },
+    {
+      "name": "LATEST_RELEASE_URL",
+      "kind": "Assign",
+      "line": 80
+    },
+    {
+      "name": "LATEST_RELEASE_TIMEOUT_SECONDS",
+      "kind": "Assign",
+      "line": 81
+    },
+    {
+      "name": "LATEST_RELEASE_RESPONSE_LIMIT",
+      "kind": "Assign",
+      "line": 82
+    },
+    {
+      "name": "SELF_CHECK_UPDATE_AVAILABLE",
+      "kind": "Assign",
+      "line": 83
+    },
+    {
+      "name": "SELF_CHECK_UNKNOWN",
+      "kind": "Assign",
+      "line": 84
+    },
+    {
+      "name": "CAPABILITY_DECLARATION_REQUIRED_PROTOCOL",
+      "kind": "Assign",
+      "line": 88
+    },
+    {
+      "name": "ADOPTION_VERDICTS",
+      "kind": "Assign",
+      "line": 89
+    },
+    {
+      "name": "ADOPTION_RETRY_LIMIT",
+      "kind": "Assign",
+      "line": 90
+    },
+    {
+      "name": "CAPABILITY_MARKER",
+      "kind": "Assign",
+      "line": 91
+    },
+    {
+      "name": "MARKED_BLOCK",
+      "kind": "Assign",
+      "line": 92
+    },
+    {
+      "name": "ENTRY_ROUTER_PATH",
+      "kind": "Assign",
+      "line": 96
+    },
+    {
+      "name": "ENTRY_ROUTER_MAP_PATH",
+      "kind": "Assign",
+      "line": 97
+    },
+    {
+      "name": "ENTRY_ROUTER_OVERLAYS",
+      "kind": "Assign",
+      "line": 98
+    },
+    {
+      "name": "ENTRY_ROUTER_BUDGET_BYTES",
+      "kind": "Assign",
+      "line": 102
+    },
+    {
+      "name": "ENTRY_ROUTER_ROUTES",
+      "kind": "Assign",
+      "line": 103
+    },
+    {
+      "name": "ENTRY_ROUTER_SAFEGUARDS",
+      "kind": "Assign",
+      "line": 111
+    },
+    {
+      "name": "CONTEXT_SIZE_CONFIG_PATH",
+      "kind": "Assign",
+      "line": 119
+    },
+    {
+      "name": "CONTEXT_SIZE_POLICY_PATH",
+      "kind": "Assign",
+      "line": 120
+    },
+    {
+      "name": "CONTEXT_PHASE_READS_BLOCK",
+      "kind": "Assign",
+      "line": 121
+    },
+    {
+      "name": "CONTEXT_PHASE_READ_LINE",
+      "kind": "Assign",
+      "line": 122
+    },
+    {
+      "name": "CONTEXT_SIZE_ROLES",
+      "kind": "Assign",
+      "line": 123
+    },
+    {
+      "name": "USAGE_HOSTS",
+      "kind": "Assign",
+      "line": 127
+    },
+    {
+      "name": "USAGE_PRIVACY_BOUNDARY",
+      "kind": "Assign",
+      "line": 128
+    },
+    {
+      "name": "USAGE_ADAPTER_NOTES",
+      "kind": "Assign",
+      "line": 132
+    },
+    {
+      "name": "MeridianError",
+      "kind": "ClassDef",
+      "line": 138
+    },
+    {
+      "name": "STOP_REGISTRY_PATH",
+      "kind": "Assign",
+      "line": 142
+    },
+    {
+      "name": "STOP_REGISTRY_VERSION",
+      "kind": "Assign",
+      "line": 143
+    },
+    {
+      "name": "STOP_REGISTRY_FIELDS",
+      "kind": "Assign",
+      "line": 144
+    },
+    {
+      "name": "_stop_registry_cache",
+      "kind": "AnnAssign",
+      "line": 148
+    },
+    {
+      "name": "InternalStopError",
+      "kind": "ClassDef",
+      "line": 151
+    },
+    {
+      "name": "MeridianStop",
+      "kind": "ClassDef",
+      "line": 155
+    },
+    {
+      "name": "load_stop_registry",
+      "kind": "FunctionDef",
+      "line": 167
+    },
+    {
+      "name": "_task_state_recovery_project",
+      "kind": "FunctionDef",
+      "line": 195
+    },
+    {
+      "name": "stop_resume",
+      "kind": "FunctionDef",
+      "line": 207
+    },
+    {
+      "name": "format_stop",
+      "kind": "FunctionDef",
+      "line": 222
+    },
+    {
+      "name": "stop_error",
+      "kind": "FunctionDef",
+      "line": 230
+    },
+    {
+      "name": "JOURNAL_NAME",
+      "kind": "Assign",
+      "line": 239
+    },
+    {
+      "name": "JOURNAL_ROTATED_NAME",
+      "kind": "Assign",
+      "line": 240
+    },
+    {
+      "name": "JOURNAL_MAX_BYTES",
+      "kind": "Assign",
+      "line": 241
+    },
+    {
+      "name": "JOURNAL_VERSION",
+      "kind": "Assign",
+      "line": 242
+    },
+    {
+      "name": "JOURNALED_WORKTREE_COMMANDS",
+      "kind": "Assign",
+      "line": 243
+    },
+    {
+      "name": "JOURNALED_INTEGRATE_COMMANDS",
+      "kind": "Assign",
+      "line": 244
+    },
+    {
+      "name": "LifecycleJournalEntry",
+      "kind": "ClassDef",
+      "line": 247
+    },
+    {
+      "name": "append_journal_line",
+      "kind": "FunctionDef",
+      "line": 319
+    },
+    {
+      "name": "CODEX_PERMISSION_PROFILE",
+      "kind": "Assign",
+      "line": 337
+    },
+    {
+      "name": "CODEX_MANAGED_BEGIN",
+      "kind": "Assign",
+      "line": 338
+    },
+    {
+      "name": "CODEX_MANAGED_END",
+      "kind": "Assign",
+      "line": 339
+    },
+    {
+      "name": "SAFE_PATH_COMPONENT",
+      "kind": "Assign",
+      "line": 340
+    },
+    {
+      "name": "TASK_IDENTITY_PATH",
+      "kind": "Assign",
+      "line": 341
+    },
+    {
+      "name": "CANDIDATE_VALIDATION_PATH",
+      "kind": "Assign",
+      "line": 342
+    },
+    {
+      "name": "PROJECT_DECLARATION_PATH",
+      "kind": "Assign",
+      "line": 343
+    },
+    {
+      "name": "_LEGACY_LOCATION_WARNING_PROJECTS",
+      "kind": "AnnAssign",
+      "line": 344
+    },
+    {
+      "name": "WORKTREE_STATE_DIRECTORY",
+      "kind": "Assign",
+      "line": 345
+    },
+    {
+      "name": "INTEGRATION_LEASE_NAME",
+      "kind": "Assign",
+      "line": 346
+    },
+    {
+      "name": "INTEGRATION_STATE_NAME",
+      "kind": "Assign",
+      "line": 347
+    },
+    {
+      "name": "STRUCTURED_TASK_ID",
+      "kind": "Assign",
+      "line": 348
+    },
+    {
+      "name": "NUMERIC_TASK_ALIAS",
+      "kind": "Assign",
+      "line": 352
+    },
+    {
+      "name": "CANDIDATE_VALIDATION_OUTCOMES",
+      "kind": "Assign",
+      "line": 353
+    },
+    {
+      "name": "RepositoryIdentity",
+      "kind": "ClassDef",
+      "line": 357
+    },
+    {
+      "name": "TaskIdentityPolicy",
+      "kind": "ClassDef",
+      "line": 364
+    },
+    {
+      "name": "TaskIdentityContext",
+      "kind": "ClassDef",
+      "line": 370
+    },
+    {
+      "name": "ResolvedTaskIdentity",
+      "kind": "ClassDef",
+      "line": 378
+    },
+    {
+      "name": "ResolvedWorktreeRoot",
+      "kind": "ClassDef",
+      "line": 422
+    },
+    {
+      "name": "CodexConfigurationPlan",
+      "kind": "ClassDef",
+      "line": 429
+    },
+    {
+      "name": "ClaudeConfigurationPlan",
+      "kind": "ClassDef",
+      "line": 440
+    },
+    {
+      "name": "CodexUserRulesPlan",
+      "kind": "ClassDef",
+      "line": 449
+    },
+    {
+      "name": "CODEX_USER_RULES",
+      "kind": "Assign",
+      "line": 457
+    },
+    {
+      "name": "plan_codex_user_rules",
+      "kind": "FunctionDef",
+      "line": 493
+    },
+    {
+      "name": "apply_codex_user_rules",
+      "kind": "FunctionDef",
+      "line": 537
+    },
+    {
+      "name": "SetupPlan",
+      "kind": "ClassDef",
+      "line": 558
+    },
+    {
+      "name": "CatalogSurface",
+      "kind": "ClassDef",
+      "line": 591
+    },
+    {
+      "name": "CatalogCapability",
+      "kind": "ClassDef",
+      "line": 597
+    },
+    {
+      "name": "CatalogProfile",
+      "kind": "ClassDef",
+      "line": 610
+    },
+    {
+      "name": "CapabilityCatalog",
+      "kind": "ClassDef",
+      "line": 620
+    },
+    {
+      "name": "EvidenceSnapshot",
+      "kind": "ClassDef",
+      "line": 636
+    },
+    {
+      "name": "DeclaredSurface",
+      "kind": "ClassDef",
+      "line": 645
+    },
+    {
+      "name": "CapabilityDeclaration",
+      "kind": "ClassDef",
+      "line": 651
+    },
+    {
+      "name": "CapabilityProfileDeclaration",
+      "kind": "ClassDef",
+      "line": 661
+    },
+    {
+      "name": "AuditResult",
+      "kind": "ClassDef",
+      "line": 668
+    },
+    {
+      "name": "_safe_component",
+      "kind": "FunctionDef",
+      "line": 674
+    },
+    {
+      "name": "_normalized_local_repository_name",
+      "kind": "FunctionDef",
+      "line": 684
+    },
+    {
+      "name": "canonical_task_id",
+      "kind": "FunctionDef",
+      "line": 692
+    },
+    {
+      "name": "git_output",
+      "kind": "FunctionDef",
+      "line": 703
+    },
+    {
+      "name": "canonical_git_common_dir",
+      "kind": "FunctionDef",
+      "line": 715
+    },
+    {
+      "name": "repository_identity",
+      "kind": "FunctionDef",
+      "line": 722
+    },
+    {
+      "name": "_task_worktree_path_for_identity",
+      "kind": "FunctionDef",
+      "line": 764
+    },
+    {
+      "name": "handoff_worktree_value",
+      "kind": "FunctionDef",
+      "line": 788
+    },
+    {
+      "name": "task_worktree_path",
+      "kind": "FunctionDef",
+      "line": 793
+    },
+    {
+      "name": "validate_worktree_collision",
+      "kind": "FunctionDef",
+      "line": 802
+    },
+    {
+      "name": "_run_git",
+      "kind": "FunctionDef",
+      "line": 823
+    },
+    {
+      "name": "_validation_reason",
+      "kind": "FunctionDef",
+      "line": 832
+    },
+    {
+      "name": "validation_evidence_reasons",
+      "kind": "FunctionDef",
+      "line": 837
+    },
+    {
+      "name": "check_validation_evidence",
+      "kind": "FunctionDef",
+      "line": 886
+    },
+    {
+      "name": "_SHARED_WORKTREES",
+      "kind": "AnnAssign",
+      "line": 939
+    },
+    {
+      "name": "parse_worktree_records",
+      "kind": "FunctionDef",
+      "line": 943
+    },
+    {
+      "name": "shared_worktree_records",
+      "kind": "FunctionDef",
+      "line": 959
+    },
+    {
+      "name": "_git_worktrees",
+      "kind": "FunctionDef",
+      "line": 974
+    },
+    {
+      "name": "canonical_project_root",
+      "kind": "FunctionDef",
+      "line": 985
+    },
+    {
+      "name": "_verified_lifecycle_project",
+      "kind": "FunctionDef",
+      "line": 994
+    },
+    {
+      "name": "user_configuration_path",
+      "kind": "FunctionDef",
+      "line": 1006
+    },
+    {
+      "name": "_read_user_configuration",
+      "kind": "FunctionDef",
+      "line": 1017
+    },
+    {
+      "name": "resolve_worktree_root",
+      "kind": "FunctionDef",
+      "line": 1033
+    },
+    {
+      "name": "_effective_worktree_root",
+      "kind": "FunctionDef",
+      "line": 1072
+    },
+    {
+      "name": "_lifecycle_paths",
+      "kind": "FunctionDef",
+      "line": 1076
+    },
+    {
+      "name": "_merge_head_path",
+      "kind": "FunctionDef",
+      "line": 1082
+    },
+    {
+      "name": "_write_json_atomic",
+      "kind": "FunctionDef",
+      "line": 1086
+    },
+    {
+      "name": "_read_json_object",
+      "kind": "FunctionDef",
+      "line": 1104
+    },
+    {
+      "name": "_branch_commit",
+      "kind": "FunctionDef",
+      "line": 1114
+    },
+    {
+      "name": "lifecycle_started_at",
+      "kind": "FunctionDef",
+      "line": 1123
+    },
+    {
+      "name": "_dirty_summary",
+      "kind": "FunctionDef",
+      "line": 1144
+    },
+    {
+      "name": "_proven_stale_base",
+      "kind": "FunctionDef",
+      "line": 1161
+    },
+    {
+      "name": "repair_task_worktree_base",
+      "kind": "FunctionDef",
+      "line": 1185
+    },
+    {
+      "name": "prepare_task_worktree",
+      "kind": "FunctionDef",
+      "line": 1219
+    },
+    {
+      "name": "inspect_task_worktree",
+      "kind": "FunctionDef",
+      "line": 1378
+    },
+    {
+      "name": "active_worktree_task",
+      "kind": "FunctionDef",
+      "line": 1475
+    },
+    {
+      "name": "registered_worktree_task_states",
+      "kind": "FunctionDef",
+      "line": 1519
+    },
+    {
+      "name": "closure_status",
+      "kind": "FunctionDef",
+      "line": 1553
+    },
+    {
+      "name": "_string_tuple",
+      "kind": "FunctionDef",
+      "line": 1667
+    },
+    {
+      "name": "_bool_field",
+      "kind": "FunctionDef",
+      "line": 1673
+    },
+    {
+      "name": "candidate_validation_declaration",
+      "kind": "FunctionDef",
+      "line": 1679
+    },
+    {
+      "name": "proposed_candidate_validation_declaration",
+      "kind": "FunctionDef",
+      "line": 1714
+    },
+    {
+      "name": "undeclared_validation_commands_error",
+      "kind": "FunctionDef",
+      "line": 1731
+    },
+    {
+      "name": "_integration_evidence",
+      "kind": "FunctionDef",
+      "line": 1742
+    },
+    {
+      "name": "record_task_evidence",
+      "kind": "FunctionDef",
+      "line": 1776
+    },
+    {
+      "name": "_remove_owned_file",
+      "kind": "FunctionDef",
+      "line": 1841
+    },
+    {
+      "name": "_lifecycle_changes_after_validation",
+      "kind": "FunctionDef",
+      "line": 1848
+    },
+    {
+      "name": "_completed_task_row",
+      "kind": "FunctionDef",
+      "line": 1913
+    },
+    {
+      "name": "_queue_task_rows",
+      "kind": "FunctionDef",
+      "line": 1924
+    },
+    {
+      "name": "_QUEUE_TABLE_DIVIDER",
+      "kind": "Assign",
+      "line": 1952
+    },
+    {
+      "name": "_QUEUE_TASK_ROW",
+      "kind": "Assign",
+      "line": 1953
+    },
+    {
+      "name": "_QUEUE_ARCHIVE_HEADER",
+      "kind": "Assign",
+      "line": 1954
+    },
+    {
+      "name": "_GOVERNED_QUEUE_ARCHIVE_HEADER",
+      "kind": "Assign",
+      "line": 1960
+    },
+    {
+      "name": "_GOVERNED_QUEUE_TASK_ROW",
+      "kind": "Assign",
+      "line": 1965
+    },
+    {
+      "name": "_GOVERNED_QUEUE_STATUSES",
+      "kind": "Assign",
+      "line": 1971
+    },
+    {
+      "name": "_MARKDOWN_HEADING",
+      "kind": "Assign",
+      "line": 1974
+    },
+    {
+      "name": "_governed_completion_error",
+      "kind": "FunctionDef",
+      "line": 1977
+    },
+    {
+      "name": "_governed_completion_row",
+      "kind": "FunctionDef",
+      "line": 1982
+    },
+    {
+      "name": "_queue_section_ranges",
+      "kind": "FunctionDef",
+      "line": 2119
+    },
+    {
+      "name": "_queue_section_completion",
+      "kind": "FunctionDef",
+      "line": 2131
+    },
+    {
+      "name": "_STATE_TERMINAL_STATUSES",
+      "kind": "Assign",
+      "line": 2166
+    },
+    {
+      "name": "QueueStateResolver",
+      "kind": "Assign",
+      "line": 2171
+    },
+    {
+      "name": "_queue_state_resolver",
+      "kind": "FunctionDef",
+      "line": 2174
+    },
+    {
+      "name": "_queue_unidentified_tables",
+      "kind": "FunctionDef",
+      "line": 2211
+    },
+    {
+      "name": "_queue_section_decisions",
+      "kind": "FunctionDef",
+      "line": 2233
+    },
+    {
+      "name": "_archive_completed_queue_sections",
+      "kind": "FunctionDef",
+      "line": 2301
+    },
+    {
+      "name": "_queue_archival_warnings",
+      "kind": "FunctionDef",
+      "line": 2334
+    },
+    {
+      "name": "_relink_archived_task_row",
+      "kind": "FunctionDef",
+      "line": 2370
+    },
+    {
+      "name": "_apply_task_completion_rows",
+      "kind": "FunctionDef",
+      "line": 2399
+    },
+    {
+      "name": "_spike_disallowed_paths",
+      "kind": "FunctionDef",
+      "line": 2459
+    },
+    {
+      "name": "_integration_task_state",
+      "kind": "FunctionDef",
+      "line": 2494
+    },
+    {
+      "name": "stage_task_integration",
+      "kind": "FunctionDef",
+      "line": 2581
+    },
+    {
+      "name": "finalize_task_integration",
+      "kind": "FunctionDef",
+      "line": 2784
+    },
+    {
+      "name": "runnable_candidate_validation_command",
+      "kind": "FunctionDef",
+      "line": 2849
+    },
+    {
+      "name": "missing_candidate_validation_commands",
+      "kind": "FunctionDef",
+      "line": 2871
+    },
+    {
+      "name": "abort_task_integration",
+      "kind": "FunctionDef",
+      "line": 2886
+    },
+    {
+      "name": "cleanup_task_worktree",
+      "kind": "FunctionDef",
+      "line": 2909
+    },
+    {
+      "name": "_journal_advance_step",
+      "kind": "FunctionDef",
+      "line": 2968
+    },
+    {
+      "name": "advance_task_closure",
+      "kind": "FunctionDef",
+      "line": 2985
+    },
+    {
+      "name": "_toml_quote",
+      "kind": "FunctionDef",
+      "line": 3177
+    },
+    {
+      "name": "_codex_managed_block",
+      "kind": "FunctionDef",
+      "line": 3181
+    },
+    {
+      "name": "_replace_codex_managed_block",
+      "kind": "FunctionDef",
+      "line": 3199
+    },
+    {
+      "name": "_without_top_level_default_permissions",
+      "kind": "FunctionDef",
+      "line": 3213
+    },
+    {
+      "name": "_codex_expected_profile",
+      "kind": "FunctionDef",
+      "line": 3225
+    },
+    {
+      "name": "_codex_profile_divergence",
+      "kind": "FunctionDef",
+      "line": 3233
+    },
+    {
+      "name": "_codex_header_patterns",
+      "kind": "FunctionDef",
+      "line": 3248
+    },
+    {
+      "name": "_codex_markers_intact",
+      "kind": "FunctionDef",
+      "line": 3257
+    },
+    {
+      "name": "_without_codex_profile_text",
+      "kind": "FunctionDef",
+      "line": 3289
+    },
+    {
+      "name": "_plan_codex_ownership_repair",
+      "kind": "FunctionDef",
+      "line": 3319
+    },
+    {
+      "name": "_plan_codex_ownership_repair_and_root_replacement",
+      "kind": "FunctionDef",
+      "line": 3352
+    },
+    {
+      "name": "plan_codex_configuration",
+      "kind": "FunctionDef",
+      "line": 3404
+    },
+    {
+      "name": "print_codex_configuration_plan",
+      "kind": "FunctionDef",
+      "line": 3452
+    },
+    {
+      "name": "_write_exclusive_backup",
+      "kind": "FunctionDef",
+      "line": 3477
+    },
+    {
+      "name": "_unused_repair_backup",
+      "kind": "FunctionDef",
+      "line": 3493
+    },
+    {
+      "name": "apply_codex_configuration",
+      "kind": "FunctionDef",
+      "line": 3502
+    },
+    {
+      "name": "_directory_setup_state",
+      "kind": "FunctionDef",
+      "line": 3533
+    },
+    {
+      "name": "CODEX_SKILL_NAMES",
+      "kind": "Assign",
+      "line": 3547
+    },
+    {
+      "name": "_framework_skill_links",
+      "kind": "FunctionDef",
+      "line": 3550
+    },
+    {
+      "name": "_aggregate_skill_state",
+      "kind": "FunctionDef",
+      "line": 3580
+    },
+    {
+      "name": "_stale_codex_skill_warnings",
+      "kind": "FunctionDef",
+      "line": 3593
+    },
+    {
+      "name": "_setup_codex_state",
+      "kind": "FunctionDef",
+      "line": 3600
+    },
+    {
+      "name": "codex_profile_root_mismatch",
+      "kind": "FunctionDef",
+      "line": 3625
+    },
+    {
+      "name": "CLAUDE_PROJECT_ALLOWLIST",
+      "kind": "Assign",
+      "line": 3643
+    },
+    {
+      "name": "CLAUDE_PROJECT_DENYLIST",
+      "kind": "Assign",
+      "line": 3712
+    },
+    {
+      "name": "plan_claude_project_allowlist",
+      "kind": "FunctionDef",
+      "line": 3727
+    },
+    {
+      "name": "apply_claude_project_allowlist",
+      "kind": "FunctionDef",
+      "line": 3790
+    },
+    {
+      "name": "claude_hook_duplicate_advisories",
+      "kind": "FunctionDef",
+      "line": 3802
+    },
+    {
+      "name": "plan_setup",
+      "kind": "FunctionDef",
+      "line": 3837
+    },
+    {
+      "name": "print_setup_plan",
+      "kind": "FunctionDef",
+      "line": 4065
+    },
+    {
+      "name": "apply_setup",
+      "kind": "FunctionDef",
+      "line": 4117
+    },
+    {
+      "name": "CODEX_CLOSURE_POLICY_PROBES",
+      "kind": "Assign",
+      "line": 4197
+    },
+    {
+      "name": "_codex_policy_probe_state",
+      "kind": "FunctionDef",
+      "line": 4227
+    },
+    {
+      "name": "codex_doctor",
+      "kind": "FunctionDef",
+      "line": 4253
+    },
+    {
+      "name": "IntegrationValidationOutcome",
+      "kind": "ClassDef",
+      "line": 4366
+    },
+    {
+      "name": "IntegrationValidationDecision",
+      "kind": "ClassDef",
+      "line": 4376
+    },
+    {
+      "name": "_paths_interact",
+      "kind": "FunctionDef",
+      "line": 4381
+    },
+    {
+      "name": "decide_integration_validation",
+      "kind": "FunctionDef",
+      "line": 4389
+    },
+    {
+      "name": "ManagedFile",
+      "kind": "ClassDef",
+      "line": 4468
+    },
+    {
+      "name": "PlanItem",
+      "kind": "ClassDef",
+      "line": 4474
+    },
+    {
+      "name": "Capability",
+      "kind": "ClassDef",
+      "line": 4484
+    },
+    {
+      "name": "CapabilityMove",
+      "kind": "ClassDef",
+      "line": 4491
+    },
+    {
+      "name": "ReviewRecord",
+      "kind": "ClassDef",
+      "line": 4507
+    },
+    {
+      "name": "AdoptionState",
+      "kind": "ClassDef",
+      "line": 4514
+    },
+    {
+      "name": "ProjectLocations",
+      "kind": "ClassDef",
+      "line": 4522
+    },
+    {
+      "name": "sha256",
+      "kind": "FunctionDef",
+      "line": 4531
+    },
+    {
+      "name": "SemVer",
+      "kind": "ClassDef",
+      "line": 4536
+    },
+    {
+      "name": "_SEMVER_IDENTIFIER",
+      "kind": "Assign",
+      "line": 4552
+    },
+    {
+      "name": "_SEMVER_PATTERN",
+      "kind": "Assign",
+      "line": 4553
+    },
+    {
+      "name": "parse_semver",
+      "kind": "FunctionDef",
+      "line": 4560
+    },
+    {
+      "name": "read_raw_version",
+      "kind": "FunctionDef",
+      "line": 4573
+    },
+    {
+      "name": "require_release_version",
+      "kind": "FunctionDef",
+      "line": 4580
+    },
+    {
+      "name": "read_version",
+      "kind": "FunctionDef",
+      "line": 4590
+    },
+    {
+      "name": "version_key",
+      "kind": "FunctionDef",
+      "line": 4599
+    },
+    {
+      "name": "semver_precedence_key",
+      "kind": "FunctionDef",
+      "line": 4606
+    },
+    {
+      "name": "release_kind_from_body",
+      "kind": "FunctionDef",
+      "line": 4621
+    },
+    {
+      "name": "fetch_latest_release",
+      "kind": "FunctionDef",
+      "line": 4630
+    },
+    {
+      "name": "run_self_update",
+      "kind": "FunctionDef",
+      "line": 4667
+    },
+    {
+      "name": "claude_user_settings_path",
+      "kind": "FunctionDef",
+      "line": 4761
+    },
+    {
+      "name": "plugin_marketplace_ref",
+      "kind": "FunctionDef",
+      "line": 4766
+    },
+    {
+      "name": "plugin_ref_report",
+      "kind": "FunctionDef",
+      "line": 4783
+    },
+    {
+      "name": "run_self_check",
+      "kind": "FunctionDef",
+      "line": 4806
+    },
+    {
+      "name": "latest_migration_to",
+      "kind": "FunctionDef",
+      "line": 4845
+    },
+    {
+      "name": "manifest_baseline_version",
+      "kind": "FunctionDef",
+      "line": 4860
+    },
+    {
+      "name": "managed_files_for_workflow",
+      "kind": "FunctionDef",
+      "line": 4865
+    },
+    {
+      "name": "managed_files",
+      "kind": "FunctionDef",
+      "line": 4911
+    },
+    {
+      "name": "marker_declaring_migrations",
+      "kind": "FunctionDef",
+      "line": 4917
+    },
+    {
+      "name": "strip_marker_block",
+      "kind": "FunctionDef",
+      "line": 4940
+    },
+    {
+      "name": "capped_managed_files",
+      "kind": "FunctionDef",
+      "line": 4953
+    },
+    {
+      "name": "_required_object",
+      "kind": "FunctionDef",
+      "line": 5002
+    },
+    {
+      "name": "_required_string",
+      "kind": "FunctionDef",
+      "line": 5008
+    },
+    {
+      "name": "_required_positive_integer",
+      "kind": "FunctionDef",
+      "line": 5014
+    },
+    {
+      "name": "_required_string_list",
+      "kind": "FunctionDef",
+      "line": 5020
+    },
+    {
+      "name": "_repository_relative_path",
+      "kind": "FunctionDef",
+      "line": 5030
+    },
+    {
+      "name": "check_protocol_compatibility",
+      "kind": "FunctionDef",
+      "line": 5038
+    },
+    {
+      "name": "manifest_workflow_mode",
+      "kind": "FunctionDef",
+      "line": 5052
+    },
+    {
+      "name": "_parse_catalog_surface",
+      "kind": "FunctionDef",
+      "line": 5071
+    },
+    {
+      "name": "parse_capability_catalog",
+      "kind": "FunctionDef",
+      "line": 5083
+    },
+    {
+      "name": "load_capability_catalog",
+      "kind": "FunctionDef",
+      "line": 5265
+    },
+    {
+      "name": "_parse_evidence_snapshot",
+      "kind": "FunctionDef",
+      "line": 5276
+    },
+    {
+      "name": "parse_capability_profiles",
+      "kind": "FunctionDef",
+      "line": 5319
+    },
+    {
+      "name": "validate_manifest",
+      "kind": "FunctionDef",
+      "line": 5473
+    },
+    {
+      "name": "load_manifest",
+      "kind": "FunctionDef",
+      "line": 5493
+    },
+    {
+      "name": "canonical_manifest",
+      "kind": "FunctionDef",
+      "line": 5515
+    },
+    {
+      "name": "write_manifest",
+      "kind": "FunctionDef",
+      "line": 5524
+    },
+    {
+      "name": "migration_ids",
+      "kind": "FunctionDef",
+      "line": 5537
+    },
+    {
+      "name": "first_retirement_migration",
+      "kind": "FunctionDef",
+      "line": 5548
+    },
+    {
+      "name": "capped_target_version",
+      "kind": "FunctionDef",
+      "line": 5559
+    },
+    {
+      "name": "migration_record_paths",
+      "kind": "FunctionDef",
+      "line": 5574
+    },
+    {
+      "name": "validate_adopt_existing_paths",
+      "kind": "FunctionDef",
+      "line": 5586
+    },
+    {
+      "name": "adopt_existing_paths",
+      "kind": "FunctionDef",
+      "line": 5620
+    },
+    {
+      "name": "migration_capability_entries",
+      "kind": "FunctionDef",
+      "line": 5632
+    },
+    {
+      "name": "migration_capability_removals",
+      "kind": "FunctionDef",
+      "line": 5651
+    },
+    {
+      "name": "migration_restructures",
+      "kind": "FunctionDef",
+      "line": 5665
+    },
+    {
+      "name": "pending_restructured_markers",
+      "kind": "FunctionDef",
+      "line": 5680
+    },
+    {
+      "name": "pending_wrapped_capabilities",
+      "kind": "FunctionDef",
+      "line": 5696
+    },
+    {
+      "name": "drop_restructured_marker_blocks",
+      "kind": "FunctionDef",
+      "line": 5714
+    },
+    {
+      "name": "restructured_marker_edits",
+      "kind": "FunctionDef",
+      "line": 5738
+    },
+    {
+      "name": "project_sections",
+      "kind": "FunctionDef",
+      "line": 5752
+    },
+    {
+      "name": "restructured_text",
+      "kind": "FunctionDef",
+      "line": 5785
+    },
+    {
+      "name": "migration_capability_moves",
+      "kind": "FunctionDef",
+      "line": 5798
+    },
+    {
+      "name": "marker_blocks",
+      "kind": "FunctionDef",
+      "line": 5821
+    },
+    {
+      "name": "marker_block_sha256",
+      "kind": "FunctionDef",
+      "line": 5831
+    },
+    {
+      "name": "exact_marker_matches",
+      "kind": "FunctionDef",
+      "line": 5835
+    },
+    {
+      "name": "declared_capability_moves",
+      "kind": "FunctionDef",
+      "line": 5840
+    },
+    {
+      "name": "pending_migration_establishes_move_source",
+      "kind": "FunctionDef",
+      "line": 5853
+    },
+    {
+      "name": "validate_capability_moves",
+      "kind": "FunctionDef",
+      "line": 5879
+    },
+    {
+      "name": "capability_requirements",
+      "kind": "FunctionDef",
+      "line": 5958
+    },
+    {
+      "name": "retired_capability_ids",
+      "kind": "FunctionDef",
+      "line": 5985
+    },
+    {
+      "name": "pending_capability_removals",
+      "kind": "FunctionDef",
+      "line": 6001
+    },
+    {
+      "name": "removals_for_managed_file",
+      "kind": "FunctionDef",
+      "line": 6023
+    },
+    {
+      "name": "find_capability_marker_version",
+      "kind": "FunctionDef",
+      "line": 6043
+    },
+    {
+      "name": "LEGACY_CAPABILITY_EVIDENCE",
+      "kind": "Assign",
+      "line": 6056
+    },
+    {
+      "name": "capability_presence_map",
+      "kind": "FunctionDef",
+      "line": 6066
+    },
+    {
+      "name": "capability_ids_in_template",
+      "kind": "FunctionDef",
+      "line": 6123
+    },
+    {
+      "name": "extract_marker_block",
+      "kind": "FunctionDef",
+      "line": 6142
+    },
+    {
+      "name": "extract_marked_block",
+      "kind": "FunctionDef",
+      "line": 6159
+    },
+    {
+      "name": "marker_pairs",
+      "kind": "FunctionDef",
+      "line": 6170
+    },
+    {
+      "name": "append_only_new_markers",
+      "kind": "FunctionDef",
+      "line": 6174
+    },
+    {
+      "name": "CLAUDE_AGENTS_POINTER_MARKER",
+      "kind": "Assign",
+      "line": 6264
+    },
+    {
+      "name": "is_agents_pointer",
+      "kind": "FunctionDef",
+      "line": 6267
+    },
+    {
+      "name": "agents_pointer_satisfies_claude",
+      "kind": "FunctionDef",
+      "line": 6285
+    },
+    {
+      "name": "agents_pointer_can_follow_upgrade",
+      "kind": "FunctionDef",
+      "line": 6305
+    },
+    {
+      "name": "reflowed_marker_normalization",
+      "kind": "FunctionDef",
+      "line": 6343
+    },
+    {
+      "name": "deduplicate_identical_template_markers",
+      "kind": "FunctionDef",
+      "line": 6386
+    },
+    {
+      "name": "remove_retired_markers",
+      "kind": "FunctionDef",
+      "line": 6412
+    },
+    {
+      "name": "retired_capability_versions",
+      "kind": "FunctionDef",
+      "line": 6464
+    },
+    {
+      "name": "audit_capability_markers",
+      "kind": "FunctionDef",
+      "line": 6482
+    },
+    {
+      "name": "HEADING",
+      "kind": "Assign",
+      "line": 6561
+    },
+    {
+      "name": "marker_headings",
+      "kind": "FunctionDef",
+      "line": 6564
+    },
+    {
+      "name": "audit_duplicate_headings",
+      "kind": "FunctionDef",
+      "line": 6582
+    },
+    {
+      "name": "audit_capability_moves",
+      "kind": "FunctionDef",
+      "line": 6626
+    },
+    {
+      "name": "entry_router_overlay",
+      "kind": "FunctionDef",
+      "line": 6707
+    },
+    {
+      "name": "render_entry_router",
+      "kind": "FunctionDef",
+      "line": 6718
+    },
+    {
+      "name": "entry_router_outputs",
+      "kind": "FunctionDef",
+      "line": 6723
+    },
+    {
+      "name": "project_uses_entry_router",
+      "kind": "FunctionDef",
+      "line": 6746
+    },
+    {
+      "name": "entry_router_trigger_requirements",
+      "kind": "FunctionDef",
+      "line": 6751
+    },
+    {
+      "name": "audit_entry_router",
+      "kind": "FunctionDef",
+      "line": 6824
+    },
+    {
+      "name": "_audit_evidence_reference",
+      "kind": "FunctionDef",
+      "line": 6866
+    },
+    {
+      "name": "_audit_snapshot_evidence",
+      "kind": "FunctionDef",
+      "line": 6889
+    },
+    {
+      "name": "_digest_exempt",
+      "kind": "FunctionDef",
+      "line": 6900
+    },
+    {
+      "name": "installation_surface_diagnostics",
+      "kind": "FunctionDef",
+      "line": 6907
+    },
+    {
+      "name": "_audit_probe_evidence",
+      "kind": "FunctionDef",
+      "line": 6955
+    },
+    {
+      "name": "managed_copy_drift",
+      "kind": "FunctionDef",
+      "line": 6975
+    },
+    {
+      "name": "declared_managed_copy_paths",
+      "kind": "FunctionDef",
+      "line": 7005
+    },
+    {
+      "name": "is_markerless_managed_copy_digest_audited",
+      "kind": "FunctionDef",
+      "line": 7022
+    },
+    {
+      "name": "audit_managed_copy_digests",
+      "kind": "FunctionDef",
+      "line": 7035
+    },
+    {
+      "name": "audit_declared_capabilities",
+      "kind": "FunctionDef",
+      "line": 7071
+    },
+    {
+      "name": "load_retired_text_registry",
+      "kind": "FunctionDef",
+      "line": 7270
+    },
+    {
+      "name": "retired_text_advisories",
+      "kind": "FunctionDef",
+      "line": 7321
+    },
+    {
+      "name": "audit_task_state_projections",
+      "kind": "FunctionDef",
+      "line": 7353
+    },
+    {
+      "name": "run_audit",
+      "kind": "FunctionDef",
+      "line": 7406
+    },
+    {
+      "name": "_load_profile_probe",
+      "kind": "FunctionDef",
+      "line": 7535
+    },
+    {
+      "name": "profile_doctor",
+      "kind": "FunctionDef",
+      "line": 7588
+    },
+    {
+      "name": "_capability_declaration",
+      "kind": "FunctionDef",
+      "line": 7654
+    },
+    {
+      "name": "bootstrap_capability_profile",
+      "kind": "FunctionDef",
+      "line": 7719
+    },
+    {
+      "name": "detect_capabilities",
+      "kind": "FunctionDef",
+      "line": 7765
+    },
+    {
+      "name": "parse_adoption_review",
+      "kind": "FunctionDef",
+      "line": 7776
+    },
+    {
+      "name": "compute_adoption_state",
+      "kind": "FunctionDef",
+      "line": 7791
+    },
+    {
+      "name": "detect_mode",
+      "kind": "FunctionDef",
+      "line": 7830
+    },
+    {
+      "name": "detect_source_version",
+      "kind": "FunctionDef",
+      "line": 7852
+    },
+    {
+      "name": "assisted_implementer_prompt",
+      "kind": "FunctionDef",
+      "line": 7871
+    },
+    {
+      "name": "assisted_reviewer_prompt",
+      "kind": "FunctionDef",
+      "line": 7927
+    },
+    {
+      "name": "assisted_orchestrator_prompt",
+      "kind": "FunctionDef",
+      "line": 7982
+    },
+    {
+      "name": "print_assisted_adoption_plan",
+      "kind": "FunctionDef",
+      "line": 8024
+    },
+    {
+      "name": "copy_baseline",
+      "kind": "FunctionDef",
+      "line": 8125
+    },
+    {
+      "name": "prune_stale_baselines",
+      "kind": "FunctionDef",
+      "line": 8139
+    },
+    {
+      "name": "lock_project",
+      "kind": "FunctionDef",
+      "line": 8154
+    },
+    {
+      "name": "merge_clean",
+      "kind": "FunctionDef",
+      "line": 8180
+    },
+    {
+      "name": "apply_additive_move_checks",
+      "kind": "FunctionDef",
+      "line": 8198
+    },
+    {
+      "name": "plan_from_baseline",
+      "kind": "FunctionDef",
+      "line": 8290
+    },
+    {
+      "name": "recorded_managed_digests",
+      "kind": "FunctionDef",
+      "line": 8646
+    },
+    {
+      "name": "profile_surface_plan",
+      "kind": "FunctionDef",
+      "line": 8655
+    },
+    {
+      "name": "prepare_upgrade_targets",
+      "kind": "FunctionDef",
+      "line": 8704
+    },
+    {
+      "name": "plan_upgrade",
+      "kind": "FunctionDef",
+      "line": 8732
+    },
+    {
+      "name": "print_plan",
+      "kind": "FunctionDef",
+      "line": 8753
+    },
+    {
+      "name": "plan_has_blockers",
+      "kind": "FunctionDef",
+      "line": 8804
+    },
+    {
+      "name": "_unused_adoption_backup",
+      "kind": "FunctionDef",
+      "line": 8809
+    },
+    {
+      "name": "complete_profile_surfaces",
+      "kind": "FunctionDef",
+      "line": 8822
+    },
+    {
+      "name": "apply_plan",
+      "kind": "FunctionDef",
+      "line": 8858
+    },
+    {
+      "name": "apply_upgrade",
+      "kind": "FunctionDef",
+      "line": 9043
+    },
+    {
+      "name": "copy_adoption_baseline",
+      "kind": "FunctionDef",
+      "line": 9078
+    },
+    {
+      "name": "adopt_project",
+      "kind": "FunctionDef",
+      "line": 9088
+    },
+    {
+      "name": "finalize_adoption",
+      "kind": "FunctionDef",
+      "line": 9126
+    },
+    {
+      "name": "BUDGET_PATH",
+      "kind": "Assign",
+      "line": 9159
+    },
+    {
+      "name": "BUDGET_STATE_NAME",
+      "kind": "Assign",
+      "line": 9160
+    },
+    {
+      "name": "BUDGET_KINDS",
+      "kind": "Assign",
+      "line": 9161
+    },
+    {
+      "name": "EVIDENCE_EVENT_KINDS",
+      "kind": "Assign",
+      "line": 9162
+    },
+    {
+      "name": "BUDGET_DEFAULT_CAPS",
+      "kind": "Assign",
+      "line": 9163
+    },
+    {
+      "name": "BUDGET_FIELD_NAMES",
+      "kind": "Assign",
+      "line": 9164
+    },
+    {
+      "name": "primary_project_root",
+      "kind": "FunctionDef",
+      "line": 9172
+    },
+    {
+      "name": "proposed_project_identity",
+      "kind": "FunctionDef",
+      "line": 9183
+    },
+    {
+      "name": "budget_state_path",
+      "kind": "FunctionDef",
+      "line": 9192
+    },
+    {
+      "name": "tracked_budget_state",
+      "kind": "FunctionDef",
+      "line": 9201
+    },
+    {
+      "name": "legacy_budget_migration_needed",
+      "kind": "FunctionDef",
+      "line": 9206
+    },
+    {
+      "name": "migrate_budget_state",
+      "kind": "FunctionDef",
+      "line": 9212
+    },
+    {
+      "name": "load_budget_state",
+      "kind": "FunctionDef",
+      "line": 9235
+    },
+    {
+      "name": "write_budget_state",
+      "kind": "FunctionDef",
+      "line": 9248
+    },
+    {
+      "name": "import_task_states",
+      "kind": "FunctionDef",
+      "line": 9256
+    },
+    {
+      "name": "transition_task_state",
+      "kind": "FunctionDef",
+      "line": 9409
+    },
+    {
+      "name": "close_task",
+      "kind": "FunctionDef",
+      "line": 9447
+    },
+    {
+      "name": "record_review_verdict",
+      "kind": "FunctionDef",
+      "line": 9486
+    },
+    {
+      "name": "_review_verdict_projection",
+      "kind": "FunctionDef",
+      "line": 9567
+    },
+    {
+      "name": "_review_attempt_text",
+      "kind": "FunctionDef",
+      "line": 9580
+    },
+    {
+      "name": "task_identity_json",
+      "kind": "FunctionDef",
+      "line": 9585
+    },
+    {
+      "name": "read_task_field",
+      "kind": "FunctionDef",
+      "line": 9598
+    },
+    {
+      "name": "profile_cap",
+      "kind": "FunctionDef",
+      "line": 9605
+    },
+    {
+      "name": "profile_digest",
+      "kind": "FunctionDef",
+      "line": 9621
+    },
+    {
+      "name": "execution_contract",
+      "kind": "FunctionDef",
+      "line": 9632
+    },
+    {
+      "name": "contract_digest",
+      "kind": "FunctionDef",
+      "line": 9650
+    },
+    {
+      "name": "contract_requires_execution_commands",
+      "kind": "FunctionDef",
+      "line": 9655
+    },
+    {
+      "name": "_safe_project_path",
+      "kind": "FunctionDef",
+      "line": 9659
+    },
+    {
+      "name": "parse_project_declaration",
+      "kind": "FunctionDef",
+      "line": 9665
+    },
+    {
+      "name": "read_project_declaration",
+      "kind": "FunctionDef",
+      "line": 9715
+    },
+    {
+      "name": "resolve_project_locations",
+      "kind": "FunctionDef",
+      "line": 9727
+    },
+    {
+      "name": "_TaskAuthority",
+      "kind": "ClassDef",
+      "line": 9818
+    },
+    {
+      "name": "parse_task_identity_policy",
+      "kind": "FunctionDef",
+      "line": 9825
+    },
+    {
+      "name": "read_task_identity_policy",
+      "kind": "FunctionDef",
+      "line": 9838
+    },
+    {
+      "name": "_task_record_id",
+      "kind": "FunctionDef",
+      "line": 9851
+    },
+    {
+      "name": "_clean_queue_id",
+      "kind": "FunctionDef",
+      "line": 9866
+    },
+    {
+      "name": "_task_authorities",
+      "kind": "FunctionDef",
+      "line": 9874
+    },
+    {
+      "name": "_numeric_alias_key",
+      "kind": "FunctionDef",
+      "line": 9931
+    },
+    {
+      "name": "_authority_matches",
+      "kind": "FunctionDef",
+      "line": 9938
+    },
+    {
+      "name": "_identity_names",
+      "kind": "FunctionDef",
+      "line": 9951
+    },
+    {
+      "name": "_check_branch_name",
+      "kind": "FunctionDef",
+      "line": 9976
+    },
+    {
+      "name": "_identity_derivations",
+      "kind": "FunctionDef",
+      "line": 9987
+    },
+    {
+      "name": "resolve_task_identity",
+      "kind": "FunctionDef",
+      "line": 9993
+    },
+    {
+      "name": "task_identity_context",
+      "kind": "FunctionDef",
+      "line": 10097
+    },
+    {
+      "name": "next_milestone_task_identity",
+      "kind": "FunctionDef",
+      "line": 10105
+    },
+    {
+      "name": "HEADING_LINE",
+      "kind": "Assign",
+      "line": 10140
+    },
+    {
+      "name": "extract_heading_block",
+      "kind": "FunctionDef",
+      "line": 10143
+    },
+    {
+      "name": "find_adr_log",
+      "kind": "FunctionDef",
+      "line": 10165
+    },
+    {
+      "name": "adr_title_matcher",
+      "kind": "FunctionDef",
+      "line": 10169
+    },
+    {
+      "name": "adr_show",
+      "kind": "FunctionDef",
+      "line": 10175
+    },
+    {
+      "name": "ADR_HEADING_ID",
+      "kind": "Assign",
+      "line": 10191
+    },
+    {
+      "name": "ADR_LIKE_HEADING",
+      "kind": "Assign",
+      "line": 10192
+    },
+    {
+      "name": "ADR_STATUS_LINE",
+      "kind": "Assign",
+      "line": 10193
+    },
+    {
+      "name": "adr_entries",
+      "kind": "FunctionDef",
+      "line": 10196
+    },
+    {
+      "name": "adr_list",
+      "kind": "FunctionDef",
+      "line": 10230
+    },
+    {
+      "name": "extract_spec_heading",
+      "kind": "FunctionDef",
+      "line": 10244
+    },
+    {
+      "name": "authority_entries",
+      "kind": "FunctionDef",
+      "line": 10256
+    },
+    {
+      "name": "SPEC_HEADING_CITATION",
+      "kind": "Assign",
+      "line": 10272
+    },
+    {
+      "name": "resolve_authority_entry",
+      "kind": "FunctionDef",
+      "line": 10275
+    },
+    {
+      "name": "context_authority",
+      "kind": "FunctionDef",
+      "line": 10312
+    },
+    {
+      "name": "_context_path_references",
+      "kind": "FunctionDef",
+      "line": 10338
+    },
+    {
+      "name": "_context_relative_references",
+      "kind": "FunctionDef",
+      "line": 10356
+    },
+    {
+      "name": "_context_phase_reads",
+      "kind": "FunctionDef",
+      "line": 10369
+    },
+    {
+      "name": "_context_router",
+      "kind": "FunctionDef",
+      "line": 10386
+    },
+    {
+      "name": "_context_routed_workflow",
+      "kind": "FunctionDef",
+      "line": 10395
+    },
+    {
+      "name": "_context_file_record",
+      "kind": "FunctionDef",
+      "line": 10416
+    },
+    {
+      "name": "_context_configuration",
+      "kind": "FunctionDef",
+      "line": 10432
+    },
+    {
+      "name": "_context_threshold",
+      "kind": "FunctionDef",
+      "line": 10452
+    },
+    {
+      "name": "context_router_files",
+      "kind": "FunctionDef",
+      "line": 10458
+    },
+    {
+      "name": "context_size_report",
+      "kind": "FunctionDef",
+      "line": 10480
+    },
+    {
+      "name": "format_context_size_report",
+      "kind": "FunctionDef",
+      "line": 10564
+    },
+    {
+      "name": "_usage_counter",
+      "kind": "FunctionDef",
+      "line": 10593
+    },
+    {
+      "name": "_claude_usage_call",
+      "kind": "FunctionDef",
+      "line": 10598
+    },
+    {
+      "name": "_usage_start",
+      "kind": "FunctionDef",
+      "line": 10606
+    },
+    {
+      "name": "_usage_session",
+      "kind": "FunctionDef",
+      "line": 10615
+    },
+    {
+      "name": "_codex_usage_session",
+      "kind": "FunctionDef",
+      "line": 10648
+    },
+    {
+      "name": "_claude_usage_session",
+      "kind": "FunctionDef",
+      "line": 10677
+    },
+    {
+      "name": "usage_report",
+      "kind": "FunctionDef",
+      "line": 10713
+    },
+    {
+      "name": "format_usage_report",
+      "kind": "FunctionDef",
+      "line": 10757
+    },
+    {
+      "name": "FLOW_TARGETS_PATH",
+      "kind": "Assign",
+      "line": 10775
+    },
+    {
+      "name": "FLOW_TARGETS_VERSION",
+      "kind": "Assign",
+      "line": 10776
+    },
+    {
+      "name": "FLOW_ORIGINS",
+      "kind": "Assign",
+      "line": 10777
+    },
+    {
+      "name": "FLOW_ORIGIN_PATTERN",
+      "kind": "Assign",
+      "line": 10778
+    },
+    {
+      "name": "FLOW_JOURNAL_TIME",
+      "kind": "Assign",
+      "line": 10779
+    },
+    {
+      "name": "FLOW_UNCODED",
+      "kind": "Assign",
+      "line": 10780
+    },
+    {
+      "name": "_flow_time",
+      "kind": "FunctionDef",
+      "line": 10783
+    },
+    {
+      "name": "_flow_read_journal",
+      "kind": "FunctionDef",
+      "line": 10792
+    },
+    {
+      "name": "_flow_origin",
+      "kind": "FunctionDef",
+      "line": 10824
+    },
+    {
+      "name": "_flow_median",
+      "kind": "FunctionDef",
+      "line": 10834
+    },
+    {
+      "name": "_flow_targets",
+      "kind": "FunctionDef",
+      "line": 10838
+    },
+    {
+      "name": "_flow_tasks",
+      "kind": "FunctionDef",
+      "line": 10901
+    },
+    {
+      "name": "flow_report",
+      "kind": "FunctionDef",
+      "line": 10943
+    },
+    {
+      "name": "format_flow_report",
+      "kind": "FunctionDef",
+      "line": 11012
+    },
+    {
+      "name": "_flow_duration",
+      "kind": "FunctionDef",
+      "line": 11045
+    },
+    {
+      "name": "task_cap",
+      "kind": "FunctionDef",
+      "line": 11051
+    },
+    {
+      "name": "find_task_file",
+      "kind": "FunctionDef",
+      "line": 11058
+    },
+    {
+      "name": "resolve_budget_key",
+      "kind": "FunctionDef",
+      "line": 11063
+    },
+    {
+      "name": "budget_show",
+      "kind": "FunctionDef",
+      "line": 11082
+    },
+    {
+      "name": "budget_spend",
+      "kind": "FunctionDef",
+      "line": 11103
+    },
+    {
+      "name": "PREFLIGHT_HEADINGS",
+      "kind": "Assign",
+      "line": 11131
+    },
+    {
+      "name": "NORMAL_PREFLIGHT_HEADINGS",
+      "kind": "Assign",
+      "line": 11132
+    },
+    {
+      "name": "SPIKE_PREFLIGHT_FIELDS",
+      "kind": "Assign",
+      "line": 11133
+    },
+    {
+      "name": "HANDOFF_FIELDS",
+      "kind": "Assign",
+      "line": 11134
+    },
+    {
+      "name": "EXECUTION_EVIDENCE_PATH",
+      "kind": "Assign",
+      "line": 11144
+    },
+    {
+      "name": "HOST_IMPACT_STATES",
+      "kind": "Assign",
+      "line": 11145
+    },
+    {
+      "name": "HOST_IMPACT_EVIDENCE_CATEGORIES",
+      "kind": "Assign",
+      "line": 11146
+    },
+    {
+      "name": "host_impact_section",
+      "kind": "FunctionDef",
+      "line": 11149
+    },
+    {
+      "name": "host_impact_field",
+      "kind": "FunctionDef",
+      "line": 11160
+    },
+    {
+      "name": "host_impact_required_profiles",
+      "kind": "FunctionDef",
+      "line": 11165
+    },
+    {
+      "name": "validate_host_impact_declaration",
+      "kind": "FunctionDef",
+      "line": 11211
+    },
+    {
+      "name": "verify_host_impact_completion_evidence",
+      "kind": "FunctionDef",
+      "line": 11229
+    },
+    {
+      "name": "TASK_BRANCH_OPEN_STATUSES",
+      "kind": "Assign",
+      "line": 11249
+    },
+    {
+      "name": "current_branch",
+      "kind": "FunctionDef",
+      "line": 11252
+    },
+    {
+      "name": "execution_preflight",
+      "kind": "FunctionDef",
+      "line": 11260
+    },
+    {
+      "name": "reconcile_execution_contract",
+      "kind": "FunctionDef",
+      "line": 11371
+    },
+    {
+      "name": "execution_entries",
+      "kind": "FunctionDef",
+      "line": 11407
+    },
+    {
+      "name": "verify_validation_skips",
+      "kind": "FunctionDef",
+      "line": 11422
+    },
+    {
+      "name": "verify_execution_evidence",
+      "kind": "FunctionDef",
+      "line": 11450
+    },
+    {
+      "name": "check_handoff",
+      "kind": "FunctionDef",
+      "line": 11511
+    },
+    {
+      "name": "default_handoff_path",
+      "kind": "FunctionDef",
+      "line": 11558
+    },
+    {
+      "name": "readiness_check",
+      "kind": "FunctionDef",
+      "line": 11562
+    },
+    {
+      "name": "_execution_location",
+      "kind": "FunctionDef",
+      "line": 11570
+    },
+    {
+      "name": "_execution_worktree",
+      "kind": "FunctionDef",
+      "line": 11606
+    },
+    {
+      "name": "_execution_state",
+      "kind": "FunctionDef",
+      "line": 11645
+    },
+    {
+      "name": "execution_start",
+      "kind": "FunctionDef",
+      "line": 11653
+    },
+    {
+      "name": "_execution_owned_paths",
+      "kind": "FunctionDef",
+      "line": 11685
+    },
+    {
+      "name": "execution_source_digest",
+      "kind": "FunctionDef",
+      "line": 11691
+    },
+    {
+      "name": "_delivery_current_commit",
+      "kind": "FunctionDef",
+      "line": 11713
+    },
+    {
+      "name": "_delivery_later_commits",
+      "kind": "FunctionDef",
+      "line": 11735
+    },
+    {
+      "name": "delivery_readiness",
+      "kind": "FunctionDef",
+      "line": 11765
+    },
+    {
+      "name": "execution_deliver",
+      "kind": "FunctionDef",
+      "line": 11822
+    },
+    {
+      "name": "validation_commands",
+      "kind": "FunctionDef",
+      "line": 11852
+    },
+    {
+      "name": "require_named_validation_commands",
+      "kind": "FunctionDef",
+      "line": 11864
+    },
+    {
+      "name": "record_validation",
+      "kind": "FunctionDef",
+      "line": 11881
+    },
+    {
+      "name": "run_validation",
+      "kind": "FunctionDef",
+      "line": 11898
+    },
+    {
+      "name": "record_execution_event",
+      "kind": "FunctionDef",
+      "line": 11920
+    },
+    {
+      "name": "record_investigation",
+      "kind": "FunctionDef",
+      "line": 11964
+    },
+    {
+      "name": "CLAUDE_MD_SHARED_ANCHOR",
+      "kind": "Assign",
+      "line": 12016
+    },
+    {
+      "name": "MeridianArgumentParser",
+      "kind": "ClassDef",
+      "line": 12022
+    },
+    {
+      "name": "generate_claude_md",
+      "kind": "FunctionDef",
+      "line": 12032
+    },
+    {
+      "name": "ShowVersionAction",
+      "kind": "ClassDef",
+      "line": 12062
+    },
+    {
+      "name": "main",
+      "kind": "FunctionDef",
+      "line": 12071
+    },
+    {
+      "name": "build_parser",
+      "kind": "FunctionDef",
+      "line": 12084
+    },
+    {
+      "name": "_run_cli",
+      "kind": "FunctionDef",
+      "line": 12550
+    }
+  ]
+}

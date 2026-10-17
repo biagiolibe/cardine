@@ -5,7 +5,7 @@ import runpy
 import sys
 
 
-def main() -> None:
+def legacy_main() -> None:
     """Select this checkout explicitly, ahead of any inherited MERIDIAN_ROOT."""
     root = Path(__file__).resolve().parents[2]
     original_argv = sys.argv
@@ -17,4 +17,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    legacy_main()

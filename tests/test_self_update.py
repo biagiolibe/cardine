@@ -12,6 +12,7 @@ from urllib.error import URLError, HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+import cardine.shared.errors as shared_errors
 
 
 class SelfUpdateTest(unittest.TestCase):
@@ -60,7 +61,7 @@ class SelfUpdateTest(unittest.TestCase):
     def assert_refused(self, code, **kwargs):
         before = self.git(self.root, 'show-ref')
         head = self.git(self.root, 'rev-parse', 'HEAD')
-        with self.assertRaises(meridian.MeridianStop) as error:
+        with self.assertRaises(shared_errors.MeridianStop) as error:
             self.run_update(**kwargs)
         self.assertEqual(error.exception.code, code)
         self.assertEqual(self.git(self.root, 'show-ref'), before)
@@ -134,7 +135,7 @@ class SelfUpdateTest(unittest.TestCase):
         self.assert_refused('SELF_UPDATE_VERIFY', apply=True)
 
     def test_plugin_cache(self):
-        with self.assertRaises(meridian.MeridianStop) as error:
+        with self.assertRaises(shared_errors.MeridianStop) as error:
             meridian.run_self_update(self.base / '.claude/plugins/cache/meridian/1.3.0', apply=True)
         self.assertEqual(error.exception.code, 'SELF_UPDATE_PLUGIN_CACHE')
         self.assertIn('/plugin marketplace update meridian', str(error.exception))
@@ -146,7 +147,7 @@ class SelfUpdateTest(unittest.TestCase):
             calls.append(root)
             return original(root) if len(calls) == 1 else '0.0.0'
         with patch.object(meridian, 'read_raw_version', side_effect=read):
-            with self.assertRaises(meridian.MeridianStop) as error:
+            with self.assertRaises(shared_errors.MeridianStop) as error:
                 self.run_update(apply=True)
         self.assertEqual(error.exception.code, 'SELF_UPDATE_VERIFY')
         self.assertIn('recovery: git -C', str(error.exception))

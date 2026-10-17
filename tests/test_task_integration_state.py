@@ -9,6 +9,7 @@ from pathlib import Path
 from tests import test_task_worktree_isolation as fixtures
 
 meridian = fixtures.meridian
+import cardine.shared.errors as shared_errors
 
 
 class TaskIntegrationStateTest(unittest.TestCase):
@@ -87,7 +88,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         before = self.git("rev-parse", "HEAD").stdout
         tree = self.git("write-tree").stdout
         queue = (self.primary / "tasks/QUEUE.md").read_bytes()
-        with self.assertRaises(meridian.MeridianStop) as caught:
+        with self.assertRaises(shared_errors.MeridianStop) as caught:
             self.stage()
         self.assertTrue(str(caught.exception).startswith(f"BLOCKED {code}:"), str(caught.exception))
         self.assertIn(detail, str(caught.exception))

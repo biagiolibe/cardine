@@ -10,6 +10,7 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+import cardine.shared.errors as shared_errors
 import project_console
 
 
@@ -55,7 +56,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         return json.loads((self.worker / '.meridian/tasks/001.json').read_text())
 
     def assert_stop(self, code, action):
-        with self.assertRaises(meridian.MeridianStop) as caught:
+        with self.assertRaises(shared_errors.MeridianStop) as caught:
             action()
         self.assertEqual(caught.exception.code, code)
 
@@ -198,7 +199,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 self.commit('Malformed handoff fixture')
                 head = self.git('rev-parse', 'HEAD')
                 for action in (meridian.delivery_readiness, meridian.execution_deliver):
-                    with self.assertRaises(meridian.MeridianStop) as caught:
+                    with self.assertRaises(shared_errors.MeridianStop) as caught:
                         action(self.worker, '001')
                     self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
                     self.assertIn('Current task commit', str(caught.exception))
@@ -374,7 +375,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         os.chdir(self.primary)
         self.git('worktree', 'remove', str(self.worker), cwd=self.primary)
         for action in (meridian.execution_start, meridian.close_task):
-            with self.assertRaises(meridian.MeridianStop) as caught:
+            with self.assertRaises(shared_errors.MeridianStop) as caught:
                 action(self.primary, '001')
             detail = (f'cwd={self.primary.resolve()}; --project={self.primary.resolve()}; expected worktree={self.worker}; '
                       'no registered task worktree')

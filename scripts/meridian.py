@@ -25,7 +25,6 @@ import unicodedata
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from enum import Enum
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError, URLError
@@ -33,110 +32,77 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
-# `bin/meridian` dispatches this file through runpy, which retains bin/ rather
-# than scripts/ on sys.path. Host hook adapters live beside this entry point.
-SCRIPTS_ROOT = Path(__file__).resolve().parent
+# Resolve both adapters and package modules from this executable checkout.
+if str(Path(__file__).resolve().parents[1] / "src") not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from cardine.shared.paths import SCRIPTS_ROOT  # noqa: E402
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
-from task_state import TaskStateInvalid, machine, read_task_state, state_path, validate_task_state  # noqa: E402
-from console_workflow import latest_review_verdict, record_review  # noqa: E402 (needs SCRIPTS_ROOT on sys.path)
-
-
-MANIFEST_PATH = Path(".meridian/manifest.json")
-VALIDATION_EVIDENCE_SCHEMA_PATH = Path("schemas/validation-evidence-v1.schema.json")
-VALIDATION_EXIT_PASSED = 0
-VALIDATION_EXIT_PENDING = 1
-VALIDATION_EXIT_FAILED = 2
-CAPABILITY_CATALOG_VERSION = 1
-CAPABILITY_CATALOG_PATH = Path("capabilities/catalog-v1.json")
-BASELINES_PATH = Path(".meridian/baselines")
-ADOPTION_REVIEW_PATH = Path(".meridian/adoption-review.md")
-# Bump only when the manifest's shape or semantics change in a way that an
-# older CLI cannot safely read. Add backward-compatible fields without a bump.
-PROTOCOL_VERSION = 2
-LEGACY_PROTOCOL_VERSION = 1
-WORKFLOW_MODES = ("lean-delivery", "governed-sdd")
-INSTALLATION_FORMS = ("managed-copy", "shared-source", "declaration-only")
-# Profiles whose managed copies are verified byte-for-byte even when a file
-# carries capability markers. A consumer profile verifies marker-bearing files by
-# their marker regions, so project text outside the blocks never fails it.
-STRICT_DIGEST_PROFILES = frozenset({"meridian-self-hosting"})
-# Managed paths whose body a project owns or extends by design. A digest check
-# never applies to them.
-PROJECT_EDITABLE_MANAGED_PATHS = frozenset(
-    {
-        "AGENTS.md",
-        "CLAUDE.md",
-        "docs/ARCHITECTURE_DECISIONS.md",
-        "docs/EXECUTION_EVIDENCE_PROFILE.md",
-        "tasks/QUEUE.md",
-    }
+from cardine.tasks.state import TaskStateInvalid, machine, read_task_state, state_path, validate_task_state  # noqa: E402
+from cardine.shared.console_workflow import latest_review_verdict, record_review  # noqa: E402
+from cardine.integration.decision import (  # noqa: E402
+    IntegrationValidationOutcome,
+    IntegrationValidationDecision,
+    _paths_interact,
+    decide_integration_validation,
 )
-INSTALLATION_STATES = ("INSTALLED", "MISSING", "DRIFTED", "NOT_APPLICABLE")
-HOST_ACTIVATION_STATES = ("ENFORCED", "ADVISORY", "UNSUPPORTED", "UNVERIFIED", "NOT_APPLICABLE")
-VERIFICATION_STATES = ("PASS", "ADVISORY", "UNVERIFIED", "NOT_APPLICABLE", "FAIL")
-AUDIT_STATES = VERIFICATION_STATES
-LATEST_RELEASE_URL = "https://api.github.com/repos/biagiolibe/meridian/releases/latest"
-LATEST_RELEASE_TIMEOUT_SECONDS = 3.0
-LATEST_RELEASE_RESPONSE_LIMIT = 1024 * 1024
-SELF_CHECK_UPDATE_AVAILABLE = 10
-SELF_CHECK_UNKNOWN = 11
-# Protocol v2 introduces capability declarations but keeps them optional for
-# legacy locked projects. A future protocol can make the declaration explicit
-# by advancing this boundary without changing the compatibility result below.
-CAPABILITY_DECLARATION_REQUIRED_PROTOCOL = 3
-ADOPTION_VERDICTS = ("APPROVE", "CHANGES_REQUESTED", "BLOCKED")
-ADOPTION_RETRY_LIMIT = 2
-CAPABILITY_MARKER = re.compile(r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->")
-MARKED_BLOCK = re.compile(
-    r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->\n?.*?<!-- MERIDIAN:END -->",
-    re.DOTALL,
+from cardine.shared.constants import (  # noqa: E402
+    MANIFEST_PATH,
+    VALIDATION_EVIDENCE_SCHEMA_PATH,
+    VALIDATION_EXIT_PASSED,
+    VALIDATION_EXIT_PENDING,
+    VALIDATION_EXIT_FAILED,
+    CAPABILITY_CATALOG_VERSION,
+    CAPABILITY_CATALOG_PATH,
+    BASELINES_PATH,
+    ADOPTION_REVIEW_PATH,
+    PROTOCOL_VERSION,
+    LEGACY_PROTOCOL_VERSION,
+    WORKFLOW_MODES,
+    INSTALLATION_FORMS,
+    STRICT_DIGEST_PROFILES,
+    PROJECT_EDITABLE_MANAGED_PATHS,
+    INSTALLATION_STATES,
+    HOST_ACTIVATION_STATES,
+    VERIFICATION_STATES,
+    AUDIT_STATES,
+    LATEST_RELEASE_URL,
+    LATEST_RELEASE_TIMEOUT_SECONDS,
+    LATEST_RELEASE_RESPONSE_LIMIT,
+    SELF_CHECK_UPDATE_AVAILABLE,
+    SELF_CHECK_UNKNOWN,
+    CAPABILITY_DECLARATION_REQUIRED_PROTOCOL,
+    ADOPTION_VERDICTS,
+    ADOPTION_RETRY_LIMIT,
+    CAPABILITY_MARKER,
+    MARKED_BLOCK,
+    ENTRY_ROUTER_PATH,
+    ENTRY_ROUTER_MAP_PATH,
+    ENTRY_ROUTER_OVERLAYS,
+    ENTRY_ROUTER_BUDGET_BYTES,
+    ENTRY_ROUTER_ROUTES,
+    ENTRY_ROUTER_SAFEGUARDS,
+    CONTEXT_SIZE_CONFIG_PATH,
+    CONTEXT_SIZE_POLICY_PATH,
+    CONTEXT_PHASE_READS_BLOCK,
+    CONTEXT_PHASE_READ_LINE,
+    CONTEXT_SIZE_ROLES,
+    USAGE_HOSTS,
+    USAGE_PRIVACY_BOUNDARY,
+    USAGE_ADAPTER_NOTES,
+    TASK_IDENTITY_PATH,
+    PROJECT_DECLARATION_PATH,
 )
-ENTRY_ROUTER_PATH = Path("docs/workflows/ENTRY_ROUTER.md")
-ENTRY_ROUTER_MAP_PATH = Path("docs/workflows/ENTRY_ROUTER_MAP.json")
-ENTRY_ROUTER_OVERLAYS = {
-    "AGENTS.md": Path("docs/workflows/ENTRY_ROUTER.AGENTS.overlay.md"),
-    "CLAUDE.md": Path("docs/workflows/ENTRY_ROUTER.CLAUDE.overlay.md"),
-}
-ENTRY_ROUTER_BUDGET_BYTES = 2048
-ENTRY_ROUTER_ROUTES = {
-    "status-design": "docs/workflows/STATUS_DESIGN.md",
-    "proceed": "docs/workflows/IMPLEMENTATION.md",
-    "review": "docs/workflows/REVIEW.md",
-    "address-review": "docs/workflows/REMEDIATION.md",
-    "lifecycle-accept": "docs/workflows/LIFECYCLE.md",
-    "audit": "docs/AUDIT_PROMPT_READ_ONLY.md",
-}
-ENTRY_ROUTER_SAFEGUARDS = {
-    "status-design": ("status",),
-    "proceed": ("git status --short", "validation"),
-    "review": ("approve", "changes_requested"),
-    "address-review": ("changes_requested", "in_progress"),
-    "lifecycle-accept": ("lifecycle", "accept"),
-    "audit": ("audit",),
-}
-CONTEXT_SIZE_CONFIG_PATH = Path(".meridian/context-size.json")
-CONTEXT_SIZE_POLICY_PATH = Path("docs/CONTEXT_BUDGET_POLICY.md")
-CONTEXT_PHASE_READS_BLOCK = re.compile(r"<!-- MERIDIAN:BEGIN capability=phase-reads v\d+ -->(.*?)<!-- MERIDIAN:END -->", re.DOTALL)
-CONTEXT_PHASE_READ_LINE = re.compile(r"^- At ([^:\n]+): (.+)$", re.MULTILINE)
-CONTEXT_SIZE_ROLES = {
-    "governed-sdd": ("status", "design", "implementation", "review", "remediation", "lifecycle"),
-    "lean-delivery": ("implementation", "review"),
-}
-USAGE_HOSTS = ("codex", "claude")
-USAGE_PRIVACY_BOUNDARY = (
-    "Privacy: reads only timestamps, session metadata, and token counters; "
-    "never prints, stores, or transmits message text, tool arguments, file contents, or paths."
+from cardine.shared.errors import (  # noqa: E402
+    MeridianError,
+    InternalStopError,
+    MeridianStop,
 )
-USAGE_ADAPTER_NOTES = {
-    "codex": "Codex rollout JSONL adapter (observed token_count event schema, 2026-10-03).",
-    "claude": "Claude Code project JSONL adapter (observed assistant usage schema, 2026-10-04; input = input_tokens + cache_read_input_tokens + cache_creation_input_tokens).",
-}
-
-
-class MeridianError(RuntimeError):
-    """Raised when an upgrade cannot be safely planned or applied."""
+from cardine.shared.hashing import (  # noqa: E402
+    sha256,
+)
 
 
 STOP_REGISTRY_PATH = Path("capabilities/stop-codes-v1.json")
@@ -146,22 +112,6 @@ STOP_REGISTRY_FIELDS = frozenset(
      "tool_hint", "test"}
 )
 _stop_registry_cache: dict[str, dict[str, object]] | None = None
-
-
-class InternalStopError(Exception):
-    """Raised when the CLI asks for a stop that the registry cannot format."""
-
-
-class MeridianStop(MeridianError):
-    """A registered stop; its message is the complete `BLOCKED <CODE>: ...` line."""
-
-    def __init__(self, code: str, line: str, *, render: Callable[[], str] | None = None) -> None:
-        super().__init__(line)
-        self.code = code
-        self._render = render
-
-    def __str__(self) -> str:
-        return self._render() if self._render is not None else super().__str__()
 
 
 def load_stop_registry() -> dict[str, dict[str, object]]:
@@ -338,9 +288,7 @@ CODEX_PERMISSION_PROFILE = "meridian-worktrees"
 CODEX_MANAGED_BEGIN = "# MERIDIAN:BEGIN worktree-permissions v1"
 CODEX_MANAGED_END = "# MERIDIAN:END worktree-permissions"
 SAFE_PATH_COMPONENT = re.compile(r"[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?")
-TASK_IDENTITY_PATH = Path(".meridian/task-identity.json")
 CANDIDATE_VALIDATION_PATH = Path(".meridian/candidate-validation.json")
-PROJECT_DECLARATION_PATH = Path(".meridian/project.json")
 _LEGACY_LOCATION_WARNING_PROJECTS: set[Path] = set()
 WORKTREE_STATE_DIRECTORY = "meridian-worktrees"
 INTEGRATION_LEASE_NAME = "meridian-integration.lock"
@@ -4363,107 +4311,6 @@ def codex_doctor(
     return result
 
 
-class IntegrationValidationOutcome(str, Enum):
-    """Validation scope selected for a serialized task-worktree integration."""
-
-    REUSE = "REUSE"
-    BOUNDED = "BOUNDED"
-    FULL = "FULL"
-    BLOCKED = "BLOCKED"
-
-
-@dataclass(frozen=True)
-class IntegrationValidationDecision:
-    outcome: IntegrationValidationOutcome
-    reason: str
-
-
-def _paths_interact(left: str, right: str) -> bool:
-    """Return whether normalized repository paths are equal or nested."""
-    left_parts = Path(left).parts
-    right_parts = Path(right).parts
-    shortest = min(len(left_parts), len(right_parts))
-    return left_parts[:shortest] == right_parts[:shortest]
-
-
-def decide_integration_validation(
-    *,
-    evidence_complete: bool,
-    validated_task_commit: str,
-    current_task_commit: str,
-    validated_base_commit: str,
-    current_main_commit: str,
-    validated_base_is_task_ancestor: bool,
-    full_validation_required: bool,
-    validated_task_is_current_ancestor: bool = False,
-    relevant_tree_unchanged_after_validation: bool = False,
-    interaction_assessment_complete: bool = False,
-    task_paths: tuple[str, ...] = (),
-    main_advanced_paths: tuple[str, ...] = (),
-    task_dependencies: tuple[str, ...] = (),
-    main_advanced_dependencies: tuple[str, ...] = (),
-    task_behavioral_surfaces: tuple[str, ...] = (),
-    main_advanced_behavioral_surfaces: tuple[str, ...] = (),
-) -> IntegrationValidationDecision:
-    """Choose the integration validation scope from durable evidence.
-
-    ``REUSE`` and ``BOUNDED`` both require the mandatory bounded gate after the
-    no-commit merge. ``REUSE`` means current ``main`` is the validated base;
-    ``BOUNDED`` records a deterministic independent-change comparison.
-    """
-    if not evidence_complete:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.BLOCKED,
-            "validation evidence is missing or incomplete",
-        )
-    if validated_task_commit != current_task_commit and not (
-        validated_task_is_current_ancestor and relevant_tree_unchanged_after_validation
-    ):
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.BLOCKED,
-            "the task-relevant tree changed or cannot be proven unchanged after validation",
-        )
-    if not validated_base_is_task_ancestor:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.BLOCKED,
-            "the validated base is not an ancestor of the task commit",
-        )
-    if full_validation_required:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.FULL,
-            "the task explicitly requires full combined-tree validation",
-        )
-    if current_main_commit == validated_base_commit:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.REUSE,
-            "current main equals the validated base",
-        )
-    if not interaction_assessment_complete:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.BLOCKED,
-            "independence from advanced main cannot be established",
-        )
-
-    path_interaction = any(
-        _paths_interact(task_path, main_path)
-        for task_path in task_paths
-        for main_path in main_advanced_paths
-    )
-    dependency_interaction = bool(set(task_dependencies) & set(main_advanced_dependencies))
-    behavioral_interaction = bool(
-        set(task_behavioral_surfaces) & set(main_advanced_behavioral_surfaces)
-    )
-    if path_interaction or dependency_interaction or behavioral_interaction:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.FULL,
-            "advanced main materially interacts with the declared task surface",
-        )
-    return IntegrationValidationDecision(
-        IntegrationValidationOutcome.BOUNDED,
-        "advanced main is independent of the declared task surface",
-    )
-
-
 @dataclass(frozen=True)
 class ManagedFile:
     source: Path
@@ -4526,10 +4373,6 @@ class ProjectLocations:
     handoff_root: Path
     review_root: Path
     plan: Path
-
-
-def sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 @dataclass(frozen=True)

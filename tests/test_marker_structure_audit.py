@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+import cardine.shared.errors as shared_errors
 
 CLI = ROOT / "scripts" / "meridian.py"
 REVIEW_PROMPT = "docs/CODE_REVIEW_PROMPT.md"
@@ -562,7 +563,7 @@ class ConsumerProfileTest(unittest.TestCase):
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         before = manifest_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(meridian.MeridianError) as error:
+        with self.assertRaises(shared_errors.MeridianError) as error:
             meridian.bootstrap_capability_profile(project, ROOT, "meridian-self-hosting", apply=True)
 
         self.assertIn("docs/CONTEXT_BUDGET_POLICY.md", str(error.exception))
@@ -570,7 +571,7 @@ class ConsumerProfileTest(unittest.TestCase):
 
     def test_a_consumer_profile_rejects_the_other_workflow_mode(self) -> None:
         project = self.legacy_project("lean-delivery")
-        with self.assertRaises(meridian.MeridianError) as error:
+        with self.assertRaises(shared_errors.MeridianError) as error:
             meridian.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=False)
         self.assertIn("governed-sdd", str(error.exception))
 

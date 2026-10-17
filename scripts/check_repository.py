@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.shared import constants
 import release  # noqa: E402
 
 # Deliberately not directly inside migrations/: `meridian.py`'s
@@ -388,20 +389,24 @@ def cli_string_literals(source: str) -> list[tuple[int, str]]:
     return found
 
 
+def cli_source_files(root: Path) -> list[Path]:
+    """Include compatibility adapters and every extracted implementation module."""
+    return sorted({root / "scripts" / name for name in ("meridian.py", "task_state.py", "console_workflow.py")
+                   if (root / "scripts" / name).is_file()} | set((root / "src/cardine").rglob("*.py")))
+
+
 def check_uncoded_blocked(root: Path, known: set[str], texts: dict[Path, str]) -> None:
     """Fail on a `BLOCKED` in managed text or in the CLI that carries no registered stop code."""
     for path, text in texts.items():
         for offset in uncoded_blocked_offsets(text, known):
             line = text.count("\n", 0, offset) + 1
             fail(f"{path.relative_to(root)}:{line}: BLOCKED without a registered stop code")
-    cli = root / "scripts" / "meridian.py"
-    if not cli.is_file():
-        return
-    for line, text in cli_string_literals(cli.read_text(encoding="utf-8")):
-        if text == "BLOCKED" or text == CLI_STOP_FORMAT:
-            continue  # a verdict or state value, and the helper's single output format
-        if uncoded_blocked_offsets(text, known):
-            fail(f"scripts/meridian.py:{line}: BLOCKED without a registered stop code")
+    for path in cli_source_files(root):
+        for line, text in cli_string_literals(path.read_text(encoding="utf-8")):
+            if text == "BLOCKED" or text == CLI_STOP_FORMAT:
+                continue  # a verdict or state value, and the helper's single output format
+            if uncoded_blocked_offsets(text, known):
+                fail(f"{path.relative_to(root)}:{line}: BLOCKED without a registered stop code")
 
 
 def check_stop_code_registry(root: Path = ROOT) -> None:
@@ -419,6 +424,12 @@ def check_stop_code_registry(root: Path = ROOT) -> None:
                 line = text.count("\n", 0, offset) + 1
                 fail(f"{path.relative_to(root)}:{line}: unregistered stop code {token}")
     check_uncoded_blocked(root, set(entries), texts)
+    for path in cli_source_files(root):
+        text = path.read_text(encoding="utf-8")
+        for offset, token in stop_tokens_in(text, set(entries)):
+            if token not in entries:
+                line = text.count("\n", 0, offset) + 1
+                fail(f"{path.relative_to(root)}:{line}: unregistered stop code {token}")
     test_names = set()
     for source in (root / "tests").glob("test_*.py"):
         tree = ast.parse(source.read_text(encoding="utf-8"))
@@ -436,8 +447,7 @@ def check_stop_code_registry(root: Path = ROOT) -> None:
             fail(f"stop code {code} is class tool but has no test field")
         if entry["test"] not in test_names:
             fail(f"stop code {code} names a test that does not exist: {entry['test']}")
-    cli = root / "scripts" / "meridian.py"
-    emitted = cli.read_text(encoding="utf-8") if cli.is_file() else ""
+    emitted = "\n".join(path.read_text(encoding="utf-8") for path in cli_source_files(root))
     for code in entries:
         mention = re.compile(rf"\b{code}\b")
         if not any(mention.search(text) for text in texts.values()) and not mention.search(emitted):
@@ -480,10 +490,10 @@ def check_capability_catalog(root: Path = ROOT) -> None:
         "schemaTransition", {}
     )
     if transition != {
-        "catalogVersion": meridian.CAPABILITY_CATALOG_VERSION,
-        "fromProtocolVersion": meridian.LEGACY_PROTOCOL_VERSION,
+        "catalogVersion": constants.CAPABILITY_CATALOG_VERSION,
+        "fromProtocolVersion": constants.LEGACY_PROTOCOL_VERSION,
         "legacyWorkflowModeField": "mode",
-        "toProtocolVersion": meridian.PROTOCOL_VERSION,
+        "toProtocolVersion": constants.PROTOCOL_VERSION,
         "workflowModeField": "workflowMode",
     }:
         fail("manifest capability-profile schema transition does not match the parser")
