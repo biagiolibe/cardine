@@ -41,6 +41,8 @@ Review scope. <!-- MERIDIAN:BEGIN capability=manual-verification-review-check v1
 """
 
 
+from cardine.templates import adoption as owner_templates_adoption
+
 def copy_tree(source: Path, destination: Path) -> None:
     for path in source.rglob("*"):
         if path.is_file():
@@ -528,7 +530,7 @@ class ConsumerProfileTest(unittest.TestCase):
         policy = project / "docs/CONTEXT_BUDGET_POLICY.md"
         policy.write_text(policy.read_text(encoding="utf-8") + "\n## Project reading notes\n\n- Prefer grep.\n", encoding="utf-8")
 
-        meridian.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=True)
+        owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=True)
         code, output = self.audit(project, "governed-sdd")
         self.assertNotRegex(output, r"(?m)^FAIL\s")
 
@@ -543,7 +545,7 @@ class ConsumerProfileTest(unittest.TestCase):
             profile_file.read_text(encoding="utf-8").replace("400\n  lines", "800\n  lines"), encoding="utf-8"
         )
 
-        meridian.bootstrap_capability_profile(project, ROOT, "lean-delivery-consumer", apply=True)
+        owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "lean-delivery-consumer", apply=True)
         code, output = self.audit(project, "lean-delivery")
 
         self.assertNotRegex(output, r"(?m)^FAIL\s")
@@ -570,7 +572,7 @@ class ConsumerProfileTest(unittest.TestCase):
         before = manifest_path.read_text(encoding="utf-8")
 
         with self.assertRaises(shared_errors.MeridianError) as error:
-            meridian.bootstrap_capability_profile(project, ROOT, "meridian-self-hosting", apply=True)
+            owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "meridian-self-hosting", apply=True)
 
         self.assertIn("docs/CONTEXT_BUDGET_POLICY.md", str(error.exception))
         self.assertEqual(manifest_path.read_text(encoding="utf-8"), before)
@@ -578,7 +580,7 @@ class ConsumerProfileTest(unittest.TestCase):
     def test_a_consumer_profile_rejects_the_other_workflow_mode(self) -> None:
         project = self.legacy_project("lean-delivery")
         with self.assertRaises(shared_errors.MeridianError) as error:
-            meridian.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=False)
+            owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=False)
         self.assertIn("governed-sdd", str(error.exception))
 
 

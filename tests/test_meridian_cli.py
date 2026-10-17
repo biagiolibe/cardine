@@ -67,6 +67,8 @@ from cardine.hosts import setup as owner_hosts_setup
 from cardine.tasks import preflight as owner_tasks_preflight
 
 
+from cardine.templates import adoption as owner_templates_adoption
+
 class FakeLatestReleaseResponse:
     def __init__(self, payload: bytes):
         self.payload = payload
@@ -8067,7 +8069,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(source, destination)
 
-            observed = meridian.bootstrap_capability_profile(
+            observed = owner_templates_adoption.bootstrap_capability_profile(
                 project, ROOT, "meridian-self-hosting", apply=True
             )
             declarations = observed["capabilityProfiles"]["meridian-self-hosting"][
@@ -8121,7 +8123,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        meridian.bootstrap_capability_profile(self.project, self.framework, self.PROFILE, apply=True)
+        owner_templates_adoption.bootstrap_capability_profile(self.project, self.framework, self.PROFILE, apply=True)
         self.expected = self.read_manifest()
         self.catalog = owner_templates_catalog.load_capability_catalog(self.framework)
         # A manifest written before the catalog gained the completion report template.
