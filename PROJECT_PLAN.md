@@ -23,4 +23,8 @@ Delivery workflow that this import carries.
 
 ## Active Delivery
 
-No task is planned yet. The work items to 0.9 are listed in the ADR.
+The work items to 0.9 are listed in the ADR.
+
+- `[ ]` 001 — Make the evidence tests independent of Meridian task records.
+- `[ ]` 002 — Add `pyproject.toml` and the `cardine` package skeleton.
+- `[ ]` 003 — Plan the split of `meridian.py` into the Cardine modules.
