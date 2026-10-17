@@ -108,9 +108,7 @@ cleanup command, which `cardine run` will call.
 
 ## Dependencies
 
-- **Depends on**: split row E11, which has no task ID yet. Do not start this
-  task before the task that implements E11 has landed; when that task is
-  planned, record its ID in this field and in the queue row.
+- **Depends on**: 016 (split plan E11)
 - **Blocks**: none
 
 ## Validation
