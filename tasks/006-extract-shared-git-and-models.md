@@ -21,21 +21,21 @@ test runner from leaking `MERIDIAN_ROOT` into tests.
 
 ## Acceptance Criteria
 
-- [ ] These modules exist under `src/cardine/`, each holding exactly the
+- [x] These modules exist under `src/cardine/`, each holding exactly the
   bindings that the plan's "Complete symbol ownership" section assigns to it:
   `shared/text.py`, `release/version.py`, `shared/git.py`,
   `shared/jsonio.py`, and `shared/models.py`. Package `__init__.py` files stay
   empty.
-- [ ] Each moved binding is defined once, in its owner, and
+- [x] Each moved binding is defined once, in its owner, and
   `scripts/meridian.py` imports it explicitly, as in task 004. Mutable state
   stays with its writers; in particular `_SHARED_WORKTREES` stays in
   `shared/git.py` with its readers and context manager. Dataclass identities
   stay singletons across every entry point.
-- [ ] The inventory tests in `tests/test_module_inventory.py` pass with the
+- [x] The inventory tests in `tests/test_module_inventory.py` pass with the
   new owners: exactly one definition per baseline binding, no import cycle
   under `src/cardine/`, and no tracked Python file under `src/cardine/` or new
   test file over 1,500 lines.
-- [ ] Every patch is checked against the plan's "Patch targets and suite
+- [x] Every patch is checked against the plan's "Patch targets and suite
   compatibility" rules. A patch moves only when code that looks the patched
   name up moves in this task, including calls between bindings that now share
   an owner module (for example, a call from `canonical_project_root` to
@@ -43,18 +43,18 @@ test runner from leaking `MERIDIAN_ROOT` into tests.
   `scripts/meridian.py` keep targeting `meridian`. The handoff lists each
   patch reviewed and the decision. No assertion, expected call, or intentional
   non-call is removed, and no platform skip changes.
-- [ ] `scripts/run_tests.py` removes `MERIDIAN_ROOT` from the environment of
+- [x] `scripts/run_tests.py` removes `MERIDIAN_ROOT` from the environment of
   the test processes it starts, and a test proves it. Tests that need the
   variable set it themselves.
-- [ ] The discovered test IDs before and after the task are mapped in the
+- [x] The discovered test IDs before and after the task are mapped in the
   handoff, with equal counts except for new tests.
-- [ ] **CI before integration.** After validation, push the task branch once
+- [x] **CI before integration.** After validation, push the task branch once
   (`git push origin task-006`, authorized by `Proceed with`) and record `T1_CI`
   evidence for the exact task commit with `python3 scripts/ci_evidence.py
   --commit <sha> --task 006 --output <path> --wait 900`. Integrate only when
   that evidence reports a successful run on both operating systems. If CI
   fails, fix the failure on the task branch; do not integrate.
-- [ ] `python3 scripts/check_repository.py`, `python3 scripts/meridian.py
+- [x] `python3 scripts/check_repository.py`, `python3 scripts/meridian.py
   --framework-root . profile doctor meridian-self-hosting --project .`,
   `python3 scripts/meridian.py --framework-root . audit --project . --mode
   lean-delivery --ci-profile meridian-self-hosting`, `python3
@@ -102,3 +102,10 @@ Plan rows E03 and later. Any behavior change, removal (work item 4), or rename
 - `python3 -m unittest discover -s tests -v`
 - `git diff --check`
 - `python3 scripts/ci_evidence.py --commit <task commit> --task 006 --output <path> --wait 900`
+
+## Completion evidence
+
+Implementation: `e3cceb9d09e226df282bd02962c16c740d3b946d`. All acceptance
+criteria passed; commands, test-ID mapping, patch review and CI job evidence
+are recorded in `tasks/handoffs/006.md`. GitHub Actions run `39059917486`
+passed on Ubuntu and macOS before integration.
