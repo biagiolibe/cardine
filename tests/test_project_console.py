@@ -20,6 +20,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import project_console as console  # noqa: E402
+from cardine.tasks import identity as owner_tasks_identity
 
 
 HEADER = (
@@ -2408,7 +2409,7 @@ class SnapshotCostTest(RepoCase):
         import meridian
         import cardine.shared.errors as shared_errors
         self.populate()
-        identity = meridian.resolve_task_identity(self.project, "TASK-001", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.project, "TASK-001", "existing")
         with mock.patch.object(Path, "cwd", return_value=self.project), \
              mock.patch.object(meridian, "resolve_task_identity",
                                side_effect=AssertionError("resolved again")):

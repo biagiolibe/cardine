@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import meridian
+from cardine.shared import authority as owner_shared_authority
 
 
 DEFAULT_THRESHOLD = 400
@@ -119,7 +120,7 @@ def is_exempt(path: Path, project: Path) -> bool:
         if active and str(path) in active["exempt_paths"]:
             return True
         if active:
-            authority = meridian.context_authority(project, str(active["task_id"]), labels_only=True)
+            authority = owner_shared_authority.context_authority(project, str(active["task_id"]), labels_only=True)
             sources = re.findall(r"^### (.+?) —", authority, re.MULTILINE)
             if relative in sources:
                 return True

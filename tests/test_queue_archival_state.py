@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
 import cardine.shared.errors as shared_errors
+from cardine.tasks import identity as owner_tasks_identity
 
 SHA = "a" * 40
 AT = "2026-10-14T12:00:00Z"
@@ -259,7 +260,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
             "# Task\n\n> **ID**: `001`\n\nStatus: ACCEPTED\nReview: REQUIRED\n", encoding="utf-8")
         reviews = self.root / "tasks/reviews"
         reviews.mkdir()
-        review = meridian.resolve_task_identity(self.root, "001", "existing").review_path
+        review = owner_tasks_identity.resolve_task_identity(self.root, "001", "existing").review_path
         review.parent.mkdir(parents=True, exist_ok=True)
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — Remediation\n", encoding="utf-8")
         with self.assertRaises(shared_errors.MeridianStop) as raised:

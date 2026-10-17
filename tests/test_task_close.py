@@ -12,6 +12,7 @@ import test_execution_boundaries as boundaries
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
 import cardine.shared.errors as shared_errors
+from cardine.tasks import identity as owner_tasks_identity
 
 
 class TaskCloseTest(unittest.TestCase):
@@ -22,7 +23,7 @@ class TaskCloseTest(unittest.TestCase):
     def setUp(self):
         boundaries.ExecutionBoundariesTest.setUp(self)
         (self.worker / 'PROJECT_WORKFLOW.md').write_text('LEAN_DELIVERY\n')
-        identity = meridian.resolve_task_identity(self.worker, '001', 'existing')
+        identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
         identity.handoff_path.parent.mkdir(parents=True)
         identity.handoff_path.write_text('## Completion Report — 001\n')
         self.commit('Select Lean and commit handoff')

@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
 import cardine.shared.errors as shared_errors
 import project_console
+from cardine.tasks import identity as owner_tasks_identity
 
 
 class ExecutionBoundariesTest(unittest.TestCase):
@@ -65,7 +66,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         (self.worker / 'feature.txt').write_text('implementation\n')
         meridian.run_validation(self.worker, '001', 'check')
         self.commit('Implement feature and validation')
-        identity = meridian.resolve_task_identity(self.worker, '001', 'existing')
+        identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
         identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
         identity.handoff_path.write_text('## Completion Report — 001\n\n' + '\n'.join(
             '- ' + field + ': ' + ('none' if field in ('Validation skips', 'Isolated exploration') else 'complete')

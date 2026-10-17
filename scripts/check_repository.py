@@ -18,6 +18,8 @@ import meridian  # noqa: E402
 from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
+from cardine.templates import files as owner_templates_files
+from cardine.templates import migrations as owner_templates_migrations
 
 # Deliberately not directly inside migrations/: `meridian.py`'s
 # capability_requirements() and migration_ids() glob `migrations/*.json`
@@ -522,7 +524,7 @@ def check_migrations(root: Path = ROOT) -> None:
             fail(f"migration is incomplete: {path.relative_to(root)}")
         if data["from"] == data["to"]:
             fail(f"migration cannot target the same version: {path.relative_to(root)}")
-        for error in meridian.validate_adopt_existing_paths(data):
+        for error in owner_templates_migrations.validate_adopt_existing_paths(data):
             fail(f"invalid migration adoption declaration in {path.relative_to(root)}: {error}")
         if previous_to is not None and data["from"] != previous_to:
             fail(f"migration versions are not contiguous: {path.relative_to(root)}")
@@ -670,7 +672,7 @@ def check_releases(root: Path = ROOT) -> None:
         fail("release versions are not monotonically increasing across files")
     latest = max(records, key=lambda record: meridian.version_key(record["version"]))
     try:
-        expected_baseline = meridian.latest_migration_to(root, latest["version"])
+        expected_baseline = owner_templates_files.latest_migration_to(root, latest["version"])
     except meridian.MeridianError as error:
         fail(f"cannot derive workflowBaselineVersion: {error}")
     if latest["workflowBaselineVersion"] != expected_baseline:
@@ -727,7 +729,7 @@ def check_local_markdown_links() -> None:
 def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str, object]]]:
     """capability marker content, by managed template file, for every mode.
 
-    Every managed template (`meridian.managed_files`, the same set a project
+    Every managed template (`owner_templates_files.managed_files`, the same set a project
     actually receives and `meridian audit` checks) is scanned for its capability
     markers. The result maps relative file path -> capability -> {version,
     sha256 of that marker's exact content}. Two templates can legitimately hold
@@ -741,7 +743,7 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
     )
     baselines: dict[str, dict[str, dict[str, object]]] = {}
     for mode in meridian.CLAUDE_MD_SHARED_ANCHOR:
-        for item in meridian.managed_files(root, mode):
+        for item in owner_templates_files.managed_files(root, mode):
             relative = str(item.source.relative_to(root))
             if relative in baselines:
                 continue
@@ -804,7 +806,7 @@ def check_capability_marker_baselines(root: Path = ROOT) -> None:
                     "baseline; run `python3 scripts/check_repository.py --write-marker-baselines` to record "
                     "this deliberate change"
                 )
-    retired = meridian.retired_capability_ids(root)
+    retired = owner_templates_migrations.retired_capability_ids(root)
     for relative, markers in recorded.items():
         current_file = current.get(relative, {})
         for capability in markers:
@@ -864,8 +866,8 @@ def check_self_hosting_baseline(root: Path = ROOT) -> None:
     if not manifest_path.is_file():
         return
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    recorded = meridian.manifest_baseline_version(manifest)
-    expected = meridian.latest_migration_to(root, meridian.read_version(root))
+    recorded = owner_templates_files.manifest_baseline_version(manifest)
+    expected = owner_templates_files.latest_migration_to(root, meridian.read_version(root))
     if meridian.version_key(recorded) < meridian.version_key(expected):
         fail(
             f".meridian/manifest.json workflowBaselineVersion {recorded} is older than the newest "

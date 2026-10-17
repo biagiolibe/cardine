@@ -21,15 +21,16 @@ PREFIX_RULE = re.compile(
 )
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.templates import files as owner_templates_files
 
 
 class CodexRulesTemplateTest(unittest.TestCase):
     def test_rules_are_managed_for_both_workflows(self) -> None:
         governed = {
             item.target
-            for item in meridian.managed_files(ROOT, "governed-sdd")
+            for item in owner_templates_files.managed_files(ROOT, "governed-sdd")
         }
-        lean = {item.target for item in meridian.managed_files(ROOT, "lean-delivery")}
+        lean = {item.target for item in owner_templates_files.managed_files(ROOT, "lean-delivery")}
         self.assertIn(Path(".codex/rules/meridian.rules"), governed)
         self.assertIn(Path(".codex/rules/meridian.rules"), lean)
 
