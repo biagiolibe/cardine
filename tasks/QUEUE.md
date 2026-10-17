@@ -56,3 +56,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[ ]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | 016 | [007](007-recover-partial-worktree-cleanup.md) |
+
+### Phase 7 — Development tooling defects
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 11.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 017 | Record wall-clock time and the real CI command in CI evidence | 🟡 P2 | — | [017](017-fix-ci-evidence-timestamp.md) |
