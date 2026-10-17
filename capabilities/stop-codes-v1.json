@@ -608,12 +608,12 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "shared task-state reader; `meridian task transition`",
+      "emitter": "shared task-state reader; `meridian task transition`; worktree advance C6",
       "human_decision": false,
       "resume": "meridian task state import {task_id} --project {project} --apply --include-terminal",
       "tool_hint": "meridian task transition",
       "kind": "stop",
-      "summary": "a task has no tracked state file; resume uses --project <canonical-task-worktree> when registered, otherwise --project <primary-checkout>",
+      "summary": "a task has no tracked state file; Lean advance resumes with task close, commit staged closure records, then advance; already archived records use transition DONE and stage state/record before committing; Governed SDD retains state import; recovery uses the registered task worktree when present",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_missing_stop"
     },
     {
