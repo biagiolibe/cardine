@@ -16,6 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+from cardine.integration import evidence as owner_integration_evidence
+from cardine.worktree import checkout as owner_worktree_checkout
+from cardine.lifecycle import execution as owner_lifecycle_execution
+from cardine.tasks import preflight as owner_tasks_preflight
 from cardine.integration import projections as owner_integration_projections
 from cardine.shared import journal as owner_shared_journal
 from cardine.shared import budget as owner_shared_budget
@@ -363,16 +367,16 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_new_budget_attempt_requires_reason_and_retired_worktree(self):
         for reason in (None, "", "   "):
             with self.assertRaisesRegex(shared_errors.MeridianError, "non-empty --reason"):
-                meridian.prepare_task_worktree("056", self.worktree_root, self.primary,
+                owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary,
                                                new_attempt=True, reason=reason)
         self.prepare()
         with self.assertRaisesRegex(shared_errors.MeridianError, "registered task worktree"):
-            meridian.prepare_task_worktree("056", self.worktree_root, self.primary,
+            owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary,
                                            new_attempt=True, reason="Approved")
         self.assertEqual(owner_shared_budget.load_budget_state(self.primary), {})
 
     def prepare(self) -> dict[str, object]:
-        return meridian.prepare_task_worktree("056", self.worktree_root, self.primary)
+        return owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
 
     def create_task(self, task_id: str) -> Path:
         worktree = self.root / f"project-{task_id}"
@@ -443,7 +447,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         return passed, invoked
 
     def resume(self) -> dict[str, object]:
-        return meridian.prepare_task_worktree("056", self.worktree_root, self.primary, resume=True)
+        return owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary, resume=True)
 
     def stale_base(self) -> tuple[dict[str, object], Path]:
         prepared = self.prepare()
@@ -463,7 +467,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         evidence_before = evidence_path.read_bytes()
         before = self.snapshot(worktree)
         os.chdir(worktree)
-        report, ready = meridian.inspect_task_worktree("056", self.worktree_root, self.primary)
+        report, ready = owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)
         self.assertFalse(ready)
         self.assertEqual(report["errors"], ["stale-base-record"])
         self.assertEqual(report["stop_reason"], "STALE_WORKTREE_BASE")
@@ -484,7 +488,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         closure, _ = meridian.closure_status("056", self.worktree_root, self.primary)
         self.assertEqual(closure["stop_reason"], "STALE_WORKTREE_BASE")
         original = json.loads(state_path.read_text(encoding="utf-8"))
-        recovered = meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+        recovered = owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
         self.assertTrue(recovered["repaired"])
         self.assertTrue(recovered["evidence_renewal_required"])
         renewed = json.loads(state_path.read_text(encoding="utf-8"))
@@ -493,30 +497,30 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(renewed["started_at"], prepared["started_at"])
         self.assertEqual(evidence_before, evidence_path.read_bytes())
         snapshot = self.snapshot(worktree)
-        self.assertFalse(meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)["repaired"])
+        self.assertFalse(owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)["repaired"])
         command[3] = "repair-base"
         repeated = subprocess.run(command, cwd=worktree, text=True, capture_output=True, check=False)
         self.assertEqual(repeated.returncode, 0, repeated.stderr)
         self.assertFalse(json.loads(repeated.stdout)["repaired"])
         self.assertEqual(snapshot, self.snapshot(worktree))
-        self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary)[1])
+        self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)[1])
         # Another main fast-forward after recovery remains provable.
         (self.primary / "second.txt").write_text("second main advancement\n", encoding="utf-8")
         self.git("add", "second.txt")
         self.git("commit", "-m", "advance main again")
         self.git("merge", "main", "--ff-only", cwd=worktree)
-        self.assertEqual(meridian.inspect_task_worktree("056", self.worktree_root, self.primary)[0]["stop_reason"],
+        self.assertEqual(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)[0]["stop_reason"],
                          "STALE_WORKTREE_BASE")
-        self.assertTrue(meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)["repaired"])
+        self.assertTrue(owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)["repaired"])
 
     def test_repaired_base_rejects_old_validation_evidence(self) -> None:
         _, worktree = self.stale_base()
-        meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+        owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
         (worktree / "task.txt").write_text("task work\n", encoding="utf-8")
         self.git("add", "task.txt", cwd=worktree)
         self.git("commit", "-m", "task work", cwd=worktree)
         os.chdir(worktree)
-        recorded = meridian.record_task_evidence(
+        recorded = owner_integration_evidence.record_task_evidence(
             "056", self.worktree_root, validation_commands=["git diff --check"], validation_exit_codes=[0],
             accepted=True, task_dependencies=[], task_behavioral_surfaces=[], main_advanced_dependencies=[],
             main_advanced_behavioral_surfaces=[], full_validation_required=False, supplied_project=self.primary,
@@ -546,7 +550,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             with self.subTest(path=path.name):
                 path.write_text(contents, encoding="utf-8")
                 with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
-                    meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+                    owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
                 self.assertEqual(state_path.read_bytes(), original)
                 path.unlink()
         for field in ("task_id", "project", "worktree", "branch", "worktree_root", "git_common_dir"):
@@ -556,12 +560,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                 state_path.write_text(json.dumps(state), encoding="utf-8")
                 before = state_path.read_bytes()
                 with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
-                    meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+                    owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
                 self.assertEqual(state_path.read_bytes(), before)
                 state_path.write_bytes(original)
         self.git("switch", "-c", "unrelated", cwd=worktree)
         with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
-            meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+            owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
     def test_task_commits_and_normal_main_advancement_are_not_stale(self) -> None:
         prepared = self.prepare()
@@ -572,25 +576,25 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         (self.primary / "upstream.txt").write_text("main work\n", encoding="utf-8")
         self.git("add", "upstream.txt")
         self.git("commit", "-m", "main work")
-        self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary,
+        self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
         with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
-            meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+            owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
         # Even after main contains the task commit, ancestry alone cannot prove recovery.
         self.git("merge", "task-056", "--no-edit")
         self.git("merge", "main", "--ff-only", cwd=worktree)
-        self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary,
+        self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
         with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
-            meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+            owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
     def test_base_repair_requires_intact_fast_forward_reflog(self) -> None:
         _, worktree = self.stale_base()
         self.git("reflog", "expire", "--expire=now", "refs/heads/task-056")
-        self.assertTrue(meridian.inspect_task_worktree("056", self.worktree_root, self.primary,
+        self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
         with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
-            meridian.repair_task_worktree_base("056", self.worktree_root, self.primary)
+            owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
     def dirty_worktree(self) -> tuple[dict[str, object], Path]:
         prepared = self.prepare()
@@ -628,7 +632,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(resumed["handoff_worktree"], prepared["handoff_worktree"])
         self.assertNotIn("new.txt", json.dumps(resumed))
         os.chdir(worktree)
-        report, ready = meridian.inspect_task_worktree("056", self.worktree_root, self.primary)
+        report, ready = owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)
         self.assertFalse(ready)
         self.assertEqual(report["errors"], ["dirty-worktree"])
 
@@ -638,7 +642,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         before = sorted(item.name for item in state_directory.iterdir())
         state_path = next(state_directory.glob("*.json"))
         original = state_path.read_bytes()
-        with mock.patch.object(meridian, "_write_json_atomic", side_effect=AssertionError("state write")), \
+        with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")), \
                 mock.patch.object(meridian.tempfile, "mkstemp", side_effect=AssertionError("temporary file")):
             resumed = self.resume()
         self.assertEqual(sorted(item.name for item in state_directory.iterdir()), before)
@@ -667,7 +671,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         prepared, worktree = self.dirty_worktree()
         state_directory = self.primary / ".git/meridian-worktrees"
         next(state_directory.glob("*.json")).unlink()
-        with mock.patch.object(meridian, "_write_json_atomic", side_effect=AssertionError("state write")):
+        with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")):
             resumed = self.resume()
         self.assertEqual(list(state_directory.glob("*.json")), [])
         self.assertEqual(resumed["base_commit"], prepared["base_commit"])
@@ -774,12 +778,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertFalse(repeated["created"])
         self.assertEqual(prepared["worktree"], repeated["worktree"])
 
-        wrong, ready = meridian.inspect_task_worktree("056", self.worktree_root, self.primary)
+        wrong, ready = owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)
         self.assertFalse(ready)
         self.assertIn("wrong-worktree", wrong["errors"])
 
         os.chdir(Path(str(prepared["worktree"])))
-        correct, ready = meridian.inspect_task_worktree("056", self.worktree_root, self.primary)
+        correct, ready = owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)
         self.assertTrue(ready, correct)
         self.assertEqual(correct["branch"], "task-056")
         self.assertTrue(correct["clean"])
@@ -879,12 +883,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_candidate_validation_declaration_states_and_malformed_input(self) -> None:
         path = self.primary / ".meridian/candidate-validation.json"
         path.write_text(json.dumps({"version": 1, "state": "none"}), encoding="utf-8")
-        self.assertEqual(meridian.candidate_validation_declaration(self.primary), ("none", {}))
+        self.assertEqual(owner_integration_evidence.candidate_validation_declaration(self.primary), ("none", {}))
         path.unlink()
-        self.assertEqual(meridian.candidate_validation_declaration(self.primary), ("undeclared", {}))
+        self.assertEqual(owner_integration_evidence.candidate_validation_declaration(self.primary), ("undeclared", {}))
         path.write_text('{"version": 1, "state": "declared", "outcomes": {}}', encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, "outcomes must declare"):
-            meridian.candidate_validation_declaration(self.primary)
+            owner_integration_evidence.candidate_validation_declaration(self.primary)
 
     def test_undeclared_validation_stops_before_lease_or_merge(self) -> None:
         prepared = self.prepare()
@@ -961,7 +965,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         previous = Path.cwd()
         try:
             os.chdir(task_worktree)
-            recorded = meridian.record_task_evidence(
+            recorded = owner_integration_evidence.record_task_evidence(
                 "056", self.worktree_root, ["python3 -m unittest"], [0],
                 accepted=True,
                 task_dependencies=[], task_behavioral_surfaces=[],
@@ -1275,14 +1279,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         }
         for label, diff in invalid_diffs.items():
             with self.subTest(label=label), mock.patch.object(
-                meridian,
+                owner_integration_evidence,
                 "_run_git",
                 side_effect=(
                     subprocess.CompletedProcess([], 0, diff, ""),
                     subprocess.CompletedProcess([], 1, "", ""),
                 ),
             ):
-                unchanged, offending = meridian._lifecycle_changes_after_validation(
+                unchanged, offending = owner_integration_evidence._lifecycle_changes_after_validation(
                     self.primary, identity, "validated", "current"
                 )
                 self.assertFalse(unchanged)
@@ -1697,7 +1701,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         )
 
     def prepare(self) -> dict[str, object]:
-        return meridian.prepare_task_worktree("056", self.worktree_root, self.primary)
+        return owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
 
     def test_governed_stage_succeeds_without_project_plan(self) -> None:
         prepared = self.prepare()
@@ -1832,7 +1836,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             encoding="utf-8",
         )
         task.write_text(task.read_text(encoding="utf-8") + "\n" +
-                        meridian.execution_contract(self.primary, "056") + "\n", encoding="utf-8")
+                        owner_tasks_preflight.execution_contract(self.primary, "056") + "\n", encoding="utf-8")
         queue = self.primary / "tasks/QUEUE.md"
         queue.write_text(queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "SPIKE"), encoding="utf-8")
         self.git("add", "-A")
@@ -1852,7 +1856,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         self.assertEqual({key: entry[key] for key in ("id", "command", "exitStatus")},
                          {"id": "probe", "command": "test -f docs/answer.md", "exitStatus": 0})
         self.assertEqual(entry["commit"], self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip())
-        self.assertEqual(entry["sourceDigest"], meridian.execution_source_digest(worktree, "056"))
+        self.assertEqual(entry["sourceDigest"], owner_lifecycle_execution.execution_source_digest(worktree, "056"))
         task = worktree / "tasks/056-lifecycle.md"
         task.write_text(task.read_text(encoding="utf-8").replace("Status: QUEUED", "Status: ANSWERED"), encoding="utf-8")
         self.git("add", "-A", cwd=worktree)

@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from cardine.hosts import setup as owner_hosts_setup
 import cardine.shared.errors as shared_errors
 from cardine.hosts import codex as owner_hosts_codex
 
@@ -65,7 +66,7 @@ class CodexUserRulesTest(unittest.TestCase):
         ):
             self.write(text)
             with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED COMMAND_REFUSED.*damaged"):
-                meridian.plan_setup(None, self.home / "config.toml", home=self.home, environment={}, project_root=self.home)
+                owner_hosts_setup.plan_setup(None, self.home / "config.toml", home=self.home, environment={}, project_root=self.home)
             self.assertFalse((self.home / ".meridian/worktrees").exists())
             self.assertEqual(self.rules.read_bytes().decode(), text)
 
@@ -96,26 +97,26 @@ class CodexUserRulesTest(unittest.TestCase):
     def test_setup_diff_apply_and_doctor_states(self):
         config = self.home / "config.toml"
         def setup():
-            return meridian.plan_setup(None, config, home=self.home, environment={}, framework_root=ROOT, project_root=self.home)
+            return owner_hosts_setup.plan_setup(None, config, home=self.home, environment={}, framework_root=ROOT, project_root=self.home)
         def doctor():
             with mock.patch.object(meridian.shutil, "which", return_value=None):
-                return meridian.codex_doctor(self.home, config, self.home / ".meridian/worktrees", home=self.home)["user-command-policy"]
+                return owner_hosts_setup.codex_doctor(self.home, config, self.home / ".meridian/worktrees", home=self.home)["user-command-policy"]
         self.assertEqual(doctor(), "missing")
         plan = setup()
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            meridian.print_setup_plan(plan)
+            owner_hosts_setup.print_setup_plan(plan)
         self.assertIn("+# MERIDIAN:BEGIN codex-user-rules v1", output.getvalue())
         self.assertFalse(self.rules.exists())
-        meridian.apply_setup(plan)
+        owner_hosts_setup.apply_setup(plan)
         self.assertEqual(doctor(), "ready")
         self.write(owner_hosts_codex.CODEX_USER_RULES.replace('"git", "fetch"', '"git", "old"'))
         self.assertEqual(doctor(), "stale")
         stale = setup()
         with contextlib.redirect_stdout(output):
-            meridian.print_setup_plan(stale)
+            owner_hosts_setup.print_setup_plan(stale)
         self.assertIn('-prefix_rule(pattern=["git", "old"]', output.getvalue())
-        meridian.apply_setup(stale)
+        owner_hosts_setup.apply_setup(stale)
         self.assertEqual(doctor(), "ready")
 
     @unittest.skipUnless(shutil.which("codex"), "codex_user_rules_decisions: codex binary unavailable")
