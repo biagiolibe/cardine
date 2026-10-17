@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.shared import context as owner_shared_context
 import cardine.shared.errors as shared_errors
 import cardine.tasks.state as task_state
@@ -163,11 +164,11 @@ class MachineTaskStateTest(unittest.TestCase):
 
         with mock.patch.object(meridian.os, "replace", side_effect=OSError("replacement failed")):
             with self.assertRaises(OSError):
-                meridian.transition_task_state(self.root, "001", "DONE")
+                owner_tasks_transitions.transition_task_state(self.root, "001", "DONE")
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.assertEqual(list(self.path.parent.iterdir()), [self.path])
         with mock.patch.object(meridian.os, "replace", side_effect=replace):
-            meridian.transition_task_state(self.root, "001", "DONE")
+            owner_tasks_transitions.transition_task_state(self.root, "001", "DONE")
         self.assertEqual(calls, [self.path])
 
     def test_missing_stop(self):

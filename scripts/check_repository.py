@@ -15,6 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.templates import audit as owner_templates_audit
 from cardine.shared import context as owner_shared_context
 from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
@@ -834,7 +835,7 @@ def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
             declared_paths.update(
                 surface.path for surface in declaration.managed_surface if surface.form == "managed-copy"
             )
-            _identities, failures = meridian.installation_surface_diagnostics(
+            _identities, failures = owner_templates_audit.installation_surface_diagnostics(
                 root, declaration, managed_files
             )
             diagnostics.extend(
@@ -843,7 +844,7 @@ def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
             )
     diagnostics.extend(
         diagnostic
-        for _relative, diagnostic in meridian.managed_copy_drift(
+        for _relative, diagnostic in owner_templates_audit.managed_copy_drift(
             root, managed_files, skip_paths=declared_paths
         )
     )

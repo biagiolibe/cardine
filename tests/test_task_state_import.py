@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.tasks.state as task_state
 from cardine.stops import render as owner_stops_render
 
@@ -156,7 +157,7 @@ class TaskStateImportTest(unittest.TestCase):
                                                review_required=None, stop_factory=owner_stops_render.stop_error)
             self.assertFalse(state["review"]["required"])
             if not spike:
-                meridian.transition_task_state(self.root, task_id, "ACCEPTED")
+                owner_tasks_transitions.transition_task_state(self.root, task_id, "ACCEPTED")
                 task_state.read_task_state(self.root, task_id, "governed-sdd", review_required=None,
                                            stop_factory=owner_stops_render.stop_error)
 

@@ -14,6 +14,7 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.stops import render as owner_stops_render
 from cardine.worktree import storage as owner_worktree_storage
 from cardine.worktree import checkout as owner_worktree_checkout
+from cardine.integration import merge as owner_integration_merge
 
 
 class TaskIntegrationStateTest(unittest.TestCase):
@@ -86,7 +87,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         return self.evidence_file
 
     def stage(self, validated=None):
-        return meridian.stage_task_integration("056", self.worktree_root, self.evidence(validated), self.primary)
+        return owner_integration_merge.stage_task_integration("056", self.worktree_root, self.evidence(validated), self.primary)
 
     def assert_stop(self, code, detail):
         before = self.git("rev-parse", "HEAD").stdout
@@ -120,7 +121,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         validation = self.root / "candidate.json"
         validation.write_text(json.dumps({"candidate_tree": staged["candidate_tree"], "passed": True,
                                          "scope": "bounded", "commands": ["git diff --check", "scripts/check_repository.py"]}))
-        meridian.finalize_task_integration("056", validation, self.primary)
+        owner_integration_merge.finalize_task_integration("056", validation, self.primary)
         self.assertEqual((self.primary / "feature.txt").read_text(), "approved code\n")
 
     def test_stale_review_stop(self):
@@ -189,7 +190,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.commit()
         staged = self.stage()
         self.assertEqual(staged["completion"]["status"], "COMPLETED")
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_other_task_state_invalidates_approval(self):
         self.start()
@@ -212,7 +213,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.write_state(required=False, verdict=None)
         self.assertEqual(self.stage()["completion"]["source"], "machine")
         self.assertIn("| ACCEPTED |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def check_spike_projection(self, status):
         self.start(spike=True)
@@ -221,7 +222,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertEqual(staged["decision"], "REUSE")
         # Archival reads task state, so a terminal spike closes its section, INCONCLUSIVE included.
         self.assertIn(f"| {status} |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_spike_terminal_projection_ignores_record_status(self):
         self.check_spike_projection("ANSWERED")
@@ -245,7 +246,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertEqual(self.stage(self.reviewed)["completion"]["source"], "machine")
         self.assertIn("`[x]`", (self.primary / "tasks/QUEUE.md").read_text())
         self.assertIn("`[x]`", (self.primary / "PROJECT_PLAN.md").read_text())
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_advance_reports_review_gate(self):
         self.start()
@@ -295,14 +296,14 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_advance_terminal_state_reaches_stage(self):
         self.start(workflow="lean-delivery")
         self.write_state(required=False)
-        original = meridian.stage_task_integration
+        original = owner_integration_merge.stage_task_integration
         with mock.patch.object(meridian, "stage_task_integration", wraps=original) as stage:
             result, blocked = meridian.advance_task_closure(
                 "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         stage.assert_called_once()
         self.assertFalse(blocked)
         self.assertEqual(result["action_required"], "run-candidate-validation")
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_missing_state_resume_selects_registered_worktree(self):
         self.start()
@@ -316,7 +317,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start()
         staged = self.stage()
         self.assertEqual(staged["completion"]["source"], "legacy")
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
         record = self.worker / "tasks/056-lifecycle.md"
         record.write_text(record.read_text() + "Review: REQUIRED\n")
         # A project-shaped queue without Review uses the legacy record policy.

@@ -31,6 +31,9 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine.integration import merge as owner_integration_merge
+from cardine.tasks import transitions as owner_tasks_transitions
+from cardine.templates import audit as owner_templates_audit
 from cardine.release import update as owner_release_update
 from cardine.shared import journal as owner_shared_journal
 from cardine.hosts import claude as owner_hosts_claude
@@ -323,7 +326,7 @@ class MeridianCliTest(unittest.TestCase):
         baseline = self.run_cli("upgrade", "--check")
         self.assertEqual(baseline.returncode, 0, baseline.stdout + baseline.stderr)
         self.assertNotIn("retired-text", baseline.stdout)
-        for relative_path in meridian.load_retired_text_registry(ROOT)[0]["files"]:
+        for relative_path in owner_templates_audit.load_retired_text_registry(ROOT)[0]["files"]:
             path = self.project / relative_path
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("a", encoding="utf-8") as stream:
@@ -3607,7 +3610,7 @@ class MarkerSupersessionTest(unittest.TestCase):
 
 class RetiredTextAdvisoryTest(unittest.TestCase):
     def test_scanner_limits_version_paths_and_managed_regions(self) -> None:
-        entry = meridian.load_retired_text_registry(ROOT)[0]
+        entry = owner_templates_audit.load_retired_text_registry(ROOT)[0]
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             for relative_path in entry["files"]:
@@ -3624,9 +3627,9 @@ class RetiredTextAdvisoryTest(unittest.TestCase):
                 path = project / relative_path
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("\n".join(entry["phrases"]), encoding="utf-8")
-            self.assertEqual(meridian.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.8"}), [])
+            self.assertEqual(owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.8"}), [])
             for version in ("1.2.9", "1.2.12"):
-                rows = meridian.retired_text_advisories(project, ROOT, {"frameworkVersion": version})
+                rows = owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": version})
                 self.assertEqual(len(rows), len(entry["files"]) * len(entry["phrases"]))
                 for row in rows:
                     self.assertEqual(row.status, "ADVISORY")
@@ -3635,16 +3638,16 @@ class RetiredTextAdvisoryTest(unittest.TestCase):
                     self.assertRegex(row.detail, r"docs/[^:]+:(?:9|10|11|12|13):")
             for relative_path in entry["files"]:
                 (project / relative_path).write_text("clean project text\n", encoding="utf-8")
-            self.assertEqual(meridian.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.9"}), [])
+            self.assertEqual(owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.9"}), [])
 
     def test_phrase_matching_is_literal_and_preserves_inline_line_numbers(self) -> None:
         entry = {"capability": "example", "retiredIn": "1.2.9", "phrases": ["cap [a-z].*"], "files": ["docs/example.md"], "remedy": "Remove by hand."}
-        with tempfile.TemporaryDirectory() as directory, mock.patch.object(meridian, "load_retired_text_registry", return_value=[entry]):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(owner_templates_audit, "load_retired_text_registry", return_value=[entry]):
             project = Path(directory)
             path = project / "docs/example.md"
             path.parent.mkdir()
             path.write_text("cap abc\n<!-- MERIDIAN:BEGIN capability=example v1 -->cap [a-z].*<!-- MERIDIAN:END --> CAP [A-Z].*\n", encoding="utf-8")
-            rows = meridian.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.9"})
+            rows = owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.9"})
             self.assertEqual(len(rows), 1)
             self.assertIn("docs/example.md:2:", rows[0].detail)
 
@@ -3654,7 +3657,7 @@ class RetiredTextAdvisoryTest(unittest.TestCase):
         self.assertEqual(set(data), set(schema["required"]))
         self.assertEqual(data["version"], schema["properties"]["version"]["const"])
         item = schema["properties"]["retirements"]["items"]
-        for entry in meridian.load_retired_text_registry(ROOT):
+        for entry in owner_templates_audit.load_retired_text_registry(ROOT):
             self.assertEqual(set(entry), set(item["required"]))
             for key, value in entry.items():
                 rule = item["properties"][key]
@@ -6167,11 +6170,11 @@ class WorktreeRootSetupTest(unittest.TestCase):
         executable.chmod(0o755)
         with mock.patch.dict(os.environ, {"PATH": "bin"}):
             for entry in ("check --flag", "bin/check", "./bin/check", str(executable)):
-                self.assertTrue(meridian.runnable_candidate_validation_command(entry, project), entry)
+                self.assertTrue(owner_integration_merge.runnable_candidate_validation_command(entry, project), entry)
             for entry in ("", "'unterminated", "unittest discover", "missing/check"):
-                self.assertFalse(meridian.runnable_candidate_validation_command(entry, project), entry)
+                self.assertFalse(owner_integration_merge.runnable_candidate_validation_command(entry, project), entry)
             executable.chmod(0o644)
-            self.assertFalse(meridian.runnable_candidate_validation_command("bin/check", project))
+            self.assertFalse(owner_integration_merge.runnable_candidate_validation_command("bin/check", project))
         self.assertFalse((project / "executed").exists())
 
     def test_setup_cli_plans_then_applies_the_requested_task_identity(self) -> None:
@@ -7474,7 +7477,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def audit(self, project: Path, mode: str = "lean-delivery") -> tuple[int, str]:
         output = io.StringIO()
         with redirect_stdout(output):
-            return_code = meridian.run_audit(project, ROOT, mode)
+            return_code = owner_templates_audit.run_audit(project, ROOT, mode)
         return return_code, output.getvalue()
 
     def test_catalog_exposes_versioned_profile_metadata_and_dependencies(self) -> None:
@@ -7505,7 +7508,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         }
         output = io.StringIO()
         with redirect_stdout(output):
-            return_code = meridian.profile_doctor(
+            return_code = owner_templates_audit.profile_doctor(
                 ROOT, ROOT, "meridian-self-hosting"
             )
         after = {
@@ -7534,7 +7537,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                     probe.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
                 output = io.StringIO()
                 with redirect_stdout(output):
-                    return_code = meridian.profile_doctor(
+                    return_code = owner_templates_audit.profile_doctor(
                         project, ROOT, "meridian-self-hosting"
                     )
                 self.assertEqual(return_code, 2, output.getvalue())
@@ -7558,7 +7561,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             owner_templates_manifest.write_manifest(project, manifest, ROOT)
             output = io.StringIO()
             with redirect_stdout(output):
-                return_code = meridian.run_audit(
+                return_code = owner_templates_audit.run_audit(
                     project, ROOT, "lean-delivery", "meridian-self-hosting"
                 )
             self.assertEqual(return_code, 0, output.getvalue())
@@ -7568,7 +7571,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             (project / ".codex/hooks.json").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
-                return_code = meridian.run_audit(
+                return_code = owner_templates_audit.run_audit(
                     project, ROOT, "lean-delivery", "meridian-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
@@ -7581,7 +7584,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             (project / "docs/CONTEXT_BUDGET_POLICY.md").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
-                return_code = meridian.run_audit(
+                return_code = owner_templates_audit.run_audit(
                     project, ROOT, "lean-delivery", "meridian-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
@@ -7597,7 +7600,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             (project / "hooks/queue-briefing.sh").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
-                return_code = meridian.run_audit(
+                return_code = owner_templates_audit.run_audit(
                     project, ROOT, "lean-delivery", "meridian-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
@@ -7612,7 +7615,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.installed_project(project)
             output = io.StringIO()
             with redirect_stdout(output):
-                return_code = meridian.run_audit(
+                return_code = owner_templates_audit.run_audit(
                     project, ROOT, "lean-delivery", "unknown-profile"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
@@ -7783,14 +7786,14 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             (project / ".meridian/candidate-validation.json").write_text('{"version": 1, "state": "none"}\n', encoding="utf-8")
             baseline_code, _ = self.audit(project)
             self.assertEqual(baseline_code, 0)
-            for relative_path in meridian.load_retired_text_registry(ROOT)[0]["files"]:
+            for relative_path in owner_templates_audit.load_retired_text_registry(ROOT)[0]["files"]:
                 path = project / relative_path
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(relative_path + "\n## Reasoning profile\n", encoding="utf-8")
             manifest = self.installed_project(project)
             manifest["frameworkVersion"] = meridian.read_version(ROOT)
             owner_templates_manifest.write_manifest(project, manifest, ROOT)
-            with mock.patch.object(meridian, "retired_text_advisories", return_value=[]):
+            with mock.patch.object(owner_templates_audit, "retired_text_advisories", return_value=[]):
                 baseline_code, _ = self.audit(project)
             self.assertEqual(baseline_code, 0)
             before = {path.relative_to(project): path.read_bytes() for path in project.rglob("*") if path.is_file()}
@@ -7982,7 +7985,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
 
             with redirect_stdout(output):
-                return_code = meridian.run_audit(project, framework, "lean-delivery")
+                return_code = owner_templates_audit.run_audit(project, framework, "lean-delivery")
 
             self.assertEqual(return_code, 0, output.getvalue())
             self.assertIn("NOT_APPLICABLE", output.getvalue())
@@ -8847,7 +8850,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "worktree", "path", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
         ).stdout)["path"])
-        meridian.transition_task_state(worktree, "056", "DONE")
+        owner_tasks_transitions.transition_task_state(worktree, "056", "DONE")
         subprocess.run(["git", "add", "."], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "record terminal state"], cwd=worktree, check=True, capture_output=True)
         (self.project / ".meridian/candidate-validation.json").write_text(
@@ -9618,12 +9621,12 @@ class TaskStateAuditTest(unittest.TestCase):
         self.assertIn("tasks/QUEUE.md queue Status: state=QUEUED, projection=IN_PROGRESS", rows[0].detail)
         self.assertIn("tasks/001.md record Status: state=QUEUED, projection=ACCEPTED", rows[0].detail)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
-        with mock.patch.object(meridian, "audit_declared_capabilities", return_value=([], "governed-sdd")), \
-                mock.patch.object(meridian, "audit_capability_markers", return_value=[]), \
-                mock.patch.object(meridian, "audit_duplicate_headings", return_value=[]), \
-                mock.patch.object(meridian, "audit_capability_moves", return_value=[]), \
-                mock.patch.object(meridian, "audit_entry_router", return_value=[]), redirect_stdout(io.StringIO()) as out:
-            meridian.run_audit(self.project, ROOT, "governed-sdd")
+        with mock.patch.object(owner_templates_audit, "audit_declared_capabilities", return_value=([], "governed-sdd")), \
+                mock.patch.object(owner_templates_audit, "audit_capability_markers", return_value=[]), \
+                mock.patch.object(owner_templates_audit, "audit_duplicate_headings", return_value=[]), \
+                mock.patch.object(owner_templates_audit, "audit_capability_moves", return_value=[]), \
+                mock.patch.object(owner_templates_audit, "audit_entry_router", return_value=[]), redirect_stdout(io.StringIO()) as out:
+            owner_templates_audit.run_audit(self.project, ROOT, "governed-sdd")
         self.assertRegex(out.getvalue(), r"ADVISORY\s+task-state")
 
     def test_audit_invalid_state_is_coded_and_other_rows_survive(self):

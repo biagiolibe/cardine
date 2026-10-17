@@ -19,6 +19,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import check_repository as cr  # noqa: E402
+from cardine.templates import audit as owner_templates_audit
 
 
 class LocalMarkdownLinksTest(unittest.TestCase):
@@ -727,7 +728,7 @@ class ManagedDigestTest(unittest.TestCase):
         with contextlib.redirect_stdout(check_output), self.assertRaises(SystemExit):
             cr.check_managed_digests(self.root)
         with contextlib.redirect_stdout(doctor_output):
-            doctor_status = cr.meridian.profile_doctor(
+            doctor_status = owner_templates_audit.profile_doctor(
                 self.root, self.root, "meridian-self-hosting"
             )
 

@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+from cardine.integration import merge as owner_integration_merge
+from cardine.worktree import closure_status as owner_worktree_closure_status
 from cardine.integration import evidence as owner_integration_evidence
 from cardine.worktree import checkout as owner_worktree_checkout
 from cardine.lifecycle import execution as owner_lifecycle_execution
@@ -485,7 +487,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(before, self.snapshot(worktree))
         with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED STALE_WORKTREE_BASE:"):
             self.prepare()
-        closure, _ = meridian.closure_status("056", self.worktree_root, self.primary)
+        closure, _ = owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)
         self.assertEqual(closure["stop_reason"], "STALE_WORKTREE_BASE")
         original = json.loads(state_path.read_text(encoding="utf-8"))
         recovered = owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
@@ -531,9 +533,9 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
         before = evidence_path.read_bytes()
         os.chdir(self.primary)
-        self.assertEqual(meridian.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C5")
+        self.assertEqual(owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C5")
         with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED EVIDENCE_MISMATCH:"):
-            meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(evidence_path.read_bytes(), before)
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
 
@@ -821,14 +823,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             }),
             encoding="utf-8",
         )
-        staged = meridian.stage_task_integration(
+        staged = owner_integration_merge.stage_task_integration(
             "056", self.worktree_root, evidence_path, self.primary
         )
         self.assertEqual(staged["decision"], "REUSE")
         self.assertFalse(queue.read_text(encoding="utf-8").strip())
         self.assertIn("### Phase 1 — Closing", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
         self.assertEqual(
-            meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary),
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary),
             staged,
         )
         validation_path = self.root / "candidate-validation.json"
@@ -841,10 +843,10 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             }),
             encoding="utf-8",
         )
-        finalized = meridian.finalize_task_integration("056", validation_path, self.primary)
+        finalized = owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
         self.assertEqual(finalized["decision"], "REUSE")
         self.assertTrue((self.primary / "feature.txt").is_file())
-        cleaned = meridian.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        cleaned = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertEqual(cleaned["status"], "cleaned")
         self.assertTrue(task_worktree.is_dir())
         self.assertEqual(list(task_worktree.iterdir()), [])
@@ -860,7 +862,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
         self.assertEqual(list(task_worktree.iterdir()), [])
         self.assertNotEqual(self.git("show-ref", "--verify", "refs/heads/task-056", check=False).returncode, 0)
-        repeated = meridian.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        repeated = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertTrue(repeated["already_cleaned"])
 
     def test_candidate_validation_commands_cover_each_decision(self) -> None:
@@ -877,7 +879,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         ):
             with self.subTest(decision=decision, commands=commands):
                 self.assertEqual(
-                    meridian.missing_candidate_validation_commands(decision, commands), expected
+                    owner_integration_merge.missing_candidate_validation_commands(decision, commands), expected
                 )
 
     def test_candidate_validation_declaration_states_and_malformed_input(self) -> None:
@@ -910,7 +912,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.git("add", ".meridian/candidate-validation.json")
         self.git("commit", "-m", "remove declaration")
         with self.assertRaisesRegex(shared_errors.MeridianError, "UNDECLARED_VALIDATION_COMMANDS"):
-            meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease_path.exists())
@@ -933,7 +935,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         validation_path = self.root / "candidate-validation.json"
         validation_path.write_text(json.dumps({
             "candidate_tree": staged["candidate_tree"], "passed": True,
@@ -941,12 +943,12 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         }), encoding="utf-8")
 
         with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
-            meridian.finalize_task_integration("056", validation_path, self.primary)
+            owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
         (self.primary / ".meridian/candidate-validation.json").write_text(
             json.dumps({"version": 1, "state": "none"}), encoding="utf-8"
         )
         with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
-            meridian.finalize_task_integration("056", validation_path, self.primary)
+            owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
 
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(
             self.primary, owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
@@ -954,7 +956,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertTrue(lease_path.is_file())
         self.assertTrue(integration_path.is_file())
         self.assertTrue((self.primary / ".git/MERGE_HEAD").is_file())
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_evidence_command_records_git_facts_without_running_validation(self) -> None:
         prepared = self.prepare()
@@ -1003,10 +1005,10 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "task_paths": [], "task_dependencies": [], "task_behavioral_surfaces": [],
             "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "FULL")
         self.assertEqual(staged["main_advanced_paths"], ["feature.txt"])
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_stage_keeps_independent_main_advance_bounded(self) -> None:
         prepared = self.prepare()
@@ -1026,9 +1028,9 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "task_paths": ["feature.txt"], "task_dependencies": [], "task_behavioral_surfaces": [],
             "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "BOUNDED")
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_stage_completes_rows_after_main_registration_advance(self) -> None:
         prepared = self.prepare()
@@ -1061,11 +1063,11 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
 
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "BOUNDED")
         self.assertIn("| `[x]` | 056 | Lifecycle |", queue.read_text(encoding="utf-8"))
         self.assertIn("- `[x]` 056 — Lifecycle", plan.read_text(encoding="utf-8"))
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_stage_reports_an_unreadable_queue_section_without_changing_the_tree(self) -> None:
         prepared = self.prepare()
@@ -1093,14 +1095,14 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
 
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(len(staged["warnings"]), 1)
         self.assertIn("## Phase 2 — Unreadable", staged["warnings"][0])
         report = {item["section"]: item for item in staged["archival"]}
         self.assertFalse(report["## Phase 2 — Unreadable"]["archive"])
         self.assertTrue(report["## Phase 2 — Unreadable"]["reason"])
         self.assertIn(unreadable, queue.read_text(encoding="utf-8"))
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_queue_archival_warnings_name_the_unrecognized_section_and_reason(self) -> None:
         issue_example = (
@@ -1180,11 +1182,11 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
 
-        meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertIn("- `[x]` 056 — Lifecycle", plan.read_text(encoding="utf-8"))
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
         self.assertIn("docs/PLAN.md", self.git("diff", "--cached", "--name-only").stdout.splitlines())
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_stage_accepts_exact_task_record_archive_after_validation(self) -> None:
         prepared = self.prepare()
@@ -1222,9 +1224,9 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
 
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_stage_relinks_the_queue_row_to_the_archived_task_record(self) -> None:
         queue = self.primary / "tasks/QUEUE.md"
@@ -1260,11 +1262,11 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
 
-        meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         row = [line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line][0]
         self.assertEqual(row, "| `[x]` | 056 | Lifecycle | [056](done/056-lifecycle.md) |")
         self.assertTrue((self.primary / "tasks/done/056-lifecycle.md").is_file())
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_lifecycle_change_parser_rejects_inexact_task_record_changes(self) -> None:
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
@@ -1491,7 +1493,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         references = self.git("show-ref").stdout
         worktree_state = state_path.read_text(encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, r"paths changed after validation: .*other.md"):
-            meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)
         self.assertEqual(self.git("show-ref").stdout, references)
         self.assertEqual(state_path.read_text(encoding="utf-8"), worktree_state)
@@ -1520,8 +1522,8 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        aborted = meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        aborted = owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertEqual(aborted["status"], "aborted")
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)
         self.assertEqual(self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip(), task_commit)
@@ -1536,7 +1538,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             exclusive=True,
         )
         self.assertFalse(integration_path.exists())
-        recovered = meridian.abort_task_integration("056", self.primary)
+        recovered = owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertEqual(recovered["status"], "aborted")
         self.assertFalse(lease_path.exists())
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)
@@ -1559,7 +1561,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         )
         with self.assertRaisesRegex(shared_errors.MeridianError, "queue link for task 056"):
             owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        recovered = meridian.abort_task_integration("056", self.primary)
+        recovered = owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertEqual(recovered["status"], "aborted")
         self.assertFalse(lease_path.exists())
 
@@ -1719,13 +1721,13 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
         self.assertIn(
             "| ACCEPTED | NOT_REQUIRED |",
             (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"),
         )
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_governed_stage_accepts_an_owner_approved_required_review_task(self) -> None:
         queue = self.primary / "tasks/QUEUE.md"
@@ -1759,14 +1761,14 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["completion"]["status"], "COMPLETED")
         self.assertEqual(staged["completion"]["reason"], "latest review verdict is APPROVE")
         self.assertIn(
             "| ACCEPTED | REQUIRED |",
             (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"),
         )
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_governed_stage_accepts_a_template_spike_row_for_another_task(self) -> None:
         queue = self.primary / "tasks/QUEUE.md"
@@ -1796,10 +1798,10 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["completion"]["status"], "COMPLETED")
         self.assertIn("ANSWERED | SPIKE", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
-        meridian.abort_task_integration("056", self.primary)
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_governed_spike_completion_and_archival_terminal_states(self) -> None:
         queue = self.primary / "tasks/QUEUE.md"
@@ -1871,7 +1873,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "task_dependencies": [], "task_behavioral_surfaces": [],
             "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
         self.assertEqual(self.git("show", f":{owner_tasks_contract.EXECUTION_EVIDENCE_PATH}").stdout.encode(), evidence_bytes)
@@ -1880,7 +1882,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "candidate_tree": staged["candidate_tree"], "passed": True, "scope": "bounded",
             "commands": ["git diff --check", "python3 scripts/check_repository.py"],
         }), encoding="utf-8")
-        meridian.finalize_task_integration("056", candidate, self.primary)
+        owner_integration_merge.finalize_task_integration("056", candidate, self.primary)
         self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
         self.assertEqual((self.primary / "docs/answer.md").read_bytes(), (worktree / "docs/answer.md").read_bytes())
         self.assertIn("ANSWERED | SPIKE", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
@@ -1901,14 +1903,14 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         self.git("commit", "-m", "exercise exact spike path boundary", cwd=worktree)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
-        self.assertEqual(set(meridian._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit)), {
+        self.assertEqual(set(owner_integration_merge._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit)), {
             ".meridian/execution-evidence-extra.json", ".meridian/other.json", "docs/undeclared.md", "source.py",
         })
         task.write_text(task.read_text(encoding="utf-8").replace("Class: SPIKE", "Class: NORMAL"), encoding="utf-8")
         self.git("add", "tasks/056-lifecycle.md", cwd=worktree)
         self.git("commit", "-m", "exercise normal task path behavior", cwd=worktree)
         commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
-        self.assertEqual(meridian._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit), ())
+        self.assertEqual(owner_integration_merge._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit), ())
 
     def test_governed_stage_blocks_a_spike_source_change_before_a_lease(self) -> None:
         task = self.primary / "tasks/056-lifecycle.md"
@@ -1935,7 +1937,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, r"source.py"):
-            meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, staged = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease.exists())
