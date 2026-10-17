@@ -2408,15 +2408,16 @@ class SnapshotCostTest(RepoCase):
 
     def test_lifecycle_readers_skip_resolution_when_given_an_identity(self) -> None:
         import meridian
+        from cardine.worktree import closure_status as owner_worktree_closure_status
         import cardine.shared.errors as shared_errors
         self.populate()
         identity = owner_tasks_identity.resolve_task_identity(self.project, "TASK-001", "existing")
         with mock.patch.object(Path, "cwd", return_value=self.project), \
-             mock.patch.object(meridian, "resolve_task_identity",
+             mock.patch.object(owner_worktree_closure_status, "resolve_task_identity",
                                side_effect=AssertionError("resolved again")), \
              mock.patch.object(owner_worktree_storage, "resolve_task_identity",
                                side_effect=AssertionError("resolved again")):
-            report, _ready = meridian.closure_status(
+            report, _ready = owner_worktree_closure_status.closure_status(
                 "TASK-001", None, self.project, identity=identity)
             self.assertEqual(report["task_id"], "TASK-001")
             # No lifecycle state was prepared, so the read ends on that, not on resolution.

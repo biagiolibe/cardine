@@ -10,6 +10,8 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine.tasks import recording as owner_tasks_recording
+from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.lifecycle import execution as owner_lifecycle_execution
 from cardine.tasks import preflight as owner_tasks_preflight
 from cardine.worktree import checkout as owner_worktree_checkout
@@ -69,7 +71,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
     def implemented(self):
         meridian.execution_start(self.worker, '001')
         (self.worker / 'feature.txt').write_text('implementation\n')
-        meridian.run_validation(self.worker, '001', 'check')
+        owner_tasks_recording.run_validation(self.worker, '001', 'check')
         self.commit('Implement feature and validation')
         identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
         identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
@@ -215,7 +217,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
 
     def test_dirty_incomplete_stale_and_direct_transition_cannot_deliver(self):
         meridian.execution_start(self.worker, '001')
-        self.assert_stop('WRONG_WORKTREE', lambda: meridian.transition_task_state(self.worker, '001', 'READY_FOR_REVIEW'))
+        self.assert_stop('WRONG_WORKTREE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'READY_FOR_REVIEW'))
         self.assertEqual(self.state()['status'], 'IN_PROGRESS')
         self.commit('Start')
         self.assert_stop('HANDOFF_REPORT_MISSING', lambda: meridian.execution_deliver(self.worker, '001'))
@@ -224,7 +226,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.commit('Change code')
         self.assert_stop('EVIDENCE_INCOMPLETE', lambda: meridian.execution_deliver(self.worker, '001'))
         self.assertEqual(self.state()['status'], 'IN_PROGRESS')
-        self.assert_stop('EVIDENCE_INCOMPLETE', lambda: meridian.transition_task_state(self.worker, '001', 'READY_FOR_REVIEW'))
+        self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'READY_FOR_REVIEW'))
 
     def test_commit_failure_reports_pending_actual_state_and_recovers(self):
         self.implemented()
@@ -251,9 +253,9 @@ class ExecutionBoundariesTest(unittest.TestCase):
         owner_review_verdict.record_review_verdict(self.worker, '001', 'CHANGES_REQUESTED', body='Fix code')
         self.commit('Request changes')
         self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_start(self.worker, '001'))
-        meridian.transition_task_state(self.worker, '001', 'IN_PROGRESS')
+        owner_tasks_transitions.transition_task_state(self.worker, '001', 'IN_PROGRESS')
         self.commit('Begin remediation')
-        meridian.run_validation(self.worker, '001', 'check')
+        owner_tasks_recording.run_validation(self.worker, '001', 'check')
         self.commit('Renew evidence')
         meridian.execution_deliver(self.worker, '001')
         owner_review_verdict.record_review_verdict(self.worker, '001', 'APPROVE', body='Approved')
@@ -301,7 +303,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         record.write_text(record.read_text().replace('Review: REQUIRED', 'Review: NOT_REQUIRED'))
         self.commit('No review policy')
         meridian.execution_start(self.worker, '001')
-        meridian.transition_task_state(self.worker, '001', 'ACCEPTED')
+        owner_tasks_transitions.transition_task_state(self.worker, '001', 'ACCEPTED')
         self.assertEqual(self.state()['status'], 'ACCEPTED')
         self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_deliver(self.worker, '001'))
 
@@ -312,7 +314,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         record.write_text(text)
         self.commit('Spike policy')
         meridian.execution_start(self.worker, '001')
-        meridian.transition_task_state(self.worker, '001', 'ANSWERED')
+        owner_tasks_transitions.transition_task_state(self.worker, '001', 'ANSWERED')
         self.assertEqual(self.state()['status'], 'ANSWERED')
         self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_start(self.worker, '001', resume=True))
 
@@ -329,7 +331,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         record = self.worker / self.record
         record.write_text(record.read_text().replace('`true`', '`pwd > validation-directory.txt`'))
         self.commit('Declare directory validation')
-        self.assertEqual(meridian.run_validation(self.worker, '001', 'check'), 0)
+        self.assertEqual(owner_tasks_recording.run_validation(self.worker, '001', 'check'), 0)
         self.assertEqual((self.worker / 'validation-directory.txt').read_text().strip(), str(self.worker))
         self.commit('Record validation')
         self.implemented()
@@ -380,7 +382,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         import shlex
         os.chdir(self.primary)
         self.git('worktree', 'remove', str(self.worker), cwd=self.primary)
-        for action in (meridian.execution_start, meridian.close_task):
+        for action in (meridian.execution_start, owner_tasks_transitions.close_task):
             with self.assertRaises(shared_errors.MeridianStop) as caught:
                 action(self.primary, '001')
             detail = (f'cwd={self.primary.resolve()}; --project={self.primary.resolve()}; expected worktree={self.worker}; '

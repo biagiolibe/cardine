@@ -24,12 +24,25 @@ from typing import Callable
 
 sys.dont_write_bytecode = True
 from meridian import (
-    EXECUTION_EVIDENCE_PATH, INTEGRATION_LEASE_NAME, INTEGRATION_STATE_NAME, TASK_IDENTITY_PATH,
-    WORKTREE_STATE_DIRECTORY, MeridianError, MeridianStop, ResolvedTaskIdentity,
-    canonical_git_common_dir, detect_mode, parse_worktree_records, read_task_field,
-    shared_worktree_records, stop_error,
-    closure_status, lifecycle_started_at, resolve_project_locations, resolve_task_identity,
+    EXECUTION_EVIDENCE_PATH,
+    INTEGRATION_LEASE_NAME,
+    INTEGRATION_STATE_NAME,
+    TASK_IDENTITY_PATH,
+    WORKTREE_STATE_DIRECTORY,
+    MeridianError,
+    MeridianStop,
+    ResolvedTaskIdentity,
+    canonical_git_common_dir,
+    detect_mode,
+    parse_worktree_records,
+    read_task_field,
+    shared_worktree_records,
+    stop_error,
+    lifecycle_started_at,
+    resolve_project_locations,
+    resolve_task_identity,
 )
+from cardine.worktree.closure_status import closure_status
 from cardine.lifecycle.execution import delivery_readiness
 from task_state import read_task_state, state_path
 from console_workflow import (

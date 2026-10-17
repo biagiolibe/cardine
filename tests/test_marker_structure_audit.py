@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import meridian  # noqa: E402
+from cardine.templates import audit as owner_templates_audit
 from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.templates import markers as templates_markers
@@ -88,7 +89,7 @@ class FrameworkFixture(unittest.TestCase):
     def audit(self) -> tuple[int, str]:
         output = io.StringIO()
         with redirect_stdout(output):
-            code = meridian.run_audit(self.project, self.framework, self.MODE)
+            code = owner_templates_audit.run_audit(self.project, self.framework, self.MODE)
         return code, output.getvalue()
 
     def manifest(self) -> dict[str, object]:
@@ -441,9 +442,9 @@ class ManagedCopyDigestAuditTest(FrameworkFixture):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "a.md").write_text("changed\n", encoding="utf-8")
-            drift = meridian.managed_copy_drift(root, recorded)
+            drift = owner_templates_audit.managed_copy_drift(root, recorded)
             self.assertEqual([path for path, _diagnostic in drift], ["a.md"])
-            self.assertEqual(meridian.managed_copy_drift(root, recorded, skip_paths={"a.md"}), [])
+            self.assertEqual(owner_templates_audit.managed_copy_drift(root, recorded, skip_paths={"a.md"}), [])
 
 
 class ConsumerProfileTest(unittest.TestCase):
@@ -470,7 +471,7 @@ class ConsumerProfileTest(unittest.TestCase):
     def audit(self, project: Path, mode: str) -> tuple[int, str]:
         output = io.StringIO()
         with redirect_stdout(output):
-            code = meridian.run_audit(project, ROOT, mode)
+            code = owner_templates_audit.run_audit(project, ROOT, mode)
         return code, output.getvalue()
 
     def test_catalog_ships_a_consumer_profile_per_mode(self) -> None:

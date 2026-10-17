@@ -11,6 +11,7 @@ import test_execution_boundaries as boundaries
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 
@@ -36,19 +37,19 @@ class TaskCloseTest(unittest.TestCase):
 
     def refused(self, code):
         before = self.snapshot()
-        self.assert_stop(code, lambda: meridian.close_task(self.worker, '001'))
+        self.assert_stop(code, lambda: owner_tasks_transitions.close_task(self.worker, '001'))
         self.assertEqual(self.snapshot(), before)
 
     def test_success_stages_exact_archive_and_identical_transition_state_without_commit(self):
         clock = mock.Mock()
         clock.now.return_value = datetime(2026, 10, 15, tzinfo=timezone.utc)
-        with mock.patch.object(meridian, 'datetime', clock):
-            expected = meridian.transition_task_state(self.worker, '001', 'DONE')
+        with mock.patch.object(owner_tasks_transitions, 'datetime', clock):
+            expected = owner_tasks_transitions.transition_task_state(self.worker, '001', 'DONE')
             # Restore only the output of the comparison transition in this fixture.
             meridian.state_path(self.worker, '001').unlink()
             (self.worker / self.record).write_bytes(self.git('show', 'HEAD:tasks/001.md').encode() + b'\n')
             before = self.git('rev-parse', 'HEAD')
-            result = meridian.close_task(self.worker, '001')
+            result = owner_tasks_transitions.close_task(self.worker, '001')
         self.assertEqual(result['state'], expected)
         self.assertFalse(result['committed'])
         self.assertEqual(self.git('rev-parse', 'HEAD'), before)
@@ -64,7 +65,7 @@ class TaskCloseTest(unittest.TestCase):
         self.refused('WRONG_WORKTREE')
         os.chdir(self.primary)
         before = self.git('status', '--porcelain', cwd=self.primary)
-        self.assert_stop('WRONG_WORKTREE', lambda: meridian.close_task(self.primary, '001'))
+        self.assert_stop('WRONG_WORKTREE', lambda: owner_tasks_transitions.close_task(self.primary, '001'))
         self.assertEqual(self.git('status', '--porcelain', cwd=self.primary), before)
 
     def test_missing_and_uncommitted_handoff_refuse(self):
@@ -85,7 +86,7 @@ class TaskCloseTest(unittest.TestCase):
         self.assertFalse(meridian.state_path(self.worker, '001').exists())
 
     def test_done_and_invalid_state_refuse_without_archive(self):
-        meridian.transition_task_state(self.worker, '001', 'DONE')
+        owner_tasks_transitions.transition_task_state(self.worker, '001', 'DONE')
         self.commit('Already done')
         self.refused('TASK_STATUS_REJECTED')
         path = meridian.state_path(self.worker, '001')
@@ -98,10 +99,10 @@ class TaskCloseTest(unittest.TestCase):
         self.commit('Select Governed')
         self.refused('TASK_STATUS_REJECTED')
         with self.assertRaisesRegex(shared_errors.MeridianStop, 'meridian task transition'):
-            meridian.close_task(self.worker, '001')
+            owner_tasks_transitions.close_task(self.worker, '001')
 
     def test_resume_archived_done_with_staged_and_committed_closure(self):
-        meridian.close_task(self.worker, '001')
+        owner_tasks_transitions.close_task(self.worker, '001')
         before = self.snapshot()
         result = meridian.execution_start(self.worker, '001', resume=True)
         self.assertFalse(result['started'])
@@ -117,7 +118,7 @@ class TaskCloseTest(unittest.TestCase):
     def close_from(self, directory):
         os.chdir(directory)
         before = self.git('rev-parse', 'HEAD')
-        result = meridian.close_task(self.worker, '001')
+        result = owner_tasks_transitions.close_task(self.worker, '001')
         self.assertEqual(result['state']['status'], 'DONE')
         self.assertEqual(result['state']['transitions'][-1]['commit'], before)
         self.assertEqual(self.git('rev-parse', 'HEAD'), before)
