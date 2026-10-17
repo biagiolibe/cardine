@@ -62,3 +62,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 6 and 7.
 |--------|----|-------|----------|------------|------|
 | `[x]` | 007 | Recover worktree cleanup after a partial removal | 🟡 P2 | 016 | [007](done/007-recover-partial-worktree-cleanup.md) |
 | `[x]` | 018 | Resume a Lean closure without state through `task close` | 🟡 P2 | 016 | [018](done/018-lean-closure-resume-uses-task-close.md) |
+
+### Phase 7 — Development tooling defects
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 11.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 017 | Record wall-clock time and the real CI command in CI evidence | 🟡 P2 | — | [017](done/017-fix-ci-evidence-timestamp.md) |

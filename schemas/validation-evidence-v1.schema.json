@@ -14,7 +14,7 @@
     "tree": {"type": "string", "minLength": 1},
     "command": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "exit_code": {"type": "integer"},
-    "tests_run": {"type": "integer"},
+    "tests_run": {"type": ["integer", "null"], "description": "Null means the CI test count is unknown; allowed only for T1_CI."},
     "produced_at": {"type": "string", "minLength": 1},
     "started_at": {"type": "string", "minLength": 1},
     "log": {"type": "string", "minLength": 1},
@@ -28,6 +28,7 @@
     "statement": {"type": "string", "minLength": 1}
   },
   "allOf": [
+    {"if": {"properties": {"level": {"const": "T1_CI"}}}, "else": {"properties": {"tests_run": {"type": "integer"}}}},
     {"if": {"properties": {"status": {"const": "running"}}}, "then": {"required": ["started_at", "log"]}},
     {"if": {"properties": {"status": {"const": "unavailable"}}}, "then": {"required": ["reason"]}},
     {"if": {"properties": {"status": {"enum": ["failed", "passed"]}}}, "then": {"required": ["exit_code"]}},

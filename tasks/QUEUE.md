@@ -33,14 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 7 — Development tooling defects
-
-Authority: `docs/ADR_CARDINE_1_0.md`, decision 11.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 017 | Record wall-clock time and the real CI command in CI evidence | 🟡 P2 | — | [017](017-fix-ci-evidence-timestamp.md) |
-
 ### Phase 8 — Module split completion
 
 Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.md`.
