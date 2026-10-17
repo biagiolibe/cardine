@@ -10,7 +10,8 @@ trademark registration, task state only in JSON, the new repository, the
 `lean` and `governed` presets, and pipx as the primary installer. Contoso and
 Fabrikam are fictitious names for the maintainer's two private projects.
 Decision 11, landing modes and pull requests, was added and accepted on the
-same day, as were the release-tooling requirements in work item 12.*
+same day, as were the release-tooling requirements in work item 12 and the
+order of work items 4 and 5.*
 
 ## Context
 
@@ -394,17 +395,22 @@ further items are open for 1.1:
 
 ## Work items to 0.9
 
-Most items are one or more tasks of 2–3 hours. Items 3 and 4 are mechanical
-and leave behavior unchanged; simplification starts after them.
+Most items are one or more tasks of 2–3 hours. Item 3 is mechanical and
+leaves behavior unchanged; simplification starts after it. Item 4 removes the
+historical migrations before item 5 renames identifiers, so the rename never
+touches code that is about to be deleted.
 
 1. Accept this ADR.
 2. Repository bootstrap: `pyproject.toml`, package skeleton, CI, code import.
 3. Split `meridian.py` and its tests into the modules of decision 8, with the
    existing suite green.
-4. Rename identifiers: command, environment variables, `.cardine/`, markers,
+4. Remove historical compatibility: migrations, baselines, budget counters,
+   maintainer commands, duplicates. Required capability versions move from the
+   migration records to the capability catalog. The migration mechanism stays,
+   with an empty chain from which Cardine 1.0 starts, and upgrade tests use
+   synthetic fixtures instead of Meridian's migrations.
+5. Rename identifiers: command, environment variables, `.cardine/`, markers,
    Git-internal files, worktree root.
-5. Remove historical compatibility: migrations, baselines, budget counters,
-   maintainer commands, duplicates.
 6. Single workflow: one template set, task contract fields, states, review
    option, `spike` class.
 7. Single source of truth: state in the task JSON, generated queue and plan
@@ -450,7 +456,7 @@ and leave behavior unchanged; simplification starts after them.
 | Risk | Mitigation |
 | --- | --- |
 | Scope grows during the rewrite ("second system") | This ADR is the 1.0 scope; new ideas wait until after 1.0. |
-| Behavior is lost while the code is split | Items 3 and 4 are mechanical, with the existing suite of more than 1,000 tests unchanged. |
+| Behavior is lost while the code is split | Item 3 is mechanical, with the existing suite of more than 1,000 tests unchanged. |
 | The single workflow misses a Governed SDD use | The parity table in decision 3 and the field-trial exit criterion in decision 10. |
 | The `cardine` PyPI name is taken meanwhile | Publish a `0.0.1` placeholder first. |
 | A trademark conflict with a business using the name | Registration is deferred until after 1.0. EU and Italian registers must be checked before registration. |
