@@ -65,7 +65,7 @@ class ValidationEvidenceTest(unittest.TestCase):
         self.assertEqual(report, {"status": "VALIDATION_PASSED", "level": "T2_SHARDED", "reasons": []})
 
     def test_invalid_proofs_name_the_failing_field(self) -> None:
-        cases = (("tree", "wrong-tree"), ("tests_run", 0), ("level", "unknown"))
+        cases = (("tree", "wrong-tree"), ("tests_run", 0), ("tests_run", None), ("tests_run", True), ("level", "unknown"))
         for field, value in cases:
             with self.subTest(field=field):
                 record = self.record()
@@ -73,6 +73,25 @@ class ValidationEvidenceTest(unittest.TestCase):
                 report, code = owner_integration_evidence.check_validation_evidence(self.write(record), self.project, self.commit)
                 self.assertEqual(code, shared_constants.VALIDATION_EXIT_FAILED)
                 self.assertTrue(any(reason.startswith(field + ":") for reason in report["reasons"]))
+
+    def test_ci_unknown_count_still_requires_the_field_and_successful_proof(self) -> None:
+        record = self.record()
+        record.update(level="T1_CI", tests_run=None, ci={
+            "run_id": "42", "run_url": "https://github.com/example/repo/actions/runs/42",
+            "workflow": "Validate repository", "conclusion": "success", "head_sha": self.commit,
+        })
+        for count in (None, 4):
+            with self.subTest(count=count):
+                record["tests_run"] = count
+                report, code = owner_integration_evidence.check_validation_evidence(self.write(record), self.project, self.commit)
+                self.assertEqual((code, report["reasons"]), (shared_constants.VALIDATION_EXIT_PASSED, []))
+        del record["tests_run"]
+        self.assertIn("tests_run: is required", owner_integration_evidence.validation_evidence_reasons(record))
+        record["tests_run"] = None
+        record["ci"]["conclusion"] = "failure"
+        report, code = owner_integration_evidence.check_validation_evidence(self.write(record), self.project, self.commit)
+        self.assertEqual(code, shared_constants.VALIDATION_EXIT_FAILED)
+        self.assertIn("ci.conclusion: must be success", report["reasons"])
 
     def test_running_record_never_invokes_subprocess(self) -> None:
         record = self.record()

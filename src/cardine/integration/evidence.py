@@ -48,7 +48,8 @@ def validation_evidence_reasons(record: object) -> list[str]:
     for field in ("commit", "tree", "produced_at"):
         _validation_reason(reasons, isinstance(record.get(field), str) and bool(record.get(field)), f"{field}: must be a non-empty string")
     _validation_reason(reasons, isinstance(record.get("command"), list) and all(isinstance(item, str) and item for item in record.get("command", [])), "command: must be an array of non-empty strings")
-    _validation_reason(reasons, isinstance(record.get("tests_run"), int) and not isinstance(record.get("tests_run"), bool), "tests_run: must be an integer")
+    unknown_ci_count = record.get("level") == "T1_CI" and record.get("tests_run") is None
+    _validation_reason(reasons, unknown_ci_count or (isinstance(record.get("tests_run"), int) and not isinstance(record.get("tests_run"), bool)), "tests_run: must be an integer or null for T1_CI")
     status = record.get("status")
     if status == "running":
         for field in ("started_at", "log"):
@@ -115,7 +116,8 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
     except MeridianError as error:
         reasons.append(f"commit: {error}")
     _validation_reason(reasons, record.get("exit_code") == 0, "exit_code: must be 0")
-    _validation_reason(reasons, isinstance(record.get("tests_run"), int) and record.get("tests_run", 0) > 0, "tests_run: must be above 0")
+    unknown_ci_count = level == "T1_CI" and record.get("tests_run") is None
+    _validation_reason(reasons, unknown_ci_count or (isinstance(record.get("tests_run"), int) and record.get("tests_run", 0) > 0), "tests_run: must be above 0 or null for T1_CI")
     if level == "T1_CI" and isinstance(record.get("ci"), dict):
         ci = record["ci"]
         _validation_reason(reasons, ci.get("conclusion") == "success", "ci.conclusion: must be success")

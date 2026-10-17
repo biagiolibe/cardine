@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -45,12 +46,12 @@ class CiEvidenceTest(unittest.TestCase):
             ["git", *args], cwd=self.project, text=True, capture_output=True, check=True
         ).stdout.strip()
 
-    def run_script(self, responses: list[tuple[object | None, str | None]], *extra: str, clock=None) -> tuple[int, dict[str, str]]:
+    def run_script(self, responses: list[tuple[object | None, str | None]], *extra: str, clock=None, wall_clock=None) -> tuple[int, dict[str, str]]:
         with mock.patch.object(ci_evidence.shutil, "which", return_value="gh"), \
              mock.patch.object(ci_evidence, "gh_json", side_effect=responses), \
              contextlib.redirect_stdout(io.StringIO()) as stdout:
             code = ci_evidence.run(["--commit", self.commit, "--task", "114", "--output", str(self.output), *extra],
-                                   clock=clock or (lambda: 0), sleep=lambda _: None)
+                                   clock=clock or (lambda: 0), wall_clock=wall_clock or (lambda: 1792195200.875), sleep=lambda _: None)
         return code, json.loads(stdout.getvalue())
 
     def run_data(self, status="completed", conclusion="success", commit=None) -> dict[str, object]:
@@ -62,13 +63,22 @@ class CiEvidenceTest(unittest.TestCase):
         code, outcome = self.run_script([([run], None), (run, None), ({"tree": {"sha": self.tree}}, None)])
         self.assertEqual((code, outcome), (0, {"status": "passed"}))
         record = json.loads(self.output.read_text(encoding="utf-8"))
+        self.assertEqual(record["produced_at"], "2026-10-17T00:00:00Z")
+        self.assertEqual(record["command"], ci_evidence.CI_TEST_COMMAND)
+        self.assertIsNone(record["tests_run"])
         self.assertEqual(record["ci"], {"run_id": "42", "run_url": run["url"], "workflow": "Validate repository", "conclusion": "success", "head_sha": self.commit})
         report, verified = owner_integration_evidence.check_validation_evidence(self.output, self.project, self.commit)
         self.assertEqual((verified, report["status"]), (shared_constants.VALIDATION_EXIT_PASSED, "VALIDATION_PASSED"))
 
+    def test_command_constant_matches_workflow(self) -> None:
+        workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+        commands = [shlex.split(line.strip().removeprefix("- run: "))
+                    for line in workflow.splitlines() if line.strip().startswith("- run: ")]
+        self.assertIn(ci_evidence.CI_TEST_COMMAND, commands)
+
     def test_in_progress_then_success_polls_without_real_sleep(self) -> None:
         running, passed = self.run_data(status="in_progress", conclusion=None), self.run_data()
-        clock_values = iter((0, 0, 0, 0, 5))
+        clock_values = iter((0, 0, 0, 0))
         code, outcome = self.run_script([([running], None), (running, None), ([passed], None), (passed, None), ({"tree": {"sha": self.tree}}, None)], "--wait", "5", clock=lambda: next(clock_values))
         self.assertEqual((code, outcome), (0, {"status": "passed"}))
 
@@ -96,7 +106,7 @@ class CiEvidenceTest(unittest.TestCase):
 
     def test_transient_error_is_retried_inside_wait_window(self) -> None:
         run = self.run_data()
-        clock_values = iter((0, 0, 0, 5))
+        clock_values = iter((0, 0, 0))
         code, outcome = self.run_script([(None, "temporary gh error"), ([run], None), (run, None), ({"tree": {"sha": self.tree}}, None)], "--wait", "5", clock=lambda: next(clock_values))
         self.assertEqual((code, outcome), (0, {"status": "passed"}))
 

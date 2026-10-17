@@ -18,6 +18,7 @@ DEFAULT_WAIT_SECONDS = 0
 RUN_LIMIT = 100
 EXIT_PASSED, EXIT_PENDING, EXIT_FAILED = 0, 1, 2
 WORKFLOW_NAME = "Validate repository"
+CI_TEST_COMMAND = ["python3", "scripts/run_tests.py", "--parallel"]
 
 
 def gh_json(arguments: list[str]) -> tuple[object | None, str | None]:
@@ -83,14 +84,14 @@ def result(status: str, reason: str | None = None) -> int:
 
 def write_record(output: Path, task: str, run: dict[str, object], tree: str, now: Callable[[], float]) -> None:
     record = {"version": 1, "task_id": task, "status": "passed", "level": "T1_CI", "commit": run["headSha"], "tree": tree,
-              "command": ["python3", "-m", "unittest", "discover", "-s", "tests"], "exit_code": 0, "tests_run": 1,
-              "produced_at": datetime.fromtimestamp(now(), timezone.utc).isoformat().replace("+00:00", "Z"),
+              "command": CI_TEST_COMMAND, "exit_code": 0, "tests_run": None,
+              "produced_at": datetime.fromtimestamp(now(), timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
               "ci": {"run_id": str(run["databaseId"]), "run_url": run["url"], "workflow": str(run.get("workflowName") or WORKFLOW_NAME), "conclusion": "success", "head_sha": run["headSha"]}}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def run(arguments: list[str] | None = None, *, clock: Callable[[], float] = time.monotonic, sleep: Callable[[float], None] = time.sleep) -> int:
+def run(arguments: list[str] | None = None, *, clock: Callable[[], float] = time.monotonic, wall_clock: Callable[[], float] = time.time, sleep: Callable[[float], None] = time.sleep) -> int:
     parser = argparse.ArgumentParser(description="Write T1 CI evidence for an exact commit.")
     parser.add_argument("--commit", required=True)
     parser.add_argument("--task", required=True)
@@ -114,7 +115,7 @@ def run(arguments: list[str] | None = None, *, clock: Callable[[], float] = time
                 tree, tree_error = commit_tree(workflow_run)
                 if tree:
                     try:
-                        write_record(args.output, args.task, workflow_run, tree, clock)
+                        write_record(args.output, args.task, workflow_run, tree, wall_clock)
                     except OSError:
                         return result("failed", "output_write_failed")
                     return result("passed")
