@@ -45,6 +45,11 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.templates import files as owner_templates_files
 from cardine.templates import migrations as owner_templates_migrations
 from cardine.templates import router as owner_templates_router
+from cardine.hosts import codex as owner_hosts_codex
+from cardine.stops import render as owner_stops_render
+from cardine.templates import manifest as owner_templates_manifest
+from cardine.templates import marker_history as owner_templates_marker_history
+from cardine.worktree import storage as owner_worktree_storage
 
 
 class FakeLatestReleaseResponse:
@@ -5704,9 +5709,9 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         )
         config.write_text(original, encoding="utf-8")
         root = self.root / "worktrees"
-        plan = meridian.plan_codex_configuration(config, root)
+        plan = owner_hosts_codex.plan_codex_configuration(config, root)
         self.assertEqual(plan.status, "approval-required")
-        self.assertTrue(meridian.apply_codex_configuration(plan))
+        self.assertTrue(owner_hosts_codex.apply_codex_configuration(plan))
         changed = config.read_text(encoding="utf-8")
         self.assertIn("# keep this comment", changed)
         self.assertIn(str(root.resolve()), changed)
@@ -5722,22 +5727,22 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         self.assertLess(changed.index('model = "gpt-test"'), changed.index(meridian.CODEX_MANAGED_BEGIN))
         self.assertLess(changed.index(meridian.CODEX_MANAGED_END), changed.index("[features]"))
         self.assertEqual(config.with_name("config.toml.meridian.bak").read_text(encoding="utf-8"), original)
-        second = meridian.plan_codex_configuration(config, root)
+        second = owner_hosts_codex.plan_codex_configuration(config, root)
         self.assertEqual(second.status, "ready")
-        self.assertFalse(meridian.apply_codex_configuration(second))
+        self.assertFalse(owner_hosts_codex.apply_codex_configuration(second))
 
     def test_config_plan_repairs_managed_block_inserted_before_root_keys(self) -> None:
         config = self.root / "config.toml"
         root = (self.root / "worktrees").resolve()
         broken = (
-            meridian._codex_managed_block(root)
+            owner_hosts_codex._codex_managed_block(root)
             + '\n\nnotify = ["/usr/bin/example", "turn-ended"]\n'
             + 'model = "gpt-test"\n\n'
             + '[features]\nnetwork_proxy = false\n'
         )
         config.write_text(broken, encoding="utf-8")
 
-        plan = meridian.plan_codex_configuration(config, root)
+        plan = owner_hosts_codex.plan_codex_configuration(config, root)
 
         self.assertEqual(plan.status, "approval-required")
         repaired = plan.proposed_text or ""
@@ -5754,30 +5759,30 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         config = self.root / "config.toml"
         original = 'model = "gpt-test"\n'
         config.write_text(original, encoding="utf-8")
-        plan = meridian.plan_codex_configuration(config, self.root / "worktrees")
+        plan = owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
         with mock.patch.object(meridian.os, "replace", side_effect=OSError("simulated")):
             with self.assertRaises(OSError):
-                meridian.apply_codex_configuration(plan)
+                owner_hosts_codex.apply_codex_configuration(plan)
         self.assertEqual(config.read_text(encoding="utf-8"), original)
 
     def test_conflicting_and_malformed_configuration_is_blocked(self) -> None:
         config = self.root / "config.toml"
         config.write_text('sandbox_mode = "workspace-write"\n', encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, "legacy"):
-            meridian.plan_codex_configuration(config, self.root / "worktrees")
+            owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
         config.write_text("broken = [\n", encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, "malformed"):
-            meridian.plan_codex_configuration(config, self.root / "worktrees")
+            owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
 
     def test_managed_requirements_must_allow_the_profile(self) -> None:
         config = self.root / "config.toml"
         requirements = self.root / "requirements.toml"
         requirements.write_text('[allowed_permission_profiles]\nother = true\n', encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, "managed"):
-            meridian.plan_codex_configuration(config, self.root / "worktrees", requirements)
+            owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees", requirements)
         requirements.write_text('[allowed_permission_profiles]\nmeridian-worktrees = true\n', encoding="utf-8")
         self.assertEqual(
-            meridian.plan_codex_configuration(config, self.root / "worktrees", requirements).status,
+            owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees", requirements).status,
             "approval-required",
         )
 
@@ -5787,7 +5792,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
             'default_permissions = ":workspace"\n\n[permissions.other]\nextends = ":read-only"\n',
             encoding="utf-8",
         )
-        plan = meridian.plan_codex_configuration(config, self.root / "worktrees")
+        plan = owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
         self.assertIsNotNone(plan.proposed_text)
         parsed = tomllib.loads(plan.proposed_text or "")
         self.assertEqual(parsed["default_permissions"], "meridian-worktrees")
@@ -5816,7 +5821,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.temporary.cleanup()
 
     def resolve(self, explicit: Path | None = None, **environment: str) -> meridian.ResolvedWorktreeRoot:
-        return meridian.resolve_worktree_root(
+        return owner_worktree_storage.resolve_worktree_root(
             explicit,
             environment={**self.environment, **environment},
             home=self.home,
@@ -5983,7 +5988,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
 
         other = self.home / "other"
-        self.codex_config.write_text(meridian._codex_managed_block(other) + "\n", encoding="utf-8")
+        self.codex_config.write_text(owner_hosts_codex._codex_managed_block(other) + "\n", encoding="utf-8")
         different = meridian.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
         self.assertEqual(different.codex_state, "different-root")
         self.assertIn("profile=", meridian.codex_profile_root_mismatch(self.codex_config, root) or "")
@@ -6609,14 +6614,14 @@ class CodexProfileRepairTest(unittest.TestCase):
     def assert_blocked_unchanged(self, text: str, pattern: str) -> None:
         self.config.write_text(text, encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, pattern):
-            meridian.plan_codex_configuration(self.config, self.worktrees)
+            owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(self.config.read_text(encoding="utf-8"), text)
 
     def test_observed_rewrite_is_a_named_repairable_state(self) -> None:
         text = self.rewritten()
         self.config.write_text(text, encoding="utf-8")
 
-        plan = meridian.plan_codex_configuration(self.config, self.worktrees)
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
 
         self.assertEqual(plan.status, "repair-required")
         self.assertIn("ownership-metadata-repair", plan.detail)
@@ -6628,7 +6633,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         original = self.rewritten(tables=self.profile_tables(old_root))
         self.config.write_text(original, encoding="utf-8")
 
-        plan = meridian.plan_codex_configuration(self.config, self.worktrees)
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
 
         self.assertEqual(plan.status, "repair-and-replace-required")
         self.assertIn("restores Meridian's ownership metadata and replaces the one configured worktree root", plan.detail)
@@ -6654,9 +6659,9 @@ class CodexProfileRepairTest(unittest.TestCase):
         backup = self.config.with_name("config.toml.meridian-repair.bak")
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
-        ready = meridian.plan_codex_configuration(self.config, self.worktrees)
+        ready = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(ready.status, "ready")
-        self.assertFalse(meridian.apply_codex_configuration(ready))
+        self.assertFalse(owner_hosts_codex.apply_codex_configuration(ready))
 
     def test_moved_and_normalized_markers_with_an_old_root_use_the_combined_state(self) -> None:
         old_root = self.root / "old-worktrees"
@@ -6668,7 +6673,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         for name, text in shapes.items():
             with self.subTest(name):
                 self.config.write_text(text, encoding="utf-8")
-                plan = meridian.plan_codex_configuration(self.config, self.worktrees)
+                plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
                 self.assertEqual(plan.status, "repair-and-replace-required")
                 self.assertEqual(
                     tomllib.loads(plan.proposed_text or "")["permissions"]["meridian-worktrees"]["workspace_roots"],
@@ -6698,13 +6703,13 @@ class CodexProfileRepairTest(unittest.TestCase):
         for name, text in shapes.items():
             with self.subTest(name):
                 self.config.write_text(text, encoding="utf-8")
-                plan = meridian.plan_codex_configuration(self.config, self.worktrees)
+                plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
                 self.assertEqual(plan.status, "repair-required")
                 self.assertEqual(tomllib.loads(plan.proposed_text or ""), tomllib.loads(text))
                 self.config.write_text(plan.proposed_text or "", encoding="utf-8")
-                again = meridian.plan_codex_configuration(self.config, self.worktrees)
+                again = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
                 self.assertEqual(again.status, "ready")
-                self.assertFalse(meridian.apply_codex_configuration(again))
+                self.assertFalse(owner_hosts_codex.apply_codex_configuration(again))
 
     def test_apply_repairs_with_exclusive_private_backup_and_preserves_unrelated_text(self) -> None:
         original = self.rewritten()
@@ -6712,8 +6717,8 @@ class CodexProfileRepairTest(unittest.TestCase):
         stale = self.config.with_name("config.toml.meridian.bak")
         stale.write_text("stale first-apply backup\n", encoding="utf-8")
 
-        plan = meridian.plan_codex_configuration(self.config, self.worktrees)
-        self.assertTrue(meridian.apply_codex_configuration(plan))
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
+        self.assertTrue(owner_hosts_codex.apply_codex_configuration(plan))
 
         repaired = self.config.read_text(encoding="utf-8")
         self.assertIn("# app-managed header", repaired)
@@ -6725,22 +6730,22 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.config.stat().st_mode & 0o777, 0o600)
-        self.assertEqual(meridian.plan_codex_configuration(self.config, self.worktrees).status, "ready")
+        self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees).status, "ready")
 
         # A later app rewrite gets its own backup instead of overwriting the earlier one.
         later = repaired.replace(meridian.CODEX_MANAGED_END + "\n", "")
         self.config.write_text(later, encoding="utf-8")
-        self.assertTrue(meridian.apply_codex_configuration(meridian.plan_codex_configuration(self.config, self.worktrees)))
+        self.assertTrue(owner_hosts_codex.apply_codex_configuration(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)))
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
         self.assertEqual(self.config.with_name("config.toml.meridian-repair.1.bak").read_text(encoding="utf-8"), later)
 
     def test_apply_refuses_when_the_file_changed_after_planning(self) -> None:
         self.config.write_text(self.rewritten(), encoding="utf-8")
-        plan = meridian.plan_codex_configuration(self.config, self.worktrees)
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         changed = self.rewritten() + "# edited after planning\n"
         self.config.write_text(changed, encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, "changed since"):
-            meridian.apply_codex_configuration(plan)
+            owner_hosts_codex.apply_codex_configuration(plan)
         self.assertEqual(self.config.read_text(encoding="utf-8"), changed)
 
     def test_divergent_profiles_are_never_adopted_and_name_the_field(self) -> None:
@@ -6788,7 +6793,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assert_blocked_unchanged(self.rewritten() + self.profile_tables(), "malformed")
         self.config.write_text(f'sandbox_mode = "workspace-write"\n{self.rewritten()}', encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, "legacy"):
-            meridian.plan_codex_configuration(self.config, self.worktrees)
+            owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
 
     def test_stray_markers_without_a_profile_remain_blocked(self) -> None:
         for text in (
@@ -6801,8 +6806,8 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def test_intact_markers_with_another_root_keep_the_managed_replace_path(self) -> None:
         old_root = self.root / "old-root"
-        self.config.write_text(meridian._codex_managed_block(old_root) + "\n", encoding="utf-8")
-        plan = meridian.plan_codex_configuration(self.config, self.worktrees)
+        self.config.write_text(owner_hosts_codex._codex_managed_block(old_root) + "\n", encoding="utf-8")
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(plan.status, "approval-required")
         self.assertEqual(
             tomllib.loads(plan.proposed_text or "")["permissions"]["meridian-worktrees"]["workspace_roots"],
@@ -6858,7 +6863,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertIn("git-metadata", report)
 
         other_root = self.root / "other-root"
-        self.config.write_text(meridian._codex_managed_block(other_root) + "\n", encoding="utf-8")
+        self.config.write_text(owner_hosts_codex._codex_managed_block(other_root) + "\n", encoding="utf-8")
         different = meridian.codex_doctor(self.root, self.config, self.worktrees)
         self.assertEqual(
             different["codex-root-mismatch"],
@@ -7326,8 +7331,8 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
         import meridian as m
 
         managed = [m.ManagedFile(source=Path("unused"), target=Path("AGENTS.md"))]
-        original_managed_files = m.managed_files
-        m.managed_files = lambda framework_root, mode: managed
+        original_managed_files = owner_templates_marker_history.managed_files
+        owner_templates_marker_history.managed_files = lambda framework_root, mode: managed
         try:
             absent = m.detect_capabilities(self.project, "governed-sdd", self.framework)
             self.assertEqual(len(absent), 1)
@@ -7349,7 +7354,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
             satisfied = m.detect_capabilities(self.project, "governed-sdd", self.framework)
             self.assertTrue(satisfied[0].present)
         finally:
-            m.managed_files = original_managed_files
+            owner_templates_marker_history.managed_files = original_managed_files
 
 
 class CapabilityProfileManifestTest(unittest.TestCase):
@@ -7451,7 +7456,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "notApplicableRationale": None,
             }
         manifest["managedFiles"] = managed_files
-        meridian.write_manifest(project, manifest, ROOT)
+        owner_templates_manifest.write_manifest(project, manifest, ROOT)
         return manifest
 
     def audit(self, project: Path, mode: str = "lean-delivery") -> tuple[int, str]:
@@ -7538,7 +7543,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                     "verifierVersion": None,
                     "notApplicableRationale": None,
                 }
-            meridian.write_manifest(project, manifest, ROOT)
+            owner_templates_manifest.write_manifest(project, manifest, ROOT)
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = meridian.run_audit(
@@ -7636,12 +7641,12 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
                 project = Path(directory)
                 manifest = self.manifest(mode)
-                meridian.write_manifest(project, manifest, ROOT)
+                owner_templates_manifest.write_manifest(project, manifest, ROOT)
                 written = json.loads((project / shared_constants.MANIFEST_PATH).read_text(encoding="utf-8"))
                 self.assertEqual(written["protocolVersion"], 2)
                 self.assertEqual(written["workflowMode"], mode)
                 self.assertNotIn("mode", written)
-                loaded = meridian.load_manifest(project, ROOT)
+                loaded = owner_templates_manifest.load_manifest(project, ROOT)
                 self.assertEqual(owner_templates_catalog.manifest_workflow_mode(loaded), mode)
                 self.assertEqual(len(owner_templates_catalog.parse_capability_profiles(loaded, self.catalog)), 1)
 
@@ -7656,18 +7661,18 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "040-pretooluse-read-guard",
             ],
         }
-        self.assertEqual(meridian.validate_manifest(legacy, self.catalog), ())
-        projected = meridian.canonical_manifest(legacy)
+        self.assertEqual(owner_templates_manifest.validate_manifest(legacy, self.catalog), ())
+        projected = owner_templates_manifest.canonical_manifest(legacy)
         self.assertEqual(projected["workflowMode"], "lean-delivery")
         self.assertNotIn("mode", projected)
         self.assertNotIn("capabilityProfiles", projected)
-        self.assertEqual(projected, meridian.canonical_manifest(legacy))
+        self.assertEqual(projected, owner_templates_manifest.canonical_manifest(legacy))
 
     def test_conflicting_mode_aliases_are_rejected(self) -> None:
         manifest = self.manifest()
         manifest["mode"] = "governed-sdd"
         with self.assertRaisesRegex(shared_errors.MeridianError, "mode and workflowMode conflict"):
-            meridian.validate_manifest(manifest, self.catalog)
+            owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
     def test_invalid_state_empty_surface_and_missing_positive_evidence_are_rejected(self) -> None:
         cases = []
@@ -7682,7 +7687,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         cases.append((no_evidence, "INSTALLED requires evidence"))
         for manifest, message in cases:
             with self.subTest(message=message), self.assertRaisesRegex(shared_errors.MeridianError, message):
-                meridian.validate_manifest(manifest, self.catalog)
+                owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
     def test_not_applicable_requires_a_catalog_backed_rationale(self) -> None:
         manifest = self.manifest()
@@ -7692,10 +7697,10 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             "evidence": [],
             "notApplicableRationale": "host-profile-unsupported",
         }
-        meridian.validate_manifest(manifest, self.catalog)
+        owner_templates_manifest.validate_manifest(manifest, self.catalog)
         hosts["codex-project"]["notApplicableRationale"] = None
         with self.assertRaisesRegex(shared_errors.MeridianError, "catalog-backed rationale"):
-            meridian.validate_manifest(manifest, self.catalog)
+            owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
     def test_upgrade_check_reads_profile_without_writing_or_promoting_state(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -7772,7 +7777,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 path.write_text(relative_path + "\n## Reasoning profile\n", encoding="utf-8")
             manifest = self.installed_project(project)
             manifest["frameworkVersion"] = meridian.read_version(ROOT)
-            meridian.write_manifest(project, manifest, ROOT)
+            owner_templates_manifest.write_manifest(project, manifest, ROOT)
             with mock.patch.object(meridian, "retired_text_advisories", return_value=[]):
                 baseline_code, _ = self.audit(project)
             self.assertEqual(baseline_code, 0)
@@ -7958,7 +7963,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "evidence": [],
                 "notApplicableRationale": "host-profile-unsupported",
             }
-            meridian.write_manifest(project, manifest, framework)
+            owner_templates_manifest.write_manifest(project, manifest, framework)
             (project / ".meridian/candidate-validation.json").write_text(
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
@@ -7979,7 +7984,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def test_legacy_lean_manifest_is_named_and_migration_history_is_not_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
-            meridian.write_manifest(
+            owner_templates_manifest.write_manifest(
                 project,
                 {
                     "protocolVersion": 1,
@@ -8035,7 +8040,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "managedFiles": {},
                 "appliedMigrations": [],
             }
-            meridian.write_manifest(project, manifest, ROOT)
+            owner_templates_manifest.write_manifest(project, manifest, ROOT)
             profile = self.catalog.profile("meridian-self-hosting")
             self.assertIsNotNone(profile)
             for capability_id, _version in profile.capabilities:
@@ -8145,10 +8150,10 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
 
     def test_strict_validation_still_rejects_the_older_surface(self) -> None:
         with self.assertRaisesRegex(shared_errors.MeridianError, "must completely match the catalog surface"):
-            meridian.validate_manifest(self.old, self.catalog)
+            owner_templates_manifest.validate_manifest(self.old, self.catalog)
 
         gaps: list[tuple[str, str, tuple[str, ...]]] = []
-        meridian.validate_manifest(self.old, self.catalog, gaps)
+        owner_templates_manifest.validate_manifest(self.old, self.catalog, gaps)
         self.assertEqual(gaps, [(self.PROFILE, self.CAPABILITY, (self.ADDED,))])
 
     def test_check_prints_the_row_and_writes_nothing(self) -> None:
@@ -8171,7 +8176,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         self.assertEqual(
             after["capabilityProfiles"], self.expected["capabilityProfiles"]
         )
-        meridian.validate_manifest(after, self.catalog)
+        owner_templates_manifest.validate_manifest(after, self.catalog)
         again = self.run_cli("upgrade", "--check")
         self.assertNotIn("PROFILE-SURFACE", again.stdout)
 
@@ -8237,7 +8242,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
             wrong_profile_version, wrong_capability_version, missing_capability,
         ):
             with self.subTest(change=change.__name__), self.assertRaises(shared_errors.MeridianError):
-                meridian.validate_manifest(mutated(change), self.catalog, [])
+                owner_templates_manifest.validate_manifest(mutated(change), self.catalog, [])
 
 
 class WorktreeLifecycleCliTest(unittest.TestCase):
@@ -8371,7 +8376,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(worktrees.count("\nworktree ") + worktrees.startswith("worktree "), 2)
 
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
-        state_path, _lease, _integration = meridian._lifecycle_paths(self.project, identity)
+        state_path, _lease, _integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
         legacy = json.loads(state_path.read_text(encoding="utf-8"))
         legacy.pop("started_at")
         state_path.write_text(json.dumps(legacy), encoding="utf-8")
@@ -8485,7 +8490,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         status("C5", "EVIDENCE_INCOMPLETE")
 
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
-        state, lease, integration = meridian._lifecycle_paths(self.project, identity)
+        state, lease, integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
         task_commit = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=worktree, check=True, capture_output=True, text=True
         ).stdout.strip()
@@ -8569,7 +8574,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "add", "implementation.txt"], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "complete task"], cwd=worktree, check=True, capture_output=True)
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
-        state, _lease, _integration = meridian._lifecycle_paths(self.project, identity)
+        state, _lease, _integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
         task_commit = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=worktree, check=True, capture_output=True, text=True
         ).stdout.strip()
@@ -8634,13 +8639,13 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def test_stop_helper_formats_registered_codes_and_rejects_others(self) -> None:
         self.assertEqual(
-            meridian.format_stop("PUSH_PENDING", "main is ahead"),
+            owner_stops_render.format_stop("PUSH_PENDING", "main is ahead"),
             "BLOCKED PUSH_PENDING: main is ahead; resume: git push origin main",
         )
         with self.assertRaises(shared_errors.InternalStopError):
-            meridian.format_stop("NOT_A_REGISTERED_CODE", "detail", resume="x")
+            owner_stops_render.format_stop("NOT_A_REGISTERED_CODE", "detail", resume="x")
         with self.assertRaises(shared_errors.InternalStopError):
-            meridian.stop_resume("WRONG_WORKTREE", task_id="056")
+            owner_stops_render.stop_resume("WRONG_WORKTREE", task_id="056")
 
     def test_stop_registry_covers_closure_codes_and_names_real_tests(self) -> None:
         registry = stops_registry.load_stop_registry()
@@ -8727,7 +8732,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def test_integrate_stage_reports_a_held_lease_through_the_registry(self) -> None:
         evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
-        _state, lease, _integration = meridian._lifecycle_paths(self.project, identity)
+        _state, lease, _integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
         lease.write_text(json.dumps({"task_id": "056"}), encoding="utf-8")
         result = self.run_cli(*self._stage_args(evidence_path))
         self.assertEqual(result.returncode, 2)
@@ -8944,7 +8949,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual([line["command"] for line in self._journal()].count("evidence"), 1)
 
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
-        _state, lease, integration = meridian._lifecycle_paths(self.project, identity)
+        _state, lease, integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
         subprocess.run(["git", "merge", "--abort"], cwd=self.project, check=True)
         lease.unlink()
         integration.unlink()

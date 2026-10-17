@@ -11,6 +11,8 @@ from tests import test_task_worktree_isolation as fixtures
 meridian = fixtures.meridian
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
+from cardine.stops import render as owner_stops_render
+from cardine.worktree import storage as owner_worktree_storage
 
 
 class TaskIntegrationStateTest(unittest.TestCase):
@@ -94,10 +96,10 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertTrue(str(caught.exception).startswith(f"BLOCKED {code}:"), str(caught.exception))
         self.assertIn(detail, str(caught.exception))
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        _state, lease, integration = meridian._lifecycle_paths(self.primary, identity)
+        _state, lease, integration = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease.exists())
         self.assertFalse(integration.exists())
-        self.assertFalse(meridian._merge_head_path(self.primary).exists())
+        self.assertFalse(owner_worktree_storage._merge_head_path(self.primary).exists())
         self.assertEqual(self.git("rev-parse", "HEAD").stdout, before)
         self.assertEqual(self.git("write-tree").stdout, tree)
         self.assertEqual((self.primary / "tasks/QUEUE.md").read_bytes(), queue)
@@ -277,7 +279,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     self.assertEqual(command[command.index("--project") + 1], str(self.worker))
                 for path, tree in before.items():
                     self.assertEqual(self.git("write-tree", cwd=path).stdout, tree)
-                self.assertFalse(meridian._merge_head_path(self.primary).exists())
+                self.assertFalse(owner_worktree_storage._merge_head_path(self.primary).exists())
 
     def test_advance_requires_state_even_before_machine_state_adoption(self):
         self.start(workflow="lean-delivery")
@@ -303,7 +305,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_missing_state_resume_selects_registered_worktree(self):
         self.start()
-        resume = meridian.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
+        resume = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
         self.assertEqual(shlex.split(resume)[shlex.split(resume).index("--project") + 1], str(self.worker))
         (self.worker / ".meridian/tasks").mkdir()
         error = self.assert_stop("TASK_STATE_MISSING", ".meridian/tasks/056.json")

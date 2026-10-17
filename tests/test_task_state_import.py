@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
 import cardine.tasks.state as task_state
+from cardine.stops import render as owner_stops_render
 
 
 class TaskStateImportTest(unittest.TestCase):
@@ -62,7 +63,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertFalse((self.root / ".meridian/tasks").exists())
         self.assertEqual(self.cli("001", "--apply").returncode, 0)
         path = self.root / proposal["path"]
-        state = task_state.read_task_state(self.root, "001", "governed-sdd", stop_factory=meridian.stop_error)
+        state = task_state.read_task_state(self.root, "001", "governed-sdd", stop_factory=owner_stops_render.stop_error)
         self.assertEqual(state["transitions"][0]["commit"], self.git("rev-parse", "HEAD"))
         self.assertEqual(state["status"], "IN_PROGRESS")
         original = path.read_bytes()
@@ -140,7 +141,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.add_task("002", "`[x]`").unlink()
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
-        state = task_state.read_task_state(self.root, "001", "lean-delivery", stop_factory=meridian.stop_error)
+        state = task_state.read_task_state(self.root, "001", "lean-delivery", stop_factory=owner_stops_render.stop_error)
         self.assertEqual(state["status"], "QUEUED")
         self.assertEqual(state["transitions"], [])
         self.assertEqual(json.loads(result.stdout)["tasks"][1]["action"], "skip-terminal")
@@ -152,12 +153,12 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         for task_id, spike in (("001", True), ("002", False)):
             state = task_state.read_task_state(self.root, task_id, "governed-sdd", spike=spike,
-                                               review_required=None, stop_factory=meridian.stop_error)
+                                               review_required=None, stop_factory=owner_stops_render.stop_error)
             self.assertFalse(state["review"]["required"])
             if not spike:
                 meridian.transition_task_state(self.root, task_id, "ACCEPTED")
                 task_state.read_task_state(self.root, task_id, "governed-sdd", review_required=None,
-                                           stop_factory=meridian.stop_error)
+                                           stop_factory=owner_stops_render.stop_error)
 
     def test_duplicate_rows_and_review_policy_disagreement_refused(self):
         record = self.add_task("001")
