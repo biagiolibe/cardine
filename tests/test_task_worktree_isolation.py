@@ -21,6 +21,7 @@ import cardine.integration.decision as integration_decision
 import cardine.shared.errors as shared_errors
 import project_console  # noqa: E402
 from cardine.tasks import identity as owner_tasks_identity
+from cardine.worktree import storage as owner_worktree_storage
 
 
 class TaskWorktreeIsolationTest(unittest.TestCase):
@@ -452,7 +453,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_stale_base_check_and_repair(self) -> None:
         prepared, worktree = self.stale_base()
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        state_path, _, _ = meridian._lifecycle_paths(self.primary, identity)
+        state_path, _, _ = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         evidence_path = state_path.with_suffix(".evidence.json")
         evidence_path.write_text(json.dumps({"validated_base_commit": self.base}), encoding="utf-8")
         evidence_before = evidence_path.read_bytes()
@@ -531,7 +532,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_base_repair_rejects_unsafe_worktree_facts(self) -> None:
         _, worktree = self.stale_base()
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        state_path, lease, integration = meridian._lifecycle_paths(self.primary, identity)
+        state_path, lease, integration = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         original = state_path.read_bytes()
         mutations = [
             (worktree / "dirty.txt", "dirty\n"),
@@ -903,7 +904,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         with self.assertRaisesRegex(shared_errors.MeridianError, "UNDECLARED_VALIDATION_COMMANDS"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        _state, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
+        _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease_path.exists())
         self.assertFalse(integration_path.exists())
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
@@ -939,7 +940,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
             meridian.finalize_task_integration("056", validation_path, self.primary)
 
-        _state, lease_path, integration_path = meridian._lifecycle_paths(
+        _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(
             self.primary, owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         )
         self.assertTrue(lease_path.is_file())
@@ -1478,7 +1479,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        state_path, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
+        state_path, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         references = self.git("show-ref").stdout
         worktree_state = state_path.read_text(encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, r"paths changed after validation: .*other.md"):
@@ -1520,7 +1521,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_abort_recovers_an_owned_lease_before_merge_state_exists(self) -> None:
         self.prepare()
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        _task_state, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
+        _task_state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         meridian._write_json_atomic(
             lease_path,
             {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary)},
@@ -1535,7 +1536,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_abort_recovers_when_the_queue_link_is_stale(self) -> None:
         self.prepare()
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        _task_state, lease_path, _integration_path = meridian._lifecycle_paths(self.primary, identity)
+        _task_state, lease_path, _integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         meridian._write_json_atomic(
             lease_path,
             {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary)},
@@ -1928,7 +1929,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         with self.assertRaisesRegex(shared_errors.MeridianError, r"source.py"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        _state, lease, staged = meridian._lifecycle_paths(self.primary, identity)
+        _state, lease, staged = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease.exists())
         self.assertFalse(staged.exists())
 

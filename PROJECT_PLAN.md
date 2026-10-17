@@ -34,7 +34,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 008 — Extract usage, validation, stop registry, marker, and mode modules (split plan E03).
 - `[x]` 009 — Extract protocol, Claude host, budget, project, and catalog modules (split plan E04).
 - `[x]` 010 — Extract migration, identity, file, router, and authority modules (split plan E05).
-- `[ ]` 011 — Extract stop rendering, manifest, marker history, worktree storage, and Codex host modules (split plan E06).
+- `[x]` 011 — Extract stop rendering, manifest, marker history, worktree storage, and Codex host modules (split plan E06).
 - `[ ]` 012 — Extract projection, update, verdict, context, and journal modules (split plan E07).
 - `[ ]` 013 — Extract evidence, marker audit, migration audit, worktree path, and skill modules (split plan E08).
 - `[ ]` 014 — Extract flow, task audit, contract, importer, and budget command modules (split plan E09).

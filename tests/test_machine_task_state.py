@@ -17,6 +17,7 @@ import meridian
 import cardine.shared.errors as shared_errors
 import cardine.tasks.state as task_state
 from cardine.shared import authority as owner_shared_authority
+from cardine.stops import render as owner_stops_render
 
 SHA = "a" * 40
 AT = "2026-10-11T12:00:00Z"
@@ -59,7 +60,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.path.write_text(json.dumps(state))
 
     def read(self, workflow="lean-delivery", spike=False):
-        return task_state.read_task_state(self.root, "001", workflow, spike=spike, stop_factory=meridian.stop_error)
+        return task_state.read_task_state(self.root, "001", workflow, spike=spike, stop_factory=owner_stops_render.stop_error)
 
     def test_every_machine_edge_and_terminal_refusals(self):
         paths = {
@@ -100,7 +101,7 @@ class MachineTaskStateTest(unittest.TestCase):
 
     def test_missing_resume_without_worktree_uses_primary(self):
         import shlex
-        resume = meridian.stop_resume("TASK_STATE_MISSING", task_id="001", project=self.root)
+        resume = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="001", project=self.root)
         self.assertEqual(shlex.split(resume)[shlex.split(resume).index("--project") + 1], str(self.root))
 
     def test_first_creation_head_timestamp_and_projection(self):
@@ -135,7 +136,7 @@ class MachineTaskStateTest(unittest.TestCase):
             result = self.cli(status)
             self.assertEqual(result.returncode, 0, result.stderr)
         state = task_state.read_task_state(self.root, "001", "governed-sdd", review_required=False,
-                                          stop_factory=meridian.stop_error)
+                                          stop_factory=owner_stops_render.stop_error)
         self.assertEqual(state["status"], "ACCEPTED")
         with self.assertRaises(task_state.TaskStateInvalid):
             task_state.validate_task_state(state, "001", "governed-sdd")

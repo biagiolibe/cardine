@@ -13,6 +13,7 @@ from urllib.error import URLError, HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
 import cardine.shared.errors as shared_errors
+from cardine.hosts import codex as owner_hosts_codex
 
 
 class SelfUpdateTest(unittest.TestCase):
@@ -166,7 +167,7 @@ class SelfUpdateTest(unittest.TestCase):
             self.assert_refused('SELF_UPDATE_TARGET', apply=True, target_tag='v1.2.1')
 
     def test_managed_rules_do_not_allow_apply(self):
-        self.assertNotIn('self-update', meridian.CODEX_USER_RULES)
+        self.assertNotIn('self-update', owner_hosts_codex.CODEX_USER_RULES)
 
     def test_cli_uses_own_checkout_and_requires_explicit_mode(self):
         with patch.object(sys, 'argv', ['meridian', '--framework-root', str(self.root),

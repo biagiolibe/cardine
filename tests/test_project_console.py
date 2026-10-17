@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import project_console as console  # noqa: E402
 from cardine.tasks import identity as owner_tasks_identity
+from cardine.worktree import storage as owner_worktree_storage
 
 
 HEADER = (
@@ -2412,13 +2413,15 @@ class SnapshotCostTest(RepoCase):
         identity = owner_tasks_identity.resolve_task_identity(self.project, "TASK-001", "existing")
         with mock.patch.object(Path, "cwd", return_value=self.project), \
              mock.patch.object(meridian, "resolve_task_identity",
+                               side_effect=AssertionError("resolved again")), \
+             mock.patch.object(owner_worktree_storage, "resolve_task_identity",
                                side_effect=AssertionError("resolved again")):
             report, _ready = meridian.closure_status(
                 "TASK-001", None, self.project, identity=identity)
             self.assertEqual(report["task_id"], "TASK-001")
             # No lifecycle state was prepared, so the read ends on that, not on resolution.
             with self.assertRaisesRegex(shared_errors.MeridianError, "worktree lifecycle state"):
-                meridian.lifecycle_started_at("TASK-001", self.project, identity=identity)
+                owner_worktree_storage.lifecycle_started_at("TASK-001", self.project, identity=identity)
 
     def test_snapshot_is_identical_with_and_without_caches(self) -> None:
         self.populate()

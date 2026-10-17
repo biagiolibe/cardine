@@ -341,50 +341,58 @@ from cardine.shared.authority import (  # noqa: E402
     resolve_authority_entry,
     context_authority,
 )
-
-
-def _task_state_recovery_project(project: Path, task_id: str) -> Path:
-    """Direct state recovery to the task branch's registered checkout when present."""
-    project = project.expanduser().resolve()
-    try:
-        primary = canonical_project_root(project)
-        identity = resolve_task_identity(primary, task_id, "existing", check_queue_links=False)
-        return next((Path(item["worktree"]).resolve() for item in _git_worktrees(primary)
-                     if item.get("branch") == f"refs/heads/{identity.branch_name}"), primary)
-    except MeridianError:
-        return project
-
-
-def stop_resume(code: str, **fields: object) -> str:
-    """Return the registered resume template for `code` with its fields filled in."""
-    entry = load_stop_registry().get(code)
-    if entry is None:
-        raise InternalStopError(f"unregistered stop code: {code}")
-    if code == "TASK_STATE_MISSING" and fields.get("project") and fields.get("task_id"):
-        fields["project"] = shlex.quote(str(_task_state_recovery_project(
-            Path(str(fields["project"])), str(fields["task_id"]),
-        )))
-    try:
-        return str(entry["resume"]).format(**fields)
-    except KeyError as error:
-        raise InternalStopError(f"stop {code} resume template needs field {error}") from error
-
-
-def format_stop(code: str, detail: str, *, resume: str | None = None, **fields: object) -> str:
-    """Format the single `BLOCKED <CODE>: <detail>; resume: <command>` line."""
-    resume_text = resume if resume is not None else stop_resume(code, **fields)
-    if code not in load_stop_registry():
-        raise InternalStopError(f"unregistered stop code: {code}")
-    return f"BLOCKED {code}: {detail}; resume: {resume_text}"
-
-
-def stop_error(code: str, detail: str, **fields: object) -> MeridianStop:
-    """Build the error for a registered stop; the CLI prints it unchanged and exits 2."""
-    if code == "TASK_STATE_MISSING":
-        # Missing state is also a normal legacy probe. Resolve Git recovery paths
-        # only when the stop is displayed, not when a caller catches that probe.
-        return MeridianStop(code, detail, render=lambda: format_stop(code, detail, **fields))
-    return MeridianStop(code, format_stop(code, detail, **fields))
+from cardine.hosts.codex import (  # noqa: E402
+    CODEX_USER_RULES,
+    plan_codex_user_rules,
+    apply_codex_user_rules,
+    _toml_quote,
+    _codex_managed_block,
+    _replace_codex_managed_block,
+    _without_top_level_default_permissions,
+    _codex_expected_profile,
+    _codex_profile_divergence,
+    _codex_header_patterns,
+    _codex_markers_intact,
+    _without_codex_profile_text,
+    _plan_codex_ownership_repair,
+    _plan_codex_ownership_repair_and_root_replacement,
+    plan_codex_configuration,
+    print_codex_configuration_plan,
+    _write_exclusive_backup,
+    _unused_repair_backup,
+    apply_codex_configuration,
+)
+from cardine.stops.render import (  # noqa: E402
+    _task_state_recovery_project,
+    stop_resume,
+    format_stop,
+    stop_error,
+)
+from cardine.templates.manifest import (  # noqa: E402
+    validate_manifest,
+    load_manifest,
+    canonical_manifest,
+    write_manifest,
+)
+from cardine.templates.marker_history import (  # noqa: E402
+    declared_capability_moves,
+    pending_migration_establishes_move_source,
+    capability_presence_map,
+    retired_capability_versions,
+)
+from cardine.worktree.storage import (  # noqa: E402
+    _verified_lifecycle_project,
+    user_configuration_path,
+    _read_user_configuration,
+    resolve_worktree_root,
+    _effective_worktree_root,
+    _lifecycle_paths,
+    _merge_head_path,
+    _branch_commit,
+    lifecycle_started_at,
+    _dirty_summary,
+    _proven_stale_base,
+)
 
 
 JOURNAL_NAME = "meridian-journal.jsonl"
@@ -483,106 +491,6 @@ def append_journal_line(project_root: Path, line: Mapping[str, object]) -> None:
             raise OSError("short journal write")
     finally:
         os.close(descriptor)
-
-
-CODEX_USER_RULES = '''# MERIDIAN:BEGIN codex-user-rules v1
-# Plain pushes to origin only. A flag placed after the refspec
-# (`git push origin main --force`) is not caught by prefix rules; the GitHub
-# ruleset on main and stable is the real guard against that form.
-prefix_rule(pattern=["git", "push", "origin"], decision="allow")
-prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"]], decision="forbidden")
-prefix_rule(pattern=["git", "push", "origin", ["--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"]], decision="forbidden")
-
-# Meridian read-only and task-lifecycle commands. Commands that change machine
-# or project configuration (setup/codex configure --apply, upgrade --apply,
-# adopt, finalize-adoption, lock, generate-*) keep prompting.
-prefix_rule(pattern=["meridian", ["--version", "self-check", "console", "audit", "profile", "locations", "project", "context", "adr", "budget", "report", "usage", "validation", "execution", "task", "review"]], decision="allow")
-prefix_rule(pattern=["meridian", "worktree"], decision="allow")
-prefix_rule(pattern=["meridian", "codex", ["doctor", "worktree-path"]], decision="allow")
-prefix_rule(pattern=["meridian", ["upgrade", "setup"], "--check"], decision="allow")
-prefix_rule(pattern=["meridian", "codex", "configure", "--check"], decision="allow")
-
-# Read-only GitHub CLI. `gh api` stays unlisted: it can send writing requests.
-prefix_rule(pattern=["gh", "release", ["list", "view"]], decision="allow")
-prefix_rule(pattern=["gh", "run", ["list", "view", "watch"]], decision="allow")
-prefix_rule(pattern=["gh", "pr", ["list", "view", "checks", "diff"]], decision="allow")
-prefix_rule(pattern=["gh", "issue", ["list", "view"]], decision="allow")
-prefix_rule(pattern=["gh", "repo", "view"], decision="allow")
-prefix_rule(pattern=["gh", "auth", "status"], decision="allow")
-
-# Git and system commands that do not discard work.
-prefix_rule(pattern=["git", "write-tree"], decision="allow")
-prefix_rule(pattern=["git", "fetch"], decision="allow")
-prefix_rule(pattern=["git", "restore", "--staged"], decision="allow")
-prefix_rule(pattern=["git", "rm"], decision="allow")
-prefix_rule(pattern=["git", "rm", ["-f", "--force"]], decision="prompt")
-prefix_rule(pattern=["ps"], decision="allow")
-# MERIDIAN:END codex-user-rules
-'''
-
-
-def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
-    # Read bytes so CRLF and missing final newlines in foreign rules survive.
-    text = path.read_bytes().decode("utf-8") if path.exists() else ""
-    markers = list(re.finditer(r"(?m)^.*# MERIDIAN:(?:BEGIN|END) codex-user-rules[^\r\n]*", text))
-    if markers:
-        if (len(markers) != 2
-            or not re.fullmatch(r"# MERIDIAN:BEGIN codex-user-rules v[0-9]+", markers[0].group())
-            or markers[1].group() != "# MERIDIAN:END codex-user-rules"):
-            raise stop_error("COMMAND_REFUSED", f"damaged Codex user-rules markers in {path}; repair the marker pair before setup")
-        start, end = markers[0].start(), markers[1].end()
-        if text[end:end + 2] == "\r\n":
-            end += 2
-        elif text[end:end + 1] == "\n":
-            end += 1
-        proposed = text[:start] + CODEX_USER_RULES + text[end:]
-        status = "ready" if proposed == text else "stale"
-    else:
-        proposed = text + ("\n" if text and not text.endswith("\n") else "") + CODEX_USER_RULES
-        status = "missing"
-    warnings = []
-    # Inspect literal calls without executing user-owned policy. AST parsing
-    # handles multiline calls, comments, and either keyword order.
-    try:
-        calls = [node for node in ast.walk(ast.parse(text)) if isinstance(node, ast.Call)]
-    except SyntaxError:
-        calls = []
-    lines = text.splitlines(keepends=True)
-    for call in sorted(calls, key=lambda node: node.lineno):
-        if not isinstance(call.func, ast.Name) or call.func.id != "prefix_rule":
-            continue
-        offset = sum(len(line) for line in lines[:call.lineno - 1])
-        if markers and start <= offset < end:
-            continue
-        keywords = {item.arg: item.value for item in call.keywords}
-        try:
-            pattern = ast.literal_eval(keywords["pattern"])
-            decision = ast.literal_eval(keywords["decision"])
-        except (KeyError, ValueError, SyntaxError):
-            continue
-        if decision == "allow" and pattern in (["meridian"], ["git", "push"]):
-            warnings.append(f"{path}:{call.lineno}: broad allow rule {pattern!r} permits commands outside Meridian's prompt coverage")
-    return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed, tuple(warnings))
-
-
-def apply_codex_user_rules(plan: CodexUserRulesPlan) -> bool:
-    current = plan.path.read_bytes().decode("utf-8") if plan.path.exists() else ""
-    if current != plan.current_text:
-        raise MeridianError("Codex user rules changed since planning; rerun --check")
-    if plan.proposed_text is None:
-        return False
-    plan.path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, name = tempfile.mkstemp(prefix=".meridian-rules-", dir=plan.path.parent)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(plan.proposed_text.encode("utf-8"))
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(name, plan.path)
-    finally:
-        if os.path.exists(name):
-            os.unlink(name)
-    return True
 
 
 def _normalized_local_repository_name(value: str) -> str:
@@ -801,169 +709,6 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
 
 # `git worktree list` reads identically from any registered worktree, so a
 # read-only scope may share one parse between every lifecycle reader it calls.
-
-
-def _verified_lifecycle_project(supplied_project: Path | None = None) -> Path:
-    current_project = canonical_project_root(Path.cwd())
-    if supplied_project is not None:
-        supplied = supplied_project.expanduser().resolve()
-        supplied_primary = canonical_project_root(supplied)
-        if supplied != supplied_primary or supplied_primary != current_project:
-            raise MeridianError(
-                f"--project must name the canonical current project {current_project}, found {supplied}"
-            )
-    return current_project
-
-
-def user_configuration_path(
-    environment: Mapping[str, str] | None = None,
-    home: Path | None = None,
-) -> Path:
-    values = os.environ if environment is None else environment
-    user_home = (home or Path.home()).expanduser().resolve()
-    configured = values.get("XDG_CONFIG_HOME")
-    base = Path(configured).expanduser().resolve() if configured else user_home / ".config"
-    return base / "meridian/config.json"
-
-
-def _read_user_configuration(path: Path) -> dict[str, object] | None:
-    if not path.exists():
-        return None
-    value = _read_json_object(path, "Meridian user configuration")
-    if set(value) != {"version", "worktreeRoot"} or value.get("version") != 1:
-        raise MeridianError(
-            f"Meridian user configuration must contain only version 1 and worktreeRoot: {path}"
-        )
-    root = value.get("worktreeRoot")
-    if not isinstance(root, str) or not root.strip():
-        raise MeridianError(f"Meridian user configuration worktreeRoot must be a non-empty string: {path}")
-    if not Path(root).expanduser().is_absolute():
-        raise MeridianError(f"Meridian user configuration worktreeRoot must be absolute: {path}")
-    return value
-
-
-def resolve_worktree_root(
-    explicit: Path | None = None,
-    *,
-    environment: Mapping[str, str] | None = None,
-    home: Path | None = None,
-    config_path: Path | None = None,
-) -> ResolvedWorktreeRoot:
-    values = os.environ if environment is None else environment
-    user_home = (home or Path.home()).expanduser().resolve()
-    selected_config = config_path or user_configuration_path(values, user_home)
-    explicit_path = explicit.expanduser().resolve() if explicit is not None else None
-    environment_value = values.get("MERIDIAN_WORKTREE_ROOT")
-    environment_path = (
-        Path(environment_value).expanduser().resolve() if environment_value else None
-    )
-    if explicit_path is not None and environment_path is not None and explicit_path != environment_path:
-        raise MeridianError(
-            "conflicting worktree roots: --worktree-root supplied "
-            f"{explicit_path}; MERIDIAN_WORKTREE_ROOT supplied {environment_path}"
-        )
-    if explicit_path is not None:
-        root, source = explicit_path, "--worktree-root"
-    elif environment_path is not None:
-        root, source = environment_path, "MERIDIAN_WORKTREE_ROOT"
-    else:
-        configuration = _read_user_configuration(selected_config)
-        if configuration is not None:
-            root = Path(str(configuration["worktreeRoot"])).expanduser().resolve()
-            source = "user-config"
-        else:
-            root = user_home / ".meridian/worktrees"
-            source = "default"
-    if root in {Path(root.anchor), user_home}:
-        raise MeridianError(
-            f"worktree root from {source} must be a dedicated directory, not the filesystem root or home: {root}"
-        )
-    return ResolvedWorktreeRoot(root, source, selected_config)
-
-
-def _effective_worktree_root(worktree_root: Path | None = None) -> Path:
-    return resolve_worktree_root(worktree_root).path
-
-
-def _lifecycle_paths(project_root: Path, identity: ResolvedTaskIdentity) -> tuple[Path, Path, Path]:
-    common = canonical_git_common_dir(project_root)
-    state = common / WORKTREE_STATE_DIRECTORY / f"{identity.artifact_stem}.json"
-    return state, common / INTEGRATION_LEASE_NAME, common / INTEGRATION_STATE_NAME
-
-
-def _merge_head_path(project_root: Path) -> Path:
-    return Path(git_output(project_root, "rev-parse", "--git-path", "MERGE_HEAD")).resolve()
-
-
-def _branch_commit(project_root: Path, branch: str) -> str | None:
-    result = _run_git(project_root, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}")
-    if result.returncode == 1:
-        return None
-    if result.returncode != 0:
-        raise MeridianError(result.stderr.strip() or f"cannot inspect branch {branch}")
-    return result.stdout.strip()
-
-
-def lifecycle_started_at(task_id: str, supplied_project: Path | None = None,
-                         identity: ResolvedTaskIdentity | None = None) -> str | None:
-    """Return a valid preparation timestamp, preserving legacy state as unavailable.
-
-    `identity` is the caller's already resolved identity of `task_id` under the
-    primary checkout; it only saves the resolution.
-    """
-    project_root = _verified_lifecycle_project(supplied_project)
-    identity = identity or resolve_task_identity(project_root, task_id, "existing")
-    state_path, _lease, _integration = _lifecycle_paths(project_root, identity)
-    state = _read_json_object(state_path, "worktree lifecycle state")
-    value = state.get("started_at")
-    if not isinstance(value, str):
-        return None
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    return value if parsed.tzinfo is not None else None
-
-
-def _dirty_summary(worktree: Path) -> dict[str, int]:
-    """Count changed and untracked paths without refreshing the index or naming files."""
-    result = _run_git(worktree, "--no-optional-locks", "status", "--porcelain", "-z")
-    if result.returncode != 0:
-        raise MeridianError(result.stderr.strip() or f"cannot inspect task worktree status: {worktree}")
-    records = iter(item for item in result.stdout.split("\0") if item)
-    changed = untracked = 0
-    for record in records:
-        if record.startswith("??"):
-            untracked += 1
-            continue
-        changed += 1
-        if record[0] in "RC" or record[1] in "RC":
-            next(records, None)  # the source path of a rename or copy is its own record
-    return {"changed_paths": changed, "untracked_paths": untracked}
-
-
-def _proven_stale_base(project: Path, state: dict[str, object], head: str) -> bool:
-    """Prove only branch creation followed by commit-less main fast-forwards."""
-    base = state.get("base_commit")
-    if not isinstance(base, str) or base == head or state.get("task_commit") != base:
-        return False
-    if _run_git(project, "merge-base", "--is-ancestor", head, "main").returncode != 0:
-        return False
-    reflog = _run_git(project, "reflog", "show", "--format=%H%x09%gs", str(state.get("branch", "")))
-    entries = [line.split("\t", 1) for line in reversed(reflog.stdout.splitlines())]
-    if reflog.returncode or not entries or any(len(entry) != 2 for entry in entries):
-        return False
-    if not entries[0][1].startswith("branch: Created from "):
-        return False
-    previous = entries[0][0]
-    saw_base = previous == base
-    for commit, action in entries[1:]:
-        if (action != "merge main: Fast-forward" or commit == previous
-                or _run_git(project, "merge-base", "--is-ancestor", previous, commit).returncode != 0):
-            return False
-        previous = commit
-        saw_base = saw_base or commit == base
-    return saw_base and previous == head
 
 
 def repair_task_worktree_base(
@@ -2958,362 +2703,6 @@ def advance_task_closure(
             raise MeridianError(f"unexpected closure state at {step}; run closure-status")
 
 
-def _toml_quote(value: str) -> str:
-    return json.dumps(value, ensure_ascii=False)
-
-
-def _codex_managed_block(worktree_root: Path) -> str:
-    root = str(worktree_root.expanduser().resolve())
-    return "\n".join(
-        [
-            CODEX_MANAGED_BEGIN,
-            f'default_permissions = "{CODEX_PERMISSION_PROFILE}"',
-            "",
-            f"[permissions.{CODEX_PERMISSION_PROFILE}]",
-            'description = "Workspace access plus Meridian-managed task worktrees."',
-            'extends = ":workspace"',
-            "",
-            f"[permissions.{CODEX_PERMISSION_PROFILE}.workspace_roots]",
-            f"{_toml_quote(root)} = true",
-            CODEX_MANAGED_END,
-        ]
-    )
-
-
-def _replace_codex_managed_block(text: str, block: str) -> str:
-    start = text.find(CODEX_MANAGED_BEGIN)
-    if start >= 0:
-        end = text.find(CODEX_MANAGED_END, start) + len(CODEX_MANAGED_END)
-        text = text[:start] + text[end:]
-
-    table = re.search(r"(?m)^\s*\[", text)
-    insertion = table.start() if table is not None else len(text)
-    prefix = text[:insertion].rstrip("\n")
-    suffix = text[insertion:].strip("\n")
-    parts = [part for part in (prefix, block, suffix) if part]
-    return "\n\n".join(parts) + "\n"
-
-
-def _without_top_level_default_permissions(text: str) -> str:
-    """Remove the root selection while leaving comments and profile tables intact."""
-    lines = text.splitlines(keepends=True)
-    for index, line in enumerate(lines):
-        if line.lstrip().startswith("["):
-            break
-        if re.match(r"^\s*default_permissions\s*=", line):
-            del lines[index]
-            break
-    return "".join(lines)
-
-
-def _codex_expected_profile(root: Path) -> dict[str, object]:
-    return {
-        "description": "Workspace access plus Meridian-managed task worktrees.",
-        "extends": ":workspace",
-        "workspace_roots": {str(root): True},
-    }
-
-
-def _codex_profile_divergence(parsed: dict[str, object], root: Path) -> list[str]:
-    """Name every field where the parsed profile differs from the one expected profile."""
-    permissions = parsed.get("permissions")
-    profile = permissions.get(CODEX_PERMISSION_PROFILE) if isinstance(permissions, dict) else None
-    if not isinstance(profile, dict):
-        return ["profile shape"]
-    expected = _codex_expected_profile(root)
-    differences = [
-        key for key in sorted(set(profile) | set(expected)) if profile.get(key) != expected.get(key)
-    ]
-    if parsed.get("default_permissions") != CODEX_PERMISSION_PROFILE:
-        differences.append("default_permissions")
-    return differences
-
-
-def _codex_header_patterns() -> tuple[re.Pattern[str], re.Pattern[str]]:
-    name = re.escape(CODEX_PERMISSION_PROFILE)
-    quoted = rf'(?:{name}|"{name}")'
-    return (
-        re.compile(rf"^\s*\[\s*permissions\s*\.\s*{quoted}\s*\]\s*(?:#.*)?$"),
-        re.compile(rf"^\s*\[\s*permissions\s*\.\s*{quoted}\s*\.\s*workspace_roots\s*\]\s*(?:#.*)?$"),
-    )
-
-
-def _codex_markers_intact(text: str) -> bool:
-    """Return whether one ordered marker pair encloses every managed piece present.
-
-    The root selection, the profile table, and its workspace_roots table must each
-    be inside the span or absent; a piece left outside means the host moved part of
-    the block and ownership can only be recovered semantically.
-    """
-    if text.count(CODEX_MANAGED_BEGIN) != 1 or text.count(CODEX_MANAGED_END) != 1:
-        return False
-    start = text.index(CODEX_MANAGED_BEGIN)
-    end = text.index(CODEX_MANAGED_END)
-    if start >= end:
-        return False
-    profile_header, roots_header = _codex_header_patterns()
-    selection = re.compile(r"^\s*default_permissions\s*=")
-    offset = 0
-    in_table = False
-    inside_profile = False
-    for line in text.splitlines(keepends=True):
-        bare = line.rstrip("\r\n")
-        within = start <= offset < end
-        if bare.lstrip().startswith("["):
-            in_table = True
-            if (profile_header.match(bare) or roots_header.match(bare)) and not within:
-                return False
-            inside_profile = inside_profile or (within and bool(profile_header.match(bare)))
-        elif not in_table and selection.match(bare) and not within:
-            return False
-        offset += len(line)
-    return inside_profile
-
-
-def _without_codex_profile_text(text: str) -> str:
-    """Remove ownership markers, the root selection, and the managed profile tables.
-
-    Raises MeridianError unless each managed table header appears exactly once as a
-    plain table header, so unusual serializations are never edited heuristically.
-    """
-    profile_header, roots_header = _codex_header_patterns()
-    marker = re.compile(r"^\s*#\s*MERIDIAN:(?:BEGIN|END)\s+worktree-permissions\b.*$")
-    lines = text.splitlines(keepends=True)
-    if sum(1 for line in lines if profile_header.match(line.rstrip("\r\n"))) != 1 or sum(
-        1 for line in lines if roots_header.match(line.rstrip("\r\n"))
-    ) != 1:
-        raise MeridianError(
-            f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} is not serialized as exactly one plain "
-            "profile table and one workspace_roots table; reconcile it manually"
-        )
-    kept: list[str] = []
-    skipping = False
-    for line in lines:
-        bare = line.rstrip("\r\n")
-        if bare.lstrip().startswith("["):
-            skipping = bool(profile_header.match(bare) or roots_header.match(bare))
-            if skipping:
-                continue
-        if skipping or marker.match(bare):
-            continue
-        kept.append(line)
-    return _without_top_level_default_permissions("".join(kept))
-
-
-def _plan_codex_ownership_repair(
-    config_path: Path, text: str, parsed: dict[str, object], root: Path
-) -> CodexConfigurationPlan:
-    """Plan an ownership-metadata repair, or raise unless the profile is an exact semantic match."""
-    differences = _codex_profile_divergence(parsed, root)
-    if differences:
-        raise MeridianError(
-            f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} exists without intact Meridian ownership "
-            f"markers and differs from the expected profile in: {', '.join(differences)}; reconcile it manually"
-        )
-    stripped = _without_codex_profile_text(text)
-    proposed = _replace_codex_managed_block(stripped, _codex_managed_block(root))
-    try:
-        reparsed = tomllib.loads(proposed)
-    except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"proposed Codex ownership repair would be invalid: {error}") from error
-    if reparsed != parsed:
-        raise MeridianError(
-            "Codex ownership repair would change effective configuration beyond Meridian's markers; "
-            "reconcile it manually"
-        )
-    return CodexConfigurationPlan(
-        "repair-required",
-        config_path,
-        root,
-        "permission-profile",
-        proposed,
-        "ownership-metadata-repair: the effective profile is identical; explicit --apply restores only "
-        "Meridian's ownership markers and block position",
-        text,
-    )
-
-
-def _plan_codex_ownership_repair_and_root_replacement(
-    config_path: Path, text: str, parsed: dict[str, object], root: Path
-) -> CodexConfigurationPlan | None:
-    """Plan the one safe combined recovery, or return None for a normal refusal.
-
-    Lost comments are not ownership evidence.  The profile's exact Meridian
-    shape is, but only when it contains one enabled root that differs from the
-    requested root.  Keep this predicate deliberately narrower than parsed
-    divergence so foreign grants and unusual shapes cannot be adopted.
-    """
-    permissions = parsed.get("permissions")
-    profile = permissions.get(CODEX_PERMISSION_PROFILE) if isinstance(permissions, dict) else None
-    expected = _codex_expected_profile(root)
-    if (
-        parsed.get("default_permissions") != CODEX_PERMISSION_PROFILE
-        or not isinstance(profile, dict)
-        or set(profile) != set(expected)
-        or profile.get("description") != expected["description"]
-        or profile.get("extends") != expected["extends"]
-    ):
-        return None
-    roots = profile.get("workspace_roots")
-    if not isinstance(roots, dict) or len(roots) != 1 or list(roots.values()) != [True]:
-        return None
-    if roots == expected["workspace_roots"]:
-        return None
-
-    stripped = _without_codex_profile_text(text)
-    proposed = _replace_codex_managed_block(stripped, _codex_managed_block(root))
-    try:
-        reparsed = tomllib.loads(proposed)
-    except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"proposed Codex repair and root replacement would be invalid: {error}") from error
-    expected_parsed = copy.deepcopy(parsed)
-    expected_parsed["permissions"][CODEX_PERMISSION_PROFILE]["workspace_roots"] = expected["workspace_roots"]  # type: ignore[index]
-    if reparsed != expected_parsed:
-        raise MeridianError(
-            "Codex repair and root replacement would change effective configuration beyond the one root value; "
-            "reconcile it manually"
-        )
-    return CodexConfigurationPlan(
-        "repair-and-replace-required",
-        config_path,
-        root,
-        "permission-profile",
-        proposed,
-        "ownership-metadata-repair-and-root-replacement: explicit --apply restores Meridian's ownership "
-        "metadata and replaces the one configured worktree root",
-        text,
-    )
-
-
-def plan_codex_configuration(
-    config_path: Path,
-    worktree_root: Path,
-    requirements_path: Path | None = None,
-) -> CodexConfigurationPlan:
-    root = worktree_root.expanduser().resolve()
-    if root == Path(root.anchor) or root == Path.home().resolve():
-        raise MeridianError("worktree root must not authorize the filesystem root or the user's home")
-    text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
-    try:
-        parsed = tomllib.loads(text)
-    except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"malformed Codex TOML at {config_path}: {error}") from error
-    if "sandbox_mode" in parsed or "sandbox_workspace_write" in parsed:
-        raise MeridianError("legacy Codex sandbox settings conflict with permission profiles")
-    if requirements_path is not None and requirements_path.is_file():
-        try:
-            requirements = tomllib.loads(requirements_path.read_text(encoding="utf-8"))
-        except tomllib.TOMLDecodeError as error:
-            raise MeridianError(f"malformed managed Codex requirements at {requirements_path}: {error}") from error
-        allowed = requirements.get("allowed_permission_profiles")
-        if isinstance(allowed, dict) and allowed.get(CODEX_PERMISSION_PROFILE) is not True:
-            raise MeridianError(
-                f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}"
-            )
-    existing_profile = parsed.get("permissions", {}).get(CODEX_PERMISSION_PROFILE)
-    managed_present = CODEX_MANAGED_BEGIN in text or CODEX_MANAGED_END in text
-    if existing_profile is not None and not _codex_markers_intact(text):
-        replacement = _plan_codex_ownership_repair_and_root_replacement(config_path, text, parsed, root)
-        if replacement is not None:
-            return replacement
-        return _plan_codex_ownership_repair(config_path, text, parsed, root)
-    if managed_present and not _codex_markers_intact(text):
-        raise MeridianError("Codex configuration contains an incomplete or damaged Meridian-managed block")
-    base_text = text
-    if "default_permissions" in parsed and not managed_present:
-        base_text = _without_top_level_default_permissions(text)
-    proposed = _replace_codex_managed_block(base_text, _codex_managed_block(root))
-    try:
-        tomllib.loads(proposed)
-    except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"proposed Codex configuration would be invalid: {error}") from error
-    current_model = "permission-profile" if "default_permissions" in parsed or "permissions" in parsed else "unconfigured"
-    if proposed == text:
-        return CodexConfigurationPlan("ready", config_path, root, current_model, None, "requested profile is already effective")
-    return CodexConfigurationPlan("approval-required", config_path, root, current_model, proposed, "explicit --apply is required", text)
-
-
-def print_codex_configuration_plan(plan: CodexConfigurationPlan) -> None:
-    print(f"status: {plan.status}")
-    print(f"config: {plan.config_path}")
-    print(f"permission-model: {plan.current_model}")
-    print(f"worktree-root: {plan.worktree_root}")
-    print(f"detail: {plan.detail}")
-    if plan.status in ("repair-required", "repair-and-replace-required") and plan.proposed_text is not None and plan.current_text is not None:
-        suffix = "effective configuration is unchanged" if plan.status == "repair-required" else "repairs ownership metadata and replaces the worktree root"
-        print(f"proposed-change (unified diff; {suffix}):")
-        print(
-            "".join(
-                difflib.unified_diff(
-                    plan.current_text.splitlines(keepends=True),
-                    plan.proposed_text.splitlines(keepends=True),
-                    fromfile=f"{plan.config_path.name} (current)",
-                    tofile=f"{plan.config_path.name} (repaired)",
-                )
-            ),
-            end="",
-        )
-    elif plan.proposed_text is not None:
-        print("proposed-change:")
-        print(_codex_managed_block(plan.worktree_root))
-
-
-def _write_exclusive_backup(path: Path, backup: Path) -> None:
-    """Copy the current bytes to a new owner-only file, never replacing an existing backup."""
-    descriptor = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(path.read_bytes())
-            stream.flush()
-            os.fsync(stream.fileno())
-    except Exception:
-        try:
-            backup.unlink()
-        except OSError:
-            pass
-        raise
-
-
-def _unused_repair_backup(path: Path) -> Path:
-    candidate = path.with_name(path.name + ".meridian-repair.bak")
-    index = 0
-    while candidate.exists() or candidate.is_symlink():
-        index += 1
-        candidate = path.with_name(f"{path.name}.meridian-repair.{index}.bak")
-    return candidate
-
-
-def apply_codex_configuration(plan: CodexConfigurationPlan) -> bool:
-    if plan.proposed_text is None:
-        return False
-    path = plan.config_path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if plan.status in ("repair-required", "repair-and-replace-required"):
-        if not path.is_file() or path.read_text(encoding="utf-8") != plan.current_text:
-            raise MeridianError("Codex configuration changed since it was planned; rerun --check")
-        _write_exclusive_backup(path, _unused_repair_backup(path))
-    else:
-        backup = path.with_name(path.name + ".meridian.bak")
-        if path.exists() and not backup.exists():
-            _write_exclusive_backup(path, backup)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        os.chmod(temporary, 0o600)
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            stream.write(plan.proposed_text)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-    except Exception:
-        try:
-            temporary.unlink()
-        except OSError:
-            pass
-        raise
-    return True
-
-
 def _directory_setup_state(root: Path) -> tuple[str, str]:
     if not root.exists():
         return "missing", f"create {root} with mode 0700"
@@ -4168,109 +3557,6 @@ def run_self_check(framework_root: Path, *, urlopen_fn=None, settings_path: Path
     return 0
 
 
-def validate_manifest(
-    manifest: dict[str, object],
-    catalog: CapabilityCatalog | None = None,
-    surface_gaps: list[tuple[str, str, tuple[str, ...]]] | None = None,
-) -> tuple[CapabilityProfileDeclaration, ...]:
-    manifest_workflow_mode(manifest)
-    applied_migrations = manifest.get("appliedMigrations", [])
-    _required_string_list(applied_migrations, "manifest appliedMigrations")
-    managed_files = _required_object(manifest.get("managedFiles", {}), "manifest managedFiles")
-    for path, digest in managed_files.items():
-        _repository_relative_path(path, "manifest managedFiles path")
-        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
-            raise MeridianError(f"manifest managedFiles.{path} must be a SHA-256 digest")
-    if "capabilityProfiles" not in manifest:
-        return ()
-    if catalog is None:
-        raise MeridianError("manifest capabilityProfiles require a capability catalog")
-    return parse_capability_profiles(manifest, catalog, surface_gaps)
-
-
-def load_manifest(
-    project_root: Path,
-    framework_root: Path | None = None,
-    *,
-    defer_surface_gaps: bool = False,
-) -> dict[str, object]:
-    manifest_path = project_root / MANIFEST_PATH
-    if not manifest_path.is_file():
-        raise MeridianError(
-            "project is not locked; run `meridian lock --project <path> --mode <mode>` first"
-        )
-    try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
-        raise MeridianError(f"invalid manifest: {manifest_path}") from error
-    if not isinstance(manifest, dict):
-        raise MeridianError(f"invalid manifest: {manifest_path} must contain a JSON object")
-    catalog = load_capability_catalog(framework_root) if framework_root is not None else None
-    validate_manifest(manifest, catalog, [] if defer_surface_gaps else None)
-    return manifest
-
-
-def canonical_manifest(manifest: dict[str, object]) -> dict[str, object]:
-    """Return the current-protocol representation without changing effective state."""
-    result = dict(manifest)
-    result["protocolVersion"] = PROTOCOL_VERSION
-    result["workflowMode"] = manifest_workflow_mode(manifest)
-    result.pop("mode", None)
-    return result
-
-
-def write_manifest(
-    project_root: Path,
-    manifest: dict[str, object],
-    framework_root: Path | None = None,
-) -> None:
-    manifest = canonical_manifest(manifest)
-    catalog = load_capability_catalog(framework_root) if framework_root is not None else None
-    validate_manifest(manifest, catalog)
-    destination = project_root / MANIFEST_PATH
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
-def declared_capability_moves(
-    framework_root: Path, migration_ids_to_find: list[str] | None = None
-) -> list[CapabilityMove]:
-    """All, or only pending, declared capability moves in migration order."""
-    wanted = set(migration_ids_to_find) if migration_ids_to_find is not None else None
-    result = []
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if wanted is None or str(data["id"]) in wanted:
-            result.extend(migration_capability_moves(data))
-    return result
-
-
-def pending_migration_establishes_move_source(
-    framework_root: Path, pending_migrations: list[str], move: CapabilityMove
-) -> bool:
-    """Whether an earlier pending migration declares this move's source marker.
-
-    A long-lag consumer can legitimately predate a marker that an intermediate
-    migration adds and a later migration immediately relocates.  The final
-    template no longer contains that transient source marker, so its presence
-    cannot be inferred from the three-way merge inputs alone.  Trust this
-    narrow transition only when the migration ledger explicitly establishes
-    the exact capability/version on the same managed source path before the
-    move that consumes it.
-    """
-    try:
-        move_index = pending_migrations.index(move.migration)
-    except ValueError:
-        return False
-    for path in migration_record_paths(framework_root, pending_migrations[:move_index]):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if str(move.source_path) not in {str(item) for item in data.get("managedPaths", [])}:
-            continue
-        if (move.source_capability, move.source_version) in migration_capability_entries(data):
-            return True
-    return False
-
-
 def validate_capability_moves(framework_root: Path, mode: str) -> list[str]:
     """Validate move declarations against the exact current release templates."""
     managed = {item.target: item.source for item in managed_files(framework_root, mode)}
@@ -4376,81 +3662,6 @@ def removals_for_managed_file(
 # every such already-adopted project would regress to fully MISSING. Each
 # entry proves only that v1 was implemented — the version that predates
 # markers entirely — never a later one.
-
-
-def capability_presence_map(
-    project_root: Path, mode: str, framework_root: Path
-) -> dict[str, tuple[bool, str]]:
-    """capability id -> (present, evidence), by behavior rather than exact wording.
-
-    A capability is present when the project carries a
-    `<!-- MERIDIAN:BEGIN capability=<id> vN --> ... <!-- MERIDIAN:END -->`
-    marker for it at or above the version the framework currently requires,
-    found anywhere among the project's managed governed-SDD files. When no
-    marker is found, a capability with a pre-marker legacy check
-    (`LEGACY_CAPABILITY_EVIDENCE`) still counts as present at v1 — never
-    higher, since that check cannot distinguish v1 from any later version.
-    See migrations/CAPABILITY_MARKERS.md for why this replaced pure phrase
-    matching without breaking every project adopted before markers existed.
-    """
-    if mode != "governed-sdd":
-        return {}
-
-    combined_text = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in (project_root / item.target for item in managed_files(framework_root, mode))
-        if path.is_file()
-    )
-
-    presence: dict[str, tuple[bool, str]] = {}
-    for capability_id, (required_version, _migration_id) in capability_requirements(framework_root).items():
-        found_version = find_capability_marker_version(combined_text, capability_id)
-        if found_version is not None:
-            if found_version < required_version:
-                presence[capability_id] = (
-                    False,
-                    f"marker present at v{found_version}, but v{required_version} is required",
-                )
-            else:
-                presence[capability_id] = (
-                    True,
-                    f"marker present at v{found_version} (>= required v{required_version})",
-                )
-        else:
-            legacy_check = LEGACY_CAPABILITY_EVIDENCE.get(capability_id)
-            legacy_present = legacy_check is not None and legacy_check(project_root, combined_text)
-            if legacy_present and required_version <= 1:
-                presence[capability_id] = (True, "no marker found; legacy pre-marker evidence confirms v1")
-            elif legacy_present:
-                presence[capability_id] = (
-                    False,
-                    "no marker found; legacy pre-marker evidence only confirms v1, but "
-                    f"v{required_version} is required",
-                )
-            else:
-                presence[capability_id] = (
-                    False,
-                    f"no MERIDIAN:BEGIN capability={capability_id} marker found",
-                )
-    return presence
-
-
-def retired_capability_versions(framework_root: Path) -> set[tuple[str, int]]:
-    """Every exact (capability, version) pair ever declared `removes` by a
-    migration, regardless of which files its `managedPaths` named. Used by
-    `audit_capability_markers` to tell "stale, upgrade hasn't run yet" apart
-    from "retired, and this marker should already be gone" — the latter
-    reported `FAIL` rather than `SKIP`, since `meridian upgrade`'s own
-    retirement path only ever touches the specific files a migration lists,
-    so a marker in a file that migration's `managedPaths` omitted would
-    otherwise sit as an invisible `SKIP` forever.
-    """
-    pairs: set[tuple[str, int]] = set()
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        for capability, version, _superseded_by in migration_capability_removals(data):
-            pairs.add((capability, version))
-    return pairs
 
 
 def audit_capability_markers(

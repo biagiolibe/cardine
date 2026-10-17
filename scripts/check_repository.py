@@ -20,6 +20,7 @@ from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
 from cardine.templates import files as owner_templates_files
 from cardine.templates import migrations as owner_templates_migrations
+from cardine.templates import manifest as owner_templates_manifest
 
 # Deliberately not directly inside migrations/: `meridian.py`'s
 # capability_requirements() and migration_ids() glob `migrations/*.json`
@@ -817,7 +818,7 @@ def check_capability_marker_baselines(root: Path = ROOT) -> None:
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
     """Return managed-copy and installation-evidence drift without host probes."""
     try:
-        manifest = meridian.load_manifest(root, root)
+        manifest = owner_templates_manifest.load_manifest(root, root)
         catalog = catalog_provider.load_capability_catalog(root)
         profiles = catalog_provider.parse_capability_profiles(manifest, catalog)
     except meridian.MeridianError as error:

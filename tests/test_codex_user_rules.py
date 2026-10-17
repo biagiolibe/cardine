@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
 import cardine.shared.errors as shared_errors
+from cardine.hosts import codex as owner_hosts_codex
 
 
 class CodexUserRulesTest(unittest.TestCase):
@@ -35,30 +36,30 @@ class CodexUserRulesTest(unittest.TestCase):
                     self.rules.unlink()
                 if foreign:
                     self.write(foreign)
-                plan = meridian.plan_codex_user_rules(self.rules)
+                plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
                 self.assertEqual(plan.status, "missing")
                 self.assertEqual(self.rules.read_bytes().decode() if self.rules.exists() else "", foreign)
-                self.assertTrue(meridian.apply_codex_user_rules(plan))
+                self.assertTrue(owner_hosts_codex.apply_codex_user_rules(plan))
                 self.assertTrue(self.rules.read_bytes().startswith(foreign.encode()))
-                ready = meridian.plan_codex_user_rules(self.rules)
+                ready = owner_hosts_codex.plan_codex_user_rules(self.rules)
                 self.assertEqual(ready.status, "ready")
-                self.assertFalse(meridian.apply_codex_user_rules(ready))
+                self.assertFalse(owner_hosts_codex.apply_codex_user_rules(ready))
 
     def test_stale_block_replacement_preserves_both_sides(self):
         before, after = "# foreign before\r\n", "# foreign after\r\n"
         self.write(before + "# MERIDIAN:BEGIN codex-user-rules v0\n# old\n# MERIDIAN:END codex-user-rules\n" + after)
         original = self.rules.read_bytes()
-        plan = meridian.plan_codex_user_rules(self.rules)
+        plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
         self.assertEqual(plan.status, "stale")
         self.assertEqual(self.rules.read_bytes(), original)
-        meridian.apply_codex_user_rules(plan)
-        self.assertEqual(self.rules.read_bytes().decode(), before + meridian.CODEX_USER_RULES + after)
+        owner_hosts_codex.apply_codex_user_rules(plan)
+        self.assertEqual(self.rules.read_bytes().decode(), before + owner_hosts_codex.CODEX_USER_RULES + after)
 
     def test_damaged_markers_stop_before_any_setup_mutation(self):
         for text in (
             "# MERIDIAN:BEGIN codex-user-rules v1\n",
             "# MERIDIAN:END codex-user-rules\n",
-            meridian.CODEX_USER_RULES * 2,
+            owner_hosts_codex.CODEX_USER_RULES * 2,
             "# MERIDIAN:END codex-user-rules\n# MERIDIAN:BEGIN codex-user-rules v1\n",
             "# MERIDIAN:BEGIN codex-user-rules broken\n# MERIDIAN:END codex-user-rules\n",
         ):
@@ -69,26 +70,26 @@ class CodexUserRulesTest(unittest.TestCase):
             self.assertEqual(self.rules.read_bytes().decode(), text)
 
     def test_foreign_broad_allow_warning_names_original_line(self):
-        text = '# foreign\nprefix_rule(pattern=["meridian"], decision="allow")\n' + meridian.CODEX_USER_RULES + 'prefix_rule(pattern = [\'git\', \'push\'], decision = \'allow\')\n'
+        text = '# foreign\nprefix_rule(pattern=["meridian"], decision="allow")\n' + owner_hosts_codex.CODEX_USER_RULES + 'prefix_rule(pattern = [\'git\', \'push\'], decision = \'allow\')\n'
         self.write(text)
-        warnings = meridian.plan_codex_user_rules(self.rules).warnings
+        warnings = owner_hosts_codex.plan_codex_user_rules(self.rules).warnings
         self.assertEqual(len(warnings), 2)
         self.assertIn(f"{self.rules}:2:", warnings[0])
         self.assertIn(f"{self.rules}:{len(text.splitlines())}:", warnings[1])
         self.assertEqual(self.rules.read_bytes().decode(), text)
 
     def test_apply_refuses_changed_foreign_rules(self):
-        plan = meridian.plan_codex_user_rules(self.rules)
+        plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
         self.write("# appeared later\n")
         with self.assertRaisesRegex(shared_errors.MeridianError, "changed since planning"):
-            meridian.apply_codex_user_rules(plan)
+            owner_hosts_codex.apply_codex_user_rules(plan)
         self.assertEqual(self.rules.read_text(), "# appeared later\n")
 
     def test_multiline_warning_ignores_comments_and_prompt_rules(self):
         self.write('# prefix_rule(pattern=["meridian"], decision="allow")\n'
                    'prefix_rule(\n decision="allow",\n pattern=["git", "push"],\n)\n'
                    'prefix_rule(pattern=["meridian"], decision="prompt")\n')
-        warnings = meridian.plan_codex_user_rules(self.rules).warnings
+        warnings = owner_hosts_codex.plan_codex_user_rules(self.rules).warnings
         self.assertEqual(len(warnings), 1)
         self.assertIn(f"{self.rules}:2:", warnings[0])
 
@@ -108,7 +109,7 @@ class CodexUserRulesTest(unittest.TestCase):
         self.assertFalse(self.rules.exists())
         meridian.apply_setup(plan)
         self.assertEqual(doctor(), "ready")
-        self.write(meridian.CODEX_USER_RULES.replace('"git", "fetch"', '"git", "old"'))
+        self.write(owner_hosts_codex.CODEX_USER_RULES.replace('"git", "fetch"', '"git", "old"'))
         self.assertEqual(doctor(), "stale")
         stale = setup()
         with contextlib.redirect_stdout(output):
@@ -119,7 +120,7 @@ class CodexUserRulesTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("codex"), "codex_user_rules_decisions: codex binary unavailable")
     def test_codex_user_rules_decisions(self):
-        self.write(meridian.CODEX_USER_RULES)
+        self.write(owner_hosts_codex.CODEX_USER_RULES)
         cases = [
             (["git", "push", "origin", "task-221"], "allow"),
             (["git", "push", "other", "main"], None),
