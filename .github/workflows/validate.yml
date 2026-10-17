@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - task-*
 
 concurrency:
   group: validate-${{ github.workflow }}-${{ github.ref }}
@@ -13,11 +12,10 @@ concurrency:
 
 jobs:
   validate:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    # A signal on Linux only: tasks validate locally and in a clean clone, and
+    # the release workflow gates on Linux and macOS.
+    continue-on-error: true
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -137,7 +137,7 @@ the same `total`/`digest` proof as `--list`, plus the number of tests the shards
 selected. A failing, erroring, killed, or mismatched shard exits non-zero, and
 the failing shards print first, limited to their last 60 lines. On the
 reference machine (10 cores, 752 tests) the sequential run took about 277
-seconds and `--parallel` (8 workers) about 52 seconds. CI and the project's own
+seconds and `--parallel` (8 workers) about 52 seconds. The signal CI and the project's own
 candidate validation use the parallel command; the release gate keeps the
 sequential one.
 
@@ -147,18 +147,28 @@ A plain repository check never rewrites digests. See
 [Managed copies of this repository](#managed-copies-of-this-repository) for how
 to refresh them.
 
-CI runs the same validation suite on pull requests, pushes to `main`, and
-pushes to `task-*` branches, on Linux and macOS.
-Push a task branch before expecting a CI run, then use
-`python3 scripts/ci_evidence.py --commit <sha> --task <TASK-ID> --output <path>`
-to capture a successful exact-commit run as T1 CI evidence. Add `--wait SECONDS`
-to poll for a new run. `Proceed with <TASK-ID>` authorizes one plain
-`git push origin <task-branch>` for this evidence, as `AGENTS.md`, `CLAUDE.md`,
-and `PROJECT_WORKFLOW.md` state. A task contract may require this evidence
-before integration.
+A task validates locally and in a clean clone, and no task waits for CI:
+
+```bash
+python3 scripts/run_tests.py --parallel --clean-clone
+```
+
+The command refuses a working tree with uncommitted changes. It clones the
+committed `HEAD` with `git clone --depth 1 --no-local` into a temporary
+directory, runs `python3 scripts/check_repository.py` and the parallel suite
+there, removes the clone, and prints the commit, the coverage `total` and
+`digest`, and the outcome. It sees only committed files and a shallow history,
+as a CI checkout does.
+
+CI runs the repository check and the suite on Linux for pull requests and
+pushes to `main`, as a non-blocking signal. The release gate
+(`.github/workflows/release.yml`) runs the repository check and the sequential
+suite on Linux and macOS, and publishes the release only when both pass.
+`scripts/ci_evidence.py` stays for projects that require CI evidence before
+landing; this repository's tasks do not.
 
 Changes under `bin/`, `migrations/`, `scripts/`, or `src/cardine/` run the
-test suite with `python3 scripts/run_tests.py --parallel`, the command CI runs.
+test suite with `python3 scripts/run_tests.py --parallel`, the command the signal CI runs.
 Its coverage `total` and `digest` prove that every test ran, so a task does
 not also run the sequential suite. The sequential suite runs in the release
 gate, in row V01 of `docs/MODULE_SPLIT_PLAN.md`, and as the fallback when the

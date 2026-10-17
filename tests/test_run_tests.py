@@ -354,3 +354,77 @@ class ParallelTestRunnerTest(unittest.TestCase):
             for name, pattern in patterns.items():
                 with self.subTest(file=path.name, check=name):
                     self.assertIsNone(pattern.search(text))
+
+
+class CleanCloneTest(unittest.TestCase):
+    def make_repository(self, check: str) -> Path:
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory, True)
+        (directory / "scripts").mkdir()
+        (directory / "scripts" / "check_repository.py").write_text(check, encoding="utf-8")
+        (directory / "scripts" / "run_tests.py").write_text(
+            "import pathlib\n"
+            "print('coverage total=1 digest=' + 'a' * 64)\n"
+            "print('files', sorted(p.name for p in pathlib.Path('scripts').iterdir()))\n",
+            encoding="utf-8",
+        )
+        for command in (
+            ["init", "--quiet", "-b", "main"],
+            ["config", "user.email", "test@example.com"],
+            ["config", "user.name", "Test"],
+            ["add", "."],
+            ["commit", "--quiet", "-m", "first"],
+            ["commit", "--quiet", "--allow-empty", "-m", "second"],
+        ):
+            subprocess.run(["git", "-C", str(directory), *command], check=True, capture_output=True)
+        return directory
+
+    def clean_clone(self, source: Path) -> tuple[int, str]:
+        with mock.patch("sys.stdout") as stdout:
+            code = runner.run_clean_clone(0, source)
+        return code, "".join(call.args[0] for call in stdout.write.call_args_list)
+
+    def test_clone_contains_only_committed_files(self) -> None:
+        source = self.make_repository("pass\n")
+        (source / "scripts" / "untracked.py").write_text("", encoding="utf-8")
+
+        code, output = self.clean_clone(source)
+
+        self.assertEqual(code, 0, output)
+        self.assertNotIn("untracked.py", output)
+        self.assertIn("check_repository.py", output)
+        commit = subprocess.run(
+            ["git", "-C", str(source), "rev-parse", "HEAD"], text=True, capture_output=True, check=True
+        ).stdout.strip()
+        self.assertIn(f"clean-clone commit={commit} total=1 digest={'a' * 64} outcome=OK", output)
+
+    def test_check_needing_history_fails_in_clone_and_passes_in_checkout(self) -> None:
+        source = self.make_repository(
+            "import subprocess, sys\n"
+            "sys.exit(subprocess.run(['git', 'rev-parse', '--verify', 'HEAD~1'], capture_output=True).returncode)\n"
+        )
+        full = subprocess.run([sys.executable, "scripts/check_repository.py"], cwd=source, check=False)
+
+        code, output = self.clean_clone(source)
+
+        self.assertEqual(full.returncode, 0)
+        self.assertEqual(code, 1)
+        self.assertIn("outcome=FAILED", output)
+
+    def test_uncommitted_changes_are_refused(self) -> None:
+        source = self.make_repository("pass\n")
+        (source / "scripts" / "check_repository.py").write_text("raise SystemExit(1)\n", encoding="utf-8")
+
+        code, output = self.clean_clone(source)
+
+        self.assertEqual(code, 2)
+        self.assertIn("uncommitted changes", output)
+        self.assertNotIn("outcome=", output)
+
+    def test_clean_clone_requires_parallel(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--list", "--clean-clone"], text=True, capture_output=True, check=False
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--clean-clone requires --parallel", result.stderr)
