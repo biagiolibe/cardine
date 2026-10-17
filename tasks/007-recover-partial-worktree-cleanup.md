@@ -117,6 +117,5 @@ cleanup command, which `cardine run` will call.
 - `python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .`
 - `python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `python3 scripts/run_tests.py --parallel`
-- `python3 -m unittest discover -s tests -v`
 - `git diff --check`
 - `python3 scripts/ci_evidence.py --commit <task commit> --task 007 --output <path> --wait 900`

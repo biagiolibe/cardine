@@ -157,10 +157,12 @@ to poll for a new run. `Proceed with <TASK-ID>` authorizes one plain
 and `PROJECT_WORKFLOW.md` state. A task contract may require this evidence
 before integration.
 
-For changes under `bin/`, `migrations/`, or `scripts/meridian.py`, also run the
-sequential suite. The extraction rows of `docs/MODULE_SPLIT_PLAN.md` are the
-exception: they run the parallel suite, and the sequential suite runs in row
-V01 and in the release gate.
+Changes under `bin/`, `migrations/`, `scripts/`, or `src/cardine/` run the
+test suite with `python3 scripts/run_tests.py --parallel`, the command CI runs.
+Its coverage `total` and `digest` prove that every test ran, so a task does
+not also run the sequential suite. The sequential suite runs in the release
+gate, in row V01 of `docs/MODULE_SPLIT_PLAN.md`, and as the fallback when the
+parallel run cannot start its workers:
 
 ```bash
 python3 -m unittest discover -s tests -v
