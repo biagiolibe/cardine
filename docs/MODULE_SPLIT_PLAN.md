@@ -732,8 +732,11 @@ end while intermediate commits are broken.
 
 All extraction rows run the focused tests listed, `python3 scripts/check_repository.py`,
 `git diff --check`, and the full existing suite once after their last source
-change (`python3 -m unittest discover -s tests -v`, required by the source-path
-baseline). Do not edit the suite’s assertions to obtain a pass. Split test files
+change with `python3 scripts/run_tests.py --parallel`. Its coverage `total` and
+`digest` prove that every test ran, and CI runs the same command on Linux and
+macOS. The sequential `python3 -m unittest discover -s tests -v` added about 11
+minutes to each row without covering anything more, so it runs once, in V01,
+and in the release gate. Do not edit the suite’s assertions to obtain a pass. Split test files
 alongside their corresponding source moves; all intermediate commits remain
 runnable through the compatibility executable. Re-exporting a name during
 transition is permitted only for callers, never as the chosen mock strategy.
@@ -755,7 +758,7 @@ transition is permitted only for callers, never as the chosen mock strategy.
 | E13 / 2–3 h | `templates.upgrade`, `templates.adopt_command`, `cli` | manifest, marker, upgrade/adoption, router and synthetic migration tests; legacy/package CLI parity, source checker and self-hosting doctor/audit; switch both entry points only after console adaptation | E12, C02 |
 | C01 / 2–3 h | Extract console models, launch and snapshot; move direct meridian imports to graph owners and keep a script adapter. Run after E12, before the CLI switch in E13. | Existing snapshot/state/launch tests, including fixture identity and refresh cost; compare discovered cases. | E12 |
 | C02 / 2–3 h | Extract console state/render/entry and split its test files; preserve current console behavior rather than rebuild it on a future run engine. | Existing render, closure, refresh and AppleScript tests; retain platform skips and inherited counts. | C01; prerequisite of E13 |
-| V01 / 2–3 h | Complete path-reader/checker/release fixtures, entry-point parity, test discovery and file-size audit; remove remaining implementation from adapters. | Full suite; repository check; self-hosting doctor/audit; package and legacy --version parity; source/import DAG and line-count audits; unchanged patch call/non-call expectations. | E13, C02 |
+| V01 / 2–3 h | Complete path-reader/checker/release fixtures, entry-point parity, test discovery and file-size audit; remove remaining implementation from adapters. | Full suite, also sequentially (`python3 -m unittest discover -s tests -v`); repository check; self-hosting doctor/audit; package and legacy --version parity; source/import DAG and line-count audits; unchanged patch call/non-call expectations. | E13, C02 |
 
 Execution order is E01 through E12, C01, C02, E13, V01.
 If a row cannot fit its 3-hour bound, divide it at a module or test-class

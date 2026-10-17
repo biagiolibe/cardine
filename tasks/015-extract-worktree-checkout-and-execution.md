@@ -36,21 +36,24 @@ extraction rule and inventory checks that tasks 004 and 006 applied.
   compatibility" rules. A patch moves only when code that looks the patched
   name up moves in this task, including calls between bindings that now share
   an owner module. Patches whose consumers stay in `scripts/meridian.py` keep
-  targeting `meridian`. The handoff lists each patch reviewed and the
-  decision. No assertion, expected call, or intentional non-call is removed,
+  targeting `meridian`. The handoff lists each patch that moved, with its new
+  target, and the number of patches reviewed that keep targeting `meridian`.
+  No assertion, expected call, or intentional non-call is removed,
   and no platform skip changes.
 - [ ] Text readers that scan moved code, such as repository source checks and
   path references, read the new modules, as the plan's "Path references, text
   readers and managed evidence" section requires.
-- [ ] The discovered test IDs before and after the task are mapped in the
-  handoff, with equal counts except for new tests.
-- [ ] **CI before integration.** After validation, push the task branch once
-  (`git push origin task-015`, authorized by `Proceed with`) and record
-  `T1_CI` evidence for the exact task commit with `python3
-  scripts/ci_evidence.py --commit <sha> --task 015 --output <path> --wait
-  900`. Integrate only when that evidence reports a successful run on both
-  operating systems. If CI fails, fix the failure on the task branch; do not
-  integrate.
+- [ ] The parallel suite reports the same coverage `total` before and after
+  the task, except for new tests. The handoff lists only the test IDs that
+  changed, with their old and new IDs.
+- [ ] **CI before integration.** Push the task branch once (`git push origin
+  task-015`, authorized by `Proceed with`) as soon as the implementation
+  commit passes `python3 scripts/run_tests.py --parallel`, and write the
+  handoff while CI runs. Then record `T1_CI` evidence for that exact commit
+  with `python3 scripts/ci_evidence.py --commit <sha> --task 015 --output
+  <path> --wait 900`. Integrate only when that evidence reports a successful
+  run on both operating systems. If CI fails, fix the failure on the task
+  branch; do not integrate.
 - [ ] Every command under Validation passes.
 
 ## Relevant Files
@@ -67,7 +70,8 @@ extraction rule and inventory checks that tasks 004 and 006 applied.
 
 - Tasks 004 and 006 show the pattern: owner modules, explicit imports in the
   monolith, thin adapters, unchanged bodies, and a handoff with the test-ID
-  mapping and the patch review.
+  mapping and the patch review. Tasks from 010 on record the patch review
+  and the test-ID mapping by exception only.
 - Focused proof for this row, from the plan: machine task-state, identity,
   execution-boundary, task-close and review-verdict tests; Codex
   rules/configuration, setup/doctor and hook tests; worktree isolation,
@@ -93,6 +97,5 @@ module or test-class boundary, as the plan requires.
 - `python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .`
 - `python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `python3 scripts/run_tests.py --parallel`
-- `python3 -m unittest discover -s tests -v`
 - `git diff --check`
 - `python3 scripts/ci_evidence.py --commit <task commit> --task 015 --output <path> --wait 900`
