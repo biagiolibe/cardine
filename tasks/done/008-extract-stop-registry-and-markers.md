@@ -17,41 +17,41 @@ extraction rule and inventory checks that tasks 004 and 006 applied.
 
 ## Acceptance Criteria
 
-- [ ] These modules exist under `src/cardine/`, each holding exactly the
+- [x] These modules exist under `src/cardine/`, each holding exactly the
   bindings that the plan's "Complete symbol ownership" section assigns to it:
   `shared/usage.py`, `shared/validation.py`, `stops/registry.py`,
   `templates/markers.py`, and `templates/mode.py`. Package `__init__.py` files
   stay empty.
-- [ ] Each moved binding is defined once, in its owner, and
+- [x] Each moved binding is defined once, in its owner, and
   `scripts/meridian.py` imports it explicitly, as in tasks 004 and 006.
   Mutable state stays with its writers, and dataclass identities stay
   singletons across every entry point.
-- [ ] The new modules import only providers that the plan's import graph lists
+- [x] The new modules import only providers that the plan's import graph lists
   for them, and only providers that earlier rows already extracted.
-- [ ] The inventory tests in `tests/test_module_inventory.py` pass with the
+- [x] The inventory tests in `tests/test_module_inventory.py` pass with the
   new owners: exactly one definition per baseline binding, no import cycle
   under `src/cardine/`, and no tracked Python file under `src/cardine/` or new
   test file over 1,500 lines.
-- [ ] Every patch is checked against the plan's "Patch targets and suite
+- [x] Every patch is checked against the plan's "Patch targets and suite
   compatibility" rules. A patch moves only when code that looks the patched
   name up moves in this task, including calls between bindings that now share
   an owner module. Patches whose consumers stay in `scripts/meridian.py` keep
   targeting `meridian`. The handoff lists each patch reviewed and the
   decision. No assertion, expected call, or intentional non-call is removed,
   and no platform skip changes.
-- [ ] Text readers that scan moved code, such as repository source checks and
+- [x] Text readers that scan moved code, such as repository source checks and
   path references, read the new modules, as the plan's "Path references, text
   readers and managed evidence" section requires.
-- [ ] The discovered test IDs before and after the task are mapped in the
+- [x] The discovered test IDs before and after the task are mapped in the
   handoff, with equal counts except for new tests.
-- [ ] **CI before integration.** After validation, push the task branch once
+- [x] **CI before integration.** After validation, push the task branch once
   (`git push origin task-008`, authorized by `Proceed with`) and record
   `T1_CI` evidence for the exact task commit with `python3
   scripts/ci_evidence.py --commit <sha> --task 008 --output <path> --wait
   900`. Integrate only when that evidence reports a successful run on both
   operating systems. If CI fails, fix the failure on the task branch; do not
   integrate.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

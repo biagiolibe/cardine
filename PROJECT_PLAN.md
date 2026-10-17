@@ -31,7 +31,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 004 — Extract the leaf modules (split plan E01).
 - `[x]` 005 — Make the module inventory test pass in a shallow clone.
 - `[x]` 006 — Extract text, version, Git, JSON, and model modules (split plan E02).
-- `[ ]` 008 — Extract usage, validation, stop registry, marker, and mode modules (split plan E03).
+- `[x]` 008 — Extract usage, validation, stop registry, marker, and mode modules (split plan E03).
 - `[ ]` 009 — Extract protocol, Claude host, budget, project, and catalog modules (split plan E04).
 - `[ ]` 010 — Extract migration, identity, file, router, and authority modules (split plan E05).
 - `[ ]` 011 — Extract stop rendering, manifest, marker history, worktree storage, and Codex host modules (split plan E06).
