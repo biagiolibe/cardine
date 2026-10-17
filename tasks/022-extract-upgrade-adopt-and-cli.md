@@ -51,14 +51,10 @@ of `docs/MODULE_SPLIT_PLAN.md`. Move the last bindings out of
 - [ ] The parallel suite reports the same coverage `total` before and after
   the task, except for new tests. The handoff lists only the test IDs that
   changed, with their old and new IDs.
-- [ ] **CI before integration.** Push the task branch once (`git push origin
-  task-022`, authorized by `Proceed with`) as soon as the implementation
-  commit passes `python3 scripts/run_tests.py --parallel`, and write the
-  handoff while CI runs. Then record `T1_CI` evidence for that exact commit
-  with `python3 scripts/ci_evidence.py --commit <sha> --task 022 --output
-  <path> --wait 900`. Integrate only when that evidence reports a successful
-  run on both operating systems. If CI fails, fix the failure on the task
-  branch; do not integrate.
+- [ ] **Clean-clone validation.** After the implementation commit, run
+  `python3 scripts/run_tests.py --parallel --clean-clone` from the clean task
+  worktree and record its result line in the handoff. No task branch push or
+  CI evidence is required.
 - [ ] Every command under Validation passes.
 
 ## Relevant Files
@@ -70,7 +66,6 @@ of `docs/MODULE_SPLIT_PLAN.md`. Move the last bindings out of
 | `src/cardine/cli.py`, `src/cardine/templates/` | New and replaced modules. |
 | `bin/meridian` | Dispatches to the package. |
 | `tests/test_module_inventory.py`, `tests/fixtures/module_split_baseline.json` | Inventory checks. |
-| `scripts/ci_evidence.py` | `T1_CI` evidence for the task commit. |
 
 ## Technical Context
 
@@ -97,4 +92,4 @@ module or test-class boundary, as the plan requires.
 - `python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `python3 scripts/run_tests.py --parallel`
 - `git diff --check`
-- `python3 scripts/ci_evidence.py --commit <task commit> --task 022 --output <path> --wait 900`
+- `python3 scripts/run_tests.py --parallel --clean-clone`

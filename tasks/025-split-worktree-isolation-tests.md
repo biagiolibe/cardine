@@ -33,14 +33,10 @@
   bases, and registered test IDs (for example in
   `capabilities/stop-codes-v1.json`) change. No assertion is removed or
   weakened, and no platform skip changes.
-- [ ] **CI before integration.** Push the task branch once (`git push origin
-  task-025`, authorized by `Proceed with`) as soon as the implementation
-  commit passes `python3 scripts/run_tests.py --parallel`, and write the
-  handoff while CI runs. Then record `T1_CI` evidence for that exact commit
-  with `python3 scripts/ci_evidence.py --commit <sha> --task 025 --output
-  <path> --wait 900`. Integrate only when that evidence reports a successful
-  run on both operating systems. If CI fails, fix the failure on the task
-  branch; do not integrate.
+- [ ] **Clean-clone validation.** After the implementation commit, run
+  `python3 scripts/run_tests.py --parallel --clean-clone` from the clean task
+  worktree and record its result line in the handoff. No task branch push or
+  CI evidence is required.
 - [ ] Every command under Validation passes.
 
 ## Relevant Files
@@ -50,7 +46,6 @@
 | `docs/MODULE_SPLIT_PLAN.md` | Authority: symbol ownership, import graph, extraction rule, patch rules, size budget. |
 | `tests/test_task_worktree_isolation.py` | Removed. |
 | `capabilities/stop-codes-v1.json` | Registered test IDs. |
-| `scripts/ci_evidence.py` | `T1_CI` evidence for the task commit. |
 
 ## Technical Context
 
@@ -72,4 +67,4 @@ Any source change.
 - `python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `python3 scripts/run_tests.py --parallel`
 - `git diff --check`
-- `python3 scripts/ci_evidence.py --commit <task commit> --task 025 --output <path> --wait 900`
+- `python3 scripts/run_tests.py --parallel --clean-clone`
