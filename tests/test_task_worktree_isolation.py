@@ -20,6 +20,7 @@ from cardine.shared import budget as owner_shared_budget
 import cardine.integration.decision as integration_decision
 import cardine.shared.errors as shared_errors
 import project_console  # noqa: E402
+from cardine.tasks import identity as owner_tasks_identity
 
 
 class TaskWorktreeIsolationTest(unittest.TestCase):
@@ -332,7 +333,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_new_budget_attempt_preserves_history_and_journals_reason(self):
         state = self.retired_budget({"diagnostic": 2, "captures:AC1": 1})
-        task = meridian.find_task_file(self.primary, "056")
+        task = owner_tasks_identity.find_task_file(self.primary, "056")
         original = task.read_bytes()
         result = subprocess.run([
             sys.executable, str(ROOT / "scripts/meridian.py"), "worktree", "prepare", "056",
@@ -450,7 +451,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_stale_base_check_and_repair(self) -> None:
         prepared, worktree = self.stale_base()
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         state_path, _, _ = meridian._lifecycle_paths(self.primary, identity)
         evidence_path = state_path.with_suffix(".evidence.json")
         evidence_path.write_text(json.dumps({"validated_base_commit": self.base}), encoding="utf-8")
@@ -529,7 +530,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_base_repair_rejects_unsafe_worktree_facts(self) -> None:
         _, worktree = self.stale_base()
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         state_path, lease, integration = meridian._lifecycle_paths(self.primary, identity)
         original = state_path.read_bytes()
         mutations = [
@@ -901,7 +902,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.git("commit", "-m", "remove declaration")
         with self.assertRaisesRegex(shared_errors.MeridianError, "UNDECLARED_VALIDATION_COMMANDS"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease_path.exists())
         self.assertFalse(integration_path.exists())
@@ -939,7 +940,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             meridian.finalize_task_integration("056", validation_path, self.primary)
 
         _state, lease_path, integration_path = meridian._lifecycle_paths(
-            self.primary, meridian.resolve_task_identity(self.primary, "056", "existing")
+            self.primary, owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         )
         self.assertTrue(lease_path.is_file())
         self.assertTrue(integration_path.is_file())
@@ -1257,7 +1258,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         meridian.abort_task_integration("056", self.primary)
 
     def test_lifecycle_change_parser_rejects_inexact_task_record_changes(self) -> None:
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         active = "tasks/056-lifecycle.md"
         archive = "tasks/done/056-lifecycle.md"
         invalid_diffs = {
@@ -1283,7 +1284,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                 self.assertTrue(offending)
 
     def test_completion_rows_reject_unknown_shape_without_editing_queue(self) -> None:
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         queue = self.primary / "tasks/QUEUE.md"
         original_queue = queue.read_text(encoding="utf-8")
         (self.primary / "PROJECT_PLAN.md").write_text("Task 056: TODO\n", encoding="utf-8")
@@ -1294,7 +1295,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(queue.read_text(encoding="utf-8"), original_queue)
 
     def test_completion_rows_archive_a_closing_phase_and_create_the_archive(self) -> None:
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         queue = self.primary / "tasks/QUEUE.md"
         queue.write_text(
             "### Phase 1 — Closing\n\n"
@@ -1395,7 +1396,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertIsNone(archive_contents)
 
     def test_completion_rows_complete_an_in_progress_task(self) -> None:
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         queue = self.primary / "tasks/QUEUE.md"
         plan = self.primary / "PROJECT_PLAN.md"
         queue.write_text(
@@ -1438,7 +1439,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertIsNone(repeated_archive)
 
     def test_completion_rows_retain_ambiguous_archival_section_with_warning(self) -> None:
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         queue = self.primary / "tasks/QUEUE.md"
         contents = (
             "### Phase 1 — Current\n\n"
@@ -1476,7 +1477,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         state_path, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
         references = self.git("show-ref").stdout
         worktree_state = state_path.read_text(encoding="utf-8")
@@ -1518,7 +1519,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_abort_recovers_an_owned_lease_before_merge_state_exists(self) -> None:
         self.prepare()
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _task_state, lease_path, integration_path = meridian._lifecycle_paths(self.primary, identity)
         meridian._write_json_atomic(
             lease_path,
@@ -1533,7 +1534,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
 
     def test_abort_recovers_when_the_queue_link_is_stale(self) -> None:
         self.prepare()
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _task_state, lease_path, _integration_path = meridian._lifecycle_paths(self.primary, identity)
         meridian._write_json_atomic(
             lease_path,
@@ -1548,7 +1549,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
             encoding="utf-8",
         )
         with self.assertRaisesRegex(shared_errors.MeridianError, "queue link for task 056"):
-            meridian.resolve_task_identity(self.primary, "056", "existing")
+            owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         recovered = meridian.abort_task_integration("056", self.primary)
         self.assertEqual(recovered["status"], "aborted")
         self.assertFalse(lease_path.exists())
@@ -1644,7 +1645,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
                             done.parent.mkdir(exist_ok=True)
                             if not active.exists():
                                 done.rename(active)
-                            identity = meridian.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
+                            identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
                             if archived_record:
                                 active.rename(done)
                             if not plan_present:
@@ -1802,7 +1803,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "| 1 | 056 | P0 | QUEUED | SPIKE | — | [056](056-lifecycle.md) |\n"
         )
         queue.write_text(contents, encoding="utf-8")
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         result = meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(result["status"], "COMPLETED")
         self.assertIn("ANSWERED | SPIKE", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
@@ -1889,7 +1890,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             target.write_text("changed\n", encoding="utf-8")
         self.git("add", "-A", cwd=worktree)
         self.git("commit", "-m", "exercise exact spike path boundary", cwd=worktree)
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
         self.assertEqual(set(meridian._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit)), {
             ".meridian/execution-evidence-extra.json", ".meridian/other.json", "docs/undeclared.md", "source.py",
@@ -1926,7 +1927,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         }), encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.MeridianError, r"source.py"):
             meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, staged = meridian._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease.exists())
         self.assertFalse(staged.exists())
@@ -1962,7 +1963,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
                             done.parent.mkdir(exist_ok=True)
                             if not active.exists():
                                 done.rename(active)
-                            identity = meridian.resolve_task_identity(
+                            identity = owner_tasks_identity.resolve_task_identity(
                                 self.primary, "056", "existing", check_queue_links=False
                             )
                             if archived_record:
@@ -1979,7 +1980,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         queue = self.primary / "tasks/QUEUE.md"
         original = queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "REQUIRED")
         queue.write_text(original, encoding="utf-8")
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
@@ -1991,7 +1992,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             + "| 2 | 057 | P1 | QUEUED | NOT_REQUIRED | — | [057](057.md) |\n",
             encoding="utf-8",
         )
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         review = identity.review_path
         review.parent.mkdir(exist_ok=True)
         cases = {
@@ -2038,7 +2039,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             + "| 2 | 057 | P1 | QUEUED | NOT_REQUIRED | — | [057](057.md) |\n",
             encoding="utf-8",
         )
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         identity.review_path.parent.mkdir(exist_ok=True)
         identity.review_path.write_text(
             "# Review Record — 056\n\n## Attempt 1 — CHANGES_REQUESTED\n\n- [x] P1 — fixed\n\n"
@@ -2059,7 +2060,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "| 2 | 057 | P1 | QUEUED | NOT_REQUIRED | — | [057](057.md) |\n",
             encoding="utf-8",
         )
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
         archived = self.primary / "tasks/done/056-lifecycle.md"
         archived.parent.mkdir(exist_ok=True)
         identity.task_path.rename(archived)
@@ -2080,7 +2081,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "| 2 | 057 | P1 | QUEUED | NOT_REQUIRED | — | [057](057.md) |\n",
             encoding="utf-8",
         )
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         meridian._apply_task_completion_rows(self.primary, identity)
         self.assertIn("| ACCEPTED |", queue.read_text(encoding="utf-8"))
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
@@ -2089,7 +2090,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
         queue = self.primary / "tasks/QUEUE.md"
         original = queue.read_text(encoding="utf-8").replace("| 1 | 056 | P0 | QUEUED |", "| 1 | 056 | P0 | UNKNOWN |")
         queue.write_text(original, encoding="utf-8")
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
             meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
@@ -2103,7 +2104,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "| 2 | 60–90m | QUEUED | — | `056` | P0 |\n"
         )
         queue.write_text(original, encoding="utf-8")
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
         task = identity.task_path
         task.write_text("# Task 056\n\nReview: NOT REQUIRED\n", encoding="utf-8")
         result = meridian._apply_task_completion_rows(self.primary, identity)
@@ -2121,7 +2122,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "| 056 | REQUIRED | 60–90m | QUEUED | — |\n"
         )
         queue.write_text(original, encoding="utf-8")
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
         with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             meridian._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
@@ -2151,7 +2152,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
                 "unknown Governed status",
             ),
         }
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
         queue = self.primary / "tasks/QUEUE.md"
         for label, (contents, message) in cases.items():
             with self.subTest(label=label):

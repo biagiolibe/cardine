@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
 from cardine.shared import git as shared_git  # noqa: E402
+from cardine.tasks import identity as owner_tasks_identity
 
 
 class TaskStateLookupTest(unittest.TestCase):
@@ -49,7 +50,7 @@ class TaskStateLookupTest(unittest.TestCase):
         self.temporary.cleanup()
 
     def test_states_and_active_build_authorities_once_for_300_tasks(self) -> None:
-        original = meridian._task_authorities
+        original = owner_tasks_identity._task_authorities
         calls = 0
 
         def counted(*args, **kwargs):
@@ -60,7 +61,7 @@ class TaskStateLookupTest(unittest.TestCase):
         with mock.patch.object(shared_git, "_git_worktrees", return_value=self.records), \
              mock.patch.object(meridian, "_git_worktrees", return_value=self.records), \
              mock.patch.object(meridian, "canonical_project_root", return_value=self.root), \
-             mock.patch.object(meridian, "_task_authorities", side_effect=counted):
+             mock.patch.object(owner_tasks_identity, "_task_authorities", side_effect=counted):
             states = meridian.registered_worktree_task_states(self.root)
             self.assertEqual(states, [{"task_id": "001", "status": "IN_PROGRESS"}])
             self.assertEqual(calls, 1)

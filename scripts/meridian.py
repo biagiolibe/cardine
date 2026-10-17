@@ -262,6 +262,86 @@ from cardine.templates.mode import (  # noqa: E402
     detect_mode,
 )
 
+from cardine.templates.migrations import (  # noqa: E402
+    migration_ids,
+    first_retirement_migration,
+    capped_target_version,
+    migration_record_paths,
+    validate_adopt_existing_paths,
+    adopt_existing_paths,
+    migration_capability_entries,
+    migration_capability_removals,
+    migration_restructures,
+    pending_restructured_markers,
+    pending_wrapped_capabilities,
+    drop_restructured_marker_blocks,
+    restructured_marker_edits,
+    project_sections,
+    restructured_text,
+    migration_capability_moves,
+    capability_requirements,
+    retired_capability_ids,
+    pending_capability_removals,
+)
+
+from cardine.tasks.identity import (  # noqa: E402
+    _safe_component,
+    canonical_task_id,
+    task_identity_json,
+    resolve_project_locations,
+    _TaskAuthority,
+    parse_task_identity_policy,
+    read_task_identity_policy,
+    _task_record_id,
+    _clean_queue_id,
+    _task_authorities,
+    _numeric_alias_key,
+    _authority_matches,
+    _identity_names,
+    _check_branch_name,
+    _identity_derivations,
+    resolve_task_identity,
+    task_identity_context,
+    next_milestone_task_identity,
+    find_task_file,
+)
+
+from cardine.templates.files import (  # noqa: E402
+    latest_migration_to,
+    manifest_baseline_version,
+    managed_files_for_workflow,
+    managed_files,
+    marker_declaring_migrations,
+    strip_marker_block,
+    capped_managed_files,
+    detect_source_version,
+)
+
+from cardine.templates.router import (  # noqa: E402
+    entry_router_overlay,
+    render_entry_router,
+    entry_router_outputs,
+    project_uses_entry_router,
+    entry_router_trigger_requirements,
+    audit_entry_router,
+)
+
+from cardine.shared.authority import (  # noqa: E402
+    find_adr_log,
+    adr_title_matcher,
+    adr_show,
+    ADR_HEADING_ID,
+    ADR_LIKE_HEADING,
+    ADR_STATUS_LINE,
+    adr_entries,
+    adr_list,
+    extract_spec_heading,
+    authority_entries,
+    SPEC_HEADING_CITATION,
+    resolve_authority_entry,
+    context_authority,
+)
+
 
 def _task_state_recovery_project(project: Path, task_id: str) -> Path:
     """Direct state recovery to the task branch's registered checkout when present."""
@@ -505,33 +585,12 @@ def apply_codex_user_rules(plan: CodexUserRulesPlan) -> bool:
     return True
 
 
-def _safe_component(value: str, label: str) -> str:
-    """Return one unambiguous, portable path component."""
-    normalized = unicodedata.normalize("NFKC", value).strip().lower()
-    if not normalized or normalized in {".", ".."}:
-        raise MeridianError(f"{label} is empty or traversing")
-    if normalized != value.strip().lower() or not SAFE_PATH_COMPONENT.fullmatch(normalized):
-        raise MeridianError(f"{label} is not an unambiguous portable path component: {value!r}")
-    return normalized
-
-
 def _normalized_local_repository_name(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).strip().lower()
     normalized = re.sub(r"[^a-z0-9]+", "-", normalized).strip("-")
     if not normalized:
         raise MeridianError("local repository name cannot be normalized safely")
     return normalized
-
-
-def canonical_task_id(value: str) -> str:
-    normalized = value.strip().lower()
-    match = re.fullmatch(r"(?:task-)?([0-9]+)", normalized)
-    if match is None:
-        raise MeridianError(f"invalid task ID: {value!r}")
-    number = match.group(1)
-    if int(number) <= 0 or number != str(int(number)).zfill(len(number)):
-        raise MeridianError(f"ambiguous task ID: {value!r}")
-    return f"task-{number}"
 
 
 def repository_identity(project_root: Path, remote_url: str | None = None) -> RepositoryIdentity:
@@ -4109,163 +4168,6 @@ def run_self_check(framework_root: Path, *, urlopen_fn=None, settings_path: Path
     return 0
 
 
-def latest_migration_to(framework_root: Path, upto: str | None = None) -> str:
-    """Return the newest migration baseline, or the release itself for an empty ledger."""
-    limit = upto or read_version(framework_root)
-    versions = [
-        str(json.loads(path.read_text(encoding="utf-8"))["to"])
-        for path in (framework_root / "migrations").glob("*.json")
-    ]
-    if not versions:
-        return limit
-    eligible = [version for version in versions if version_key(version) <= version_key(limit)]
-    if not eligible:
-        raise MeridianError(f"no migration baseline exists at or below framework version {limit}")
-    return max(eligible, key=version_key)
-
-
-def manifest_baseline_version(manifest: dict[str, object]) -> str:
-    """Read the explicit baseline version, with compatibility for legacy manifests."""
-    return str(manifest.get("workflowBaselineVersion", manifest.get("frameworkVersion", "")))
-
-
-def managed_files_for_workflow(workflow: Path, mode: str) -> list[ManagedFile]:
-    if not workflow.is_dir():
-        raise MeridianError(f"workflow template is missing: {workflow}")
-
-    paths = [
-        Path("PROJECT_WORKFLOW.md"),
-        Path("AGENTS.md"),
-        Path("CLAUDE.md"),
-        Path("LANGUAGE_POLICY.md"),
-    ]
-    if mode == "lean-delivery":
-        paths.extend(
-            [
-                Path("docs/CONTEXT_BUDGET_POLICY.md"),
-                Path("docs/EXECUTION_EVIDENCE_PROFILE.md"),
-            ]
-        )
-    if mode == "governed-sdd":
-        paths.extend(
-            [
-                Path("tasks/TASK_BLUEPRINT.md"),
-                *[
-                    item.relative_to(workflow)
-                    for item in sorted((workflow / "docs").rglob("*.md"))
-                ],
-            ]
-        )
-    # Packaged legacy baselines predate these managed files. Include each file
-    # when the particular workflow snapshot supplies it, without making a
-    # historical adoption baseline claim a file it never shipped.
-    optional_paths = [Path(".codex/rules/meridian.rules"), Path(".codex/hooks.json")]
-    if mode == "lean-delivery":
-        optional_paths.append(Path("docs/WORKTREE_LIFECYCLE.md"))
-    for optional_path in optional_paths:
-        if (workflow / optional_path).is_file():
-            paths.append(optional_path)
-
-    result = []
-    for target in paths:
-        source = workflow / target
-        if not source.is_file():
-            raise MeridianError(f"managed template is missing: {source}")
-        result.append(ManagedFile(source=source, target=target))
-    return result
-
-
-def managed_files(framework_root: Path, mode: str) -> list[ManagedFile]:
-    return managed_files_for_workflow(
-        framework_root / "templates" / "workflows" / mode, mode
-    )
-
-
-def marker_declaring_migrations(framework_root: Path) -> dict[tuple[str, int], str]:
-    """Map every declared (capability, version) pair to the migration id that
-    introduces it — via `capability`/`capabilityVersion`, a `capabilities`
-    list entry, or a `capabilityMoves` source/target — so a capped upgrade can
-    tell whether a marker version present in the live template belongs to an
-    excluded migration. A pair declared more than once keeps its first
-    (earliest) declaring migration, in file order."""
-    result: dict[tuple[str, int], str] = {}
-
-    def record(pair: tuple[str, int], migration_id: str) -> None:
-        result.setdefault(pair, migration_id)
-
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        migration_id = str(data["id"])
-        for capability, version in migration_capability_entries(data):
-            record((capability, version), migration_id)
-        for move in migration_capability_moves(data):
-            record((move.source_capability, move.source_version), migration_id)
-            record((move.target_capability, move.target_version), migration_id)
-    return result
-
-
-def strip_marker_block(text: str, capability: str, version: int) -> str:
-    """Remove one complete exact marker block, leaving surrounding text
-    untouched. Mirrors `marker_blocks()`'s pattern; used to synthesize a
-    template as it existed before an excluded migration introduced or bumped
-    one of its markers."""
-    pattern = re.compile(
-        rf"<!-- MERIDIAN:BEGIN capability={re.escape(capability)} v{version} -->\n?.*?"
-        r"<!-- MERIDIAN:END -->\n?",
-        re.DOTALL,
-    )
-    return pattern.sub("", text, count=1)
-
-
-def capped_managed_files(
-    framework_root: Path,
-    mode: str,
-    baseline_root: Path,
-    excluded_migration_ids: set[str],
-    scratch_dir: Path,
-) -> list[ManagedFile]:
-    """`managed_files()`, substituting a synthesized capped template for any
-    file that carries a marker block declared by an excluded migration, so
-    the live (always-latest) template cannot leak a change gated to a
-    migration a capped upgrade must stop before.
-
-    Stripping the excluded marker straight out of the live template would
-    leave a fragment missing whatever unrelated content the file already had
-    at the installed baseline (the `--replace` fast path would then apply
-    that fragment wholesale). Instead, build the capped content up from the
-    installed baseline, splicing in only the marker adds/supersessions the
-    live template declares via a *non*-excluded migration, reusing
-    `append_only_new_markers`'s own add/supersede rules by treating the
-    baseline as if it were both the local file and the base of a normal
-    upgrade. A file with no baseline snapshot yet (a new managed file, e.g.
-    one migration 037 alone introduces) is returned unchanged — its content
-    already reflects only the migrations that created it."""
-    declaring = marker_declaring_migrations(framework_root)
-    result = []
-    for item in managed_files(framework_root, mode):
-        base_path = baseline_root / item.target
-        if not base_path.is_file():
-            result.append(item)
-            continue
-        target_text = item.source.read_text(encoding="utf-8")
-        base_text = base_path.read_text(encoding="utf-8")
-        filtered_target = target_text
-        for capability, version in marker_pairs(target_text):
-            if declaring.get((capability, version)) in excluded_migration_ids:
-                filtered_target = strip_marker_block(filtered_target, capability, version)
-        spliced = append_only_new_markers(base_text, base_text, filtered_target)
-        capped_text = base_text if spliced is None else spliced
-        if capped_text == target_text:
-            result.append(item)
-            continue
-        scratch_dir.mkdir(parents=True, exist_ok=True)
-        capped_path = scratch_dir / item.target
-        capped_path.parent.mkdir(parents=True, exist_ok=True)
-        capped_path.write_text(capped_text, encoding="utf-8")
-        result.append(ManagedFile(source=capped_path, target=item.target))
-    return result
-
-
 def validate_manifest(
     manifest: dict[str, object],
     catalog: CapabilityCatalog | None = None,
@@ -4328,290 +4230,6 @@ def write_manifest(
     destination = project_root / MANIFEST_PATH
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-
-def migration_ids(framework_root: Path, installed_version: str, target_version: str) -> list[str]:
-    result = []
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if version_key(str(data["to"])) > version_key(installed_version) and version_key(
-            str(data["to"])
-        ) <= version_key(target_version):
-            result.append(str(data["id"]))
-    return result
-
-
-def first_retirement_migration(framework_root: Path, migration_ids_to_check: list[str]) -> str | None:
-    """The first migration, in order, among `migration_ids_to_check` whose
-    record declares any `stage: "retirement"` capability move, or `None` if
-    none of them do."""
-    for path in migration_record_paths(framework_root, migration_ids_to_check):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if any(str(move.get("stage")) == "retirement" for move in data.get("capabilityMoves", [])):
-            return str(data["id"])
-    return None
-
-
-def capped_target_version(framework_root: Path, installed_version: str, target_version: str) -> str:
-    """The effective target version for a `--stop-before-retirement` upgrade:
-    the `from` version of the first pending migration that declares a
-    retirement-stage capability move, or `target_version` unchanged if none
-    of the pending migrations retire anything."""
-    pending = migration_ids(framework_root, installed_version, target_version)
-    retirement_id = first_retirement_migration(framework_root, pending)
-    if retirement_id is None:
-        return target_version
-    for path in migration_record_paths(framework_root, [retirement_id]):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return str(data["from"])
-    raise MeridianError(f"migration record is missing: {retirement_id}")
-
-
-def migration_record_paths(framework_root: Path, migration_ids_to_find: list[str]) -> list[Path]:
-    records = []
-    wanted = set(migration_ids_to_find)
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if str(data["id"]) in wanted:
-            records.append(path)
-    if len(records) != len(wanted):
-        raise MeridianError("a requested migration record is missing from the framework source")
-    return records
-
-
-def validate_adopt_existing_paths(data: dict[str, object]) -> list[str]:
-    """Validate an optional, narrowly scoped newly-managed-file adoption declaration."""
-    declared = data.get("adoptExistingPaths", [])
-    if not isinstance(declared, list):
-        return ["adoptExistingPaths must be a list"]
-    managed = data.get("managedPaths", [])
-    managed_paths = (
-        {value for value in managed if isinstance(value, str)}
-        if isinstance(managed, list)
-        else set()
-    )
-    errors = []
-    seen = set()
-    for value in declared:
-        if not isinstance(value, str) or not value:
-            errors.append("adoptExistingPaths entries must be non-empty strings")
-            continue
-        normalized = PurePosixPath(value)
-        if (
-            normalized.is_absolute()
-            or not normalized.parts
-            or normalized.as_posix() != value
-            or "\\" in value
-            or ".." in normalized.parts
-        ):
-            errors.append(f"adoptExistingPaths entry is not a normalized relative path: {value!r}")
-        if value in seen:
-            errors.append(f"adoptExistingPaths entry is duplicated: {value!r}")
-        seen.add(value)
-        if value not in managed_paths:
-            errors.append(f"adoptExistingPaths entry is not listed in managedPaths: {value!r}")
-    return errors
-
-
-def adopt_existing_paths(framework_root: Path, pending_migrations: list[str]) -> set[Path]:
-    """Return files that pending migrations explicitly permit adopting without a baseline."""
-    result = set()
-    for path in migration_record_paths(framework_root, pending_migrations):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        errors = validate_adopt_existing_paths(data)
-        if errors:
-            raise MeridianError(f"invalid adoption declaration in {path.name}: {'; '.join(errors)}")
-        result.update(Path(value) for value in data.get("adoptExistingPaths", []))
-    return result
-
-
-def migration_capability_entries(data: dict[str, object]) -> list[tuple[str, int]]:
-    """A migration record's declared (capability, capabilityVersion) pairs.
-
-    Most migrations declare at most one, via the singular `capability` /
-    `capabilityVersion` fields. A migration introducing several independent,
-    pre-existing capabilities at once (a marker-retrofit pass over one file's
-    several sections, for example) may instead declare a `capabilities` list
-    of `{"capability": ..., "capabilityVersion": ...}` objects, so it doesn't
-    need one near-duplicate migration record per capability.
-    """
-    entries = []
-    capability = data.get("capability")
-    if capability:
-        entries.append((str(capability), int(data["capabilityVersion"])))
-    for entry in data.get("capabilities", []):
-        entries.append((str(entry["capability"]), int(entry["capabilityVersion"])))
-    return entries
-
-
-def migration_capability_removals(data: dict[str, object]) -> list[tuple[str, int, str | None]]:
-    """A migration record's declared (capability, capabilityVersion, supersededBy)
-    retirements — the mirror of `migration_capability_entries` for task 007's
-    retirement path. `supersededBy` is an optional pointer, named in reports
-    only, to the capability that now covers the same rule; nothing writes it
-    into a managed file (see tasks/007-capability-retirement-path.md — a slot
-    left behind inside a merge target is exactly the tension task 014 flagged
-    as out of scope)."""
-    return [
-        (str(entry["capability"]), int(entry["capabilityVersion"]), entry.get("supersededBy"))
-        for entry in data.get("removes", [])
-    ]
-
-
-def migration_restructures(data: dict[str, object]) -> list[tuple[Path, list[tuple[str, int]]]]:
-    """A migration record's declared `restructures`: for each managed path, the
-    inline marker versions the template no longer carries because a standalone
-    block replaced them. Unlike `removes`, the scope is one path, so a capability
-    that another file still carries stays required."""
-    result = []
-    for entry in data.get("restructures", []):
-        markers = [
-            (str(item["capability"]), int(item["capabilityVersion"]))
-            for item in entry.get("retiredMarkers", [])
-        ]
-        result.append((Path(str(entry["path"])), markers))
-    return result
-
-
-def pending_restructured_markers(
-    framework_root: Path, migration_ids_to_find: list[str], target: Path
-) -> list[tuple[str, int]]:
-    """Retired inline marker versions a pending upgrade restructures in one file."""
-    wanted = set(migration_ids_to_find)
-    result: list[tuple[str, int]] = []
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if str(data["id"]) not in wanted:
-            continue
-        for restructured_path, markers in migration_restructures(data):
-            if restructured_path == target:
-                result.extend(markers)
-    return result
-
-
-def pending_wrapped_capabilities(
-    framework_root: Path, migration_ids_to_find: list[str], target: Path
-) -> list[tuple[str, int]]:
-    """Capability blocks a pending upgrade newly wraps around text the file
-    already carried unmarked. A local copy that edited that text cannot take the
-    block as an additive insertion without duplicating the text."""
-    wanted = set(migration_ids_to_find)
-    result: list[tuple[str, int]] = []
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if str(data["id"]) not in wanted:
-            continue
-        for entry in data.get("wraps", []):
-            if Path(str(entry["path"])) == target:
-                result.append((str(entry["capability"]), int(entry["capabilityVersion"])))
-    return result
-
-
-def drop_restructured_marker_blocks(
-    text: str, retired_markers: list[tuple[str, int]]
-) -> str:
-    """Remove complete retired marker blocks from a carried project section.
-
-    Restructuring replaces the managed part of a file, but appends project-owned
-    level-2 sections verbatim. Retired inline blocks in those sections must not
-    hitch a ride into the new file. The removal intentionally accepts modified
-    blocks too: the restructure plan reports those edits and preserves the
-    complete pre-restructure file in its backup.
-    """
-    result = text
-    for capability, version in retired_markers:
-        while (block := extract_marked_block(result, capability, version)) is not None:
-            start = result.index(block)
-            end = start + len(block)
-            before, after = result[:start], result[end:]
-            # Keep normalization bounded to the deletion point so unrelated
-            # project-owned blank-line runs remain byte-for-byte.
-            boundary = re.sub(r"\n{3,}", "\n\n", before[-4:] + after[:4])
-            result = before[:-4] + boundary + after[4:]
-    return result
-
-
-def restructured_marker_edits(
-    local_text: str, base_text: str, retired_markers: list[tuple[str, int]]
-) -> list[tuple[str, int]]:
-    """Retired markers whose local complete block differs from the baseline."""
-    return [
-        (capability, version)
-        for capability, version in retired_markers
-        if any(
-            block != extract_marked_block(base_text, capability, version)
-            for block in marker_blocks(local_text, capability, version)
-        )
-    ]
-
-
-def project_sections(
-    local_text: str,
-    base_text: str,
-    template_text: str,
-    retired_markers: list[tuple[str, int]] | None = None,
-) -> list[str]:
-    """Level-2 sections of `local_text` whose heading neither the installed
-    baseline nor the target template carries: the project's own sections,
-    returned verbatim and in order. Headings inside code fences are ignored."""
-    def split(text: str) -> list[tuple[str, str]]:
-        sections: list[tuple[str, list[str]]] = []
-        fenced = False
-        for line in text.splitlines(keepends=True):
-            if line.lstrip().startswith("```"):
-                fenced = not fenced
-            if not fenced and re.match(r"#{1,2}\s", line):
-                sections.append((line.strip() if line.startswith("## ") else "", [line]))
-            elif sections:
-                sections[-1][1].append(line)
-        return [(heading, "".join(lines)) for heading, lines in sections]
-
-    known = {heading for text in (base_text, template_text) for heading, _body in split(text)}
-    return [
-        (
-            drop_restructured_marker_blocks(body, retired_markers or [])
-            if retired_markers
-            else body
-        ).rstrip("\n") + "\n"
-        for heading, body in split(local_text)
-        if heading and heading not in known
-    ]
-
-
-def restructured_text(
-    local_text: str,
-    base_text: str,
-    template_text: str,
-    retired_markers: list[tuple[str, int]] | None = None,
-) -> str:
-    """The target template followed by the project's own level-2 sections."""
-    carried = project_sections(local_text, base_text, template_text, retired_markers)
-    if not carried:
-        return template_text
-    return template_text.rstrip("\n") + "\n\n" + "\n".join(carried)
-
-
-def migration_capability_moves(data: dict[str, object]) -> list[CapabilityMove]:
-    """Parse the exact-source/exact-target moves declared by one migration."""
-    result = []
-    for entry in data.get("capabilityMoves", []):
-        source = entry["source"]
-        target = entry["target"]
-        result.append(
-            CapabilityMove(
-                stage=str(entry["stage"]),
-                source_path=Path(str(source["path"])),
-                source_capability=str(source["capability"]),
-                source_version=int(source["capabilityVersion"]),
-                source_sha256=str(source["markerSha256"]),
-                target_path=Path(str(target["path"])),
-                target_capability=str(target["capability"]),
-                target_version=int(target["capabilityVersion"]),
-                target_sha256=str(target["markerSha256"]),
-                migration=str(data["id"]),
-            )
-        )
-    return result
 
 
 def declared_capability_moves(
@@ -4730,71 +4348,6 @@ def validate_capability_moves(framework_root: Path, mode: str) -> list[str]:
             }:
                 errors.append(f"{label} source and target must both be listed in managedPaths")
     return errors
-
-
-def capability_requirements(framework_root: Path) -> dict[str, tuple[int, str]]:
-    """Map capability id -> (required version, the migration id that requires it).
-
-    Built from every migration record's declared capability entries (see
-    `migration_capability_entries`), processed in migration order (the glob
-    is already sorted by the zero-padded numeric filename prefix, the same
-    order `migration_ids` and `check_migrations` assume is contiguous). When
-    more than one migration touches the same capability, the highest
-    declared `capabilityVersion` wins. A migration's `removes` entries then
-    drop that capability from the requirements entirely — no version of it
-    is required — unless a *later* migration reintroduces it, which
-    naturally wins back by virtue of running after the removal in sequence.
-    Without this, `capability_presence_map` would report a correctly retired
-    capability as MISSING on every project that removed it exactly as asked.
-    """
-    requirements: dict[str, tuple[int, str]] = {}
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        for capability, version in migration_capability_entries(data):
-            current = requirements.get(capability)
-            if current is None or version > current[0]:
-                requirements[capability] = (version, str(data["id"]))
-        for capability, _version, _superseded_by in migration_capability_removals(data):
-            requirements.pop(capability, None)
-    return requirements
-
-
-def retired_capability_ids(framework_root: Path) -> set[str]:
-    """Every capability id ever declared `removes` by a migration, regardless
-    of whether a later migration reintroduced it. Used to distinguish a
-    legitimate, migration-declared removal from an unexplained one — see
-    `check_capability_marker_baselines` in check_repository.py, which must
-    not fail merely because a retired capability's marker is gone from the
-    framework's own current templates.
-    """
-    ids: set[str] = set()
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        for capability, _version, _superseded_by in migration_capability_removals(data):
-            ids.add(capability)
-    return ids
-
-
-def pending_capability_removals(
-    framework_root: Path, migration_ids_to_find: list[str]
-) -> list[tuple[str, int, str | None, list[str]]]:
-    """(capability, version, supersededBy, managedPaths) for every retirement
-    declared by the specific migrations about to be applied in one upgrade
-    run (not every removal in framework history — that scope belongs to
-    `retired_capability_ids`). `managedPaths` scopes which files an upgrade
-    should attempt to remove the marker from, the same field migration
-    records already use for the additive case.
-    """
-    result: list[tuple[str, int, str | None, list[str]]] = []
-    wanted = set(migration_ids_to_find)
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if str(data["id"]) not in wanted:
-            continue
-        managed_paths = [str(p) for p in data.get("managedPaths", [])]
-        for capability, version, superseded_by in migration_capability_removals(data):
-            result.append((capability, version, superseded_by, managed_paths))
-    return result
 
 
 def removals_for_managed_file(
@@ -5122,165 +4675,6 @@ def audit_capability_moves(project_root: Path, framework_root: Path, mode: str) 
                         f"capability move {move.migration}: target {move.target_path} is missing, modified, or duplicated",
                     )
                 )
-    return results
-
-
-def entry_router_overlay(text: str, path: Path) -> str:
-    """Validate the deliberately tiny, non-instructional host overlay."""
-    if not text:
-        return ""
-    if len(text.encode("utf-8")) > 256 or not re.fullmatch(r"<!--[^\n]*-->\n?", text):
-        raise MeridianError(
-            f"{path}: an entry-router host overlay must be one HTML comment of at most 256 UTF-8 bytes"
-        )
-    return text.rstrip() + "\n"
-
-
-def render_entry_router(router_text: str, overlay_text: str = "") -> str:
-    """Render one generated entry point from the consumer-owned router."""
-    return router_text.rstrip() + "\n" + ("\n" + overlay_text if overlay_text else "")
-
-
-def entry_router_outputs(project_root: Path) -> dict[Path, str]:
-    """Return the expected generated entry points, or fail without writing."""
-    router = project_root / ENTRY_ROUTER_PATH
-    if not router.is_file():
-        raise MeridianError(f"entry-router source is missing: {router}")
-    router_text = router.read_text(encoding="utf-8")
-    if len(router_text.encode("utf-8")) > ENTRY_ROUTER_BUDGET_BYTES:
-        raise MeridianError(
-            f"{router}: exceeds the {ENTRY_ROUTER_BUDGET_BYTES}-byte entry-router budget"
-        )
-    if CLAUDE_AGENTS_POINTER_MARKER in router_text or is_agents_pointer(router_text):
-        raise MeridianError(f"{router}: a generated entry router must not emit a Claude-to-AGENTS pointer")
-    result = {}
-    for target, relative_overlay in ENTRY_ROUTER_OVERLAYS.items():
-        overlay = project_root / relative_overlay
-        overlay_text = entry_router_overlay(overlay.read_text(encoding="utf-8"), overlay) if overlay.is_file() else ""
-        output = render_entry_router(router_text, overlay_text)
-        if len(output.encode("utf-8")) > ENTRY_ROUTER_BUDGET_BYTES:
-            raise MeridianError(f"{target}: exceeds the {ENTRY_ROUTER_BUDGET_BYTES}-byte entry-router budget")
-        result[Path(target)] = output
-    return result
-
-
-def project_uses_entry_router(project_root: Path) -> bool:
-    """Whether the project's top-level agent files are generated outputs."""
-    return (project_root / ENTRY_ROUTER_PATH).is_file()
-
-
-def entry_router_trigger_requirements(
-    project_root: Path,
-    framework_root: Path,
-    pending_migrations: list[str],
-    planned_files: list[ManagedFile],
-) -> tuple[str, ...]:
-    """Report command triggers a pending migration requires in the router.
-
-    The framework template remains the authority for the exact command text
-    and routed document, while ENTRY_ROUTER.md remains the only editable input
-    in an opted-in consumer. Only literal command triggers are checked here;
-    prose routes such as status and audit continue to be governed by the
-    explicit entry-router route map.
-    """
-    if not project_uses_entry_router(project_root):
-        return ()
-    command_trigger_versions = []
-    for path in migration_record_paths(framework_root, pending_migrations):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        command_trigger_versions.extend(
-            version
-            for capability, version in migration_capability_entries(data)
-            if capability == "command-triggers"
-        )
-    if not command_trigger_versions:
-        return ()
-
-    version = max(command_trigger_versions)
-    templates = {
-        item.target: item.source
-        for item in planned_files
-        if item.target in {Path("AGENTS.md"), Path("CLAUDE.md")}
-    }
-    source = templates.get(Path("AGENTS.md")) or templates.get(Path("CLAUDE.md"))
-    if source is None:
-        raise MeridianError("upgrade plan has no managed entry-point template for command-triggers")
-    block = extract_marker_block(source.read_text(encoding="utf-8"), "command-triggers", version)
-    if block is None:
-        raise MeridianError(
-            f"entry-point template lacks capability=command-triggers v{version} required by the migration ledger"
-        )
-
-    router_text = (project_root / ENTRY_ROUTER_PATH).read_text(encoding="utf-8")
-    router_lines = router_text.splitlines()
-    problems = []
-    for line in block.splitlines():
-        stripped = line.strip()
-        if not stripped.startswith("- ") or "—" not in stripped:
-            continue
-        label, route = stripped[2:].split("—", 1)
-        triggers = re.findall(r"`([^`]+)`", label)
-        if not triggers:
-            continue
-        targets = [value for value in re.findall(r"`([^`]+)`", route) if value.endswith(".md")]
-        if not targets:
-            raise MeridianError(f"command trigger has no routed Markdown target: {stripped}")
-        target = targets[-1]
-        for trigger in triggers:
-            if any(trigger in router_line and target in router_line for router_line in router_lines):
-                continue
-            if router_text.count(target) == 1:
-                guidance = (
-                    f"add `{trigger}` to the existing route line for `{target}`; do not add another "
-                    "line because the entry-router audit requires each route target exactly once"
-                )
-            else:
-                guidance = f"add `{trigger}` and route it to `{target}`"
-            problems.append(
-                f"{ENTRY_ROUTER_PATH}: missing trigger `{trigger}` for `{target}`; {guidance}"
-            )
-    return tuple(problems)
-
-
-def audit_entry_router(project_root: Path) -> list[tuple[str, str]]:
-    """Audit an opting-in consumer's generated files and explicit route map."""
-    if not (project_root / ENTRY_ROUTER_PATH).is_file():
-        return []
-    results = []
-    try:
-        outputs = entry_router_outputs(project_root)
-    except MeridianError as error:
-        return [("FAIL", str(error))]
-    for target, expected in outputs.items():
-        actual = project_root / target
-        if not actual.is_file() or actual.read_text(encoding="utf-8") != expected:
-            results.append(("FAIL", f"generated entry router drift: {target}; rerun `meridian generate-entry-routers --write`"))
-    mapping_path = project_root / ENTRY_ROUTER_MAP_PATH
-    try:
-        mapping = json.loads(mapping_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        return results + [("FAIL", f"entry-router route map is missing or invalid: {mapping_path} ({error})")]
-    if not isinstance(mapping, dict) or set(mapping) != set(ENTRY_ROUTER_ROUTES):
-        results.append(("FAIL", f"entry-router route map must declare exactly: {', '.join(ENTRY_ROUTER_ROUTES)}"))
-        return results
-    router_text = (project_root / ENTRY_ROUTER_PATH).read_text(encoding="utf-8")
-    for route, expected_path in ENTRY_ROUTER_ROUTES.items():
-        actual_path = mapping.get(route)
-        if actual_path != expected_path:
-            results.append(("FAIL", f"entry-router route {route} must target {expected_path}"))
-            continue
-        if router_text.count(expected_path) != 1:
-            results.append(("FAIL", f"entry-router must name {expected_path} exactly once for route {route}"))
-        target = project_root / expected_path
-        if not target.is_file():
-            results.append(("FAIL", f"entry-router route {route} target is missing: {expected_path}"))
-            continue
-        target_text = target.read_text(encoding="utf-8").lower()
-        missing = [token for token in ENTRY_ROUTER_SAFEGUARDS[route] if token not in target_text]
-        if missing:
-            results.append(
-                ("FAIL", f"entry-router route {route} target lacks required safeguard token(s): {', '.join(missing)}")
-            )
     return results
 
 
@@ -6246,25 +5640,6 @@ def compute_adoption_state(project_root: Path, mode: str, framework_root: Path) 
             )
         return AdoptionState("FINALIZE", missing, review, "review approved; ready to finalize")
     return AdoptionState("BLOCKED", missing, review, f"unexpected verdict in adoption review record: {review.verdict}")
-
-
-def detect_source_version(framework_root: Path, mode: str) -> str:
-    baselines_root = framework_root / "release-baselines"
-    candidates = sorted(
-        path.name
-        for path in baselines_root.iterdir()
-        if path.is_dir() and (path / "templates" / "workflows" / mode).is_dir()
-    ) if baselines_root.is_dir() else []
-    if len(candidates) == 1:
-        return candidates[0]
-    if not candidates:
-        raise MeridianError(
-            f"cannot detect source version: no packaged baseline for {mode}; pass --from explicitly"
-        )
-    raise MeridianError(
-        "cannot detect source version: multiple packaged baselines are available "
-        f"({', '.join(candidates)}); pass --from explicitly"
-    )
 
 
 def assisted_implementer_prompt(
@@ -7893,19 +7268,6 @@ def _review_attempt_text(text, attempt, verdict, body):
     return prefix + f"## Attempt {attempt} — {verdict}\n" + ("\n" + body.rstrip() + "\n" if body else "")
 
 
-def task_identity_json(project_root: Path, identity: ResolvedTaskIdentity) -> dict[str, object]:
-    """Render the diagnostic with the same effective attempt used by budgets,
-    without persisting the transition that a mutating budget command records.
-    """
-    state = load_budget_state(project_root)
-    meta = dict(state.get(identity.canonical_id) or {"attempt": 1, "lastStatus": None})
-    status = read_task_field(identity.task_path.read_text(encoding="utf-8"), "Status") or "UNKNOWN"
-    attempt = int(meta.get("attempt", 1))
-    if meta.get("lastStatus") == "READY_FOR_REVIEW" and status == "IN_PROGRESS":
-        attempt += 1
-    return identity.as_json(project_root, attempt)
-
-
 def profile_cap(project_root: Path, kind: str) -> int:
     """Read the project's declared budget default, retaining framework defaults
     only for pre-profile projects.
@@ -7958,592 +7320,6 @@ def contract_digest(text: str) -> str | None:
 
 def contract_requires_execution_commands(text: str) -> bool:
     return "- Execution commands: `required via meridian execution`" in text
-
-
-def resolve_project_locations(project_root: Path) -> ProjectLocations:
-    """Resolve project customizations declared after execution-assets.
-
-    The same resolver backs the CLI and the hook, avoiding separate default
-    paths for a project's queue and its nested task records.
-    """
-    project_root = primary_project_root(project_root)
-    declaration = read_project_declaration(project_root)
-    workflow = project_root / "PROJECT_WORKFLOW.md"
-    zone = ""
-    block_zone = ""
-    if workflow.is_file():
-        workflow_text = workflow.read_text(encoding="utf-8")
-        block_match = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=execution-assets .*?<!-- MERIDIAN:END -->",
-            workflow_text,
-            re.DOTALL,
-        )
-        block_zone = block_match.group(0) if block_match else ""
-        match = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=execution-assets .*?<!-- MERIDIAN:END -->\s*(.*?)(?=^## |\Z)",
-            workflow_text,
-            re.MULTILINE | re.DOTALL,
-        )
-        zone = match.group(1) if match else ""
-    queue_matches = re.findall(r"`([^`]*queue[^`]*\.md)`", zone, re.IGNORECASE)
-    queues = [Path(path) for path in dict.fromkeys(path for path in queue_matches if "archive" not in path.lower())]
-    if len(queues) != 1:
-        block_matches = re.findall(r"`([^`]*queue[^`]*\.md)`", block_zone, re.IGNORECASE)
-        queues = [Path(path) for path in dict.fromkeys(path for path in block_matches if "archive" not in path.lower())]
-    queue = queues[0] if len(queues) == 1 else Path("tasks/QUEUE.md")
-    roots = [Path("tasks")]
-    for raw in re.findall(r"task files live (?:at|under)\s+`([^`]+)`", zone + "\n" + block_zone, re.IGNORECASE):
-        prefix = raw.split("<", 1)[0].rstrip("/")
-        candidate = Path(prefix)
-        root = candidate.parent if candidate.suffix else candidate
-        if root not in roots:
-            roots.append(root)
-    adr_matches = re.findall(r"ADR log(?:\s+is|\s+at)?\s+`([^`]+)`", zone, re.IGNORECASE)
-    if len(set(adr_matches)) != 1:
-        adr_matches = re.findall(r"ADR log(?:\s+is|\s+at)?\s+`([^`]+)`", block_zone, re.IGNORECASE)
-    adr_log = Path(adr_matches[0]) if len(set(adr_matches)) == 1 else Path("docs/ARCHITECTURE_DECISIONS.md")
-    handoff_matches = re.findall(r"[Cc]ompletion handoffs live at `([^`]+)/<TASK-ID>\.md`", zone)
-    if len(set(handoff_matches)) != 1:
-        handoff_matches = re.findall(r"[Cc]ompletion handoffs live at `([^`]+)/<TASK-ID>\.md`", block_zone)
-    review_matches = re.findall(r"(?:durable )?review records (?:live )?at `([^`]+)/<TASK-ID>\.md`", zone, re.IGNORECASE)
-    if len(set(review_matches)) != 1:
-        review_matches = re.findall(r"(?:durable )?review records (?:live )?at `([^`]+)/<TASK-ID>\.md`", block_zone, re.IGNORECASE)
-    handoff_root = Path(handoff_matches[0]) if len(set(handoff_matches)) == 1 else Path("tasks/handoffs")
-    review_root = Path(review_matches[0]) if len(set(review_matches)) == 1 else Path("tasks/reviews")
-    legacy_used = declaration is None and (queue != Path("tasks/QUEUE.md") or len(roots) != 1 or adr_log != Path("docs/ARCHITECTURE_DECISIONS.md") or handoff_root != Path("tasks/handoffs") or review_root != Path("tasks/reviews"))
-    if declaration is not None:
-        declared_locations = declaration.get("locations", {})
-        assert isinstance(declared_locations, dict)
-        if "queue" in declared_locations:
-            queue = _safe_project_path(declared_locations["queue"], "locations.queue")
-        if "taskRoots" in declared_locations:
-            roots = [_safe_project_path(value, "locations.taskRoots") for value in declared_locations["taskRoots"]]
-        if "adrLog" in declared_locations:
-            adr_log = _safe_project_path(declared_locations["adrLog"], "locations.adrLog")
-        if "handoffRoot" in declared_locations:
-            handoff_root = _safe_project_path(declared_locations["handoffRoot"], "locations.handoffRoot")
-        if "reviewRoot" in declared_locations:
-            review_root = _safe_project_path(declared_locations["reviewRoot"], "locations.reviewRoot")
-        plan = _safe_project_path(declared_locations["plan"], "locations.plan") if "plan" in declared_locations else Path("PROJECT_PLAN.md")
-    else:
-        plan = Path("PROJECT_PLAN.md")
-    for label, path in (
-        ("queue", queue),
-        ("ADR log", adr_log),
-        ("handoff root", handoff_root),
-        ("review root", review_root),
-        *(("task root", root) for root in roots),
-    ):
-        if path.is_absolute() or ".." in path.parts:
-            raise MeridianError(f"canonical {label} must be a safe project-relative path: {path}")
-    project_root = project_root.resolve()
-    if legacy_used and project_root not in shared_project._LEGACY_LOCATION_WARNING_PROJECTS:
-        print("DEPRECATED: resolve canonical locations with .meridian/project.json", file=sys.stderr)
-        shared_project._LEGACY_LOCATION_WARNING_PROJECTS.add(project_root)
-    return ProjectLocations(
-        queue=queue,
-        task_roots=tuple(roots),
-        adr_log=adr_log,
-        handoff_root=handoff_root,
-        review_root=review_root,
-        plan=plan,
-    )
-
-
-@dataclass(frozen=True)
-class _TaskAuthority:
-    canonical_id: str
-    task_paths: tuple[Path, ...]
-    queue_links: tuple[Path, ...]
-    queue_records: int
-
-
-def parse_task_identity_policy(declaration: object) -> TaskIdentityPolicy:
-    """Validate the closed task-identity declaration schema."""
-    if not isinstance(declaration, dict):
-        raise MeridianError("task identity declaration must be a JSON object")
-    if set(declaration) != {"version", "mode"}:
-        raise MeridianError("task identity declaration accepts only version and mode")
-    if type(declaration["version"]) is not int or declaration["version"] != 1:
-        raise MeridianError(f"unsupported task identity policy version: {declaration['version']!r}")
-    if declaration["mode"] not in ("opaque", "milestone"):
-        raise MeridianError(f"unsupported task identity mode: {declaration['mode']!r}")
-    return TaskIdentityPolicy(version=1, mode=str(declaration["mode"]))
-
-
-def read_task_identity_policy(project_root: Path) -> TaskIdentityPolicy:
-    path = project_root / TASK_IDENTITY_PATH
-    if not path.exists():
-        return TaskIdentityPolicy(version=1, mode="opaque")
-    if not path.is_file():
-        raise MeridianError(f"invalid task identity declaration: {path}")
-    try:
-        declaration = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError) as error:
-        raise MeridianError(f"invalid task identity declaration: {path}") from error
-    return parse_task_identity_policy(declaration)
-
-
-def _task_record_id(path: Path) -> str | None:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return None
-    for pattern in (
-        r"^>\s*\*\*ID\*\*:\s*`([^`]+)`\s*$",
-        r"^ID:\s*`?([^`\s]+)`?\s*$",
-    ):
-        match = re.search(pattern, text, re.MULTILINE)
-        if match and "[" not in match.group(1) and "<" not in match.group(1):
-            return match.group(1)
-    return None
-
-
-def _clean_queue_id(cell: str) -> tuple[str, str | None]:
-    cell = cell.strip().strip("`")
-    link = re.fullmatch(r"\[([^]]+)\]\(([^)]+)\)", cell)
-    if link:
-        return link.group(1).strip().strip("`"), link.group(2).strip()
-    return cell, None
-
-
-def _task_authorities(project_root: Path, locations: ProjectLocations) -> dict[str, _TaskAuthority]:
-    task_paths: dict[str, set[Path]] = {}
-    queue_links: dict[str, set[Path]] = {}
-    queue_counts: dict[str, int] = {}
-    excluded_names = {"QUEUE.md", "QUEUE_ARCHIVE.md", "QUEUE_TEMPLATE.md", "TASK_BLUEPRINT.md"}
-    for root in locations.task_roots:
-        absolute = project_root / root
-        if not absolute.is_dir():
-            continue
-        for path in absolute.rglob("*.md"):
-            relative_parts = path.relative_to(absolute).parts
-            if path.name in excluded_names or {"handoffs", "reviews"}.intersection(relative_parts):
-                continue
-            canonical = _task_record_id(path) or path.stem
-            task_paths.setdefault(canonical, set()).add(path.resolve())
-
-    queue_path = (project_root / locations.queue).resolve()
-    if queue_path.is_file():
-        lines = queue_path.read_text(encoding="utf-8").splitlines()
-        headers: list[str] | None = None
-        for line in lines:
-            if not line.lstrip().startswith("|"):
-                headers = None
-                continue
-            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-            if "ID" in cells:
-                headers = cells
-                continue
-            if headers is None or len(cells) != len(headers) or set("".join(cells)) <= {"-", ":"}:
-                continue
-            canonical, inline_link = _clean_queue_id(cells[headers.index("ID")])
-            if not canonical or canonical in ("ID", "[ID]"):
-                continue
-            queue_counts[canonical] = queue_counts.get(canonical, 0) + 1
-            link_value = inline_link
-            for heading in ("Task file", "File"):
-                if heading in headers:
-                    _label, candidate = _clean_queue_id(cells[headers.index(heading)])
-                    link_value = candidate or link_value
-            if link_value and "://" not in link_value and not link_value.startswith("#"):
-                resolved = (queue_path.parent / link_value.split("#", 1)[0]).resolve()
-                if project_root.resolve() not in (resolved, *resolved.parents):
-                    raise MeridianError(f"queue task link escapes the project: {link_value}")
-                queue_links.setdefault(canonical, set()).add(resolved)
-
-    identities = set(task_paths) | set(queue_counts)
-    return {
-        canonical: _TaskAuthority(
-            canonical,
-            tuple(sorted(task_paths.get(canonical, set()))),
-            tuple(sorted(queue_links.get(canonical, set()))),
-            queue_counts.get(canonical, 0),
-        )
-        for canonical in identities
-    }
-
-
-def _numeric_alias_key(value: str) -> str | None:
-    match = NUMERIC_TASK_ALIAS.fullmatch(value)
-    if match is None or int(match.group(1)) <= 0:
-        return None
-    return match.group(1)
-
-
-def _authority_matches(authorities: dict[str, _TaskAuthority], supplied_id: str) -> list[str]:
-    if supplied_id in authorities:
-        return [supplied_id]
-    structured = STRUCTURED_TASK_ID.fullmatch(supplied_id.upper())
-    if structured:
-        candidate = supplied_id.upper()
-        return [candidate] if candidate in authorities else []
-    numeric = _numeric_alias_key(supplied_id)
-    if numeric is None:
-        return []
-    return [canonical for canonical in authorities if _numeric_alias_key(canonical) == numeric]
-
-
-def _identity_names(canonical_id: str, kind: str) -> tuple[str, str, dict[str, object] | None]:
-    """Derive branch and artifact names without spawning Git."""
-    structured = STRUCTURED_TASK_ID.fullmatch(canonical_id)
-    semantic: dict[str, object] | None = None
-    if kind == "structured":
-        if structured is None:
-            raise MeridianError(f"invalid structured task ID: {canonical_id!r}")
-        semantic = {
-            "milestone": int(structured.group("milestone")),
-            "workstream": structured.group("workstream"),
-            "ordinal": int(structured.group("ordinal")),
-        }
-        branch = canonical_id.lower()
-    else:
-        numeric = _numeric_alias_key(canonical_id)
-        branch = f"task-{numeric}" if numeric is not None else canonical_id.lower()
-    artifact = canonical_id
-    normalized = unicodedata.normalize("NFKC", artifact)
-    if normalized != artifact or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", artifact):
-        raise MeridianError(f"task ID is not a safe filesystem component: {canonical_id!r}")
-    if artifact in (".", "..") or artifact.casefold() in {"con", "prn", "aux", "nul"} or artifact.endswith((".", ".lock")):
-        raise MeridianError(f"task ID is a reserved filesystem or Git component: {canonical_id!r}")
-    return branch, artifact, semantic
-
-
-def _check_branch_name(canonical_id: str, branch: str) -> None:
-    checked = subprocess.run(
-        ["git", "check-ref-format", "--branch", branch],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if checked.returncode != 0 or not SAFE_PATH_COMPONENT.fullmatch(branch):
-        raise MeridianError(f"task ID does not derive a safe Git branch: {canonical_id!r}")
-
-
-def _identity_derivations(canonical_id: str, kind: str) -> tuple[str, str, dict[str, object] | None]:
-    branch, artifact, semantic = _identity_names(canonical_id, kind)
-    _check_branch_name(canonical_id, branch)
-    return branch, artifact, semantic
-
-
-def resolve_task_identity(
-    project_root: Path,
-    supplied_id: str,
-    intent: str,
-    *,
-    check_queue_links: bool = True,
-    context: TaskIdentityContext | None = None,
-    allow_archived_queue_links: bool = False,
-) -> ResolvedTaskIdentity:
-    if intent not in ("existing", "new"):
-        raise MeridianError(f"unsupported task identity intent: {intent!r}")
-    project_root = project_root.resolve()
-    supplied = supplied_id.strip()
-    if not supplied or supplied != supplied_id.strip() or any(separator in supplied for separator in ("/", "\\")):
-        raise MeridianError(f"invalid task ID: {supplied_id!r}")
-    context = context or task_identity_context(project_root)
-    policy = context.policy
-    locations = context.locations
-    authorities = context.authorities
-    matches = _authority_matches(authorities, supplied)
-    if len(matches) > 1:
-        raise MeridianError(f"ambiguous task identity {supplied_id!r}: {', '.join(sorted(matches))}")
-    if intent == "existing" and not matches:
-        raise MeridianError(f"unknown task identity: {supplied_id!r}")
-
-    if matches:
-        canonical = matches[0]
-    elif policy.mode == "milestone":
-        canonical = supplied.upper()
-        if STRUCTURED_TASK_ID.fullmatch(canonical) is None:
-            raise MeridianError("new milestone-mode tasks must use M<milestone>-<WORKSTREAM>-<ordinal>")
-    else:
-        canonical = supplied
-
-    structured = STRUCTURED_TASK_ID.fullmatch(canonical)
-    structured_casefold = STRUCTURED_TASK_ID.fullmatch(canonical.upper())
-    if policy.mode == "milestone" and structured_casefold and structured is None:
-        raise MeridianError(f"authoritative structured task ID is not canonical uppercase: {canonical!r}")
-    if policy.mode == "milestone" and structured:
-        kind = "structured"
-    elif policy.mode == "milestone":
-        if not matches:
-            raise MeridianError(f"unknown legacy task identity: {supplied_id!r}")
-        kind = "legacy-opaque"
-    else:
-        kind = "opaque"
-
-    branch, artifact, semantic = _identity_derivations(canonical, kind)
-    authority = authorities.get(canonical)
-    if authority is not None:
-        if len(authority.task_paths) > 1 or authority.queue_records > 1 or len(authority.queue_links) > 1:
-            raise MeridianError(f"ambiguous authoritative artifacts for task {canonical}")
-        if check_queue_links:
-            links = authority.queue_links
-            if allow_archived_queue_links and len(authority.task_paths) == 1:
-                record = authority.task_paths[0]
-                links = tuple(
-                    record if not link.exists() and record == link.parent / "done" / link.name else link
-                    for link in links
-                )
-            linked_existing = tuple(path for path in links if path.is_file())
-            if authority.queue_links and len(linked_existing) != len(authority.queue_links):
-                raise MeridianError(f"queue link for task {canonical} does not resolve to an existing task file")
-            if linked_existing and not authority.task_paths:
-                raise MeridianError(f"queue and task authorities disagree for {canonical}")
-            if authority.task_paths and linked_existing and authority.task_paths[0] != linked_existing[0]:
-                raise MeridianError(f"task and queue authorities disagree for {canonical}")
-        paths = authority.task_paths
-        if not paths:
-            raise MeridianError(f"task {canonical} has no authoritative task file")
-        task_path = paths[0]
-    else:
-        task_path = (project_root / locations.task_roots[0] / f"{artifact}.md").resolve()
-
-    for other_id in authorities:
-        if other_id == canonical:
-            continue
-        try:
-            other_kind = "structured" if policy.mode == "milestone" and STRUCTURED_TASK_ID.fullmatch(other_id) else "opaque"
-            other_branch, other_artifact, _other_semantic = _identity_names(other_id, other_kind)
-            if other_branch.casefold() != branch.casefold() and other_artifact.casefold() != artifact.casefold():
-                continue
-            # Only a colliding ID needs the Git ref check, so the subprocess cost
-            # does not grow with the number of known tasks.
-            _check_branch_name(other_id, other_branch)
-        except MeridianError:
-            continue
-        raise MeridianError(f"task identity collision between {canonical!r} and {other_id!r}")
-
-    return ResolvedTaskIdentity(
-        policy_version=policy.version,
-        mode=policy.mode,
-        kind=kind,
-        canonical_id=canonical,
-        branch_name=branch,
-        artifact_stem=artifact,
-        semantic_tuple=semantic,
-        task_path=task_path,
-        queue_path=(project_root / locations.queue).resolve(),
-        handoff_path=(project_root / locations.handoff_root / f"{artifact}.md").resolve(),
-        review_path=(project_root / locations.review_root / f"{artifact}.md").resolve(),
-    )
-
-
-def task_identity_context(project_root: Path) -> TaskIdentityContext:
-    """Build the authoritative identity inputs once for a command."""
-    project_root = project_root.resolve()
-    policy = read_task_identity_policy(project_root)
-    locations = resolve_project_locations(project_root)
-    return TaskIdentityContext(policy, locations, _task_authorities(project_root, locations))
-
-
-def next_milestone_task_identity(
-    project_root: Path, milestone: str, workstream: str
-) -> ResolvedTaskIdentity:
-    """Resolve the next unused structured identity from the task authorities."""
-    context = task_identity_context(project_root)
-    if context.policy.mode != "milestone":
-        raise MeridianError("next task identity requires a milestone task-identity policy")
-    if re.fullmatch(r"[1-9][0-9]*", milestone) is None:
-        raise MeridianError("invalid milestone: expected a positive integer without a leading zero")
-    if re.fullmatch(r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*", workstream) is None:
-        raise MeridianError("invalid workstream: expected canonical uppercase task-ID grammar")
-
-    project_root = project_root.resolve()
-    authorities = context.authorities
-    highest = 0
-    for canonical_id in authorities:
-        structured = STRUCTURED_TASK_ID.fullmatch(canonical_id)
-        similar = STRUCTURED_TASK_ID.fullmatch(canonical_id.upper())
-        if similar is None:
-            continue
-        if similar.group("milestone") != milestone or similar.group("workstream") != workstream:
-            continue
-        # Reuse the normal resolver to reject duplicate, mismatched, or
-        # non-canonical authoritative records before deriving a new ordinal.
-        resolved = resolve_task_identity(project_root, canonical_id, "existing", context=context)
-        if structured is not None:
-            highest = max(highest, int(structured.group("ordinal")))
-
-    if highest >= 999:
-        raise MeridianError(f"next ordinal exceeds 999 for M{milestone}-{workstream}")
-    return resolve_task_identity(
-        project_root, f"M{milestone}-{workstream}-{highest + 1:03d}", "new", context=context
-    )
-
-
-def find_adr_log(project_root: Path) -> Path:
-    return project_root / resolve_project_locations(project_root).adr_log
-
-
-def adr_title_matcher(adr_id: str):
-    """The one title test that decides which heading is ADR `adr_id`, at any
-    heading level; `adr show` and `adr list` both resolve entries through it."""
-    return lambda title: re.match(rf"{re.escape(adr_id)}\b", title) is not None
-
-
-def adr_show(project_root: Path, adr_id: str) -> str:
-    """Print exactly one ADR section: the first heading whose title starts with
-    the ID, up to the next heading at the same or a shallower level or EOF,
-    without depending on contiguous numbering.
-    """
-    adr_log = find_adr_log(project_root)
-    if not adr_log.is_file():
-        raise MeridianError(f"ADR log not found for {adr_id}: {adr_log}")
-    text = adr_log.read_text(encoding="utf-8")
-    result = extract_heading_block(text, adr_title_matcher(adr_id))
-    if result is None:
-        raise MeridianError(f"unknown ADR {adr_id}: not found in {adr_log}")
-    excerpt, _ = result
-    return excerpt
-
-
-ADR_HEADING_ID = re.compile(r"ADR-\d+\b")
-ADR_LIKE_HEADING = re.compile(r"ADR\b", re.IGNORECASE)
-ADR_STATUS_LINE = re.compile(r"^\s*(?:[-*]\s+)?\*{0,2}Status\*{0,2}\s*:\s*\*{0,2}\s*(.*?)\s*$", re.IGNORECASE)
-
-
-def adr_entries(text: str) -> tuple[list[dict[str, str | None]], list[str]]:
-    """Return `(entries, warnings)` for an ADR log. An entry exists exactly when
-    `adr show` would resolve its ID: the first heading whose title starts with
-    `ADR-<digits>`. A later heading that repeats an ID, or an ADR-like heading
-    that carries no parsable ID, is reported as a warning, never dropped.
-    """
-    entries: list[dict[str, str | None]] = []
-    warnings: list[str] = []
-    seen: set[str] = set()
-    for match in HEADING_LINE.finditer(text):
-        title = match.group(2).strip()
-        line = text.count("\n", 0, match.start()) + 1
-        id_match = ADR_HEADING_ID.match(title)
-        if id_match is None:
-            if ADR_LIKE_HEADING.match(title):
-                warnings.append(f"line {line}: heading is not an ADR-NNNN entry and cannot be listed or shown: {title}")
-            continue
-        adr_id = id_match.group(0)
-        if adr_id in seen:
-            warnings.append(f"line {line}: duplicate {adr_id}; `adr show` resolves only the first entry")
-            continue
-        seen.add(adr_id)
-        result = extract_heading_block(text, adr_title_matcher(adr_id))
-        block = result[0] if result is not None else ""
-        status = None
-        for block_line in block.splitlines()[1:]:
-            status_match = ADR_STATUS_LINE.match(block_line)
-            if status_match is not None:
-                status = status_match.group(1) or None
-                break
-        entries.append({"id": adr_id, "title": title[len(adr_id):].lstrip(" \t:\u2014\u2013-").strip(), "status": status})
-    return entries, warnings
-
-
-def adr_list(
-    project_root: Path, status_filter: str | None = None
-) -> tuple[list[dict[str, str | None]], list[str]]:
-    """List every ADR entry as `{id, title, status}` without printing a body."""
-    adr_log = find_adr_log(project_root)
-    if not adr_log.is_file():
-        raise MeridianError(f"ADR log not found: {adr_log}")
-    entries, warnings = adr_entries(adr_log.read_text(encoding="utf-8"))
-    if status_filter is not None:
-        wanted = status_filter.strip().casefold()
-        entries = [entry for entry in entries if entry["status"] is not None and entry["status"].casefold() == wanted]
-    return entries, warnings
-
-
-def extract_spec_heading(project_root: Path, spec_path: str, heading: str) -> str:
-    full = project_root / spec_path
-    if not full.is_file():
-        raise MeridianError(f"spec file not found: {spec_path}")
-    text = full.read_text(encoding="utf-8")
-    result = extract_heading_block(text, lambda title: title.strip() == heading.strip())
-    if result is None:
-        raise MeridianError(f"heading not found in {spec_path}: {heading}")
-    excerpt, _ = result
-    return excerpt
-
-
-def authority_entries(text: str) -> list[str]:
-    """Every `## Authority` bullet, with wrapped continuation lines merged
-    into the bullet they belong to."""
-    section = extract_heading_block(text, lambda title: title == "Authority")
-    if section is None:
-        return []
-    body = section[0].split("\n", 1)[1] if "\n" in section[0] else ""
-    entries: list[str] = []
-    for line in body.splitlines():
-        if line.startswith("- "):
-            entries.append(line[2:].strip())
-        elif line.strip() and entries:
-            entries[-1] += " " + line.strip()
-    return entries
-
-
-SPEC_HEADING_CITATION = re.compile(r"^`([^`]+)`#(.+)$")
-
-
-def resolve_authority_entry(
-    project_root: Path, entry: str
-) -> tuple[list[tuple[str, str, str]], list[str]]:
-    """Resolve one Authority bullet to `(source, heading, excerpt)` triples,
-    plus any part of the bullet that could not be resolved (named, not
-    silently dropped): every `ADR-NNNN` token cited anywhere in the bullet
-    resolves through `adr_show`; a `` `path`#Heading `` citation resolves
-    through the same heading-range logic against that path; anything else is
-    reported unresolved.
-    """
-    resolved: list[tuple[str, str, str]] = []
-    unresolved: list[str] = []
-    adr_ids = re.findall(r"\bADR-\d+\b", entry)
-    if adr_ids:
-        adr_log = find_adr_log(project_root)
-        for adr_id in adr_ids:
-            try:
-                excerpt = adr_show(project_root, adr_id)
-            except MeridianError:
-                unresolved.append(f"{adr_id} (not found in {adr_log})")
-                continue
-            resolved.append((str(adr_log), adr_id, excerpt))
-        return resolved, unresolved
-    match = SPEC_HEADING_CITATION.match(entry.strip())
-    if match:
-        spec_path, heading = match.group(1), match.group(2).strip()
-        try:
-            excerpt = extract_spec_heading(project_root, spec_path, heading)
-        except MeridianError as error:
-            unresolved.append(f"{entry} ({error})")
-            return resolved, unresolved
-        resolved.append((spec_path, heading, excerpt))
-        return resolved, unresolved
-    unresolved.append(entry)
-    return resolved, unresolved
-
-
-def context_authority(project_root: Path, task_id: str, labels_only: bool = False) -> str:
-    """Print the task's cited ADR sections and spec headings, labeled with
-    source path and heading, in place of opening the ADR log or spec file
-    directly. `labels_only` drops excerpt bodies, keeping only source and
-    heading, for the queue-briefing hook.
-    """
-    task = find_task_file(project_root, task_id)
-    text = task.read_text(encoding="utf-8")
-    entries = authority_entries(text)
-    if not entries:
-        return f"{task_id}: no Authority entries."
-    lines: list[str] = []
-    unresolved_all: list[str] = []
-    for entry in entries:
-        resolved, unresolved = resolve_authority_entry(project_root, entry)
-        for source, heading, excerpt in resolved:
-            lines.append(f"### {source} — {heading}")
-            if not labels_only:
-                lines.append(excerpt)
-        unresolved_all.extend(unresolved)
-    if unresolved_all:
-        lines.append("### Unresolved")
-        lines.extend(f"- {item}" for item in unresolved_all)
-    return "\n".join(lines).rstrip("\n")
 
 
 def _context_path_references(text: str) -> list[Path]:
@@ -9082,11 +7858,6 @@ def task_cap(project_root: Path, text: str, kind: str) -> int:
     if raw and raw.isdigit():
         return int(raw)
     return profile_cap(project_root, kind)
-
-
-def find_task_file(project_root: Path, task_id: str) -> Path:
-    """Locate a task through the shared declaration-driven identity resolver."""
-    return resolve_task_identity(project_root, task_id, "existing").task_path
 
 
 def resolve_budget_key(project_root: Path, state: dict[str, object], task_id: str) -> tuple[str, str]:

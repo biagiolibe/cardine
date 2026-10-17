@@ -10,6 +10,7 @@ from tests import test_task_worktree_isolation as fixtures
 
 meridian = fixtures.meridian
 import cardine.shared.errors as shared_errors
+from cardine.tasks import identity as owner_tasks_identity
 
 
 class TaskIntegrationStateTest(unittest.TestCase):
@@ -92,7 +93,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
             self.stage()
         self.assertTrue(str(caught.exception).startswith(f"BLOCKED {code}:"), str(caught.exception))
         self.assertIn(detail, str(caught.exception))
-        identity = meridian.resolve_task_identity(self.primary, "056", "existing")
+        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, integration = meridian._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease.exists())
         self.assertFalse(integration.exists())

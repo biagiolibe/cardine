@@ -21,6 +21,7 @@ from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.templates import markers as templates_markers
 import cardine.shared.errors as shared_errors
+from cardine.templates import migrations as owner_templates_migrations
 
 CLI = ROOT / "scripts" / "meridian.py"
 REVIEW_PROMPT = "docs/CODE_REVIEW_PROMPT.md"
@@ -219,7 +220,7 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         self.assertFalse(list(self.project.glob("docs/*.bak*")))
 
     def test_ci_verified_validation_stays_required_for_other_files(self) -> None:
-        requirements = meridian.capability_requirements(ROOT)
+        requirements = owner_templates_migrations.capability_requirements(ROOT)
         self.assertIn("ci-verified-validation", requirements)
         self.assertNotIn("task-worktree-review", requirements)
         self.assertNotIn("manual-verification-review-check", requirements)
@@ -584,15 +585,15 @@ class RestructureHelpersTest(unittest.TestCase):
         base = "# T\n\n## Known\n\nbody\n"
         template = "# T\n\n## Known\n\nnew body\n"
         local = "# T\n\n## Known\n\nedited\n\n```text\n## not a heading\n```\n\n## Mine\n\nkeep\n"
-        self.assertEqual(meridian.project_sections(local, base, template), ["## Mine\n\nkeep\n"])
+        self.assertEqual(owner_templates_migrations.project_sections(local, base, template), ["## Mine\n\nkeep\n"])
         self.assertEqual(
-            meridian.restructured_text(local, base, template),
+            owner_templates_migrations.restructured_text(local, base, template),
             "# T\n\n## Known\n\nnew body\n\n## Mine\n\nkeep\n",
         )
 
     def test_a_file_without_project_sections_becomes_the_template(self) -> None:
         template = "# T\n\nbody\n"
-        self.assertEqual(meridian.restructured_text("# T\n\nedited\n", "# T\n\nold\n", template), template)
+        self.assertEqual(owner_templates_migrations.restructured_text("# T\n\nedited\n", "# T\n\nold\n", template), template)
 
     def test_carried_sections_without_retired_markers_or_with_other_markers_are_unchanged(self) -> None:
         base = "# T\n\n## Known\n\nbody\n"
@@ -602,7 +603,7 @@ class RestructureHelpersTest(unittest.TestCase):
             "<!-- MERIDIAN:BEGIN capability=kept-marker v1 -->Keep this.<!-- MERIDIAN:END -->\n"
         )
         self.assertEqual(
-            meridian.project_sections(local, base, template, [("retired-marker", 1)]),
+            owner_templates_migrations.project_sections(local, base, template, [("retired-marker", 1)]),
             ["## Mine\n\n<!-- MERIDIAN:BEGIN capability=kept-marker v1 -->Keep this.<!-- MERIDIAN:END -->\n"],
         )
 

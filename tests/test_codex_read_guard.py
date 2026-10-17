@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from codex_read_guard import decision, extract_targets  # noqa: E402
 import meridian  # noqa: E402
+from cardine.templates import files as owner_templates_files
 
 
 class CodexReadGuardTest(unittest.TestCase):
@@ -113,7 +114,7 @@ class CodexReadGuardTest(unittest.TestCase):
         self.assertEqual(entry["matcher"], "Bash")
         self.assertEqual(entry["hooks"][0]["command"], "meridian hook read-guard --host codex")
         managed = {str(item.source.relative_to(ROOT / "templates/workflows/governed-sdd"))
-                   for item in meridian.managed_files(ROOT, "governed-sdd")}
+                   for item in owner_templates_files.managed_files(ROOT, "governed-sdd")}
         self.assertIn(".codex/hooks.json", managed)
 
 

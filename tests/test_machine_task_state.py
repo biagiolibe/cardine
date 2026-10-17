@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
 import cardine.shared.errors as shared_errors
 import cardine.tasks.state as task_state
+from cardine.shared import authority as owner_shared_authority
 
 SHA = "a" * 40
 AT = "2026-10-11T12:00:00Z"
@@ -236,7 +237,7 @@ class MachineTaskStateTest(unittest.TestCase):
         before = meridian.context_size_report(self.root, "implementation")
         self.write(self.state())
         self.record.write_text(self.record.read_text() + "\n## Authority\n\n- `.meridian/tasks/001.json`#State\n")
-        with mock.patch.object(meridian, "extract_spec_heading", side_effect=AssertionError("state startup read")):
+        with mock.patch.object(owner_shared_authority, "extract_spec_heading", side_effect=AssertionError("state startup read")):
             report = meridian.context_size_report(self.root, "implementation", task_id="001")
         self.assertNotIn(".meridian/tasks/001.json", [item["path"] for item in report["files"]])
         for role in ("implementation", "review"):
