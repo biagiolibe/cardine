@@ -148,6 +148,7 @@ def run_shards(
                 "TMPDIR": str(private / "tmp"),
                 "MERIDIAN_TEST_SHARD": f"{position}/{len(commands)}",
             }
+            shard_environment.pop("MERIDIAN_ROOT", None)
             with output_path.open("wb") as output:
                 process = subprocess.Popen(
                     list(command), stdout=output, stderr=subprocess.STDOUT, env=shard_environment, cwd=ROOT
@@ -248,6 +249,8 @@ def run_parallel(
 
 def main(arguments: list[str] | None = None) -> int:
     options = parser().parse_args(arguments)
+    # Tests select their own framework roots; do not inherit the launcher's.
+    os.environ.pop("MERIDIAN_ROOT", None)
     # `python -m unittest` puts the working directory on sys.path; a script run
     # puts only scripts/, so tests that import `tests.*` need the root as well.
     if str(ROOT) not in sys.path:

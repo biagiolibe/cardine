@@ -304,6 +304,43 @@ class ParallelTestRunnerTest(unittest.TestCase):
             self.assertTrue(path.startswith(str(scratch)))
             self.assertIn(f"{position}/3", results[position - 1].output)
 
+    def test_shards_remove_inherited_framework_root(self) -> None:
+        for explicit_environment in (False, True):
+            with self.subTest(explicit_environment=explicit_environment):
+                scratch = Path(tempfile.mkdtemp())
+                self.addCleanup(shutil.rmtree, scratch, True)
+                environment = dict(os.environ, MERIDIAN_ROOT="/foreign/framework")
+                code = "import os; print(repr(os.environ.get('MERIDIAN_ROOT')))"
+                with mock.patch.dict(os.environ, environment, clear=True):
+                    results = runner.run_shards(
+                        [[sys.executable, "-c", code]], scratch,
+                        environment if explicit_environment else None,
+                    )
+                    self.assertEqual(os.environ["MERIDIAN_ROOT"], "/foreign/framework")
+                self.assertEqual(results[0].returncode, 0)
+                self.assertEqual(results[0].output.strip(), "None")
+                self.assertEqual(environment["MERIDIAN_ROOT"], "/foreign/framework")
+
+    def test_direct_shard_removes_inherited_framework_root(self) -> None:
+        directory = self.make_suite(["environment"])
+        self.addCleanup(shutil.rmtree, directory, True)
+        test_file = next(directory.glob("test_*.py"))
+        test_file.write_text(
+            "import os, unittest\n"
+            "assert 'MERIDIAN_ROOT' not in os.environ\n"
+            "class GeneratedTest(unittest.TestCase):\n"
+            "    def test_environment(self):\n"
+            "        self.assertNotIn('MERIDIAN_ROOT', os.environ)\n",
+            encoding="utf-8",
+        )
+        with mock.patch.dict(os.environ, {"MERIDIAN_ROOT": "/foreign/framework"}):
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--shard", "1/1", "--tests-directory", str(directory)],
+                cwd=ROOT, text=True, capture_output=True, check=False,
+            )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("result ran=1 failures=0 errors=0", result.stdout)
+
     def test_tests_do_not_share_ports_global_git_config_or_process_environment(self) -> None:
         patterns = {
             "socket use": re.compile(r"\bsocket\.|\.bind\(\("),
