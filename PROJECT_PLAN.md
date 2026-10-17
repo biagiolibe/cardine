@@ -51,4 +51,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 024 — Move the remaining `test_meridian_cli.py` classes to domain test files.
 - `[ ]` 025 — Split `test_task_worktree_isolation.py`.
 - `[ ]` 026 — Verify the completed module split (split plan V01).
-- `[ ]` 027 — Replace the per-task CI gate with a clean-clone run and a two-platform release gate.
+- `[x]` 027 — Replace the per-task CI gate with a clean-clone run and a two-platform release gate.

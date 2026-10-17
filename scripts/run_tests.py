@@ -28,6 +28,7 @@ MAX_WORKERS = 8
 FAILURE_LINES = 60
 HEADER = re.compile(r"^shard=(\d+)/(\d+) total=(\d+) selected=(\d+) digest=([0-9a-f]{64})$")
 RESULT = re.compile(r"^result ran=(\d+) failures=(\d+) errors=(\d+) skipped=(\d+)$", re.MULTILINE)
+COVERAGE = re.compile(r"^coverage total=(\d+) digest=([0-9a-f]{64})", re.MULTILINE)
 FAILURE_BLOCK = re.compile(r"^(?:FAIL|ERROR): .*\n^-{5,}\n.*?^-{5,}$", re.MULTILINE | re.DOTALL)
 
 
@@ -95,6 +96,11 @@ def parser() -> argparse.ArgumentParser:
         type=parse_workers,
         metavar="N",
         help=f"run N shards concurrently (default: CPU count, at most {MAX_WORKERS})",
+    )
+    argument_parser.add_argument(
+        "--clean-clone",
+        action="store_true",
+        help="with --parallel, validate a shallow clone of the committed HEAD instead of this working tree",
     )
     argument_parser.add_argument("--tests-directory", type=Path, default=TESTS_DIRECTORY, help=argparse.SUPPRESS)
     return argument_parser
@@ -247,8 +253,64 @@ def run_parallel(
     return 0 if ok else 1
 
 
+def git(source: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["git", "-C", str(source), *arguments], text=True, capture_output=True, check=False)
+
+
+def run_clean_clone(requested: int, source: Path = ROOT) -> int:
+    """Validate the committed HEAD of `source` in a throwaway shallow clone.
+
+    The clone holds only tracked files and the last commit, which is what a CI
+    checkout sees, so it catches untracked-file dependencies and checks that
+    need history. A dirty tree is refused so the result always names a commit.
+    """
+    dirty = git(source, "status", "--porcelain", "--untracked-files=no")
+    if dirty.returncode != 0 or dirty.stdout.strip():
+        print("clean-clone refused: the working tree has uncommitted changes; commit them first")
+        return 2
+    commit = git(source, "rev-parse", "HEAD").stdout.strip()
+    scratch = Path(tempfile.mkdtemp(prefix="meridian-clean-clone-"))
+    clone = scratch / "clone"
+    environment = {key: value for key, value in os.environ.items() if key != "MERIDIAN_ROOT"}
+    environment["TMPDIR"] = str(scratch)
+    total, digest, outcome = "unknown", "unknown", "FAILED"
+    try:
+        cloned = subprocess.run(
+            ["git", "clone", "--quiet", "--depth", "1", "--no-local", str(source), str(clone)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if cloned.returncode != 0:
+            print(f"clean-clone could not clone: {cloned.stderr.strip()}")
+        else:
+            parallel = ["--parallel"] + ([str(requested)] if requested else [])
+            steps = (["scripts/check_repository.py"], ["scripts/run_tests.py", *parallel])
+            for step in steps:
+                finished = subprocess.run(
+                    [sys.executable, *step], cwd=clone, env=environment, text=True, capture_output=True, check=False
+                )
+                print(finished.stdout, end="")
+                print(finished.stderr, end="", file=sys.stderr)
+                proof = COVERAGE.search(finished.stdout)
+                if proof:
+                    total, digest = proof[1], proof[2]
+                if finished.returncode != 0:
+                    break
+            else:
+                outcome = "OK"
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+    print(f"clean-clone commit={commit} total={total} digest={digest} outcome={outcome}", flush=True)
+    return 0 if outcome == "OK" else 1
+
+
 def main(arguments: list[str] | None = None) -> int:
     options = parser().parse_args(arguments)
+    if options.clean_clone:
+        if options.parallel is None:
+            parser().error("--clean-clone requires --parallel")
+        return run_clean_clone(options.parallel)
     # Tests select their own framework roots; do not inherit the launcher's.
     os.environ.pop("MERIDIAN_ROOT", None)
     # `python -m unittest` puts the working directory on sys.path; a script run
