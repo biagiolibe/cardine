@@ -31,6 +31,9 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+
+from cardine.stops import registry as stops_registry
+from cardine.templates import markers as templates_markers
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
 import cardine.shared.hashing as shared_hashing
@@ -511,7 +514,7 @@ class MeridianCliTest(unittest.TestCase):
         claude.write_text("# Compact Claude router\n", encoding="utf-8")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text("# Implementation\n\n" + moved + "\n", encoding="utf-8")
-        digest = meridian.marker_block_sha256(moved)
+        digest = templates_markers.marker_block_sha256(moved)
 
         establish = {
             "id": "001-establish-route-rule",
@@ -2234,7 +2237,7 @@ worktree before the branch only after validated integration succeeds.
         profile.write_text("# Project Execution Evidence Profile\n", encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.15\n", encoding="utf-8")
 
-        appended = meridian.append_only_new_markers(
+        appended = templates_markers.append_only_new_markers(
             local_policy.read_text(encoding="utf-8"),
             (self.project / ".meridian/baselines/1.1.14/docs/CONTEXT_BUDGET_POLICY.md").read_text(
                 encoding="utf-8"
@@ -2327,17 +2330,17 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded = pointer.read_text(encoding="utf-8")
         self.assertEqual(upgraded.count("<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->"), 1)
-        self.assertEqual(meridian.marker_pairs(upgraded), [])
+        self.assertEqual(templates_markers.marker_pairs(upgraded), [])
 
     def test_explicit_agents_pointer_rejects_duplicate_or_capability_markers(self) -> None:
         self.assertFalse(
-            meridian.is_agents_pointer(
+            templates_markers.is_agents_pointer(
                 "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n"
                 "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n"
             )
         )
         self.assertFalse(
-            meridian.is_agents_pointer(
+            templates_markers.is_agents_pointer(
                 "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n"
                 "<!-- MERIDIAN:BEGIN capability=test v1 -->\nRule.\n<!-- MERIDIAN:END -->\n"
             )
@@ -2348,10 +2351,10 @@ worktree before the branch only after validated integration succeeds.
             "# Profile\n\n<!-- MERIDIAN:BEGIN capability=investigation-scope v2 -->\n"
             "- Investigation scope: 2 per task.\n<!-- MERIDIAN:END -->\n"
         )
-        content = meridian.extract_marker_block(template, "investigation-scope", 2)
+        content = templates_markers.extract_marker_block(template, "investigation-scope", 2)
         self.assertIsNotNone(content)
         local = "# Profile\n\n" + content
-        upgraded = meridian.append_only_new_markers(local, "# Profile\n", template)
+        upgraded = templates_markers.append_only_new_markers(local, "# Profile\n", template)
         self.assertIsNotNone(upgraded)
         self.assertEqual(upgraded.count("Investigation scope: 2 per task."), 1)
         self.assertIn("capability=investigation-scope v2", upgraded)
@@ -2362,9 +2365,9 @@ worktree before the branch only after validated integration succeeds.
                 template = (
                     ROOT / "templates" / "workflows" / mode / "docs" / "EXECUTION_EVIDENCE_PROFILE.md"
                 ).read_text(encoding="utf-8")
-                self.assertIsNotNone(meridian.extract_marker_block(template, "long-command-waits", 1))
+                self.assertIsNotNone(templates_markers.extract_marker_block(template, "long-command-waits", 1))
                 local = "# Project profile\n\nProject-owned rule.\n"
-                upgraded = meridian.append_only_new_markers(local, "# Project profile\n", template)
+                upgraded = templates_markers.append_only_new_markers(local, "# Project profile\n", template)
                 self.assertIsNotNone(upgraded)
                 self.assertEqual(upgraded.count("capability=long-command-waits v1"), 1)
                 self.assertIn("Project-owned rule.", upgraded)
@@ -2376,19 +2379,19 @@ worktree before the branch only after validated integration succeeds.
             "<!-- MERIDIAN:END -->\n"
         )
         reflowed = template.replace("One long policy sentence wraps here.", "One long policy\nsentence wraps here.")
-        normalized = meridian.reflowed_marker_normalization(reflowed, template)
+        normalized = templates_markers.reflowed_marker_normalization(reflowed, template)
         self.assertEqual(normalized, template)
         changed_fence = reflowed.replace("exact value", "different value")
-        self.assertIsNone(meridian.reflowed_marker_normalization(changed_fence, template))
+        self.assertIsNone(templates_markers.reflowed_marker_normalization(changed_fence, template))
 
     def test_marker_deduplication_removes_only_identical_template_copies(self) -> None:
         block = "<!-- MERIDIAN:BEGIN capability=example v1 -->\nRule.\n<!-- MERIDIAN:END -->\n"
         duplicated = "# Policy\n\n" + block + "\n" + block
-        normalized = meridian.deduplicate_identical_template_markers(duplicated, block)
+        normalized = templates_markers.deduplicate_identical_template_markers(duplicated, block)
         self.assertIsNotNone(normalized)
         self.assertEqual(normalized.count("capability=example v1"), 1)
         divergent = duplicated.replace("Rule.\n<!-- MERIDIAN:END -->\n\n<!--", "Different.\n<!-- MERIDIAN:END -->\n\n<!--", 1)
-        self.assertIsNone(meridian.deduplicate_identical_template_markers(divergent, block))
+        self.assertIsNone(templates_markers.deduplicate_identical_template_markers(divergent, block))
 
     def test_upgrade_does_not_require_a_capability_not_marked_in_this_file(self) -> None:
         """A migration's `managedPaths` lists every file its diff touches, which
@@ -2561,7 +2564,7 @@ worktree before the branch only after validated integration succeeds.
         )
         self.assertIsNotNone(marker)
         marker_text = marker.group(0)
-        digest = meridian.marker_block_sha256(marker_text)
+        digest = templates_markers.marker_block_sha256(marker_text)
         incoming_source = source_text[: marker.start()] + source_text[marker.end() :]
         source.write_text(
             incoming_source.replace(
@@ -3532,14 +3535,14 @@ class MarkerSupersessionTest(unittest.TestCase):
             "new capability.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        result = meridian.append_only_new_markers(self.BASE, self.BASE, template)
+        result = templates_markers.append_only_new_markers(self.BASE, self.BASE, template)
         self.assertIsNotNone(result)
         self.assertIn("old rule text.", result)
         self.assertIn("new capability.", result)
 
     def test_bumped_capability_with_unmodified_block_replaces_in_place(self) -> None:
         template = self.BASE.replace(self.OLD_BLOCK, self.NEW_BLOCK)
-        result = meridian.append_only_new_markers(self.BASE, self.BASE, template)
+        result = templates_markers.append_only_new_markers(self.BASE, self.BASE, template)
         self.assertIsNotNone(result)
         self.assertIn("capability=mvp v2", result)
         self.assertIn("new rule text.", result)
@@ -3553,13 +3556,13 @@ class MarkerSupersessionTest(unittest.TestCase):
     def test_bumped_capability_with_modified_block_returns_none(self) -> None:
         local = self.BASE.replace("old rule text.", "old rule text, locally customized.")
         template = self.BASE.replace(self.OLD_BLOCK, self.NEW_BLOCK)
-        result = meridian.append_only_new_markers(local, self.BASE, template)
+        result = templates_markers.append_only_new_markers(local, self.BASE, template)
         self.assertIsNone(result)
 
     def test_local_file_with_two_existing_versions_is_left_untouched(self) -> None:
         local = self.BASE + "\n" + self.NEW_BLOCK + "\n"
         template = self.BASE.replace(self.OLD_BLOCK, self.NEW_BLOCK)
-        result = meridian.append_only_new_markers(local, self.BASE, template)
+        result = templates_markers.append_only_new_markers(local, self.BASE, template)
         self.assertIsNone(result)
 
     def test_edited_unchanged_version_block_blocks_an_otherwise_safe_append(self) -> None:
@@ -3573,7 +3576,7 @@ class MarkerSupersessionTest(unittest.TestCase):
             "new capability.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        result = meridian.append_only_new_markers(local, self.BASE, template)
+        result = templates_markers.append_only_new_markers(local, self.BASE, template)
         self.assertIsNone(result)
 
 
@@ -3663,7 +3666,7 @@ class CapabilityRetirementTest(unittest.TestCase):
     )
 
     def test_retires_an_unmodified_block(self) -> None:
-        result = meridian.remove_retired_markers(self.BASE, self.BASE, [("old-rule", 1)])
+        result = templates_markers.remove_retired_markers(self.BASE, self.BASE, [("old-rule", 1)])
         self.assertIsNotNone(result)
         self.assertNotIn("capability=old-rule", result)
         self.assertNotIn("retired rule text.", result)
@@ -3678,16 +3681,16 @@ class CapabilityRetirementTest(unittest.TestCase):
             "<!-- MERIDIAN:END -->\n\n",
             "",
         )
-        result = meridian.remove_retired_markers(local, self.BASE, [("old-rule", 1)])
+        result = templates_markers.remove_retired_markers(local, self.BASE, [("old-rule", 1)])
         self.assertEqual(result, local)
 
     def test_refuses_to_retire_a_locally_modified_block(self) -> None:
         local = self.BASE.replace("retired rule text.", "retired rule text, locally customized.")
-        result = meridian.remove_retired_markers(local, self.BASE, [("old-rule", 1)])
+        result = templates_markers.remove_retired_markers(local, self.BASE, [("old-rule", 1)])
         self.assertIsNone(result)
 
     def test_returns_input_unchanged_when_nothing_in_the_list_applies(self) -> None:
-        result = meridian.remove_retired_markers(self.BASE, self.BASE, [("unrelated-capability", 1)])
+        result = templates_markers.remove_retired_markers(self.BASE, self.BASE, [("unrelated-capability", 1)])
         self.assertEqual(result, self.BASE)
 
     def test_refuses_when_the_same_block_appears_twice_in_one_file(self) -> None:
@@ -3700,7 +3703,7 @@ class CapabilityRetirementTest(unittest.TestCase):
             "retired rule text.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        result = meridian.remove_retired_markers(duplicated, duplicated, [("old-rule", 1)])
+        result = templates_markers.remove_retired_markers(duplicated, duplicated, [("old-rule", 1)])
         self.assertIsNone(result)
 
     def test_removal_collapses_only_the_local_blank_line_gap(self) -> None:
@@ -3715,7 +3718,7 @@ class CapabilityRetirementTest(unittest.TestCase):
             "middle\n\n\n\n"
             "tail\n"
         )
-        result = meridian.remove_retired_markers(text, text, [("old-rule", 1)])
+        result = templates_markers.remove_retired_markers(text, text, [("old-rule", 1)])
         self.assertIsNotNone(result)
         self.assertEqual(result, "intro\n\nmiddle\n\n\n\ntail\n")
 
@@ -3897,10 +3900,10 @@ class GenerateClaudeMdTest(unittest.TestCase):
         generated = meridian.generate_claude_md("governed-sdd", agents_text, claude_text)
         self.assertIn("ORIGINAL RELEASED WORDING.", generated)
         self.assertNotIn("NEW WORDING", generated)
-        for capability, version in meridian.marker_pairs(claude_text):
+        for capability, version in templates_markers.marker_pairs(claude_text):
             self.assertEqual(
-                meridian.extract_marked_block(generated, capability, version),
-                meridian.extract_marked_block(claude_text, capability, version),
+                templates_markers.extract_marked_block(generated, capability, version),
+                templates_markers.extract_marked_block(claude_text, capability, version),
                 f"capability={capability} v{version} was altered by the generator",
             )
 
@@ -7299,11 +7302,11 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
     def test_marker_absent_is_distinct_from_marker_stale(self) -> None:
         self.write_migration("001-widget.json", "widget", 2)
 
-        absent = meridian.find_capability_marker_version("no marker here", "widget")
+        absent = templates_markers.find_capability_marker_version("no marker here", "widget")
         self.assertIsNone(absent)
 
         stale_text = "<!-- MERIDIAN:BEGIN capability=widget v1 -->text<!-- MERIDIAN:END -->"
-        self.assertEqual(meridian.find_capability_marker_version(stale_text, "widget"), 1)
+        self.assertEqual(templates_markers.find_capability_marker_version(stale_text, "widget"), 1)
 
     def test_detect_capabilities_distinguishes_absent_stale_and_satisfied(self) -> None:
         self.write_migration("001-widget.json", "widget", 2)
@@ -8632,7 +8635,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             meridian.stop_resume("WRONG_WORKTREE", task_id="056")
 
     def test_stop_registry_covers_closure_codes_and_names_real_tests(self) -> None:
-        registry = meridian.load_stop_registry()
+        registry = stops_registry.load_stop_registry()
         closure = (
             "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "REVIEW_REQUIRED", "WRONG_WORKTREE", "EVIDENCE_INCOMPLETE",
             "PRIMARY_DIRTY", "MAIN_BEHIND_ORIGIN", "LEASE_HELD", "INTEGRATION_CONFLICT",
@@ -8674,7 +8677,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def test_stop_registry_matches_its_schema_shape(self) -> None:
         schema = json.loads((ROOT / "schemas/stop-codes-v1.schema.json").read_text(encoding="utf-8"))
         item = schema["properties"]["stops"]["items"]
-        for code, entry in meridian.load_stop_registry().items():
+        for code, entry in stops_registry.load_stop_registry().items():
             with self.subTest(code=code):
                 self.assertLessEqual(set(entry), set(item["properties"]))
                 self.assertTrue(set(item["required"]) <= set(entry))
@@ -9491,7 +9494,7 @@ class FlowReportTest(unittest.TestCase):
             self.report()
 
     def test_removal_candidates_are_unemitted_tool_codes(self) -> None:
-        tool_codes = {code for code, entry in meridian.load_stop_registry().items() if entry["class"] == "tool"}
+        tool_codes = {code for code, entry in stops_registry.load_stop_registry().items() if entry["class"] == "tool"}
         self.add(0, "integrate stage", "056", "blocked", stop_code="PRIMARY_DIRTY")
         self.add(0, "integrate stage", "056", "blocked", stop_code="VALIDATION_FAILED")
         self.add(30, "check", "056")
