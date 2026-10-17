@@ -17,38 +17,38 @@ divides it into tasks of 2–3 hours. This task changes no code.
 
 ## Acceptance Criteria
 
-- [ ] `docs/MODULE_SPLIT_PLAN.md` exists, in English, and contains:
-  - [ ] **Mapping**: every top-level function, class, and constant of
+- [x] `docs/MODULE_SPLIT_PLAN.md` exists, in English, and contains:
+  - [x] **Mapping**: every top-level function, class, and constant of
     `scripts/meridian.py` assigned to one module of decision 8 under
     `src/cardine/`, or to a named shared module when several modules need it.
     The plan lists the import dependencies between modules and shows that they
     form no cycle.
-  - [ ] **Patch targets**: an inventory of every `mock.patch(...)` and
+  - [x] **Patch targets**: an inventory of every `mock.patch(...)` and
     `patch.object(meridian, ...)` in `tests/` that targets a name in
     `meridian.py` (at least 33 `patch.object(meridian, ...)` calls on
     2026-10-17). After a split, patching `meridian.X` no longer reaches a call
     made inside another module. The plan chooses one approach and its rule,
     either a compatibility re-export or test edits, and states plainly whether
     "suite unchanged" still holds.
-  - [ ] **Path references**: an inventory of every file that names
+  - [x] **Path references**: an inventory of every file that names
     `scripts/meridian.py` or reads it as text, with the change each one needs.
     Known cases: `bin/meridian` runs it with `runpy`; `scripts/release.py`
     reads `PROTOCOL_VERSION` from it with a regular expression; also check
     `scripts/check_repository.py`, `.codex/` rules and hooks, the self-hosting
     probes, managed digests, and 21 files in total on 2026-10-17.
-  - [ ] **File size**: the ADR limit of 1,500 lines applies to source and test
+  - [x] **File size**: the ADR limit of 1,500 lines applies to source and test
     files. List the files over it (`scripts/meridian.py`,
     `scripts/project_console.py`, `tests/test_meridian_cli.py`,
     `tests/test_project_console.py`, `tests/test_task_worktree_isolation.py`)
     and how each is split.
-  - [ ] **Task sequence**: an ordered list of extraction tasks of 2–3 hours,
+  - [x] **Task sequence**: an ordered list of extraction tasks of 2–3 hours,
     each with its scope, the tests that prove it, and its dependencies. The
     first task is the one with the fewest incoming dependencies.
-- [ ] The plan covers only work item 3. It does not plan the removal of
+- [x] The plan covers only work item 3. It does not plan the removal of
   migrations (item 4) or the rename (item 5), but it names any choice that
   would make those items harder.
-- [ ] No change outside `docs/MODULE_SPLIT_PLAN.md` and this task's records.
-- [ ] `python3 scripts/check_repository.py` and `git diff --check` pass.
+- [x] No change outside `docs/MODULE_SPLIT_PLAN.md` and this task's records.
+- [x] `python3 scripts/check_repository.py` and `git diff --check` pass.
 
 ## Relevant Files
 
@@ -74,3 +74,14 @@ Documentation only:
 
 - `python3 scripts/check_repository.py`
 - `git diff --check`
+
+## Completion evidence
+
+- Delivered `docs/MODULE_SPLIT_PLAN.md` with exact baseline ownership for all
+  506 bindings, a ranked acyclic graph, all 35 Meridian-related mock calls,
+  33 tracked path-reference files, the five oversized files and 16 proposed
+  2–3 hour steps (13 extraction, two console, one final verification).
+- AST inspection corrects the older estimates: 26 direct module patches plus
+  nine imported-object patches; 33 tracked files mention the source basename.
+- Required repository and whitespace checks passed. No source or tests changed.
+- See `tasks/handoffs/003.md` for validation and integration evidence.
