@@ -14,6 +14,7 @@ from cardine.review import verdict as owner_review_verdict
 import cardine.shared.errors as shared_errors
 import project_console
 from cardine.tasks import identity as owner_tasks_identity
+from cardine.tasks import contract as owner_tasks_contract
 
 
 class ExecutionBoundariesTest(unittest.TestCase):
@@ -71,7 +72,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
         identity.handoff_path.write_text('## Completion Report — 001\n\n' + '\n'.join(
             '- ' + field + ': ' + ('none' if field in ('Validation skips', 'Isolated exploration') else 'complete')
-            for field in meridian.HANDOFF_FIELDS) + '\n')
+            for field in owner_tasks_contract.HANDOFF_FIELDS) + '\n')
         with identity.handoff_path.open('a') as report:
             report.write('- Current task commit: `Deliver 001 for review`\n')
         self.commit('Finalize handoff')

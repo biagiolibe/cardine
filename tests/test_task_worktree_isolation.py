@@ -24,6 +24,8 @@ import cardine.shared.errors as shared_errors
 import project_console  # noqa: E402
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
+from cardine.shared import budget_commands as owner_shared_budget_commands
+from cardine.tasks import contract as owner_tasks_contract
 
 
 class TaskWorktreeIsolationTest(unittest.TestCase):
@@ -332,7 +334,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
     def test_prepare_retired_without_spends(self):
         self.retired_budget({"diagnostic": 0})
         self.assertTrue(self.prepare()["created"])
-        self.assertIn("Attempt 1", meridian.budget_show(self.primary, "056"))
+        self.assertIn("Attempt 1", owner_shared_budget_commands.budget_show(self.primary, "056"))
 
     def test_new_budget_attempt_preserves_history_and_journals_reason(self):
         state = self.retired_budget({"diagnostic": 2, "captures:AC1": 1})
@@ -349,7 +351,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual(ledger["056:2"], {})
         self.assertEqual(ledger["056"]["attempt"], 2)
         self.assertEqual(task.read_bytes(), original)
-        self.assertIn("Attempt 2", meridian.budget_show(self.primary, "056"))
+        self.assertIn("Attempt 2", owner_shared_budget_commands.budget_show(self.primary, "056"))
         journal = meridian.canonical_git_common_dir(self.primary) / owner_shared_journal.JOURNAL_NAME
         event = next(json.loads(line) for line in journal.read_text().splitlines()
                      if json.loads(line)["command"] == "worktree prepare new-attempt")
@@ -1844,7 +1846,7 @@ class GovernedCompletionRowsTest(unittest.TestCase):
              "--project", str(worktree)], cwd=worktree, text=True, capture_output=True, check=False,
         )
         self.assertEqual(validated.returncode, 0, validated.stderr)
-        ledger = worktree / meridian.EXECUTION_EVIDENCE_PATH
+        ledger = worktree / owner_tasks_contract.EXECUTION_EVIDENCE_PATH
         evidence_bytes = ledger.read_bytes()
         entry = json.loads(evidence_bytes)["056"][0]
         self.assertEqual({key: entry[key] for key in ("id", "command", "exitStatus")},
@@ -1861,21 +1863,21 @@ class GovernedCompletionRowsTest(unittest.TestCase):
             "accepted": True, "validation_passed": True,
             "validated_task_commit": task_commit, "validated_base_commit": self.base,
             "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": [str(meridian.EXECUTION_EVIDENCE_PATH), "docs/answer.md", "tasks/056-lifecycle.md"],
+            "task_paths": [str(owner_tasks_contract.EXECUTION_EVIDENCE_PATH), "docs/answer.md", "tasks/056-lifecycle.md"],
             "task_dependencies": [], "task_behavioral_surfaces": [],
             "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
         staged = meridian.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
-        self.assertEqual((self.primary / meridian.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
-        self.assertEqual(self.git("show", f":{meridian.EXECUTION_EVIDENCE_PATH}").stdout.encode(), evidence_bytes)
+        self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
+        self.assertEqual(self.git("show", f":{owner_tasks_contract.EXECUTION_EVIDENCE_PATH}").stdout.encode(), evidence_bytes)
         candidate = self.root / "candidate-validation.json"
         candidate.write_text(json.dumps({
             "candidate_tree": staged["candidate_tree"], "passed": True, "scope": "bounded",
             "commands": ["git diff --check", "python3 scripts/check_repository.py"],
         }), encoding="utf-8")
         meridian.finalize_task_integration("056", candidate, self.primary)
-        self.assertEqual((self.primary / meridian.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
+        self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
         self.assertEqual((self.primary / "docs/answer.md").read_bytes(), (worktree / "docs/answer.md").read_bytes())
         self.assertIn("ANSWERED | SPIKE", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
 

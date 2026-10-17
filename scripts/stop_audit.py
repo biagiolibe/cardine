@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import meridian
+from cardine.shared import flow as owner_shared_flow
 
 BLOCKED_LINE = re.compile(r"^[\s>*_`-]*BLOCKED ([A-Z][A-Z0-9_]*)\b", re.MULTILINE)
 FALLBACK_WINDOW = timedelta(hours=24)
@@ -85,7 +86,7 @@ def audit(payload: dict, now: datetime | None = None, host: str = "claude") -> l
     directory = meridian.canonical_git_common_dir(project)
     if not any((directory / name).is_file() for name in (meridian.JOURNAL_NAME, meridian.JOURNAL_ROTATED_NAME)):
         return []
-    records, _ = meridian._flow_read_journal(project)
+    records, _ = owner_shared_flow._flow_read_journal(project)
     start = session_start(payload, now)
     task = active_task(cwd)
     written = []

@@ -56,6 +56,10 @@ from cardine.templates import marker_audit as owner_templates_marker_audit
 from cardine.worktree import paths as owner_worktree_paths
 from cardine.hosts import skills as owner_hosts_skills
 from cardine.worktree import storage as owner_worktree_storage
+from cardine.shared import budget_commands as owner_shared_budget_commands
+from cardine.shared import flow as owner_shared_flow
+from cardine.tasks import audit as owner_tasks_audit
+from cardine.tasks import contract as owner_tasks_contract
 
 
 class FakeLatestReleaseResponse:
@@ -4688,7 +4692,7 @@ Evidence plan:
         task = self.project / "tasks/TASK-020.md"
         body = "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n"
         task.write_text(body, encoding="utf-8")
-        digest = meridian.profile_digest(self.project)
+        digest = owner_tasks_contract.profile_digest(self.project)
         resume = "resume: meridian execution reconcile TASK-020 --apply --project ."
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
@@ -4698,7 +4702,7 @@ Evidence plan:
         )
         self.append_contract("TASK-020")
         profile.write_text("changed profile\n", encoding="utf-8")
-        changed = meridian.profile_digest(self.project)
+        changed = owner_tasks_contract.profile_digest(self.project)
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
             "BLOCKED EXECUTION_CONTRACT_UNRESOLVED: rule: the resolved contract must match the current profile; "
@@ -4958,7 +4962,7 @@ Evidence plan:
             "raise the cap or re-scope the task; never raise the cap yourself",
         )
         with self.assertRaises(shared_errors.MeridianStop) as invalid:
-            meridian.budget_spend(self.project, "TASK-003", "captures", amount=0)
+            owner_shared_budget_commands.budget_spend(self.project, "TASK-003", "captures", amount=0)
         self.assertEqual(
             str(invalid.exception),
             "BLOCKED EXECUTION_EVIDENCE_ARGUMENTS: rule: a budget use is at least one; option checked: --scope; "
@@ -5033,21 +5037,21 @@ Evidence plan:
     def test_multi_unit_spend_crossing_the_cap_is_rejected_without_writing(self) -> None:
         self.write_task("TASK-014", "IN_PROGRESS")
         # Default investigation scope is 2, so a single scope-2 use is admitted.
-        count, cap = meridian.budget_spend(self.project, "TASK-014", "investigations", amount=2)
+        count, cap = owner_shared_budget_commands.budget_spend(self.project, "TASK-014", "investigations", amount=2)
         self.assertEqual((count, cap), (2, 2))
         self.assertEqual(self.budget_state()["TASK-014:1"]["investigations"], 2)
 
         self.write_task("TASK-015", "IN_PROGRESS", **{"Investigation scope": "3"})
-        meridian.budget_spend(self.project, "TASK-015", "investigations", amount=2)
+        owner_shared_budget_commands.budget_spend(self.project, "TASK-015", "investigations", amount=2)
         with self.assertRaises(shared_errors.MeridianError) as raised:
-            meridian.budget_spend(self.project, "TASK-015", "investigations", amount=2)
+            owner_shared_budget_commands.budget_spend(self.project, "TASK-015", "investigations", amount=2)
         message = str(raised.exception)
         self.assertIn("BLOCKED", message)
         self.assertIn("2 of 3 allowed uses already recorded, 2 more requested", message)
         self.assertEqual(self.budget_state()["TASK-015:1"]["investigations"], 2)
         # The one remaining unit is still spendable after the rejection.
         self.assertEqual(
-            meridian.budget_spend(self.project, "TASK-015", "investigations", amount=1), (3, 3)
+            owner_shared_budget_commands.budget_spend(self.project, "TASK-015", "investigations", amount=1), (3, 3)
         )
 
     def test_unknown_task_is_blocked_without_writing_state(self) -> None:
@@ -5104,7 +5108,7 @@ Evidence plan:
         subprocess.run(("git", "-C", str(self.project), "worktree", "add", "-b", "task-017", str(worktree)),
                        check=True, capture_output=True, text=True)
 
-        count, cap = meridian.budget_spend(worktree, "TASK-017", "diagnostic")
+        count, cap = owner_shared_budget_commands.budget_spend(worktree, "TASK-017", "diagnostic")
         self.assertEqual((count, cap), (2, 3))
         self.assertEqual(subprocess.run(
             ("git", "-C", str(worktree), "status", "--porcelain"),
@@ -7068,7 +7072,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         direct = owner_tasks_identity.resolve_task_identity(self.project, "m9-cli-003", "existing")
         self.assertEqual(payload, owner_tasks_identity.task_identity_json(self.project, direct))
         runtime_state: dict[str, object] = {}
-        runtime_key, _text = meridian.resolve_budget_key(self.project, runtime_state, "m9-cli-003")
+        runtime_key, _text = owner_shared_budget_commands.resolve_budget_key(self.project, runtime_state, "m9-cli-003")
         self.assertEqual(payload["budget_key"], runtime_key)
         after = {path.relative_to(self.project): path.read_bytes() for path in self.project.rglob("*") if path.is_file()}
         self.assertEqual(before, after)
@@ -7100,7 +7104,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertEqual(json.loads(checked.stdout)["budget_key"], "TASK-009:3")
         self.assertEqual(json.loads(budget.read_text(encoding="utf-8")), state)
         runtime_state = json.loads(budget.read_text(encoding="utf-8"))
-        key, _text = meridian.resolve_budget_key(self.project, runtime_state, "009")
+        key, _text = owner_shared_budget_commands.resolve_budget_key(self.project, runtime_state, "009")
         self.assertEqual(key, "TASK-009:3")
 
     def test_next_identity_uses_matching_authorities_and_is_read_only(self) -> None:
@@ -9394,7 +9398,7 @@ class FlowReportTest(unittest.TestCase):
 
     def report(self, since: str | None = None) -> dict[str, object]:
         self.flush()
-        return meridian.flow_report(self.project, since, self.now)
+        return owner_shared_flow.flow_report(self.project, since, self.now)
 
     def target_states(self, report: dict[str, object]) -> dict[str, str]:
         return {target["target"]: target["state"] for target in report["targets"]}  # type: ignore[index]
@@ -9451,7 +9455,7 @@ class FlowReportTest(unittest.TestCase):
         self.assertEqual(report["tasks"][0]["lead_time_seconds"], 10 * 86400)  # type: ignore[index]
         self.assertEqual(report["stops_by_code"], {"PRIMARY_DIRTY": 1})
         with self.assertRaises(shared_errors.MeridianError):
-            meridian.flow_report(self.project, "yesterday", self.now)
+            owner_shared_flow.flow_report(self.project, "yesterday", self.now)
 
     def test_origin_shares_with_archive_and_unknown(self) -> None:
         for task, origin, archived in (("101", "friction", False), ("102", "capability", True), ("103", None, False),
@@ -9597,7 +9601,7 @@ class TaskStateAuditTest(unittest.TestCase):
 
     def test_audit_pass_and_drift_are_one_read_only_row_per_state(self):
         before = {p: p.read_bytes() for p in self.project.rglob("*") if p.is_file()}
-        rows = meridian.audit_task_state_projections(self.project, "governed-sdd")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].status, "PASS")
         self.assertEqual(before, {p: p.read_bytes() for p in before})
@@ -9605,7 +9609,7 @@ class TaskStateAuditTest(unittest.TestCase):
         (self.project / "tasks/QUEUE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | IN_PROGRESS | [001](001.md) |\n")
         before = {p: p.read_bytes() for p in before}
-        rows = meridian.audit_task_state_projections(self.project, "governed-sdd")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].status, "ADVISORY")
         self.assertIn(".meridian/tasks/001.json", rows[0].detail)
@@ -9622,7 +9626,7 @@ class TaskStateAuditTest(unittest.TestCase):
 
     def test_audit_invalid_state_is_coded_and_other_rows_survive(self):
         self.path.write_text("not JSON")
-        rows = meridian.audit_task_state_projections(self.project, "governed-sdd")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
         self.assertEqual(rows[0].status, "FAIL")
         self.assertIn("TASK_STATE_INVALID", rows[0].detail)
 
@@ -9636,7 +9640,7 @@ class TaskStateAuditTest(unittest.TestCase):
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "lean-delivery",
             "status": "DONE", "transitions": [{"from": "QUEUED", "to": "DONE", "commit": "a" * 40,
                                                 "at": "2026-10-11T12:00:00Z"}]}))
-        rows = meridian.audit_task_state_projections(self.project, "lean-delivery")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "lean-delivery")
         self.assertEqual(rows[0].status, "PASS")
 
 

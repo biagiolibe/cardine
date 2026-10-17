@@ -15,6 +15,7 @@ import meridian
 from cardine.integration import projections as owner_integration_projections
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
+from cardine.tasks import importer as owner_tasks_importer
 
 SHA = "a" * 40
 AT = "2026-10-14T12:00:00Z"
@@ -226,21 +227,21 @@ class IncludeTerminalImportTest(unittest.TestCase):
         return {item["task_id"]: item["action"] for item in result["tasks"]}
 
     def test_terminal_tasks_are_skipped_without_the_flag(self) -> None:
-        result = meridian.import_task_states(self.root, [])
+        result = owner_tasks_importer.import_task_states(self.root, [])
         self.assertEqual(self.actions(result), {"001": "skip-terminal", "002": "write"})
 
     def test_dry_run_prints_and_apply_writes_without_overwriting(self) -> None:
-        preview = meridian.import_task_states(self.root, [], include_terminal=True)
+        preview = owner_tasks_importer.import_task_states(self.root, [], include_terminal=True)
         self.assertEqual(self.actions(preview), {"001": "write", "002": "write"})
         done = next(item for item in preview["tasks"] if item["task_id"] == "001")
         self.assertEqual(done["state"]["status"], "DONE")
         self.assertFalse((self.root / ".meridian/tasks/001.json").exists())
-        applied = meridian.import_task_states(self.root, [], apply=True, include_terminal=True)
+        applied = owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(self.actions(applied), {"001": "write", "002": "write"})
         written = json.loads((self.root / ".meridian/tasks/001.json").read_text(encoding="utf-8"))
         self.assertEqual(written["status"], "DONE")
         marker = (self.root / ".meridian/tasks/001.json").read_bytes()
-        again = meridian.import_task_states(self.root, [], apply=True, include_terminal=True)
+        again = owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(self.actions(again), {"001": "skip-existing", "002": "skip-existing"})
         self.assertEqual((self.root / ".meridian/tasks/001.json").read_bytes(), marker)
 
@@ -248,7 +249,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         (self.root / "tasks/done/001.md").write_text(
             "# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n", encoding="utf-8")
         with self.assertRaises(shared_errors.MeridianStop) as raised:
-            meridian.import_task_states(self.root, [], apply=True, include_terminal=True)
+            owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         self.assertFalse((self.root / ".meridian/tasks").exists())
 
@@ -265,10 +266,10 @@ class IncludeTerminalImportTest(unittest.TestCase):
         review.parent.mkdir(parents=True, exist_ok=True)
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — Remediation\n", encoding="utf-8")
         with self.assertRaises(shared_errors.MeridianStop) as raised:
-            meridian.import_task_states(self.root, [], include_terminal=True)
+            owner_tasks_importer.import_task_states(self.root, [], include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — APPROVE\n", encoding="utf-8")
-        result = meridian.import_task_states(self.root, [], include_terminal=True)
+        result = owner_tasks_importer.import_task_states(self.root, [], include_terminal=True)
         state = result["tasks"][0]["state"]
         self.assertEqual((state["status"], state["review"]["verdict"]), ("ACCEPTED", "APPROVE"))
         self.assertIsNone(state["review"]["reviewed_commit"])
