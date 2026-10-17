@@ -12,6 +12,7 @@ from pathlib import Path
 from tests import test_task_worktree_isolation as fixtures
 
 meridian = fixtures.meridian
+from cardine.lifecycle import closure as owner_lifecycle_closure
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.stops import render as owner_stops_render
@@ -254,7 +255,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_advance_reports_review_gate(self):
         self.start()
         self.write_state(verdict=None)
-        result, blocked = meridian.advance_task_closure(
+        result, blocked = owner_lifecycle_closure.advance_task_closure(
             "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         self.assertTrue(blocked)
         self.assertEqual(result["stop_code"], "REVIEW_NOT_APPROVED")
@@ -272,8 +273,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.git("add", "-A", cwd=self.worker)
                 self.git("commit", "--allow-empty", "-m", "set closure state", cwd=self.worker)
                 before = {path: self.git("write-tree", cwd=path).stdout for path in (self.primary, self.worker)}
-                with mock.patch.object(meridian, "stage_task_integration") as stage:
-                    result, blocked = meridian.advance_task_closure(
+                with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
+                    result, blocked = owner_lifecycle_closure.advance_task_closure(
                         "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
                 stage.assert_not_called()
                 self.assertTrue(blocked)
@@ -293,8 +294,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_advance_requires_state_even_before_machine_state_adoption(self):
         self.start(workflow="lean-delivery")
         self.assertFalse((self.worker / ".meridian/tasks").exists())
-        with mock.patch.object(meridian, "stage_task_integration") as stage:
-            result, blocked = meridian.advance_task_closure(
+        with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
+            result, blocked = owner_lifecycle_closure.advance_task_closure(
                 "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         stage.assert_not_called()
         self.assertTrue(blocked)
@@ -313,7 +314,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     handoff.parent.mkdir(exist_ok=True)
                     handoff.write_text("Validated task completion.\n")
                     self.commit()
-                result, blocked = meridian.advance_task_closure(
+                result, blocked = owner_lifecycle_closure.advance_task_closure(
                     "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
@@ -344,7 +345,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_advance_governed_missing_state_keeps_import_resume(self):
         self.start()
-        result, blocked = meridian.advance_task_closure(
+        result, blocked = owner_lifecycle_closure.advance_task_closure(
             "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         self.assertTrue(blocked)
         expected = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
@@ -355,8 +356,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start(workflow="lean-delivery")
         self.write_state(required=False)
         original = owner_integration_merge.stage_task_integration
-        with mock.patch.object(meridian, "stage_task_integration", wraps=original) as stage:
-            result, blocked = meridian.advance_task_closure(
+        with mock.patch.object(owner_lifecycle_closure, "stage_task_integration", wraps=original) as stage:
+            result, blocked = owner_lifecycle_closure.advance_task_closure(
                 "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         stage.assert_called_once()
         self.assertFalse(blocked)

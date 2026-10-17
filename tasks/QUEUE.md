@@ -39,7 +39,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 019 | Extract lifecycle, upgrade support, merge, and adoption modules (split plan E12) | 🔴 P1 | 016, 007, 018 | [019](019-extract-lifecycle-and-template-merge.md) |
+| `[x]` | 019 | Extract lifecycle, upgrade support, merge, and adoption modules (split plan E12) | 🔴 P1 | 016, 007, 018 | [019](done/019-extract-lifecycle-and-template-merge.md) |
 | `[ ]` | 020 | Extract console models, launch, and snapshot (split plan C01) | 🔴 P1 | 019 | [020](020-extract-console-models-launch-snapshot.md) |
 | `[ ]` | 021 | Extract console state, render, and entry, and split the console tests (split plan C02) | 🔴 P1 | 020 | [021](021-extract-console-state-render-entry.md) |
 | `[ ]` | 022 | Extract upgrade, adopt command, and CLI, and switch the entry points (split plan E13) | 🔴 P1 | 021 | [022](022-extract-upgrade-adopt-and-cli.md) |

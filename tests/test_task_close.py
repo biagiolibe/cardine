@@ -16,6 +16,8 @@ import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 
 
+from cardine.lifecycle import commands as owner_lifecycle_commands
+
 class TaskCloseTest(unittest.TestCase):
     git = boundaries.ExecutionBoundariesTest.git
     commit = boundaries.ExecutionBoundariesTest.commit
@@ -104,16 +106,16 @@ class TaskCloseTest(unittest.TestCase):
     def test_resume_archived_done_with_staged_and_committed_closure(self):
         owner_tasks_transitions.close_task(self.worker, '001')
         before = self.snapshot()
-        result = meridian.execution_start(self.worker, '001', resume=True)
+        result = owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
         self.assertFalse(result['started'])
         self.assertEqual(result['next_action'], 'commit-closure-records')
         self.assertEqual(self.snapshot(), before)
         self.git('commit', '-qm', 'Commit closure')
         before = self.snapshot()
-        result = meridian.execution_start(self.worker, '001', resume=True)
+        result = owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
         self.assertEqual(result['next_action'], 'worktree-advance')
         self.assertEqual(self.snapshot(), before)
-        self.assert_stop('TASK_STATUS_REJECTED', lambda: meridian.execution_start(self.worker, '001'))
+        self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
 
     def close_from(self, directory):
         os.chdir(directory)
