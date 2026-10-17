@@ -32,13 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 1 — Repository bootstrap and module split plan
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work items 2 and 3.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 001 | Make the evidence tests independent of Meridian task records | 🔴 P1 | — | [001](done/001-self-contained-evidence-tests.md) |
-| `[x]` | 002 | Add `pyproject.toml` and the `cardine` package skeleton | 🔴 P1 | — | [002](done/002-package-skeleton.md) |
-| `[ ]` | 003 | Plan the split of `meridian.py` into the Cardine modules | 🔴 P1 | 002 | [003](003-module-split-plan.md) |
