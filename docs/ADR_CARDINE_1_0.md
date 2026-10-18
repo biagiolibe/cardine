@@ -529,9 +529,9 @@ touches code that is about to be deleted.
 8. `cardine run` engine: next step, resume, directory independence, runnable
    commands, validation retry limit. It applies decision 12: only guardrails
    stop, recoverable states return the next action or are resolved by the
-   engine, and failing work iterates within the retry limit. Rebuild the console on this engine. Build
-   integration around the landing mode, with `direct` as its only 1.0 mode
-   (decision 11).
+   engine, and failing work iterates within the retry limit. Rebuild the
+   console on this engine. Build integration around the landing mode, with
+   `direct` as its only 1.0 mode (decision 11).
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
    hooks. The per-turn queue briefing is one Python implementation that
    prints the status that work item 7 generates. It computes no task state of
