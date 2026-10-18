@@ -7,7 +7,7 @@ import shlex
 import subprocess
 import unittest
 
-import test_meridian_cli as lifecycle
+import test_worktree_lifecycle as lifecycle
 
 ROOT = lifecycle.ROOT
 
