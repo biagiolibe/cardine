@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from meridian_cli_support import CLI
+from synthetic_upgrade_support import SyntheticFramework
 import hashlib
 import json
 import shutil
@@ -29,9 +30,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         root = Path(self.temporary.name)
         self.framework = root / "framework"
         self.project = root / "project"
-        for name in ("templates", "migrations", "capabilities", "release-baselines"):
-            shutil.copytree(ROOT / name, self.framework / name)
-        shutil.copyfile(ROOT / "VERSION", self.framework / "VERSION")
+        self.fixture = SyntheticFramework(self.framework, "2.0.0")
         self.project.mkdir()
         source = self.framework / "templates/workflows/governed-sdd"
         for path in source.rglob("*"):

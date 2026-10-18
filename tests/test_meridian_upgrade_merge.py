@@ -16,10 +16,11 @@ import meridian  # noqa: E402
 from cardine.templates import audit as owner_templates_audit
 from cardine.templates import markers as templates_markers
 
-from meridian_cli_support import MeridianCliFixtureMixin, ROOT
+from meridian_cli_support import ROOT
+from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin
 
 
-class UpgradeMergeTest(MeridianCliFixtureMixin, unittest.TestCase):
+class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_upgrade_check_reports_retired_text_without_writes_or_exit_change(self) -> None:
         (self.framework / "VERSION").write_text(meridian.read_version(ROOT) + "\n", encoding="utf-8")
         locked = self.run_cli("lock", "--mode", "governed-sdd")
@@ -103,10 +104,8 @@ class UpgradeMergeTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertEqual(
             manifest["appliedMigrations"],
             [
-                "001-review-remediation-record",
-                "002-lifecycle-orchestration",
-                "003-framework-updater",
-                "004-validation-scoping",
+                "001-synthetic-baseline",
+                "002-synthetic-merge",
             ],
         )
         baselines = sorted(path.name for path in (self.project / ".meridian/baselines").iterdir())
@@ -354,7 +353,7 @@ class UpgradeMergeTest(MeridianCliFixtureMixin, unittest.TestCase):
 
         shutil.rmtree(current_templates)
         shutil.copytree(ROOT / "templates/workflows/governed-sdd", current_templates)
-        current = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        current = "1.4.0"  # Fixed target of this historical fixture.
         (self.framework / "VERSION").write_text(current + "\n", encoding="utf-8")
 
         applied = self.run_cli("upgrade", "--apply")
