@@ -48,7 +48,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 4, and decisions 5 and 7.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 031 | Record template changes without migrations until 1.0 | 🔴 P1 | 026, 030 | [031](031-pre-1-0-template-baseline.md) |
+| `[x]` | 031 | Record template changes without migrations until 1.0 | 🔴 P1 | 026, 030 | [031](done/031-pre-1-0-template-baseline.md) |
 | `[ ]` | 032 | Move the upgrade and merge tests to synthetic migration fixtures | 🔴 P1 | 031 | [032](032-synthetic-upgrade-fixtures.md) |
 | `[ ]` | 033 | Empty the migration chain | 🔴 P1 | 032 | [033](033-empty-the-migration-chain.md) |
 | `[ ]` | 034 | Remove release baselines and adoption from historical versions | 🔴 P1 | 029 | [034](034-remove-release-baselines-and-historical-adoption.md) |

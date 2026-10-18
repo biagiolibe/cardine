@@ -28,12 +28,7 @@ import meridian
 
 
 class CapabilityVersionDetectionTest(unittest.TestCase):
-    """Phase 2 of migrations/CAPABILITY_MARKERS.md: version-aware detection.
-
-    No real migration requires v2 of anything yet, so this builds a synthetic
-    framework with one to exercise the case Meridian's own shipped migrations
-    can't: a marker present but below the version now required.
-    """
+    """Version-aware detection uses the current marker catalog."""
 
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -47,13 +42,18 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
         self.temporary.cleanup()
 
     def write_migration(self, filename: str, capability: str, version: int) -> None:
-        migration_id = filename.removesuffix(".json")
-        (self.framework / "migrations" / filename).write_text(
-            json.dumps({"id": migration_id, "capability": capability, "capabilityVersion": version}),
-            encoding="utf-8",
-        )
+        # Legacy adoption labels remain stable; requirements come only from the catalog.
+        directory = self.framework / "capabilities"
+        directory.mkdir(exist_ok=True)
+        (directory / "markers-v1.json").write_text(json.dumps({
+            "catalogVersion": 1,
+            "capabilities": {capability: {
+                "requiredVersion": version, "required": True, "retired": False,
+                "adoptionRecord": filename.removesuffix(".json"),
+            }},
+        }), encoding="utf-8")
 
-    def test_requirement_is_the_highest_declared_version(self) -> None:
+    def test_requirement_uses_the_current_catalog_version(self) -> None:
         self.write_migration("001-widget.json", "widget", 1)
         self.write_migration("002-widget-v2.json", "widget", 2)
         requirements = owner_templates_migrations.capability_requirements(self.framework)
@@ -102,6 +102,56 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
             self.assertTrue(satisfied[0].present)
         finally:
             owner_templates_marker_history.managed_files = original_managed_files
+
+
+class MarkerCatalogTest(unittest.TestCase):
+    def test_catalog_preserves_current_migration_requirements_and_retirements(self) -> None:
+        expected = {}
+        retired = set()
+        for path in sorted((ROOT / "migrations").glob("*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            for capability, version in owner_templates_migrations.migration_capability_entries(data):
+                if capability not in expected or version > expected[capability][0]:
+                    expected[capability] = (version, data["id"])
+            for capability, _version, _replacement in owner_templates_migrations.migration_capability_removals(data):
+                expected.pop(capability, None)
+                retired.add(capability)
+        self.assertEqual(owner_templates_catalog.marker_requirements(ROOT), expected)
+        self.assertEqual(owner_templates_migrations.retired_capability_ids(ROOT), retired)
+
+    def test_catalog_readers_work_without_migration_records(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            framework = Path(temporary)
+            shutil.copytree(ROOT / "capabilities", framework / "capabilities")
+            self.assertEqual(
+                owner_templates_migrations.capability_requirements(framework),
+                owner_templates_catalog.marker_requirements(ROOT),
+            )
+            self.assertEqual(
+                owner_templates_migrations.retired_capability_ids(framework),
+                owner_templates_migrations.retired_capability_ids(ROOT),
+            )
+            managed = mock.Mock(target=Path("AGENTS.md"))
+            with mock.patch.object(owner_templates_marker_history, "managed_files", return_value=[managed]):
+                self.assertEqual(
+                    owner_templates_adoption.detect_capabilities(framework, "governed-sdd", framework),
+                    owner_templates_adoption.detect_capabilities(framework, "governed-sdd", ROOT),
+                )
+
+    def test_invalid_marker_catalog_fields_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            framework = Path(temporary)
+            directory = framework / "capabilities"
+            directory.mkdir()
+            for field, value in (("requiredVersion", 0), ("required", "true"), ("retired", 0)):
+                with self.subTest(field=field):
+                    entry = {"requiredVersion": 1, "required": True, "retired": False, "adoptionRecord": "rule"}
+                    entry[field] = value
+                    (directory / "markers-v1.json").write_text(json.dumps({
+                        "catalogVersion": 1, "capabilities": {"rule": entry},
+                    }), encoding="utf-8")
+                    with self.assertRaises(shared_errors.MeridianError):
+                        owner_templates_catalog.marker_requirements(framework)
 
 
 class CapabilityProfileManifestTest(unittest.TestCase):

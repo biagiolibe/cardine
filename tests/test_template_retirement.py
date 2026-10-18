@@ -227,91 +227,25 @@ class CapabilityRetirementTest(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(result, "intro\n\nmiddle\n\n\n\ntail\n")
 
-    def test_capability_requirements_drops_a_retired_capability(self) -> None:
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        framework = Path(temporary.name)
-        migrations = framework / "migrations"
-        migrations.mkdir()
-        (migrations / "001-add.json").write_text(
-            json.dumps(
-                {
-                    "id": "001-add",
-                    "from": "1.0.0",
-                    "to": "1.1.0",
-                    "capability": "old-rule",
-                    "capabilityVersion": 1,
-                    "managedPaths": ["AGENTS.md"],
-                }
-            ),
-            encoding="utf-8",
-        )
-        (migrations / "002-retire.json").write_text(
-            json.dumps(
-                {
-                    "id": "002-retire",
-                    "from": "1.1.0",
-                    "to": "1.2.0",
-                    "removes": [{"capability": "old-rule", "capabilityVersion": 1}],
-                    "managedPaths": ["AGENTS.md"],
-                }
-            ),
-            encoding="utf-8",
-        )
-        requirements = owner_templates_migrations.capability_requirements(framework)
-        self.assertNotIn("old-rule", requirements)
-        self.assertIn("old-rule", owner_templates_migrations.retired_capability_ids(framework))
-
-    def test_capability_requirements_honors_a_later_reintroduction(self) -> None:
-        """A capability retired by one migration and reintroduced by a later
-        one must end up required again — removal and addition are applied in
-        migration sequence order, not as an unordered set operation."""
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        framework = Path(temporary.name)
-        migrations = framework / "migrations"
-        migrations.mkdir()
-        (migrations / "001-add.json").write_text(
-            json.dumps(
-                {
-                    "id": "001-add",
-                    "from": "1.0.0",
-                    "to": "1.1.0",
-                    "capability": "reused-rule",
-                    "capabilityVersion": 1,
-                    "managedPaths": ["AGENTS.md"],
-                }
-            ),
-            encoding="utf-8",
-        )
-        (migrations / "002-retire.json").write_text(
-            json.dumps(
-                {
-                    "id": "002-retire",
-                    "from": "1.1.0",
-                    "to": "1.2.0",
-                    "removes": [{"capability": "reused-rule", "capabilityVersion": 1}],
-                    "managedPaths": ["AGENTS.md"],
-                }
-            ),
-            encoding="utf-8",
-        )
-        (migrations / "003-reintroduce.json").write_text(
-            json.dumps(
-                {
-                    "id": "003-reintroduce",
-                    "from": "1.2.0",
-                    "to": "1.3.0",
-                    "capability": "reused-rule",
-                    "capabilityVersion": 1,
-                    "managedPaths": ["AGENTS.md"],
-                }
-            ),
-            encoding="utf-8",
-        )
-        requirements = owner_templates_migrations.capability_requirements(framework)
-        self.assertIn("reused-rule", requirements)
-        self.assertEqual(requirements["reused-rule"], (1, "003-reintroduce"))
+    def test_catalog_retirement_and_reintroduction(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            framework = Path(temporary)
+            directory = framework / "capabilities"
+            directory.mkdir()
+            for required in (False, True):
+                with self.subTest(required=required):
+                    (directory / "markers-v1.json").write_text(json.dumps({
+                        "catalogVersion": 1,
+                        "capabilities": {"rule": {
+                            "requiredVersion": 2, "retired": True, "required": required,
+                            "adoptionRecord": "reintroduced-rule" if required else None,
+                        }},
+                    }), encoding="utf-8")
+                    requirements = owner_templates_migrations.capability_requirements(framework)
+                    self.assertEqual("rule" in requirements, required)
+                    self.assertIn("rule", owner_templates_migrations.retired_capability_ids(framework))
+                    if required:
+                        self.assertEqual(requirements["rule"], (2, "reintroduced-rule"))
 
     def test_removals_for_managed_file_scopes_by_managed_paths(self) -> None:
         temporary = tempfile.TemporaryDirectory()

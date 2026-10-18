@@ -257,7 +257,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
             cr.check_capability_marker_baselines(self.root)
 
     def test_missing_baseline_file_fails(self) -> None:
-        (self.root / "migrations" / "marker-baselines" / "CAPABILITY_MARKER_BASELINES.json").unlink()
+        (self.root / "capabilities" / "marker-baselines.json").unlink()
         with self.assertRaises(SystemExit):
             cr.check_capability_marker_baselines(self.root)
 
@@ -292,20 +292,13 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             cr.check_capability_marker_baselines(self.root)
 
-    def test_a_capability_removed_by_a_declared_migration_passes(self) -> None:
-        """Task 007: `check_capability_marker_baselines` must reuse the same
-        `removes` declaration `meridian upgrade` honors, not a second,
-        independent notion of what a legitimate removal looks like."""
+    def test_a_capability_retired_in_the_catalog_passes_without_a_migration(self) -> None:
         self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 2)
-        (self.root / "migrations" / "999-retire-spike-routing.json").write_text(
-            '{"id": "999-retire-spike-routing", "from": "1.1.20", "to": "1.1.21", '
-            '"description": "test-only", "removes": '
-            '[{"capability": "spike-routing", "capabilityVersion": 1}], '
-            '"managedPaths": ["AGENTS.md", "CLAUDE.md"], "verification": ["test-only"]}',
-            encoding="utf-8",
-        )
-        # No SystemExit: the recorded baseline's spike-routing entry is
-        # stale relative to the live templates, but its absence is explained.
+        path = self.root / "capabilities/markers-v1.json"
+        catalog = json.loads(path.read_text(encoding="utf-8"))
+        catalog["capabilities"]["spike-routing"].update(retired=True, required=False)
+        path.write_text(json.dumps(catalog), encoding="utf-8")
+        shutil.rmtree(self.root / "migrations")
         cr.check_capability_marker_baselines(self.root)
 
 
@@ -879,73 +872,6 @@ class SelfHostingBaselineTest(unittest.TestCase):
         (self.root / "migrations/999-ahead-of-version.json").write_text(json.dumps(data), encoding="utf-8")
 
         cr.check_self_hosting_baseline(self.root)
-
-
-class CatalogSurfaceMigrationTest(unittest.TestCase):
-    """A catalog surface added after a release must be carried by a migration."""
-
-    ADDED = "docs/NEW_SURFACE.md"
-
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
-        (self.root / "capabilities").mkdir()
-        (self.root / "migrations").mkdir()
-        (self.root / "VERSION").write_text("1.2.8\n", encoding="utf-8")
-        self.previous = {
-            "capabilities": {"alpha": {"managedSurfaces": [{"path": "docs/A.md"}]}}
-        }
-        current = {
-            "capabilities": {
-                "alpha": {"managedSurfaces": [{"path": "docs/A.md"}, {"path": self.ADDED}]},
-                "beta": {"managedSurfaces": [{"path": "docs/B.md"}]},
-            }
-        }
-        (self.root / "capabilities/catalog-v1.json").write_text(
-            json.dumps(current), encoding="utf-8"
-        )
-
-    def tearDown(self) -> None:
-        self.temporary.cleanup()
-
-    def write_migration(self, name: str, to: str, managed_paths: list[str]) -> None:
-        (self.root / "migrations" / name).write_text(
-            json.dumps({"id": name[:-5], "to": to, "managedPaths": managed_paths}),
-            encoding="utf-8",
-        )
-
-    def test_additions_name_only_new_paths_of_known_capabilities(self) -> None:
-        current = json.loads((self.root / "capabilities/catalog-v1.json").read_text())
-
-        self.assertEqual(
-            cr.catalog_surface_additions(self.previous, current), [("alpha", self.ADDED)]
-        )
-
-    def test_added_surface_without_a_listing_migration_fails_naming_both(self) -> None:
-        self.write_migration("001-other.json", "1.2.8", ["docs/A.md"])
-        output = io.StringIO()
-
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.check_catalog_surface_migrations(self.root, self.previous, "1.2.7")
-
-        self.assertIn("alpha", output.getvalue())
-        self.assertIn(self.ADDED, output.getvalue())
-
-    def test_listing_in_a_next_release_migration_passes(self) -> None:
-        self.write_migration("001-other.json", "1.2.8", ["docs/A.md", self.ADDED])
-
-        cr.check_catalog_surface_migrations(self.root, self.previous, "1.2.7")
-
-    def test_a_listing_in_an_already_released_migration_does_not_count(self) -> None:
-        self.write_migration("001-old.json", "1.2.7", [self.ADDED])
-
-        with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
-            cr.check_catalog_surface_migrations(self.root, self.previous, "1.2.7")
-
-    def test_unchanged_catalog_passes_without_migrations(self) -> None:
-        unchanged = json.loads((self.root / "capabilities/catalog-v1.json").read_text())
-
-        cr.check_catalog_surface_migrations(self.root, unchanged, "1.2.7")
 
 
 class StopCodeRegistryCheckTest(unittest.TestCase):
