@@ -324,7 +324,15 @@ _QUOTED_TOKEN = rf"([`\"])({STOP_TOKEN})\1"
 STOP_CODE_LIST = re.compile(
     rf"{_QUOTED_TOKEN}(?:(?:,\s*|\s+)(?:(?:or|and|through)\s+)?{_QUOTED_TOKEN})+"
 )
-STOP_LIST_TEST_FILES = ("tests/test_project_console.py",)
+STOP_LIST_TEST_FILES = (
+    "tests/test_project_console.py",  # Legacy fixtures and older checkouts.
+    "tests/test_console_launch.py",
+    "tests/test_console_render.py",
+    "tests/test_console_snapshot.py",
+    "tests/test_console_states.py",
+    "tests/test_console_closure.py",
+    "tests/test_console_refresh.py",
+)
 
 
 def managed_stop_text_files(root: Path) -> list[Path]:

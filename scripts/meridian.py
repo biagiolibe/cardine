@@ -1626,7 +1626,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             if not console_path.is_file():
                 raise MeridianError(f"console is unavailable from framework root: {framework_root}")
             sys.path.insert(0, str(console_path.parent))
-            import project_console
+            from cardine.console import entry as project_console
 
             return project_console.main([
                 "--project", str(project_root), "--interval", str(arguments.interval),

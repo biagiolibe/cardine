@@ -17,35 +17,35 @@ lines) as the plan's size budget describes.
 
 ## Acceptance Criteria
 
-- [ ] `src/cardine/console/state.py`, `render.py`, and `entry.py` exist, with
+- [x] `src/cardine/console/state.py`, `render.py`, and `entry.py` exist, with
   the code that the plan assigns to them. `scripts/project_console.py` becomes a
   thin adapter that runs `cardine.console.entry.main`.
-- [ ] `tests/test_project_console.py` is replaced by the files the plan lists:
+- [x] `tests/test_project_console.py` is replaced by the files the plan lists:
   `test_console_launch`, `test_console_render`, `test_console_snapshot`,
   `test_console_states`, `test_console_closure`, and `test_console_refresh`.
   `RepoCase` and reusable fixtures move to a support module that discovery does
   not collect. Each file is at most 1,500 lines.
-- [ ] The console launch mock moves from `project_console.main` to
+- [x] The console launch mock moves from `project_console.main` to
   `cardine.console.entry.main`, and subprocess coverage of the legacy adapter
   stays.
-- [ ] No test is lost or run twice: the parallel suite reports the same
+- [x] No test is lost or run twice: the parallel suite reports the same
   coverage `total` before and after the task, and the handoff maps every moved
   test ID from its old to its new location. No module re-imports `TestCase`
   classes into discovery, and shared fixtures hold no inherited `test_*`
   method.
-- [ ] Tests keep their bodies: only imports, class placement, shared fixture
+- [x] Tests keep their bodies: only imports, class placement, shared fixture
   bases, and registered test IDs (for example in
   `capabilities/stop-codes-v1.json`) change. No assertion is removed or
   weakened, and no platform skip changes.
-- [ ] The inventory tests in `tests/test_module_inventory.py` pass: exactly
+- [x] The inventory tests in `tests/test_module_inventory.py` pass: exactly
   one definition per baseline binding, no import cycle under `src/cardine/`,
   and no tracked Python file under `src/cardine/` or new test file over 1,500
   lines.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean task
   worktree and record its result line in the handoff. No task branch push or
   CI evidence is required.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

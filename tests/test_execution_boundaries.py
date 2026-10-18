@@ -18,7 +18,7 @@ from cardine.worktree import checkout as owner_worktree_checkout
 from cardine.review import verdict as owner_review_verdict
 from cardine.lifecycle import commands as owner_lifecycle_commands
 import cardine.shared.errors as shared_errors
-import project_console
+from cardine.console import snapshot as project_console
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.tasks import contract as owner_tasks_contract
 

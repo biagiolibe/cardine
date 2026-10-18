@@ -58,6 +58,10 @@ class ModuleInventoryTest(unittest.TestCase):
         paths = [ROOT / "scripts/meridian.py", *sorted((ROOT / "src/cardine").rglob("*.py"))]
         for path in paths:
             for name in definitions(ast.parse(path.read_text(encoding="utf-8"))):
+                # The console already had its own main before extraction; the
+                # baseline inventories only the Meridian CLI main binding.
+                if path == ROOT / "src/cardine/console/entry.py" and name == "main":
+                    name = "console.main"
                 owners[name].append(str(path.relative_to(ROOT)))
         for binding in baseline["bindings"]:
             with self.subTest(name=binding["name"]):

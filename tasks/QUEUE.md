@@ -42,7 +42,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[x]` | 019 | Extract lifecycle, upgrade support, merge, and adoption modules (split plan E12) | 🔴 P1 | 016, 007, 018 | [019](done/019-extract-lifecycle-and-template-merge.md) |
 | `[x]` | 027 | Replace the per-task CI gate with a clean-clone run and a two-platform release gate | 🔴 P1 | — | [027](done/027-clean-clone-validation-and-release-matrix.md) |
 | `[x]` | 020 | Extract console models, launch, and snapshot (split plan C01) | 🔴 P1 | 019, 027 | [020](done/020-extract-console-models-launch-snapshot.md) |
-| `[ ]` | 021 | Extract console state, render, and entry, and split the console tests (split plan C02) | 🔴 P1 | 020 | [021](021-extract-console-state-render-entry.md) |
+| `[x]` | 021 | Extract console state, render, and entry, and split the console tests (split plan C02) | 🔴 P1 | 020 | [021](done/021-extract-console-state-render-entry.md) |
 | `[ ]` | 028 | Accept a dirty worktree in `worktree check` during an explicit Resume | 🔴 P1 | 021 | [028](028-dirty-resume-check-without-stop.md) |
 | `[ ]` | 022 | Extract upgrade, adopt command, and CLI, and switch the entry points (split plan E13) | 🔴 P1 | 021, 028 | [022](022-extract-upgrade-adopt-and-cli.md) |
 | `[ ]` | 023 | Split the `MeridianCliTest` class by responsibility | 🔴 P1 | 022 | [023](023-split-meridian-cli-test-class.md) |

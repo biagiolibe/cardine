@@ -9156,7 +9156,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertIn("interactive console requires a terminal", result.stderr)
 
     def test_console_dispatches_to_framework_console_with_project_and_interval(self) -> None:
-        import project_console
+        from cardine.console import entry as project_console
 
         with (
             mock.patch.object(
