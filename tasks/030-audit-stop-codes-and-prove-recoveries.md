@@ -19,26 +19,26 @@ after a dirty Resume, fixed by task 028).
 
 ## Acceptance Criteria
 
-- [ ] Every code in `capabilities/stop-codes-v1.json` is classified with the
+- [x] Every code in `capabilities/stop-codes-v1.json` is classified with the
   table of decision 12. The handoff lists every code whose `human_decision`
   value changes, with the reason. A code needs a person when the recovery
   needs authority, a decision, a permission, or information that the agent
   lacks. Examples are a rejected push, a host sandbox that denies a write, or
   a missing project declaration.
-- [ ] Each entry gains a `resolution` field with the value `guardrail`,
+- [x] Each entry gains a `resolution` field with the value `guardrail`,
   `recoverable`, or `failing-work`. `scripts/check_repository.py` rejects a
   missing value, and rejects `human_decision: true` on any class other than
   `guardrail`.
-- [ ] Each `recoverable` code has a test that builds the state, takes the
+- [x] Each `recoverable` code has a test that builds the state, takes the
   command from the stop, runs it unchanged, and asserts that the task
   advances or the next command succeeds. A code that cannot be tested this
   way is listed in the handoff with the reason and becomes a task proposal.
   If the work does not fit the 3-hour bound, stop at a code boundary and
   propose the remaining codes as a follow-up task.
-- [ ] The journal records the `resolution` class with each blocked line.
+- [x] The journal records the `resolution` class with each blocked line.
   `meridian report flow`, or the journal reader that reports stops, counts
   stops per task by class.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -77,3 +77,10 @@ Changes to the agent instructions (task 029) and the `cardine run` engine
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Completion evidence
+
+See `tasks/handoffs/030.md` for the 55-code classification audit,
+all 16 human-decision changes, unchanged-command recovery proofs, the permitted
+recovery exception and task proposals, and successful validation on final
+implementation commit `69c4fe2b4d3ac1cb72aa3b0ca4a827ec91292f9c`.
