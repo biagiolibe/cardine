@@ -383,7 +383,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         renamed = self.root / "project with spaces"
         self.project.rename(renamed)
         self.project = renamed
-        evidence_path = self._stage_ready_task_with_origin()
+        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd=self.project, check=True, capture_output=True)
         remote = self.root / "origin.git"
         clone = self.root / "origin-writer"
         subprocess.run(["git", "clone", "--branch", "main", str(remote), str(clone)], check=True, capture_output=True)
