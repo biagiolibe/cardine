@@ -96,3 +96,13 @@ Deleting migration records (task 033), changing upgrade behavior, and
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Implementation evidence
+
+Implementation is committed as `8ffdd56c3c03d0e9ee58d84c1cbead4bc85d8115`.
+All required validation commands passed, including 1,145 tests both locally
+and in a clean clone, with no skips. See `tasks/handoffs/031.md` for evidence.
+
+Closure is pending `BLOCKED RULE_CONFLICT`: the unchanged `.meridian/`
+criterion conflicts with the mandatory lifecycle write to
+`.meridian/tasks/031.json`. No installation records have been changed.
