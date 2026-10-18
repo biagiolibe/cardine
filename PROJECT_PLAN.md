@@ -55,3 +55,9 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 028 — Accept a dirty worktree in `worktree check` during an explicit Resume.
 - `[ ]` 029 — Make agents stop only for decisions that need a person.
 - `[ ]` 030 — Classify every stop code and prove each recovery command.
+- `[ ]` 031 — Record template changes without migrations until 1.0.
+- `[ ]` 032 — Move the upgrade and merge tests to synthetic migration fixtures.
+- `[ ]` 033 — Empty the migration chain.
+- `[ ]` 034 — Remove release baselines and adoption from historical versions.
+- `[ ]` 035 — Remove the self-reported budget counters.
+- `[ ]` 036 — Move maintainer commands out of the user CLI and merge the generators.

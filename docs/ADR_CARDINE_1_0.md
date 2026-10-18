@@ -501,10 +501,17 @@ touches code that is about to be deleted.
 3. Split `meridian.py` and its tests into the modules of decision 8, with the
    existing suite green.
 4. Remove historical compatibility: migrations, baselines, budget counters,
-   maintainer commands, duplicates. Required capability versions move from the
-   migration records to the capability catalog. The migration mechanism stays,
-   with an empty chain from which Cardine 1.0 starts, and upgrade tests use
-   synthetic fixtures instead of Meridian's migrations.
+   maintainer commands, and the duplicate entry-router generator. Required
+   capability versions move from the migration records to the capability
+   catalog. The migration mechanism stays, with an empty chain from which
+   Cardine 1.0 starts, and upgrade tests use synthetic fixtures instead of
+   Meridian's migrations. Until 1.0 no project runs Cardine, so a template
+   change bumps the capability version and rewrites the marker baseline
+   without adding a migration. The other duplicates of decision 7 move:
+   one Python implementation of each hook to work item 9, and one release
+   script to work item 12. Removing release baselines also removes `adopt`
+   until work item 10 rebuilds it. `.meridian/` stays untouched, because the
+   installed Meridian 1.4.0 runs this repository's lifecycle.
 5. Rename identifiers: command, environment variables, `.cardine/`, markers,
    Git-internal files, worktree root.
 6. Single workflow: one template set, task contract fields, states, review
@@ -533,13 +540,16 @@ touches code that is about to be deleted.
    console on this engine. Build integration around the landing mode, with
    `direct` as its only 1.0 mode (decision 11).
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
-   hooks. The per-turn queue briefing is one Python implementation that
+   hooks, with one Python implementation of each hook (decision 7). The per-turn queue briefing is one Python implementation that
    prints the status that work item 7 generates. It computes no task state of
    its own. The regression tests of work items 6 and 7 run against the hook
    output on both hosts.
-10. Meridian conversion: open tasks, ADRs, configuration.
+10. Meridian conversion: open tasks, ADRs, configuration. This item rebuilds
+    `cardine adopt`, which work item 4 removes together with the release
+    baselines.
 11. Documentation: README positioning, quick start, agent reference.
-12. Release: GitHub and PyPI publication from one script. Preparing Meridian
+12. Release: GitHub and PyPI publication from one script, which merges
+    `release.py` and `prepare_release.py` (decision 7). Preparing Meridian
     1.4.0 (task 231) exposed three gaps that this script must close:
     - The release kind follows what changed. A template change without a
       migration stops the release; it is never labelled CLI-only.

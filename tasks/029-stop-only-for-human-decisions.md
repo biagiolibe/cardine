@@ -52,7 +52,8 @@ work within the validation retry limit.
   validation is failing work, not a stop. Every code that the new text names
   exists in the registry.
 - [ ] The change is a capability version bump with a migration, as the
-  repository checks require. `meridian upgrade` applies it to this
+  repository checks require. `python3 scripts/meridian.py --framework-root .
+  upgrade` applies it to this
   repository's own `CLAUDE.md` and `AGENTS.md`, and the result is committed.
 - [ ] A test proves that every code the new text names as a guardrail has
   `human_decision: true`, and that the text names no code missing from the
@@ -67,7 +68,7 @@ work within the validation retry limit.
 | `templates/workflows/governed-sdd/` | Governed SDD stop rules. |
 | `capabilities/stop-codes-v1.json` | Registry with `human_decision`. |
 | `capabilities/`, `migrations/` | Capability version and migration. |
-| `CLAUDE.md`, `AGENTS.md` | This repository's own copies, updated through `meridian upgrade`. |
+| `CLAUDE.md`, `AGENTS.md` | This repository's own copies, updated through the checkout's `upgrade`. |
 | `docs/ADR_CARDINE_1_0.md` | Decision 12, the authority. |
 
 ## Technical Context
