@@ -22,11 +22,12 @@ import check_repository as cr  # noqa: E402
 from cardine.templates import audit as owner_templates_audit
 
 
-class LocalMarkdownLinksTest(unittest.TestCase):
+class RepositoryCheckTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
+        subprocess.run(["git", "init", "--quiet", str(self.root)], check=True)
         root_patch = patch.object(cr, "ROOT", self.root)
         root_patch.start()
         self.addCleanup(root_patch.stop)
@@ -36,6 +37,8 @@ class LocalMarkdownLinksTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
 
+
+class LocalMarkdownLinksTest(RepositoryCheckTest):
     def test_queue_link_to_archived_record_is_informational(self) -> None:
         self.write("tasks/QUEUE.md", "[Task](220-example.md#objective)")
         self.write("tasks/done/220-example.md")
@@ -65,6 +68,82 @@ class LocalMarkdownLinksTest(unittest.TestCase):
                     cr.check_local_markdown_links()
                 self.assertIn(f"broken local Markdown link in {source}: {target}", output.getvalue())
                 (self.root / source).unlink()
+
+
+class RepositoryFilesTest(RepositoryCheckTest):
+    def git(self, *arguments: str) -> None:
+        subprocess.run(["git", "-C", str(self.root), *arguments], check=True,
+                       capture_output=True)
+
+    def test_nested_checkouts_are_ignored_with_or_without_ignore_rules(self) -> None:
+        for ignore_file in (None, ".gitignore", ".git/info/exclude"):
+            with self.subTest(ignore_file=ignore_file):
+                if ignore_file:
+                    self.write(ignore_file, ".claude/\n")
+                nested = self.root / ".claude/worktrees/session"
+                nested.mkdir(parents=True, exist_ok=True)
+                subprocess.run(["git", "init", "--quiet", str(nested)], check=True)
+                self.write(".claude/worktrees/session/broken.md", "[Broken](missing.md)")
+                self.write(".claude/worktrees/session/broken.json", "{")
+                self.write(".claude/worktrees/session/broken.sh", "if then\n")
+                cr.check_local_markdown_links()
+                cr.check_json()
+                cr.check_bash()
+                self.assertNotIn(nested / "broken.md", cr.repository_files())
+
+    def test_ignored_files_are_not_checked(self) -> None:
+        for ignore_file in (".gitignore", ".git/info/exclude"):
+            with self.subTest(ignore_file=ignore_file):
+                self.write(ignore_file, "ignored/\n")
+                self.write("ignored/broken.md", "[Broken](missing.md)")
+                self.write("ignored/broken.json", "{")
+                self.write("ignored/broken.sh", "if then\n")
+                cr.check_local_markdown_links()
+                cr.check_json()
+                cr.check_bash()
+                (self.root / ignore_file).unlink()
+
+    def test_tracked_and_untracked_files_are_checked(self) -> None:
+        for tracked in (False, True):
+            with self.subTest(tracked=tracked):
+                self.write("broken.md", "[Broken](missing.md)")
+                if tracked:
+                    self.git("add", "broken.md")
+                    self.write(".gitignore", "broken.md\n")
+                with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                    cr.check_local_markdown_links()
+
+    def test_invalid_repository_json_and_bash_fail(self) -> None:
+        for name, content, check in (
+            ("broken.json", "{", cr.check_json),
+            ("broken.sh", "if then\n", cr.check_bash),
+        ):
+            with self.subTest(name=name):
+                self.write(name, content)
+                with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                    check()
+
+    def test_listing_failure_fails_every_check(self) -> None:
+        failed = subprocess.CompletedProcess([], 1, stdout=b"", stderr=b"failure")
+        for check in (cr.check_local_markdown_links, cr.check_json, cr.check_bash):
+            with self.subTest(check=check.__name__), patch.object(cr.subprocess, "run", return_value=failed):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+                    check()
+                self.assertIn("cannot list repository files", output.getvalue())
+
+    def test_listing_handles_deleted_and_unusual_paths(self) -> None:
+        self.write("deleted.md")
+        self.git("add", "deleted.md")
+        (self.root / "deleted.md").unlink()
+        name = "space and\nnewline.md"
+        self.write(name)
+        self.assertEqual(cr.repository_files(), [self.root / name])
+
+    def test_template_link_exemptions_are_preserved(self) -> None:
+        self.write("templates/example.md", "[Future](missing.md)")
+        self.write("tasks/QUEUE_TEMPLATE.md", "[Future](missing.md)")
+        cr.check_local_markdown_links()
 
 
 class PluginVersionTest(unittest.TestCase):

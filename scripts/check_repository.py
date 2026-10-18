@@ -6,6 +6,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -480,8 +481,27 @@ def check_stop_code_registry(root: Path = ROOT) -> None:
             fail(f"stop code {code} is registered but no managed text or CLI output mentions it")
 
 
+def repository_files() -> list[Path]:
+    """List existing repository files, excluding ignored and nested checkouts."""
+    listed = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--cached", "--others",
+         "--exclude-standard"],
+        capture_output=True,
+        check=False,
+    )
+    if listed.returncode:
+        fail("cannot list repository files: git ls-files failed")
+    return sorted({
+        ROOT / os.fsdecode(name)
+        for name in listed.stdout.split(b"\0")
+        if name and (ROOT / os.fsdecode(name)).is_file()
+    })
+
+
 def check_json() -> None:
-    for path in ROOT.rglob("*.json"):
+    for path in repository_files():
+        if path.suffix != ".json":
+            continue
         try:
             json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
@@ -706,7 +726,9 @@ def check_releases(root: Path = ROOT) -> None:
 
 
 def check_bash() -> None:
-    for path in ROOT.rglob("*.sh"):
+    for path in repository_files():
+        if path.suffix != ".sh":
+            continue
         result = subprocess.run(
             ["bash", "-n", str(path)], check=False, capture_output=True, text=True
         )
@@ -715,7 +737,9 @@ def check_bash() -> None:
 
 
 def check_local_markdown_links() -> None:
-    for path in ROOT.rglob("*.md"):
+    for path in repository_files():
+        if path.suffix != ".md":
+            continue
         relative_path = path.relative_to(ROOT)
         # Templates deliberately link to files that an initialized project may
         # create later (for example, QUEUE_ARCHIVE.md). They are examples of a
