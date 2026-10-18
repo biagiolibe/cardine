@@ -522,7 +522,7 @@
       "resume": "resolve each conflict or router requirement that the plan lists, then rerun meridian upgrade --check",
       "kind": "stop",
       "summary": "the upgrade plan has a conflict or an unmet router requirement and changed no file",
-      "test": "tests.test_meridian_cli.MeridianCliTest.test_check_reports_multiple_merge_conflicts"
+      "test": "tests.test_meridian_upgrade_merge.UpgradeMergeTest.test_check_reports_multiple_merge_conflicts"
     },
     {
       "code": "ADOPTION_BLOCKED",
@@ -535,7 +535,7 @@
       "resume": "resolve the adoption review record that the detail names manually, then restart the assisted adoption loop",
       "kind": "stop",
       "summary": "the assisted adoption state cannot advance without a developer decision",
-      "test": "tests.test_meridian_cli.MeridianCliTest.test_address_review_and_retry_limit"
+      "test": "tests.test_meridian_adoption_audit.AdoptionAuditTest.test_address_review_and_retry_limit"
     },
     {
       "code": "WORKFLOW_UNREADABLE",
