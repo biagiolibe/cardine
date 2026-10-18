@@ -29,30 +29,30 @@ continued past the stop, and the agent on 021 stopped.
 
 ## Acceptance Criteria
 
-- [ ] `meridian worktree check <task-id> --resume` exits 0 and prints no
+- [x] `meridian worktree check <task-id> --resume` exits 0 and prints no
   `BLOCKED` line when `dirty-worktree` is the only error. Its report says
   `status: ready-dirty`, `next_action: inspect-dirty`, and the changed and
   untracked path counts. It writes nothing.
-- [ ] With `--resume`, any other error, alone or together with
+- [x] With `--resume`, any other error, alone or together with
   `dirty-worktree`, still stops with `BLOCKED WRONG_WORKTREE`.
-- [ ] Without `--resume`, a dirty worktree still stops, as today, so a fresh
+- [x] Without `--resume`, a dirty worktree still stops, as today, so a fresh
   start never runs on top of unexplained changes. Its resume command names
   `prepare --resume`, the command that accepts a dirty worktree, instead of a
   `prepare` that refuses it.
-- [ ] `prepare --resume` with `dirty: true` returns the exact next command,
+- [x] `prepare --resume` with `dirty: true` returns the exact next command,
   `meridian worktree check <task-id> --resume --project <primary-checkout>
   --format json`, run from the task worktree.
-- [ ] `execution start --resume` keeps accepting the same state; a test runs
+- [x] `execution start --resume` keeps accepting the same state; a test runs
   the whole dirty Resume, `prepare --resume`, `check --resume`, and
   `execution start --resume`, with exit 0 at every step and no `BLOCKED`
   line.
-- [ ] A regression test covers clean and dirty Resume states: the lifecycle
+- [x] A regression test covers clean and dirty Resume states: the lifecycle
   commands exit 0 in both cases, independently of managed template text.
-- [ ] `tests/test_task_worktree_isolation.py`
+- [x] `tests/test_task_worktree_isolation.py`
   (`test_resume_accepts_a_dirty_worktree_and_changes_nothing`) keeps its
   assertions for `inspect_task_worktree` without `--resume`, and adds the
   `--resume` case.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
