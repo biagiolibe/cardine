@@ -87,3 +87,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[x]` | 024 | Move the remaining `test_meridian_cli.py` classes to domain test files | 🔴 P1 | 023 | [024](done/024-split-remaining-cli-test-classes.md) |
 | `[x]` | 025 | Split `test_task_worktree_isolation.py` | 🔴 P1 | 024 | [025](done/025-split-worktree-isolation-tests.md) |
 | `[x]` | 026 | Verify the completed module split (split plan V01) | 🔴 P1 | 025 | [026](done/026-verify-module-split-completion.md) |
+
+### Phase 11 — Repository tooling fixes
+
+Authority: the developer decision of 2026-10-18 after the Meridian task 232 candidate validation stop.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 037 | Scan only repository files in `check_repository.py` | 🔴 P1 | — | [037](done/037-check-repository-scans-only-repository-files.md) |

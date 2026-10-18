@@ -61,4 +61,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 034 — Remove release baselines and adoption from historical versions.
 - `[ ]` 035 — Remove the self-reported budget counters.
 - `[ ]` 036 — Move maintainer commands out of the user CLI and merge the generators.
-- `[ ]` 037 — Scan only repository files in `check_repository.py`.
+- `[x]` 037 — Scan only repository files in `check_repository.py`.
