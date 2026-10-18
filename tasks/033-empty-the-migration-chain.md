@@ -70,7 +70,7 @@ Release baselines and adoption from them (task 034), and `.meridian/`.
 ## Dependencies
 
 - **Depends on**: 032
-- **Blocks**: 034
+- **Blocks**: 029
 
 ## Validation
 

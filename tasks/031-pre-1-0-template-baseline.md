@@ -44,7 +44,11 @@ delete the chain.
   capability version and runs `check_repository.py --write-marker-baselines`
   in the same commit. It adds no migration and does not bump `VERSION`.
   Retiring a capability marks it retired in the catalog. The repository
-  checks no longer require a migration for a template change.
+  checks no longer require a migration for a template change. It also says
+  never to run the checkout's `upgrade` on this repository: `.meridian/`
+  belongs to the installed Meridian 1.4.0, and on 2026-10-18 that upgrade
+  rewrote the digests of unchanged files and deleted
+  `.meridian/baselines/1.4.0`.
 - [ ] `docs/ADR_CARDINE_1_0.md` work item 4 names this rule. That edit is
   already made by the planning commit, so the task verifies that the text
   matches the implementation.

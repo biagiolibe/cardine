@@ -11,7 +11,7 @@
 ## Objective
 
 Make the registry's `human_decision` field trustworthy, because ADR decision
-12 and task 029 turn it into the rule for when an agent stops. Prove that
+12 turns it into the rule for when an agent stops. Prove that
 each recoverable code returns a command that runs unchanged and advances the
 task. Two stops in this repository returned a command that did not: task 015
 (`TASK_STATE_MISSING`, fixed by task 018) and task 021 (`WRONG_WORKTREE`
@@ -66,7 +66,7 @@ Changes to the agent instructions (task 029) and the `cardine run` engine
 
 ## Dependencies
 
-- **Depends on**: 029
+- **Depends on**: 028
 - **Blocks**: none
 
 ## Validation

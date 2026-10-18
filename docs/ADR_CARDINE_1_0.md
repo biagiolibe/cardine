@@ -484,10 +484,13 @@ Two checks keep this true:
 - The journal counts stops per task by class. The target is that every stop
   is a guardrail.
 
-The rule applies twice. First, now, to the operational instructions that
-Cardine still inherits from Meridian (`CLAUDE.md`, `AGENTS.md`, and the
-managed workflow text): a code without `human_decision` is a next action,
-not a stop. Then by construction in the `cardine run` engine (work item 8).
+The rule applies twice. First to the agent instructions in Cardine's
+templates: a code without `human_decision` is a next action, not a stop.
+Then by construction in the `cardine run` engine (work item 8). This
+repository's own lifecycle runs on the installed Meridian 1.4.0 until
+`cardine run` can deliver its tasks. Its managed files carry whole-file
+digests, and the checkout's upgrade damages them, so neither change reaches
+the stops of that lifecycle.
 
 ## Work items to 0.9
 

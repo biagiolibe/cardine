@@ -56,8 +56,8 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decision 12.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 029 | Make agents stop only for decisions that need a person | 🔴 P1 | 028 | [029](029-stop-only-for-human-decisions.md) |
-| `[ ]` | 030 | Classify every stop code and prove each recovery command | 🔴 P1 | 029 | [030](030-audit-stop-codes-and-prove-recoveries.md) |
+| `[ ]` | 029 | Make agents stop only for decisions that need a person | 🔴 P1 | 033 | [029](029-stop-only-for-human-decisions.md) |
+| `[ ]` | 030 | Classify every stop code and prove each recovery command | 🔴 P1 | 028 | [030](030-audit-stop-codes-and-prove-recoveries.md) |
 
 ### Phase 10 — Remove historical compatibility
 
@@ -68,6 +68,6 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 4, and decisions 5 and 7.
 | `[ ]` | 031 | Record template changes without migrations until 1.0 | 🔴 P1 | 026, 030 | [031](031-pre-1-0-template-baseline.md) |
 | `[ ]` | 032 | Move the upgrade and merge tests to synthetic migration fixtures | 🔴 P1 | 031 | [032](032-synthetic-upgrade-fixtures.md) |
 | `[ ]` | 033 | Empty the migration chain | 🔴 P1 | 032 | [033](033-empty-the-migration-chain.md) |
-| `[ ]` | 034 | Remove release baselines and adoption from historical versions | 🔴 P1 | 033 | [034](034-remove-release-baselines-and-historical-adoption.md) |
+| `[ ]` | 034 | Remove release baselines and adoption from historical versions | 🔴 P1 | 029 | [034](034-remove-release-baselines-and-historical-adoption.md) |
 | `[ ]` | 035 | Remove the self-reported budget counters | 🔴 P1 | 034 | [035](035-remove-budget-counters.md) |
 | `[ ]` | 036 | Move maintainer commands out of the user CLI and merge the generators | 🔴 P1 | 035 | [036](036-move-maintainer-commands.md) |

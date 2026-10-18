@@ -60,7 +60,7 @@ Work item 10's conversion command, and `.meridian/`.
 
 ## Dependencies
 
-- **Depends on**: 033
+- **Depends on**: 029
 - **Blocks**: 035
 
 ## Validation
