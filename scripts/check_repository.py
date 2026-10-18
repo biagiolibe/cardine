@@ -26,13 +26,7 @@ from cardine.templates import migration_audit as owner_templates_migration_audit
 from cardine.templates import migrations as owner_templates_migrations
 from cardine.templates import manifest as owner_templates_manifest
 
-# Deliberately not directly inside migrations/: `meridian.py`'s
-# capability_requirements() and migration_ids() glob `migrations/*.json`
-# expecting every match to be a migration record (with "id"/"from"/"to"/...
-# fields); a baseline file there would satisfy the glob and blow up the first
-# reader with a KeyError. A subdirectory is invisible to that non-recursive
-# glob, so this file sits one level down instead.
-MARKER_BASELINE_PATH = ROOT / "migrations" / "marker-baselines" / "CAPABILITY_MARKER_BASELINES.json"
+MARKER_BASELINE_PATH = ROOT / "capabilities" / "marker-baselines.json"
 REQUIRED_FILES = (
     "README.md",
     "VERSION",
@@ -51,6 +45,8 @@ REQUIRED_FILES = (
     "capabilities/catalog-v1.json",
     "capabilities/stop-codes-v1.json",
     "capabilities/retired-text-v1.json",
+    "capabilities/markers-v1.json",
+    "capabilities/marker-baselines.json",
     "schemas/retired-text-v1.schema.json",
     "schemas/capability-catalog-v1.schema.json",
     "schemas/stop-codes-v1.schema.json",
@@ -593,78 +589,6 @@ def check_migrations(root: Path = ROOT) -> None:
         fail(f"invalid capability move: {error}")
 
 
-def catalog_surface_additions(
-    previous: dict[str, object], current: dict[str, object]
-) -> list[tuple[str, str]]:
-    """`(capability, path)` pairs the current catalog adds to a capability the
-    previous catalog already declared."""
-    previous_capabilities = previous.get("capabilities", {})
-    additions = []
-    for capability_id, capability in sorted(current.get("capabilities", {}).items()):
-        if capability_id not in previous_capabilities:
-            continue
-        known = {
-            surface["path"] for surface in previous_capabilities[capability_id]["managedSurfaces"]
-        }
-        additions.extend(
-            (capability_id, surface["path"])
-            for surface in capability["managedSurfaces"]
-            if surface["path"] not in known
-        )
-    return additions
-
-
-def check_catalog_surface_migrations(
-    root: Path = ROOT,
-    previous_catalog: dict[str, object] | None = None,
-    previous_version: str = "0.0.0",
-) -> None:
-    """A path added to a capability's managed surface must be listed in `managedPaths`
-    of a migration of the next release; otherwise projects that declare the
-    surface are not told about it."""
-    if previous_catalog is None:
-        current_version = (root / "VERSION").read_text(encoding="utf-8").strip()
-        listing = subprocess.run(
-            ["git", "-C", str(root), "tag", "--list", "v[0-9]*"],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        earlier = sorted(
-            (
-                tag
-                for tag in listing.stdout.split()
-                if re.fullmatch(r"v\d+\.\d+\.\d+", tag)
-                and meridian.version_key(tag[1:]) < meridian.version_key(current_version)
-            ),
-            key=lambda tag: meridian.version_key(tag[1:]),
-        )
-        if not earlier:
-            return
-        shown = subprocess.run(
-            ["git", "-C", str(root), "show", f"{earlier[-1]}:{meridian.CAPABILITY_CATALOG_PATH}"],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        if shown.returncode != 0:
-            return
-        previous_catalog = json.loads(shown.stdout)
-        previous_version = earlier[-1][1:]
-    current_catalog = json.loads((root / meridian.CAPABILITY_CATALOG_PATH).read_text(encoding="utf-8"))
-    listed: set[str] = set()
-    for path in sorted((root / "migrations").glob("[0-9][0-9][0-9]-*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if meridian.version_key(str(data["to"])) > meridian.version_key(previous_version):
-            listed.update(str(item) for item in data.get("managedPaths", []))
-    for capability_id, surface_path in catalog_surface_additions(previous_catalog, current_catalog):
-        if surface_path not in listed:
-            fail(
-                f"capability {capability_id} adds managed surface {surface_path} but no migration "
-                "after the previous release lists it in managedPaths"
-            )
-
-
 RELEASE_FIELDS = (
     "version",
     "releaseDate",
@@ -807,7 +731,7 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
 
 
 def write_marker_baselines(root: Path = ROOT) -> None:
-    baseline_path = root / "migrations" / "marker-baselines" / "CAPABILITY_MARKER_BASELINES.json"
+    baseline_path = root / "capabilities" / "marker-baselines.json"
     baseline_path.parent.mkdir(parents=True, exist_ok=True)
     baseline_path.write_text(
         json.dumps(current_marker_baselines(root), indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -827,7 +751,7 @@ def check_capability_marker_baselines(root: Path = ROOT) -> None:
     change, so the record stays an explicit, reviewed act, not something a
     tool updates on its own.
     """
-    baseline_path = root / "migrations" / "marker-baselines" / "CAPABILITY_MARKER_BASELINES.json"
+    baseline_path = root / "capabilities" / "marker-baselines.json"
     if not baseline_path.is_file():
         fail(f"capability marker baseline is missing: {baseline_path.relative_to(root)}")
     recorded = json.loads(baseline_path.read_text(encoding="utf-8"))
@@ -845,7 +769,7 @@ def check_capability_marker_baselines(root: Path = ROOT) -> None:
                 fail(
                     f"{relative}: capability={capability} v{info['version']} — protected content changed "
                     "without a version bump; restore the released text or bump the version as a deliberate "
-                    "migration"
+                    "template change"
                 )
             elif baseline["version"] != info["version"] or baseline["sha256"] != info["sha256"]:
                 fail(
@@ -1085,7 +1009,6 @@ def main() -> None:
     meridian.load_retired_text_registry(ROOT)
     check_capability_catalog()
     check_migrations()
-    check_catalog_surface_migrations()
     check_releases()
     check_bash()
     check_local_markdown_links()

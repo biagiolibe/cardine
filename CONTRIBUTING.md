@@ -61,6 +61,10 @@ When changing this behavior, keep the base and governed-SDD language-policy temp
 
 ## Migrations and capability markers
 
+Until Cardine 1.0, use the no-migration template rule under
+[Managed copies of this repository](#managed-copies-of-this-repository).
+The following describes historical migration records.
+
 A migration that modifies framework-mandated prose already tracked as a
 capability — not just adds a new managed file — must declare `capability`
 and `capabilityVersion` in its migration record, wrap the affected text in
@@ -256,43 +260,31 @@ documents under `docs/` are copies of the Lean Delivery templates, and
 from. Never edit the manifest or `.meridian/baselines/` by hand; `meridian
 upgrade` writes them.
 
-A task that changes a managed template ships a migration and bumps `VERSION`
-(see the release procedure below). In that same task, bring this repository's
-copies to the new release with the checkout's own CLI:
+Until Cardine 1.0, no project runs Cardine. A template change bumps the
+capability version, updates its `requiredVersion` in
+`capabilities/markers-v1.json`, and runs:
 
 ```bash
-bin/meridian upgrade --project . --check
-bin/meridian upgrade --project . --apply
-python3 scripts/check_repository.py --write-managed-digests
+python3 scripts/check_repository.py --write-marker-baselines
 ```
 
-Do not retype the template change into a copy by hand. Run the last command
-after `--apply` and review the manifest diff: `--apply` records the digest of
-each template, but this repository's copies keep repository-specific text (the
-project title, purpose, and local Codex rules), so the refresh records the
-digest of each copy, recomputes the profiles' installation evidence from the
-files, and restores a declared managed-copy surface that the upgrade's managed
-list omits. Run it before `--apply` too when you have already edited a copy, so
-that the recorded digests match the files the upgrade starts from.
+Commit the template, catalog, and `capabilities/marker-baselines.json`
+together. Add no migration and do not bump `VERSION` for a template change.
+The marker catalog is separate from `catalog-v1.json`, which describes
+installation profiles. For a new marker, set `required: true`, `retired: false`,
+and use its capability ID as the `adoptionRecord` label; existing labels are
+retained for historical adoption output and do not require a new migration.
+Mark a retired capability with `retired: true` and `required: false` in the
+marker catalog. The catalog owns current requirements and retirements;
+historical migration records are not the source of current template state.
+This pre-1.0 rule takes precedence over the historical migration and release
+procedures below.
 
-`--apply` changes nothing while the plan has a `CONFLICT`. Resolve each one in
-the copy, keeping this repository's intended text: where the copy only
-paraphrases the template, take the template's text for that region; where it
-carries repository-specific text, leave at least one unchanged baseline line
-between it and the lines the template changed, because adjacent edits conflict.
-Rerun `--check` until it reports no conflict. A managed document that has no
-baseline yet and differs from the template is planned as `ADOPT-REPLACE`, which
-would discard the copy: reduce the file to the template text, apply, then
-restore the repository's own sections after the managed block.
-
-Use `--write-managed-digests` on its own only for a deliberate edit to a managed
-copy that follows no template change, such as repository-specific text outside
-a capability block. Such an edit ships no migration and does not move the
-manifest's release.
-
-The repository check fails when the manifest's `workflowBaselineVersion` is
-older than the newest migration's `to` that is not ahead of `VERSION`; run the
-commands above to fix it.
+Never run the checkout's `upgrade` on this repository. Its `.meridian/`
+manifest, baselines, and task states belong to the installed Meridian 1.4.0,
+which runs this repository's lifecycle. On 2026-10-18, the checkout's upgrade
+rewrote digests of unchanged files and deleted `.meridian/baselines/1.4.0`.
+Do not edit those installation records to accompany Cardine template changes.
 
 ## Versioning and deprecation
 

@@ -24,7 +24,7 @@ from cardine.templates.manifest import validate_manifest
 from cardine.templates.manifest import write_manifest
 from cardine.templates.marker_history import capability_presence_map
 from cardine.templates.merge import lock_project
-from cardine.templates.migrations import capability_requirements
+from cardine.templates.catalog import marker_requirements
 from cardine.templates.migrations import migration_record_paths
 from pathlib import Path
 import json
@@ -148,7 +148,7 @@ def bootstrap_capability_profile(
 def detect_capabilities(project_root: Path, mode: str, framework_root: Path) -> list[Capability]:
     if mode != "governed-sdd":
         return []
-    requirements = capability_requirements(framework_root)
+    requirements = marker_requirements(framework_root)
     presence = capability_presence_map(project_root, mode, framework_root)
     return [
         Capability(migration_id, *presence[capability_id])

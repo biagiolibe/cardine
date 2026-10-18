@@ -448,3 +448,38 @@ def parse_capability_profiles(
             CapabilityProfileDeclaration(profile_id, profile_version, tuple(declarations))
         )
     return tuple(parsed_profiles)
+
+
+def load_marker_catalog(framework_root: Path) -> dict[str, dict[str, object]]:
+    """Read current marker requirements independently of migration history.
+
+    adoptionRecord preserves the historical adoption label while those flows
+    still exist. Retired is historical: a reintroduced marker can be required.
+    """
+    path = framework_root / "capabilities/markers-v1.json"
+    try:
+        data = _required_object(json.loads(path.read_text(encoding="utf-8")), "marker catalog")
+    except (OSError, ValueError) as error:
+        raise MeridianError(f"cannot read marker catalog: {path}") from error
+    if data.get("catalogVersion") != 1:
+        raise MeridianError("unsupported marker catalog version")
+    entries = _required_object(data.get("capabilities"), "marker capabilities")
+    for capability, value in entries.items():
+        label = f"marker capabilities.{capability}"
+        item = _required_object(value, label)
+        _required_positive_integer(item.get("requiredVersion"), f"{label}.requiredVersion")
+        for field in ("required", "retired"):
+            if type(item.get(field)) is not bool:
+                raise MeridianError(f"{label}.{field} must be a boolean")
+        if item["required"]:
+            _required_string(item.get("adoptionRecord"), f"{label}.adoptionRecord")
+    return entries
+
+
+def marker_requirements(framework_root: Path) -> dict[str, tuple[int, str]]:
+    """Return current required versions and legacy adoption labels."""
+    return {
+        capability: (item["requiredVersion"], item["adoptionRecord"])
+        for capability, item in load_marker_catalog(framework_root).items()
+        if item["required"]
+    }

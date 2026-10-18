@@ -298,46 +298,20 @@ def migration_capability_moves(data: dict[str, object]) -> list[CapabilityMove]:
 
 
 def capability_requirements(framework_root: Path) -> dict[str, tuple[int, str]]:
-    """Map capability id -> (required version, the migration id that requires it).
+    """Compatibility entry point for catalog-backed marker requirements."""
+    from cardine.templates.catalog import marker_requirements
 
-    Built from every migration record's declared capability entries (see
-    `migration_capability_entries`), processed in migration order (the glob
-    is already sorted by the zero-padded numeric filename prefix, the same
-    order `migration_ids` and `check_migrations` assume is contiguous). When
-    more than one migration touches the same capability, the highest
-    declared `capabilityVersion` wins. A migration's `removes` entries then
-    drop that capability from the requirements entirely — no version of it
-    is required — unless a *later* migration reintroduces it, which
-    naturally wins back by virtue of running after the removal in sequence.
-    Without this, `capability_presence_map` would report a correctly retired
-    capability as MISSING on every project that removed it exactly as asked.
-    """
-    requirements: dict[str, tuple[int, str]] = {}
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        for capability, version in migration_capability_entries(data):
-            current = requirements.get(capability)
-            if current is None or version > current[0]:
-                requirements[capability] = (version, str(data["id"]))
-        for capability, _version, _superseded_by in migration_capability_removals(data):
-            requirements.pop(capability, None)
-    return requirements
+    return marker_requirements(framework_root)
 
 
 def retired_capability_ids(framework_root: Path) -> set[str]:
-    """Every capability id ever declared `removes` by a migration, regardless
-    of whether a later migration reintroduced it. Used to distinguish a
-    legitimate, migration-declared removal from an unexplained one — see
-    `check_capability_marker_baselines` in check_repository.py, which must
-    not fail merely because a retired capability's marker is gone from the
-    framework's own current templates.
-    """
-    ids: set[str] = set()
-    for path in sorted((framework_root / "migrations").glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        for capability, _version, _superseded_by in migration_capability_removals(data):
-            ids.add(capability)
-    return ids
+    """Return historically retired marker IDs from the current catalog."""
+    from cardine.templates.catalog import load_marker_catalog
+
+    return {
+        capability for capability, item in load_marker_catalog(framework_root).items()
+        if item["retired"]
+    }
 
 
 def pending_capability_removals(
