@@ -71,3 +71,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 4, and decisions 5 and 7.
 | `[ ]` | 034 | Remove release baselines and adoption from historical versions | 🔴 P1 | 029 | [034](034-remove-release-baselines-and-historical-adoption.md) |
 | `[ ]` | 035 | Remove the self-reported budget counters | 🔴 P1 | 034 | [035](035-remove-budget-counters.md) |
 | `[ ]` | 036 | Move maintainer commands out of the user CLI and merge the generators | 🔴 P1 | 035 | [036](036-move-maintainer-commands.md) |
+
+### Phase 11 — Repository tooling fixes
+
+Authority: the developer decision of 2026-10-18 after the Meridian task 232 candidate validation stop.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 037 | Scan only repository files in `check_repository.py` | 🔴 P1 | — | [037](037-check-repository-scans-only-repository-files.md) |
