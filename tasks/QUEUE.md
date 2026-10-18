@@ -49,3 +49,12 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[ ]` | 024 | Move the remaining `test_meridian_cli.py` classes to domain test files | 🔴 P1 | 023 | [024](024-split-remaining-cli-test-classes.md) |
 | `[ ]` | 025 | Split `test_task_worktree_isolation.py` | 🔴 P1 | 024 | [025](025-split-worktree-isolation-tests.md) |
 | `[ ]` | 026 | Verify the completed module split (split plan V01) | 🔴 P1 | 025 | [026](026-verify-module-split-completion.md) |
+
+### Phase 9 — Stops reserved for decisions that need a person
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 12.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 029 | Make agents stop only for decisions that need a person | 🔴 P1 | 028 | [029](029-stop-only-for-human-decisions.md) |
+| `[ ]` | 030 | Classify every stop code and prove each recovery command | 🔴 P1 | 029 | [030](030-audit-stop-codes-and-prove-recoveries.md) |

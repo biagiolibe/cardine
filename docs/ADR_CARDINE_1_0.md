@@ -13,7 +13,9 @@ Decision 11, landing modes and pull requests, was added and accepted on the
 same day, as were the release-tooling requirements in work item 12, the
 order of work items 4 and 5, quick tasks under decision 4, CI before
 landing under decision 11, and the queue-briefing requirements in work items
-6, 7, and 9.*
+6, 7, and 9. Decision 12, stops reserved for decisions that need a person,
+was proposed and accepted on 2026-10-18. It refines decisions 5 to 7 and adds
+no feature to the 1.0 scope.*
 
 ## Context
 
@@ -235,7 +237,8 @@ diagnosis and manual recovery.
 
 Unchanged, because they are the product's value:
 
-- registered stops with exact resume commands;
+- registered stops with exact resume commands, reserved for decisions that
+  need a person (decision 12);
 - denied destructive actions;
 - one worktree and one writer per task;
 - candidate validation before integration;
@@ -415,6 +418,77 @@ further items are open for 1.1:
   request.
 - **Other forges.**
 
+### 12. Stops are for people
+
+A stop hands control to a person. It is justified only when that person
+brings something the agent lacks: authority, a decision, or information.
+Everything else is the agent's work.
+
+The evidence, as of 2026-10-18:
+
+- The stop registry has 55 codes. Only 14 have `human_decision: true`: an
+  outstanding review, a merge conflict, a rejected push, a scope change, a
+  rule conflict, and a few more.
+- In the first 22 Cardine tasks, agents stopped 7 times, and none of those
+  stops needed a new decision from the developer:
+  - three were a Resume of a worktree with uncommitted changes, which the
+    workflow allows (tasks 009, 019, 021);
+  - one was a task that skipped `task close`, with a known remedy (task 015);
+  - one was a test that failed once and passed on the rerun (task 009);
+  - one was a trailing blank line and a missing import path in the task's
+    own work (task 021);
+  - one was a refused `prepare` for work that had no task record yet; the
+    coordinator wrote the record for work the developer had already asked
+    for (task 005).
+- Each stop cost a round trip through the developer, who pasted a Resume
+  directive and added nothing to it.
+
+The cause is a correction that went too far. Meridian agents used to invent
+stops, for example the false budget exhaustion of issue #15. The rule that a
+stop is valid only when a command prints `BLOCKED` ended that, but the
+commands print `BLOCKED` for every state off the happy path, including the
+states they know how to resolve. That also contradicts decision 5, which
+stops a task after repeated validation failures, not after the first, and
+decision 6, which returns the next action instead of a stop.
+
+Every outcome of a lifecycle command belongs to one of three classes:
+
+| Class | Examples | What the agent does |
+| --- | --- | --- |
+| Guardrail | A denied action; a merge conflict; a rejected push; a required review; a scope change; a rule conflict | Stops. The command prints `BLOCKED <CODE>` and a resume command for the person. |
+| Recoverable state | A Resume with uncommitted changes; closure records still to write; a partial cleanup; CI still running | Continues. The command returns `next` with the exact command, and the agent runs it in the same turn. When the recovery is safe and idempotent, the command performs it itself. |
+| Failing work | Failing tests, a lint error, a wrong import | Iterates: fixes its work and validates again, within the validation retry limit. |
+
+The registry's `human_decision` field is the rule. A code without it never
+prints `BLOCKED` and never stops the agent. Guardrails stay absolute, because
+they are the product's value: an agent never runs a denied action, writes
+state to pass a gate, changes scope, or decides in place of a review.
+
+The validation retry limit of decision 5 also covers intermittent failures.
+A failed validation run is rerun once automatically. If the rerun passes,
+the handoff records the test as intermittent and the attempt does not count.
+If it fails, the attempt counts toward N.
+
+For unattended runs, decisions that need a person are taken before the run,
+in the task contract. The `Expected code surface` bounds what the agent may
+change. Work outside it is a scope change and stops.
+
+"Resume" is no longer a ritual for the developer. It follows only a stop
+that needed a person; otherwise the agent runs the lifecycle command again.
+
+Two checks keep this true:
+
+- Every recoverable code has a test proving that the command it returns runs
+  unchanged and advances the task. A `BLOCKED` line for a code without
+  `human_decision` is a defect of the tool.
+- The journal counts stops per task by class. The target is that every stop
+  is a guardrail.
+
+The rule applies twice. First, now, to the operational instructions that
+Cardine still inherits from Meridian (`CLAUDE.md`, `AGENTS.md`, and the
+managed workflow text): a code without `human_decision` is a next action,
+not a stop. Then by construction in the `cardine run` engine (work item 8).
+
 ## Work items to 0.9
 
 Most items are one or more tasks of 2–3 hours. Item 3 is mechanical and
@@ -453,7 +527,9 @@ touches code that is about to be deleted.
    a project whose queue lists no task while its task states record done
    tasks.
 8. `cardine run` engine: next step, resume, directory independence, runnable
-   commands, validation retry limit. Rebuild the console on this engine. Build
+   commands, validation retry limit. It applies decision 12: only guardrails
+   stop, recoverable states return the next action or are resolved by the
+   engine, and failing work iterates within the retry limit. Rebuild the console on this engine. Build
    integration around the landing mode, with `direct` as its only 1.0 mode
    (decision 11).
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
@@ -498,6 +574,7 @@ touches code that is about to be deleted.
 | Scope grows during the rewrite ("second system") | This ADR is the 1.0 scope; new ideas wait until after 1.0. |
 | Behavior is lost while the code is split | Item 3 is mechanical. The existing suite of more than 1,000 tests stays green with its assertions unchanged; tests change only their imports, patch targets, and file locations (`docs/MODULE_SPLIT_PLAN.md`). |
 | The single workflow misses a Governed SDD use | The parity table in decision 3 and the field-trial exit criterion in decision 10. |
+| Agent autonomy erodes a guardrail (decision 12) | Guardrails are the registry codes with `human_decision`, and they always stop. Writing false state, running a denied action, and changing scope stay forbidden. Recoverable codes need a test proving their next action. |
 | The `cardine` PyPI name is taken meanwhile | Publish a `0.0.1` placeholder first. |
 | A trademark conflict with a business using the name | Registration is deferred until after 1.0. EU and Italian registers must be checked before registration. |
 

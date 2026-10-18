@@ -53,3 +53,5 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 026 — Verify the completed module split (split plan V01).
 - `[x]` 027 — Replace the per-task CI gate with a clean-clone run and a two-platform release gate.
 - `[ ]` 028 — Accept a dirty worktree in `worktree check` during an explicit Resume.
+- `[ ]` 029 — Make agents stop only for decisions that need a person.
+- `[ ]` 030 — Classify every stop code and prove each recovery command.
