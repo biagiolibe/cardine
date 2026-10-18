@@ -46,7 +46,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 3, and `docs/MODULE_SPLIT_PLAN.m
 | `[x]` | 028 | Accept a dirty worktree in `worktree check` during an explicit Resume | 🔴 P1 | 021 | [028](done/028-dirty-resume-check-without-stop.md) |
 | `[x]` | 022 | Extract upgrade, adopt command, and CLI, and switch the entry points (split plan E13) | 🔴 P1 | 021, 028 | [022](done/022-extract-upgrade-adopt-and-cli.md) |
 | `[x]` | 023 | Split the `MeridianCliTest` class by responsibility | 🔴 P1 | 022 | [023](done/023-split-meridian-cli-test-class.md) |
-| `[ ]` | 024 | Move the remaining `test_meridian_cli.py` classes to domain test files | 🔴 P1 | 023 | [024](024-split-remaining-cli-test-classes.md) |
+| `[x]` | 024 | Move the remaining `test_meridian_cli.py` classes to domain test files | 🔴 P1 | 023 | [024](done/024-split-remaining-cli-test-classes.md) |
 | `[ ]` | 025 | Split `test_task_worktree_isolation.py` | 🔴 P1 | 024 | [025](025-split-worktree-isolation-tests.md) |
 | `[ ]` | 026 | Verify the completed module split (split plan V01) | 🔴 P1 | 025 | [026](026-verify-module-split-completion.md) |
 

@@ -48,7 +48,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 021 — Extract console state, render, and entry, and split the console tests (split plan C02).
 - `[x]` 022 — Extract upgrade, adopt command, and CLI, and switch the entry points (split plan E13).
 - `[x]` 023 — Split the `MeridianCliTest` class by responsibility.
-- `[ ]` 024 — Move the remaining `test_meridian_cli.py` classes to domain test files.
+- `[x]` 024 — Move the remaining `test_meridian_cli.py` classes to domain test files.
 - `[ ]` 025 — Split `test_task_worktree_isolation.py`.
 - `[ ]` 026 — Verify the completed module split (split plan V01).
 - `[x]` 027 — Replace the per-task CI gate with a clean-clone run and a two-platform release gate.
