@@ -15,7 +15,9 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-import meridian
+from cardine.shared.context import _context_configuration, context_router_files
+from cardine.shared.errors import MeridianError
+from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import authority as owner_shared_authority
 
 
@@ -116,7 +118,7 @@ def is_exempt(path: Path, project: Path) -> bool:
     if relative == "LANGUAGE_POLICY.md":
         return True
     try:
-        active = meridian.active_worktree_task(project)
+        active = active_worktree_task(project)
         if active and str(path) in active["exempt_paths"]:
             return True
         if active:
@@ -124,14 +126,14 @@ def is_exempt(path: Path, project: Path) -> bool:
             sources = re.findall(r"^### (.+?) —", authority, re.MULTILINE)
             if relative in sources:
                 return True
-    except meridian.MeridianError:
+    except MeridianError:
         pass
     except OSError:
         pass
     try:
-        if Path(relative) in meridian.context_router_files(project):
+        if Path(relative) in context_router_files(project):
             return True
-    except meridian.MeridianError:
+    except MeridianError:
         pass
     return False
 
@@ -140,14 +142,14 @@ def router_ceiling_reason(path: Path, project: Path) -> str | None:
     """Return a specific denial for a declared router file above its ceiling."""
     try:
         relative = path.relative_to(project)
-        if relative not in meridian.context_router_files(project):
+        if relative not in context_router_files(project):
             return None
-        _bytes, ceiling = meridian._context_configuration(project)
+        _bytes, ceiling = _context_configuration(project)
         with path.open(encoding="utf-8", errors="replace") as source:
             lines = sum(1 for _ in source)
         if lines > ceiling:
             return f"Blocked: router file {relative.as_posix()} ({lines} lines) exceeds its declared ceiling ({ceiling} lines). Shrink the file; do not read it in ranges."
-    except (OSError, ValueError, meridian.MeridianError):
+    except (OSError, ValueError, MeridianError):
         return None
     return None
 

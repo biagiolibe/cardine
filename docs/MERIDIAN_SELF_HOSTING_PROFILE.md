@@ -300,6 +300,9 @@ The concrete commands are:
 ```bash
 python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .
 python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
+# Equivalent package dispatch (with PYTHONPATH=src for an uninstalled checkout):
+python3 -m cardine.cli --framework-root . profile doctor meridian-self-hosting --project .
+python3 -m cardine.cli --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
 ```
 
 The doctor resolves catalog declarations, managed copies, shared sources,

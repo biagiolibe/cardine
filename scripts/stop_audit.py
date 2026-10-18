@@ -13,7 +13,9 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import meridian
+from cardine.shared.git import canonical_git_common_dir, canonical_project_root
+from cardine.shared.journal import JOURNAL_NAME, JOURNAL_ROTATED_NAME, JOURNAL_VERSION, append_journal_line
+from cardine.stops.registry import load_stop_registry
 from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import flow as owner_shared_flow
 
@@ -79,13 +81,13 @@ def audit(payload: dict, now: datetime | None = None, host: str = "claude") -> l
     if not (cwd / "PROJECT_WORKFLOW.md").is_file():
         return []
     codes = list(dict.fromkeys(BLOCKED_LINE.findall(final_message(payload))))
-    registry = meridian.load_stop_registry()
+    registry = load_stop_registry()
     codes = [code for code in codes if code in registry]
     if not codes:
         return []
-    project = meridian.canonical_project_root(cwd)
-    directory = meridian.canonical_git_common_dir(project)
-    if not any((directory / name).is_file() for name in (meridian.JOURNAL_NAME, meridian.JOURNAL_ROTATED_NAME)):
+    project = canonical_project_root(cwd)
+    directory = canonical_git_common_dir(project)
+    if not any((directory / name).is_file() for name in (JOURNAL_NAME, JOURNAL_ROTATED_NAME)):
         return []
     records, _ = owner_shared_flow._flow_read_journal(project)
     start = session_start(payload, now)
@@ -106,7 +108,7 @@ def audit(payload: dict, now: datetime | None = None, host: str = "claude") -> l
                 continue
             result = "unbacked_block"
         line = {
-            "version": meridian.JOURNAL_VERSION,
+            "version": JOURNAL_VERSION,
             "ts": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "command": "stop-audit",
             "task": task,
@@ -115,7 +117,7 @@ def audit(payload: dict, now: datetime | None = None, host: str = "claude") -> l
             "host": host,
             "exit": 0,
         }
-        meridian.append_journal_line(project, line)
+        append_journal_line(project, line)
         written.append(line)
     return written
 

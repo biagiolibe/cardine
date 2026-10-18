@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine import cli as owner_cli
 
 
 def command_parsers(parser, prefix="meridian"):
@@ -28,7 +29,7 @@ class PublicSurfaceTest(unittest.TestCase):
         rows = re.findall(r"^\| `(meridian [^`]+)` \| ([^|]+) \|$", document, re.MULTILINE)
         self.assertTrue(rows)
         self.assertEqual(len(rows), len(dict(rows)), "duplicate command classifications")
-        parsers = command_parsers(meridian.build_parser())
+        parsers = command_parsers(owner_cli.build_parser())
         self.assertEqual(set(dict(rows)), set(parsers))
         for command, tier in rows:
             with self.subTest(command=command):

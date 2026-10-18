@@ -12,6 +12,7 @@ from urllib.error import URLError, HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine import cli as owner_cli
 from cardine.release import update as owner_release_update
 from cardine.shared import journal as owner_shared_journal
 import cardine.shared.errors as shared_errors
@@ -174,12 +175,12 @@ class SelfUpdateTest(unittest.TestCase):
     def test_cli_uses_own_checkout_and_requires_explicit_mode(self):
         with patch.object(sys, 'argv', ['meridian', '--framework-root', str(self.root),
                                       'self-update', '--check']), patch.object(
-                meridian, 'run_self_update', return_value=0) as update:
-            self.assertEqual(meridian._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
+                owner_cli, 'run_self_update', return_value=0) as update:
+            self.assertEqual(owner_cli._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
         update.assert_called_once_with(Path(meridian.__file__).resolve().parents[1],
                                        apply=False, target_tag=None)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-            meridian.build_parser().parse_args(['self-update'])
+            owner_cli.build_parser().parse_args(['self-update'])
 
 
 
