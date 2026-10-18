@@ -103,6 +103,14 @@ Implementation is committed as `8ffdd56c3c03d0e9ee58d84c1cbead4bc85d8115`.
 All required validation commands passed, including 1,145 tests both locally
 and in a clean clone, with no skips. See `tasks/handoffs/031.md` for evidence.
 
-Closure is pending `BLOCKED RULE_CONFLICT`: the unchanged `.meridian/`
-criterion conflicts with the mandatory lifecycle write to
-`.meridian/tasks/031.json`. No installation records have been changed.
+## Developer amendment
+
+The developer resolved the scope ambiguity on resume:
+
+> "The criterion "`.meridian/` is unchanged" and the out-of-scope item `.meridian/` cover the manifest, `.meridian/baselines/`, the other files under `.meridian/`, and other tasks' state files. They never covered task 031's own state file. `.meridian/tasks/031.json`, written and staged by the installed `meridian task close 031`, is allowed, as PROJECT_WORKFLOW.md requires. Every other path under `.meridian/` stays unchanged; verify this with `git diff main -- .meridian` before advance (the only allowed entry is tasks/031.json)."
+
+Only the installed Meridian is authorized for lifecycle commands. The
+installed version is 1.4.1; 1.4.0 is the manifest baseline. This amendment
+supersedes the earlier unchanged-state wording and clears RULE_CONFLICT.
+All other `.meridian/` paths remain outside the implementation scope.
+The required validation is rerun after the contributor-policy correction.

@@ -281,10 +281,12 @@ This pre-1.0 rule takes precedence over the historical migration and release
 procedures below.
 
 Never run the checkout's `upgrade` on this repository. Its `.meridian/`
-manifest, baselines, and task states belong to the installed Meridian 1.4.0,
-which runs this repository's lifecycle. On 2026-10-18, the checkout's upgrade
+records belong to the installed Meridian, which runs this repository's
+lifecycle. Task state files are written only by the installed Meridian
+lifecycle commands, never by hand. The other records must not be edited to
+accompany Cardine template changes. The installed Meridian is currently
+1.4.1; 1.4.0 is the manifest's baseline. On 2026-10-18, the checkout's upgrade
 rewrote digests of unchanged files and deleted `.meridian/baselines/1.4.0`.
-Do not edit those installation records to accompany Cardine template changes.
 
 ## Versioning and deprecation
 
