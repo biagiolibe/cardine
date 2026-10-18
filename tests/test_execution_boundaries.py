@@ -108,6 +108,53 @@ class ExecutionBoundariesTest(unittest.TestCase):
         owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
         self.assertEqual(self.state(), original)
 
+    def test_clean_and_dirty_resume_states_exit_zero(self):
+        owner_lifecycle_commands.execution_start(self.worker, '001')
+        self.commit('Start before interruption')
+        original = self.state()
+        script = str(Path(meridian.__file__).resolve())
+        for dirty in (False, True):
+            with self.subTest(dirty=dirty):
+                if dirty:
+                    (self.worker / 'feature.txt').write_text('interrupted work\n')
+                before = self.git('status', '--porcelain')
+                for command in (
+                    ['worktree', 'prepare', '001', '--resume', '--project', str(self.primary)],
+                    ['worktree', 'check', '001', '--resume', '--project', str(self.primary)],
+                    ['execution', 'start', '001', '--resume', '--project', str(self.worker)],
+                ):
+                    result = subprocess.run([sys.executable, script, *command, '--format', 'json'],
+                                            cwd=self.worker, text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertNotIn('BLOCKED', result.stdout + result.stderr)
+                    if command[:2] == ['worktree', 'check']:
+                        report = json.loads(result.stdout)
+                        self.assertEqual(report['status'], 'ready-dirty' if dirty else 'ready')
+                self.assertEqual(self.git('status', '--porcelain'), before)
+                self.assertEqual(self.state(), original)
+
+    def test_resume_check_keeps_other_errors_blocking(self):
+        script = str(Path(meridian.__file__).resolve())
+        for dirty in (False, True):
+            with self.subTest(dirty=dirty):
+                if dirty:
+                    (self.worker / 'feature.txt').write_text('partial\n')
+                result = subprocess.run([
+                    sys.executable, script, 'worktree', 'check', '001', '--resume',
+                    '--project', str(self.primary), '--format', 'json'],
+                    cwd=self.primary, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn('BLOCKED WRONG_WORKTREE', result.stderr)
+                self.assertIn('wrong-worktree', json.loads(result.stdout)['errors'])
+                if dirty:
+                    self.assertIn('dirty-worktree', json.loads(result.stdout)['errors'])
+        refused = subprocess.run([
+            sys.executable, script, 'worktree', 'check', '001',
+            '--project', str(self.primary), '--format', 'json'],
+            cwd=self.worker, text=True, capture_output=True)
+        self.assertEqual(refused.returncode, 2)
+        self.assertIn('prepare 001 --resume', refused.stderr)
+
     def test_preflight_and_worktree_failures_do_not_write_start(self):
         text = (self.worker / self.record).read_text()
         (self.worker / self.record).write_text(text.replace('Profile revision:', 'Missing revision:'))

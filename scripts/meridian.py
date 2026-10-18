@@ -1341,6 +1341,7 @@ def build_parser() -> MeridianArgumentParser:
     worktree_prepare.add_argument("--format", choices=("json",), required=True)
     worktree_check = worktree_sub.add_parser("check", help="inspect the effective worker worktree without mutation")
     worktree_check.add_argument("task_id")
+    worktree_check.add_argument("--resume", action="store_true", help="accept only dirty-worktree after explicit Resume")
     worktree_check.add_argument("--project", type=Path)
     worktree_check.add_argument("--worktree-root", type=Path)
     worktree_check.add_argument("--format", choices=("json",), required=True)
@@ -1815,6 +1816,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     arguments.task_id,
                     arguments.worktree_root,
                     project_root,
+                    resume=arguments.resume,
                 )
                 journal.observe(report)
                 print(json.dumps(report, sort_keys=True))
