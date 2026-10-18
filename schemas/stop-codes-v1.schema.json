@@ -13,7 +13,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["code", "class", "kind", "workflows", "emitter", "human_decision", "resume", "summary"],
+        "required": ["code", "class", "kind", "workflows", "emitter", "human_decision", "resolution", "resume", "summary"],
         "properties": {
           "code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
           "class": {"enum": ["tool", "command-exit", "judgment"]},
@@ -26,6 +26,7 @@
           },
           "step": {"type": "string", "pattern": "^C[0-9]+$"},
           "emitter": {"type": "string", "minLength": 1},
+          "resolution": {"enum": ["guardrail", "recoverable", "failing-work"]},
           "human_decision": {"type": "boolean"},
           "resume": {"type": "string", "minLength": 1},
           "summary": {"type": "string", "minLength": 1},
@@ -34,7 +35,9 @@
         },
         "allOf": [
           {"if": {"properties": {"class": {"const": "tool"}, "kind": {"const": "stop"}}},
-           "then": {"required": ["test"]}}
+           "then": {"required": ["test"]}},
+          {"if": {"properties": {"human_decision": {"const": true}}},
+           "then": {"properties": {"resolution": {"const": "guardrail"}}}}
         ]
       }
     }

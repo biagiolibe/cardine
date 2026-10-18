@@ -154,6 +154,14 @@ def _flow_targets(project_root: Path, tasks: list[dict[str, object]], unbacked_t
     return results
 
 
+def _flow_resolution(record: dict[str, object]) -> str:
+    """Preserve recorded classifications; infer them for journals written before task 030."""
+    resolution = record.get("resolution")
+    if resolution in ("guardrail", "recoverable", "failing-work"):
+        return str(resolution)
+    return str(load_stop_registry().get(str(record.get("stop_code")), {}).get("resolution", "unknown"))
+
+
 def _flow_tasks(project_root: Path, records: list[dict[str, object]], cutoff: datetime | None) -> list[dict[str, object]]:
     """Build one entry per task that has a journal record in the period; lead time uses the task's whole history."""
     in_period = lambda record: cutoff is None or record["_when"] >= cutoff  # noqa: E731
@@ -178,15 +186,19 @@ def _flow_tasks(project_root: Path, records: list[dict[str, object]], cutoff: da
         integrated = min(finalized) if finalized else None
         counted = [r for r in task_records if in_period(r)]
         stops: dict[str, int] = {}
+        resolutions: dict[str, int] = {}
         for record in counted:
             if record["result"] == "blocked":
                 code = record.get("stop_code")
                 key = code if isinstance(code, str) else FLOW_UNCODED
                 stops[key] = stops.get(key, 0) + 1
+                resolution = _flow_resolution(record)
+                resolutions[resolution] = resolutions.get(resolution, 0) + 1
         tasks.append({
             "task": task,
             "lead_time_seconds": int((integrated - started).total_seconds()) if started and integrated else None,
             "stops": dict(sorted(stops.items())),
+            "stops_by_resolution": dict(sorted(resolutions.items())),
             "aborts": sum(1 for r in counted if r["command"] == "integrate abort" and r["result"] == "ok"),
             "resumes": sum(1 for r in counted if r["command"] == "prepare" and r.get("resume") and r["result"] == "ok"),
             "origin": _flow_origin(project_root, task),
@@ -210,11 +222,14 @@ def flow_report(project_root: Path, since: str | None, now: datetime | None = No
     tasks = _flow_tasks(project_root, records, cutoff)
     unbacked_times = [record["_when"] for record in records if record["result"] == "unbacked_block"]
     stops_by_code: dict[str, int] = {}
+    stops_by_resolution: dict[str, int] = {}
     for record in records:
         if in_period(record) and record["result"] == "blocked":
             code = record.get("stop_code")
             key = code if isinstance(code, str) else FLOW_UNCODED
             stops_by_code[key] = stops_by_code.get(key, 0) + 1
+            resolution = _flow_resolution(record)
+            stops_by_resolution[resolution] = stops_by_resolution.get(resolution, 0) + 1
     stops_by_class: dict[str, int] = {}
     for code, count in stops_by_code.items():
         klass = FLOW_UNCODED if code == FLOW_UNCODED else str(registry.get(code, {}).get("class", "unknown"))
@@ -255,6 +270,7 @@ def flow_report(project_root: Path, since: str | None, now: datetime | None = No
         },
         "stops_by_code": dict(sorted(stops_by_code.items())),
         "stops_by_class": dict(sorted(stops_by_class.items())),
+        "stops_by_resolution": dict(sorted(stops_by_resolution.items())),
         "unbacked_blocks": sum(1 for record in period_records if record["result"] == "unbacked_block"),
         "blocks_by_host": blocks_by_host,
         "origin_counts": origins,
@@ -277,12 +293,14 @@ def format_flow_report(report: dict[str, object]) -> str:
         lines.append(f"Malformed journal lines skipped: {report['malformed_lines']}")
     for task in report["tasks"]:  # type: ignore[index]
         stops = ", ".join(f"{code}={count}" for code, count in task["stops"].items()) or "none"
+        resolutions = ", ".join(f"{key}={value}" for key, value in task["stops_by_resolution"].items()) or "none"
         lines.append(
             f"  task {task['task']}: lead time {_flow_duration(task['lead_time_seconds'])}, stops {stops}, "
-            f"aborts {task['aborts']}, resumes {task['resumes']}, origin {task['origin']}"
+            f"resolutions {resolutions}, aborts {task['aborts']}, resumes {task['resumes']}, origin {task['origin']}"
         )
     lines.append("Stops by code: " + (", ".join(f"{k}={v}" for k, v in report["stops_by_code"].items()) or "none"))  # type: ignore[attr-defined]
     lines.append("Stops by class: " + (", ".join(f"{k}={v}" for k, v in report["stops_by_class"].items()) or "none"))  # type: ignore[attr-defined]
+    lines.append("Stops by resolution: " + (", ".join(f"{k}={v}" for k, v in report["stops_by_resolution"].items()) or "none"))
     by_host = report["blocks_by_host"]  # type: ignore[assignment]
     for kind, label in (("unbacked", "Unbacked stop reports"), ("declared", "Declared stop reports")):
         if any(counts[kind] for counts in by_host.values()):

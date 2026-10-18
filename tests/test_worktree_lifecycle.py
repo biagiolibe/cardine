@@ -7,6 +7,7 @@ import importlib
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,7 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.stops import render as owner_stops_render
 from cardine.worktree import storage as owner_worktree_storage
 import meridian
+from stop_recovery_support import run_recovery, resume_from
 
 
 class WorktreeLifecycleCliTest(unittest.TestCase):
@@ -122,6 +124,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             f"BLOCKED WRONG_WORKTREE: worktree check reported: {errors}; resume: meridian worktree prepare 056 "
             f"--project {self.project.resolve()} --format json",
         )
+        recovery = run_recovery(resume_from(wrong.stderr), self.project, self.worktree_root)
+        self.assertEqual(recovery.returncode, 0, recovery.stderr)
+        self.assertEqual(json.loads(recovery.stdout)["worktree"], contract["worktree"])
         correct = self.run_cli(
             "worktree", "check", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
@@ -375,6 +380,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         return state.with_suffix(".evidence.json")
 
     def test_integrate_stage_blocks_when_fetched_origin_main_is_ahead(self) -> None:
+        renamed = self.root / "project with spaces"
+        self.project.rename(renamed)
+        self.project = renamed
         evidence_path = self._stage_ready_task_with_origin()
         remote = self.root / "origin.git"
         clone = self.root / "origin-writer"
@@ -404,10 +412,14 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(
             result.stderr.strip(),
             "BLOCKED MAIN_BEHIND_ORIGIN: local main is behind the already fetched origin/main "
-            f"(local main {local}, origin/main {fetched}); resume: bring local main up to the fetched origin/main "
-            "without rewriting history, then rerun meridian worktree integrate stage 056 "
-            f"--project {self.project.resolve()} --evidence {evidence_path} --format json",
+            f"(local main {local}, origin/main {fetched}); resume: "
+            f"git -C {shlex.quote(str(self.project.resolve()))} merge --ff-only origin/main",
         )
+
+        recovery = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
+        self.assertEqual(recovery.returncode, 0, recovery.stderr)
+        staged = self.run_cli(*self._stage_args(evidence_path))
+        self.assertEqual(staged.returncode, 0, staged.stderr)
 
     def _stage_args(self, evidence_path: Path) -> tuple[str, ...]:
         return (
@@ -476,6 +488,23 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 self.assertIn(entry["kind"], item["properties"]["kind"]["enum"])
                 self.assertTrue(set(entry["workflows"]) <= set(item["properties"]["workflows"]["items"]["enum"]))
 
+    def test_runtime_registry_rejects_invalid_resolution(self) -> None:
+        path = self.root / "capabilities/stop-codes-v1.json"
+        path.parent.mkdir()
+        entry = dict(stops_registry.load_stop_registry()["STALE_WORKTREE_BASE"])
+        for resolution, human in ((None, False), ("unknown", False), ("recoverable", True), ("failing-work", True)):
+            with self.subTest(resolution=resolution, human=human):
+                candidate = {**entry, "human_decision": human}
+                if resolution is None:
+                    candidate.pop("resolution")
+                else:
+                    candidate["resolution"] = resolution
+                path.write_text(json.dumps({"version": 1, "stops": [candidate]}), encoding="utf-8")
+                with mock.patch.object(stops_registry, "SCRIPTS_ROOT", self.root / "scripts"), \
+                     mock.patch.object(stops_registry, "_stop_registry_cache", None), \
+                     self.assertRaises(shared_errors.InternalStopError):
+                    stops_registry.load_stop_registry()
+
     def test_closure_status_text_reports_incomplete_evidence_through_the_registry(self) -> None:
         prepared = self.run_cli(
             "worktree", "prepare", "056", "--project", str(self.project),
@@ -520,6 +549,11 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "`meridian worktree integrate abort`; resume: meridian worktree integrate abort 056 "
             f"--project {self.project.resolve()} --format json",
         )
+
+        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        restaged = self.run_cli(*self._stage_args(evidence_path))
+        self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
     def test_integrate_stage_reports_undeclared_validation_commands_through_the_registry(self) -> None:
         evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
@@ -570,6 +604,11 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "BLOCKED EVIDENCE_MISMATCH: candidate validation evidence is stale, mismatched, or failed; resume: "
             f"meridian worktree integrate abort 056 --project {self.project.resolve()} --format json",
         )
+
+        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        restaged = self.run_cli(*self._stage_args(evidence_path))
+        self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
     def test_cleanup_reports_blocked_cleanup_through_the_registry(self) -> None:
         prepared = self.run_cli(
@@ -801,7 +840,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertEqual(
             (report["step"], report["action_required"], report["stop_code"], report["performed"]),
-            ("C6", "resolve", "PRIMARY_DIRTY", []),
+            ("C6", "human", "PRIMARY_DIRTY", []),
         )
 
     def _candidate(self, *commands: str, exit_code: int = 0) -> tuple[str, ...]:
@@ -834,6 +873,20 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
         self.assertEqual(self._main_subject(), "Integrate 056")
         self.assertEqual([line["command"] for line in self._journal()].count("integrate finalize"), 1)
+
+    def test_push_pending_recovery_runs_unchanged(self) -> None:
+        self._staged_at_c7()
+        finalized = self._advance(*self._all_candidate_commands())
+        self.assertEqual(finalized.returncode, 0, finalized.stderr)
+        stopped = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
+                               "--worktree-root", str(self.worktree_root))
+        self.assertIn("PUSH_PENDING", stopped.stdout)
+        command = resume_from(stopped.stdout)
+        pushed = run_recovery(command, self.project, self.worktree_root)
+        self.assertEqual(pushed.returncode, 0, pushed.stderr)
+        status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
+                              "--worktree-root", str(self.worktree_root), "--format", "json")
+        self.assertEqual(json.loads(status.stdout)["step"], "C10")
 
     def test_advance_reruns_after_an_interruption_between_finalize_and_push(self) -> None:
         self._staged_at_c7()

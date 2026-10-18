@@ -116,6 +116,7 @@ class LifecycleJournalTest(unittest.TestCase):
             (line["command"], line["result"], line["exit"], line["stop_code"]),
             ("cleanup", "blocked", 2, "CLEANUP_BLOCKED"),
         )
+        self.assertEqual(line["resolution"], "guardrail")
         self.assertNotIn(str(self.root), self.journal.read_text(encoding="utf-8"))
 
     def test_lines_hold_no_absolute_path_or_agent_supplied_text(self) -> None:
@@ -130,7 +131,7 @@ class LifecycleJournalTest(unittest.TestCase):
         self.assertNotIn(str(Path.home()), text)
         for line in self.lines():
             self.assertLessEqual(
-                set(line), {"version", "ts", "command", "task", "step", "result", "stop_code", "exit"}
+                set(line), {"version", "ts", "command", "task", "step", "result", "stop_code", "resolution", "exit"}
             )
 
     def test_journal_is_untracked_and_shared_by_every_worktree(self) -> None:
@@ -272,6 +273,20 @@ class FlowReportTest(unittest.TestCase):
         by_task = {task["task"]: task for task in report["tasks"]}  # type: ignore[index]
         self.assertEqual(by_task["056"]["stops"], {"PRIMARY_DIRTY": 2, "uncoded": 1})
         self.assertEqual(report["totals"]["stops"], 4)  # type: ignore[index]
+
+    def test_resolution_counts_preserve_history_and_infer_legacy_lines(self) -> None:
+        self.add(0, "check", "056", "blocked", stop_code="STALE_WORKTREE_BASE")
+        self.add(1, "check", "056", "blocked", stop_code="PRIMARY_DIRTY", resolution="failing-work")
+        self.add(2, "cleanup", "057", "blocked", stop_code="CLEANUP_BLOCKED", resolution="guardrail")
+        self.add(2, "check", "057", "blocked", stop_code="NOT_A_REGISTERED_CODE")
+        report = self.report()
+        self.assertEqual(report["stops_by_resolution"],
+                         {"recoverable": 1, "failing-work": 1, "guardrail": 1, "unknown": 1})
+        self.assertEqual(report["tasks"][0]["stops_by_resolution"], {"recoverable": 1, "failing-work": 1})
+        recent = self.report("2026-01-03")
+        self.assertEqual(recent["stops_by_resolution"], {"guardrail": 1, "unknown": 1})
+        self.assertIn("Stops by resolution:", owner_shared_flow.format_flow_report(report))
+        self.assertIn("resolutions failing-work=1, recoverable=1", owner_shared_flow.format_flow_report(report))
 
     def test_aborts_and_resumes_are_counted_per_task(self) -> None:
         self.add(0, "prepare", "056")

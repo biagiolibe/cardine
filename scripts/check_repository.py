@@ -461,6 +461,12 @@ def check_stop_code_registry(root: Path = ROOT) -> None:
                     if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
                 )
     for code, entry in entries.items():
+        if entry.get("resolution") not in {"guardrail", "recoverable", "failing-work"}:
+            fail(f"stop code {code} has a missing or invalid resolution")
+        if not isinstance(entry.get("human_decision"), bool):
+            fail(f"stop code {code} must declare human_decision as a boolean")
+        if entry["human_decision"] and entry["resolution"] != "guardrail":
+            fail(f"stop code {code} needs human_decision only on a guardrail")
         if entry["class"] != "tool":
             continue
         if not entry.get("test"):

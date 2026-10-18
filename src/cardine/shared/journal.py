@@ -99,6 +99,7 @@ class LifecycleJournalEntry:
             line["step"] = self.step
         if self.stop_code is not None and outcome == "blocked":
             line["stop_code"] = self.stop_code
+            line["resolution"] = load_stop_registry()[self.stop_code]["resolution"]
         if self.resume:
             line["resume"] = True
         try:

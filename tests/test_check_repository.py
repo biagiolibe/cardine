@@ -882,8 +882,8 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
             "class EmitTest:\n    def test_tool_line(self):\n        pass\n", encoding="utf-8"
         )
         self.registry = [
-            {"code": "ALPHA_STOP", "class": "tool", "test": self.TEST_NAME},
-            {"code": "BETA_STOP", "class": "judgment"},
+            {"code": "ALPHA_STOP", "class": "tool", "test": self.TEST_NAME, "resolution": "recoverable", "human_decision": False},
+            {"code": "BETA_STOP", "class": "judgment", "resolution": "guardrail", "human_decision": True},
         ]
         self.text = "Stop with `ALPHA_STOP` or `BETA_STOP`; returns `REUSE`, `FULL`.\n"
         self.write()
@@ -902,6 +902,20 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
         with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
             cr.check_stop_code_registry(self.root)
         return output.getvalue()
+
+    def test_resolution_is_required_and_human_decisions_require_guardrails(self) -> None:
+        for resolution in (None, "other", ""):
+            with self.subTest(resolution=resolution):
+                self.registry[0]["resolution"] = resolution
+                self.write()
+                self.assertIn("missing or invalid resolution", self.failure())
+        del self.registry[0]["resolution"]
+        self.write()
+        self.assertIn("missing or invalid resolution", self.failure())
+        for resolution in ("recoverable", "failing-work"):
+            self.registry[0].update(resolution=resolution, human_decision=True)
+            self.write()
+            self.assertIn("human_decision only on a guardrail", self.failure())
 
     def test_registered_text_passes_and_unrelated_uppercase_lists_are_ignored(self) -> None:
         cr.check_stop_code_registry(self.root)
@@ -931,12 +945,12 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
         self.assertIn("ALPHA_STOP names a test that does not exist", self.failure())
 
     def test_registered_code_mentioned_nowhere_fails(self) -> None:
-        self.registry.append({"code": "DEAD_STOP", "class": "judgment"})
+        self.registry.append({"code": "DEAD_STOP", "class": "judgment", "resolution": "failing-work", "human_decision": False})
         self.write()
         self.assertIn("DEAD_STOP is registered but no managed text or CLI output mentions it", self.failure())
 
     def test_code_emitted_only_by_the_cli_is_not_dead(self) -> None:
-        self.registry.append({"code": "CLI_STOP", "class": "judgment"})
+        self.registry.append({"code": "CLI_STOP", "class": "judgment", "resolution": "failing-work", "human_decision": False})
         self.write()
         (self.root / "scripts/meridian.py").write_text('report("C1", "CLI_STOP")\n', encoding="utf-8")
         cr.check_stop_code_registry(self.root)
