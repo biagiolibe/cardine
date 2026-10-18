@@ -228,6 +228,10 @@ def prepare_task_worktree(
         result.update({"resumed": True, "dirty": dirty, **dirty_summary})
         if dirty:
             result["next_action"] = "inspect-dirty"
+            result["next_command"] = shlex.join((
+                "meridian", "worktree", "check", identity.canonical_id, "--resume",
+                "--project", str(project_root), "--format", "json",
+            ))
     return result
 
 
@@ -236,6 +240,7 @@ def inspect_task_worktree(
     worktree_root: Path | None,
     supplied_project: Path | None = None,
     *,
+    resume: bool = False,
     require_effective_worktree: bool = True,
     inspection_directory: Path | None = None,
     identity: ResolvedTaskIdentity | None = None,
@@ -247,6 +252,7 @@ def inspect_task_worktree(
     expected = _task_worktree_path_for_identity(project_root, root, identity)
     state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
     errors: list[str] = []
+    dirty_summary: dict[str, int] = {}
     state: dict[str, object] = {}
     if state_path.is_file():
         state = _read_json_object(state_path, "worktree lifecycle state")
@@ -271,8 +277,8 @@ def inspect_task_worktree(
             clean = False
             errors.append("missing-worktree")
         else:
-            status = _run_git(expected, "status", "--porcelain")
-            clean = status.returncode == 0 and not status.stdout
+            dirty_summary = _dirty_summary(expected)
+            clean = not any(dirty_summary.values())
             if not clean:
                 errors.append("dirty-worktree")
     if state:
@@ -329,6 +335,15 @@ def inspect_task_worktree(
                       resume=stop_resume("STALE_WORKTREE_BASE", task_id=identity.canonical_id,
                                          project=shlex.quote(str(project_root)))
                       + f" --worktree-root {shlex.quote(str(root))}")
+    if errors == ["dirty-worktree"]:
+        result["resume"] = shlex.join((
+            "meridian", "worktree", "prepare", identity.canonical_id, "--resume",
+            "--project", str(project_root), "--format", "json",
+        ))
+        if resume:
+            result.pop("resume")
+            result.update(status="ready-dirty", next_action="inspect-dirty", **dirty_summary)
+            return result, True
     return result, not errors
 
 

@@ -46,14 +46,8 @@ continued past the stop, and the agent on 021 stopped.
   the whole dirty Resume, `prepare --resume`, `check --resume`, and
   `execution start --resume`, with exit 0 at every step and no `BLOCKED`
   line.
-- [ ] The managed lifecycle text in `templates/workflows/lean-delivery/PROJECT_WORKFLOW.md`
-  (`bounded-worktree-lifecycle`) and in the Governed SDD template names
-  `check --resume`, through a capability version bump and migration as the
-  repository checks require. This repository's own `PROJECT_WORKFLOW.md`
-  receives the new text through `meridian upgrade`.
-- [ ] A regression test asserts the rule this task applies: for every state
-  that the managed workflow text names as allowed during a Resume, the
-  lifecycle commands exit 0. A new allowed state needs its test case.
+- [ ] A regression test covers clean and dirty Resume states: the lifecycle
+  commands exit 0 in both cases, independently of managed template text.
 - [ ] `tests/test_task_worktree_isolation.py`
   (`test_resume_accepts_a_dirty_worktree_and_changes_nothing`) keeps its
   assertions for `inspect_task_worktree` without `--resume`, and adds the
@@ -67,7 +61,6 @@ continued past the stop, and the agent on 021 stopped.
 | `src/cardine/worktree/checkout.py` | `prepare_task_worktree` (`--resume` result) and `inspect_task_worktree`. |
 | `scripts/meridian.py` | `worktree check` parser and handler, which turns any error into `BLOCKED`. |
 | `src/cardine/lifecycle/execution.py` | `_execution_worktree`, which already accepts `dirty-worktree` on `--resume`. |
-| `templates/workflows/*/PROJECT_WORKFLOW.md`, `capabilities/`, `migrations/` | Managed lifecycle text and its upgrade. |
 | `tests/test_task_worktree_isolation.py`, `tests/test_execution_boundaries.py` | Resume tests. |
 
 ## Technical Context
@@ -81,6 +74,12 @@ continued past the stop, and the agent on 021 stopped.
   019 at 2026-10-17T23:25:47Z, and task 021 at 2026-10-18T10:16:56Z.
 
 ## Out of scope
+
+Developer-approved scope change, 2026-10-18: managed Resume text, capability
+versions, migration policy, and application to this repository are deferred to
+task 029. This task changes CLI behavior and its tests only; it does not run
+upgrade on this repository or change its managed manifest, release metadata,
+or template files.
 
 The `cardine run` engine (work item 8), which replaces these single-step
 commands. Moving the `worktree check` handler to `cardine.cli` (task 022).
