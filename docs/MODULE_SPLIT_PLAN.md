@@ -779,6 +779,51 @@ and the existing suite plus repository/self-hosting checks pass. Preserve a
 reviewable old-to-new test-ID map, source inventory and import graph in the
 extraction handoffs. Use the existing candidate-validation policy at integration.
 
+### Final inventory — V01 / task 026
+
+Work item 3 is complete. Task 026 verifies the completion gate with the full
+parallel and sequential suites, clean-clone validation, launcher parity,
+repository checks and self-hosting doctor/audit; see its completion report.
+
+The final tracked inventory contains 163 Python files in `src/`, `scripts/`
+and `tests/`: 83 package files (71 implementation modules and 12 package
+initializers), 13 scripts and 67 test/support files. The largest file is
+`src/cardine/cli.py` at 1,108 physical lines. No Python file in these directories
+exceeds 1,500 lines. The permanent inventory gate now checks all tracked Python
+files in all three directories, including pre-existing tests and scripts.
+
+All 506 baseline bindings have exactly one definition; the complete package
+import graph is acyclic. The imported helper implementations belong to
+`cardine.tasks.state` and `cardine.shared.console_workflow`. Their legacy scripts,
+the CLI script and the console script contain bootstrap/import/dispatch code
+only; an AST gate prevents definitions from returning to these adapters.
+
+The path-reference inventory was repeated at implementation commit `1f55f83`
+using `git ls-files` and searches for both `scripts/meridian.py` and
+`meridian.py`, including joined path components. It found 92 matching files:
+27 active files, 56 historical records and nine task contracts. Closure adds
+this task's handoff and archives its contract; these are historical evidence.
+The active references fall into the following reviewed groups:
+
+- `.codex/rules/local.rules`, `.github/workflows/validate.yml`,
+  `CONTRIBUTING.md`, `docs/MERIDIAN_SELF_HOSTING_PROFILE.md` and
+  `src/cardine/hosts/claude.py`: supported compatibility commands and permissions.
+- `scripts/check_repository.py`: required adapter, historical migration comment,
+  and package-plus-adapter source enumeration. AST/string/stop readers scan
+  the extracted implementation; release protocol reading uses the selected
+  root's constants owner, verified by the existing synthetic release fixtures.
+- `PROJECT_PLAN.md` and this plan: delivery and source-inventory references.
+- The 19 matching test/support files: legacy subprocess coverage, explicit
+  compatibility import support, checker fixtures/diagnostics, permission
+  assertions and inventory checks. None reads the adapter as the implementation.
+
+Historical matches are the changelog, architecture/stop ADRs, migration
+metadata, archived queue/tasks, extraction handoffs and baseline fixture.
+The nine task contracts describe this verification and deferred work items;
+their source paths remain valid. No historical record or managed probe digest
+needed rewriting. Full validation and the only changed test-ID mapping are
+recorded in `tasks/handoffs/026.md`.
+
 Item 4 is deferred: retain migrations, baselines, budget counters and maintainer
 commands. Keep historical helpers isolated in `templates.migrations`,
 `templates.marker_history`, `templates.migration_audit`, `shared.budget` and
