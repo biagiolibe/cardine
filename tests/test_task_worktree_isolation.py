@@ -647,7 +647,7 @@ class BoundedWorktreeLifecycleTest(unittest.TestCase):
         self.assertEqual((report["changed_paths"], report["untracked_paths"]), (1, 1))
         self.assertEqual(self.snapshot(worktree), before)
         self.assertEqual(shlex.split(resumed["next_command"]), [
-            "meridian", "worktree", "check", "056", "--resume", "--project", str(self.primary), "--format", "json"])
+            "meridian", "worktree", "check", "056", "--resume", "--project", str(self.primary.resolve()), "--format", "json"])
 
     def test_resume_never_attempts_a_lifecycle_state_write(self) -> None:
         prepared, worktree = self.dirty_worktree()
