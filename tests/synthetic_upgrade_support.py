@@ -154,7 +154,11 @@ def rich_upgrade_framework(root: Path) -> SyntheticFramework:
                 {"capability": "reasoning-budget-contract", "capabilityVersion": 1},
                 {"capability": "role-scoped-agent-rules", "capabilityVersion": 1},
             ]
-        fixture.migration(MIGRATIONS[name], target, paths=paths, **metadata)
+        # Preserve the cross-file declaration that the per-file verification
+        # regression exercises: lifecycle-orchestration touches the context
+        # policy without having a marker in that file.
+        capability = {"baseline": "review-remediation-record", "merge": "lifecycle-orchestration"}.get(name)
+        fixture.migration(MIGRATIONS[name], target, capability=capability, paths=paths, **metadata)
     fixture.refresh_markers(MIGRATIONS["delivery"])
     fixture.write("VERSION", "1.1.0\n")
     return fixture
