@@ -15,7 +15,7 @@ STOP_REGISTRY_VERSION = 1
 
 STOP_REGISTRY_FIELDS = frozenset(
     {"code", "class", "kind", "workflows", "step", "emitter", "human_decision", "resume", "summary",
-     "tool_hint", "test"}
+     "tool_hint", "test", "resolution"}
 )
 
 _stop_registry_cache: dict[str, dict[str, object]] | None = None
@@ -38,6 +38,9 @@ def load_stop_registry() -> dict[str, dict[str, object]]:
             if (
                 not isinstance(code, str)
                 or code in registry
+                or entry.get("resolution") not in {"guardrail", "recoverable", "failing-work"}
+                or not isinstance(entry.get("human_decision"), bool)
+                or (entry.get("human_decision") is True and entry.get("resolution") != "guardrail")
                 or not isinstance(entry.get("resume"), str)
                 or not isinstance(entry.get("summary"), str)
                 or not set(entry) <= STOP_REGISTRY_FIELDS

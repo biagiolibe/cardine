@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from meridian_cli_support import CLI
+from stop_recovery_support import run_recovery, resume_from
 import json
 import re
 import subprocess
@@ -620,6 +621,18 @@ Evidence plan:
     def blocked_line(self, result: subprocess.CompletedProcess[str]) -> str:
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         return next(line for line in result.stderr.splitlines() if line.startswith("BLOCKED "))
+
+    def test_unresolved_contract_recovery_runs_unchanged(self) -> None:
+        (self.project / "docs").mkdir()
+        (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
+        (self.project / "tasks/TASK-020.md").write_text(
+            "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n", encoding="utf-8")
+        stopped = self.run_cli("execution", "preflight", "TASK-020")
+        self.assertIn("BLOCKED EXECUTION_CONTRACT_UNRESOLVED:", self.blocked_line(stopped))
+        recovered = run_recovery(resume_from(stopped.stderr), self.project)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        retried = self.run_cli("execution", "preflight", "TASK-020")
+        self.assertEqual(retried.returncode, 0, retried.stderr)
 
     def test_execution_gates_report_coded_actionable_stops(self) -> None:
         self.write_task("TASK-020", "QUEUED")

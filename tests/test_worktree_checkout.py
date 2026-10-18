@@ -29,6 +29,7 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 from cardine.shared import budget_commands as owner_shared_budget_commands
 
+from stop_recovery_support import run_recovery, resume_from
 import worktree_support as support
 
 
@@ -114,7 +115,9 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         closure, _ = owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)
         self.assertEqual(closure["stop_reason"], "STALE_WORKTREE_BASE")
         original = json.loads(state_path.read_text(encoding="utf-8"))
-        recovered = owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
+        recovery = run_recovery(resume_from(checked.stderr), worktree, self.worktree_root)
+        self.assertEqual(recovery.returncode, 0, recovery.stderr)
+        recovered = json.loads(recovery.stdout)
         self.assertTrue(recovered["repaired"])
         self.assertTrue(recovered["evidence_renewal_required"])
         renewed = json.loads(state_path.read_text(encoding="utf-8"))

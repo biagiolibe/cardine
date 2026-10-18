@@ -14,6 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian
+from stop_recovery_support import run_recovery, resume_from
 from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.shared import context as owner_shared_context
 import cardine.shared.errors as shared_errors
@@ -172,11 +173,16 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(calls, [self.path])
 
     def test_missing_stop(self):
+        (self.root / "tasks/QUEUE.md").write_text(
+            "| ID | Status | Task file |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
         with self.assertRaises(shared_errors.MeridianStop) as caught:
             self.read()
         self.assertTrue(str(caught.exception).startswith("BLOCKED TASK_STATE_MISSING:"))
         self.assertIn("meridian task state import 001", str(caught.exception))
         self.assertFalse(self.path.exists())
+        recovered = run_recovery(resume_from(str(caught.exception)), self.root)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        self.assertEqual(self.read()["status"], "QUEUED")
 
     def test_invalid_stop(self):
         self.write(self.state())

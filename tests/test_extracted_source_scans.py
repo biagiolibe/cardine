@@ -21,7 +21,8 @@ class ExtractedSourceScanTest(unittest.TestCase):
         self.root = Path(temporary.name)
         (self.root / "capabilities").mkdir()
         (self.root / "capabilities/stop-codes-v1.json").write_text(json.dumps({
-            "version": 1, "stops": [{"code": "EXTRACTED_STOP", "class": "judgment"}],
+            "version": 1, "stops": [{"code": "EXTRACTED_STOP", "class": "judgment",
+                                    "resolution": "failing-work", "human_decision": False}],
         }))
         self.source = self.root / "src/cardine/shared/example.py"
         self.source.parent.mkdir(parents=True)
