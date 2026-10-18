@@ -38,6 +38,14 @@ and deletes the chain.
   asserts the synthetic one instead. The handoff lists these tests.
 - [ ] A test proves that upgrade with an empty chain is a no-op that reports
   the project as current.
+- [ ] No test compares the framework's own `VERSION` with a literal. A test
+  of a historical upgrade fixes both its source and its target version in
+  the fixture; a test of the current release reads the expected values from
+  the release ledger and the migration chain. In particular,
+  `test_pristine_1_3_0_upgrades_all_1_4_0_managed_text` loses its
+  `read_version(ROOT) == "1.4.0"` guard: it moves to a synthetic chain like
+  the other upgrade tests, or task 033 deletes it with the real chain, and
+  the handoff says which.
 - [ ] Production code changes only where a test needs to point the framework
   root at a fixture. The handoff names each such change.
 - [ ] The parallel suite reports the same coverage `total` before and after
@@ -60,6 +68,12 @@ and deletes the chain.
   `migrations/056-manual-governed-proceed-worktree.json` or
   `migrations/063-retire-reasoning-budget-contract.json`.
 - Task 031 already reads required and retired capabilities from the catalog.
+- Meridian task 234 (release 1.4.1) failed its parallel suite only because
+  `test_pristine_1_3_0_upgrades_all_1_4_0_managed_text` asserts
+  `meridian.read_version(ROOT) == "1.4.0"`, although a CLI-only release
+  leaves the tested baseline unchanged. The same guard exists in this
+  repository (in `tests/test_meridian_cli.py` before tasks 023 and 024 move
+  it). ADR work item 12 records the rule that tests never pin `VERSION`.
 
 ## Out of scope
 
