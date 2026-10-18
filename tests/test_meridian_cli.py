@@ -31,6 +31,7 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 import meridian  # noqa: E402
+from cardine import cli as owner_cli
 from cardine.integration import merge as owner_integration_merge
 from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.templates import audit as owner_templates_audit
@@ -261,7 +262,7 @@ class SelfCheckLatestTest(unittest.TestCase):
             mock.patch.object(owner_release_update, "urlopen", return_value=response) as opener,
             redirect_stdout(output),
         ):
-            result = meridian.main()
+            result = owner_cli.main()
 
         self.assertEqual(result, 0)
         self.assertIn("Status: UP_TO_DATE", output.getvalue())
@@ -274,7 +275,7 @@ class SelfCheckLatestTest(unittest.TestCase):
             redirect_stderr(io.StringIO()),
             self.assertRaises(SystemExit) as raised,
         ):
-            meridian.main()
+            owner_cli.main()
 
         self.assertEqual(raised.exception.code, 2)
         opener.assert_not_called()
@@ -3866,7 +3867,7 @@ class CapabilityRetirementTest(unittest.TestCase):
 
 class GenerateClaudeMdTest(unittest.TestCase):
     """`CLAUDE.md` is generated from `AGENTS.md` (task 004 of
-    docs/PLAN_TOKEN_EFFICIENCY.md): from `meridian.CLAUDE_MD_SHARED_ANCHOR`'s
+    docs/PLAN_TOKEN_EFFICIENCY.md): from `owner_cli.CLAUDE_MD_SHARED_ANCHOR`'s
     heading onward, the committed `CLAUDE.md` must be byte-identical to what
     `generate_claude_md` derives from the committed `AGENTS.md`, so the two
     files cannot independently drift on content meant to be shared. Everything
@@ -3874,16 +3875,16 @@ class GenerateClaudeMdTest(unittest.TestCase):
     """
 
     def test_committed_claude_md_matches_the_generator_for_every_mode(self) -> None:
-        for mode in meridian.CLAUDE_MD_SHARED_ANCHOR:
+        for mode in owner_cli.CLAUDE_MD_SHARED_ANCHOR:
             workflow = ROOT / "templates" / "workflows" / mode
             agents_text = (workflow / "AGENTS.md").read_text(encoding="utf-8")
             claude_text = (workflow / "CLAUDE.md").read_text(encoding="utf-8")
-            generated = meridian.generate_claude_md(mode, agents_text, claude_text)
+            generated = owner_cli.generate_claude_md(mode, agents_text, claude_text)
             self.assertEqual(
                 generated,
                 claude_text,
                 f"{mode}: CLAUDE.md has drifted from AGENTS.md past the shared anchor "
-                f"{meridian.CLAUDE_MD_SHARED_ANCHOR[mode]!r}",
+                f"{owner_cli.CLAUDE_MD_SHARED_ANCHOR[mode]!r}",
             )
 
     def test_generator_reports_drift_when_claude_md_diverges(self) -> None:
@@ -3895,7 +3896,7 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "# [Project Name]\n\nown preamble\n\n"
             "## Code organization\n\nSTALE shared body.\n"
         )
-        generated = meridian.generate_claude_md("governed-sdd", agents_text, stale_claude_text)
+        generated = owner_cli.generate_claude_md("governed-sdd", agents_text, stale_claude_text)
         self.assertNotEqual(generated, stale_claude_text)
         self.assertIn("own preamble", generated)
         self.assertIn("shared body.\n", generated)
@@ -3927,7 +3928,7 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "ORIGINAL RELEASED WORDING.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        generated = meridian.generate_claude_md("governed-sdd", agents_text, claude_text)
+        generated = owner_cli.generate_claude_md("governed-sdd", agents_text, claude_text)
         self.assertIn("ORIGINAL RELEASED WORDING.", generated)
         self.assertNotIn("NEW WORDING", generated)
         for capability, version in templates_markers.marker_pairs(claude_text):
@@ -3949,14 +3950,14 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "<!-- MERIDIAN:END -->\n"
         )
         claude_text = "# [Project Name]\n\nown preamble\n\n## Code organization\n\nno markers here.\n"
-        generated = meridian.generate_claude_md("governed-sdd", agents_text, claude_text)
+        generated = owner_cli.generate_claude_md("governed-sdd", agents_text, claude_text)
         self.assertIn("First-ever wording.", generated)
 
     def test_generator_raises_when_the_anchor_heading_is_missing(self) -> None:
         with self.assertRaises(shared_errors.MeridianError):
-            meridian.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
+            owner_cli.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
         with self.assertRaises(shared_errors.MeridianError):
-            meridian.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
+            owner_cli.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
 
     def test_cli_check_and_write_round_trip_on_a_stale_copy(self) -> None:
         temporary = tempfile.TemporaryDirectory()
@@ -9177,7 +9178,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             mock.patch.object(sys.stdout, "isatty", return_value=True),
             mock.patch.object(project_console, "main", return_value=0) as launched,
         ):
-            result = meridian.main()
+            result = owner_cli.main()
 
         self.assertEqual(result, 0)
         launched.assert_called_once_with(
@@ -9579,8 +9580,8 @@ class FlowReportTest(unittest.TestCase):
 
 class LauncherTest(unittest.TestCase):
     def test_the_bin_launcher_starts_outside_the_scripts_directory(self) -> None:
-        # runpy.run_path keeps bin/ on sys.path, so every script-local import
-        # must resolve after the entry point adds scripts/ itself.
+        # The source launcher must resolve the package and script hook adapters
+        # from its own checkout when invoked outside the repository.
         environment = dict(os.environ)
         environment.pop("MERIDIAN_ROOT", None)
         result = subprocess.run(

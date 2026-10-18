@@ -11,6 +11,7 @@ import test_execution_boundaries as boundaries
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import meridian
+from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
@@ -136,5 +137,5 @@ class TaskCloseTest(unittest.TestCase):
         self.close_from(Path(self.temp.name))
 
     def test_cli_parser_accepts_close_flags(self):
-        args = meridian.build_parser().parse_args(['task', 'close', '001', '--project', str(self.worker), '--format', 'json'])
+        args = owner_cli.build_parser().parse_args(['task', 'close', '001', '--project', str(self.worker), '--format', 'json'])
         self.assertEqual(args.task_command, 'close')

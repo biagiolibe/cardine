@@ -13,10 +13,9 @@ if sys.version_info < (3, 12):
     sys.exit(1)
 
 from pathlib import Path
-import runpy
 
 
-runpy.run_path(
-    str(Path(__file__).resolve().parents[1] / "scripts" / "meridian.py"),
-    run_name="__main__",
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from cardine.cli import main
+
+raise SystemExit(main())
