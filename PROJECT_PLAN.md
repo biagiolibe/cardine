@@ -44,7 +44,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 017 — Record wall-clock time and the real CI command in CI evidence.
 - `[x]` 018 — Resume a Lean closure without state through `task close`.
 - `[x]` 019 — Extract lifecycle, upgrade support, merge, and adoption modules (split plan E12).
-- `[ ]` 020 — Extract console models, launch, and snapshot (split plan C01).
+- `[x]` 020 — Extract console models, launch, and snapshot (split plan C01).
 - `[ ]` 021 — Extract console state, render, and entry, and split the console tests (split plan C02).
 - `[ ]` 022 — Extract upgrade, adopt command, and CLI, and switch the entry points (split plan E13).
 - `[ ]` 023 — Split the `MeridianCliTest` class by responsibility.

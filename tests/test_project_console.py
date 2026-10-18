@@ -20,6 +20,11 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import project_console as console  # noqa: E402
+from cardine.console import launch as owner_console_launch
+from cardine.console import models as owner_console_models
+from cardine.console import snapshot as owner_console_snapshot
+from cardine.shared import console_workflow as owner_console_workflow
+from cardine.shared import errors as owner_shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 
@@ -82,12 +87,12 @@ class ProjectConsoleTest(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def snapshot(self) -> console.Snapshot:
-        with mock.patch.object(console, "_git", side_effect=lambda _project, *args: (
+    def snapshot(self) -> owner_console_models.Snapshot:
+        with mock.patch.object(owner_console_snapshot, "_git", side_effect=lambda _project, *args: (
             "## main...origin/main\n" if args[0] == "status"
             else "worktree /tmp/task-002\nbranch refs/heads/task-002\n"
         )):
-            return console.load_snapshot(self.project)
+            return owner_console_snapshot.load_snapshot(self.project)
 
     def test_completed_dependency_is_ready_and_task_details_are_loaded(self) -> None:
         self.write_queue()
@@ -107,9 +112,9 @@ class ProjectConsoleTest(unittest.TestCase):
             calls.append(args)
             return "worktree /tmp/task-002\nbranch refs/heads/task-002\n"
 
-        with mock.patch.object(console, "_git", side_effect=git):
-            task = console.load_task(self.project, "002")
-            missing = console.load_task(self.project, "999")
+        with mock.patch.object(owner_console_snapshot, "_git", side_effect=git):
+            task = owner_console_snapshot.load_task(self.project, "002")
+            missing = owner_console_snapshot.load_task(self.project, "999")
         self.assertEqual((task.task_id, task.readiness, task.launch_command),
                          ("002", "READY", "Proceed with 002"))
         self.assertIsNone(missing)
@@ -126,7 +131,7 @@ class ProjectConsoleTest(unittest.TestCase):
     def test_refresh_failure_retains_last_valid_snapshot(self) -> None:
         self.write_queue()
         state = console.ConsoleState(self.project)
-        with mock.patch.object(console, "_git", side_effect=lambda _project, *args: (
+        with mock.patch.object(owner_console_snapshot, "_git", side_effect=lambda _project, *args: (
             "## main\n" if args[0] == "status" else ""
         )):
             state.refresh()
@@ -215,8 +220,8 @@ class ProjectConsoleTest(unittest.TestCase):
         record.unlink()
         with self.assertRaisesRegex(console.ConsoleError, "Task 002 file is unavailable"):
             self.snapshot()
-        resolver = console.RecordResolver(self.project.resolve(),
-                                          console.resolve_project_locations(self.project))
+        resolver = owner_console_snapshot.RecordResolver(self.project.resolve(),
+                                          owner_tasks_identity.resolve_project_locations(self.project))
         path, problem = resolver.find_by_name(record.name)
         self.assertIsNone(path)
         self.assertIn("ambiguous task record:", problem)
@@ -243,9 +248,9 @@ class ProjectConsoleTest(unittest.TestCase):
             target = self.project / "tasks" / directory
             target.mkdir()
             (target / record.name).write_text("# Task 002\n", encoding="utf-8")
-        resolver = console.RecordResolver(self.project.resolve(),
-                                          console.resolve_project_locations(self.project))
-        with mock.patch.object(console.os, "walk", wraps=os.walk) as walk:
+        resolver = owner_console_snapshot.RecordResolver(self.project.resolve(),
+                                          owner_tasks_identity.resolve_project_locations(self.project))
+        with mock.patch.object(owner_console_snapshot.os, "walk", wraps=os.walk) as walk:
             self.assertEqual(resolver.find_by_name(record.name), (archived.resolve(), None))
             self.assertEqual(resolver.find("002"), (None, "task record not found"))
             self.assertEqual(resolver.find_by_name(record.name), (archived.resolve(), None))
@@ -289,18 +294,18 @@ class ProjectConsoleTest(unittest.TestCase):
         }
         for step, phase in cases.items():
             with self.subTest(step=step):
-                self.assertEqual(console._lifecycle_progress(step, True)[0], phase)
-        self.assertEqual(console._lifecycle_progress("C10", True)[0], "cleanup pending")
-        self.assertEqual(console._lifecycle_progress("C10", False), ("done", ()))
+                self.assertEqual(owner_console_snapshot._lifecycle_progress(step, True)[0], phase)
+        self.assertEqual(owner_console_snapshot._lifecycle_progress("C10", True)[0], "cleanup pending")
+        self.assertEqual(owner_console_snapshot._lifecycle_progress("C10", False), ("done", ()))
 
     def test_active_task_one_shot_and_detail_keep_elapsed_and_last_activity_separate(self) -> None:
-        task = console.Task(
+        task = owner_console_models.Task(
             "001", "Task", "IN_PROGRESS", (), (), None, (), (), readiness="IN PROGRESS",
             lifecycle="in_progress", updated_at=0, started_at="2026-01-01T00:00:00Z",
             progress_phase="working", remaining_gates=("Run task validation",),
         )
         state = console.ConsoleState(self.project)
-        state.snapshot = console.Snapshot(self.project, self.project / "tasks/QUEUE.md", "main", "clean", 0, (task,), 0)
+        state.snapshot = owner_console_models.Snapshot(self.project, self.project / "tasks/QUEUE.md", "main", "clean", 0, (task,), 0)
         output = console.one_shot(state)
         self.assertIn("Elapsed:", output)
         self.assertIn("Progress: working", output)
@@ -316,7 +321,7 @@ class ProjectConsoleTest(unittest.TestCase):
         script.parent.mkdir(parents=True)
         (root / "VERSION").write_text("9.8.7\n", encoding="utf-8")
         self.write_queue()
-        with mock.patch.object(console.Path, "home", return_value=home):
+        with mock.patch.object(owner_console_models.Path, "home", return_value=home):
             identity = console._framework_identity(script)
             self.assertEqual(identity.version, "9.8.7")
             self.assertEqual(identity.root_label, "~/framework")
@@ -338,8 +343,8 @@ class ProjectConsoleTest(unittest.TestCase):
 
     def test_terminal_title_identifies_console_without_an_absolute_path(self) -> None:
         output = mock.Mock()
-        with mock.patch.object(console.sys, "stdout", output):
-            console._set_terminal_title(Path("/private/project-name"))
+        with mock.patch.object(owner_console_launch.sys, "stdout", output):
+            owner_console_launch._set_terminal_title(Path("/private/project-name"))
         self.assertIn("Meridian console", output.write.call_args.args[0])
         self.assertIn("project-name", output.write.call_args.args[0])
         self.assertNotIn("/private", output.write.call_args.args[0])
@@ -361,9 +366,9 @@ class ProjectConsoleTest(unittest.TestCase):
         self.write_queue()
         task = self.snapshot().tasks[0]
         governed = "# Task\n\n## 🎯 Goal\n\nGoverned goal.\n\n## ✅ Acceptance criteria\n\n- [ ] Done.\n"
-        self.assertEqual(console._section(governed, "Objective", "Goal"), ("Governed goal.",))
-        self.assertEqual(console._section(governed, "Acceptance Criteria"), ("- [ ] Done.",))
-        detailed = console.Task(
+        self.assertEqual(owner_console_snapshot._section(governed, "Objective", "Goal"), ("Governed goal.",))
+        self.assertEqual(owner_console_snapshot._section(governed, "Acceptance Criteria"), ("- [ ] Done.",))
+        detailed = owner_console_models.Task(
             task.task_id, task.title, task.status, task.phase, ("001",), task.path,
             task.objective, task.criteria, readiness=task.readiness,
             dependency_states=(("001", "Done"),),
@@ -375,7 +380,7 @@ class ProjectConsoleTest(unittest.TestCase):
 
     def test_detail_view_clamps_scroll_across_resize_and_draws_hidden_indicators(self) -> None:
         palette = {name: 0 for name in ("base", "text", "title", "ready", "muted", "line", "action")}
-        task = console.Task(
+        task = owner_console_models.Task(
             "LONG", "A long task", "[ ]", (), ("001",), None,
             tuple(f"Objective line {number} needs enough text to wrap in narrow panes." for number in range(12)),
             (), readiness="READY", dependency_states=(("001", "Done"),),
@@ -393,7 +398,7 @@ class ProjectConsoleTest(unittest.TestCase):
     def test_header_right_aligns_git_and_underlines_active_all_tab(self) -> None:
         self.write_queue()
         state = console.ConsoleState(self.project)
-        state.framework = console.FrameworkIdentity("1.4.0", Path("/fw"))
+        state.framework = owner_console_models.FrameworkIdentity("1.4.0", Path("/fw"))
         state.snapshot = self.snapshot()
         state.last_success = datetime.now().astimezone()
         screen = mock.Mock()
@@ -457,13 +462,13 @@ class ProjectConsoleTest(unittest.TestCase):
 class AgentLaunchTest(unittest.TestCase):
     SESSION_ID = "w0t1p2:12345678-1234-1234-1234-123456789abc"
 
-    def task(self, **changes) -> console.Task:
+    def task(self, **changes) -> owner_console_models.Task:
         values = dict(
             task_id="001", title="First", status="TODO", phase=(), dependencies=(), path=None,
             objective=(), criteria=(), readiness="READY", lifecycle="todo",
         )
         values.update(changes)
-        return console.Task(**values)
+        return owner_console_models.Task(**values)
 
     def test_permitted_directive_matrix_refuses_writers_and_mismatches(self) -> None:
         self.assertEqual(self.task().launch_command, "Proceed with 001")
@@ -538,15 +543,15 @@ class AgentLaunchTest(unittest.TestCase):
         self.assertEqual(lean.next_action, "If assigned: Review 001")
 
     def test_request_revalidates_id_and_preserves_an_argument_vector(self) -> None:
-        with mock.patch.dict(console.os.environ, {"ITERM_SESSION_ID": self.SESSION_ID}, clear=False):
-            request, error = console._launch_request(self.task(), Path("."), "codex")
+        with mock.patch.dict(owner_console_launch.os.environ, {"ITERM_SESSION_ID": self.SESSION_ID}, clear=False):
+            request, error = owner_console_launch._launch_request(self.task(), Path("."), "codex")
         self.assertIsNone(error)
         self.assertIsNotNone(request)
         self.assertEqual(request.directive, "Proceed with 001")
         self.assertEqual(request.session_uuid, "12345678-1234-1234-1234-123456789abc")
         self.assertIn("exec codex 'Proceed with 001'", request.shell_command)
-        with mock.patch.dict(console.os.environ, {"ITERM_SESSION_ID": self.SESSION_ID}, clear=False):
-            hostile, error = console._launch_request(self.task(task_id="001; rm -rf /"), Path("."), "codex")
+        with mock.patch.dict(owner_console_launch.os.environ, {"ITERM_SESSION_ID": self.SESSION_ID}, clear=False):
+            hostile, error = owner_console_launch._launch_request(self.task(task_id="001; rm -rf /"), Path("."), "codex")
         self.assertIsNone(hostile)
         self.assertIn("task ID", error or "")
 
@@ -559,14 +564,14 @@ class AgentLaunchTest(unittest.TestCase):
                 'model = "gpt-test"\nmodel_reasoning_effort = "high"\n', encoding="utf-8")
             (home / ".claude" / "settings.json").write_text(
                 '{"model": "claude-test", "effort": "medium"}', encoding="utf-8")
-            defaults = console._agent_defaults(home)
-            self.assertEqual(defaults["codex"], console.AgentDefaults("gpt-test", "high"))
-            self.assertEqual(defaults["claude"], console.AgentDefaults("claude-test", "medium"))
+            defaults = owner_console_launch._agent_defaults(home)
+            self.assertEqual(defaults["codex"], owner_console_models.AgentDefaults("gpt-test", "high"))
+            self.assertEqual(defaults["claude"], owner_console_models.AgentDefaults("claude-test", "medium"))
             (home / ".codex" / "config.toml").write_text("not = [valid", encoding="utf-8")
             (home / ".claude" / "settings.json").write_text("{", encoding="utf-8")
-            defaults = console._agent_defaults(home)
-            self.assertEqual(defaults["codex"], console.AgentDefaults())
-            self.assertEqual(defaults["claude"], console.AgentDefaults())
+            defaults = owner_console_launch._agent_defaults(home)
+            self.assertEqual(defaults["codex"], owner_console_models.AgentDefaults())
+            self.assertEqual(defaults["claude"], owner_console_models.AgentDefaults())
 
     def test_launch_panel_is_bordered_and_identifies_the_choice(self) -> None:
         screen = FakeScreen(20, 100)
@@ -575,8 +580,8 @@ class AgentLaunchTest(unittest.TestCase):
         )}
         console._draw_launch_prompt(
             screen, 100, 20, self.task(), 0, Path("/project"),
-            {"claude": console.AgentDefaults("claude-test", "medium"),
-             "codex": console.AgentDefaults("gpt-test", "high")}, palette,
+            {"claude": owner_console_models.AgentDefaults("claude-test", "medium"),
+             "codex": owner_console_models.AgentDefaults("gpt-test", "high")}, palette,
         )
         rendered = "\n".join(screen.row(y) for y in range(20))
         self.assertIn("┌", rendered)
@@ -590,7 +595,7 @@ class AgentLaunchTest(unittest.TestCase):
         palette = {name: 0 for name in (
             "base", "text", "title", "ready", "muted", "line", "action", "blocked",
         )}
-        defaults = {"claude": console.AgentDefaults(), "codex": console.AgentDefaults()}
+        defaults = {"claude": owner_console_models.AgentDefaults(), "codex": owner_console_models.AgentDefaults()}
         clean = self.task(readiness="IN PROGRESS", lifecycle="in_progress")
         screen = FakeScreen(20, 100)
         console._draw_launch_prompt(screen, 100, 20, clean, 0, Path("/project"),
@@ -625,7 +630,7 @@ class AgentLaunchTest(unittest.TestCase):
              mock.patch.object(console, "_launch_request") as request, \
              mock.patch.object(console, "_start_launch", return_value=(True, "Started")) as start:
             request.return_value = (
-                console.LaunchRequest("codex", "Proceed with 001", Path("/project"), "001",
+                owner_console_models.LaunchRequest("codex", "Proceed with 001", Path("/project"), "001",
                                       "12345678-1234-1234-1234-123456789abc"), None)
             self.assertEqual(console._launch_selected(state, task, "codex"),
                              (True, "Started"))
@@ -687,11 +692,11 @@ class AgentLaunchTest(unittest.TestCase):
         resume = self.task(readiness="IN PROGRESS", lifecycle="in_progress", active_writer=True)
         self.assertEqual(resume.launch_command, RESUME_001)
         self.assertIn("prepare 001 --resume --format json", RESUME_001)
-        request, error = console._launch_request(resume, Path("/project"), "codex")
+        request, error = owner_console_launch._launch_request(resume, Path("/project"), "codex")
         self.assertIsNone(request)  # no iTerm session here; the directive itself is unchanged
         with mock.patch.dict(os.environ, {"ITERM_SESSION_ID": "w0t1p2:12345678-1234-1234-1234-123456789abc"}), \
-             mock.patch.object(console, "_primary_checkout", return_value=(Path("/project"), None)):
-            request, error = console._launch_request(resume, Path("/project"), "codex")
+             mock.patch.object(owner_console_launch, "_primary_checkout", return_value=(Path("/project"), None)):
+            request, error = owner_console_launch._launch_request(resume, Path("/project"), "codex")
         self.assertIsNone(error)
         self.assertEqual(request.directive, RESUME_001)
         self.assertIn(RESUME_001, request.shell_command)
@@ -700,36 +705,36 @@ class AgentLaunchTest(unittest.TestCase):
         for session_id in (None, "w0t1p2:not-a-uuid", "wrong:12345678-1234-1234-1234-123456789abc"):
             environment = {} if session_id is None else {"ITERM_SESSION_ID": session_id}
             with self.subTest(session_id=session_id), \
-                 mock.patch.dict(console.os.environ, environment, clear=True):
-                request, error = console._launch_request(self.task(), Path("."), "codex")
+                 mock.patch.dict(owner_console_launch.os.environ, environment, clear=True):
+                request, error = owner_console_launch._launch_request(self.task(), Path("."), "codex")
             self.assertIsNone(request)
             self.assertEqual(error, "iTerm2 console session is missing or invalid; [copy] remains available")
 
     def test_launch_failure_modes_leave_copy_as_fallback(self) -> None:
-        request = console.LaunchRequest(
+        request = owner_console_models.LaunchRequest(
             "codex", "Proceed with 001", Path("/project"), "001",
             "12345678-1234-1234-1234-123456789abc",
         )
-        with mock.patch.object(console.sys, "platform", "linux"):
-            self.assertIn("macOS", console._start_launch(request)[1])
-        with mock.patch.object(console.sys, "platform", "darwin"), \
-             mock.patch.object(console.shutil, "which", return_value=None):
-            self.assertIn("codex is not available", console._start_launch(request)[1])
-        with mock.patch.object(console.sys, "platform", "darwin"), \
-             mock.patch.object(console.shutil, "which", return_value="/usr/bin/tool"), \
-             mock.patch.object(console.subprocess, "run", side_effect=subprocess.TimeoutExpired("osascript", 10)):
-            self.assertIn("timed out", console._start_launch(request)[1])
+        with mock.patch.object(owner_console_launch.sys, "platform", "linux"):
+            self.assertIn("macOS", owner_console_launch._start_launch(request)[1])
+        with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
+             mock.patch.object(owner_console_launch.shutil, "which", return_value=None):
+            self.assertIn("codex is not available", owner_console_launch._start_launch(request)[1])
+        with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
+             mock.patch.object(owner_console_launch.shutil, "which", return_value="/usr/bin/tool"), \
+             mock.patch.object(owner_console_launch.subprocess, "run", side_effect=subprocess.TimeoutExpired("osascript", 10)):
+            self.assertIn("timed out", owner_console_launch._start_launch(request)[1])
 
     def test_osascript_receives_quoted_command_and_reports_iterm_failure(self) -> None:
-        request = console.LaunchRequest(
+        request = owner_console_models.LaunchRequest(
             "claude", "Proceed with 001; echo nope", Path("/project name"), "001",
             "12345678-1234-1234-1234-123456789abc",
         )
-        with mock.patch.object(console.sys, "platform", "darwin"), \
-             mock.patch.object(console.shutil, "which", return_value="/usr/bin/tool"), \
-             mock.patch.object(console.subprocess, "run") as run:
+        with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
+             mock.patch.object(owner_console_launch.shutil, "which", return_value="/usr/bin/tool"), \
+             mock.patch.object(owner_console_launch.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=1, stderr="Application isn't running", stdout="")
-            success, message = console._start_launch(request)
+            success, message = owner_console_launch._start_launch(request)
         self.assertFalse(success)
         self.assertIn("iTerm2 is unavailable", message)
         command = run.call_args.args[0]
@@ -755,7 +760,7 @@ class AgentLaunchTest(unittest.TestCase):
                 "osacompile cannot resolve the iTerm2 dictionary in this environment: "
                 f"{reason}",
             )
-        payload = console._apple_script(
+        payload = owner_console_launch._apple_script(
             "exec claude 'a \"q\" \\ b'", "12345678-1234-1234-1234-123456789abc",
         )
         with tempfile.TemporaryDirectory() as directory:
@@ -808,23 +813,23 @@ class AgentLaunchTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_unmatched_console_session_leaves_copy_as_fallback(self) -> None:
-        request = console.LaunchRequest(
+        request = owner_console_models.LaunchRequest(
             "codex", "Proceed with 001", Path("/project"), "001",
             "12345678-1234-1234-1234-123456789abc",
         )
-        with mock.patch.object(console.sys, "platform", "darwin"), \
-             mock.patch.object(console.shutil, "which", return_value="/usr/bin/tool"), \
-             mock.patch.object(console.subprocess, "run") as run:
+        with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
+             mock.patch.object(owner_console_launch.shutil, "which", return_value="/usr/bin/tool"), \
+             mock.patch.object(owner_console_launch.subprocess, "run") as run:
             run.return_value = mock.Mock(returncode=1, stderr="MERIDIAN_SESSION_NOT_FOUND", stdout="")
-            success, message = console._start_launch(request)
+            success, message = owner_console_launch._start_launch(request)
         self.assertFalse(success)
         self.assertEqual(message, "iTerm2 console session was not found; [copy] remains available")
 
     def test_start_revalidates_task_and_session_ids(self) -> None:
-        request = console.LaunchRequest("codex", "Proceed with 001", Path("/project"), "001; rm -rf /", "bad")
-        with mock.patch.object(console.sys, "platform", "darwin"), \
-             mock.patch.object(console.shutil, "which", return_value="/usr/bin/tool"):
-            success, message = console._start_launch(request)
+        request = owner_console_models.LaunchRequest("codex", "Proceed with 001", Path("/project"), "001; rm -rf /", "bad")
+        with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
+             mock.patch.object(owner_console_launch.shutil, "which", return_value="/usr/bin/tool"):
+            success, message = owner_console_launch._start_launch(request)
         self.assertFalse(success)
         self.assertIn("task ID", message)
 
@@ -854,8 +859,8 @@ class ConsoleListLayoutTest(unittest.TestCase):
     )}
 
     @staticmethod
-    def task(task_id: str, title: str = "Title") -> console.Task:
-        return console.Task(task_id, title, "[ ]", ("Phase 1",), (), None, (), (),
+    def task(task_id: str, title: str = "Title") -> owner_console_models.Task:
+        return owner_console_models.Task(task_id, title, "[ ]", ("Phase 1",), (), None, (), (),
                             readiness="READY")
 
     def render(self, tasks, width: int, all_tasks=None):
@@ -886,9 +891,9 @@ class ConsoleListLayoutTest(unittest.TestCase):
                  + "| `[ ]` | 002 | Second | P2 | — | — |\n\n"
                  + "### Phase 2\n\n" + HEADER
                  + "| `[ ]` | 003 | Third | P2 | — | — |\n")
-        rows = console.parse_queue(queue, "fixture", console.PROFILES["lean-delivery"])
+        rows = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["lean-delivery"])
         tasks = [
-            console.Task(row.task_id, row.title, row.status, row.section,
+            owner_console_models.Task(row.task_id, row.title, row.status, row.section,
                          (), None, (), (), readiness="READY")
             for row in rows
         ]
@@ -901,7 +906,7 @@ class ConsoleListLayoutTest(unittest.TestCase):
         self.assertEqual(drawn[4], "Phase 2")
         self.assertIn("003", drawn[5])
         self.assertEqual(sum(line == "Program" for line in drawn), 1)
-        snapshot = console.Snapshot(Path("/p"), Path("/p/q"), "main", "clean", 0,
+        snapshot = owner_console_models.Snapshot(Path("/p"), Path("/p/q"), "main", "clean", 0,
                                     tuple(tasks), 0)
         self.assertEqual([task.task_id for task in console._visible_tasks(snapshot, "All", "program")],
                          ["001", "002", "003"])
@@ -911,9 +916,9 @@ class ConsoleListLayoutTest(unittest.TestCase):
     def test_lean_active_queue_wrapper_keeps_phase_only_rendering(self) -> None:
         queue = ("# Queue\n\n## 🏃 Active Queue\n\n### Phase 29 — Work\n\n"
                  + HEADER + "| `[ ]` | 001 | First | P2 | — | — |\n")
-        row = console.parse_queue(queue, "fixture", console.PROFILES["lean-delivery"])[0]
+        row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["lean-delivery"])[0]
         self.assertEqual(row.section, ("Phase 29 — Work",))
-        task = console.Task(row.task_id, row.title, row.status, row.section,
+        task = owner_console_models.Task(row.task_id, row.title, row.status, row.section,
                             (), None, (), (), readiness="READY")
         screen = self.render([task], 100)
         self.assertEqual(screen.row(5).strip(), "Phase 29 — Work")
@@ -925,8 +930,8 @@ class ConsoleListLayoutTest(unittest.TestCase):
                 label = f"Level {level} Queue — Work"
                 queue = (f"# Queue\n\n{'#' * level} {label}\n\n" + HEADER
                          + "| `[ ]` | 001 | First | P2 | — | — |\n")
-                row = console.parse_queue(queue, "fixture", console.PROFILES["lean-delivery"])[0]
-                task = console.Task(row.task_id, row.title, row.status, row.section,
+                row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["lean-delivery"])[0]
+                task = owner_console_models.Task(row.task_id, row.title, row.status, row.section,
                                     (), None, (), (), readiness="READY")
                 self.assertEqual(row.section, (label,))
                 self.assertEqual(self.render([task], 100).row(5).strip(),
@@ -970,7 +975,7 @@ class ConsoleListLayoutTest(unittest.TestCase):
         self.assertIn("Task M20-EVENT-002-CORR", lines)
         self.assertEqual(task.launch_command, "Proceed with M20-EVENT-002-CORR")
         state = console.ConsoleState(Path("."))
-        state.snapshot = console.Snapshot(
+        state.snapshot = owner_console_models.Snapshot(
             Path("."), Path("tasks/QUEUE.md"), "main", "clean", 0, (task,), 0,
         )
         state.last_success = datetime.now().astimezone()
@@ -1012,8 +1017,8 @@ class RepoCase(unittest.TestCase):
         self.git(self.project, "worktree", "add", "-q", "-b", branch, str(path))
         return path
 
-    def load(self) -> dict[str, console.Task]:
-        return {task.task_id: task for task in console.load_snapshot(self.project).tasks}
+    def load(self) -> dict[str, owner_console_models.Task]:
+        return {task.task_id: task for task in owner_console_snapshot.load_snapshot(self.project).tasks}
 
     def refs_and_status(self) -> tuple[str, str]:
         return (self.git(self.project, "for-each-ref"),
@@ -1082,7 +1087,7 @@ class LeanEffectiveStateTest(RepoCase):
         self.setup_project({"001": " "})
         self.worktree("task-001")
         report = {"stop_reason": "REVIEW_REQUIRED", "resume": "After approval, continue at C4"}
-        with mock.patch.object(console, "closure_status", return_value=(report, False)):
+        with mock.patch.object(owner_console_snapshot, "closure_status", return_value=(report, False)):
             task = self.load()["001"]
         self.assertEqual(task.closure_stop_reason, "REVIEW_REQUIRED")
         self.assertEqual(task.closure_resume, "After approval, continue at C4")
@@ -1104,7 +1109,7 @@ class LeanEffectiveStateTest(RepoCase):
             "PUSH_PENDING", "PUSH_REJECTED", "CLEANUP_BLOCKED",
         )
         for reason in reasons:
-            task = console.Task("001", "Task", "IN_PROGRESS", (), (), None, (), (),
+            task = owner_console_models.Task("001", "Task", "IN_PROGRESS", (), (), None, (), (),
                                 readiness="IN PROGRESS", lifecycle="in_progress",
                                 closure_stop_reason=reason, closure_resume="resume command")
             lines = [value for value, _ in console._detail_lines(task, 60, palette)]
@@ -1113,7 +1118,7 @@ class LeanEffectiveStateTest(RepoCase):
 
     def test_queued_tasks_do_not_read_closure_status(self) -> None:
         self.setup_project({"001": " ", "002": " "})
-        with mock.patch.object(console, "closure_status") as status:
+        with mock.patch.object(owner_console_snapshot, "closure_status") as status:
             self.load()
         status.assert_not_called()
 
@@ -1304,7 +1309,7 @@ class GovernedEffectiveStateTest(RepoCase):
     def test_unrecognized_status_is_an_explicit_error(self) -> None:
         self.setup_project([("TASK-001", "CHANGES_REQUESTED", "REQUIRED", "—")])
         with self.assertRaisesRegex(console.ConsoleError, "Unknown task status"):
-            console.load_snapshot(self.project)
+            owner_console_snapshot.load_snapshot(self.project)
 
     def test_ready_for_review_requires_record_queue_and_review_agreement(self) -> None:
         self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
@@ -1474,7 +1479,7 @@ class LinklessQueueTest(RepoCase):
         self.write(self.project, "docs/TASK_QUEUE.md", queue)
         self.commit(self.project, "milestone queue")
 
-        snapshot = console.load_snapshot(self.project)
+        snapshot = owner_console_snapshot.load_snapshot(self.project)
         self.assertEqual(snapshot.done_count, 1)
         self.assertEqual(len(snapshot.tasks), 38)
         grouped = {}
@@ -1512,8 +1517,8 @@ class LinklessQueueTest(RepoCase):
             ("", None), ("required", None), ("OPTIONAL", None),
         ):
             with self.subTest(value=value):
-                self.assertEqual(console.record_review(f"Review: {value}\n"), expected)
-        self.assertIsNone(console.record_review("Status: READY_FOR_REVIEW\n"))
+                self.assertEqual(owner_console_workflow.record_review(f"Review: {value}\n"), expected)
+        self.assertIsNone(owner_console_workflow.record_review("Status: READY_FOR_REVIEW\n"))
 
     def test_branch_task_record_review_required_offers_review(self) -> None:
         self.setup_project([("M37-CAUSE-004", "QUEUED", "—")])
@@ -1609,7 +1614,7 @@ class LinklessQueueTest(RepoCase):
             self.write(self.project, "docs/TASK_QUEUE.md", "# Q\n\n" + header
                        + f"| 1 | M37-CAUSE-001 | P1 | QUEUED | — | {cell} |\n")
             with self.assertRaisesRegex(console.ConsoleError, message, msg=cell):
-                console.load_snapshot(self.project)
+                owner_console_snapshot.load_snapshot(self.project)
 
     def test_link_wins_over_the_search_when_present(self) -> None:
         header = ("| Order | ID | Priority | Status | Dependencies | Task file |\n"
@@ -1692,7 +1697,7 @@ class LinklessQueueTest(RepoCase):
                 return real(command, *args, **kwargs)
 
             with mock.patch.object(subprocess, "run", side_effect=counting):
-                console.load_snapshot(self.project, console.IdentityCache())
+                owner_console_snapshot.load_snapshot(self.project, owner_console_snapshot.IdentityCache())
             return len(seen)
 
         for count in (2, 12):
@@ -1712,7 +1717,7 @@ class RefreshCostTest(RepoCase):
         self.write(self.project, "tasks/QUEUE.md", queue + history)
         self.commit(self.project, "history")
 
-    def subprocess_calls(self, cache: console.IdentityCache | None) -> list[list[str]]:
+    def subprocess_calls(self, cache: owner_console_snapshot.IdentityCache | None) -> list[list[str]]:
         real = subprocess.run
         calls: list[list[str]] = []
 
@@ -1721,14 +1726,14 @@ class RefreshCostTest(RepoCase):
             return real(command, *args, **kwargs)
 
         with mock.patch.object(subprocess, "run", side_effect=counting):
-            console.load_snapshot(self.project, cache)
+            owner_console_snapshot.load_snapshot(self.project, cache)
         return calls
 
     def test_subprocess_work_does_not_grow_with_known_tasks(self) -> None:
         self.setup_with_history(2)
-        small = self.subprocess_calls(console.IdentityCache())
+        small = self.subprocess_calls(owner_console_snapshot.IdentityCache())
         self.setup_with_history(40)
-        large = self.subprocess_calls(console.IdentityCache())
+        large = self.subprocess_calls(owner_console_snapshot.IdentityCache())
         self.assertEqual(len(small), len(large))
         checks = [call for call in large if "check-ref-format" in call]
         self.assertEqual(len(checks), 2, "one ref check per open task")
@@ -1739,14 +1744,14 @@ class RefreshCostTest(RepoCase):
         worktrees = {task_id: self.worktree(f"task-{task_id}") for task_id in statuses}
         self.write(worktrees["001"], "scratch.txt", "uncommitted")
         reads: list[Path] = []
-        original = console._read_text
+        original = owner_console_snapshot._read_text
 
         def observing(path: Path) -> str:
             reads.append(path)
             return original(path)
 
-        with mock.patch.object(console, "_read_text", side_effect=observing):
-            console.load_snapshot(self.project, console.IdentityCache())
+        with mock.patch.object(owner_console_snapshot, "_read_text", side_effect=observing):
+            owner_console_snapshot.load_snapshot(self.project, owner_console_snapshot.IdentityCache())
         self.assertIn(worktrees["001"] / "tasks/QUEUE.md", reads)
         for task_id, worktree in worktrees.items():
             if task_id != "001":
@@ -1754,30 +1759,30 @@ class RefreshCostTest(RepoCase):
 
     def test_warm_refresh_resolves_no_identity_and_spawns_no_ref_check(self) -> None:
         self.setup_with_history(5)
-        cache = console.IdentityCache()
+        cache = owner_console_snapshot.IdentityCache()
         self.subprocess_calls(cache)
         warm = self.subprocess_calls(cache)
         self.assertEqual([call for call in warm if "check-ref-format" in call], [])
 
     def test_identity_is_resolved_once_until_the_declaration_changes(self) -> None:
         self.setup_with_history(1)
-        cache = console.IdentityCache()
-        with mock.patch.object(console, "resolve_task_identity",
-                               wraps=console.resolve_task_identity) as resolver:
-            console.load_snapshot(self.project, cache)
-            console.load_snapshot(self.project, cache)
+        cache = owner_console_snapshot.IdentityCache()
+        with mock.patch.object(owner_console_snapshot, "resolve_task_identity",
+                               wraps=owner_console_snapshot.resolve_task_identity) as resolver:
+            owner_console_snapshot.load_snapshot(self.project, cache)
+            owner_console_snapshot.load_snapshot(self.project, cache)
             self.assertEqual(resolver.call_count, 2)
             self.write(self.project, ".meridian/task-identity.json",
                        json.dumps({"version": 1, "mode": "opaque"}))
-            console.load_snapshot(self.project, cache)
+            owner_console_snapshot.load_snapshot(self.project, cache)
             self.assertEqual(resolver.call_count, 4)
-            console.load_snapshot(self.project, cache)
+            owner_console_snapshot.load_snapshot(self.project, cache)
             self.assertEqual(resolver.call_count, 4)
 
     def test_failed_resolution_is_not_cached(self) -> None:
-        cache = console.IdentityCache()
+        cache = owner_console_snapshot.IdentityCache()
         self.setup_with_history(1)
-        with self.assertRaises(console.MeridianError):
+        with self.assertRaises(owner_shared_errors.MeridianError):
             cache.resolve(self.project, "999")
         self.write(self.project, "tasks/999-task.md", "# Task 999\n\n> **ID**: `999`\n")
         self.assertEqual(cache.resolve(self.project, "999").canonical_id, "999")
@@ -1798,7 +1803,7 @@ class ClosingTaskMixin:
 
     def load_closing(self, report=None, error: Exception | None = None):
         patcher = mock.patch.object(
-            console, "closure_status", return_value=report, side_effect=error)
+            owner_console_snapshot, "closure_status", return_value=report, side_effect=error)
         with patcher as status:
             tasks = self.load()
         return tasks, status
@@ -1834,7 +1839,7 @@ class ClosingTaskMixin:
         before = self.refs_and_status()
         resume = f"meridian worktree cleanup {self.done_id} --project /exact/project"
         state = console.ConsoleState(self.project)
-        with mock.patch.object(console, "closure_status", return_value=self.report(
+        with mock.patch.object(owner_console_snapshot, "closure_status", return_value=self.report(
                 "C10", None, resume)) as status:
             state.refresh()
         self.assertEqual(self.refs_and_status(), before)
@@ -1880,8 +1885,8 @@ class ClosingTaskMixin:
         self.closing_project()
         for step in ("C6", "C7", "C9"):
             with self.subTest(step=step), mock.patch.object(
-                    console, "closure_status", return_value=self.report(step)):
-                snapshot = console.load_snapshot(self.project)
+                    owner_console_snapshot, "closure_status", return_value=self.report(step)):
+                snapshot = owner_console_snapshot.load_snapshot(self.project)
                 task = next(item for item in snapshot.tasks if item.task_id == self.done_id)
                 self.assertEqual(console._state_label(task), ("Closing", "working"))
                 self.assertEqual(snapshot.done_count, 0)
@@ -1891,8 +1896,8 @@ class ClosingTaskMixin:
         self.closing_project()
         for report in (None, {}, {"step": "C10"}, {"step": "C10", "resume": "cleanup"}):
             with self.subTest(report=report), mock.patch.object(
-                    console, "closure_status", return_value=(report, False)):
-                snapshot = console.load_snapshot(self.project)
+                    owner_console_snapshot, "closure_status", return_value=(report, False)):
+                snapshot = owner_console_snapshot.load_snapshot(self.project)
                 task = next(item for item in snapshot.tasks if item.task_id == self.done_id)
                 self.assertEqual(console._state_label(task), ("Closing", "working"))
                 self.assertEqual(snapshot.done_count, 0)
@@ -1906,8 +1911,8 @@ class ClosingTaskMixin:
 
     def test_closing_task_is_counted_and_filtered_as_closing_only(self) -> None:
         self.closing_project()
-        with mock.patch.object(console, "closure_status", return_value=self.report("C7")):
-            snapshot = console.load_snapshot(self.project)
+        with mock.patch.object(owner_console_snapshot, "closure_status", return_value=self.report("C7")):
+            snapshot = owner_console_snapshot.load_snapshot(self.project)
         counts = console._filter_counts(snapshot)
         self.assertEqual(counts["Closing"], 1)
         self.assertEqual(counts["Ready"], 1)
@@ -1929,7 +1934,7 @@ class ClosingTaskMixin:
 
     def test_lifecycle_read_failure_keeps_the_task_with_unavailable_progress(self) -> None:
         self.closing_project()
-        for error in (console.MeridianError("boom"), OSError("boom"), ValueError("boom")):
+        for error in (owner_shared_errors.MeridianError("boom"), OSError("boom"), ValueError("boom")):
             with self.subTest(error=type(error).__name__):
                 tasks, _status = self.load_closing(error=error)
                 task = tasks[self.done_id]
@@ -1954,9 +1959,9 @@ class ClosingTaskMixin:
     def test_once_output_lists_the_closing_task_with_the_same_facts(self) -> None:
         self.closing_project()
         state = console.ConsoleState(self.project)
-        with mock.patch.object(console, "closure_status", return_value=self.report(
+        with mock.patch.object(owner_console_snapshot, "closure_status", return_value=self.report(
                 "C9", "PUSH_PENDING", "git push origin main")), \
-             mock.patch.object(console, "lifecycle_started_at", return_value="2026-01-01T00:00:00Z"):
+             mock.patch.object(owner_console_snapshot, "lifecycle_started_at", return_value="2026-01-01T00:00:00Z"):
             state.refresh()
         text = console.one_shot(state)
         self.assertIn("MERIDIAN | ", text)
@@ -2024,8 +2029,8 @@ class GovernedClosingTaskTest(ClosingTaskMixin, GovernedEffectiveStateTest):
         wt = self.worktree("task-001")
         self.write_record(wt, "TASK-001", "READY_FOR_REVIEW")
         self.commit(wt, "ready")
-        with mock.patch.object(console, "closure_status") as status, \
-             mock.patch.object(console, "lifecycle_started_at",
+        with mock.patch.object(owner_console_snapshot, "closure_status") as status, \
+             mock.patch.object(owner_console_snapshot, "lifecycle_started_at",
                                return_value="2026-01-01T00:00:00Z"):
             task = self.load()["TASK-001"]
         status.assert_not_called()
@@ -2044,7 +2049,7 @@ class GovernedClosingTaskTest(ClosingTaskMixin, GovernedEffectiveStateTest):
         self.assertEqual(task.progress_phase, "unavailable")
 
     def test_review_gate_progress_phase(self) -> None:
-        phase, gates = console._lifecycle_progress("C3", True)
+        phase, gates = owner_console_snapshot._lifecycle_progress("C3", True)
         self.assertEqual(phase, "review pending")
         self.assertEqual(gates[0], "Independent review")
 
@@ -2056,8 +2061,8 @@ class BackgroundRefreshTest(unittest.TestCase):
             time.sleep(0.01)
         self.assertFalse(state.refreshing)
 
-    def snapshot(self, marker: str) -> console.Snapshot:
-        return console.Snapshot(
+    def snapshot(self, marker: str) -> owner_console_models.Snapshot:
+        return owner_console_models.Snapshot(
             project=Path("/p"), queue=Path("/p/q"), branch=marker, git_summary="clean",
             git_changes=0, tasks=(), done_count=0,
         )
@@ -2166,7 +2171,7 @@ class BackgroundRefreshTest(unittest.TestCase):
             raise AssertionError("must not run on the caller thread")
 
         with mock.patch.object(console, "load_task", side_effect=blocked), \
-             mock.patch.object(console.subprocess, "run", side_effect=blocked):
+             mock.patch.object(owner_console_launch.subprocess, "run", side_effect=blocked):
             begun = time.monotonic()
             self.assertTrue(state.start_launch(task, "codex"))
             self.assertLess(time.monotonic() - begun, 1)
@@ -2182,14 +2187,14 @@ class WorkflowModeLockTest(RepoCase):
     def test_missing_unknown_and_double_locks_are_explicit_errors(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").unlink()
         with self.assertRaisesRegex(console.ConsoleError, "PROJECT_WORKFLOW.md is missing") as raised:
-            console.load_snapshot(self.project)
+            owner_console_snapshot.load_snapshot(self.project)
         self.assertNotIn("--mode", str(raised.exception))
         self.write(self.project, "PROJECT_WORKFLOW.md", "# nothing\n")
         with self.assertRaisesRegex(console.ConsoleError, "no recognized mode lock"):
-            console.load_snapshot(self.project)
+            owner_console_snapshot.load_snapshot(self.project)
         self.write(self.project, "PROJECT_WORKFLOW.md", "LEAN_DELIVERY GOVERNED_SDD\n")
         with self.assertRaisesRegex(console.ConsoleError, "both mode locks"):
-            console.load_snapshot(self.project)
+            owner_console_snapshot.load_snapshot(self.project)
 
 
 class MachineStateConsoleTest(RepoCase):
@@ -2253,7 +2258,7 @@ class MachineStateConsoleTest(RepoCase):
         self.assertTrue(legacy.legacy)
         self.assertEqual(legacy.launch_command, "Proceed with TASK-002")
         state = console.ConsoleState(self.project)
-        state.snapshot = console.load_snapshot(self.project)
+        state.snapshot = owner_console_snapshot.load_snapshot(self.project)
         output = console.one_shot(state)
         self.assertIn("State error: BLOCKED TASK_STATE_INVALID", output)
         self.assertIn("Status: QUEUED | Verdict: none | legacy", output)
@@ -2290,7 +2295,7 @@ class MachineStateConsoleTest(RepoCase):
                 raise AssertionError("state directory scan")
             return original_glob(path, *args, **kwargs)
         with mock.patch.object(Path, "read_text", observe), mock.patch.object(Path, "glob", observe_glob):
-            snapshot = console.load_snapshot(self.project)
+            snapshot = owner_console_snapshot.load_snapshot(self.project)
         self.assertEqual(opened, ["TASK-001.json"])
         self.assertEqual(snapshot.done_count, 150)
         self.assertEqual(snapshot.tasks[0].status, "IN_PROGRESS")
@@ -2313,7 +2318,7 @@ class MachineStateConsoleTest(RepoCase):
                              "at": "2026-10-11T12:00:00Z"}
                             for before, after in [("QUEUED", "IN_PROGRESS"), ("IN_PROGRESS", "ANSWERED")]],
         }))
-        snapshot = console.load_snapshot(self.project)
+        snapshot = owner_console_snapshot.load_snapshot(self.project)
         self.assertEqual(snapshot.done_count, 1)
         self.assertEqual(snapshot.tasks, ())
 
@@ -2375,18 +2380,19 @@ class SnapshotCostTest(RepoCase):
 
     def test_worktrees_are_listed_once_per_snapshot(self) -> None:
         self.populate()
-        calls = self.run_snapshot(lambda: console.load_snapshot(self.project))
+        calls = self.run_snapshot(lambda: owner_console_snapshot.load_snapshot(self.project))
         self.assertEqual(len(self.listings(calls)), 1)
-        task = console.load_task(self.project, "TASK-003")
+        task = owner_console_snapshot.load_task(self.project, "TASK-003")
         self.assertIsNotNone(task)
         self.assertEqual(len(self.listings(self.run_snapshot(
-            lambda: console.load_task(self.project, "TASK-003")))), 1)
+            lambda: owner_console_snapshot.load_task(self.project, "TASK-003")))), 1)
 
     def test_closure_readers_receive_the_cached_identity(self) -> None:
         self.populate()
-        cache = console.IdentityCache()
+        cache = owner_console_snapshot.IdentityCache()
         seen: dict[str, list[object]] = {"closure": [], "started": []}
-        real_closure, real_started = console.closure_status, console.lifecycle_started_at
+        real_closure = owner_console_snapshot.closure_status
+        real_started = owner_console_snapshot.lifecycle_started_at
 
         def closure(*args, **kwargs):
             seen["closure"].append(kwargs.get("identity"))
@@ -2396,10 +2402,10 @@ class SnapshotCostTest(RepoCase):
             seen["started"].append(kwargs.get("identity"))
             return real_started(*args, **kwargs)
 
-        with mock.patch.object(console, "closure_status", side_effect=closure), \
-             mock.patch.object(console, "lifecycle_started_at", side_effect=started), \
+        with mock.patch.object(owner_console_snapshot, "closure_status", side_effect=closure), \
+             mock.patch.object(owner_console_snapshot, "lifecycle_started_at", side_effect=started), \
              mock.patch.object(Path, "cwd", return_value=self.project):
-            console.load_snapshot(self.project, cache)
+            owner_console_snapshot.load_snapshot(self.project, cache)
         for readers in seen.values():
             self.assertTrue(readers)
             for identity in readers:
@@ -2427,23 +2433,23 @@ class SnapshotCostTest(RepoCase):
     def test_snapshot_is_identical_with_and_without_caches(self) -> None:
         self.populate()
         with mock.patch.object(Path, "cwd", return_value=self.project):
-            plain = console.load_snapshot(self.project)
-            identities, deliveries = console.IdentityCache(), console.DeliveryCache()
-            cold = console.load_snapshot(self.project, identities, deliveries)
-            warm = console.load_snapshot(self.project, identities, deliveries)
+            plain = owner_console_snapshot.load_snapshot(self.project)
+            identities, deliveries = owner_console_snapshot.IdentityCache(), owner_console_snapshot.DeliveryCache()
+            cold = owner_console_snapshot.load_snapshot(self.project, identities, deliveries)
+            warm = owner_console_snapshot.load_snapshot(self.project, identities, deliveries)
         self.assertEqual({task.task_id for task in plain.tasks}, {"TASK-001", "TASK-002", "TASK-003"})
         self.assertEqual(plain, cold)
         self.assertEqual(plain, warm)
 
-    def review_ready(self) -> tuple[Path, console.DeliveryCache, mock.Mock]:
+    def review_ready(self) -> tuple[Path, owner_console_snapshot.DeliveryCache, mock.Mock]:
         wt = self.populate()["TASK-002"]
-        gate = mock.Mock(side_effect=console.MeridianError("evidence is incomplete"))
-        return wt, console.DeliveryCache(), gate
+        gate = mock.Mock(side_effect=owner_shared_errors.MeridianError("evidence is incomplete"))
+        return wt, owner_console_snapshot.DeliveryCache(), gate
 
-    def load_with(self, deliveries: console.DeliveryCache, gate: mock.Mock) -> console.Task:
-        with mock.patch.object(console, "delivery_readiness", gate), \
+    def load_with(self, deliveries: owner_console_snapshot.DeliveryCache, gate: mock.Mock) -> owner_console_models.Task:
+        with mock.patch.object(owner_console_snapshot, "delivery_readiness", gate), \
              mock.patch.object(Path, "cwd", return_value=self.project):
-            snapshot = console.load_snapshot(self.project, console.IdentityCache(), deliveries)
+            snapshot = owner_console_snapshot.load_snapshot(self.project, owner_console_snapshot.IdentityCache(), deliveries)
         return next(task for task in snapshot.tasks if task.task_id == "TASK-002")
 
     def test_unchanged_review_ready_task_is_not_rechecked(self) -> None:
@@ -2463,7 +2469,7 @@ class SnapshotCostTest(RepoCase):
         self.assertIsNone(task.delivery_pending)
         self.load_with(deliveries, gate)
         self.assertEqual(gate.call_count, 1)
-        gate.side_effect = console.MeridianError("handoff changed")
+        gate.side_effect = owner_shared_errors.MeridianError("handoff changed")
         self.write(wt, "tasks/handoffs/TASK-002.md", "# Handoff\n")
         self.commit(wt)
         self.assertEqual(self.load_with(deliveries, gate).delivery_pending, "handoff changed")

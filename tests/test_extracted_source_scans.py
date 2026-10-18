@@ -40,6 +40,13 @@ class ExtractedSourceScanTest(unittest.TestCase):
         self.source.write_text('raise Error("UNKNOWN_STOP", "EXTRACTED_STOP")\n')
         self.assertIn("src/cardine/shared/example.py:1: unregistered stop code UNKNOWN_STOP", self.failure())
 
+    def test_console_readiness_label_is_not_an_uncoded_stop(self):
+        self.source.write_text('report("C1", "EXTRACTED_STOP")\n')
+        console = self.root / "src/cardine/console/example.py"
+        console.parent.mkdir(parents=True)
+        console.write_text('readiness = "BLOCKED: " + detail\n')
+        checker.check_stop_code_registry(self.root)
+
     def test_uncoded_stop_in_an_extracted_module_is_rejected(self):
         self.source.write_text('raise Error("BLOCKED: detail")\n')
         self.assertIn("src/cardine/shared/example.py:1: BLOCKED without a registered stop code", self.failure())

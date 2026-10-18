@@ -397,9 +397,14 @@ def cli_string_literals(source: str) -> list[tuple[int, str]]:
 
 
 def cli_source_files(root: Path) -> list[Path]:
-    """Include compatibility adapters and every extracted implementation module."""
+    """Include compatibility adapters and every extracted implementation module except the console.
+
+    The console shows readiness labels such as `BLOCKED: ...`; they are display values, not stop lines.
+    """
+    package = {path for path in (root / "src/cardine").rglob("*.py")
+               if (root / "src/cardine/console") not in path.parents}
     return sorted({root / "scripts" / name for name in ("meridian.py", "task_state.py", "console_workflow.py")
-                   if (root / "scripts" / name).is_file()} | set((root / "src/cardine").rglob("*.py")))
+                   if (root / "scripts" / name).is_file()} | package)
 
 
 def check_uncoded_blocked(root: Path, known: set[str], texts: dict[Path, str]) -> None:
