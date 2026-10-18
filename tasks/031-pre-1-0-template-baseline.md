@@ -29,33 +29,33 @@ delete the chain.
 
 ## Acceptance Criteria
 
-- [ ] The capability catalog under `capabilities/` records each capability's
+- [x] The capability catalog under `capabilities/` records each capability's
   required version and whether it is retired. `cardine.templates.adoption`,
   `cardine.templates.migrations` (`retired_capability_ids`), and
   `scripts/check_repository.py` read these values from the catalog, not from
   migration records. Their results are unchanged for the current templates,
   and a test proves it.
-- [ ] The marker baseline moves from
+- [x] The marker baseline moves from
   `migrations/marker-baselines/CAPABILITY_MARKER_BASELINES.json` to
   `capabilities/marker-baselines.json`. `check_repository.py
   --write-marker-baselines` writes the new path, and the content check still
   fails when protected content changes without a version bump.
-- [ ] `CONTRIBUTING.md` states the pre-1.0 rule. A template change bumps the
+- [x] `CONTRIBUTING.md` states the pre-1.0 rule. A template change bumps the
   capability version and runs `check_repository.py --write-marker-baselines`
   in the same commit. It adds no migration and does not bump `VERSION`.
   Retiring a capability marks it retired in the catalog. The repository
   checks no longer require a migration for a template change. It also says
   never to run the checkout's `upgrade` on this repository: `.meridian/`
-  belongs to the installed Meridian 1.4.0, and on 2026-10-18 that upgrade
+  belongs to the installed Meridian, and on 2026-10-18 that upgrade
   rewrote the digests of unchanged files and deleted
   `.meridian/baselines/1.4.0`.
-- [ ] `docs/ADR_CARDINE_1_0.md` work item 4 names this rule. That edit is
+- [x] `docs/ADR_CARDINE_1_0.md` work item 4 names this rule. That edit is
   already made by the planning commit, so the task verifies that the text
   matches the implementation.
-- [ ] `.meridian/` is unchanged. Its manifest, baselines, and task states
-  belong to the installed Meridian 1.4.0 that runs this repository's
-  lifecycle.
-- [ ] Every command under Validation passes.
+- [x] `.meridian/` is unchanged except for task 031's own state written
+  by the installed Meridian lifecycle, as authorized below. Its manifest,
+  baselines, other records, and other tasks' state files remain unchanged.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -99,7 +99,8 @@ Deleting migration records (task 033), changing upgrade behavior, and
 
 ## Implementation evidence
 
-Implementation is committed as `8ffdd56c3c03d0e9ee58d84c1cbead4bc85d8115`.
+The final implementation and policy amendment are committed as
+`f614a3f410e60849b9639095b20e55eb0cfa3d96`.
 All required validation commands passed, including 1,145 tests both locally
 and in a clean clone, with no skips. See `tasks/handoffs/031.md` for evidence.
 
@@ -113,4 +114,7 @@ Only the installed Meridian is authorized for lifecycle commands. The
 installed version is 1.4.1; 1.4.0 is the manifest baseline. This amendment
 supersedes the earlier unchanged-state wording and clears RULE_CONFLICT.
 All other `.meridian/` paths remain outside the implementation scope.
-The required validation is rerun after the contributor-policy correction.
+All required validation passed on the final implementation commit after the
+contributor-policy correction: 1,145 tests locally and in a clean clone,
+zero failures, errors, or skips. Resume validation succeeded on attempt 1 of 3;
+no intermittent failures were observed.
