@@ -12,7 +12,7 @@
       "tool_hint": "meridian worktree repair-base",
       "kind": "stop",
       "summary": "a proven commit-less main fast-forward left an obsolete task base",
-      "test": "tests.test_task_worktree_isolation.BoundedWorktreeLifecycleTest.test_stale_base_check_and_repair"
+      "test": "tests.test_worktree_checkout.WorktreeCheckoutTest.test_stale_base_check_and_repair"
     },
     {
       "code": "ACCEPTANCE_UNMET",
@@ -751,7 +751,7 @@
       "resume": "only after explicit developer authorization, run meridian worktree prepare {task_id} --project {project} --new-attempt --reason \"<developer reason>\" --format json",
       "kind": "stop",
       "summary": "a retired task attempt has inherited budget spends and needs developer authorization for a new attempt",
-      "test": "tests.test_task_worktree_isolation.BoundedWorktreeLifecycleTest.test_prepare_blocks_inherited_budget_spends"
+      "test": "tests.test_worktree_checkout.WorktreeCheckoutTest.test_prepare_blocks_inherited_budget_spends"
     }
   ]
 }
