@@ -9,9 +9,9 @@ from unittest import mock
 import shlex
 from pathlib import Path
 
-from tests import test_task_worktree_isolation as fixtures
+from tests import worktree_support as fixtures
 
-meridian = fixtures.meridian
+import meridian
 from cardine.lifecycle import closure as owner_lifecycle_closure
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
@@ -23,12 +23,12 @@ from cardine.integration import merge as owner_integration_merge
 
 class TaskIntegrationStateTest(unittest.TestCase):
     def setUp(self):
-        fixtures.GovernedCompletionRowsTest.setUp(self)
+        fixtures.GovernedCompletionRowsFixture.setUp(self)
 
     def tearDown(self):
-        fixtures.BoundedWorktreeLifecycleTest.tearDown(self)
+        fixtures.BoundedWorktreeLifecycleFixture.tearDown(self)
 
-    git = fixtures.BoundedWorktreeLifecycleTest.git
+    git = fixtures.BoundedWorktreeLifecycleFixture.git
 
     def start(self, *, workflow="governed-sdd", spike=False):
         if workflow == "lean-delivery":
