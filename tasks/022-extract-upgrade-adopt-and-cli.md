@@ -82,7 +82,7 @@ module or test-class boundary, as the plan requires.
 
 ## Dependencies
 
-- **Depends on**: 021
+- **Depends on**: 021, 028
 - **Blocks**: 023
 
 ## Validation
