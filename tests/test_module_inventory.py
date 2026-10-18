@@ -82,14 +82,23 @@ class ModuleInventoryTest(unittest.TestCase):
         for name in graph:
             visit(name, [])
 
-    def test_package_and_new_tests_fit_line_budget(self):
+    def test_all_tracked_python_files_fit_line_budget(self):
         tracked = subprocess.check_output(
-            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "--", "src/cardine", "tests"],
+            ["git", "ls-files", "--", "src", "scripts", "tests"],
             cwd=ROOT, text=True,
         ).splitlines()
-        baseline = json.loads((ROOT / "tests/fixtures/module_split_baseline.json").read_text())
-        baseline_tests = set(baseline["tests"])
         for name in sorted(set(tracked)):
-            if name.endswith(".py") and (name.startswith("src/cardine/") or name not in baseline_tests):
+            if name.endswith(".py"):
                 with self.subTest(path=name):
                     self.assertLessEqual(len((ROOT / name).read_text().splitlines()), 1500)
+
+    def test_compatibility_adapters_have_no_implementation(self):
+        for name in ("meridian.py", "project_console.py", "task_state.py", "console_workflow.py"):
+            with self.subTest(adapter=name):
+                tree = ast.parse((ROOT / "scripts" / name).read_text(encoding="utf-8"))
+                self.assertEqual(list(definitions(tree)), [])
+                imports = [node.module for node in tree.body if isinstance(node, ast.ImportFrom)]
+                self.assertTrue(any(module and module.startswith("cardine.") for module in imports))
+                self.assertFalse(any(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
+                                                      ast.ClassDef, ast.Lambda))
+                                     for node in ast.walk(tree)))
