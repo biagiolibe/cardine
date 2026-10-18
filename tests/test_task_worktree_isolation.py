@@ -28,7 +28,7 @@ from cardine.shared import journal as owner_shared_journal
 from cardine.shared import budget as owner_shared_budget
 import cardine.integration.decision as integration_decision
 import cardine.shared.errors as shared_errors
-import project_console  # noqa: E402
+from cardine.console import models as project_console  # noqa: E402
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 from cardine.shared import budget_commands as owner_shared_budget_commands

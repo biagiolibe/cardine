@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from cardine.console.snapshot import load_task, IdentityCache
+from cardine.shared.console_workflow import ConsoleError
+
 import json
 import os
 import re
@@ -128,3 +131,26 @@ def _start_launch(request: LaunchRequest) -> tuple[bool, str]:
         return False, (f"iTerm2 is unavailable or rejected launch: {detail}; [copy] remains available"
                        if detail else "iTerm2 launch failed; [copy] remains available")
     return True, f"Started {request.agent} in a new iTerm2 split pane"
+
+
+def _launch_selected(state: "ConsoleState", task: Task, agent: str,
+                     dirty_confirmed: bool = False) -> tuple[bool, str]:
+    """Reread only the selected task, require an unchanged directive, and launch it.
+
+    Blocking: run it off the UI thread through `ConsoleState.start_launch`.
+    """
+    expected_directive = task.launch_command
+    expected_resume = task.is_resume
+    try:
+        current = load_task(state.project, task.task_id, IdentityCache())
+    except ConsoleError as error:
+        return False, f"Launch revalidation failed: {error}"
+    if current is None or current.launch_command != expected_directive or current.is_resume != expected_resume:
+        return False, "Task state changed; review the refreshed task before launching"
+    if current.is_resume and current.active_writer and not dirty_confirmed:
+        return False, "Task worktree became dirty; confirm Resume again before launching"
+    request, error = _launch_request(current, state.project, agent)
+    if error:
+        return False, error
+    assert request is not None
+    return _start_launch(request)
