@@ -16,28 +16,28 @@
 
 ## Acceptance Criteria
 
-- [ ] `TaskWorktreeIsolationTest` moves to `test_worktree_paths`, and
+- [x] `TaskWorktreeIsolationTest` moves to `test_worktree_paths`, and
   `GovernedCompletionRowsTest` to `test_integration_projections`.
-- [ ] `BoundedWorktreeLifecycleTest` is split by methods into
+- [x] `BoundedWorktreeLifecycleTest` is split by methods into
   checkout and inspection, evidence and integration, and closure and cleanup
   files, each sharing a fixture-only base in a support module that discovery
   does not collect.
-- [ ] `tests/test_task_worktree_isolation.py` no longer exists, and every new
+- [x] `tests/test_task_worktree_isolation.py` no longer exists, and every new
   file is at most 1,500 lines.
-- [ ] No test is lost or run twice: the parallel suite reports the same
+- [x] No test is lost or run twice: the parallel suite reports the same
   coverage `total` before and after the task, and the handoff maps every moved
   test ID from its old to its new location. No module re-imports `TestCase`
   classes into discovery, and shared fixtures hold no inherited `test_*`
   method.
-- [ ] Tests keep their bodies: only imports, class placement, shared fixture
+- [x] Tests keep their bodies: only imports, class placement, shared fixture
   bases, and registered test IDs (for example in
   `capabilities/stop-codes-v1.json`) change. No assertion is removed or
   weakened, and no platform skip changes.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean task
   worktree and record its result line in the handoff. No task branch push or
   CI evidence is required.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
