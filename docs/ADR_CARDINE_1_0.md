@@ -563,6 +563,18 @@ touches code that is about to be deleted.
     - When Cardine manages its own repository, a template-changing release
       brings those project files to the new baseline in the prepared commit.
 
+    Preparing Meridian 1.4.1 (task 234) exposed three more:
+    - Preparation runs on the task branch in the task worktree. Meridian's
+      `release.py prepare` accepted only `main`, so the release task stopped
+      with `RULE_CONFLICT` and fell back to the manual procedure. Publication
+      stays a developer step on `main`.
+    - Tests never pin the framework's own `VERSION`. A test that needs a
+      baseline asserts the baseline, so a CLI-only release does not fail
+      the suite.
+    - One maintainer document, `docs/RELEASING.md`, holds the release
+      procedure, and the release task names it. `CONTRIBUTING.md` keeps only
+      the rules for outside contributors and links to it.
+
     Its tests run a real preparation in a disposable clone, not only a dry
     run, because a dry run skips validation.
 13. Release 0.9, run the field trial, release 1.0.0.
