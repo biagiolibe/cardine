@@ -15,7 +15,9 @@ order of work items 4 and 5, quick tasks under decision 4, CI before
 landing under decision 11, and the queue-briefing requirements in work items
 6, 7, and 9. Decision 12, stops reserved for decisions that need a person,
 was proposed and accepted on 2026-10-18. It refines decisions 5 to 7 and adds
-no feature to the 1.0 scope.*
+no feature to the 1.0 scope. On 2026-10-19 the developer split work item 5 in
+two, reset the capability marker versions at the marker rename, and placed the
+move of this repository to Cardine after work items 8, 9, and 10.*
 
 ## Context
 
@@ -497,7 +499,14 @@ the stops of that lifecycle.
 Most items are one or more tasks of 2–3 hours. Item 3 is mechanical and
 leaves behavior unchanged; simplification starts after it. Item 4 removes the
 historical migrations before item 5 renames identifiers, so the rename never
-touches code that is about to be deleted.
+touches code that is about to be deleted. For the same reason item 5 is split:
+item 5a renames code identifiers before item 6, and item 5b renames the markers
+and template text after item 6 has produced one template set.
+
+Until item 10 moves this repository to Cardine, the installed Meridian owns
+`.meridian/` and this repository's managed copies and shared-source hooks, as
+`.meridian/manifest.json` lists them. Tasks before that point change product
+surfaces only and leave those files unchanged.
 
 1. Accept this ADR.
 2. Repository bootstrap: `pyproject.toml`, package skeleton, CI, code import.
@@ -515,8 +524,18 @@ touches code that is about to be deleted.
    script to work item 12. Removing release baselines also removes `adopt`
    until work item 10 rebuilds it. `.meridian/` stays untouched, because the
    installed Meridian 1.4.0 runs this repository's lifecycle.
-5. Rename identifiers: command, environment variables, `.cardine/`, markers,
-   Git-internal files, worktree root.
+5. Rename identifiers, in two parts.
+   - **5a, before item 6:** the command and entry points, environment
+     variables, the `.cardine/` project directory, Git-internal files such as
+     the journal and the integration lease, and the worktree root. Product
+     code keeps one read-only reader of `.meridian/` and `MERIDIAN:BEGIN`
+     markers for the conversion of item 10. That reader is not an alias of
+     decision 1: no command accepts the Meridian names as input for its own
+     work.
+   - **5b, after item 6:** the markers become `CARDINE:BEGIN`, and every
+     capability restarts at `v1`. The marker baseline and `requiredVersion`
+     values are rewritten to match. Template text, skills, and slash
+     commands lose the Meridian name.
 6. Single workflow: one template set, task contract fields, states, review
    option, `spike` class. The preset comes from the project configuration,
    never from the shape of the queue file. In Meridian 1.4.0 the per-turn
@@ -524,7 +543,7 @@ touches code that is about to be deleted.
    governed table. A Governed SDD project that had archived every closed
    phase got the Lean Delivery header and a total of 0. A regression test
    covers a project whose queue lists no task: the briefing still names the
-   project's preset.
+   project's preset. Item 5b follows this item.
 7. Single source of truth: state in the task JSON, generated queue and plan
    status. The generated status lists a task as startable only when its state
    is `queued` and its dependencies are met. A task that is `in_progress` or
@@ -549,7 +568,12 @@ touches code that is about to be deleted.
    output on both hosts.
 10. Meridian conversion: open tasks, ADRs, configuration. This item rebuilds
     `cardine adopt`, which work item 4 removes together with the release
-    baselines.
+    baselines. It ends by converting this repository with `cardine adopt`, so
+    that `cardine run` delivers its remaining tasks. That move releases the
+    files the installed Meridian owned: the checks and tests that guard them
+    are removed or pointed at Cardine's own records, and the changes deferred
+    to it, such as the old shell hooks and the managed copy of
+    `CONTEXT_BUDGET_POLICY.md`, are made. Items 11 and 12 run on Cardine.
 11. Documentation: README positioning, quick start, agent reference.
 12. Release: GitHub and PyPI publication from one script, which merges
     `release.py` and `prepare_release.py` (decision 7). Preparing Meridian
