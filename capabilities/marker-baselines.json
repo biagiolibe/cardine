@@ -19,8 +19,8 @@
   },
   "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
-      "sha256": "d797c30c13e1cca26effa5259adb7a8ab87f4d776675149c1be491e175c38f98",
-      "version": 5
+      "sha256": "4810cec23c0165da1328cf1a42a5807b5eb85758df5f83dda28fe39f2c686861",
+      "version": 6
     },
     "codex-worktree-access": {
       "sha256": "1f5397dce445667ab7d6621065f3df138e3f8ca559f338c58157e994c2cbc0c3",
@@ -39,8 +39,8 @@
       "version": 1
     },
     "git-workflow": {
-      "sha256": "a401bce0ec78bba3409e97d87e605d8b543251cc5a34a0fe35389ca41be71b6d",
-      "version": 14
+      "sha256": "bfc4bdb8ceb936c1de390cd22bf64849c81ce69ec6ce68b6a398fa6f38d1aa62",
+      "version": 15
     },
     "review-policy": {
       "sha256": "197e387dbaa735f705a3d014034c13dbd31181b77deb83710f50c4f105749d17",
@@ -307,14 +307,14 @@
   },
   "templates/workflows/lean-delivery/AGENTS.md": {
     "git-workflow": {
-      "sha256": "e0576b497e9bb7f1e9ef79220c26e87659f078a18da59970ec528322f2e9d3f9",
-      "version": 14
+      "sha256": "62d95b0cb7a1b1cbdec565bf755625864742ce4cc7adbaee7a002b155a244ae3",
+      "version": 15
     }
   },
   "templates/workflows/lean-delivery/CLAUDE.md": {
     "git-workflow": {
-      "sha256": "e0576b497e9bb7f1e9ef79220c26e87659f078a18da59970ec528322f2e9d3f9",
-      "version": 14
+      "sha256": "62d95b0cb7a1b1cbdec565bf755625864742ce4cc7adbaee7a002b155a244ae3",
+      "version": 15
     }
   },
   "templates/workflows/lean-delivery/LANGUAGE_POLICY.md": {
@@ -325,16 +325,16 @@
   },
   "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
-      "sha256": "474ba337465f71df05c76f9c1c69fa58f0a2a58e6439e1fc2f73712f1534c27d",
-      "version": 7
+      "sha256": "df79ffa1d6ca51029dc3376a18484e8d6788b85b11ba88046ccc4f2a2313dee6",
+      "version": 8
     },
     "codex-worktree-access": {
       "sha256": "5db5c51499c52a6227ca4a4b797f98b8ced5caafcffb37db24508469297187c8",
       "version": 4
     },
     "git-workflow": {
-      "sha256": "e0576b497e9bb7f1e9ef79220c26e87659f078a18da59970ec528322f2e9d3f9",
-      "version": 14
+      "sha256": "62d95b0cb7a1b1cbdec565bf755625864742ce4cc7adbaee7a002b155a244ae3",
+      "version": 15
     },
     "task-identity-policy": {
       "sha256": "78df2cd565b113a06771de7572bd260667aa8a687aa3b6066d12b4578d510221",

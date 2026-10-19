@@ -37,7 +37,7 @@ discard, or commit them; report the conflict and stop.
   fix. Report actionable findings; do not silently correct implementation code
   during review.
 
-<!-- MERIDIAN:BEGIN capability=git-workflow v14 -->
+<!-- MERIDIAN:BEGIN capability=git-workflow v15 -->
 ## Authority of `Proceed with`
 
 `Proceed with <TASK-ID>` authorizes that task's whole lifecycle when every gate
@@ -45,8 +45,8 @@ passes: implementation and validation on the task branch; completion and
 archive records; `meridian worktree integrate stage`, the selected candidate
 validation, and `integrate finalize` or `abort`; one plain `git push origin
 main` of the resulting integration; and `meridian worktree cleanup`. Do not ask
-for confirmation at any of these steps. When a gate fails, stop once with
-`BLOCKED <CODE>` and the resume command.
+for confirmation at any of these steps. When a gate fails, classify the outcome
+under Stops and denials and follow that class in the same turn.
 
 It also authorizes one plain `git push origin <task-branch>`, where
 `<task-branch>` is the `branch` value returned by `meridian worktree prepare`,
@@ -61,10 +61,28 @@ conflict; or work on another task.
 
 ## Stops and denials
 
-The deny list above stays in force without a supporting command. A stop is
-valid only when it is backed by a `BLOCKED <CODE>` line from a Meridian
-command, a non-zero exit of a required command, an acceptance criterion you
-can name as unmet, or a judgment stop that this workflow names with its code. Guidance that no command backs is advice: follow it when you
+The deny list above stays in force without a supporting command. Classify
+outcomes using `capabilities/stop-codes-v1.json` in the framework: its
+`human_decision` field determines whether a code needs a person.
+
+- **Guardrail.** Stop on a `BLOCKED <CODE>` whose registry entry has
+  `human_decision: true`, on a denied action, or on a scope change. Report
+  the code and the resume command. `BLOCKED RULE_CONFLICT` and
+  `BLOCKED VALIDATION_RETRY_LIMIT` are guardrails.
+- **Recoverable state.** For a code without `human_decision: true`, run the
+  recovery command the outcome names in the same turn and continue. Never
+  run a recovery twice. If it returns the same code again, report that
+  `BLOCKED <CODE>` and its recovery history to the person.
+- **Failing work.** A non-zero validation exit or an unmet acceptance
+  criterion calls for work on the assigned task. Rerun a failed validation
+  once without changes. If the rerun passes, record the test as intermittent
+  in the handoff; the attempt does not count. If the rerun fails, count the
+  attempt, fix the task's own work, and validate again. After 3 consecutive
+  counted failures, stop with `BLOCKED VALIDATION_RETRY_LIMIT` and a summary
+  of the failures. `VALIDATION_FAILED` has `human_decision: false`; a single
+  failed validation does not stop the agent.
+
+Guidance that no command backs is advice: follow it when you
 can, and never stop on its strength alone.
 
 Never satisfy a gate by writing false state, such as setting a status only to
@@ -74,7 +92,7 @@ report both rules.
 When a Meridian command accepted a state that this text appears to forbid,
 follow the command and record the difference under `Rule discrepancies:` in the
 handoff. This never covers an action on the deny list and never overrides a
-stop that a command printed.
+guardrail, including a repeated recovery failure.
 
 ## Governance-file ownership and closure
 
@@ -91,8 +109,8 @@ and handoff, run `meridian worktree advance <TASK-ID> --project
 <primary-checkout> --format json` from the primary checkout, giving each result
 as `--validation-command`/`--validation-exit-code` with `--accepted`. Perform
 exactly its `action_required`, rerun it with the results (candidate validation
-uses `--candidate-command`/`--candidate-exit-code`), and report its `BLOCKED <CODE>`
-line when it stops. `docs/WORKTREE_LIFECYCLE.md` keeps the single-step commands
+uses `--candidate-command`/`--candidate-exit-code`), and classify any `BLOCKED <CODE>`
+under Stops and denials before deciding whether to stop. `docs/WORKTREE_LIFECYCLE.md` keeps the single-step commands
 for diagnosis and manual recovery.
 A named sandbox skip is not a validation failure only when the test itself
 reports it and no acceptance criterion depends solely on that test. Record its
