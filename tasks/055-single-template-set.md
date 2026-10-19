@@ -19,29 +19,29 @@ presets.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SW4 is implemented as the plan describes it, with the
+- [x] The scope of row SW4 is implemented as the plan describes it, with the
   design of the plan's sections 1 to 6. A file the plan missed but that
   the same change needs is in scope; the handoff lists it.
-- [ ] Every test that row SW4 lists under "Tests that prove it" exists and
+- [x] Every test that row SW4 lists under "Tests that prove it" exists and
   passes.
-- [ ] Every file under `templates/base/`,
+- [x] Every file under `templates/base/`,
   `templates/workflows/lean-delivery/`, and
   `templates/workflows/governed-sdd/` has a destination, including the six
   hidden files that the plan's table omits: `base/.gitignore`,
   `base/.claudeignore`, and each workflow's `.codex/hooks.json` and
   `.codex/rules/meridian.rules`. The handoff gives their destinations.
-- [ ] The "init adapter" of the plan is the init slash command
+- [x] The "init adapter" of the plan is the init slash command
   `commands/meridian-init.md`. It copies `templates/single/`, asks for the
   preset with `lean` as the default, and writes `.cardine/project.json`. A
   `cardine init` command is not part of this task (see the deferred items
   in `PROJECT_PLAN.md`).
-- [ ] The old source roots stay in this task, because the capability catalog
+- [x] The old source roots stay in this task, because the capability catalog
   and marker baselines still key on their paths. Row SW5 removes them. No
   generator, router, or test reads the old roots after this task, apart
   from the catalog checks that row SW5 moves.
-- [ ] "Distribution inclusion" is whatever ships the templates today. The
+- [x] "Distribution inclusion" is whatever ships the templates today. The
   handoff says what that is, and it includes `templates/single/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -50,16 +50,16 @@ presets.
   worktree` line of `.codex/rules/local.rules`. No task of this work item
   runs the checkout's `setup --apply` against the real home directory or
   creates `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/055.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/055.json`, which only
   the installed `meridian task close 055` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
