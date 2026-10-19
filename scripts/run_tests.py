@@ -8,6 +8,7 @@ import hashlib
 import os
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,7 @@ import time
 import unittest
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -30,6 +32,40 @@ HEADER = re.compile(r"^shard=(\d+)/(\d+) total=(\d+) selected=(\d+) digest=([0-9
 RESULT = re.compile(r"^result ran=(\d+) failures=(\d+) errors=(\d+) skipped=(\d+)$", re.MULTILINE)
 COVERAGE = re.compile(r"^coverage total=(\d+) digest=([0-9a-f]{64})", re.MULTILINE)
 FAILURE_BLOCK = re.compile(r"^(?:FAIL|ERROR): .*\n^-{5,}\n.*?^-{5,}$", re.MULTILINE | re.DOTALL)
+
+
+@contextmanager
+def reject_path_meridian():
+    """Fail the current test even when a nested hook swallows a PATH command's exit."""
+    with tempfile.TemporaryDirectory(prefix="installation-guard-") as directory:
+        root = Path(directory)
+        marker = root / "called"
+        executable = root / "meridian"
+        executable.write_text(
+            "#!/bin/sh\nprintf '%s\\n' \"$*\" >> " + shlex.quote(str(marker)) + "\nexit 97\n",
+            encoding="utf-8",
+        )
+        executable.chmod(0o755)
+        previous = os.environ.get("PATH")
+        os.environ["PATH"] = str(root) + os.pathsep + (previous or os.defpath)
+
+        class InstallationCheckResult(unittest.TextTestResult):
+            def stopTest(self, test):
+                if marker.exists():
+                    try:
+                        raise AssertionError("test spawned meridian through PATH: " + marker.read_text())
+                    except AssertionError:
+                        self.addFailure(test, sys.exc_info())
+                    marker.unlink()
+                super().stopTest(test)
+
+        try:
+            yield InstallationCheckResult
+        finally:
+            if previous is None:
+                os.environ.pop("PATH", None)
+            else:
+                os.environ["PATH"] = previous
 
 
 def iter_tests(suite: unittest.TestSuite) -> Iterable[unittest.TestCase]:
@@ -333,7 +369,8 @@ def main(arguments: list[str] | None = None) -> int:
     )
     if not selected:
         parser().error(f"shard {index}/{count} selects no tests")
-    outcome = unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(selected))
+    with reject_path_meridian() as result_class:
+        outcome = unittest.TextTestRunner(verbosity=2, resultclass=result_class).run(unittest.TestSuite(selected))
     print(
         f"result ran={outcome.testsRun} failures={len(outcome.failures)} errors={len(outcome.errors)} "
         f"skipped={len(outcome.skipped)}",

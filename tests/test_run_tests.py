@@ -127,6 +127,18 @@ class ParallelTestRunnerTest(unittest.TestCase):
             check=False,
         )
 
+    def test_path_meridian_spawn_fails_even_when_its_status_is_ignored(self) -> None:
+        for invocation in (
+            "__import__('subprocess').run(['meridian', '--version'], capture_output=True)",
+            "__import__('subprocess').run(['sh', '-c', 'meridian --version >/dev/null 2>&1; exit 0'])",
+        ):
+            with self.subTest(invocation=invocation):
+                directory = self.make_suite([invocation])
+                result = self.run_parallel(directory, "--parallel", "1")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("test spawned meridian through PATH", result.stdout + result.stderr)
+                self.assertIn("ran=1 failures=1 errors=0", result.stdout)
+
     @staticmethod
     def stable(output: str) -> str:
         output = re.sub(r"time=[0-9.]+s", "time=T", output)

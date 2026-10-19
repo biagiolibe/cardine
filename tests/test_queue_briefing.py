@@ -13,10 +13,11 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from installation_fixture import copy_hook, hook_environment
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK = ROOT / "hooks" / "queue-briefing.sh"
+HOOK = ROOT / "hooks" / "queue-briefing.sh"  # MERIDIAN-INSTALLATION-CHECK
 
 GOVERNED_HEADER = (
     "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
@@ -24,11 +25,14 @@ GOVERNED_HEADER = (
 )
 
 
-def run_hook(cwd: Path, environment: dict[str, str] | None = None, hook: Path = HOOK) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["bash", str(hook)], cwd=str(cwd), capture_output=True, text=True,
-        check=False, env=environment,
-    )
+def run_hook(cwd: Path, environment: dict[str, str] | None = None, hook: Path | None = None) -> subprocess.CompletedProcess[str]:
+    with tempfile.TemporaryDirectory() as directory:
+        # MERIDIAN-INSTALLATION-CHECK
+        selected_hook = hook or copy_hook(Path(directory), "queue-briefing.sh")
+        return subprocess.run(
+            ["bash", str(selected_hook)], cwd=str(cwd), capture_output=True, text=True,
+            check=False, env=hook_environment(environment),
+        )
 
 
 class QueueBriefingTest(unittest.TestCase):
@@ -47,6 +51,7 @@ class QueueBriefingTest(unittest.TestCase):
         return target
 
     def write_language_policy(self, value: str, extra: str = "") -> Path:
+        # MERIDIAN-INSTALLATION-CHECK
         target = self.project / "LANGUAGE_POLICY.md"
         target.write_text(
             "# Language Policy\n\n"
@@ -85,6 +90,7 @@ class QueueBriefingTest(unittest.TestCase):
         mismatch = [line for line in result.stdout.splitlines() if "Codex worktree root differs" in line]
         self.assertEqual(len(mismatch), 1, result.stdout)
         self.assertIn(str(other), mismatch[0])
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn(str(home / ".meridian/worktrees"), mismatch[0])
 
     def test_reports_combined_codex_repair_and_root_replacement_on_one_line(self) -> None:
@@ -210,6 +216,7 @@ class QueueBriefingTest(unittest.TestCase):
         """The consumer project A-shaped customization: an annotated paragraph right
         after execution-assets' MERIDIAN:END, still inside the section,
         naming a different queue path than the tasks/QUEUE.md default."""
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "# Project Workflow\n\n"
             "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
@@ -244,6 +251,7 @@ class QueueBriefingTest(unittest.TestCase):
             "| 1 | TASK-001 | P0 | IN_PROGRESS | — | 10m |\n",
             encoding="utf-8",
         )
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
             "<!-- MERIDIAN:END -->\n"
@@ -261,6 +269,7 @@ class QueueBriefingTest(unittest.TestCase):
         real declaration by a bare `*queue*.md` regex. Resolving to the
         wrong file with no error is worse than resolving to the default, so
         this must fall back rather than guess."""
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "# Project Workflow\n\n"
             "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
@@ -304,9 +313,11 @@ class QueueBriefingTest(unittest.TestCase):
             "| 2 | TASK-002 | P0 | QUEUED | REQUIRED | — | [TASK-002](TASK-002.md) |\n"
         )
         hook_root = self.project / "hook-root"
+        # MERIDIAN-INSTALLATION-CHECK
         hook = hook_root / "hooks/queue-briefing.sh"
         hook.parent.mkdir(parents=True)
         hook.write_text(HOOK.read_text(encoding="utf-8"), encoding="utf-8")
+        # MERIDIAN-INSTALLATION-CHECK
         runner = hook_root / "bin/meridian"
         runner.parent.mkdir()
         runner.write_text(
@@ -329,9 +340,11 @@ class QueueBriefingTest(unittest.TestCase):
         self.write_language_policy("Italian")
         self.write_queue("| 1 | TASK-001 | P0 | QUEUED | REQUIRED | — | [TASK-001](TASK-001.md) |\n")
         hook_root = self.project / "hook-root"
+        # MERIDIAN-INSTALLATION-CHECK
         hook = hook_root / "hooks/queue-briefing.sh"
         hook.parent.mkdir(parents=True)
         hook.write_text(HOOK.read_text(encoding="utf-8"), encoding="utf-8")
+        # MERIDIAN-INSTALLATION-CHECK
         runner = hook_root / "bin/meridian"
         runner.parent.mkdir()
         runner.write_text(
@@ -357,9 +370,11 @@ class QueueBriefingTest(unittest.TestCase):
             encoding="utf-8",
         )
         hook_root = self.project / "hook-root"
+        # MERIDIAN-INSTALLATION-CHECK
         hook = hook_root / "hooks/queue-briefing.sh"
         hook.parent.mkdir(parents=True)
         hook.write_text(HOOK.read_text(encoding="utf-8"), encoding="utf-8")
+        # MERIDIAN-INSTALLATION-CHECK
         runner = hook_root / "bin/meridian"
         runner.parent.mkdir()
         runner.write_text(

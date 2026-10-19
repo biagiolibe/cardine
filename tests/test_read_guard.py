@@ -12,23 +12,24 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from installation_fixture import copy_hook, hook_environment
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK = ROOT / "hooks" / "read-guard.sh"
+HOOK = ROOT / "hooks" / "read-guard.sh"  # MERIDIAN-INSTALLATION-CHECK
 
 GOVERNED_HEADER = (
     "| Order | ID | Priority | Status | Dependencies |\n|---:|---|---|---|---|\n"
 )
 
 
-def run_hook(payload: dict) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["bash", str(HOOK)],
-        input=json.dumps(payload),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+def run_hook(payload: dict | str) -> subprocess.CompletedProcess[str]:
+    with tempfile.TemporaryDirectory() as directory:
+        # MERIDIAN-INSTALLATION-CHECK
+        hook = copy_hook(Path(directory), "read-guard.sh")
+        return subprocess.run(
+            ["bash", str(hook)], input=payload if isinstance(payload, str) else json.dumps(payload),
+            capture_output=True, text=True, check=False, env=hook_environment(),
+        )
 
 
 class ReadGuardTest(unittest.TestCase):
@@ -36,6 +37,7 @@ class ReadGuardTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.project = Path(self.temporary.name)
         (self.project / "tasks").mkdir()
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n<!-- MERIDIAN:END -->\n"
             "Task files live under `tasks/`; queue is `tasks/QUEUE.md`.\n\n## Roles\n",
@@ -102,14 +104,17 @@ class ReadGuardTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_allows_language_policy_over_the_threshold(self) -> None:
+        # MERIDIAN-INSTALLATION-CHECK
         target = self.write_file("LANGUAGE_POLICY.md", 500)
         result = run_hook(self.payload(target))
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_allows_a_file_an_entry_router_declares_always_loaded(self) -> None:
+        # MERIDIAN-INSTALLATION-CHECK
         target = self.write_file("AGENTS.md", 500)
         router = self.project / "docs/workflows/ENTRY_ROUTER.md"
         router.parent.mkdir(parents=True)
+        # MERIDIAN-INSTALLATION-CHECK
         router.write_text("`AGENTS.md` and `CLAUDE.md` are always loaded at session start.\n", encoding="utf-8")
         result = run_hook(self.payload(target))
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -117,6 +122,7 @@ class ReadGuardTest(unittest.TestCase):
     def test_honors_a_configured_threshold(self) -> None:
         target = self.write_file("big.txt", 500)
         (self.project / "docs").mkdir()
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text(
             "`Read-guard threshold`: 1000 lines, overridable per project.\n", encoding="utf-8"
         )
@@ -124,9 +130,12 @@ class ReadGuardTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_router_file_uses_its_own_ceiling(self) -> None:
+        # MERIDIAN-INSTALLATION-CHECK
         target = self.write_file("PROJECT_WORKFLOW.md", 500)
         target.write_text("LEAN_DELIVERY\n" * 500, encoding="utf-8")
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / ".meridian").mkdir()
+        # MERIDIAN-INSTALLATION-CHECK
         (self.project / ".meridian/context-size.json").write_text(
             '{"version": 1, "routerFileLinesCeiling": 100}\n', encoding="utf-8"
         )
@@ -149,10 +158,7 @@ class ReadGuardTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_allows_on_malformed_payload(self) -> None:
-        result = subprocess.run(
-            ["bash", str(HOOK)], input="not json", capture_output=True, text=True, check=False,
-            cwd=str(self.project),
-        )
+        result = run_hook("not json")
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_ignores_a_non_read_tool_call(self) -> None:

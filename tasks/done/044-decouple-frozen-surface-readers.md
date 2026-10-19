@@ -19,15 +19,15 @@ repository. No name changes.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row R3 in `docs/RENAME_PLAN.md` is implemented as the
+- [x] The scope of row R3 in `docs/RENAME_PLAN.md` is implemented as the
   plan describes it, on the files it lists. A file the plan missed but that
   the same rename needs is in scope; the handoff lists it.
-- [ ] Every test under "Tests that prove it" for row R3 exists and passes.
-- [ ] Every line that names a group 3 path in readers 1 to 3, 9, 12, and 13 of the
+- [x] Every test under "Tests that prove it" for row R3 exists and passes.
+- [x] Every line that names a group 3 path in readers 1 to 3, 9, 12, and 13 of the
   plan carries the tag `MERIDIAN-INSTALLATION-CHECK`, on the line or the line
   above.
-- [ ] No test spawns `meridian` through `PATH`; a test fails if one does.
-- [ ] No group 2, group 3, or group 4 identifier changes, except the group 4
+- [x] No test spawns `meridian` through `PATH`; a test fails if one does.
+- [x] No group 2, group 3, or group 4 identifier changes, except the group 4
   exceptions the plan names (`docs/PUBLIC_SURFACE.md` and
   `docs/examples/LEAN_DELIVERY_WALKTHROUGH.md`). The frozen files stay
   unchanged: `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
@@ -37,17 +37,17 @@ repository. No name changes.
   `.codex/rules/meridian.rules`, `hooks/hooks.json`,
   `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, and the `meridian
   worktree` line of `.codex/rules/local.rules`.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/044.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/044.json`, which only
   the installed `meridian task close 044` writes. No task of this phase runs the
   checkout's `setup --apply` against the real home directory (plan choice 7).
-- [ ] A test expectation that this task makes stale, such as a renamed
+- [x] A test expectation that this task makes stale, such as a renamed
   path, class, or string, is updated in this task without weakening any
   other assertion. The parallel suite reports the same coverage `total`
   before and after the task, except for new tests, which the handoff lists.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean task
   worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
