@@ -282,10 +282,11 @@ evidence.
 
 ## Dogfooding verification
 
-Local verification for Meridian runs the profile-aware audit from the
-repository root and a read-only profile doctor that resolves every declared
-surface and host profile. CI runs the same checks in a clean checkout. Both
-must confirm:
+Local installation verification uses only the installed Meridian from the
+repository root. Its profile-aware audit and read-only profile doctor resolve
+the surfaces and host profiles declared by that installed framework. CI has no
+installed Meridian and does not run these installation checks. Both local
+commands must confirm:
 
 - `workflowMode` remains `lean-delivery`;
 - the `meridian-self-hosting` profile and required capability versions are
@@ -298,16 +299,13 @@ must confirm:
 The concrete commands are:
 
 ```bash
-python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .
-python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
-# Equivalent package dispatch (with PYTHONPATH=src for an uninstalled checkout):
-python3 -m cardine.cli --framework-root . profile doctor meridian-self-hosting --project .
-python3 -m cardine.cli --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
+meridian profile doctor meridian-self-hosting --project .
+meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
 ```
 
 The doctor resolves catalog declarations, managed copies, shared sources,
 manifest evidence references, and every profile-required probe without
-writing. The CI audit continues to print host-dependent `UNVERIFIED` rows, but
+writing. The local audit continues to print host-dependent `UNVERIFIED` rows, but
 its CI gate requires every static installation row and every global audit
 failure condition to pass. The separately executed unit suite supplies the
 behavior checks named by the host-neutral probe. This does not promote an

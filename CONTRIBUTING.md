@@ -247,12 +247,21 @@ release, commit message, or lifecycle step requires a run or its pass counts.
 
 ## Managed copies of this repository
 
-This repository installs Meridian on itself. Its root `PROJECT_WORKFLOW.md`,
-`AGENTS.md`, `CLAUDE.md`, `LANGUAGE_POLICY.md`, `.codex/` files, and the managed
-documents under `docs/` are copies of the Lean Delivery templates, and
-`.meridian/manifest.json` records the release and baseline they were installed
-from. Never edit the manifest or `.meridian/baselines/` by hand; `meridian
-upgrade` writes them.
+The installed Meridian owns this repository's `.meridian/` and managed copies:
+`PROJECT_WORKFLOW.md`, `AGENTS.md`, `CLAUDE.md`, `LANGUAGE_POLICY.md`, `.codex/`,
+the managed documents under `docs/`, and the managed hooks. Check installation
+integrity locally with the installed Meridian:
+
+```bash
+meridian profile doctor meridian-self-hosting --project .
+meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
+```
+
+Never edit `.meridian/` or managed copies by hand, rewrite their digests, or run
+the checkout's `upgrade` on this repository. Restore an accidentally changed
+managed copy from `main`. Product catalog, template, migration, and release
+changes do not update this installed baseline. CI checks product code and
+recorded managed digests; installation integrity is a local lifecycle check.
 
 Until Cardine 1.0, no project runs Cardine. A template change bumps the
 capability version, updates its `requiredVersion` in

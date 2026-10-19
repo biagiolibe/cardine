@@ -812,7 +812,7 @@ class ManagedDigestTest(unittest.TestCase):
 
         self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
 
-    def test_drift_names_file_digests_and_refresh_command(self) -> None:
+    def test_drift_names_file_digests_and_restore_instruction(self) -> None:
         self.drift()
         output = io.StringIO()
 
@@ -823,7 +823,8 @@ class ManagedDigestTest(unittest.TestCase):
         self.assertIn("docs/CONTEXT_BUDGET_POLICY.md", message)
         self.assertIn("expected", message)
         self.assertIn("got", message)
-        self.assertIn("--write-managed-digests", message)
+        self.assertIn("restore the managed copy from `main`", message)
+        self.assertNotIn("--write-managed-digests", message)
 
     def test_stale_digest_evidence_fails(self) -> None:
         manifest = self.manifest()
@@ -842,62 +843,52 @@ class ManagedDigestTest(unittest.TestCase):
 
         self.assertIn("stale digest evidence", output.getvalue())
 
-    def test_refresh_fixes_drift_and_is_idempotent(self) -> None:
-        self.drift()
+    def test_missing_managed_file_fails(self) -> None:
+        self.target.unlink()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+            cr.check_managed_digests(self.root)
+        self.assertIn("missing managed-copy surface docs/CONTEXT_BUDGET_POLICY.md", output.getvalue())
 
-        changes = cr.write_managed_digests(self.root)
-        after_first_write = (self.root / ".meridian/manifest.json").read_bytes()
-        cr.check_managed_digests(self.root)
-
-        self.assertTrue(any("docs/CONTEXT_BUDGET_POLICY.md" in change for change in changes))
-        self.assertEqual([], cr.write_managed_digests(self.root))
-        self.assertEqual(after_first_write, (self.root / ".meridian/manifest.json").read_bytes())
-
-    def test_refresh_restores_a_declared_surface_the_upgrade_dropped(self) -> None:
+    def test_missing_declared_digest_fails(self) -> None:
         manifest = self.manifest()
-        managed_files = manifest["managedFiles"]
-        assert isinstance(managed_files, dict)
-        managed_files.pop("docs/COMPLETION_REPORT_TEMPLATE.md")
+        manifest["managedFiles"].pop("docs/COMPLETION_REPORT_TEMPLATE.md")
         self.write_manifest(manifest)
         output = io.StringIO()
         with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
             cr.check_managed_digests(self.root)
         self.assertIn("has no managedFiles digest", output.getvalue())
 
-        changes = cr.write_managed_digests(self.root)
+    def test_removed_writer_option_cannot_change_manifest(self) -> None:
+        self.drift()
+        before = (self.root / ".meridian/manifest.json").read_bytes()
+        result = subprocess.run(
+            [sys.executable, "scripts/check_repository.py", "--write-managed-digests"],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("unsupported repository-check option", result.stdout)
+        self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
 
-        self.assertEqual(1, len(changes))
-        self.assertIn("docs/COMPLETION_REPORT_TEMPLATE.md", changes[0])
-        cr.check_managed_digests(self.root)
-        restored = self.manifest()["managedFiles"]
-        assert isinstance(restored, dict)
-        self.assertEqual(sorted(restored), list(restored))
+    def test_repository_check_ignores_checkout_profile_surface_changes(self) -> None:
+        catalog_path = self.root / "capabilities/catalog-v1.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        catalog["capabilities"]["context-budgeting"]["managedSurfaces"][0]["path"] = (
+            "docs/FUTURE_CONTEXT_POLICY.md"
+        )
+        catalog_path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
+        before = (self.root / ".meridian/manifest.json").read_bytes()
+        subprocess.run(["git", "init", "--quiet"], cwd=self.root, check=True)
+        subprocess.run(["git", "add", "."], cwd=self.root, check=True)
 
-    def test_refresh_recomputes_evidence_after_an_upgrade_rewrote_managed_files(self) -> None:
-        manifest = self.manifest()
-        managed_files = manifest["managedFiles"]
-        assert isinstance(managed_files, dict)
-        managed_files["docs/CONTEXT_BUDGET_POLICY.md"] = "0" * 64
-        profiles = manifest["capabilityProfiles"]
-        assert isinstance(profiles, dict)
-        capabilities = profiles["meridian-self-hosting"]["capabilities"]
-        assert isinstance(capabilities, dict)
-        capabilities["context-budgeting"]["installation"]["evidence"] = ["sha256:" + "1" * 64]
-        self.write_manifest(manifest)
+        result = subprocess.run(
+            [sys.executable, "scripts/check_repository.py"],
+            cwd=self.root, capture_output=True, text=True,
+        )
 
-        cr.write_managed_digests(self.root)
-
-        cr.check_managed_digests(self.root)
-        self.assertEqual([], cr.write_managed_digests(self.root))
-
-    def test_refresh_refuses_a_missing_listed_file(self) -> None:
-        self.target.unlink()
-        output = io.StringIO()
-
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.write_managed_digests(self.root)
-
-        self.assertIn("listed file is missing: docs/CONTEXT_BUDGET_POLICY.md", output.getvalue())
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("Meridian repository checks passed.", result.stdout)
+        self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
 
     def test_repository_check_and_profile_doctor_agree_on_drift(self) -> None:
         self.drift()
@@ -937,58 +928,6 @@ class ManagedDigestTest(unittest.TestCase):
         profile = (self.root / "docs/EXECUTION_EVIDENCE_PROFILE.md").read_text(encoding="utf-8")
         self.assertIn("Run every validation command of record as its own command", profile)
         self.assertIn("Never join it with `&&` or `;`", profile)
-
-
-class SelfHostingBaselineTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name) / "project"
-        (self.root / ".meridian").mkdir(parents=True)
-        (self.root / "migrations").mkdir()
-        (self.root / "VERSION").write_text("1.4.0\n", encoding="utf-8")
-        (self.root / "migrations/001-synthetic.json").write_text(
-            json.dumps({"to": "1.4.0"}), encoding="utf-8"
-        )
-        self.manifest_path = self.root / ".meridian/manifest.json"
-        self.manifest_path.write_text(
-            json.dumps({"workflowBaselineVersion": "1.4.0"}), encoding="utf-8"
-        )
-
-    def tearDown(self) -> None:
-        self.temporary.cleanup()
-
-    def set_baseline(self, version: str) -> None:
-        manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
-        manifest["workflowBaselineVersion"] = version
-        self.manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-
-    def test_current_baseline_passes(self) -> None:
-        cr.check_self_hosting_baseline(self.root)
-
-    def test_lagging_baseline_fails_and_names_the_fix(self) -> None:
-        self.set_baseline("1.1.49")
-        output = io.StringIO()
-
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.check_self_hosting_baseline(self.root)
-
-        message = output.getvalue()
-        self.assertIn("1.1.49", message)
-        self.assertIn("upgrade --project . --check", message)
-        self.assertIn("--apply", message)
-
-    def test_migration_ahead_of_version_is_not_required_yet(self) -> None:
-        data = {
-            "id": "999-ahead-of-version",
-            "from": "98.0.0",
-            "to": "99.0.0",
-            "description": "Synthetic record ahead of VERSION.",
-            "managedPaths": [],
-            "verification": [],
-        }
-        (self.root / "migrations/999-ahead-of-version.json").write_text(json.dumps(data), encoding="utf-8")
-
-        cr.check_self_hosting_baseline(self.root)
 
 
 class StopCodeRegistryCheckTest(unittest.TestCase):

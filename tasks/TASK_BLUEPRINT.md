@@ -60,3 +60,12 @@
 ```bash
 claude "$(cat tasks/[NNN]-name.md)"$'\n\nExecute this task in the current project.'
 ```
+
+## Validation
+
+- `python3 scripts/check_repository.py`
+- `meridian profile doctor meridian-self-hosting --project .`
+- `meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
+- `python3 scripts/run_tests.py --parallel`
+- `python3 scripts/run_tests.py --parallel --clean-clone`
+- `git diff --check`

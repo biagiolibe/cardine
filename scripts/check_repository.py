@@ -25,7 +25,6 @@ from cardine.templates import files as owner_templates_files
 from cardine.templates.markers import find_capability_marker_version
 from cardine.templates import migration_audit as owner_templates_migration_audit
 from cardine.templates import migrations as owner_templates_migrations
-from cardine.templates import manifest as owner_templates_manifest
 
 MARKER_BASELINE_PATH = ROOT / "capabilities" / "marker-baselines.json"
 REQUIRED_FILES = (
@@ -800,35 +799,37 @@ def check_capability_required_versions(root: Path = ROOT) -> None:
 
 
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
-    """Return managed-copy and installation-evidence drift without host probes."""
-    try:
-        manifest = owner_templates_manifest.load_manifest(root, root)
-        catalog = catalog_provider.load_capability_catalog(root)
-        profiles = catalog_provider.parse_capability_profiles(manifest, catalog)
-    except meridian.MeridianError as error:
-        return [str(error)]
+    """Check recorded installation digests without consulting the product catalog."""
+    manifest = json.loads((root / ".meridian/manifest.json").read_text(encoding="utf-8"))
     managed_files = manifest["managedFiles"]
-    assert isinstance(managed_files, dict)
-    diagnostics: list[str] = []
-    declared_paths: set[str] = set()
-    for profile in profiles:
-        for declaration in profile.capabilities:
-            declared_paths.update(
-                surface.path for surface in declaration.managed_surface if surface.form == "managed-copy"
-            )
-            _identities, failures = owner_templates_audit.installation_surface_diagnostics(
-                root, declaration, managed_files
-            )
-            diagnostics.extend(
-                failure for failure in failures
-                if "managed-copy" in failure or failure.startswith("stale digest evidence")
-            )
-    diagnostics.extend(
+    diagnostics = [
         diagnostic
-        for _relative, diagnostic in owner_templates_audit.managed_copy_drift(
-            root, managed_files, skip_paths=declared_paths
-        )
-    )
+        for _relative, diagnostic in owner_templates_audit.managed_copy_drift(root, managed_files)
+    ]
+    for profile in manifest.get("capabilityProfiles", {}).values():
+        for declaration in profile.get("capabilities", {}).values():
+            surfaces = declaration.get("managedSurface", [])
+            evidence = declaration.get("installation", {}).get("evidence", [])
+            surface_digests: set[str] = set()
+            for surface in surfaces:
+                form, relative = surface["form"], surface["path"]
+                if form == "declaration-only":
+                    continue
+                path = root / relative
+                if not path.is_file():
+                    if form == "managed-copy" and relative not in managed_files:
+                        diagnostics.append(f"missing managed-copy surface {relative}")
+                    continue
+                digest = meridian.sha256(path)
+                surface_digests.add(f"sha256:{digest}")
+                if form == "managed-copy":
+                    if relative not in managed_files:
+                        diagnostics.append(f"managed-copy surface {relative} has no managedFiles digest")
+                    if f"sha256:{digest}" not in evidence:
+                        diagnostics.append(f"managed-copy surface {relative} lacks matching digest evidence")
+            for reference in evidence:
+                if reference.startswith("sha256:") and reference not in surface_digests:
+                    diagnostics.append(f"stale digest evidence {reference}")
     return diagnostics
 
 
@@ -836,116 +837,10 @@ def check_managed_digests(root: Path = ROOT) -> None:
     diagnostics = managed_digest_diagnostics(root)
     if not diagnostics:
         return
-    refresh = (
-        "run `python3 scripts/check_repository.py --write-managed-digests` "
-        "after a deliberate managed-copy edit and review the resulting diff"
-    )
+    restore = "restore the managed copy from `main`; never rewrite installed digests"
     for diagnostic in diagnostics:
-        print(f"FAIL: {diagnostic}; {refresh}")
+        print(f"FAIL: {diagnostic}; {restore}")
     raise SystemExit(1)
-
-
-def check_self_hosting_baseline(root: Path = ROOT) -> None:
-    """Fail when this repository's installed baseline lags the newest released migration."""
-    manifest_path = root / ".meridian" / "manifest.json"
-    if not manifest_path.is_file():
-        return
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    recorded = owner_templates_files.manifest_baseline_version(manifest)
-    version = meridian.read_version(root)
-    # The newest chain target at or below VERSION; with none, the baseline the
-    # newest release ledger at or below VERSION records.
-    released = [
-        str(json.loads(path.read_text(encoding="utf-8"))["to"])
-        for path in (root / "migrations").glob("[0-9][0-9][0-9]-*.json")
-    ] or [
-        str(json.loads(path.read_text(encoding="utf-8"))["workflowBaselineVersion"])
-        for path in (root / "releases").glob("*.json")
-    ]
-    expected = max(
-        (item for item in released if meridian.version_key(item) <= meridian.version_key(version)),
-        key=meridian.version_key,
-        default=recorded,
-    )
-    if meridian.version_key(recorded) < meridian.version_key(expected):
-        fail(
-            f".meridian/manifest.json workflowBaselineVersion {recorded} is older than the newest "
-            f"migration baseline {expected} that VERSION includes; run "
-            "`bin/meridian upgrade --project . --check`, then `--apply` (see CONTRIBUTING.md, "
-            "\"Managed copies of this repository\")"
-        )
-
-
-def write_managed_digests(root: Path = ROOT) -> list[str]:
-    """Refresh managed-file digests and matching profile evidence explicitly."""
-    manifest_path = root / ".meridian" / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    managed_files = manifest.get("managedFiles")
-    if not isinstance(managed_files, dict):
-        fail("manifest managedFiles must be an object")
-    refreshed: dict[str, tuple[str, str]] = {}
-    for relative, recorded in managed_files.items():
-        path = root / relative
-        if not path.is_file():
-            fail(f"refusing to write managed digests: listed file is missing: {relative}")
-        current = meridian.sha256(path)
-        if recorded != current:
-            refreshed[relative] = (str(recorded), current)
-    profiles = manifest.get("capabilityProfiles", {})
-    # `upgrade --apply` rebuilds managedFiles from the template's managed list, so
-    # a managed-copy surface a profile declares beyond that list loses its digest.
-    for profile in profiles.values() if isinstance(profiles, dict) else ():
-        capabilities = profile.get("capabilities") if isinstance(profile, dict) else None
-        for declaration in capabilities.values() if isinstance(capabilities, dict) else ():
-            for surface in declaration.get("managedSurface", []) if isinstance(declaration, dict) else ():
-                relative = surface.get("path") if isinstance(surface, dict) else None
-                if (
-                    isinstance(relative, str)
-                    and surface.get("form") == "managed-copy"
-                    and relative not in managed_files
-                    and relative not in refreshed
-                ):
-                    path = root / relative
-                    if not path.is_file():
-                        fail(f"refusing to write managed digests: declared file is missing: {relative}")
-                    refreshed[relative] = ("absent", meridian.sha256(path))
-    for relative, (_recorded, current) in refreshed.items():
-        managed_files[relative] = current
-    ordered = dict(sorted(managed_files.items()))
-    managed_files.clear()
-    managed_files.update(ordered)
-    evidence_refreshed: list[str] = []
-    if isinstance(profiles, dict):
-        for profile_id, profile in profiles.items():
-            if not isinstance(profile, dict) or not isinstance(profile.get("capabilities"), dict):
-                continue
-            for capability_id, declaration in profile["capabilities"].items():
-                if not isinstance(declaration, dict):
-                    continue
-                surfaces = declaration.get("managedSurface")
-                installation = declaration.get("installation")
-                if not isinstance(surfaces, list) or not isinstance(installation, dict):
-                    continue
-                if not any(isinstance(item, dict) and item.get("form") == "managed-copy" for item in surfaces):
-                    continue
-                # `upgrade --apply` rewrites managedFiles but not this evidence, so it is
-                # recomputed from the files, as the install builds it, not mapped from old digests.
-                digests = {
-                    f"sha256:{meridian.sha256(root / item['path'])}"
-                    for item in surfaces
-                    if isinstance(item, dict)
-                    and item.get("form") != "declaration-only"
-                    and (root / str(item.get("path"))).is_file()
-                }
-                if digests and installation.get("evidence") != sorted(digests):
-                    installation["evidence"] = sorted(digests)
-                    evidence_refreshed.append(f"{profile_id}/{capability_id}: installation evidence")
-    if refreshed or evidence_refreshed:
-        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    return [
-        *(f"{relative}: {recorded} -> {current}" for relative, (recorded, current) in refreshed.items()),
-        *evidence_refreshed,
-    ]
 
 
 # Tracked records identify checkouts and worktrees by names or paths relative
@@ -1014,13 +909,8 @@ def check_no_private_names(
 
 
 def main() -> None:
-    if "--write-managed-digests" in sys.argv[1:]:
-        changes = write_managed_digests()
-        for change in changes:
-            print(f"Updated managed digest: {change}")
-        if not changes:
-            print("Managed digests are already current.")
-        return
+    if any(argument != "--write-marker-baselines" for argument in sys.argv[1:]):
+        fail("unsupported repository-check option")
     if "--write-marker-baselines" in sys.argv[1:]:
         write_marker_baselines()
         print(f"Wrote {MARKER_BASELINE_PATH.relative_to(ROOT)}.")
@@ -1042,7 +932,6 @@ def main() -> None:
     check_local_markdown_links()
     check_capability_marker_baselines()
     check_capability_required_versions()
-    check_self_hosting_baseline()
     check_managed_digests()
     check_no_machine_paths()
     check_no_private_names()
