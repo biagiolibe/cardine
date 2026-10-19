@@ -40,7 +40,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 5a and decision 1, and `docs/REN
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 042 | Introduce the project names accessor (rename plan R1) | 🔴 P1 | — | [042](done/042-introduce-names-accessor.md) |
-| `[ ]` | 043 | Extract the read-only Meridian installation reader (rename plan R2) | 🔴 P1 | 042 | [043](043-extract-meridian-installation-reader.md) |
+| `[x]` | 043 | Extract the read-only Meridian installation reader (rename plan R2) | 🔴 P1 | 042 | [043](done/043-extract-meridian-installation-reader.md) |
 | `[ ]` | 044 | Decouple the frozen-surface readers (rename plan R3) | 🔴 P1 | 043 | [044](044-decouple-frozen-surface-readers.md) |
 | `[ ]` | 045 | Rename the exception and parser classes (rename plan R4) | 🔴 P1 | 044 | [045](045-rename-exception-and-parser-classes.md) |
 | `[ ]` | 046 | Rename the executables, the adapter, and the test modules (rename | 🔴 P1 | 045 | [046](046-rename-executables-adapter-and-test-modules.md) |
