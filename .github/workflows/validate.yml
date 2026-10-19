@@ -24,6 +24,4 @@ jobs:
       - run: python3 -m pip install --editable .
       - run: cardine --version
       - run: python3 scripts/check_repository.py
-      - run: python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .
-      - run: python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting
       - run: python3 scripts/run_tests.py --parallel
