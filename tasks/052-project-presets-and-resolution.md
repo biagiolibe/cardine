@@ -20,30 +20,30 @@ or the shape of the queue.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SW1 is implemented as the plan describes it, with the
+- [x] The scope of row SW1 is implemented as the plan describes it, with the
   design of the plan's sections 1 to 6. A file the plan missed but that
   the same change needs is in scope; the handoff lists it.
-- [ ] Every test that row SW1 lists under "Tests that prove it" exists and
+- [x] Every test that row SW1 lists under "Tests that prove it" exists and
   passes.
-- [ ] `detect_mode` resolves the workflow from the configured preset and never
+- [x] `detect_mode` resolves the workflow from the configured preset and never
   reads `PROJECT_WORKFLOW.md` or `tasks/QUEUE.md`. Until row SW7 removes
   the branching, it maps `lean` to the internal key `lean-delivery` and
   `governed` to `governed-sdd`, so its 13 current consumers keep working
   unchanged. A missing or malformed configuration is a configuration
   error, never a guess.
-- [ ] The detection of the Meridian mode lock in `PROJECT_WORKFLOW.md` moves
+- [x] The detection of the Meridian mode lock in `PROJECT_WORKFLOW.md` moves
   into `cardine.legacy.meridian_installation`. `load_snapshot` accepts the
   workflow resolver as an injected argument; `load_meridian_snapshot`
   passes the legacy detection and every product caller uses the
   configuration resolver. No product command imports `cardine.legacy` (the
   import-graph test of task 043 still passes).
-- [ ] `load_meridian_snapshot` still reads a synthetic Meridian-layout project
+- [x] `load_meridian_snapshot` still reads a synthetic Meridian-layout project
   that has no `.cardine/project.json`, and a test proves it.
-- [ ] The shared test fixture builders (`tests/cardine_cli_support.py`,
+- [x] The shared test fixture builders (`tests/cardine_cli_support.py`,
   `tests/console_support.py`, `tests/worktree_support.py`) write a
   `.cardine/project.json` with a preset. Test files that wrote a mode lock
   only to select the workflow use the fixture instead.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -52,16 +52,16 @@ or the shape of the queue.
   worktree` line of `.codex/rules/local.rules`. No task of this work item
   runs the checkout's `setup --apply` against the real home directory or
   creates `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/052.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/052.json`, which only
   the installed `meridian task close 052` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
