@@ -183,7 +183,7 @@ class AuthorityExcerptTest(unittest.TestCase):
         self.assertNotIn("Other body.", result.stdout)
 
     def test_context_authority_resolves_the_module_map_section_after_the_managed_block(self) -> None:
-        template = (ROOT / "templates/workflows/governed-sdd/docs/CODE_ORGANIZATION.md").read_text(encoding="utf-8")
+        template = (ROOT / "templates/single/docs/CODE_ORGANIZATION.md").read_text(encoding="utf-8")
         (self.project / "docs/CODE_ORGANIZATION.md").write_text(
             template + "\n## Project module map\n\nThe `core` module owns domain rules; `app` depends on `core`.\n\n## Other\n\nUnrelated.\n",
             encoding="utf-8",

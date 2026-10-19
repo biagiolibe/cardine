@@ -26,7 +26,12 @@ from cardine.templates import files as owner_templates_files
 from cardine.templates.markers import find_capability_marker_version
 from cardine.templates import migration_audit as owner_templates_migration_audit
 from cardine.templates import migrations as owner_templates_migrations
+from cardine.templates.roots import single_template_root
 
+# The marker baselines and the catalog's required versions still key on the old
+# per-workflow roots until row SW5 of docs/SINGLE_WORKFLOW_PLAN.md moves them.
+LEGACY_WORKFLOW_MODES = ("lean-delivery", "governed-sdd")
+SINGLE_POLICY_LABEL = "All presets"
 MARKER_BASELINE_PATH = ROOT / "capabilities" / "marker-baselines.json"
 REQUIRED_FILES = (
     "README.md",
@@ -53,13 +58,15 @@ REQUIRED_FILES = (
     "migrations/README.md",
     "commands/meridian-upgrade.md",
     "commands/meridian-audit.md",
-    "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md",
-    "templates/workflows/lean-delivery/AGENTS.md",
-    "templates/workflows/lean-delivery/CLAUDE.md",
-    "templates/workflows/lean-delivery/LANGUAGE_POLICY.md",
-    "templates/workflows/lean-delivery/docs/CONTEXT_BUDGET_POLICY.md",
-    "templates/workflows/lean-delivery/docs/EXECUTION_EVIDENCE_PROFILE.md",
-    "templates/workflows/lean-delivery/.codex/hooks.json",
+    "templates/single/PROJECT_WORKFLOW.md",
+    "templates/single/AGENTS.md",
+    "templates/single/CLAUDE.md",
+    "templates/single/LANGUAGE_POLICY.md",
+    "templates/single/tasks/TASK_BLUEPRINT.md",
+    "templates/single/tasks/QUEUE.md",
+    "templates/single/docs/CONTEXT_BUDGET_POLICY.md",
+    "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md",
+    "templates/single/.codex/hooks.json",
     "skills/meridian-lean-delivery/SKILL.md",
     "skills/meridian-lean-delivery-claude-code/SKILL.md",
 )
@@ -71,11 +78,7 @@ INSTALLED_MERIDIAN_RECORDS = (
     ".meridian/probes/meridian-self-hosting/claude-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
     ".meridian/probes/meridian-self-hosting/codex-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
 )
-LANGUAGE_POLICY_FILES = (
-    "templates/base/LANGUAGE_POLICY.md",
-    "templates/workflows/lean-delivery/LANGUAGE_POLICY.md",
-    "templates/workflows/governed-sdd/LANGUAGE_POLICY.md",
-)
+LANGUAGE_POLICY_FILES = ("templates/single/LANGUAGE_POLICY.md",)
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
 RETIRED_GOVERNED_REVIEW_PHRASES = (
     "uses that same primary checkout",
@@ -110,26 +113,25 @@ def check_changelog_fragments(root: Path = ROOT) -> None:
 
 def check_template_context_sizes() -> None:
     """Keep the shipped role startup sets below their documented ceilings."""
-    labels = {"lean-delivery": "Lean Delivery", "governed-sdd": "Governed SDD"}
-    for mode, workflow_label in labels.items():
-        project = ROOT / "templates" / "workflows" / mode
-        policy = project / cardine_cli.CONTEXT_SIZE_POLICY_PATH
-        if not policy.is_file():
-            fail(f"context-size policy is missing: {policy.relative_to(ROOT)}")
-        rows = {
-            role: int(ceiling)
-            for found_workflow, role, ceiling in re.findall(
-                r"^\| ([^|]+) \| ([a-z]+) \| ([0-9]+) \|$", policy.read_text(encoding="utf-8"), re.MULTILINE
-            )
-            if found_workflow == workflow_label
-        }
-        for role in cardine_cli.CONTEXT_SIZE_ROLES[mode]:
-            if role not in rows:
-                fail(f"context-size ceiling is missing for {mode}/{role}")
-            report = owner_shared_context.context_size_report(project, role, workflow_mode=mode)
-            actual = int(report["total"]["bytes"])
-            if actual > rows[role]:
-                fail(f"context-size ceiling exceeded for {mode}/{role}: {actual} bytes > {rows[role]} bytes")
+    project = single_template_root(ROOT)
+    policy = project / cardine_cli.CONTEXT_SIZE_POLICY_PATH
+    if not policy.is_file():
+        fail(f"context-size policy is missing: {policy.relative_to(ROOT)}")
+    rows = {
+        role: int(ceiling)
+        for found_workflow, role, ceiling in re.findall(
+            r"^\| ([^|]+) \| ([a-z]+) \| ([0-9]+) \|$", policy.read_text(encoding="utf-8"), re.MULTILINE
+        )
+        if found_workflow == SINGLE_POLICY_LABEL
+    }
+    # The legacy workflow key selects the full role set; both presets install it.
+    for role in cardine_cli.CONTEXT_SIZE_ROLES["governed-sdd"]:
+        if role not in rows:
+            fail(f"context-size ceiling is missing for {role}")
+        report = owner_shared_context.context_size_report(project, role, workflow_mode="governed-sdd")
+        actual = int(report["total"]["bytes"])
+        if actual > rows[role]:
+            fail(f"context-size ceiling exceeded for {role}: {actual} bytes > {rows[role]} bytes")
 
 
 def check_language_policy() -> None:
@@ -147,32 +149,28 @@ def check_language_policy() -> None:
                 fail(f"language policy is incomplete: {name}")
 
     for name in (
-        "templates/base/CLAUDE.md",
-        "templates/workflows/lean-delivery/AGENTS.md",
-        "templates/workflows/lean-delivery/CLAUDE.md",
-        "templates/workflows/governed-sdd/AGENTS.md",
-        "templates/workflows/governed-sdd/CLAUDE.md",
+        "templates/single/AGENTS.md",
+        "templates/single/CLAUDE.md",
     ):
         if "LANGUAGE_POLICY.md" not in (ROOT / name).read_text(encoding="utf-8"):
             fail(f"agent instructions do not load the language policy: {name}")
 
-    mode_lock_files = (
-        "commands/meridian-task.md",
-        "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md",
-        "templates/workflows/governed-sdd/AGENTS.md",
-        "templates/workflows/governed-sdd/CLAUDE.md",
-        "templates/workflows/governed-sdd/docs/CODE_REVIEW_PROMPT.md",
-        "templates/workflows/governed-sdd/docs/OPERATOR_PROMPTS.md",
+    command_text = (ROOT / "commands/meridian-task.md").read_text(encoding="utf-8")
+    if "GOVERNED_SDD" not in command_text or "BLOCKED" not in command_text:
+        fail("governed-SDD mode lock is incomplete: commands/meridian-task.md")
+    workflow_lock_files = (
+        "templates/single/PROJECT_WORKFLOW.md",
+        "templates/single/AGENTS.md",
+        "templates/single/CLAUDE.md",
+        "templates/single/docs/CODE_REVIEW_PROMPT.md",
+        "templates/single/docs/OPERATOR_PROMPTS.md",
     )
-    for name in mode_lock_files:
+    for name in workflow_lock_files:
         text = (ROOT / name).read_text(encoding="utf-8")
-        if "GOVERNED_SDD" not in text or "BLOCKED" not in text:
-            fail(f"governed-SDD mode lock is incomplete: {name}")
+        if "BLOCKED WORKFLOW_UNREADABLE" not in text:
+            fail(f"workflow lock is incomplete: {name}")
 
     lean_mode_lock_files = (
-        "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md",
-        "templates/workflows/lean-delivery/AGENTS.md",
-        "templates/workflows/lean-delivery/CLAUDE.md",
         "skills/meridian-lean-delivery/SKILL.md",
         "skills/meridian-lean-delivery-claude-code/SKILL.md",
     )
@@ -181,17 +179,17 @@ def check_language_policy() -> None:
         if "LEAN_DELIVERY" not in text or "BLOCKED" not in text:
             fail(f"Lean Delivery mode lock is incomplete: {name}")
 
-    operator_prompts = ROOT / "templates/workflows/governed-sdd/docs/OPERATOR_PROMPTS.md"
+    operator_prompts = ROOT / "templates/single/docs/OPERATOR_PROMPTS.md"
     if not operator_prompts.is_file():
-        fail("governed-SDD operator prompts are missing")
+        fail("operator prompts are missing")
     if "This non-normative cookbook" not in operator_prompts.read_text(
         encoding="utf-8"
     ):
-        fail("governed-SDD operator prompts must remain non-normative")
+        fail("operator prompts must remain non-normative")
 
 
 def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
-    workflow = root / "templates" / "workflows" / "governed-sdd"
+    workflow = single_template_root(root)
     review_paths = (
         workflow / "PROJECT_WORKFLOW.md",
         workflow / "docs" / "CODE_REVIEW_PROMPT.md",
@@ -262,26 +260,24 @@ def check_governed_lifecycle_text(root: Path = ROOT) -> None:
     naming the governance files its task branches must not edit, because task 145
     scopes Lean to the branch-name and push rules.
     """
-    workflows = root / "templates" / "workflows"
+    workflows = single_template_root(root)
     for path in sorted(workflows.rglob("*.md")):
         relative = path.relative_to(root)
         text = path.read_text(encoding="utf-8")
         for phrase in FORBIDDEN_TEMPLATE_TEXT:
             if phrase in text:
                 fail(f"{relative} contains retired or placeholder text: {phrase}")
-        governed = "governed-sdd" in path.parts
         for block in MANAGED_BLOCK.finditer(text):
             capability, body = block.group("capability"), block.group("body")
             edit = QUEUE_EDIT_STATEMENT.search(body)
             if edit:
                 fail(f"{relative}: capability {capability} says a role edits a queue row: {edit.group(0)!r}")
-            if governed and capability not in LITERAL_LOCATION_EXEMPT_CAPABILITIES:
+            if capability not in LITERAL_LOCATION_EXEMPT_CAPABILITIES:
                 literal = LITERAL_LOCATION.search(body)
                 if literal:
                     fail(f"{relative}: capability {capability} names a literal location: {literal.group(0)!r}")
-    governed_root = workflows / "governed-sdd"
     identity_blocks = []
-    for path in sorted(governed_root.rglob("*.md")):
+    for path in sorted(workflows.rglob("*.md")):
         text = path.read_text(encoding="utf-8")
         for match in re.finditer(r"--author=", text):
             enclosing = next(
@@ -701,8 +697,8 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
         re.DOTALL,
     )
     baselines: dict[str, dict[str, dict[str, object]]] = {}
-    for mode in generator.CLAUDE_MD_SHARED_ANCHOR:
-        for item in owner_templates_files.managed_files(root, mode):
+    for mode in LEGACY_WORKFLOW_MODES:
+        for item in owner_templates_files.legacy_managed_files(root, mode):
             relative = str(item.source.relative_to(root))
             if relative in baselines:
                 continue
@@ -779,7 +775,7 @@ def check_capability_required_versions(root: Path = ROOT) -> None:
     catalog = json.loads((root / catalog_path).read_text(encoding="utf-8"))
     templates = [
         (item.source, item.source.read_text(encoding="utf-8"))
-        for item in owner_templates_files.managed_files(root, "governed-sdd")
+        for item in owner_templates_files.legacy_managed_files(root, "governed-sdd")
     ]
     for capability, entry in catalog["capabilities"].items():
         if not entry["required"] or entry["retired"]:
@@ -916,10 +912,9 @@ def check_no_private_names(
 
 
 def check_generated_templates() -> None:
-    for mode in generator.CLAUDE_MD_SHARED_ANCHOR:
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/dev.py"), "generate-entry-routers", "--mode", mode, "--check"], capture_output=True, text=True)
-        if result.returncode:
-            fail(result.stderr or result.stdout)
+    result = subprocess.run([sys.executable, str(ROOT / "scripts/dev.py"), "generate-entry-routers", "--template", "--check"], capture_output=True, text=True)
+    if result.returncode:
+        fail(result.stderr or result.stdout)
 
 
 def main() -> None:

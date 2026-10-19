@@ -146,7 +146,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         """
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
@@ -218,7 +218,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         silently discard the customization along with the block."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
@@ -273,7 +273,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         """
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        source = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
+        source = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
         source_text = source.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
@@ -287,13 +287,13 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         incoming_source = source_text[: marker.start()] + source_text[marker.end() :]
         source.write_text(
             incoming_source.replace(
-                "This policy reduces context and reasoning overhead while preserving governed-SDD authority and review quality.",
-                "This framework policy reduces context and reasoning overhead while preserving governed-SDD authority and review quality.",
+                "This policy reduces context and reasoning overhead while preserving authority and review quality.",
+                "This framework policy reduces context and reasoning overhead while preserving authority and review quality.",
             ),
             encoding="utf-8",
         )
 
-        target = self.framework / "templates/workflows/governed-sdd/docs/ROUTED_STATUS_RULE.md"
+        target = self.framework / "templates/single/docs/ROUTED_STATUS_RULE.md"
         target.write_text(marker_text + "\n", encoding="utf-8")
         (self.framework / "migrations/999-move-minimal-read-only-status.json").write_text(
             json.dumps(
@@ -330,7 +330,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         local_source = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
         local_source.write_text(
             local_source.read_text(encoding="utf-8").replace(
-                "This policy reduces context and reasoning overhead while preserving governed-SDD authority and review quality.",
+                "This policy reduces context and reasoning overhead while preserving authority and review quality.",
                 "This project policy reduces context and reasoning overhead while preserving governed-SDD authority and review quality.",
             ),
             encoding="utf-8",

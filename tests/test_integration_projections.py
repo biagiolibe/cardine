@@ -370,8 +370,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
 
 
     def test_owner_accept_text_uses_command_and_legacy_approve_attempt_is_supported(self) -> None:
-        workflow = (ROOT / "templates/workflows/governed-sdd/docs/workflows/LIFECYCLE.md").read_text(encoding="utf-8")
-        record_template = (ROOT / "templates/workflows/governed-sdd/docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
+        workflow = (ROOT / "templates/single/docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")
+        record_template = (ROOT / "templates/single/docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertIn("meridian review verdict <TASK-ID> APPROVE --owner", workflow)
         self.assertIn('`approved_by: "owner"`', workflow)
         self.assertIn("continue at C6 under the `Proceed with` authority", workflow)

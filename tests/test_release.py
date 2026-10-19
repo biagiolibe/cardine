@@ -120,7 +120,7 @@ class ReleasePrepareTest(unittest.TestCase):
             self.setUp()
 
     def test_prepare_refuses_template_changes_without_migration(self) -> None:
-        for relative in ("templates/workflows/lean-delivery/PROJECT_WORKFLOW.md", "templates/skills/example.md"):
+        for relative in ("templates/single/PROJECT_WORKFLOW.md", "templates/skills/example.md"):
             path = self.root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("New template text.\n")
@@ -130,7 +130,7 @@ class ReleasePrepareTest(unittest.TestCase):
         with redirect_stderr(errors):
             self.assertEqual(self.invoke("prepare", "--bump", "minor", "--dry-run"), 1)
         self.assertIn("cannot label release CLI-only", errors.getvalue())
-        self.assertIn("templates/workflows/lean-delivery/PROJECT_WORKFLOW.md", errors.getvalue())
+        self.assertIn("templates/single/PROJECT_WORKFLOW.md", errors.getvalue())
         self.assertIn("templates/skills/example.md", errors.getvalue())
 
     def test_non_template_changes_remain_cli_only(self) -> None:

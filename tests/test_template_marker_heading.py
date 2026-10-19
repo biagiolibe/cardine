@@ -24,7 +24,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     nesting as the templates keep changing.
     """
 
-    WORKFLOW = ROOT / "templates" / "workflows" / "governed-sdd"
+    WORKFLOW = ROOT / "templates" / "single"
 
     def marker_pairs(self, text: str) -> list[tuple[str, str]]:
         begins = MARKER_BEGIN.findall(text)
@@ -38,7 +38,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         for name in ("AGENTS.md", "CLAUDE.md"):
             self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "3")])
         self.assertIn(("review-remediation-record", "6"), self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")))
-        self.assertIn(("lifecycle-orchestration", "3"), self.marker_pairs((self.WORKFLOW / "docs/workflows/LIFECYCLE.md").read_text(encoding="utf-8")))
+        self.assertIn(("lifecycle-orchestration", "12"), self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")))
         implementation = self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"))
         for pair in (("execution-command-gate", "5"), ("validation-scoping", "2"), ("spike-routing", "3"), ("host-impact-routing", "2")):
             self.assertIn(pair, implementation)
@@ -70,7 +70,12 @@ class CapabilityMarkerTest(unittest.TestCase):
         text = (self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(text),
-            [("lifecycle-orchestration", "12"), ("rejected-attempt-restart", "5")],
+            [
+                ("lifecycle-orchestration", "12"),
+                ("task-worktree-lifecycle", "1"),
+                ("owner-acceptance-workflow", "4"),
+                ("rejected-attempt-restart", "5"),
+            ],
         )
 
     def test_context_budget_policy_carries_its_capability_markers(self) -> None:
@@ -110,7 +115,7 @@ class CapabilityMarkerTest(unittest.TestCase):
             "docs/CONTEXT_BUDGET_POLICY.md",
             "docs/LIFECYCLE_ORCHESTRATION.md",
             "docs/OPERATOR_PROMPTS.md",
-            "docs/PULL_REQUEST_POLICY.md",
+            "docs/INTEGRATION_POLICY.md",
             "docs/EXECUTION_EVIDENCE_PROFILE.md",
         ]
         texts = {path: (self.WORKFLOW / path).read_text(encoding="utf-8") for path in paths}
@@ -153,7 +158,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("Do not modify files, create ADRs or tasks", prompts)
 
     def test_ci_verified_validation_marker_in_each_of_its_three_docs(self) -> None:
-        pull_request_policy = (self.WORKFLOW / "docs/PULL_REQUEST_POLICY.md").read_text(encoding="utf-8")
+        pull_request_policy = (self.WORKFLOW / "docs/INTEGRATION_POLICY.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(pull_request_policy),
             [
@@ -208,7 +213,9 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("independently confirms", review_record)
 
     def test_project_workflow_carries_all_declared_baseline_capabilities(self) -> None:
-        text = (self.WORKFLOW / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+        # The recorded baselines still key on the old governed root until row SW5
+        # of docs/SINGLE_WORKFLOW_PLAN.md rewrites them for the single set.
+        text = (ROOT / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         pairs = self.marker_pairs(text)
         baselines = json.loads((ROOT / "capabilities/marker-baselines.json").read_text(encoding="utf-8"))
         expected = {
@@ -222,7 +229,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_git_workflow_block_drives_closure_through_advance(self) -> None:
         for path in (
             self.WORKFLOW / "PROJECT_WORKFLOW.md",
-            ROOT / "templates" / "workflows" / "lean-delivery" / "PROJECT_WORKFLOW.md",
+            ROOT / "templates" / "single" / "PROJECT_WORKFLOW.md",
         ):
             text = path.read_text(encoding="utf-8")
             start = text.index("capability=git-workflow")
@@ -325,7 +332,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         project = Path(temporary.name) / "project"
-        source = ROOT / "templates" / "workflows" / "governed-sdd"
+        source = ROOT / "templates" / "single"
         for path in source.rglob("*"):
             if path.is_file():
                 destination = project / path.relative_to(source)

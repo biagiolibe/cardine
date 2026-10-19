@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cardine_cli_support import CLI, ROOT
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,7 @@ from cardine.templates import generator as owner_generator
 from cardine.templates import markers as templates_markers
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
+from cardine.shared.project import resolve_project_configuration
 from cardine.templates import router as owner_templates_router
 
 
@@ -25,29 +27,28 @@ class GenerateClaudeMdTest(unittest.TestCase):
     above the anchor is each file's own hand-authored preamble and is exempt.
     """
 
-    def test_committed_claude_md_matches_the_generator_for_every_mode(self) -> None:
-        for mode in owner_generator.CLAUDE_MD_SHARED_ANCHOR:
-            workflow = ROOT / "templates" / "workflows" / mode
-            agents_text = (workflow / "AGENTS.md").read_text(encoding="utf-8")
-            claude_text = (workflow / "CLAUDE.md").read_text(encoding="utf-8")
-            generated = owner_generator.generate_claude_md(mode, agents_text, claude_text)
-            self.assertEqual(
-                generated,
-                claude_text,
-                f"{mode}: CLAUDE.md has drifted from AGENTS.md past the shared anchor "
-                f"{owner_generator.CLAUDE_MD_SHARED_ANCHOR[mode]!r}",
-            )
+    def test_committed_claude_md_matches_the_generator_for_the_single_template_set(self) -> None:
+        template = ROOT / "templates" / "single"
+        agents_text = (template / "AGENTS.md").read_text(encoding="utf-8")
+        claude_text = (template / "CLAUDE.md").read_text(encoding="utf-8")
+        generated = owner_generator.generate_claude_md(agents_text, claude_text)
+        self.assertEqual(
+            generated,
+            claude_text,
+            "CLAUDE.md has drifted from AGENTS.md past the shared anchor "
+            f"{owner_generator.CLAUDE_MD_SHARED_ANCHOR!r}",
+        )
 
     def test_generator_reports_drift_when_claude_md_diverges(self) -> None:
         agents_text = (
             "# [Project Name] — Agent Rules\n\npreamble\n\n"
-            "## Code organization\n\nshared body.\n"
+            "## Command triggers\n\nshared body.\n"
         )
         stale_claude_text = (
             "# [Project Name]\n\nown preamble\n\n"
-            "## Code organization\n\nSTALE shared body.\n"
+            "## Command triggers\n\nSTALE shared body.\n"
         )
-        generated = owner_generator.generate_claude_md("governed-sdd", agents_text, stale_claude_text)
+        generated = owner_generator.generate_claude_md(agents_text, stale_claude_text)
         self.assertNotEqual(generated, stale_claude_text)
         self.assertIn("own preamble", generated)
         self.assertIn("shared body.\n", generated)
@@ -67,19 +68,19 @@ class GenerateClaudeMdTest(unittest.TestCase):
         """
         agents_text = (
             "# [Project Name] — Agent Rules\n\npreamble\n\n"
-            "## Code organization\n\n"
+            "## Command triggers\n\n"
             "<!-- MERIDIAN:BEGIN capability=example-capability v1 -->\n"
             "NEW WORDING the generator must not introduce.\n"
             "<!-- MERIDIAN:END -->\n"
         )
         claude_text = (
             "# [Project Name]\n\nown preamble\n\n"
-            "## Code organization\n\n"
+            "## Command triggers\n\n"
             "<!-- MERIDIAN:BEGIN capability=example-capability v1 -->\n"
             "ORIGINAL RELEASED WORDING.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        generated = owner_generator.generate_claude_md("governed-sdd", agents_text, claude_text)
+        generated = owner_generator.generate_claude_md(agents_text, claude_text)
         self.assertIn("ORIGINAL RELEASED WORDING.", generated)
         self.assertNotIn("NEW WORDING", generated)
         for capability, version in templates_markers.marker_pairs(claude_text):
@@ -95,28 +96,28 @@ class GenerateClaudeMdTest(unittest.TestCase):
         AGENTS.md, same as any other shared-body text."""
         agents_text = (
             "# [Project Name] — Agent Rules\n\npreamble\n\n"
-            "## Code organization\n\n"
+            "## Command triggers\n\n"
             "<!-- MERIDIAN:BEGIN capability=brand-new-capability v1 -->\n"
             "First-ever wording.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        claude_text = "# [Project Name]\n\nown preamble\n\n## Code organization\n\nno markers here.\n"
-        generated = owner_generator.generate_claude_md("governed-sdd", agents_text, claude_text)
+        claude_text = "# [Project Name]\n\nown preamble\n\n## Command triggers\n\nno markers here.\n"
+        generated = owner_generator.generate_claude_md(agents_text, claude_text)
         self.assertIn("First-ever wording.", generated)
 
     def test_generator_raises_when_the_anchor_heading_is_missing(self) -> None:
         with self.assertRaises(shared_errors.CardineError):
-            owner_generator.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
+            owner_generator.generate_claude_md("no anchor here", "## Command triggers\nbody")
         with self.assertRaises(shared_errors.CardineError):
-            owner_generator.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
+            owner_generator.generate_claude_md("## Command triggers\nbody", "no anchor here")
 
     def test_cli_check_and_write_round_trip_on_a_stale_copy(self) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         framework = Path(temporary.name) / "framework"
-        workflow = framework / "templates" / "workflows" / "governed-sdd"
+        workflow = framework / "templates" / "single"
         workflow.mkdir(parents=True)
-        source = ROOT / "templates" / "workflows" / "governed-sdd"
+        source = ROOT / "templates" / "single"
         agents_text = (source / "AGENTS.md").read_text(encoding="utf-8")
         claude_text = (source / "CLAUDE.md").read_text(encoding="utf-8")
         (workflow / "AGENTS.md").write_text(
@@ -133,8 +134,7 @@ class GenerateClaudeMdTest(unittest.TestCase):
                     "--framework-root",
                     str(framework),
                     "generate-entry-routers",
-                    "--mode",
-                    "governed-sdd",
+                    "--template",
                     *extra,
                 ],
                 text=True,
@@ -170,7 +170,7 @@ class GeneratedEntryRouterTest(unittest.TestCase):
             "- Proceed: `docs/workflows/IMPLEMENTATION.md`\n"
             "- Review: `docs/workflows/REVIEW.md`\n"
             "- Address review: `docs/workflows/REMEDIATION.md`\n"
-            "- Lifecycle or Accept: `docs/workflows/LIFECYCLE.md`\n"
+            "- Lifecycle or Accept: `docs/LIFECYCLE_ORCHESTRATION.md`\n"
             "- Audit: `docs/AUDIT_PROMPT_READ_ONLY.md`\n",
             encoding="utf-8",
         )
@@ -230,3 +230,52 @@ class GeneratedEntryRouterTest(unittest.TestCase):
         self.assertEqual(written.returncode, 0, written.stdout + written.stderr)
         checked = subprocess.run(command + ["--check"], text=True, capture_output=True, check=False)
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+
+
+class InitAdapterTest(unittest.TestCase):
+    """The init slash command installs the single template set for either preset."""
+
+    COMMAND = ROOT / "commands" / "meridian-init.md"
+
+    def test_init_copies_the_single_set_and_defaults_to_lean(self) -> None:
+        text = self.COMMAND.read_text(encoding="utf-8")
+        self.assertIn("`templates/single/`", text)
+        self.assertIn("offering `lean` as the default", text)
+        for preset in ("`lean`", "`governed`"):
+            self.assertIn(preset, text)
+        self.assertIn("exactly the same files", text)
+        for hidden in (".gitignore", ".claudeignore", ".codex/hooks.json", ".codex/rules/meridian.rules"):
+            self.assertIn(hidden, text)
+        self.assertIn("Do not copy from `templates/base/` or `templates/workflows/`", text)
+        for retired in ("overlay", "classic", "workflow mode"):
+            self.assertNotIn(retired, text)
+        self.assertNotIn("cardine init", text)
+
+    def test_init_writes_a_project_declaration_that_the_schema_accepts(self) -> None:
+        text = self.COMMAND.read_text(encoding="utf-8")
+        block = re.search(r"```json\n(.*?)```", text, re.DOTALL)
+        self.assertIsNotNone(block)
+        for preset in ("lean", "governed"):
+            with self.subTest(preset=preset):
+                declaration = json.loads(
+                    block.group(1)
+                    .replace("<lean|governed>", preset)
+                    .replace("<opaque|milestone>", "opaque")
+                    .replace("<project name>", "Example")
+                    .replace("<project slug>", "example")
+                    .replace("<id>", "check")
+                    .replace("<literal command>", "python3 -m unittest")
+                )
+                with tempfile.TemporaryDirectory() as directory:
+                    project = Path(directory)
+                    (project / ".cardine").mkdir()
+                    (project / ".cardine/project.json").write_text(json.dumps(declaration), encoding="utf-8")
+                    configuration = resolve_project_configuration(project)
+                self.assertEqual(configuration["preset"], preset)
+                self.assertEqual(sorted(configuration["validation"]["candidate"]), ["BOUNDED", "FULL", "REUSE"])
+
+    def test_distribution_ships_the_single_set_with_the_plugin(self) -> None:
+        marketplace = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
+        sources = {plugin["source"] for plugin in marketplace["plugins"]}
+        self.assertEqual(sources, {"./"}, "the plugin ships the whole checkout, so templates/ ships with it")
+        self.assertTrue((ROOT / "templates" / "single" / "PROJECT_WORKFLOW.md").is_file())

@@ -122,5 +122,5 @@ Conversion of projects without Cardine and of existing installations returns wit
 
 Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow`,
 `generate-entry-routers`, and `agent-evals`. They are internal development
-interfaces and have no compatibility promise. The generator's `--mode` option
-selects a workflow shared body; without it, `--project` selects consumer routers.
+interfaces and have no compatibility promise. The generator's `--template` option
+selects the single template set's shared body; without it, `--project` selects consumer routers.

@@ -20,9 +20,11 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
         self.project = root / "project"
         self.project.mkdir()
         files = ("PROJECT_WORKFLOW.md", "AGENTS.md", "CLAUDE.md", "LANGUAGE_POLICY.md",
-                 "docs/CONTEXT_BUDGET_POLICY.md", "docs/EXECUTION_EVIDENCE_PROFILE.md")
+                 "tasks/TASK_BLUEPRINT.md", "docs/CONTEXT_BUDGET_POLICY.md",
+                 "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules",
+                 ".codex/hooks.json")
         self.fixture = SyntheticFramework(root / "framework", "2.0.0", templates={
-            "lean-delivery/" + path: "# Synthetic policy\n" for path in files
+            path: "# Synthetic policy\n" for path in files
         })
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
@@ -33,7 +35,7 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
         )
 
     def lock(self) -> None:
-        shutil.copytree(self.fixture.root / "templates/workflows/lean-delivery", self.project,
+        shutil.copytree(self.fixture.root / "templates/single", self.project,
                         dirs_exist_ok=True)
         result = self.run_cli("lock", "--mode", "lean-delivery")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

@@ -34,7 +34,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         manifest_path = self.project / ".cardine/manifest.json"
         manifest_before = manifest_path.read_bytes()
-        workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8") + "\nPrerelease marker.\n", encoding="utf-8")
         project_workflow = self.project / "PROJECT_WORKFLOW.md"
         workflow_before = project_workflow.read_bytes()

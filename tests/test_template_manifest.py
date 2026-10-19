@@ -26,6 +26,10 @@ from cardine.templates import manifest as owner_templates_manifest
 from cardine.templates import marker_history as owner_templates_marker_history
 from cardine.templates import adoption as owner_templates_adoption
 import cardine_cli
+from cardine.tasks.contract import resolve_task_contract
+from project_config_support import write_project_config
+from task_contract_support import VALIDATION
+import re
 
 
 class CapabilityVersionDetectionTest(unittest.TestCase):
@@ -418,7 +422,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             for source in ("templates", "migrations", "capabilities"):
                 shutil.copytree(ROOT / source, framework / source)
             (framework / "VERSION").write_text("1.1.0\n", encoding="utf-8")
-            source = framework / "templates/workflows/governed-sdd"
+            source = framework / "templates/single"
             for path in source.rglob("*"):
                 if path.is_file():
                     destination = project / path.relative_to(source)
@@ -741,7 +745,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             <= lean_paths
         )
         policy = (
-            ROOT / "templates/workflows/lean-delivery/docs/CONTEXT_BUDGET_POLICY.md"
+            ROOT / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
         ).read_text(encoding="utf-8")
         for governed_only in (
             "READY_FOR_REVIEW",
@@ -769,7 +773,11 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 capability = self.catalog.capability(capability_id)
                 self.assertIsNotNone(capability)
                 for surface in capability.managed_surfaces:
-                    source = ROOT / surface.path
+                    # Managed copies come from the template set; this checkout's own
+                    # copies stay frozen until work item 10.
+                    source = ROOT / "templates/single" / surface.path
+                    if not source.is_file():
+                        source = ROOT / surface.path
                     destination = project / surface.path
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(source, destination)
@@ -804,3 +812,213 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         self.assertNotRegex(profile, r"\[[^]]*(?:describe|command|method|bound|policy|tool)[^]]*\]")
         self.assertIn("python3 scripts/check_repository.py", profile)
         self.assertIn("python3 -m unittest discover -s tests -q 2>&1 | tail -n 40", profile)
+
+
+LEGACY_TEMPLATE_ROOTS = ("base", "workflows/lean-delivery", "workflows/governed-sdd")
+# Old source files that the single set renames or merges into another destination.
+MERGED_DESTINATIONS = {
+    "workflows/governed-sdd/docs/workflows/LIFECYCLE.md": "docs/LIFECYCLE_ORCHESTRATION.md",
+    "workflows/governed-sdd/docs/PULL_REQUEST_POLICY.md": "docs/INTEGRATION_POLICY.md",
+}
+HIDDEN_DESTINATIONS = {
+    "base/.gitignore": ".gitignore",
+    "base/.claudeignore": ".claudeignore",
+    "workflows/lean-delivery/.codex/hooks.json": ".codex/hooks.json",
+    "workflows/lean-delivery/.codex/rules/meridian.rules": ".codex/rules/meridian.rules",
+    "workflows/governed-sdd/.codex/hooks.json": ".codex/hooks.json",
+    "workflows/governed-sdd/.codex/rules/meridian.rules": ".codex/rules/meridian.rules",
+}
+
+
+def legacy_template_sources() -> list[str]:
+    """Every file under the three old source roots, relative to `templates/`."""
+    templates = ROOT / "templates"
+    return sorted(
+        path.relative_to(templates).as_posix()
+        for root in LEGACY_TEMPLATE_ROOTS
+        for path in (templates / root).rglob("*")
+        if path.is_file()
+    )
+
+
+def single_destination(source: str) -> str:
+    """The destination under `templates/single/` for one old source file."""
+    if source in MERGED_DESTINATIONS:
+        return MERGED_DESTINATIONS[source]
+    for root in LEGACY_TEMPLATE_ROOTS:
+        if source.startswith(root + "/"):
+            return source.removeprefix(root + "/")
+    raise AssertionError(source)
+
+
+class SingleTemplateSetTest(unittest.TestCase):
+    """Both presets install one template set, and no code falls back to the old roots."""
+
+    SINGLE = ROOT / "templates" / "single"
+
+    def framework_copy(self) -> Path:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        framework = Path(temporary.name) / "framework"
+        shutil.copytree(ROOT / "templates", framework / "templates")
+        return framework
+
+    def test_both_presets_install_the_same_file_list(self) -> None:
+        lean = [item.target for item in owner_templates_files.managed_files(ROOT, "lean-delivery")]
+        governed = [item.target for item in owner_templates_files.managed_files(ROOT, "governed-sdd")]
+        self.assertEqual(lean, governed)
+        self.assertTrue(all(item.source.is_relative_to(self.SINGLE) for item in owner_templates_files.managed_files(ROOT, "lean-delivery")))
+        locked = {}
+        for preset, mode in (("lean", "lean-delivery"), ("governed", "governed-sdd")):
+            with tempfile.TemporaryDirectory() as directory:
+                project = Path(directory)
+                shutil.copytree(self.SINGLE, project, dirs_exist_ok=True)
+                (project / ".cardine").mkdir(exist_ok=True)
+                (project / ".cardine/project.json").write_text(
+                    json.dumps({"version": 1, "preset": preset}), encoding="utf-8"
+                )
+                result = subprocess.run(
+                    [sys.executable, str(CLI), "--framework-root", str(ROOT), "lock", "--mode", mode,
+                     "--project", str(project)],
+                    text=True, capture_output=True, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                manifest = json.loads((project / ".cardine/manifest.json").read_text(encoding="utf-8"))
+                locked[preset] = sorted(manifest["managedFiles"])
+        self.assertEqual(locked["lean"], locked["governed"])
+        self.assertEqual(locked["lean"], sorted(target.as_posix() for target in lean))
+
+    def test_no_old_root_fallback(self) -> None:
+        framework = self.framework_copy()
+        expected = [item.target for item in owner_templates_files.managed_files(ROOT)]
+        shutil.rmtree(framework / "templates/workflows")
+        shutil.rmtree(framework / "templates/base")
+        self.assertEqual([item.target for item in owner_templates_files.managed_files(framework)], expected)
+        (framework / "templates/single/tasks/TASK_BLUEPRINT.md").unlink()
+        with self.assertRaises(shared_errors.CardineError):
+            owner_templates_files.managed_files(framework)
+        shutil.rmtree(framework / "templates/single")
+        with self.assertRaisesRegex(shared_errors.CardineError, "single template set is missing"):
+            owner_templates_files.managed_files(framework, "governed-sdd")
+
+    def test_only_the_named_legacy_accessor_reads_the_old_roots(self) -> None:
+        allowed = {"src/cardine/templates/roots.py", "src/cardine/templates/files.py"}
+        offenders = []
+        for path in sorted((ROOT / "src/cardine").rglob("*.py")):
+            relative = path.relative_to(ROOT).as_posix()
+            text = path.read_text(encoding="utf-8")
+            if relative not in allowed and re.search(r"templates/(?:base|workflows)|LEGACY_WORKFLOW_ROOT|legacy_managed_files", text):
+                offenders.append(relative)
+        self.assertEqual(offenders, [])
+        files_text = (ROOT / "src/cardine/templates/files.py").read_text(encoding="utf-8")
+        self.assertEqual(files_text.count("legacy_managed_files("), 1, "only the definition may name the accessor")
+
+    def test_every_old_source_file_has_a_destination_and_nothing_else_is_shipped(self) -> None:
+        destinations = set()
+        for source in legacy_template_sources():
+            destination = single_destination(source)
+            with self.subTest(source=source):
+                self.assertTrue((self.SINGLE / destination).is_file(), destination)
+            destinations.add(destination)
+        shipped = {path.relative_to(self.SINGLE).as_posix() for path in self.SINGLE.rglob("*") if path.is_file()}
+        self.assertEqual(shipped - destinations, set(), "a shipped file has no inventory source")
+
+    def test_the_six_hidden_files_have_destinations(self) -> None:
+        self.assertEqual(len(HIDDEN_DESTINATIONS), 6)
+        for source, destination in HIDDEN_DESTINATIONS.items():
+            with self.subTest(source=source):
+                self.assertTrue((ROOT / "templates" / source).is_file())
+                self.assertEqual(single_destination(source), destination)
+                self.assertTrue((self.SINGLE / destination).is_file())
+
+    def test_context_policy_keeps_its_installed_path_until_row_sw5(self) -> None:
+        # Row SW5 renames the policy and its capability together; the catalog still names this path.
+        self.assertTrue((self.SINGLE / "docs/CONTEXT_BUDGET_POLICY.md").is_file())
+        self.assertFalse((self.SINGLE / "docs/CONTEXT_READING_POLICY.md").exists())
+
+    def test_template_links_and_document_paths_resolve_inside_the_set(self) -> None:
+        link = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
+        path = re.compile(r"`((?:docs|tasks)/[A-Za-z0-9_./-]+\.md)(?:#[^`]*)?`")
+        # Queue rows and task examples are placeholders for files a project creates.
+        placeholders = {"tasks/QUEUE.md"}
+        for document in sorted(self.SINGLE.rglob("*.md")):
+            relative = document.relative_to(self.SINGLE).as_posix()
+            if relative in placeholders:
+                continue
+            text = document.read_text(encoding="utf-8")
+            for target in link.findall(text):
+                if re.match(r"[a-z]+:|#", target):
+                    continue
+                with self.subTest(document=relative, link=target):
+                    resolved = (document.parent / target.split("#")[0]).resolve()
+                    self.assertTrue(resolved.is_file() or (self.SINGLE / target.split("#")[0]).is_file(), target)
+            for target in path.findall(text):
+                if target.startswith(("tasks/<", "tasks/handoffs", "tasks/reviews", "tasks/done")) or "<" in target or "NNN" in target:
+                    continue
+                with self.subTest(document=relative, path=target):
+                    self.assertTrue((self.SINGLE / target).is_file(), target)
+
+    def test_one_task_shape_resolves_for_both_presets(self) -> None:
+        blueprint = (self.SINGLE / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
+        for heading in ("Spike shape", "Host impact"):
+            blueprint = re.sub(rf"^## {heading}\n.*?(?=^## )", "", blueprint, flags=re.MULTILINE | re.DOTALL)
+        for old, new in (
+            ("# Task [ID] — [Title]", "# Task 001 — Shape fixture"),
+            ("> **ID**: `[NNN]`", "> **ID**: `001`"),
+            ("> **Priority**: [P0 / P1 / P2]", "> **Priority**: P1"),
+            ("> **Estimate**: [~1h / ~2h / etc.]", "> **Estimate**: ~1h"),
+            ("- **Depends on**: [none / TASK-ID, ...]", "- **Depends on**: none"),
+            ("- `<validation-id>`: `<complete literal command, including its output bound and exit-status handling>`",
+             "- `task-check`: `python3 -c 'pass'`"),
+        ):
+            self.assertIn(old, blueprint)
+            blueprint = blueprint.replace(old, new)
+        blueprint = re.sub(r"^(?:Class|Review|Options|Manual verification(?: rationale)?): \[.*\]\n", "", blueprint, flags=re.MULTILINE)
+        self.assertNotIn("Budget usage", blueprint)
+        snapshots = {}
+        for preset in ("lean", "governed"):
+            with tempfile.TemporaryDirectory() as directory:
+                project = Path(directory).resolve()
+                (project / "tasks").mkdir()
+                write_project_config(project, preset, validation=json.loads(json.dumps(VALIDATION)))
+                (project / "tasks/001.md").write_text(blueprint, encoding="utf-8")
+                (project / "tasks/QUEUE.md").write_text(
+                    "| ID | Status | Task file |\n|---|---|---|\n| 001 | queued | [001](001.md) |\n", encoding="utf-8"
+                )
+                snapshots[preset] = resolve_task_contract(project, "001")
+        self.assertEqual(snapshots["lean"]["options"]["review"], "not_required")
+        self.assertEqual(snapshots["governed"]["options"]["review"], "required")
+        lean, governed = (dict(snapshots[name], preset=None, options=None, projectDigest=None) for name in ("lean", "governed"))
+        self.assertEqual(lean, governed, "the presets may differ only in their option defaults")
+
+    def test_local_prose_survives_a_template_update(self) -> None:
+        framework = self.framework_copy()
+        shutil.copytree(ROOT / "migrations", framework / "migrations")
+        shutil.copytree(ROOT / "capabilities", framework / "capabilities")
+        (framework / "VERSION").write_text("1.1.0\n", encoding="utf-8")
+        project = framework.parent / "project"
+        shutil.copytree(framework / "templates/single", project)
+        write_project_config(project, "lean")
+
+        def cli(*arguments: str) -> subprocess.CompletedProcess[str]:
+            return subprocess.run(
+                [sys.executable, str(CLI), "--framework-root", str(framework), *arguments, "--project", str(project)],
+                text=True, capture_output=True, check=False,
+            )
+
+        self.assertEqual(cli("lock", "--mode", "lean-delivery").returncode, 0)
+        local_note = "\n## Project conventions\n\nProject-owned prose that no update may drop.\n"
+        for name in ("PROJECT_WORKFLOW.md", "tasks/TASK_BLUEPRINT.md"):
+            installed = project / name
+            installed.write_text(installed.read_text(encoding="utf-8") + local_note, encoding="utf-8")
+        template = framework / "templates/single/PROJECT_WORKFLOW.md"
+        text = template.read_text(encoding="utf-8")
+        self.assertIn("## Preset and options", text)
+        template.write_text(text.replace("## Preset and options", "## Presets and task options", 1), encoding="utf-8")
+        (framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
+        applied = cli("upgrade", "--apply")
+        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+        upgraded = (project / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+        self.assertIn("## Presets and task options", upgraded)
+        for name in ("PROJECT_WORKFLOW.md", "tasks/TASK_BLUEPRINT.md"):
+            self.assertIn("Project-owned prose that no update may drop.", (project / name).read_text(encoding="utf-8"))

@@ -39,9 +39,9 @@ schemas/                          JSON schemas for Meridian records
 scripts/                          Repository validation and release tooling
 skills/                           Codex and Claude Code workflow skills
 tasks/                            Active task records, queue, and handoffs
-templates/base/                   Shared stack-agnostic templates
-templates/workflows/lean-delivery/ Lean Delivery overlay
-templates/workflows/governed-sdd/ Governed-SDD overlay
+templates/single/                 The one template set both presets install
+templates/base/                   Legacy root, removed by single workflow row SW5
+templates/workflows/              Legacy roots, removed by single workflow row SW5
 tests/                            Unit tests
 .github/workflows/                GitHub Actions workflows
 WORKFLOW_GUIDE.md                 Lean Delivery workflow reference
@@ -252,15 +252,14 @@ Run maintainer tools from the repository checkout:
 ```bash
 python3 scripts/dev.py profile doctor <profile-id> --project <consumer>
 python3 scripts/dev.py report flow --project <consumer> --format json
-python3 scripts/dev.py generate-entry-routers --mode governed-sdd --check
-python3 scripts/dev.py generate-entry-routers --mode lean-delivery --check
+python3 scripts/dev.py generate-entry-routers --template --check
 python3 scripts/dev.py generate-entry-routers --project <consumer> --write
 python3 scripts/dev.py agent-evals --help
 ```
 
 The single generator replaces `generate-claude-md` and `generate-entry-routers`
-in the user CLI. `--mode` generates a workflow template's shared `CLAUDE.md`
-body; without it, the consumer's canonical router produces both entry files.
+in the user CLI. `--template` generates the single template set's shared
+`CLAUDE.md` body; without it, the consumer's canonical router produces both entry files.
 Use `--check` to detect drift without writing and `--write` to regenerate.
 Profile and journal arguments and output retain their previous behavior.
 

@@ -41,7 +41,7 @@ class ContextSizeTest(unittest.TestCase):
                 "- `Proceed with <TASK-ID>` — read `docs/workflows/IMPLEMENTATION.md`.",
                 "- `Review <TASK-ID>` — read `docs/workflows/REVIEW.md`.",
                 "- `Address review <TASK-ID>` — read `docs/workflows/REMEDIATION.md`.",
-                "- `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — read `docs/workflows/LIFECYCLE.md`.",
+                "- `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.",
             )), encoding="utf-8"
         )
         for name in ("STATUS.md", "IMPLEMENTATION.md", "REVIEW.md", "REMEDIATION.md", "LIFECYCLE.md"):

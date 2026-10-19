@@ -7,6 +7,7 @@ from cardine.shared.layout import names
 from cardine.shared.constants import CAPABILITY_MARKER
 from cardine.shared.errors import CardineError
 from cardine.templates.files import managed_files
+from cardine.templates.roots import single_template_root
 from cardine.templates.manifest import load_manifest
 from cardine.templates.marker_history import declared_capability_moves
 from cardine.templates.marker_history import retired_capability_versions
@@ -220,7 +221,7 @@ def audit_capability_moves(project_root: Path, framework_root: Path, mode: str) 
                 target_text, move.target_capability, move.target_version, move.target_sha256
             )
             if not target_matches:
-                template = framework_root / "templates" / "workflows" / mode / move.target_path
+                template = single_template_root(framework_root) / move.target_path
                 template_text = template.read_text(encoding="utf-8") if template.is_file() else ""
                 superseding_versions = [
                     int(version)

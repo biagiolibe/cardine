@@ -10,6 +10,8 @@ from cardine.templates.markers import append_only_new_markers
 from cardine.templates.markers import marker_pairs
 from cardine.templates.migrations import migration_capability_entries
 from cardine.templates.migrations import migration_capability_moves
+from cardine.templates.roots import LEGACY_WORKFLOW_ROOT
+from cardine.templates.roots import single_template_root
 from pathlib import Path
 import json
 import re
@@ -79,10 +81,44 @@ def managed_files_for_workflow(workflow: Path, mode: str) -> list[ManagedFile]:
     return result
 
 
-def managed_files(framework_root: Path, mode: str) -> list[ManagedFile]:
-    return managed_files_for_workflow(
-        framework_root / "templates" / "workflows" / mode, mode
-    )
+def single_managed_files(root: Path) -> list[ManagedFile]:
+    """The managed files of a single template set; the same for every preset."""
+    if not root.is_dir():
+        raise CardineError(f"single template set is missing: {root}")
+    paths = [
+        Path("PROJECT_WORKFLOW.md"),
+        Path("AGENTS.md"),
+        Path("CLAUDE.md"),
+        Path("LANGUAGE_POLICY.md"),
+        Path("tasks/TASK_BLUEPRINT.md"),
+        *[item.relative_to(root) for item in sorted((root / "docs").rglob("*.md"))],
+    ]
+    # Include optional managed files only when the template set supplies them.
+    for optional_path in (Path(".codex/rules/meridian.rules"), Path(".codex/hooks.json")):
+        if (root / optional_path).is_file():
+            paths.append(optional_path)
+    result = []
+    for target in paths:
+        source = root / target
+        if not source.is_file():
+            raise CardineError(f"managed template is missing: {source}")
+        result.append(ManagedFile(source=source, target=target))
+    return result
+
+
+def managed_files(framework_root: Path, mode: str | None = None) -> list[ManagedFile]:
+    """The managed files every installation receives. `mode` is a legacy
+    compatibility key; the single template set is the only source."""
+    return single_managed_files(single_template_root(framework_root))
+
+
+def legacy_managed_files(framework_root: Path, mode: str) -> list[ManagedFile]:
+    """The managed files of an old per-workflow root.
+
+    Only the catalog and marker-baseline checks that still key on those paths
+    call this; row SW5 moves them to the single set and deletes the accessor.
+    """
+    return managed_files_for_workflow(framework_root / LEGACY_WORKFLOW_ROOT / mode, mode)
 
 
 def marker_declaring_migrations(framework_root: Path) -> dict[tuple[str, int], str]:

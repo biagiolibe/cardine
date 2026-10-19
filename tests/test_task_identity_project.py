@@ -285,23 +285,22 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertIn("ambiguous", ambiguous.stderr)
 
     def test_migration_delivers_only_managed_guidance_and_never_opts_in(self) -> None:
-        for mode in shared_constants.WORKFLOW_MODES:
-            template = ROOT / "templates/workflows" / mode / "PROJECT_WORKFLOW.md"
-            self.assertIn("capability=task-identity-policy v1", template.read_text(encoding="utf-8"))
+        template = ROOT / "templates/single/PROJECT_WORKFLOW.md"
+        self.assertIn("capability=task-identity-policy v1", template.read_text(encoding="utf-8"))
 
         root = Path(self.temporary.name)
         framework = root / "framework"
         consumer = root / "consumer"
         for source in ("templates", "migrations", "capabilities"):
             shutil.copytree(ROOT / source, framework / source)
-        current = (framework / "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+        current = (framework / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         previous = re.sub(
             r"\n<!-- MERIDIAN:BEGIN capability=task-identity-policy v1 -->.*?<!-- MERIDIAN:END -->\n",
             "\n",
             current,
             flags=re.DOTALL,
         )
-        source = framework / "templates/workflows/lean-delivery"
+        source = framework / "templates/single"
         for path in source.rglob("*"):
             if path.is_file():
                 destination = consumer / path.relative_to(source)

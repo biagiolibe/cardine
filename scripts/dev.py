@@ -15,7 +15,7 @@ from cardine.stops.render import stop_error
 from cardine.shared.flow import flow_report, format_flow_report
 from cardine.templates.adoption import bootstrap_capability_profile
 from cardine.templates.audit import profile_doctor
-from cardine.templates.generator import CLAUDE_MD_SHARED_ANCHOR, generated_outputs
+from cardine.templates.generator import generated_outputs
 from cardine.worktree.storage import _verified_lifecycle_project
 
 
@@ -38,8 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
     flow.add_argument("--project", type=Path)
     flow.add_argument("--since")
     flow.add_argument("--format", choices=("json", "text"), default="text")
-    generate = commands.add_parser("generate-entry-routers", help="generate consumer entry routers or workflow CLAUDE.md shared bodies")
-    generate.add_argument("--mode", choices=tuple(CLAUDE_MD_SHARED_ANCHOR))
+    generate = commands.add_parser("generate-entry-routers", help="generate consumer entry routers or the single template set's CLAUDE.md shared body")
+    generate.add_argument("--template", action="store_true", help="generate the single template set's CLAUDE.md")
     generate.add_argument("--project", type=Path, default=Path.cwd())
     action = generate.add_mutually_exclusive_group(required=True)
     action.add_argument("--check", action="store_true")
@@ -67,20 +67,20 @@ def main(argv: list[str] | None = None) -> int:
             report = flow_report(_verified_lifecycle_project(arguments.project), arguments.since)
             print(json.dumps(report, sort_keys=True) if arguments.format == "json" else format_flow_report(report))
         else:
-            outputs = generated_outputs(framework, arguments.project.resolve(), arguments.mode)
+            outputs = generated_outputs(framework, arguments.project.resolve(), "single" if arguments.template else None)
             if arguments.check:
                 drifted = [path for path, text in outputs.items() if not path.is_file() or path.read_text(encoding="utf-8") != text]
                 if drifted:
-                    if arguments.mode:
+                    if arguments.template:
                         print(f"STALE {drifted[0]}: does not match AGENTS.md-generated output.", file=sys.stderr)
                     else:
                         print("STALE generated entry router(s): " + ", ".join(path.name for path in drifted), file=sys.stderr)
                     return 2
-                print(f"CLAUDE.md ({arguments.mode}) matches the generator's output." if arguments.mode else "Generated entry routers match their canonical source.")
+                print("CLAUDE.md (single template set) matches the generator's output." if arguments.template else "Generated entry routers match their canonical source.")
             else:
                 for path, text in outputs.items():
                     path.write_text(text, encoding="utf-8")
-                print(f"Regenerated {next(iter(outputs))}." if arguments.mode else "Generated AGENTS.md and CLAUDE.md from ENTRY_ROUTER.md.")
+                print(f"Regenerated {next(iter(outputs))}." if arguments.template else "Generated AGENTS.md and CLAUDE.md from ENTRY_ROUTER.md.")
         return 0
     except CardineStop as error:
         print(error, file=sys.stderr)

@@ -474,13 +474,13 @@ class ExecutionBoundariesTest(unittest.TestCase):
 
     def test_instruction_ordering_and_skill_parity(self):
         root = Path(__file__).resolve().parents[1]
-        text = (root / 'templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md').read_text()
+        text = (root / 'templates/single/docs/workflows/IMPLEMENTATION.md').read_text()
         self.assertLess(text.index('worktree check'), text.index('execution start'))
         self.assertLess(text.index('execution start'), text.index('advisor consultation'))
         for host in ('meridian-governed-sdd', 'meridian-governed-sdd-claude-code'):
             skill = (root / 'skills' / host / 'SKILL.md').read_text().split('capability=execution-boundaries v1 -->')[1]
             self.assertIn('execution start', skill)
             self.assertIn('execution deliver', skill)
-        orchestration = (root / 'templates/workflows/governed-sdd/docs/LIFECYCLE_ORCHESTRATION.md').read_text()
+        orchestration = (root / 'templates/single/docs/LIFECYCLE_ORCHESTRATION.md').read_text()
         self.assertIn('execution start', orchestration)
         self.assertIn('execution deliver', orchestration)
