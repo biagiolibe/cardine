@@ -19,7 +19,7 @@ class TemplateStopPolicyTest(unittest.TestCase):
             )["stops"]
         }
         policies = []
-        for path in (ROOT / "templates/workflows").rglob("*.md"):
+        for path in (ROOT / "templates/single").rglob("*.md"):
             text = path.read_text()
             match = re.search(
                 r"<!-- MERIDIAN:BEGIN capability=git-workflow v\d+ -->(.*?)<!-- MERIDIAN:END -->",
@@ -46,4 +46,5 @@ class TemplateStopPolicyTest(unittest.TestCase):
                 for code in guardrail_codes:
                     self.assertIs(entries[code]["human_decision"], True, code)
                 self.assertIs(entries["VALIDATION_FAILED"]["human_decision"], False)
-        self.assertEqual(len(policies), 4)
+        # The single template set carries the git-workflow block once, in PROJECT_WORKFLOW.md.
+        self.assertEqual([path.name for path in policies], ["PROJECT_WORKFLOW.md"])

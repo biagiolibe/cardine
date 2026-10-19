@@ -177,12 +177,11 @@ class StopAuditTest(unittest.TestCase):
         self.assertIn("Declared stop reports: claude=1, codex=0", text)
 
     def test_codex_templates_register_the_stop_hook_beside_the_read_guard(self) -> None:
-        for mode in ("lean-delivery", "governed-sdd"):
-            hooks = json.loads((ROOT / "templates" / "workflows" / mode / ".codex" / "hooks.json").read_text())["hooks"]
-            stop = hooks["Stop"][0]["hooks"][0]
-            self.assertEqual(stop["command"], "meridian hook stop-audit --host codex")
-            self.assertLessEqual(stop["timeout"], 5)
-            self.assertEqual(hooks["PreToolUse"][0]["hooks"][0]["command"], "meridian hook read-guard --host codex")
+        hooks = json.loads((ROOT / "templates" / "single" / ".codex" / "hooks.json").read_text())["hooks"]
+        stop = hooks["Stop"][0]["hooks"][0]
+        self.assertEqual(stop["command"], "meridian hook stop-audit --host codex")
+        self.assertLessEqual(stop["timeout"], 5)
+        self.assertEqual(hooks["PreToolUse"][0]["hooks"][0]["command"], "meridian hook read-guard --host codex")
 
 
 if __name__ == "__main__":

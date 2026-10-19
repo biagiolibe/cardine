@@ -13,8 +13,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RULES = ROOT / "templates/workflows/governed-sdd/.codex/rules/meridian.rules"
-LEAN_RULES = ROOT / "templates/workflows/lean-delivery/.codex/rules/meridian.rules"
+RULES = ROOT / "templates/single/.codex/rules/meridian.rules"
+LEAN_RULES = ROOT / "templates/single/.codex/rules/meridian.rules"
 PROJECT_RULES = ROOT / ".codex/rules/meridian.rules"
 PREFIX_RULE = re.compile(
     r'^prefix_rule\(pattern=\[[^\n]+\], decision="(allow|prompt|forbidden)"\)$'

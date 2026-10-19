@@ -22,11 +22,11 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_audit_fails_on_edited_protected_region(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        agents = self.project / "docs/workflows/LIFECYCLE.md"
+        agents = self.project / "docs/LIFECYCLE_ORCHESTRATION.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=lifecycle-orchestration v3", text)
+        self.assertIn("MERIDIAN:BEGIN capability=lifecycle-orchestration v12", text)
         edited = text.replace(
-            "Act only as the coordinator", "Act only as the coordinator (edited without an upgrade)"
+            "The orchestrator is a coordination-only role", "The orchestrator is a coordination-only role (edited without an upgrade)"
         )
         self.assertNotEqual(text, edited, "the replacement should have matched something inside the marker")
         agents.write_text(edited, encoding="utf-8")
@@ -34,8 +34,8 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         audited = self.run_cli("audit", "--mode", "governed-sdd")
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
-            "FAIL           marker-integrity — docs/workflows/LIFECYCLE.md: "
-            "capability=lifecycle-orchestration v3",
+            "FAIL           marker-integrity — docs/LIFECYCLE_ORCHESTRATION.md: "
+            "capability=lifecycle-orchestration v12",
             audited.stdout,
         )
         self.assertIn("SUMMARY worst=FAIL", audited.stdout)
@@ -71,11 +71,11 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_audit_skips_a_version_the_current_template_no_longer_carries(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        for name in ("docs/workflows/LIFECYCLE.md",):
+        for name in ("docs/LIFECYCLE_ORCHESTRATION.md",):
             local = self.project / name
             local.write_text(
                 local.read_text(encoding="utf-8").replace(
-                    "MERIDIAN:BEGIN capability=lifecycle-orchestration v3",
+                    "MERIDIAN:BEGIN capability=lifecycle-orchestration v12",
                     "MERIDIAN:BEGIN capability=lifecycle-orchestration v99",
                 ),
                 encoding="utf-8",
@@ -122,7 +122,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
         policy_text = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->\n?.*?"

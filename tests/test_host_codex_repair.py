@@ -304,11 +304,10 @@ class CodexProfileRepairTest(unittest.TestCase):
         contract = (ROOT / "docs/HOST_CAPABILITY_CONTRACT.md").read_text(encoding="utf-8")
         for fragment in ("repair-required", "Explicit `--apply`", "does not prove", "profile-ownership"):
             self.assertIn(fragment, contract)
-        for mode in ("lean-delivery", "governed-sdd"):
-            workflow = (ROOT / f"templates/workflows/{mode}/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-            region = workflow.split("capability=codex-worktree-access v4 -->", 1)[1].split("<!-- MERIDIAN:END -->", 1)[0]
-            for fragment in ("repair-required", "`--apply` only", "`blocked` status", "fresh session"):
-                self.assertIn(fragment, region, mode)
+        workflow = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+        region = workflow.split("capability=codex-worktree-access v4 -->", 1)[1].split("<!-- MERIDIAN:END -->", 1)[0]
+        for fragment in ("repair-required", "`--apply` only", "`blocked` status", "fresh session"):
+            self.assertIn(fragment, region)
 
     def test_doctor_reports_ownership_separately_from_root_access(self) -> None:
         self.config.write_text(self.rewritten(), encoding="utf-8")

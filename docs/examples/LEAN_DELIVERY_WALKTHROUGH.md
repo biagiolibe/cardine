@@ -19,8 +19,8 @@ sets both, plus a disposable HOME, so it does not touch your user configuration.
 
 **Host step — initialization:** in Claude Code use `/meridian-init`; in Codex
 follow `commands/meridian-init.md` from the installed framework. Choose
-`Walkthrough`, `lean-delivery`, `opaque`, and `English` when asked. The script
-below reproduces its base-copy, mode-overlay, placeholder, and lock steps for
+`Walkthrough`, the `lean` preset, `opaque`, and `English` when asked. The script
+below reproduces its template-copy, placeholder, and lock steps for
 this empty project. It does not exercise the interactive host or imply consent
 to machine setup. In a real host, review setup separately and confirm actual
 worktree access as described in the quick start.
@@ -34,8 +34,7 @@ import os
 import shutil
 from pathlib import Path
 root = Path(os.environ["CARDINE_ROOT"])
-for source in (root / "templates/base", root / "templates/workflows/lean-delivery"):
-    shutil.copytree(source, Path.cwd(), dirs_exist_ok=True)
+shutil.copytree(root / "templates/single", Path.cwd(), dirs_exist_ok=True)
 for path in Path.cwd().rglob("*"):
     if path.is_file() and ".git" not in path.parts:
         text = path.read_text()
@@ -48,9 +47,9 @@ PY
 cardine lock --project . --mode lean-delivery
 ```
 
-The initialized files include `PROJECT_WORKFLOW.md` (the `LEAN_DELIVERY`
-lock), `AGENTS.md`, `CLAUDE.md`, `LANGUAGE_POLICY.md`, `TECH_DESIGN.md`,
-`PROJECT_PLAN.md`, `tasks/QUEUE.md`, the task blueprint, mode-specific `docs/`
+The initialized files include `PROJECT_WORKFLOW.md` (the workflow lock),
+`AGENTS.md`, `CLAUDE.md`, `LANGUAGE_POLICY.md`, `TECH_DESIGN.md`,
+`PROJECT_PLAN.md`, `tasks/QUEUE.md`, the task blueprint, the `docs/`
 and `.codex/` files, and the generated `.cardine/manifest.json` and baseline.
 Fill in the real project's design, commands, conventions and toolchain before
 implementation. Here the stack is Markdown and Git, and the only gate is
@@ -124,7 +123,7 @@ git push -u origin main
 ```
 
 ```text checked=tasks/QUEUE.md
-| `[ ]` | 001 | Add the purpose sentence | 🔴 P1 | — |
+| `[ ]` | 001 | Add the purpose sentence | 🔴 P1 | none |
 ```
 
 ```text checked=PROJECT_PLAN.md
@@ -226,7 +225,7 @@ are empty, only the primary worktree remains, and `HEAD` equals `origin/main`.
 The closed queue section moves to the archive; the plan and handoff remain:
 
 ```text checked=tasks/QUEUE_ARCHIVE.md
-| `[x]` | 001 | Add the purpose sentence | 🔴 P1 | — |
+| `[x]` | 001 | Add the purpose sentence | 🔴 P1 | none |
 ```
 
 ```text checked=PROJECT_PLAN.md

@@ -7,6 +7,7 @@ import hashlib
 import re
 
 from cardine.shared.constants import CAPABILITY_MARKER
+from cardine.templates.roots import single_template_root
 
 
 def marker_blocks(text: str, capability: str, version: int) -> list[str]:
@@ -202,7 +203,7 @@ def agents_pointer_satisfies_claude(
     if not is_agents_pointer(claude_local_text):
         return False
     agent_local = project_root / "AGENTS.md"
-    agent_template = framework_root / "templates" / "workflows" / mode / "AGENTS.md"
+    agent_template = single_template_root(framework_root) / "AGENTS.md"
     if not agent_local.is_file() or not agent_template.is_file():
         return False
     local_text = agent_local.read_text(encoding="utf-8")
@@ -235,7 +236,7 @@ def agents_pointer_can_follow_upgrade(
         return True
     agent_local = project_root / "AGENTS.md"
     agent_base = baseline_root / "AGENTS.md"
-    agent_template = framework_root / "templates" / "workflows" / mode / "AGENTS.md"
+    agent_template = single_template_root(framework_root) / "AGENTS.md"
     if not agent_local.is_file() or not agent_base.is_file() or not agent_template.is_file():
         return False
     reconciled = append_only_new_markers(

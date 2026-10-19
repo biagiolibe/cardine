@@ -13,6 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import cardine_cli  # noqa: E402
+from cardine.templates import markers as owner_templates_markers
 from cardine.templates import migrations as owner_templates_migrations
 
 from cardine_cli_support import CLI, ROOT
@@ -21,11 +22,14 @@ from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin, SyntheticFra
 
 class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def baseline_version(self, mode: str, relative: str, capability: str) -> int:
-        baselines = json.loads((ROOT / "capabilities/marker-baselines.json").read_text(encoding="utf-8"))
-        return baselines[f"templates/workflows/{mode}/{relative}"][capability]["version"]
+        """The marker version the single template set ships; `mode` is a legacy key."""
+        text = (ROOT / "templates/single" / relative).read_text(encoding="utf-8")
+        version = owner_templates_markers.find_capability_marker_version(text, capability)
+        self.assertIsNotNone(version, f"{relative} ships no {capability} marker")
+        return version
 
     def test_spike_blueprint_upgrade_preserves_consumer_text_and_task_records(self) -> None:
-        blueprint = self.framework / "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md"
+        blueprint = self.framework / "templates/single/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
         previous = (ROOT / "tests/fixtures/task-blueprint-v15.md").read_text(encoding="utf-8")
         self.assertIn("capability=task-blueprint v15", previous)
@@ -52,7 +56,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertNotIn("committed directly to `main`", upgraded)
         self.assertNotIn("Branch:      throwaway, never merged", upgraded)
         self.assertIn("probe code is never merged or pushed", upgraded)
-        self.assertIn("ordinary governed worktree closure and integration", upgraded)
+        self.assertIn("ordinary worktree closure and integration", upgraded)
         for record, content in records.items():
             self.assertEqual(record.read_text(encoding="utf-8"), content)
         audit = self.run_cli("audit")
@@ -71,9 +75,9 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         (self.framework / "VERSION").write_text("1.1.39\n", encoding="utf-8")
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        blueprint = self.framework / "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md"
+        blueprint = self.framework / "templates/single/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
-        declaration = current.split("\n## Host impact\n", 1)[1].split("\n## Goal\n", 1)[0]
+        declaration = current.split("\n## Host impact\n", 1)[1].split("\n## Expected code surface\n", 1)[0]
         previous = current.replace("capability=task-blueprint v19", "capability=task-blueprint v11", 1)
         previous = previous.replace("\n## Host impact\n" + declaration, "", 1)
 
@@ -85,7 +89,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
             previous + "\nProject-owned task note.\n", encoding="utf-8"
         )
 
-        implementation = self.framework / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md"
+        implementation = self.framework / "templates/single/docs/workflows/IMPLEMENTATION.md"
         routed = implementation.read_text(encoding="utf-8")
         routing = routed.split(
             "<!-- MERIDIAN:BEGIN capability=host-impact-routing v2 -->", 1
@@ -120,16 +124,16 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_clean_upgrade_installs_isolated_task_worktree_contract(self) -> None:
         """Migration 045 delivers the worktree contract to an existing adopter."""
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         relative_paths = (
             "PROJECT_WORKFLOW.md",
             "docs/AUDIT_PROMPT_READ_ONLY.md",
             "docs/CODE_REVIEW_PROMPT.md",
             "docs/COMPLETION_REPORT_TEMPLATE.md",
             "docs/LIFECYCLE_ORCHESTRATION.md",
-            "docs/PULL_REQUEST_POLICY.md",
+            "docs/INTEGRATION_POLICY.md",
             "docs/workflows/IMPLEMENTATION.md",
-            "docs/workflows/LIFECYCLE.md",
+            "docs/LIFECYCLE_ORCHESTRATION.md",
             "docs/workflows/REMEDIATION.md",
             "docs/workflows/REVIEW.md",
         )
@@ -209,13 +213,13 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_clean_upgrade_installs_integration_evidence_reuse_contract(self) -> None:
         """Migration 046 upgrades every changed integration capability."""
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         changed_paths = (
             "PROJECT_WORKFLOW.md",
             "docs/CODE_REVIEW_PROMPT.md",
             "docs/COMPLETION_REPORT_TEMPLATE.md",
             "docs/LIFECYCLE_ORCHESTRATION.md",
-            "docs/PULL_REQUEST_POLICY.md",
+            "docs/INTEGRATION_POLICY.md",
             "docs/workflows/REVIEW.md",
         )
         current = {
@@ -276,7 +280,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_upgrade_replaces_conflicting_review_blocks_and_preserves_consumer_text(self) -> None:
         """Migration 050 replaces the distributed checkout conflict in place."""
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         paths = (
             "PROJECT_WORKFLOW.md",
             "docs/CODE_REVIEW_PROMPT.md",
@@ -394,7 +398,7 @@ worktree before the branch only after validated integration succeeds.
             with self.subTest(mode):
                 shutil.rmtree(self.project)
                 self.project.mkdir()
-                workflow = self.framework / "templates/workflows" / mode
+                workflow = self.framework / "templates/single"
                 for path in workflow.rglob("*"):
                     if path.is_file():
                         destination = self.project / path.relative_to(workflow)
@@ -473,7 +477,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(implementation.read_text(encoding="utf-8"), customized)
 
     def test_upgrade_installs_self_referential_handoff_rules_and_preserves_consumer_text(self) -> None:
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         paths = (
             "docs/COMPLETION_REPORT_TEMPLATE.md",
             "docs/workflows/REVIEW.md",
@@ -532,17 +536,21 @@ worktree before the branch only after validated integration succeeds.
                     self.project = self.framework.parent / mode
                     self.project.mkdir()
                     prefix = f"templates/workflows/{mode}/"
-                    for member in source.getmembers():
-                        if member.isfile() and member.name.startswith(prefix):
-                            relative = Path(member.name.removeprefix(prefix))
-                            target = self.project / relative
-                            target.parent.mkdir(parents=True, exist_ok=True)
-                            target.write_bytes(source.extractfile(member).read())
-                    # Fix source and target releases independently of VERSION.
+                    # The archive predates the single template set. Its managed text
+                    # overlays the current set, so the old release locks a complete
+                    # project whose archived files are the pristine 1.3.0 text.
                     old_framework = self.framework.parent / f"release-{mode}"
                     old_fixture = SyntheticFramework(old_framework, "1.3.0")
                     shutil.rmtree(old_framework / "templates")
-                    shutil.copytree(self.project, old_framework / "templates/workflows" / mode)
+                    single = old_framework / "templates/single"
+                    shutil.copytree(ROOT / "templates/single", single)
+                    for member in source.getmembers():
+                        if member.isfile() and member.name.startswith(prefix):
+                            relative = Path(member.name.removeprefix(prefix))
+                            target = single / relative
+                            target.parent.mkdir(parents=True, exist_ok=True)
+                            target.write_bytes(source.extractfile(member).read())
+                    shutil.copytree(single, self.project, dirs_exist_ok=True)
                     old_fixture.refresh_markers()
                     def cli(framework, *arguments):
                         return subprocess.run(
@@ -558,19 +566,17 @@ worktree before the branch only after validated integration succeeds.
                     applied = cli(self.framework, "upgrade", "--apply")
                     self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
                     self.assertNotIn("CONFLICT", applied.stdout)
-                    paths = ["PROJECT_WORKFLOW.md", "docs/WORKTREE_LIFECYCLE.md"]
-                    if mode == "governed-sdd":
-                        paths.append("docs/COMPLETION_REPORT_TEMPLATE.md")
+                    paths = ["PROJECT_WORKFLOW.md", "docs/WORKTREE_LIFECYCLE.md", "docs/COMPLETION_REPORT_TEMPLATE.md"]
                     for relative in paths:
-                        expected = ROOT / "templates/workflows" / mode / relative
+                        expected = ROOT / "templates/single" / relative
                         self.assertEqual((self.project / relative).read_bytes(), expected.read_bytes())
                     manifest = json.loads((self.project / ".cardine/manifest.json").read_text())
                     self.assertEqual(manifest["workflowBaselineVersion"], "1.4.0")
                     self.assertEqual(manifest["appliedMigrations"][-1], "030-synthetic-delivery")
 
     def test_pristine_1_2_15_lean_upgrade_installs_task_close(self) -> None:
-        workflow = self.framework / "templates/workflows/lean-delivery"
-        paths = ("AGENTS.md", "CLAUDE.md", "PROJECT_WORKFLOW.md")
+        workflow = self.framework / "templates/single"
+        paths = ("PROJECT_WORKFLOW.md",)
         current = {name: (workflow / name).read_text() for name in paths}
         old_closure = "When closure requires machine task state, run `meridian task transition <TASK-ID> DONE` in the task worktree after validation and before archiving the record, then commit the state file with the completion records. Never edit status or verdict fields by hand."
         for name in paths:
@@ -604,8 +610,8 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(manifest["appliedMigrations"][-1], "029-synthetic-close")
 
     def test_upgrade_installs_lean_closure_procedure_and_preserves_consumer_text(self) -> None:
-        workflow = self.framework / "templates/workflows/lean-delivery"
-        paths = ("PROJECT_WORKFLOW.md", "AGENTS.md", "CLAUDE.md")
+        workflow = self.framework / "templates/single"
+        paths = ("PROJECT_WORKFLOW.md",)
         current = {relative: (workflow / relative).read_text(encoding="utf-8") for relative in paths}
         previous = {
             relative: re.sub(
@@ -628,7 +634,7 @@ worktree before the branch only after validated integration succeeds.
 
         for relative, text in previous.items():
             self.assertEqual((self.project / relative).read_text(encoding="utf-8"), text)
-        agents = self.project / "AGENTS.md"
+        agents = self.project / "PROJECT_WORKFLOW.md"
         agents.write_text(agents.read_text(encoding="utf-8") + "\nConsumer-owned closure note.\n", encoding="utf-8")
 
         for relative, text in current.items():
@@ -643,14 +649,14 @@ worktree before the branch only after validated integration succeeds.
         for relative in paths:
             upgraded = (self.project / relative).read_text(encoding="utf-8")
             self.assertIn(f"MERIDIAN:BEGIN capability=git-workflow v{self.baseline_version('lean-delivery', relative, 'git-workflow')}", upgraded)
-            self.assertIn("Task branches do not edit `tasks/QUEUE.md`", upgraded)
+            self.assertIn("Task branches never edit the project's queue", upgraded)
         self.assertIn("Consumer-owned closure note.", agents.read_text(encoding="utf-8"))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.4")
         self.assertEqual(manifest["appliedMigrations"][-1], "020-synthetic-lean-closure")
 
     def test_upgrade_installs_governed_closure_procedure_and_preserves_consumer_text(self) -> None:
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         paths = (
             "PROJECT_WORKFLOW.md",
             "docs/workflows/IMPLEMENTATION.md",
@@ -717,7 +723,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(manifest["appliedMigrations"][-1], "021-synthetic-governed-closure")
 
     def test_upgrade_installs_code_organization_v2_and_preserves_the_project_module_map(self) -> None:
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         relative = "docs/CODE_ORGANIZATION.md"
         current = (workflow / relative).read_text(encoding="utf-8")
         new_sentence = re.search(r"^The project records its layered module map.*$", current, re.MULTILINE)
@@ -753,7 +759,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(len(re.findall(r"^## Project module map$", upgraded, re.MULTILINE)), 1)
 
     def test_upgrade_removes_an_untouched_smoke_line_and_never_drops_a_customized_one(self) -> None:
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         relative = "PROJECT_WORKFLOW.md"
         current = (workflow / relative).read_text(encoding="utf-8")
         anchor = "<!-- MERIDIAN:BEGIN capability=execution-discipline v1 -->"
@@ -792,7 +798,7 @@ worktree before the branch only after validated integration succeeds.
         self._assert_upgrade_installs_closure_command_policy("governed-sdd")
 
     def test_upgrade_installs_resume_guidance_for_lean_from_1_2_6(self) -> None:
-        workflow = self.framework / "templates/workflows/lean-delivery"
+        workflow = self.framework / "templates/single"
         paths = ("PROJECT_WORKFLOW.md", "docs/WORKTREE_LIFECYCLE.md")
         current = {relative: (workflow / relative).read_text(encoding="utf-8") for relative in paths}
         resume_paragraph = re.compile(r"\nA `Proceed with <TASK-ID>` directive that says to Resume.*?(?=<!-- MERIDIAN:END -->)", re.DOTALL)
@@ -853,7 +859,7 @@ worktree before the branch only after validated integration succeeds.
         self._assert_upgrade_installs_closure_command_policy("lean-delivery")
 
     def test_upgrade_installs_lean_lifecycle_document_from_1_2_5(self) -> None:
-        workflow = self.framework / "templates/workflows/lean-delivery"
+        workflow = self.framework / "templates/single"
         template = workflow / "docs/WORKTREE_LIFECYCLE.md"
         current = template.read_text(encoding="utf-8")
         previous = re.sub(

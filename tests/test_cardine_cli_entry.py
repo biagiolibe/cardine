@@ -32,8 +32,8 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_upgrade_preserves_a_verified_agents_pointer_claude_file(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        agent_template = self.framework / "templates/workflows/governed-sdd/AGENTS.md"
-        claude_template = self.framework / "templates/workflows/governed-sdd/CLAUDE.md"
+        agent_template = self.framework / "templates/single/AGENTS.md"
+        claude_template = self.framework / "templates/single/CLAUDE.md"
         marker = "<!-- MERIDIAN:BEGIN capability=pointer-test v1 -->\nShared gate.\n<!-- MERIDIAN:END -->\n"
         agent_template.write_text(agent_template.read_text(encoding="utf-8") + "\n" + marker, encoding="utf-8")
         claude_template.write_text(claude_template.read_text(encoding="utf-8") + "\n" + marker, encoding="utf-8")
@@ -56,8 +56,8 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_upgrade_preserves_an_explicit_agents_pointer_claude_file(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        agent_template = self.framework / "templates/workflows/governed-sdd/AGENTS.md"
-        claude_template = self.framework / "templates/workflows/governed-sdd/CLAUDE.md"
+        agent_template = self.framework / "templates/single/AGENTS.md"
+        claude_template = self.framework / "templates/single/CLAUDE.md"
         marker = "<!-- MERIDIAN:BEGIN capability=pointer-test v1 -->\nShared gate.\n<!-- MERIDIAN:END -->\n"
         agent_template.write_text(agent_template.read_text(encoding="utf-8") + "\n" + marker, encoding="utf-8")
         claude_template.write_text(claude_template.read_text(encoding="utf-8") + "\n" + marker, encoding="utf-8")
@@ -132,7 +132,7 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
         self.assertIn("ROUTER   AGENTS.md", checked.stdout)
         self.assertIn("missing trigger `Restart rejected <TASK-ID>`", checked.stdout)
-        self.assertIn("for `docs/workflows/LIFECYCLE.md`", checked.stdout)
+        self.assertIn("for `docs/LIFECYCLE_ORCHESTRATION.md`", checked.stdout)
         self.assertIn("existing route line", checked.stdout)
         self.assertIn("exactly once", checked.stdout)
 

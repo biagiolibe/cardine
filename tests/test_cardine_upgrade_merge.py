@@ -88,7 +88,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         locked = self.run_cli("lock", "--mode", "governed-sdd")
         self.assertEqual(locked.returncode, 0, locked.stderr)
 
-        workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8") + "\nUpgrade marker.\n", encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
@@ -125,7 +125,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
 
     def test_owner_reconciled_upgrade_does_not_adopt_or_back_up_a_managed_file(self) -> None:
-        workflow = self.framework / "templates/workflows/lean-delivery"
+        workflow = self.framework / "templates/single"
         template = workflow / "docs/WORKTREE_LIFECYCLE.md"
         current = template.read_text(encoding="utf-8")
         previous = current + "\nConsumer-owned lifecycle note.\n"
@@ -157,7 +157,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         satisfied capability marker is cosmetic and should be left untouched,
         not treated the same as a real, unverifiable conflict."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        agents = self.framework / "templates/workflows/governed-sdd/docs/workflows/REMEDIATION.md"
+        agents = self.framework / "templates/single/docs/workflows/REMEDIATION.md"
         agents.write_text(
             agents.read_text(encoding="utf-8").replace("# Remediation Procedure", "# Remediation Procedure Rules"),
             encoding="utf-8",
@@ -186,8 +186,8 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_upgrade_appends_new_marker_when_existing_marker_was_moved(self) -> None:
         """A new protected capability must not conflict solely because a project
         relocated an unchanged older protected block."""
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
-        profile = self.framework / "templates/workflows/governed-sdd/docs/EXECUTION_EVIDENCE_PROFILE.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        profile = self.framework / "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v6 -->\n?.*?"
@@ -265,17 +265,13 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("capability=investigation-scope v2", upgraded)
 
     def test_long_command_waits_block_is_added_once_to_a_customized_profile(self) -> None:
-        for mode in ("lean-delivery", "governed-sdd"):
-            with self.subTest(mode=mode):
-                template = (
-                    ROOT / "templates" / "workflows" / mode / "docs" / "EXECUTION_EVIDENCE_PROFILE.md"
-                ).read_text(encoding="utf-8")
-                self.assertIsNotNone(templates_markers.extract_marker_block(template, "long-command-waits", 1))
-                local = "# Project profile\n\nProject-owned rule.\n"
-                upgraded = templates_markers.append_only_new_markers(local, "# Project profile\n", template)
-                self.assertIsNotNone(upgraded)
-                self.assertEqual(upgraded.count("capability=long-command-waits v1"), 1)
-                self.assertIn("Project-owned rule.", upgraded)
+        template = (ROOT / "templates" / "single" / "docs" / "EXECUTION_EVIDENCE_PROFILE.md").read_text(encoding="utf-8")
+        self.assertIsNotNone(templates_markers.extract_marker_block(template, "long-command-waits", 1))
+        local = "# Project profile\n\nProject-owned rule.\n"
+        upgraded = templates_markers.append_only_new_markers(local, "# Project profile\n", template)
+        self.assertIsNotNone(upgraded)
+        self.assertEqual(upgraded.count("capability=long-command-waits v1"), 1)
+        self.assertIn("Project-owned rule.", upgraded)
 
     def test_marker_normalization_accepts_prose_reflow_but_not_fenced_content(self) -> None:
         template = (
@@ -307,7 +303,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         check must derive required capabilities from the template's own marker
         set, not from `managedPaths`, or this file can never be verified."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
         policy.write_text(
             policy.read_text(encoding="utf-8").replace("## Task-first loading", "## Task-First Loading Rules"),
             encoding="utf-8",
@@ -326,7 +322,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_apply_refuses_conflicting_local_change(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Roles", "## Updated Roles"), encoding="utf-8")
         local = self.project / "PROJECT_WORKFLOW.md"
         local.write_text(local.read_text(encoding="utf-8").replace("## Roles", "## Local Roles"), encoding="utf-8")
@@ -339,11 +335,17 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_oldest_published_release_upgrades_to_current_in_one_apply(self) -> None:
         """Decision 6: the oldest published release reaches the current one in one step."""
-        current_templates = self.framework / "templates/workflows/governed-sdd"
+        current_templates = self.framework / "templates/single"
         shutil.rmtree(current_templates)
-        # Verbatim templates/workflows/governed-sdd at tag v1.1.49; do not edit.
+        # Verbatim templates/workflows/governed-sdd at tag v1.1.49; do not edit. That
+        # release predates the single template set, so its files overlay the current
+        # set: the old release locks a complete project whose archived files are the
+        # pristine 1.1.49 text.
+        release = self.framework.parent / "release-1.1.49"
         with tarfile.open(ROOT / "tests/fixtures/release-1.1.49-governed-sdd.tar.gz") as archive:
-            archive.extractall(current_templates.parent, filter="data")
+            archive.extractall(release, filter="data")
+        shutil.copytree(ROOT / "templates/single", current_templates)
+        shutil.copytree(release / "governed-sdd", current_templates, dirs_exist_ok=True)
         shutil.rmtree(self.project)
         self.project.mkdir()
         self.copy_governed_templates()
@@ -352,7 +354,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
 
         shutil.rmtree(current_templates)
-        shutil.copytree(ROOT / "templates/workflows/governed-sdd", current_templates)
+        shutil.copytree(ROOT / "templates/single", current_templates)
         current = "1.4.0"  # Fixed target of this historical fixture.
         (self.framework / "VERSION").write_text(current + "\n", encoding="utf-8")
 
@@ -374,7 +376,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_owner_reconciled_upgrade_registers_baseline_despite_conflicts(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Roles", "## Updated Roles"), encoding="utf-8")
         local = self.project / "PROJECT_WORKFLOW.md"
         local.write_text(local.read_text(encoding="utf-8").replace("## Roles", "## Local Roles"), encoding="utf-8")
@@ -397,7 +399,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_check_reports_multiple_merge_conflicts(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(
             workflow.read_text(encoding="utf-8")
             .replace("## Roles", "## Updated Roles")

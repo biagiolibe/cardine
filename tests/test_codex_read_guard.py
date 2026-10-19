@@ -110,12 +110,12 @@ class CodexReadGuardTest(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
 
     def test_distribution_registers_the_verified_project_hook(self) -> None:
-        hook_path = ROOT / "templates/workflows/governed-sdd/.codex/hooks.json"
+        hook_path = ROOT / "templates/single/.codex/hooks.json"
         hook = json.loads(hook_path.read_text(encoding="utf-8"))
         entry = hook["hooks"]["PreToolUse"][0]
         self.assertEqual(entry["matcher"], "Bash")
         self.assertEqual(entry["hooks"][0]["command"], "meridian hook read-guard --host codex")
-        managed = {str(item.source.relative_to(ROOT / "templates/workflows/governed-sdd"))
+        managed = {str(item.source.relative_to(ROOT / "templates/single"))
                    for item in owner_templates_files.managed_files(ROOT, "governed-sdd")}
         self.assertIn(".codex/hooks.json", managed)
 

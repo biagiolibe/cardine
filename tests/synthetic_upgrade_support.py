@@ -30,7 +30,7 @@ class SyntheticFramework:
                 shutil.copyfile(ROOT / "capabilities" / name, root / "capabilities" / name)
         else:
             for relative, content in templates.items():
-                self.write("templates/workflows/" + relative, content)
+                self.write("templates/single/" + relative, content)
             self.write_json("capabilities/catalog-v1.json", {
                 "catalogVersion": 1, "capabilities": {}, "profiles": {},
             })
@@ -85,7 +85,7 @@ class SyntheticFramework:
                     record["wraps"] = [{"path": path, **declaration} for path in paths]
             if content is not None or operation == "retire":
                 for path in paths:
-                    relative = f"templates/workflows/{mode}/{path}"
+                    relative = f"templates/single/{path}"
                     destination = self.root / relative
                     text = destination.read_text(encoding="utf-8") if destination.exists() else ""
                     block = "" if operation == "retire" else (
@@ -132,9 +132,8 @@ MIGRATIONS = {name: f"{index:03d}-synthetic-{name}" for index, (_, name) in enum
 
 def rich_upgrade_framework(root: Path) -> SyntheticFramework:
     fixture = SyntheticFramework(root, "1.0.0")
-    paths = tuple(sorted({path.relative_to(workflow).as_posix()
-                          for workflow in (root / "templates/workflows").iterdir()
-                          for path in workflow.rglob("*.md")}))
+    single = root / "templates/single"
+    paths = tuple(sorted({path.relative_to(single).as_posix() for path in single.rglob("*.md")}))
     for target, name in RELEASES:
         if name == "before-closure":
             continue
@@ -146,7 +145,7 @@ def rich_upgrade_framework(root: Path) -> SyntheticFramework:
                 {"path": path, "capability": capability, "capabilityVersion": version}
                 for path, capability, version in (
                     ("docs/WORKTREE_LIFECYCLE.md", "worktree-lifecycle", 6),
-                    ("docs/PULL_REQUEST_POLICY.md", "remote-branch-cleanup", 1),
+                    ("docs/INTEGRATION_POLICY.md", "remote-branch-cleanup", 1),
                 )
             ]
         if name == "retirement":
@@ -175,7 +174,7 @@ class SyntheticUpgradeFixtureMixin(CardineCliFixtureMixin):
         self.copy_governed_templates()
 
     def _assert_upgrade_installs_closure_command_policy(self, mode: str) -> None:
-        workflow = self.framework / f"templates/workflows/{mode}"
+        workflow = self.framework / "templates/single"
         relative = ".codex/rules/meridian.rules"
         current = (workflow / relative).read_text(encoding="utf-8")
         previous = re.sub(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", "\n", current, flags=re.DOTALL)

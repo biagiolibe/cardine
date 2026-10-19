@@ -64,7 +64,7 @@ class FrameworkFixture(unittest.TestCase):
             shutil.copytree(ROOT / name, self.framework / name)
         shutil.copyfile(ROOT / "VERSION", self.framework / "VERSION")
         self.project.mkdir()
-        copy_tree(self.framework / "templates" / "workflows" / self.MODE, self.project)
+        copy_tree(self.framework / "templates" / "single", self.project)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -101,10 +101,10 @@ class FrameworkFixture(unittest.TestCase):
 
 class StandaloneBlockTemplateTest(unittest.TestCase):
     def read(self, relative: str) -> str:
-        return (ROOT / "templates/workflows" / relative).read_text(encoding="utf-8")
+        return (ROOT / "templates/single" / relative).read_text(encoding="utf-8")
 
     def test_review_prompt_is_one_block_and_applies_the_project_checklist(self) -> None:
-        text = self.read("governed-sdd" + "/" + REVIEW_PROMPT)
+        text = self.read(REVIEW_PROMPT)
         self.assertEqual(templates_markers.marker_pairs(text), [("code-review-prompt", 3)])
         block = templates_markers.extract_marker_block(text, "code-review-prompt", 3)
         self.assertIn("## Project review checklist", block)
@@ -112,35 +112,33 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
         self.assertTrue(text.rstrip().endswith("<!-- MERIDIAN:END -->"))
 
     def test_audit_prompt_runs_the_project_specific_checks_section(self) -> None:
-        text = self.read("governed-sdd/docs/AUDIT_PROMPT_READ_ONLY.md")
+        text = self.read("docs/AUDIT_PROMPT_READ_ONLY.md")
         self.assertEqual(templates_markers.marker_pairs(text), [("audit-prompt", 4)])
         block = templates_markers.extract_marker_block(text, "audit-prompt", 4)
         self.assertIn("## Project-specific checks", block)
         self.assertIn("cite an accepted ADR", block)
 
     def test_inline_markers_became_complete_standalone_blocks(self) -> None:
-        implementation = self.read("governed-sdd/docs/workflows/IMPLEMENTATION.md")
+        implementation = self.read("docs/workflows/IMPLEMENTATION.md")
         block = templates_markers.extract_marker_block(implementation, "validation-scoping", 2)
         self.assertTrue(block.startswith("Scope validation"))
-        for mode in ("governed-sdd", "lean-delivery"):
-            policy = self.read(f"{mode}/docs/CONTEXT_BUDGET_POLICY.md")
-            read_guard = templates_markers.extract_marker_block(policy, "read-guard", 2)
-            self.assertIn("verified task worktree", read_guard)
-            self.assertIn("router read set", read_guard)
-            self.assertNotRegex(policy, r"(?m)^\d+\. <!-- MERIDIAN:BEGIN capability=(?:read-guard|validation-scoping)")
+        policy = self.read("docs/CONTEXT_BUDGET_POLICY.md")
+        read_guard = templates_markers.extract_marker_block(policy, "read-guard", 2)
+        self.assertIn("verified task worktree", read_guard)
+        self.assertIn("router read set", read_guard)
+        self.assertNotRegex(policy, r"(?m)^\d+\. <!-- MERIDIAN:BEGIN capability=(?:read-guard|validation-scoping)")
 
     def test_lifecycle_and_remote_cleanup_are_managed_capabilities(self) -> None:
-        for mode in ("governed-sdd", "lean-delivery"):
-            text = self.read(f"{mode}/docs/WORKTREE_LIFECYCLE.md")
-            self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 1), ("worktree-lifecycle", 6)])
-        policy = self.read("governed-sdd/docs/PULL_REQUEST_POLICY.md")
+        text = self.read("docs/WORKTREE_LIFECYCLE.md")
+        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 1), ("worktree-lifecycle", 6)])
+        policy = self.read("docs/INTEGRATION_POLICY.md")
         self.assertIn(("remote-branch-cleanup", 1), templates_markers.marker_pairs(policy))
         self.assertNotIn("distinct authorized reviewer identity", policy)
 
     def test_new_blocks_audit_as_pass(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
-            copy_tree(ROOT / "templates/workflows/governed-sdd", project)
+            copy_tree(ROOT / "templates/single", project)
             results = owner_templates_marker_audit.audit_capability_markers(project, ROOT, "governed-sdd")
             self.assertFalse([item for item in results if item[0] != "PASS"], results)
             names = " ".join(detail for _status, detail in results)
@@ -163,14 +161,14 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
 
     def locked_at_legacy_prompt(self, local_prompt: str | None = None) -> str:
         """Lock a project at 1.2.6 with the legacy prompt, then return the target template."""
-        template = self.framework / "templates/workflows/governed-sdd" / REVIEW_PROMPT
+        template = self.framework / "templates/single" / REVIEW_PROMPT
         current = template.read_text(encoding="utf-8")
         template.write_text(LEGACY_REVIEW_PROMPT, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
         self.write_migration("001-synthetic-legacy", "1.2.5", "1.2.6", [])
         shutil.rmtree(self.project)
         self.project.mkdir()
-        copy_tree(self.framework / "templates/workflows/governed-sdd", self.project)
+        copy_tree(self.framework / "templates/single", self.project)
         self.lock()
         template.write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.7\n", encoding="utf-8")
@@ -297,7 +295,7 @@ class WrappedTextUpgradeTest(unittest.TestCase):
             base = Path(directory)
             framework, project = base / "framework", base / "project"
             fixture = SyntheticFramework(framework, "1.2.6")
-            template = framework / "templates/workflows" / mode / relative
+            template = framework / "templates/single" / relative
             current = template.read_text(encoding="utf-8")
             version = re.search(rf"capability={capability} v(\d+) -->", current).group(1)
             legacy = current.replace(f"<!-- MERIDIAN:BEGIN capability={capability} v{version} -->\n", "")
@@ -306,7 +304,7 @@ class WrappedTextUpgradeTest(unittest.TestCase):
             template.write_text(legacy, encoding="utf-8")
             (framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
             project.mkdir()
-            copy_tree(framework / "templates/workflows" / mode, project)
+            copy_tree(framework / "templates/single", project)
 
             def run(*arguments: str) -> subprocess.CompletedProcess[str]:
                 return subprocess.run(
@@ -338,17 +336,17 @@ class WrappedTextUpgradeTest(unittest.TestCase):
 
     def test_a_customized_remote_cleanup_section_is_a_conflict_not_a_duplicate(self) -> None:
         stdout, stderr = self.scenario(
-            "governed-sdd", "docs/PULL_REQUEST_POLICY.md", "remote-branch-cleanup",
+            "governed-sdd", "docs/INTEGRATION_POLICY.md", "remote-branch-cleanup",
             ("may intentionally lack a local", "may, in this project, lack a local"),
         )
-        self.assertRegex(stdout, r"CONFLICT\s+docs/PULL_REQUEST_POLICY.md")
+        self.assertRegex(stdout, r"CONFLICT\s+docs/INTEGRATION_POLICY.md")
         self.assertNotIn("APPEND-MARKERS", stdout)
         self.assertIn("blocking plan items", stderr)
 
 
 class ManagedCopyDigestAuditTest(FrameworkFixture):
     def change_template_heading(self, relative: str, replacement: str) -> Path:
-        template = self.framework / "templates/workflows" / self.MODE / relative
+        template = self.framework / "templates/single" / relative
         text = template.read_text(encoding="utf-8")
         first_line, remainder = text.split("\n", 1)
         template.write_text(replacement + "\n" + remainder, encoding="utf-8")
@@ -391,7 +389,7 @@ class ManagedCopyDigestAuditTest(FrameworkFixture):
         prompts = self.change_template_heading("docs/OPERATOR_PROMPTS.md", "# Released Operator Prompts")
         prompts.write_text(
             prompts.read_text(encoding="utf-8").replace(
-                "# Governed SDD Operator Prompts", "# Project Operator Prompts", 1
+                "# Operator Prompts", "# Project Operator Prompts", 1
             ),
             encoding="utf-8",
         )
@@ -481,7 +479,7 @@ class ConsumerProfileTest(unittest.TestCase):
     def legacy_project(self, mode: str) -> Path:
         project = self.root / mode
         project.mkdir()
-        copy_tree(ROOT / "templates/workflows" / mode, project)
+        copy_tree(ROOT / "templates/single", project)
         locked = subprocess.run(
             [sys.executable, str(CLI), "--framework-root", str(ROOT), "lock", "--mode", mode, "--project", str(project)],
             text=True,

@@ -32,7 +32,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         self.project = root / "project"
         self.fixture = SyntheticFramework(self.framework, "2.0.0")
         self.project.mkdir()
-        source = self.framework / "templates/workflows/governed-sdd"
+        source = self.framework / "templates/single"
         for path in source.rglob("*"):
             if path.is_file():
                 destination = self.project / path.relative_to(source)

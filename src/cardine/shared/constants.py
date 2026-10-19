@@ -100,7 +100,7 @@ ENTRY_ROUTER_ROUTES = {
     "proceed": "docs/workflows/IMPLEMENTATION.md",
     "review": "docs/workflows/REVIEW.md",
     "address-review": "docs/workflows/REMEDIATION.md",
-    "lifecycle-accept": "docs/workflows/LIFECYCLE.md",
+    "lifecycle-accept": "docs/LIFECYCLE_ORCHESTRATION.md",
     "audit": "docs/AUDIT_PROMPT_READ_ONLY.md",
 }
 

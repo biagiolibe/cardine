@@ -30,7 +30,7 @@ class CodexRulesUpgradeTest(unittest.TestCase):
         shutil.copytree(ROOT / "migrations", self.framework / "migrations")
         shutil.copytree(ROOT / "capabilities", self.framework / "capabilities")
         self.project.mkdir()
-        source = self.framework / "templates/workflows/governed-sdd"
+        source = self.framework / "templates/single"
         for path in source.rglob("*"):
             if path.is_file():
                 destination = self.project / path.relative_to(source)
@@ -53,7 +53,7 @@ class CodexRulesUpgradeTest(unittest.TestCase):
         (self.project / ".codex").rmdir()
         (self.framework / "VERSION").write_text("1.1.38\n", encoding="utf-8")
         # This fixture models 1.1.38 immediately after task 040, before task 041.
-        (self.framework / "templates/workflows/governed-sdd/.codex/hooks.json").unlink()
+        (self.framework / "templates/single/.codex/hooks.json").unlink()
 
     def tearDown(self) -> None:
         self.temporary.cleanup()

@@ -41,7 +41,7 @@ class CardineCliFixtureMixin:
 
     def copy_governed_templates(self) -> None:
         write_project_config(self.project, "governed")
-        source = self.framework / "templates" / "workflows" / "governed-sdd"
+        source = self.framework / "templates" / "single"
         for path in source.rglob("*"):
             if path.is_file():
                 destination = self.project / path.relative_to(source)
@@ -75,14 +75,14 @@ class CardineCliFixtureMixin:
 
     def configure_1_1_40_to_1_1_41_upgrade(self) -> None:
         """Lock the entry points immediately before migration 044."""
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         for name in ("AGENTS.md", "CLAUDE.md"):
             current = workflow / name
             old_text = current.read_text(encoding="utf-8").replace(
                 "MERIDIAN:BEGIN capability=command-triggers v3",
                 "MERIDIAN:BEGIN capability=command-triggers v2",
             ).replace(
-                "- `Restart rejected <TASK-ID>` — read `docs/workflows/LIFECYCLE.md`.\n",
+                "- `Restart rejected <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.\n",
                 "",
             )
             current.write_text(old_text, encoding="utf-8")
@@ -91,7 +91,7 @@ class CardineCliFixtureMixin:
         self.write_synthetic_migration("001-synthetic-before-restart", "1.1.39", "1.1.40")
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         for name in ("AGENTS.md", "CLAUDE.md"):
-            source = ROOT / "templates/workflows/governed-sdd" / name
+            source = ROOT / "templates/single" / name
             (workflow / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.41\n", encoding="utf-8")
         self.write_synthetic_migration(
@@ -101,7 +101,7 @@ class CardineCliFixtureMixin:
 
     def configure_1_1_53_to_1_1_54_manual_proceed_upgrade(self) -> tuple[Path, Path]:
         """Lock the two governed worktree capabilities immediately before 056."""
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         implementation = workflow / "docs/workflows/IMPLEMENTATION.md"
         project_workflow = workflow / "PROJECT_WORKFLOW.md"
         current_implementation = implementation.read_text(encoding="utf-8")
@@ -178,7 +178,7 @@ class CardineCliFixtureMixin:
             "- `Proceed with <TASK-ID>`: `docs/workflows/IMPLEMENTATION.md`.\n"
             "- `Review <TASK-ID>`: `docs/workflows/REVIEW.md`.\n"
             "- `Address review <TASK-ID>`: `docs/workflows/REMEDIATION.md`.\n"
-            f"- {lifecycle_triggers}: `docs/workflows/LIFECYCLE.md`.\n"
+            f"- {lifecycle_triggers}: `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
             "- Explicit audit: `docs/AUDIT_PROMPT_READ_ONLY.md`.\n"
         )
         router_path = self.project / shared_constants.ENTRY_ROUTER_PATH
@@ -252,7 +252,7 @@ class CardineCliFixtureMixin:
         point copy.  The target templates intentionally contain only the
         compact router marker and the managed destination.
         """
-        workflow = self.framework / "templates/workflows/governed-sdd"
+        workflow = self.framework / "templates/single"
         agents = workflow / "AGENTS.md"
         claude = workflow / "CLAUDE.md"
         router_v1 = (
@@ -372,7 +372,7 @@ class CardineCliFixtureMixin:
         (self.framework / "migrations/002-next-baseline.json").write_text(
             json.dumps(migration), encoding="utf-8"
         )
-        workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(
             workflow.read_text(encoding="utf-8") + "\nVersion split marker.\n",
             encoding="utf-8",
@@ -389,8 +389,8 @@ class CardineCliFixtureMixin:
     def _lock_project_with_reasoning_contract(self) -> tuple[Path, Path]:
         """Lock a governed project from templates that still carry the retired
         block and the superseded `execution-evidence-profile` v3 marker."""
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
-        current = (ROOT / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md").read_text(
+        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        current = (ROOT / "templates/single/docs/CONTEXT_BUDGET_POLICY.md").read_text(
             encoding="utf-8"
         )
         previous = current.replace(

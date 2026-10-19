@@ -343,7 +343,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                 project = self.home / workflow_mode
                 project.mkdir()
                 (project / "PROJECT_WORKFLOW.md").write_text(
-                    (ROOT / "templates/workflows" / workflow_mode / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8"),
+                    (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8"),
                     encoding="utf-8",
                 )
                 root = self.home / f"{workflow_mode}-root"
@@ -362,7 +362,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     choice_project = self.home / f"{workflow_mode}-{choice}"
                     choice_project.mkdir()
                     (choice_project / "PROJECT_WORKFLOW.md").write_text(
-                        (ROOT / "templates/workflows" / workflow_mode / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8"),
+                        (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8"),
                         encoding="utf-8",
                     )
                     plan = owner_hosts_setup.plan_setup(
@@ -753,7 +753,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_codex_doctor_probes_every_closure_policy_group(self) -> None:
-        rules = (ROOT / "templates/workflows/lean-delivery/.codex/rules/meridian.rules").read_text(encoding="utf-8")
+        rules = (ROOT / "templates/single/.codex/rules/meridian.rules").read_text(encoding="utf-8")
         project, root = self._trusted_project_with_rules(rules)
         ready = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(ready["lifecycle-command-policy"], "ready")
@@ -762,7 +762,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_codex_doctor_names_the_gap_for_rules_without_the_closure_block(self) -> None:
-        rules = (ROOT / "templates/workflows/lean-delivery/.codex/rules/meridian.rules").read_text(encoding="utf-8")
+        rules = (ROOT / "templates/single/.codex/rules/meridian.rules").read_text(encoding="utf-8")
         legacy = re.sub(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", "\n", rules, flags=re.DOTALL)
         self.assertNotEqual(legacy, rules)
         project, root = self._trusted_project_with_rules(legacy)
@@ -806,7 +806,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             self.assertFalse(any(forbidden in command for command in allowlist), forbidden)
 
     def test_claude_allowlist_execution_commands_match_the_codex_rule(self) -> None:
-        rules = normalize_program_word((ROOT / "templates/workflows/governed-sdd/.codex/rules/meridian.rules").read_text(encoding="utf-8"))
+        rules = normalize_program_word((ROOT / "templates/single/.codex/rules/meridian.rules").read_text(encoding="utf-8"))
         match = re.search(
             r'prefix_rule\(pattern=\["cardine", "execution", \[(.*?)\]\], decision="allow"\)',
             rules,
