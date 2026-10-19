@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,7 @@ class ReviewVerdictTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n")
+        write_project_config(self.root, "governed")
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.record = self.root / "tasks/001.md"

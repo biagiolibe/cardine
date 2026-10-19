@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -21,7 +22,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n")
+        write_project_config(self.root, "governed")
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.queue = self.root / "tasks/QUEUE.md"
@@ -136,7 +137,7 @@ class TaskStateImportTest(unittest.TestCase):
                 self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
 
     def test_lean_missing_status_and_derived_progress(self):
-        (self.root / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n")
+        write_project_config(self.root, "lean")
         record = self.add_task("001", "`[/]`")
         record.write_text("> **ID**: `001`\n")
         self.add_task("002", "`[x]`").unlink()

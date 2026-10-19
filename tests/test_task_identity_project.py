@@ -328,19 +328,19 @@ class ProjectDeclarationTest(unittest.TestCase):
     def test_defaults_partial_full_and_invalid_declarations(self) -> None:
         defaults = owner_tasks_identity.resolve_project_locations(self.project)
         self.assertEqual(defaults.queue, Path("tasks/QUEUE.md"))
-        self.write({"version": 1, "locations": {"queue": "docs/QUEUE.md"}})
+        self.write({"version": 1, "preset": "lean", "locations": {"queue": "docs/QUEUE.md"}})
         self.assertEqual(owner_tasks_identity.resolve_project_locations(self.project).queue, Path("docs/QUEUE.md"))
-        self.write({"version": 1, "locations": {"queue": "docs/QUEUE.md", "taskRoots": ["work/tasks"], "reviewRoot": "reviews", "handoffRoot": "handoffs", "adrLog": "docs/ADR.md", "plan": "docs/PLAN.md"}})
+        self.write({"version": 1, "preset": "lean", "locations": {"queue": "docs/QUEUE.md", "taskRoots": ["work/tasks"], "reviewRoot": "reviews", "handoffRoot": "handoffs", "adrLog": "docs/ADR.md", "plan": "docs/PLAN.md"}})
         locations = owner_tasks_identity.resolve_project_locations(self.project)
         self.assertEqual((locations.queue, locations.task_roots, locations.plan), (Path("docs/QUEUE.md"), (Path("work/tasks"),), Path("docs/PLAN.md")))
-        for declaration in ({"version": 2}, {"version": 1, "unknown": True}, {"version": 1, "locations": {"queue": "/tmp/QUEUE.md"}}, {"version": 1, "locations": {"queue": "../QUEUE.md"}}):
+        for declaration in ({"version": 2}, {"version": 1, "unknown": True}, {"version": 1, "preset": "lean", "locations": {"queue": "/tmp/QUEUE.md"}}, {"version": 1, "preset": "lean", "locations": {"queue": "../QUEUE.md"}}):
             self.write(declaration)
             with self.subTest(declaration=declaration), self.assertRaises(shared_errors.CardineError):
                 owner_shared_project.read_project_declaration(self.project)
 
     def test_declaration_overrides_legacy_and_cli_fields(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text("<!-- MERIDIAN:BEGIN capability=execution-assets v2 -->\n<!-- MERIDIAN:END -->\nTask files live at `legacy/tasks/<TASK-ID>.md`; queue is `legacy/QUEUE.md`.\n", encoding="utf-8")
-        self.write({"version": 1, "project": {"name": "Example", "slug": "example"}, "locations": {"queue": "docs/QUEUE.md"}})
+        self.write({"version": 1, "preset": "lean", "project": {"name": "Example", "slug": "example"}, "locations": {"queue": "docs/QUEUE.md"}})
         result = subprocess.run([sys.executable, str(CLI), "locations", "--field", "queue", "--project", str(self.project)], text=True, capture_output=True, check=False)
         self.assertEqual((result.returncode, result.stdout.strip(), result.stderr), (0, "docs/QUEUE.md", ""))
         author = subprocess.run([sys.executable, str(CLI), "project", "show", "--field", "reviewer-author", "--project", str(self.project)], text=True, capture_output=True, check=False)
@@ -353,7 +353,7 @@ class ProjectDeclarationTest(unittest.TestCase):
             "queue is `/tmp/QUEUE.md`.\n",
             encoding="utf-8",
         )
-        self.write({"version": 1, "locations": {"queue": "docs/QUEUE.md"}})
+        self.write({"version": 1, "preset": "lean", "locations": {"queue": "docs/QUEUE.md"}})
         self.assertEqual(owner_tasks_identity.resolve_project_locations(self.project).queue, Path("docs/QUEUE.md"))
 
     def test_legacy_location_warning_is_emitted_once_per_process(self) -> None:
@@ -370,19 +370,19 @@ class ProjectDeclarationTest(unittest.TestCase):
 
     def test_linked_worktree_reads_primary_declaration(self) -> None:
         subprocess.run(("git", "init", str(self.project)), check=True, capture_output=True, text=True)
-        self.write({"version": 1, "project": {"name": "Before", "slug": "before"}})
+        self.write({"version": 1, "preset": "lean", "project": {"name": "Before", "slug": "before"}})
         subprocess.run(("git", "-C", str(self.project), "add", "."), check=True, capture_output=True, text=True)
         subprocess.run(("git", "-C", str(self.project), "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "initial"), check=True, capture_output=True, text=True)
         linked = Path(self.temporary.name) / "linked"
         subprocess.run(("git", "-C", str(self.project), "worktree", "add", "-b", "task-stale", str(linked)), check=True, capture_output=True, text=True)
-        self.write({"version": 1, "project": {"name": "After", "slug": "after"}, "locations": {"queue": "current/QUEUE.md"}})
+        self.write({"version": 1, "preset": "lean", "project": {"name": "After", "slug": "after"}, "locations": {"queue": "current/QUEUE.md"}})
         author = subprocess.run([sys.executable, str(CLI), "project", "show", "--field", "reviewer-author", "--project", str(linked)], text=True, capture_output=True, check=False)
         locations = subprocess.run([sys.executable, str(CLI), "locations", "--field", "queue", "--project", str(linked)], text=True, capture_output=True, check=False)
         self.assertEqual((author.returncode, author.stdout.strip()), (0, "After Reviewer-Integrator <reviewer-integrator@after.local>"))
         self.assertEqual((locations.returncode, locations.stdout.strip()), (0, "current/QUEUE.md"))
 
     def test_setup_marks_missing_identity_incomplete_and_proposes_it(self) -> None:
-        self.write({"version": 1, "locations": {"queue": "docs/QUEUE.md"}})
+        self.write({"version": 1, "preset": "lean", "locations": {"queue": "docs/QUEUE.md"}})
         plan = owner_hosts_setup.plan_setup(None, self.project / "config.toml", home=self.project, framework_root=ROOT, project_root=self.project)
         self.assertEqual(plan.project_declaration_state, "advisory-incomplete")
         self.assertEqual(plan.project_declaration_proposal["project"]["slug"], "project")

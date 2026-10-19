@@ -282,9 +282,9 @@ def _committed_update(project: Path, relative: str, ref: str = "HEAD") -> int | 
         return None
 
 
-def _select_profile(project: Path) -> Profile:
+def _select_profile(project: Path, workflow_resolver: Callable[[Path], str]) -> Profile:
     try:
-        mode = detect_mode(project)
+        mode = workflow_resolver(project)
     except CardineError as error:
         raise ConsoleError(str(error).partition("; pass --mode")[0]) from error
     return PROFILES[mode]
@@ -594,8 +594,9 @@ def _delivery_pending(project: Path, worktree: str | None, task_id: str, heads: 
 
 
 def load_snapshot(project: Path, identities: IdentityCache | None = None,
-                  deliveries: DeliveryCache | None = None) -> Snapshot:
-    return _load_snapshot(project, identities, deliveries=deliveries)
+                  deliveries: DeliveryCache | None = None,
+                  *, workflow_resolver: Callable[[Path], str] = detect_mode) -> Snapshot:
+    return _load_snapshot(project, identities, deliveries=deliveries, workflow_resolver=workflow_resolver)
 
 
 def load_task(project: Path, task_id: str,
@@ -606,7 +607,8 @@ def load_task(project: Path, task_id: str,
 
 
 def _load_snapshot(project: Path, identities: IdentityCache | None = None,
-                   only: str | None = None, deliveries: DeliveryCache | None = None) -> Snapshot:
+                   only: str | None = None, deliveries: DeliveryCache | None = None,
+                   *, workflow_resolver: Callable[[Path], str] = detect_mode) -> Snapshot:
     """Build the snapshot; `only` restricts the per-task Git reads to one task.
 
     Git lists the registered worktrees once; every lifecycle reader below
@@ -614,11 +616,11 @@ def _load_snapshot(project: Path, identities: IdentityCache | None = None,
     """
     project = project.expanduser().resolve()
     with contextlib.ExitStack() as stack:
-        return _build_snapshot(project, identities, only, deliveries, stack)
+        return _build_snapshot(project, identities, only, deliveries, stack, workflow_resolver)
 
 
 def _build_snapshot(project: Path, identities: IdentityCache | None, only: str | None,
-                    deliveries: DeliveryCache | None, stack: contextlib.ExitStack) -> Snapshot:
+                    deliveries: DeliveryCache | None, stack: contextlib.ExitStack, workflow_resolver: Callable[[Path], str]) -> Snapshot:
     # Read the registered worktrees first so that profile and location detection
     # share the one read; a failure surfaces where the read used to happen.
     records: list[dict[str, str]] = []
@@ -628,7 +630,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         stack.enter_context(shared_worktree_records(records))
     except ConsoleError as error:
         listing_error = error
-    profile = _select_profile(project)
+    profile = _select_profile(project, workflow_resolver)
     try:
         locations = resolve_project_locations(project)
     except Exception as error:

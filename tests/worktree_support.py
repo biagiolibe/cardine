@@ -21,6 +21,9 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 
 
+from project_config_support import write_project_config
+
+
 class BoundedWorktreeLifecycleFixture(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -45,12 +48,10 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         (self.primary / "PROJECT_PLAN.md").write_text(
             "- `[ ]` 056 — Lifecycle\n", encoding="utf-8"
         )
-        (self.primary / "PROJECT_WORKFLOW.md").write_text(
-            "# Workflow\n\nThis file selects `LEAN_DELIVERY` exclusively.\n", encoding="utf-8"
-        )
+        write_project_config(self.primary)
         (self.primary / "README.md").write_text("base\n", encoding="utf-8")
         declaration = self.primary / ".cardine/candidate-validation.json"
-        declaration.parent.mkdir()
+        declaration.parent.mkdir(exist_ok=True)
         declaration.write_text(json.dumps({
             "version": 1, "state": "declared", "outcomes": {
                 "REUSE": ["scripts/check_repository.py"],
@@ -210,10 +211,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
 class GovernedCompletionRowsFixture(unittest.TestCase):
     def setUp(self) -> None:
         BoundedWorktreeLifecycleFixture.setUp(self)
-        template = ROOT / "templates/workflows/governed-sdd"
-        (self.primary / "PROJECT_WORKFLOW.md").write_text(
-            (template / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8"), encoding="utf-8"
-        )
+        write_project_config(self.primary, "governed")
         (self.primary / "tasks/QUEUE.md").write_text(
             "### Phase 1 — Governed\n\n"
             "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"

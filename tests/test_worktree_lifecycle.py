@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 from unittest import mock
 from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
@@ -332,7 +333,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             (self.project / ".cardine/candidate-validation.json").write_text(
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
-            (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
+            write_project_config(self.project, "lean")
             (self.project / "tasks").mkdir(exist_ok=True)
             (self.project / "tasks/QUEUE.md").write_text(
                 "| Status | ID | Title | Priority | Depends | Task |\n"
@@ -342,7 +343,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             )
             (self.project / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Fixture task.\n", encoding="utf-8")
             subprocess.run(
-                ["git", "add", "unpushed.txt", ".cardine/candidate-validation.json", "PROJECT_WORKFLOW.md",
+                ["git", "add", "unpushed.txt", ".cardine/candidate-validation.json", ".cardine/project.json",
                  "tasks/QUEUE.md", "PROJECT_PLAN.md"],
                 cwd=self.project, check=True,
             )
@@ -724,7 +725,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self._advance_ready_task()
         script = self.project / "scripts/check_repository.py"
         script.parent.mkdir(exist_ok=True)
-        script.write_text("from pathlib import Path\nassert Path('PROJECT_WORKFLOW.md').is_file()\n", encoding="utf-8")
+        script.write_text("from pathlib import Path\nassert Path('.cardine/project.json').is_file()\n", encoding="utf-8")
         script.chmod(0o644)
         command = "python3 scripts/check_repository.py"
         (self.project / cardine_cli.CANDIDATE_VALIDATION_PATH).write_text(json.dumps({

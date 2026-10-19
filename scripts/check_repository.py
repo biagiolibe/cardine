@@ -126,7 +126,7 @@ def check_template_context_sizes() -> None:
         for role in cardine_cli.CONTEXT_SIZE_ROLES[mode]:
             if role not in rows:
                 fail(f"context-size ceiling is missing for {mode}/{role}")
-            report = owner_shared_context.context_size_report(project, role)
+            report = owner_shared_context.context_size_report(project, role, workflow_mode=mode)
             actual = int(report["total"]["bytes"])
             if actual > rows[role]:
                 fail(f"context-size ceiling exceeded for {mode}/{role}: {actual} bytes > {rows[role]} bytes")

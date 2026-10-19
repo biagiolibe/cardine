@@ -8,6 +8,7 @@ import unittest
 from unittest import mock
 import shlex
 from pathlib import Path
+from project_config_support import write_project_config
 
 from tests import worktree_support as fixtures
 
@@ -32,7 +33,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def start(self, *, workflow="governed-sdd", spike=False):
         if workflow == "lean-delivery":
-            (self.primary / "PROJECT_WORKFLOW.md").write_text("This file selects `LEAN_DELIVERY` exclusively.\n")
+            write_project_config(self.primary, "lean")
             (self.primary / "tasks/QUEUE.md").write_text("| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n")
             (self.primary / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Lifecycle\n")
         elif spike:

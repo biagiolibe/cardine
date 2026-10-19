@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +33,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        (self.root / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n")
+        write_project_config(self.root, "lean")
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.record = self.root / "tasks/001.md"
@@ -118,7 +119,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(len(state["transitions"]), 1)
 
     def test_governed_cli_requires_delivery_and_preserves_spike(self):
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n")
+        write_project_config(self.root, "governed")
         self.assertEqual(self.cli("IN_PROGRESS").returncode, 0)
         before = self.path.read_bytes()
         refused = self.cli("READY_FOR_REVIEW")
@@ -133,7 +134,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(self.read("governed-sdd", True)["status"], "ANSWERED")
 
     def test_review_not_required_goes_directly_to_accepted(self):
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n")
+        write_project_config(self.root, "governed")
         self.record.write_text(self.record.read_text() + "Review: NOT_REQUIRED\n")
         for status in ("IN_PROGRESS", "ACCEPTED"):
             result = self.cli(status)

@@ -20,6 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "cardine_cli.py"
 
 
+from project_config_support import write_project_config
+
+
 class CardineCliFixtureMixin:
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -37,6 +40,7 @@ class CardineCliFixtureMixin:
         self.temporary.cleanup()
 
     def copy_governed_templates(self) -> None:
+        write_project_config(self.project, "governed")
         source = self.framework / "templates" / "workflows" / "governed-sdd"
         for path in source.rglob("*"):
             if path.is_file():

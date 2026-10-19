@@ -14,6 +14,7 @@ import time
 import unittest
 from datetime import datetime
 from pathlib import Path
+from project_config_support import write_project_config
 from unittest import mock
 
 
@@ -45,7 +46,7 @@ class ProjectConsoleTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.project = Path(self.temporary.name)
         (self.project / "tasks").mkdir()
-        (self.project / "PROJECT_WORKFLOW.md").write_text("# LEAN_DELIVERY\n", encoding="utf-8")
+        write_project_config(self.project, "lean")
         (self.project / "tasks" / "001-first.md").write_text(
             "# Task 001\n\n> **ID**: `001`\n\n## Objective\n\nFirst task.\n\n"
             "## Acceptance Criteria\n\n- [ ] First check.\n", encoding="utf-8",
@@ -189,6 +190,7 @@ class ProjectConsoleTest(unittest.TestCase):
             "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
             "Task files live under `docs/tasks/`\n"
             "<!-- MERIDIAN:END -->\n", encoding="utf-8")
+        write_project_config(self.project, "lean")
         record = self.project / "tasks/002-second.md"
         for root in ("tasks/done", "docs/tasks"):
             target = self.project / root

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -34,7 +35,7 @@ class StateArchivalTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        (self.root / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
+        write_project_config(self.root, "lean")
         self.queue = self.root / "tasks/QUEUE.md"
         self.archive = self.root / "tasks/QUEUE_ARCHIVE.md"
 
@@ -73,7 +74,7 @@ class StateArchivalTest(unittest.TestCase):
         self.assertIn("terminal by task state", str(entry["reason"]))
 
     def test_governed_inconclusive_spike_closes_its_section(self) -> None:
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n", encoding="utf-8")
+        write_project_config(self.root, "governed")
         self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
         self.state("057", "ACCEPTED", "governed-sdd")
         contents = ("## Spikes\n\n" + GOVERNED_HEADER
@@ -178,7 +179,7 @@ class StateArchivalTest(unittest.TestCase):
     def test_dependency_satisfaction_is_unchanged_by_archival_from_state(self) -> None:
         from cardine.shared.console_workflow import PROFILES, parse_queue
 
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n", encoding="utf-8")
+        write_project_config(self.root, "governed")
         self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
         self.state("057", "ACCEPTED", "governed-sdd")
         contents = ("## Closed\n\n" + GOVERNED_HEADER
@@ -213,7 +214,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks/done").mkdir(parents=True)
-        (self.root / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
+        write_project_config(self.root, "lean")
         (self.root / "tasks/QUEUE.md").write_text(
             "### Phase\n\n| Status | ID | Title |\n|---|---|---|\n"
             "| `[x]` | 001 | Closed |\n| `[ ]` | 002 | Open |\n", encoding="utf-8")
@@ -254,7 +255,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         self.assertFalse((self.root / ".cardine/tasks").exists())
 
     def test_governed_terminal_requires_a_consistent_recorded_verdict(self) -> None:
-        (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n", encoding="utf-8")
+        write_project_config(self.root, "governed")
         (self.root / "tasks/QUEUE.md").write_text(
             "### Phase\n\n" + GOVERNED_HEADER + "| 1 | 001 | P0 | ACCEPTED | REQUIRED | — | [001](done/001.md) |\n",
             encoding="utf-8")

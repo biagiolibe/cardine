@@ -18,6 +18,8 @@ from cardine_cli_support import CardineCliFixtureMixin
 
 class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_lock_rejects_a_prerelease_framework_version_without_writing(self) -> None:
+        before = {path.relative_to(self.project): path.read_bytes()
+                  for path in self.project.rglob("*") if path.is_file()}
         (self.framework / "VERSION").write_text("1.2.0-rc.1\n", encoding="utf-8")
 
         locked = self.run_cli("lock", "--mode", "governed-sdd")
@@ -25,7 +27,8 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertNotEqual(locked.returncode, 0)
         self.assertIn("prerelease", locked.stderr)
         self.assertIn("1.2.0-rc.1", locked.stderr)
-        self.assertFalse((self.project / ".cardine").exists())
+        self.assertEqual(before, {path.relative_to(self.project): path.read_bytes()
+                                  for path in self.project.rglob("*") if path.is_file()})
 
     def test_upgrade_apply_rejects_a_prerelease_target_before_touching_files(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)

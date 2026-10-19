@@ -37,6 +37,7 @@ class InstallationTest(RepoCase):
         self.addCleanup(os.chdir, Path.cwd())
         os.chdir(self.project)
         self.setup_project({"001": " ", "002": " "})
+        self.write(self.project, "PROJECT_WORKFLOW.md", "LEAN_DELIVERY\n")
         self.write(self.project, ".meridian/manifest.json", json.dumps({"workflowMode": "lean-delivery"}))
         self.write(self.project, ".meridian/task-identity.json", '{"version": 1, "mode": "opaque"}')
         with use(installation.MERIDIAN_INSTALLATION_NAMES):
@@ -49,8 +50,9 @@ class InstallationTest(RepoCase):
         }))
 
     def test_snapshot_equals_current_builder_on_synthetic_installation(self):
+        (self.project / ".cardine/project.json").unlink()
         with use(installation.MERIDIAN_INSTALLATION_NAMES):
-            expected = load_snapshot(self.project)
+            expected = load_snapshot(self.project, workflow_resolver=installation.detect_meridian_mode)
         self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
         self.assertEqual(expected.done_count, 1)
         self.assertEqual(expected.tasks[0].task_id, "002")

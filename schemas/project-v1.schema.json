@@ -4,13 +4,263 @@
   "title": "Cardine project declaration v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version"],
+  "required": [
+    "version",
+    "preset"
+  ],
   "properties": {
-    "version": {"const": 1},
-    "project": {"type": "object", "additionalProperties": false, "required": ["name", "slug"], "properties": {"name": {"type": "string", "minLength": 1}, "slug": {"type": "string", "minLength": 1}}},
-    "locations": {"type": "object", "additionalProperties": false, "properties": {"queue": {"$ref": "#/$defs/path"}, "taskRoots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/path"}}, "reviewRoot": {"$ref": "#/$defs/path"}, "handoffRoot": {"$ref": "#/$defs/path"}, "adrLog": {"$ref": "#/$defs/path"}, "plan": {"$ref": "#/$defs/path"}}},
-    "validationScoping": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["paths", "commands"], "properties": {"paths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "commands": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}}}},
-    "ci": {"oneOf": [{"const": "none"}, {"type": "object", "additionalProperties": false, "required": ["provider", "requiredChecks"], "properties": {"provider": {"type": "string", "minLength": 1}, "requiredChecks": {"type": "array", "items": {"type": "string", "minLength": 1}}}}]}
+    "version": {
+      "const": 1
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "slug"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slug": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "locations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "queue": {
+          "$ref": "#/$defs/path"
+        },
+        "taskRoots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/path"
+          }
+        },
+        "reviewRoot": {
+          "$ref": "#/$defs/path"
+        },
+        "handoffRoot": {
+          "$ref": "#/$defs/path"
+        },
+        "adrLog": {
+          "$ref": "#/$defs/path"
+        },
+        "plan": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "validationScoping": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "paths",
+          "commands"
+        ],
+        "properties": {
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "commands": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "ci": {
+      "oneOf": [
+        {
+          "const": "none"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "requiredChecks"
+          ],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requiredChecks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "preset": {
+      "enum": [
+        "lean",
+        "governed"
+      ]
+    },
+    "taskDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "review": {
+          "enum": [
+            "required",
+            "not_required"
+          ]
+        },
+        "authorityRequired": {
+          "type": "boolean"
+        },
+        "expectedCodeSurfaceRequired": {
+          "type": "boolean"
+        },
+        "validationRetryLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "landingMode": {
+          "enum": [
+            "direct"
+          ]
+        },
+        "ciBeforeLanding": {
+          "type": "boolean"
+        }
+      }
+    },
+    "taskIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "opaque",
+            "milestone"
+          ]
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commands",
+        "baseline",
+        "candidate"
+      ],
+      "properties": {
+        "commands": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "\\S"
+          }
+        },
+        "baseline": {
+          "$ref": "#/$defs/commandReferences"
+        },
+        "candidate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "REUSE",
+            "BOUNDED",
+            "FULL"
+          ],
+          "properties": {
+            "REUSE": {
+              "$ref": "#/$defs/commandReferences"
+            },
+            "BOUNDED": {
+              "$ref": "#/$defs/commandReferences"
+            },
+            "FULL": {
+              "$ref": "#/$defs/commandReferences"
+            }
+          }
+        }
+      }
+    }
   },
-  "$defs": {"path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}}
+  "$defs": {
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "commandReferences": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "taskDefaults"
+        ],
+        "properties": {
+          "taskDefaults": {
+            "required": [
+              "ciBeforeLanding"
+            ],
+            "properties": {
+              "ciBeforeLanding": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "ci"
+        ],
+        "properties": {
+          "ci": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "github"
+              },
+              "requiredChecks": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
