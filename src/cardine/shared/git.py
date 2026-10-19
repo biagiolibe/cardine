@@ -107,7 +107,7 @@ def primary_project_root(project_root: Path) -> Path:
         return project_root.expanduser().resolve()
 
 
-TASK_BRANCH_OPEN_STATUSES = ("QUEUED", "IN_PROGRESS", "CHANGES_REQUESTED", "READY_FOR_REVIEW")
+TASK_BRANCH_OPEN_STATUSES = ("queued", "in_progress", "in_review")
 
 
 def current_branch(project_root: Path) -> str | None:

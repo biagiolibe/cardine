@@ -34,11 +34,11 @@ class MachineTaskStateTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        write_project_config(self.root, "lean")
+        write_project_config(self.root, "lean", validation=VALIDATION)
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.record = self.root / "tasks/001.md"
-        self.record.write_text("# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n")
+        self.record.write_text(contract_record(extra="Status: queued\n"))
         self.path = task_state.state_path(self.root, "001")
         self.git("init", "-q", "-b", "main")
         self.git("add", ".")
@@ -47,12 +47,12 @@ class MachineTaskStateTest(unittest.TestCase):
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True, text=True).stdout.strip()
 
-    def cli(self, status):
-        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "task", "transition", "001", status,
+    def cli(self, status, *options):
+        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "task", "transition", "001", status, *options,
                                "--project", str(self.root), "--format", "json"], capture_output=True, text=True)
 
     def state(self, workflow="lean-delivery", steps=()):
-        current = "QUEUED"
+        current = "queued"
         transitions = []
         for destination in steps:
             transitions.append({"from": current, "to": destination, "commit": SHA, "at": AT})
@@ -68,39 +68,46 @@ class MachineTaskStateTest(unittest.TestCase):
         return task_state.read_task_state(self.root, "001", workflow, spike=spike, stop_factory=owner_stops_render.stop_error)
 
     def test_every_machine_edge_and_terminal_refusals(self):
-        paths = {
-            ("lean-delivery", False): [("DONE",)],
-            ("governed-sdd", False): [
-                ("IN_PROGRESS", "READY_FOR_REVIEW", "ACCEPTED"),
-                ("IN_PROGRESS", "READY_FOR_REVIEW", "CHANGES_REQUESTED", "IN_PROGRESS", "READY_FOR_REVIEW", "ACCEPTED"),
-            ],
-            ("governed-sdd", True): [("IN_PROGRESS", "ANSWERED"), ("IN_PROGRESS", "INCONCLUSIVE")],
-        }
-        for (workflow, spike), routes in paths.items():
-            for route in routes:
-                for length in range(len(route) + 1):
-                    with self.subTest(workflow=workflow, spike=spike, path=route[:length]):
-                        state = self.state(workflow, route[:length])
-                        self.assertEqual(task_state.validate_task_state(state, "001", workflow, spike=spike), state)
-                with self.assertRaisesRegex(task_state.TaskStateInvalid, "transitions"):
-                    task_state.validate_task_state(self.state(workflow, (*route, "QUEUED")), "001", workflow, spike=spike)
-        for workflow, target in (("lean-delivery", "IN_PROGRESS"), ("governed-sdd", "ACCEPTED")):
-            with self.assertRaises(task_state.TaskStateInvalid):
-                task_state.validate_task_state(self.state(workflow, (target,)), "001", workflow)
-        with self.assertRaises(task_state.TaskStateInvalid):
-            task_state.validate_task_state(self.state("governed-sdd", ("IN_PROGRESS", "ANSWERED")), "001", "governed-sdd")
+        expected = {"queued": {"in_progress", "cancelled"},
+                    "in_progress": {"in_review", "done", "cancelled"},
+                    "in_review": {"in_progress", "cancelled"}, "done": set(), "cancelled": set()}
+        prefixes = {"queued": (), "in_progress": ("in_progress",),
+                    "in_review": ("in_progress", "in_review"),
+                    "done": ("in_progress", "done"), "cancelled": ("cancelled",)}
+        for workflow in ("lean-delivery", "governed-sdd"):
+            for spike in (False, True):
+                for required in (False, True):
+                    graph = task_state.machine(workflow, spike, required)
+                    for source, prefix in prefixes.items():
+                        if source == "in_review" and not required:
+                            continue
+                        for target in expected:
+                            state = self.state(workflow, (*prefix, target))
+                            for edge in state["transitions"]:
+                                if edge["to"] == "cancelled":
+                                    edge.update(authority="owner directive", reason="No longer needed")
+                            allowed = target in expected[source] and (target != "in_review" or required)
+                            self.assertEqual(target in graph[source], allowed)
+                            with self.subTest(workflow=workflow, spike=spike, review=required, source=source, target=target):
+                                if allowed:
+                                    self.assertEqual(task_state.validate_task_state(state, "001", workflow,
+                                        spike=spike, review_required=required), state)
+                                else:
+                                    with self.assertRaises(task_state.TaskStateInvalid):
+                                        task_state.validate_task_state(state, "001", workflow,
+                                            spike=spike, review_required=required)
 
     def test_archived_record_transition_preserves_location_and_queue(self):
         queue = self.root / "tasks/QUEUE.md"
-        queue.write_text("| ID | Status | Task file |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
+        queue.write_text("| ID | Status | Task file |\n|---|---|---|\n| 001 | queued | [001](001.md) |\n")
         archived = self.root / "tasks/done/001.md"
         archived.parent.mkdir()
         self.record.rename(archived)
         before = queue.read_bytes()
-        result = self.cli("DONE")
+        result = self.cli("in_progress")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.read()["status"], "DONE")
-        self.assertIn("Status: DONE", archived.read_text())
+        self.assertEqual(self.read()["status"], "in_progress")
+        self.assertIn("Status: in_progress", archived.read_text())
         self.assertFalse(self.record.exists())
         self.assertEqual(queue.read_bytes(), before)
 
@@ -110,46 +117,48 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(shlex.split(resume)[shlex.split(resume).index("--project") + 1], str(self.root))
 
     def test_first_creation_head_timestamp_and_projection(self):
-        result = self.cli("DONE")
+        result = self.cli("in_progress")
         self.assertEqual(result.returncode, 0, result.stderr)
         state = json.loads(result.stdout)
         self.assertEqual(state, self.read())
         self.assertEqual(state["transitions"][0]["commit"], self.git("rev-parse", "HEAD"))
         self.assertTrue(state["transitions"][0]["at"].endswith("Z"))
-        self.assertIn("Status: DONE\n", self.record.read_text())
+        self.assertIn("Status: in_progress\n", self.record.read_text())
         self.assertEqual(len(state["transitions"]), 1)
 
     def test_governed_cli_requires_delivery_and_preserves_spike(self):
-        write_project_config(self.root, "governed")
-        self.assertEqual(self.cli("IN_PROGRESS").returncode, 0)
+        write_project_config(self.root, "governed", validation=VALIDATION)
+        self.assertEqual(self.cli("in_progress").returncode, 0)
         before = self.path.read_bytes()
-        refused = self.cli("READY_FOR_REVIEW")
+        refused = self.cli("in_review")
         self.assertEqual(refused.returncode, 2)
         self.assertIn("BLOCKED WRONG_WORKTREE", refused.stderr)
         self.assertEqual(self.path.read_bytes(), before)
         self.path.unlink()
-        self.record.write_text(self.record.read_text() + "Class: SPIKE\n")
-        for status in ("IN_PROGRESS", "ANSWERED"):
-            result = self.cli(status)
-            self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.read("governed-sdd", True)["status"], "ANSWERED")
+        self.record.write_text(contract_record(spike=True, extra="Review: NOT_REQUIRED\nStatus: queued\n"))
+        self.assertEqual(self.cli("in_progress").returncode, 0)
+        for outcome in ("ANSWERED", "INCONCLUSIVE"):
+            state = owner_tasks_transitions.record_spike_outcome(self.root, "001", outcome)
+            self.assertEqual(state["status"], "in_progress")
+            self.assertEqual(state["outcome"], outcome)
+            self.assertEqual(self.cli("done").returncode, 2)
 
     def test_review_not_required_goes_directly_to_accepted(self):
-        write_project_config(self.root, "governed")
+        write_project_config(self.root, "governed", validation=VALIDATION)
         self.record.write_text(self.record.read_text() + "Review: NOT_REQUIRED\n")
-        for status in ("IN_PROGRESS", "ACCEPTED"):
-            result = self.cli(status)
-            self.assertEqual(result.returncode, 0, result.stderr)
-        state = task_state.read_task_state(self.root, "001", "governed-sdd", review_required=False,
-                                          stop_factory=owner_stops_render.stop_error)
-        self.assertEqual(state["status"], "ACCEPTED")
-        with self.assertRaises(task_state.TaskStateInvalid):
-            task_state.validate_task_state(state, "001", "governed-sdd")
+        self.assertEqual(self.cli("in_progress").returncode, 0)
+        before = self.path.read_bytes()
+        for status in ("in_review", "done", "ACCEPTED"):
+            self.assertEqual(self.cli(status).returncode, 2)
+            self.assertEqual(self.path.read_bytes(), before)
+        state = self.read("governed-sdd")
+        self.assertEqual(state["status"], "in_progress")
+        self.assertEqual(state["contract"]["options"]["review"], "not_required")
 
     def test_no_projection_field_is_added(self):
-        self.record.write_text("> **ID**: `001`\n")
+        self.record.write_text(contract_record())
         original = self.record.read_bytes()
-        self.assertEqual(self.cli("DONE").returncode, 0)
+        self.assertEqual(self.cli("in_progress").returncode, 0)
         self.assertEqual(self.record.read_bytes(), original)
 
     def test_atomic_replace_and_write_failure_preserves_files(self):
@@ -161,24 +170,24 @@ class MachineTaskStateTest(unittest.TestCase):
         def replace(source, destination):
             self.assertEqual(self.path.read_bytes(), before[0])
             self.assertEqual(Path(source).parent, self.path.parent)
-            self.assertEqual(json.loads(Path(source).read_text())["status"], "DONE")
+            self.assertEqual(json.loads(Path(source).read_text())["status"], "in_progress")
             calls.append(destination)
             real_replace(source, destination)
 
         with mock.patch.object(cardine_cli.os, "replace", side_effect=OSError("replacement failed")):
             with self.assertRaises(OSError):
-                owner_tasks_transitions.transition_task_state(self.root, "001", "DONE")
+                owner_tasks_transitions.transition_task_state(self.root, "001", "in_progress")
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.assertEqual(list(self.path.parent.iterdir()), [self.path])
         with mock.patch.object(cardine_cli.os, "replace", side_effect=replace):
-            owner_tasks_transitions.transition_task_state(self.root, "001", "DONE")
+            owner_tasks_transitions.transition_task_state(self.root, "001", "in_progress")
         self.assertEqual(calls, [self.path])
 
     def test_missing_stop(self):
         write_project_config(self.root, "lean", validation=VALIDATION)
-        self.record.write_text(contract_record(extra="Status: QUEUED\n"))
+        self.record.write_text(contract_record(extra="Status: queued\n"))
         (self.root / "tasks/QUEUE.md").write_text(
-            "| ID | Status | Task file |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
+            "| ID | Status | Task file |\n|---|---|---|\n| 001 | queued | [001](001.md) |\n")
         with self.assertRaises(shared_errors.CardineStop) as caught:
             self.read()
         self.assertTrue(str(caught.exception).startswith("BLOCKED TASK_STATE_MISSING:"))
@@ -186,7 +195,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertFalse(self.path.exists())
         recovered = run_recovery(resume_from(str(caught.exception)), self.root)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
-        self.assertEqual(self.read()["status"], "QUEUED")
+        self.assertEqual(self.read()["status"], "queued")
 
     def test_invalid_stop(self):
         self.write(self.state())
@@ -194,39 +203,39 @@ class MachineTaskStateTest(unittest.TestCase):
         result = self.cli("UNKNOWN")
         self.assertEqual(result.returncode, 2)
         self.assertTrue(result.stderr.startswith("BLOCKED TASK_STATE_INVALID:"), result.stderr)
-        self.assertIn("allowed ['DONE']; found 'UNKNOWN'", result.stderr)
+        self.assertIn("found 'UNKNOWN'", result.stderr)
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.path.unlink()
-        result = self.cli("IN_PROGRESS")
-        self.assertEqual(result.returncode, 2)
-        self.assertFalse(self.path.exists())
+        result = self.cli("in_progress")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(self.path.exists())
 
     def test_invalid_existing_schema_history_and_identity_write_nothing(self):
-        good = self.state(steps=("DONE",))
+        good = self.state(steps=("in_progress", "done"))
         cases = []
-        for field, value in (("version", True), ("task_id", "002"), ("workflow", "governed-sdd"), ("status", "UNKNOWN"), ("extra", 1)):
+        for field, value in (("version", True), ("task_id", "002"), ("workflow", "unknown"), ("status", "UNKNOWN"), ("extra", 1)):
             changed = copy.deepcopy(good)
             changed[field] = value
             cases.append(changed)
-        for field, value in (("commit", "abc"), ("at", "2026-02-30T00:00:00Z"), ("at", "2026-10-11T12:00:00+01:00"), ("from", "DONE"), ("to", "QUEUED")):
+        for field, value in (("commit", "abc"), ("at", "2026-02-30T00:00:00Z"), ("at", "2026-10-11T12:00:00+01:00"), ("from", "done"), ("to", "queued")):
             changed = copy.deepcopy(good)
             changed["transitions"][0][field] = value
             cases.append(changed)
         changed = copy.deepcopy(good)
-        changed["status"] = "QUEUED"
+        changed["status"] = "queued"
         cases += [changed, {"version": 1}, [], None]
         for state in cases:
             with self.subTest(state=state):
                 self.write(state)
                 before = self.path.read_bytes(), self.record.read_bytes()
-                result = self.cli("DONE")
+                result = self.cli("done")
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("BLOCKED TASK_STATE_INVALID:", result.stderr)
                 self.assertIn("allowed", result.stderr)
                 self.assertIn("found", result.stderr)
                 self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.path.write_text("{")
-        self.assertIn("BLOCKED TASK_STATE_INVALID:", self.cli("DONE").stderr)
+        self.assertIn("BLOCKED TASK_STATE_INVALID:", self.cli("done").stderr)
 
     def test_optional_review_schema(self):
         state = self.state()
@@ -244,7 +253,83 @@ class MachineTaskStateTest(unittest.TestCase):
         with mock.patch.object(Path, "iterdir", side_effect=AssertionError("scan")), \
              mock.patch.object(Path, "glob", side_effect=AssertionError("scan")), \
              mock.patch.object(Path, "rglob", side_effect=AssertionError("scan")):
-            self.assertEqual(self.read()["status"], "QUEUED")
+            self.assertEqual(self.read()["status"], "queued")
+
+    def test_cancellation_requires_authority_and_reason_from_each_open_state(self):
+        for prefix in ((), ("in_progress",), ("in_progress", "in_review")):
+            with self.subTest(prefix=prefix):
+                state = self.state(steps=prefix)
+                state["review"] = {"required": True, "verdict": None, "attempt": 1,
+                                   "reviewed_commit": None, "approved_by": None}
+                self.record.write_text(contract_record(extra="Review: REQUIRED\n"))
+                self.write(state)
+                before = self.path.read_bytes()
+                denied = self.cli("cancelled")
+                self.assertEqual(denied.returncode, 2, denied.stderr)
+                self.assertEqual(self.path.read_bytes(), before)
+                cancelled = self.cli("cancelled", "--cancellation-authority", "Owner directive 054",
+                                     "--reason", "Superseded by another task")
+                self.assertEqual(cancelled.returncode, 0, cancelled.stderr)
+                result = self.read()
+                self.assertEqual(result["status"], "cancelled")
+                self.assertEqual(result["transitions"][-1]["authority"], "Owner directive 054")
+                self.assertEqual(result["transitions"][-1]["reason"], "Superseded by another task")
+                for target in task_state.STATUSES:
+                    self.assertEqual(self.cli(target).returncode, 2)
+
+    def test_dependencies_use_landed_results_for_both_presets(self):
+        from cardine.tasks.preflight import check_dependencies
+        from cardine.tasks.contract import resolve_task_contract
+        contract = resolve_task_contract(self.root, "001")
+        dependency_path = task_state.state_path(self.root, "002")
+        dependency_path.parent.mkdir(parents=True, exist_ok=True)
+        record = "## Dependencies\n- **Depends on**: 002\n- **Blocks**: 003\n"
+        for preset in ("lean", "governed"):
+            write_project_config(self.root, preset, validation=VALIDATION)
+            for task_class, status, outcome, satisfied in (
+                    ("standard", "queued", None, False),
+                    ("standard", "in_progress", None, False),
+                    ("standard", "in_review", None, False),
+                    ("standard", "done", None, True),
+                    ("standard", "cancelled", None, False),
+                    ("spike", "done", "ANSWERED", True),
+                    ("spike", "done", "INCONCLUSIVE", False),
+                    ("spike", "in_progress", "ANSWERED", False)):
+                steps = () if status == "queued" else ("in_progress",) if status == "in_progress" else ("in_progress", status)
+                state = self.state(steps=steps)
+                state["task_id"] = "002"
+                state["contract"] = copy.deepcopy(contract)
+                state["contract"]["class"] = task_class
+                state["contract"]["options"]["review"] = "required" if status == "in_review" else "not_required"
+                if outcome:
+                    state["outcome"] = outcome
+                if status == "cancelled":
+                    state["transitions"][-1].update(authority="owner", reason="Cancelled")
+                dependency_path.write_text(json.dumps(state))
+                self.git("add", ".")
+                self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "--allow-empty", "-qm", "Dependency result")
+                with self.subTest(preset=preset, task_class=task_class, status=status, outcome=outcome):
+                    if satisfied:
+                        check_dependencies(self.root, "001", record)
+                    else:
+                        with self.assertRaises(shared_errors.CardineStop):
+                            check_dependencies(self.root, "001", record)
+            # A branch's done result must not unblock its dependent on main.
+            self.git("switch", "-qc", "unlanded-" + preset)
+            state = self.state(steps=("in_progress", "done"))
+            state["task_id"] = "002"
+            dependency_path.write_text(json.dumps(state))
+            self.git("add", ".")
+            self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Unlanded result")
+            with self.assertRaises(shared_errors.CardineStop):
+                check_dependencies(self.root, "001", record)
+            self.git("switch", "main")
+
+    def test_transition_timestamps_must_be_chronological(self):
+        state = self.state(steps=("in_progress", "done"))
+        state["transitions"][0]["at"] = "2026-10-12T12:00:00Z"
+        with self.assertRaisesRegex(task_state.TaskStateInvalid, "chronological"):
+            task_state.validate_task_state(state, "001", "lean-delivery")
 
     def test_context_size_and_read_guard_sets_exclude_state_files(self):
         before = owner_shared_context.context_size_report(self.root, "implementation")

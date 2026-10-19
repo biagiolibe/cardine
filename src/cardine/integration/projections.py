@@ -84,14 +84,14 @@ _GOVERNED_QUEUE_ARCHIVE_HEADER = (
 
 _GOVERNED_QUEUE_TASK_ROW = re.compile(
     r"^\| (?P<order>[^|]+) \| (?P<id>[^|]+) \| (?P<priority>[^|]+) \| "
-    r"(?P<status>QUEUED|IN_PROGRESS|CHANGES_REQUESTED|READY_FOR_REVIEW|ACCEPTED|ANSWERED|INCONCLUSIVE) \| "
+    r"(?P<status>queued|in_progress|in_review|done|cancelled) \| "
     r"(?P<review>REQUIRED|NOT_REQUIRED|SPIKE) \| (?P<dependencies>[^|]*) \| (?P<task_file>[^|]*) \|$",
     re.MULTILINE,
 )
 
 
 _GOVERNED_QUEUE_STATUSES = frozenset(
-    {"QUEUED", "IN_PROGRESS", "CHANGES_REQUESTED", "READY_FOR_REVIEW", "ACCEPTED", "ANSWERED", "INCONCLUSIVE"}
+    {"queued", "in_progress", "in_review", "done", "cancelled"}
 )
 
 
@@ -180,23 +180,6 @@ def _governed_completion_row(
     if not record_path.is_file() and archived_path.is_file():
         record_path = archived_path
     record_text = record_path.read_text(encoding="utf-8") if record_path.is_file() else ""
-    if read_task_field(record_text, "Class") == "SPIKE":
-        terminal_status = read_task_field(record_text, "Status")
-        if terminal_status not in ("ANSWERED", "INCONCLUSIVE"):
-            raise _governed_completion_error(
-                path, section, "SPIKE task record must have terminal Status ANSWERED or INCONCLUSIVE"
-            )
-        if status == terminal_status:
-            return contents, True, f"SPIKE task is {terminal_status}"
-        line = lines[row_index]
-        parts = line.split("|")
-        payload = parts[status_index + 1]
-        replacement = re.sub(r"(?<!\S)(?:`)?[^`\s|]+(?:`)?(?!\S)", terminal_status, payload, count=1)
-        if replacement == payload:
-            raise _governed_completion_error(path, section, "Status cell has no replaceable token")
-        parts[status_index + 1] = replacement
-        return f"{contents[:start]}{'|'.join(parts)}{contents[start + len(line):]}", True, f"SPIKE task is {terminal_status}"
-
     if review_index is None:
         review = record_review(record_text)
         review = "REQUIRED" if review == "REQUIRED" else "NOT_REQUIRED" if review == "NOT REQUIRED" else None
@@ -204,6 +187,17 @@ def _governed_completion_row(
             raise _governed_completion_error(path, section, "no Review column and task record has no recognized review policy")
     else:
         review = cells[review_index].strip("`")
+        if review == "SPIKE":
+            # Class never waives review; old table layouts obtain policy from
+            # the task declaration, or inherit the configured project default.
+            declared = record_review(record_text)
+            if declared is not None:
+                review = declared.replace(" ", "_")
+            else:
+                from cardine.shared.project import resolve_project_configuration
+                from cardine.shared.git import canonical_project_root
+                policy = resolve_project_configuration(canonical_project_root(path.parent))["taskDefaults"]["review"]
+                review = "REQUIRED" if policy == "required" else "NOT_REQUIRED"
         if review not in ("REQUIRED", "NOT_REQUIRED"):
             raise _governed_completion_error(path, section, f"unknown Review value {cells[review_index]!r}")
 
@@ -216,7 +210,7 @@ def _governed_completion_row(
             reason = "review record is missing or malformed" if verdict is None else f"latest review verdict is {verdict}"
             return contents, False, reason
 
-    if status == "ACCEPTED":
+    if status == "done":
         return (
             contents,
             True,
@@ -229,7 +223,7 @@ def _governed_completion_row(
     # only the cell payload so all formatting around it remains unchanged.
     cell_index = status_index + 1
     payload = parts[cell_index]
-    replacement = re.sub(r"(?<!\S)(?:`)?[^`\s|]+(?:`)?(?!\S)", "ACCEPTED", payload, count=1)
+    replacement = re.sub(r"(?<!\S)(?:`)?[^`\s|]+(?:`)?(?!\S)", "done", payload, count=1)
     if replacement == payload:
         raise _governed_completion_error(path, section, "Status cell has no replaceable token")
     parts[cell_index] = replacement
@@ -288,8 +282,8 @@ def _queue_section_completion(section: str, mode: str) -> tuple[list[re.Match[st
 
 
 _STATE_TERMINAL_STATUSES = {
-    "governed-sdd": frozenset({"ACCEPTED", "ANSWERED", "INCONCLUSIVE"}),
-    "lean-delivery": frozenset({"DONE"}),
+    "governed-sdd": frozenset({"done", "cancelled"}),
+    "lean-delivery": frozenset({"done", "cancelled"}),
 }
 
 
@@ -322,7 +316,7 @@ def _queue_state_resolver(
                     record = authority.task_paths[0].read_text(encoding="utf-8")
                 state = override or read_task_state(
                     project_root, task_id, mode, review_required=None, stop_factory=stop_error,
-                    spike=read_task_field(record, "Class") == "SPIKE",
+                    spike=(read_task_field(record, "Class") or "").lower() == "spike",
                 )
                 status = str(state["status"])
                 result = ("terminal" if status in terminal else "open", status)
@@ -360,7 +354,7 @@ def _queue_section_decisions(
     queue_contents: str, mode: str, resolve_state: QueueStateResolver | None
 ) -> list[dict[str, object]]:
     """Decide every section; nested sections of an archived section are covered by it."""
-    completed_statuses = {"ACCEPTED", "ANSWERED"} if mode == "governed-sdd" else {"[x]"}
+    completed_statuses = {"done", "cancelled"} if mode == "governed-sdd" else {"[x]"}
     ranges = _queue_section_ranges(queue_contents)
     decisions: list[dict[str, object]] = []
     covered_until = -1
@@ -482,14 +476,6 @@ def _queue_archival_warnings(
                 f"queue section {heading!r} is not archived: heading level {level} is not `###`, "
                 "the only level archival reads"
             )
-        elif mode == "governed-sdd" and rows:
-            inconclusive = [row.group("id").strip() for row in rows if row.group("status") == "INCONCLUSIVE"]
-            if inconclusive and all(row.group("status") in {"ACCEPTED", "ANSWERED", "INCONCLUSIVE"} for row in rows):
-                warnings.append(
-                    f"queue section {heading!r} stays open only because of INCONCLUSIVE row(s): "
-                    + ", ".join(inconclusive)
-                    + "; run `cardine task state import --include-terminal` so archival reads task state"
-                )
     return warnings
 
 

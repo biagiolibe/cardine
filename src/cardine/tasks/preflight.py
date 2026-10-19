@@ -40,7 +40,7 @@ def execution_contract(project_root: Path, task_id: str) -> str:
     ))
 
 
-def execution_preflight(project_root: Path, task_id: str) -> str:
+def execution_preflight(project_root: Path, task_id: str, *, options: dict | None = None) -> str:
     """Validate the minimum durable execution contract before implementation.
 
     This intentionally does not inspect a chat's reasoning setting: that is a
@@ -76,22 +76,29 @@ def execution_preflight(project_root: Path, task_id: str) -> str:
             f"{task_name}; expected: `required via meridian execution`; found: no such line",
             task_id=task_id,
         )
-    required_headings = PREFLIGHT_HEADINGS
+    if options is None:
+        from cardine.tasks.state import read_task_state, state_path
+        from cardine.templates.mode import detect_mode
+        if state_path(project_root, task_id).exists():
+            snapshot = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)
+            options = snapshot.get("contract", {}).get("options")
+    required_headings = tuple(heading for heading in PREFLIGHT_HEADINGS
+                              if heading != "Authority" or options is None or options["authorityRequired"])
     missing = [
         f"## {heading}"
         for heading in required_headings
         if not re.search(rf"^## {re.escape(heading)}\s*$", text, re.MULTILINE)
     ]
-    if read_task_field(text, "Class") == "SPIKE":
+    if (read_task_field(text, "Class") or "").lower() == "spike":
         missing.extend(field for field in SPIKE_PREFLIGHT_FIELDS if not read_task_field(text, field))
-    else:
+    elif options is None or options["expectedCodeSurfaceRequired"]:
         missing.extend(
             f"## {heading}"
             for heading in NORMAL_PREFLIGHT_HEADINGS
             if not re.search(rf"^## {re.escape(heading)}\s*$", text, re.MULTILINE)
         )
     if missing:
-        is_spike = read_task_field(text, "Class") == "SPIKE"
+        is_spike = (read_task_field(text, "Class") or "").lower() == "spike"
         required = [f"## {heading}" for heading in PREFLIGHT_HEADINGS] + (
             list(SPIKE_PREFLIGHT_FIELDS) if is_spike else [f"## {heading}" for heading in NORMAL_PREFLIGHT_HEADINGS]
         )
@@ -104,7 +111,7 @@ def execution_preflight(project_root: Path, task_id: str) -> str:
         )
     status = read_task_field(text, "Status")
     on_task_branch = current_branch(project_root) == identity.branch_name
-    open_statuses = TASK_BRANCH_OPEN_STATUSES if on_task_branch else ("QUEUED", "IN_PROGRESS")
+    open_statuses = TASK_BRANCH_OPEN_STATUSES if on_task_branch else ("queued", "in_progress")
     if status not in open_statuses:
         raise stop_error(
             "TASK_STATUS_REJECTED",
@@ -122,17 +129,17 @@ def execution_preflight(project_root: Path, task_id: str) -> str:
                 values = [value.strip() for value in line.strip("|").split("|")]
                 if len(values) == len(columns) and values[columns.index("ID")] == identity.canonical_id:
                     queued_status = values[columns.index("Status")]
-                    # A task branch never edits the queue, so its row stays QUEUED while the record moves.
-                    if queued_status != status and not (on_task_branch and queued_status == "QUEUED"):
+                    # A task branch never edits the queue, so its row stays queued while the record moves.
+                    if queued_status != status and not (on_task_branch and queued_status == "queued"):
                         queue_name = queue.relative_to(project_root).as_posix()
                         permitted = (
                             f"on task branch {identity.branch_name} the actor may change only {task_name}, "
-                            f"and the queue row stays QUEUED"
+                            f"and the queue row stays queued"
                             if on_task_branch
                             else f"the actor may change {task_name} and {queue_name} together through the lifecycle"
                         )
                         accepted = (
-                            f"equal values, or queue QUEUED with task {', '.join(TASK_BRANCH_OPEN_STATUSES)}"
+                            f"equal values, or queue queued with task {', '.join(TASK_BRANCH_OPEN_STATUSES)}"
                             if on_task_branch
                             else "equal values"
                         )
@@ -153,13 +160,13 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
     task_file = find_task_file(project_root, task_id)
     text = task_file.read_text(encoding="utf-8")
     status = read_task_field(text, "Status") or "missing"
-    if status in ("ACCEPTED", "ANSWERED", "INCONCLUSIVE"):
+    if status in ("done", "cancelled"):
         return f"Execution reconciliation skipped for terminal task {task_id} ({status})"
-    if status not in ("QUEUED", "IN_PROGRESS"):
+    if status not in ("queued", "in_progress"):
         raise stop_error(
             "TASK_STATUS_REJECTED",
             f"rule: reconcile refreshes only an open task; field checked: Status in "
-            f"{task_file.relative_to(project_root).as_posix()}; accepted: QUEUED, IN_PROGRESS "
+            f"{task_file.relative_to(project_root).as_posix()}; accepted: queued, in_progress "
             f"(terminal tasks are skipped); found: {status}",
         )
     generated = execution_contract(project_root, task_id)
@@ -189,5 +196,34 @@ def readiness_check(project_root: Path, task_id: str, report: Path) -> str:
     execution_preflight(project_root, task_id)
     verify_host_impact_completion_evidence(find_task_file(project_root, task_id).read_text(encoding="utf-8"))
     check_handoff(project_root, task_id, report)
-    return f"READY_FOR_REVIEW gate passed for {task_id}"
+    return f"in_review gate passed for {task_id}"
 
+
+
+def check_dependencies(project_root: Path, task_id: str, record: str) -> None:
+    """Check canonical state on primary main, never an unlanded task branch."""
+    from cardine.templates.mode import detect_mode
+    from cardine.shared.git import canonical_project_root, _run_git
+    from cardine.tasks.state import read_task_state, state_path, dependency_satisfied
+    match = re.search(r"^## Dependencies\s*$\n(.*?)(?=^## |\Z)", record, re.MULTILINE | re.DOTALL)
+    body = match.group(1) if match else ""
+    field = re.search(r"(?:Depends on|Dependencies)\*{0,2}\s*:\s*(.+)", body, re.IGNORECASE)
+    raw = field.group(1) if field else body.strip()
+    raw = re.sub(r"\[([^]]+)\]\([^)]+\)", r"\1", raw)
+    dependencies = []
+    for item in re.split(r"[,\n]", raw):
+        item = item.strip().removeprefix("- ").strip().strip("`").strip()
+        if item.lower().strip(" .") in ("", "none", "—", "-"):
+            continue
+        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", item) is None:
+            raise stop_error("TASK_STATUS_REJECTED", f"invalid dependency declaration {item!r}", task_id=task_id, project=project_root)
+        dependencies.append(item)
+    primary = canonical_project_root(project_root)
+    for dependency in dependencies:
+        path = state_path(project_root, dependency).relative_to(project_root)
+        shown = _run_git(primary, "show", f"main:{path.as_posix()}")
+        if shown.returncode:
+            raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} has no landed state", task_id=task_id, project=project_root)
+        state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error)
+        if not dependency_satisfied(state):
+            raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} is not a landed successful result", task_id=task_id, project=project_root)

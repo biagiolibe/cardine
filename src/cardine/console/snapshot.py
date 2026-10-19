@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from cardine.shared.layout import ProjectNames, names
+from cardine.shared.snapshot_adapters import state_adapter
 
 import contextlib
+import json
 import os
 import re
 import subprocess
@@ -45,7 +47,7 @@ from cardine.shared.models import (
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.identity import resolve_project_locations, resolve_task_identity
-from cardine.tasks.state import read_task_state, state_path
+from cardine.tasks.state import read_task_state, state_path, review_is_required
 from cardine.templates.mode import detect_mode
 from cardine.worktree.closure_status import closure_status
 from cardine.worktree.storage import lifecycle_started_at
@@ -330,15 +332,23 @@ def _read_console_state(project: Path, profile: Profile, task_id: str,
                         record_loader: Callable[[], str | None], *, text: str | None = None
                         ) -> tuple[dict | None, str | None]:
     """Read only the addressed task; missing state alone enables legacy prose."""
-    # Class is metadata for choosing the SPIKE machine, never a status projection.
+    # Class is metadata for outcome validation, never a status projection.
     try:
         record = record_loader() if text is not None or state_path(project, task_id).exists() else ""
+        adapter = state_adapter.get()
+        if adapter is not None:
+            raw = text if text is not None else state_path(project, task_id).read_text(encoding="utf-8")
+            return adapter(json.loads(raw)), None
         state = read_task_state(
             project, task_id, profile.name, review_required=None,
-            spike=read_task_field(record or "", "Class") == "SPIKE",
+            spike=(read_task_field(record or "", "Class") or "").lower() == "spike",
             text=text, stop_factory=stop_error,
         )
         return state, None
+    except FileNotFoundError:
+        return None, None
+    except (ValueError, KeyError, TypeError) as error:
+        return None, str(stop_error("TASK_STATE_INVALID", f"state metadata: {error}", task_id=task_id, project=project))
     except CardineStop as error:
         if error.code == "TASK_STATE_MISSING":
             return None, None
@@ -656,11 +666,21 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
 
     active_rows = parse_queue(_read_text(queue), str(queue), profile, status_reader)
     archived_rows = parse_queue(_read_text(archive), str(archive), profile) if archive.is_file() else []
+    # Read archived machine state only for dependencies that the active queue
+    # addresses; unrelated historical files retain the bounded-read contract.
+    addressed = {dependency for row in active_rows for dependency in _dependency_ids(row)}
+    for row in archived_rows:
+        if row.task_id in addressed:
+            status_reader(row.task_id, {"File": row.link})
     by_id: dict[str, str] = {}
     for row in (*active_rows, *archived_rows):
         if row.task_id in by_id:
             raise ConsoleError(f"Duplicate task ID across queues: {row.task_id}")
         by_id[row.task_id] = row.status
+    from cardine.tasks.state import dependency_satisfied
+    satisfied_ids = {row.task_id for row in (*active_rows, *archived_rows)
+                     if (dependency_satisfied(states[row.task_id]) if states.get(row.task_id)
+                         else row.status in profile.satisfying and not state_errors.get(row.task_id))}
     # A single-task read needs neither the branch line nor the change count.
     status_lines = ["## "] if only is not None else _git(
         project, "status", "--porcelain=v1", "--branch").splitlines()
@@ -723,7 +743,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
                               and facts.row.status != row.status else primary_text)
         state = facts.state if facts and facts.state is not None else states[row.task_id]
         state_error = facts.state_error if facts else None
-        review = ("REQUIRED" if state.get("review", {}).get("required", profile.name == "governed-sdd")
+        review = ("REQUIRED" if review_is_required(state)
                   else "NOT REQUIRED") if state else (
                       row.review if row.review is not None else record_review(branch_policy_text))
         effective = effective_state(profile, row, None if state or state_error else record_status(primary_text),
@@ -762,9 +782,9 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             except (CardineError, OSError, ValueError):
                 # Legacy or unreadable timing data is intentionally non-fatal.
                 pass
-        if state and profile.name == "governed-sdd":
+        if state:
             started_at = next((item["at"] for item in state["transitions"]
-                               if item["to"] == "IN_PROGRESS"), None)
+                               if item["to"] == "in_progress"), None)
         from_branch = facts is not None and branch_text is not None and effective.source != "main"
         task_text = branch_text if from_branch else primary_text
         problem = None if task_text is not None else (main_problem or "task record not found")
@@ -772,7 +792,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         # branch does not unblock dependents until it reaches the primary queue.
         missing = [item for item in dependencies if item not in by_id]
         waiting = [item for item in dependencies
-                   if item in by_id and by_id[item] not in profile.satisfying]
+                   if item in by_id and item not in satisfied_ids]
         if state_error:
             readiness = "STATE ERROR"
         elif effective.mismatch:
@@ -789,7 +809,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
                 "ready_for_review": "READY FOR REVIEW", "done": "DONE ON BRANCH",
             }[effective.lifecycle]
         delivery_pending = None
-        if state and profile.name == "governed-sdd" and state["status"] == "READY_FOR_REVIEW":
+        if state and state["status"] == "in_review":
             delivery_pending = _delivery_pending(
                 project, worktree, row.task_id, heads, identities, delivery_cache, deliveries_shared)
             if delivery_pending is not None:

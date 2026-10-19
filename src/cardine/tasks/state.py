@@ -14,20 +14,12 @@ from datetime import datetime
 from pathlib import Path
 
 
-STATE_MACHINES = {
-    "lean-delivery": {"QUEUED": ("DONE",), "DONE": ()},
-    "governed-sdd": {
-        "QUEUED": ("IN_PROGRESS",),
-        "IN_PROGRESS": ("READY_FOR_REVIEW",),
-        "READY_FOR_REVIEW": ("ACCEPTED", "CHANGES_REQUESTED"),
-        "CHANGES_REQUESTED": ("IN_PROGRESS",),
-        "ACCEPTED": (),
-    },
-}
-SPIKE_MACHINE = {
-    "QUEUED": ("IN_PROGRESS",),
-    "IN_PROGRESS": ("ANSWERED", "INCONCLUSIVE"),
-    "ANSWERED": (), "INCONCLUSIVE": (),
+STATUSES = ("queued", "in_progress", "in_review", "done", "cancelled")
+STATE_MACHINE = {
+    "queued": ("in_progress", "cancelled"),
+    "in_progress": ("in_review", "done", "cancelled"),
+    "in_review": ("in_progress", "cancelled"),
+    "done": (), "cancelled": (),
 }
 SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas/task-state-v1.schema.json"
 
@@ -93,17 +85,31 @@ def _validate_schema(value, schema, field="state"):
         _invalid(field, f">= {schema['minimum']}", value)
 
 
-def machine(workflow, spike=False, review_required=True):
-    if workflow not in STATE_MACHINES:
-        _invalid("workflow", list(STATE_MACHINES), workflow)
-    if workflow == "governed-sdd" and spike:
-        return SPIKE_MACHINE
-    if workflow == "governed-sdd" and not review_required:
-        return {"QUEUED": ("IN_PROGRESS",), "IN_PROGRESS": ("ACCEPTED",), "ACCEPTED": ()}
-    return STATE_MACHINES[workflow]
+def machine(workflow=None, spike=False, review_required=True):
+    """Presets and task classes share one machine; only review policy gates review."""
+    return {status: tuple(target for target in targets
+                          if target != "in_review" or review_required)
+            for status, targets in STATE_MACHINE.items()}
 
 
-def validate_task_state(state, task_id, workflow, *, spike=False, review_required=True):
+def review_is_required(state):
+    """Read frozen task policy; sparse pre-contract snapshots retain their default."""
+    options = state.get("contract", {}).get("options", {})
+    if "review" in options:
+        return options["review"] == "required"
+    return state.get("review", {}).get("required", state.get("workflow") == "governed-sdd")
+
+
+def dependency_satisfied(state):
+    """Only landed results unblock dependents; an inconclusive spike never does."""
+    task_class = state.get("contract", {}).get("class")
+    if task_class is None:
+        task_class = "spike" if "outcome" in state else "standard"
+    return (state["status"] == "done"
+            and (task_class != "spike" or state.get("outcome") == "ANSWERED"))
+
+
+def validate_task_state(state, task_id, workflow, *, spike=False, review_required=None):
     """Validate history; review_required=None selects the snapshot's review policy."""
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     _validate_schema(state, schema)
@@ -121,17 +127,31 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
             raise TaskStateInvalid(f"contract: {error}") from error
     # Integration reads policy from the snapshot, without consulting prose.
     if review_required is None:
-        review_required = state.get("review", {}).get("required", workflow == "governed-sdd")
-    for field, expected in (("task_id", task_id), ("workflow", workflow)):
-        if state[field] != expected:
-            _invalid(field, [expected], state[field])
+        review_required = review_is_required(state)
+    if state["task_id"] != task_id:
+        _invalid("task_id", [task_id], state["task_id"])
+    if "contract" in state:
+        review_required = review_is_required(state)
+        spike = state["contract"]["class"] == "spike"
+        if "review" in state and state["review"]["required"] != review_required:
+            _invalid("review.required", [review_required], state["review"]["required"])
+    if "outcome" in state and not spike:
+        _invalid("outcome", "spike tasks only", state["outcome"])
     states = machine(workflow, spike, review_required)
-    current = "QUEUED"
+    current = "queued"
+    previous_at = None
     for index, transition in enumerate(state["transitions"]):
+        at = datetime.fromisoformat(transition["at"].replace("Z", "+00:00"))
+        if previous_at is not None and at < previous_at:
+            _invalid(f"transitions[{index}].at", "chronological timestamp", transition["at"])
+        previous_at = at
         if transition["from"] != current:
             _invalid(f"transitions[{index}].from", [current], transition["from"])
         if transition["to"] not in states[current]:
             _invalid(f"transitions[{index}].to", list(states[current]), transition["to"])
+        if transition["to"] == "cancelled" and not all(
+                str(transition.get(field, "")).strip() for field in ("authority", "reason")):
+            _invalid(f"transitions[{index}]", "cancellation authority and reason", transition)
         current = transition["to"]
     if state["status"] not in states:
         _invalid("status", list(states), state["status"])
@@ -146,7 +166,7 @@ def state_path(project_root, task_id):
     return Path(project_root) / names().tasks_path / f"{task_id}.json"
 
 
-def read_task_state(project_root, task_id, workflow, *, spike=False, review_required=True, stop_factory,
+def read_task_state(project_root, task_id, workflow, *, spike=False, review_required=None, stop_factory,
                     text=None):
     """Read one state file (or its Git snapshot), returning state or a registered stop."""
     try:

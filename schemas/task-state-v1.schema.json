@@ -33,14 +33,11 @@
     "status": {
       "type": "string",
       "enum": [
-        "QUEUED",
-        "IN_PROGRESS",
-        "CHANGES_REQUESTED",
-        "READY_FOR_REVIEW",
-        "ACCEPTED",
-        "ANSWERED",
-        "INCONCLUSIVE",
-        "DONE"
+        "queued",
+        "in_progress",
+        "in_review",
+        "done",
+        "cancelled"
       ]
     },
     "transitions": {
@@ -58,27 +55,21 @@
           "from": {
             "type": "string",
             "enum": [
-              "QUEUED",
-              "IN_PROGRESS",
-              "CHANGES_REQUESTED",
-              "READY_FOR_REVIEW",
-              "ACCEPTED",
-              "ANSWERED",
-              "INCONCLUSIVE",
-              "DONE"
+              "queued",
+              "in_progress",
+              "in_review",
+              "done",
+              "cancelled"
             ]
           },
           "to": {
             "type": "string",
             "enum": [
-              "QUEUED",
-              "IN_PROGRESS",
-              "CHANGES_REQUESTED",
-              "READY_FOR_REVIEW",
-              "ACCEPTED",
-              "ANSWERED",
-              "INCONCLUSIVE",
-              "DONE"
+              "queued",
+              "in_progress",
+              "in_review",
+              "done",
+              "cancelled"
             ]
           },
           "commit": {
@@ -91,6 +82,14 @@
             "type": "string",
             "format": "date-time",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|\\+00:00)$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authority": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -139,6 +138,12 @@
             null,
             "reviewer",
             "owner"
+          ]
+        },
+        "source": {
+          "enum": [
+            "local",
+            "external"
           ]
         }
       }
@@ -335,6 +340,69 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "outcome": {
+      "enum": [
+        "ANSWERED",
+        "INCONCLUSIVE"
+      ]
+    },
+    "review_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "required",
+          "verdict",
+          "attempt",
+          "reviewed_commit",
+          "approved_by"
+        ],
+        "properties": {
+          "required": {
+            "type": "boolean"
+          },
+          "verdict": {
+            "enum": [
+              null,
+              "APPROVE",
+              "CHANGES_REQUESTED",
+              "BLOCKED"
+            ]
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reviewed_commit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$",
+                "minLength": 40,
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approved_by": {
+            "enum": [
+              null,
+              "reviewer",
+              "owner"
+            ]
+          },
+          "source": {
+            "enum": [
+              "local",
+              "external"
+            ]
           }
         }
       }

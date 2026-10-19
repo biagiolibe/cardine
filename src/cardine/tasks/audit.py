@@ -33,7 +33,7 @@ def audit_task_state_projections(project_root: Path, workflow: str) -> list[Audi
         for found in _queue_task_rows(path.read_text(encoding="utf-8")):
             value = str(found["status"])
             if workflow == "lean-delivery":
-                value = {"[ ]": "QUEUED", "[/]": "IN_PROGRESS", "[x]": "DONE"}.get(value, value)
+                value = {"[ ]": "queued", "[/]": "in_progress", "[x]": "done"}.get(value, value)
             projections.setdefault(str(found["id"]), []).append((path.relative_to(project_root).as_posix(), value))
     results = []
     for path in paths:
@@ -46,7 +46,7 @@ def audit_task_state_projections(project_root: Path, workflow: str) -> list[Audi
             record_text = record.read_text(encoding="utf-8") if record else ""
             state = read_task_state(
                 project_root, task_id, workflow, review_required=None,
-                spike=read_task_field(record_text, "Class") == "SPIKE", stop_factory=stop_error,
+                spike=(read_task_field(record_text, "Class") or "").lower() == "spike", stop_factory=stop_error,
             )
         except (CardineError, OSError, UnicodeError) as error:
             results.append(AuditResult("FAIL", "task-state", f"{relative}: {error}"))

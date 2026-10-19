@@ -279,7 +279,7 @@ class ProjectConsoleTest(unittest.TestCase):
 
     def test_active_task_one_shot_and_detail_keep_elapsed_and_last_activity_separate(self) -> None:
         task = owner_console_models.Task(
-            "001", "Task", "IN_PROGRESS", (), (), None, (), (), readiness="IN PROGRESS",
+            "001", "Task", "in_progress", (), (), None, (), (), readiness="IN PROGRESS",
             lifecycle="in_progress", updated_at=0, started_at="2026-01-01T00:00:00Z",
             progress_phase="working", remaining_gates=("Run task validation",),
         )
@@ -461,7 +461,7 @@ class LinklessQueueTest(support.RepoCase):
             "`tasks/handoffs/<TASK-ID>.md`.\n"
         ))
 
-    def record(self, task_id: str, status: str = "QUEUED", milestone: str = "M37") -> str:
+    def record(self, task_id: str, status: str = "queued", milestone: str = "M37") -> str:
         return (f"docs/tasks/{milestone}/{task_id}.md",
                 f"# {task_id} — Title of {task_id}\n\nStatus: {status}\n\n"
                 f"## Objective\n\nObjective of {task_id}.\n")
@@ -481,9 +481,9 @@ class LinklessQueueTest(support.RepoCase):
 
     def test_consumer_project_a_shaped_project_lists_every_row_without_stale(self) -> None:
         rows = [
-            ("M37-CAUSE-001", "ACCEPTED", "—"), ("M37-CAUSE-002", "QUEUED", "M37-CAUSE-001"),
-            ("M37-CAUSE-003", "IN_PROGRESS", "—"), ("M37-CAUSE-004", "READY_FOR_REVIEW", "—"),
-            ("M37-SPIKE-001", "ANSWERED", "—"), ("M37-CAUSE-005", "QUEUED", "M37-SPIKE-001"),
+            ("M37-CAUSE-001", "done", "—"), ("M37-CAUSE-002", "queued", "M37-CAUSE-001"),
+            ("M37-CAUSE-003", "in_progress", "—"), ("M37-CAUSE-004", "in_review", "—"),
+            ("M37-SPIKE-001", "done", "—"), ("M37-CAUSE-005", "queued", "M37-SPIKE-001"),
         ]
         self.setup_project(rows)
         for task_id, _status, _deps in rows:  # review and handoff records share the ID
@@ -514,14 +514,14 @@ class LinklessQueueTest(support.RepoCase):
         for number in range(1, 38):
             milestone = f"M{number:02}"
             task_id = f"{milestone}-CAUSE-001"
-            status = "ACCEPTED" if number == 1 else "QUEUED"
+            status = "done" if number == 1 else "queued"
             queue += (f"## {milestone} Queue — Milestone {number}\n\n" + self.header
                       + f"| {number} | {task_id} | P1 | {status} | — | 2h |\n\n")
             self.write(self.project, *self.record(task_id, status, milestone))
             counts[milestone] = 1
         queue += ("## F0 Queue — Presentation track\n\n" + self.header
-                  + "| 38 | F0-PRES-001 | P1 | QUEUED | — | 2h |\n"
-                  + "| 39 | F0-PRES-002 | P1 | QUEUED | — | 2h |\n")
+                  + "| 38 | F0-PRES-001 | P1 | queued | — | 2h |\n"
+                  + "| 39 | F0-PRES-002 | P1 | queued | — | 2h |\n")
         for task_id in ("F0-PRES-001", "F0-PRES-002"):
             self.write(self.project, *self.record(task_id, milestone="F0"))
         counts["F0"] = 2
@@ -553,7 +553,7 @@ class LinklessQueueTest(support.RepoCase):
             snapshot, "All", "presentation track")], ["F0-PRES-001", "F0-PRES-002"])
 
     def test_queue_without_review_column_declares_no_review_policy(self) -> None:
-        self.setup_project([("M37-CAUSE-004", "READY_FOR_REVIEW", "—")])
+        self.setup_project([("M37-CAUSE-004", "in_review", "—")])
         task = self.load()["M37-CAUSE-004"]
         self.assertIsNone(task.review)
         self.assertEqual((task.readiness, task.lifecycle), ("READY FOR REVIEW", "ready_for_review"))
@@ -567,15 +567,15 @@ class LinklessQueueTest(support.RepoCase):
         ):
             with self.subTest(value=value):
                 self.assertEqual(owner_console_workflow.record_review(f"Review: {value}\n"), expected)
-        self.assertIsNone(owner_console_workflow.record_review("Status: READY_FOR_REVIEW\n"))
+        self.assertIsNone(owner_console_workflow.record_review("Status: in_review\n"))
 
     def test_branch_task_record_review_required_offers_review(self) -> None:
-        self.setup_project([("M37-CAUSE-004", "QUEUED", "—")])
+        self.setup_project([("M37-CAUSE-004", "queued", "—")])
         wt = self.worktree("m37-cause-004")
         queue = (wt / "docs/TASK_QUEUE.md").read_text(encoding="utf-8").replace(
-            "QUEUED", "READY_FOR_REVIEW")
+            "queued", "in_review")
         self.write(wt, "docs/TASK_QUEUE.md", queue)
-        path, text = self.record("M37-CAUSE-004", "READY_FOR_REVIEW")
+        path, text = self.record("M37-CAUSE-004", "in_review")
         self.write(wt, path, text + "Review: REQUIRED\n")
         self.commit(wt)
         task = self.load()["M37-CAUSE-004"]
@@ -585,12 +585,12 @@ class LinklessQueueTest(support.RepoCase):
         self.assertEqual(task.next_action, "If assigned: Review M37-CAUSE-004")
 
     def test_branch_task_record_not_required_uses_queue_mismatch_rule(self) -> None:
-        self.setup_project([("M37-CAUSE-004", "QUEUED", "—")])
+        self.setup_project([("M37-CAUSE-004", "queued", "—")])
         wt = self.worktree("m37-cause-004")
         queue = (wt / "docs/TASK_QUEUE.md").read_text(encoding="utf-8").replace(
-            "QUEUED", "READY_FOR_REVIEW")
+            "queued", "in_review")
         self.write(wt, "docs/TASK_QUEUE.md", queue)
-        path, text = self.record("M37-CAUSE-004", "READY_FOR_REVIEW")
+        path, text = self.record("M37-CAUSE-004", "in_review")
         self.write(wt, path, text + "Review: NOT REQUIRED\n")
         self.commit(wt)
         task = self.load()["M37-CAUSE-004"]
@@ -602,15 +602,15 @@ class LinklessQueueTest(support.RepoCase):
         header = ("| Order | ID | Priority | Status | Review | Dependencies |\n"
                   "|---:|---|---|---|---|---|\n")
         self.write(self.project, "docs/TASK_QUEUE.md", "# Q\n\n" + header
-                   + "| 1 | M37-CAUSE-004 | P1 | READY_FOR_REVIEW | NOT_REQUIRED | — |\n")
-        path, text = self.record("M37-CAUSE-004", "READY_FOR_REVIEW")
+                   + "| 1 | M37-CAUSE-004 | P1 | in_review | NOT_REQUIRED | — |\n")
+        path, text = self.record("M37-CAUSE-004", "in_review")
         self.write(self.project, path, text)
         self.commit(self.project)
         task = self.load()["M37-CAUSE-004"]
         self.assertEqual((task.review, task.readiness), ("NOT_REQUIRED", "MISMATCH"))
 
     def test_missing_record_is_a_per_task_problem(self) -> None:
-        self.setup_project([("M37-CAUSE-001", "QUEUED", "—"), ("M37-CAUSE-002", "QUEUED", "—")],
+        self.setup_project([("M37-CAUSE-001", "queued", "—"), ("M37-CAUSE-002", "queued", "—")],
                            records=False)
         path, text = self.record("M37-CAUSE-002")
         self.write(self.project, path, text)
@@ -619,7 +619,7 @@ class LinklessQueueTest(support.RepoCase):
         missing = tasks["M37-CAUSE-001"]
         self.assertEqual(missing.record_problem, "task record not found")
         self.assertEqual((missing.title, missing.status, missing.objective, missing.updated_at),
-                         ("M37-CAUSE-001", "QUEUED", (), None))
+                         ("M37-CAUSE-001", "queued", (), None))
         self.assertIsNone(missing.path)
         self.assertIsNone(missing.launch_command)
         self.assertNotEqual(missing.readiness, "READY")
@@ -632,7 +632,7 @@ class LinklessQueueTest(support.RepoCase):
         self.assertNotIn("Proceed with", " ".join(lines))
 
     def test_duplicate_record_lists_the_paths_and_offers_no_directive(self) -> None:
-        self.setup_project([("M37-CAUSE-001", "QUEUED", "—"), ("M37-CAUSE-002", "QUEUED", "—")])
+        self.setup_project([("M37-CAUSE-001", "queued", "—"), ("M37-CAUSE-002", "queued", "—")])
         self.write(self.project, "tasks/M36/M37-CAUSE-001.md", "# Copy\n")
         self.commit(self.project)
         tasks = self.load()
@@ -661,7 +661,7 @@ class LinklessQueueTest(support.RepoCase):
                               ("[x](../../outside.md)", "no unambiguous file link"),
                               ("[x](other/missing.md)", "unavailable within the project")):
             self.write(self.project, "docs/TASK_QUEUE.md", "# Q\n\n" + header
-                       + f"| 1 | M37-CAUSE-001 | P1 | QUEUED | — | {cell} |\n")
+                       + f"| 1 | M37-CAUSE-001 | P1 | queued | — | {cell} |\n")
             with self.assertRaisesRegex(owner_console_workflow.ConsoleError, message, msg=cell):
                 owner_console_snapshot.load_snapshot(self.project)
 
@@ -669,15 +669,15 @@ class LinklessQueueTest(support.RepoCase):
         header = ("| Order | ID | Priority | Status | Dependencies | Task file |\n"
                   "|---:|---|---|---|---|---|\n")
         self.write(self.project, "docs/TASK_QUEUE.md", "# Q\n\n" + header
-                   + "| 1 | M37-CAUSE-001 | P1 | QUEUED | — | [t](tasks/M37/M37-CAUSE-001.md) |\n")
+                   + "| 1 | M37-CAUSE-001 | P1 | queued | — | [t](tasks/M37/M37-CAUSE-001.md) |\n")
         self.write(self.project, "docs/tasks/M37/M37-CAUSE-001.md",
-                   "# M37-CAUSE-001 — Linked\n\nStatus: QUEUED\n")
+                   "# M37-CAUSE-001 — Linked\n\nStatus: queued\n")
         self.commit(self.project)
         task = self.load()["M37-CAUSE-001"]
         self.assertEqual((task.title, task.record_problem), ("Linked", None))
 
     def test_record_is_read_from_the_task_branch_without_links(self) -> None:
-        self.setup_project([("M37-CAUSE-001", "QUEUED", "—")])
+        self.setup_project([("M37-CAUSE-001", "queued", "—")])
         queue_path = self.project / "docs/TASK_QUEUE.md"
         queue_path.write_text(queue_path.read_text(encoding="utf-8").replace(
             "# Task Queue\n\n", "# Task Queue\n\n## M37 Queue — Main group\n\n"),
@@ -685,9 +685,9 @@ class LinklessQueueTest(support.RepoCase):
         self.commit(self.project, "main group")
         wt = self.worktree("m37-cause-001")
         queue = (wt / "docs/TASK_QUEUE.md").read_text(encoding="utf-8").replace(
-            "QUEUED", "IN_PROGRESS").replace("Main group", "Branch group")
+            "queued", "in_progress").replace("Main group", "Branch group")
         self.write(wt, "docs/TASK_QUEUE.md", queue)
-        path, text = self.record("M37-CAUSE-001", "IN_PROGRESS")
+        path, text = self.record("M37-CAUSE-001", "in_progress")
         self.write(wt, path, text.replace("Objective of", "Branch objective of"))
         self.commit(wt)
         before = self.refs_and_status()
@@ -701,25 +701,25 @@ class LinklessQueueTest(support.RepoCase):
         self.assertEqual(task.phase, ("M37 Queue — Main group",))
 
     def test_branch_record_state_is_used_when_the_queue_has_no_links(self) -> None:
-        self.setup_project([("M37-CAUSE-004", "QUEUED", "—")])
+        self.setup_project([("M37-CAUSE-004", "queued", "—")])
         wt = self.worktree("m37-cause-004")
         queue = (wt / "docs/TASK_QUEUE.md").read_text(encoding="utf-8").replace(
-            "QUEUED", "READY_FOR_REVIEW")
+            "queued", "in_review")
         self.write(wt, "docs/TASK_QUEUE.md", queue)
-        self.write(wt, *self.record("M37-CAUSE-004", "READY_FOR_REVIEW"))
+        self.write(wt, *self.record("M37-CAUSE-004", "in_review"))
         self.commit(wt)
         task = self.load()["M37-CAUSE-004"]
         self.assertEqual((task.source, task.readiness, task.mismatch),
                          ("branch m37-cause-004", "READY FOR REVIEW", None))
 
     def test_branch_that_moved_the_record_is_resolved_in_its_own_tree(self) -> None:
-        self.setup_project([("M37-CAUSE-004", "QUEUED", "—")])
+        self.setup_project([("M37-CAUSE-004", "queued", "—")])
         wt = self.worktree("m37-cause-004")
         queue = (wt / "docs/TASK_QUEUE.md").read_text(encoding="utf-8").replace(
-            "QUEUED", "READY_FOR_REVIEW")
+            "queued", "in_review")
         self.write(wt, "docs/TASK_QUEUE.md", queue)
         self.git(wt, "rm", "-q", "docs/tasks/M37/M37-CAUSE-004.md")
-        self.write(wt, *self.record("M37-CAUSE-004", "READY_FOR_REVIEW", milestone="M38"))
+        self.write(wt, *self.record("M37-CAUSE-004", "in_review", milestone="M38"))
         self.commit(wt)
         task = self.load()["M37-CAUSE-004"]
         self.assertEqual((task.source, task.readiness, task.mismatch),
@@ -731,10 +731,10 @@ class LinklessQueueTest(support.RepoCase):
             names = [f"M37-CAUSE-{n:03}" for n in range(count)]
             header = ("| Order | ID | Priority | Status | Dependencies | Task file |\n"
                       "|---:|---|---|---|---|---|\n") if linked else None
-            self.setup_project([(name, "QUEUED", "—") for name in names], header=header)
+            self.setup_project([(name, "queued", "—") for name in names], header=header)
             if linked:
                 rows = "".join(
-                    f"| {n} | {name} | P1 | QUEUED | — | [t](tasks/M37/{name}.md) |\n"
+                    f"| {n} | {name} | P1 | queued | — | [t](tasks/M37/{name}.md) |\n"
                     for n, name in enumerate(names, 1))
                 self.write(self.project, "docs/TASK_QUEUE.md", "# Q\n\n" + header + rows)
                 self.commit(self.project, "links")
@@ -851,15 +851,15 @@ class SnapshotCostTest(support.RepoCase):
     def populate(self) -> dict[str, Path]:
         """An in-progress, a review-ready, and a closing task, each with a worktree."""
         self.setup_project([
-            ("TASK-001", "QUEUED", "REQUIRED", "—"),
-            ("TASK-002", "QUEUED", "REQUIRED", "—"),
-            ("TASK-003", "ACCEPTED", "REQUIRED", "—"),
+            ("TASK-001", "queued", "REQUIRED", "—"),
+            ("TASK-002", "queued", "REQUIRED", "—"),
+            ("TASK-003", "done", "REQUIRED", "—"),
         ])
         trees = {task_id: self.worktree(task_id.lower()) for task_id in
                  ("TASK-001", "TASK-002", "TASK-003")}
-        self.state(trees["TASK-001"], "TASK-001", "IN_PROGRESS")
-        self.state(trees["TASK-002"], "TASK-002", "READY_FOR_REVIEW")
-        self.state(trees["TASK-003"], "TASK-003", "ACCEPTED", verdict="APPROVE")
+        self.state(trees["TASK-001"], "TASK-001", "in_progress")
+        self.state(trees["TASK-002"], "TASK-002", "in_review")
+        self.state(trees["TASK-003"], "TASK-003", "done", verdict="APPROVE")
         for wt in trees.values():
             self.commit(wt)
         return trees
@@ -968,7 +968,7 @@ class SnapshotCostTest(support.RepoCase):
     def test_success_is_cached_and_a_changed_input_discards_it(self) -> None:
         wt, deliveries, gate = self.review_ready()
         gate.side_effect = None
-        gate.return_value = {"status": "READY_FOR_REVIEW"}
+        gate.return_value = {"status": "in_review"}
         task = self.load_with(deliveries, gate)
         self.assertIsNone(task.delivery_pending)
         self.load_with(deliveries, gate)

@@ -34,10 +34,10 @@ class SingleWorkflowContractTest(unittest.TestCase):
 
     def record(self, extra='', *, spike=False, text=None, task_id='001'):
         self.path = self.root / f'tasks/{task_id}.md'
-        self.path.write_text(text if text is not None else contract_record(task_id, extra='Status: QUEUED\n' + extra, spike=spike))
+        self.path.write_text(text if text is not None else contract_record(task_id, extra='Status: queued\n' + extra, spike=spike))
         (self.root / 'tasks/QUEUE.md').write_text(
             '| ID | Status | Task file |\n|---|---|---|\n'
-            f'| {task_id} | QUEUED | [{task_id}]({task_id}.md) |\n')
+            f'| {task_id} | queued | [{task_id}]({task_id}.md) |\n')
 
     def resolve(self):
         return resolve_task_contract(self.root, '001')
@@ -179,12 +179,12 @@ class SingleWorkflowContractTest(unittest.TestCase):
         self.record()
         queue = self.root / 'tasks/QUEUE.md'
         queue.write_text('| ID | Status | Review | Task file |\n|---|---|---|---|\n'
-                         '| 001 | QUEUED | REQUIRED | [001](001.md) |\n')
+                         '| 001 | queued | REQUIRED | [001](001.md) |\n')
         self.assertEqual(import_task_states(self.root, ['001'])['tasks'][0]['state']['contract']['options']['review'],
                          'required')
         self.record('Options: {"review": "not_required"}\n')
         queue.write_text('| ID | Status | Review | Task file |\n|---|---|---|---|\n'
-                         '| 001 | QUEUED | NOT_REQUIRED | [001](001.md) |\n')
+                         '| 001 | queued | NOT_REQUIRED | [001](001.md) |\n')
         self.assertFalse(import_task_states(self.root, ['001'])['tasks'][0]['state']['review']['required'])
 
     def test_validation_snapshot_composes_baseline_task_and_candidate_commands(self):
@@ -254,7 +254,7 @@ class SingleWorkflowContractTest(unittest.TestCase):
         self.record(task_id='002', extra='Options: {"review": true}\n')
         (self.root / 'tasks/QUEUE.md').write_text(
             '| ID | Status | Task file |\n|---|---|---|\n'
-            '| 001 | QUEUED | [001](001.md) |\n| 002 | QUEUED | [002](002.md) |\n')
+            '| 001 | queued | [001](001.md) |\n| 002 | queued | [002](002.md) |\n')
         with self.assertRaises(CardineError):
             import_task_states(self.root, [], apply=True)
         self.assertFalse((self.root / '.cardine/tasks').exists())

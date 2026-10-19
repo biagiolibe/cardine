@@ -109,7 +109,7 @@ class AgentLaunchTest(unittest.TestCase):
                                     lifecycle="ready_for_review", review="NOT_REQUIRED").launch_command)
         self.assertIsNone(self.task(readiness="MISMATCH", active_writer=True).launch_command)
         self.assertIsNone(self.task(active_writer=True).launch_command)
-        self.assertIsNone(self.task(lifecycle="done", readiness="DONE ON BRANCH").launch_command)
+        self.assertIsNone(self.task(lifecycle="done", readiness="done ON BRANCH").launch_command)
         self.assertIsNone(self.task(lifecycle="closing", readiness="CLOSING").launch_command)
         self.assertIsNone(self.task(lifecycle="in_progress", readiness="IN PROGRESS",
                                     record_problem="duplicate record").launch_command)

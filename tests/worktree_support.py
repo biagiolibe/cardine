@@ -22,6 +22,7 @@ from cardine.worktree import storage as owner_worktree_storage
 
 
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 
 
 class BoundedWorktreeLifecycleFixture(unittest.TestCase):
@@ -36,7 +37,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         tasks = self.primary / "tasks"
         tasks.mkdir()
         (tasks / "056-lifecycle.md").write_text(
-            "# Task 056\n\n> **ID**: `056`\n", encoding="utf-8"
+            contract_record("056"), encoding="utf-8"
         )
         (tasks / "QUEUE.md").write_text(
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
@@ -48,7 +49,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         (self.primary / "PROJECT_PLAN.md").write_text(
             "- `[ ]` 056 — Lifecycle\n", encoding="utf-8"
         )
-        write_project_config(self.primary)
+        write_project_config(self.primary, validation=VALIDATION)
         (self.primary / "README.md").write_text("base\n", encoding="utf-8")
         declaration = self.primary / ".cardine/candidate-validation.json"
         declaration.parent.mkdir(exist_ok=True)
@@ -211,12 +212,12 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
 class GovernedCompletionRowsFixture(unittest.TestCase):
     def setUp(self) -> None:
         BoundedWorktreeLifecycleFixture.setUp(self)
-        write_project_config(self.primary, "governed")
+        write_project_config(self.primary, "governed", validation=VALIDATION)
         (self.primary / "tasks/QUEUE.md").write_text(
             "### Phase 1 — Governed\n\n"
             "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
             "|---:|---|---|---|---|---|---|\n"
-            "| 1 | 056 | P0 | QUEUED | NOT_REQUIRED | — | [056](056-lifecycle.md) |\n",
+            "| 1 | 056 | P0 | queued | NOT_REQUIRED | — | [056](056-lifecycle.md) |\n",
             encoding="utf-8",
         )
         (self.primary / "PROJECT_PLAN.md").unlink()

@@ -19,21 +19,21 @@ dependency rule of section 3 of the plan.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SW3 is implemented as the plan describes it, with the
+- [x] The scope of row SW3 is implemented as the plan describes it, with the
   design of the plan's sections 1 to 6. A file the plan missed but that
   the same change needs is in scope; the handoff lists it.
-- [ ] Every test that row SW3 lists under "Tests that prove it" exists and
+- [x] Every test that row SW3 lists under "Tests that prove it" exists and
   passes.
-- [ ] "Integration task-state consumers" means every module of `src/cardine/`
+- [x] "Integration task-state consumers" means every module of `src/cardine/`
   that reads a task status value, found with `git grep` for the old status
   names. The handoff lists them.
-- [ ] `load_meridian_snapshot` still reads state files that use the Meridian
+- [x] `load_meridian_snapshot` still reads state files that use the Meridian
   statuses (`QUEUED`, `IN_PROGRESS`, `READY_FOR_REVIEW`,
   `CHANGES_REQUESTED`, `ACCEPTED`, `ANSWERED`, `INCONCLUSIVE`, `DONE`).
   `cardine.legacy` maps them to the new vocabulary for the snapshot,
   read-only, with the mapping table of section 3. Product readers accept
   only the new vocabulary. A test covers both.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -42,16 +42,16 @@ dependency rule of section 3 of the plan.
   worktree` line of `.codex/rules/local.rules`. No task of this work item
   runs the checkout's `setup --apply` against the real home directory or
   creates `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/054.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/054.json`, which only
   the installed `meridian task close 054` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -94,6 +94,9 @@ revalidation in the same turn; do not stop to report the fix.
 - A required command that exits non-zero because of a precondition the agent
   can satisfy (command order, an uncommitted worktree, a missing argument):
   satisfy it and run the command again, once.
+- A counted attempt is a run of the whole Validation section on a committed,
+  complete implementation. Development runs on unfinished or uncommitted code
+  do not count (developer clarification on Resume, 2026-10-19).
 - A validation failure caused by this task's own changes, including a name
   collision, a stale reference, a broken link, or a test expectation that the
   task made obsolete: fix it and revalidate, at most 3 counted attempts. A

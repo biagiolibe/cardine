@@ -312,15 +312,12 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "|---:|---|---|---|---|---|---|\n"
         )
         held = header + (
-            "| 1 | 056 | P0 | INCONCLUSIVE | SPIKE | — | [056](056.md) |\n"
-            "| 2 | 057 | P0 | ACCEPTED | NOT_REQUIRED | — | [057](057.md) |\n"
+            "| 1 | 056 | P0 | in_progress | SPIKE | — | [056](056.md) |\n"
+            "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n"
         )
         warnings = owner_integration_projections._queue_archival_warnings(held, "governed-sdd")
-        self.assertEqual(len(warnings), 1)
-        self.assertIn("INCONCLUSIVE", warnings[0])
-        self.assertIn("056", warnings[0])
-        self.assertNotIn("057", warnings[0])
-        queued = held.replace("ACCEPTED", "QUEUED")
+        self.assertEqual(warnings, [])
+        queued = held.replace("done", "queued")
         self.assertEqual(owner_integration_projections._queue_archival_warnings(queued, "governed-sdd"), [])
         retained, archive = owner_integration_projections._archive_completed_queue_sections(
             held, self.primary / "tasks/QUEUE.md", self.primary / "tasks/QUEUE_ARCHIVE.md", "governed-sdd"
@@ -508,9 +505,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
                 row = lambda status: f"| `{status}` | B | Other |\n"
             else:
                 header = "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n|---|---|---|---|---|---|---|\n"
-                closed = "| 1 | A | P0 | ACCEPTED | NOT_REQUIRED | — | A.md |\n"
-                terminals = ("ACCEPTED", "ANSWERED")
-                open_states = ("QUEUED", "IN_PROGRESS", "CHANGES_REQUESTED", "READY_FOR_REVIEW", "INCONCLUSIVE")
+                closed = "| 1 | A | P0 | done | NOT_REQUIRED | — | A.md |\n"
+                terminals = ("done", "done")
+                open_states = ("queued", "in_progress", "CHANGES_REQUESTED", "in_review", "in_progress")
                 row = lambda status: f"| 2 | B | P0 | {status} | SPIKE | — | B.md |\n"
             for nested in ("", "#### Nested\n", "##### Deep\n"):
                 for status in terminals + open_states:
@@ -556,11 +553,11 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "## Phase A\n### Completed\n"
             "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
             "|---|---|---|---|---|---|---|\n"
-            "| 1 | A | P0 | ACCEPTED | NOT_REQUIRED | — | A.md |\n"
+            "| 1 | A | P0 | done | NOT_REQUIRED | — | A.md |\n"
             "## Phase B\n"
             "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
             "|---|---|---|---|---|---|---|\n"
-            "| 1 | B-SPIKE | P0 | QUEUED | SPIKE | — | B.md |\n"
+            "| 1 | B-SPIKE | P0 | queued | SPIKE | — | B.md |\n"
         )
         retained, archive = owner_integration_projections._archive_completed_queue_sections(
             contents, self.primary / "docs/QUEUE.md", self.primary / "archive.md", "governed-sdd"
@@ -719,7 +716,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_task_can_require_full_combined_tree_validation(self) -> None:
         task = self.create_task("task-055")
-        task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: DONE"))
+        task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: done"))
         decision = self.validation_decision(task_commit, full_required=True)
 
         self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.FULL)
@@ -730,7 +727,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_unknown_advanced_main_interaction_is_blocked(self) -> None:
         task = self.create_task("task-055")
-        task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: DONE"))
+        task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: done"))
         (self.primary / "advance.txt").write_text("main change\n", encoding="utf-8")
         self.git("add", "advance.txt")
         self.git("commit", "-m", "advance main")

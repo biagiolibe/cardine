@@ -166,23 +166,27 @@ def advance_task_closure(
                         recovery_project, task, "existing", allow_archived_queue_links=True,
                     )
                     archived = recovery_identity.task_path.parent.name == "done"
-                    recovery = ["cardine", "task", "transition" if archived else "close", task]
-                    if archived:
-                        recovery.append("DONE")
+                    recovery = ["cardine", "task", "transition", task, "in_progress"]
                     recovery.extend(["--project", str(recovery_project)])
                     if worktree_root is not None:
                         recovery = ["env", f"CARDINE_WORKTREE_ROOT={worktree_root}", *recovery]
                     commands = [f"cd {shlex.quote(str(recovery_project))} && {shlex.join(recovery)}"]
-                    if archived:
-                        # close refuses archived records; recreate only their missing state.
-                        commands.append(shlex.join([
-                            "git", "-C", str(recovery_project), "add", "--",
-                            (names().tasks_path / f"{task}.json").as_posix(),
-                            recovery_identity.task_path.relative_to(recovery_project).as_posix(),
-                        ]))
                     commands.append(shlex.join([
-                        "git", "-C", str(recovery_project), "commit", "-m", f"Close task {task}",
+                        "git", "-C", str(recovery_project), "add", "--",
+                        (names().tasks_path / f"{task}.json").as_posix(),
+                        recovery_identity.task_path.relative_to(recovery_project).as_posix(),
                     ]))
+                    commands.append(shlex.join([
+                        "git", "-C", str(recovery_project), "commit", "-m", f"Recover task state {task}",
+                    ]))
+                    if not archived:
+                        close = ["cardine", "task", "close", task, "--project", str(recovery_project)]
+                        if worktree_root is not None:
+                            close = ["env", f"CARDINE_WORKTREE_ROOT={worktree_root}", *close]
+                        commands.append(f"cd {shlex.quote(str(recovery_project))} && {shlex.join(close)}")
+                        commands.append(shlex.join([
+                            "git", "-C", str(recovery_project), "commit", "-m", f"Close task {task}",
+                        ]))
                     advance = ["cardine", "worktree", "advance", task, "--project", str(project_root),
                                "--format", "json"]
                     if worktree_root is not None:
