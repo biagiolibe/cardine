@@ -89,7 +89,7 @@ class Task:
         if self.is_resume:
             if self.active_writer:
                 return (f"Proceed with {self.task_id} (Resume: run "
-                        f"meridian worktree prepare {self.task_id} --resume --format json)")
+                        f"cardine worktree prepare {self.task_id} --resume --format json)")
             return f"Proceed with {self.task_id}"
         if self.active_writer:
             return None
@@ -132,7 +132,7 @@ class Task:
         if self.closure_resume:
             return self.closure_resume
         if self.readiness == "CLOSING":
-            return "Closure state unavailable: rerun meridian worktree closure-status"
+            return "Closure state unavailable: rerun cardine worktree closure-status"
         if self.record_problem and self.readiness != "MISMATCH":
             return f"Resolve the task record: {self.record_problem}"
         if self.readiness == "READY":

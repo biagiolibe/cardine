@@ -63,8 +63,8 @@ PROJECT="$(cd "$PROJECT" && pwd)" || die "project path not found"
 
 # --- Framework -------------------------------------------------------------
 if [ -z "$MERIDIAN_ROOT" ]; then
-  if command -v meridian >/dev/null 2>&1; then
-    MERIDIAN_ROOT="$(cd "$(dirname "$(command -v meridian)")/.." && pwd)"
+  if command -v cardine >/dev/null 2>&1; then
+    MERIDIAN_ROOT="$(cd "$(dirname "$(command -v cardine)")/.." && pwd)"
   else
     die "set MERIDIAN_ROOT or pass --meridian-root"
   fi
@@ -135,7 +135,7 @@ if [ "$OTHER_WORKTREES" -gt 1 ]; then
 fi
 
 # --- Read-only plans -------------------------------------------------------
-step "meridian upgrade --check"
+step "cardine upgrade --check"
 set +e
 "$M" upgrade --project "$PROJECT" --check
 PLAN=$?
@@ -143,7 +143,7 @@ set -e
 [ "$PLAN" = "0" ] || die "upgrade plan is blocked (exit $PLAN); resolve the listed conflicts first"
 
 if [ "$SKIP_SETUP" = "0" ]; then
-  step "meridian setup --check"
+  step "cardine setup --check"
   "$M" setup --project "$PROJECT" --check || die "setup --check failed"
 fi
 
@@ -151,7 +151,7 @@ ALIGN="$SCRIPT_DIR/align_queue.py"
 if [ "$SKIP_QUEUE" = "0" ]; then
   step "Queue usage text (preview)"
   if [ -f "$ALIGN" ]; then
-    python3 "$ALIGN" --meridian "$M" "$PROJECT" || info "queue alignment skipped (see notes above)"
+    python3 "$ALIGN" --cardine "$M" "$PROJECT" || info "queue alignment skipped (see notes above)"
   else
     info "align_queue.py not found next to this script; skipping"
     SKIP_QUEUE=1
@@ -170,21 +170,21 @@ git -C "$PROJECT" switch -q -c "$BRANCH"
 ON_BRANCH=1
 info "on $BRANCH"
 
-step "meridian upgrade --apply"
+step "cardine upgrade --apply"
 "$M" upgrade --project "$PROJECT" --apply
 
 if [ "$SKIP_SETUP" = "0" ]; then
-  step "meridian setup --apply"
+  step "cardine setup --apply"
   "$M" setup --project "$PROJECT" --apply
 fi
 
 if [ "$SKIP_QUEUE" = "0" ]; then
   step "Align queue usage text"
-  python3 "$ALIGN" --meridian "$M" "$PROJECT" --apply || info "queue alignment left unchanged parts (see notes above)"
+  python3 "$ALIGN" --cardine "$M" "$PROJECT" --apply || info "queue alignment left unchanged parts (see notes above)"
 fi
 
 # --- Validate ---------------------------------------------------------------
-step "meridian audit"
+step "cardine audit"
 # audit exits non-zero for UNVERIFIED or ADVISORY rows too (for example a
 # legacy manifest without capabilityProfiles); only FAIL rows stop here.
 set +e

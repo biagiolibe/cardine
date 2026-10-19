@@ -30,7 +30,7 @@ def audit_capability_markers(
     carry different canonical text for the same capability (a workflow
     section in AGENTS.md is not the same text as a template file's body).
     `PASS` means unmodified; `FAIL` means the protected text was edited
-    outside `meridian upgrade`; `SKIP` means the project's marker version
+    outside `cardine upgrade`; `SKIP` means the project's marker version
     predates what the current template carries, so there is nothing current
     to verify against yet (a staleness question for `upgrade`, not a drift
     question for this audit). Also reports `FAIL` when a single file carries
@@ -70,7 +70,7 @@ def audit_capability_markers(
                     (
                         "FAIL",
                         f"{item.target}: capability={capability} v{version} is retired but still "
-                        "present here; run `meridian upgrade`, or reconcile by hand if this file was "
+                        "present here; run `cardine upgrade`, or reconcile by hand if this file was "
                         "outside the retiring migration's `managedPaths`",
                     )
                 )
@@ -80,7 +80,7 @@ def audit_capability_markers(
                         "SKIP",
                         f"{item.target}: capability={capability} v{version} — the current framework "
                         "template has no matching version to verify against here (likely stale; "
-                        "run `meridian upgrade` first)",
+                        "run `cardine upgrade` first)",
                     )
                 )
             elif local_block == template_block:

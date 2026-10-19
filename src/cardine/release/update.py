@@ -151,12 +151,12 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
             refuse("SELF_UPDATE_VERIFY", f"post-apply HEAD/VERSION verification failed; recovery: git -C {shlex.quote(str(root))} switch --detach {tag}")
         print(f"Updated to {tag}. Restart running Codex and Claude Code sessions.")
         if templates == "template-changing":
-            print("Run meridian upgrade --check in each project.")
+            print("Run cardine upgrade --check in each project.")
         return 0
     except CardineStop:
         raise
     except (CardineError, OSError) as error:
-        refuse("SELF_UPDATE_VERIFY", f"Git operation failed: {error}; inspect checkout and retry meridian self-update --check")
+        refuse("SELF_UPDATE_VERIFY", f"Git operation failed: {error}; inspect checkout and retry cardine self-update --check")
 
 
 def claude_user_settings_path() -> Path:

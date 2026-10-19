@@ -138,7 +138,7 @@ def prepare_task_worktree(
                     f"lifecycle state mismatch retained at {state_path}: expected worktree {path} and branch "
                     f"{identity.branch_name}; found worktree {prior.get('worktree')} and branch {prior.get('branch')}",
                     resume=f"the developer corrects or removes the lifecycle state file {state_path}, then rerun "
-                    f"meridian worktree prepare {identity.canonical_id} --project {project_root} --format json",
+                    f"cardine worktree prepare {identity.canonical_id} --project {project_root} --format json",
                 )
             base_commit = str(prior.get("base_commit", base_commit))
             if not resume and _proven_stale_base(project_root, prior, str(branch_commit)):
@@ -183,7 +183,7 @@ def prepare_task_worktree(
         result.update({
             "base_commit_source": "derived",
             "state": "missing",
-            "state_repair": f"meridian worktree prepare {identity.canonical_id} --project {project_root} --format json",
+            "state_repair": f"cardine worktree prepare {identity.canonical_id} --project {project_root} --format json",
         })
     if dirty_summary is not None:
         dirty = bool(dirty_summary["changed_paths"] or dirty_summary["untracked_paths"])
@@ -191,7 +191,7 @@ def prepare_task_worktree(
         if dirty:
             result["next_action"] = "inspect-dirty"
             result["next_command"] = shlex.join((
-                "meridian", "worktree", "check", identity.canonical_id, "--resume",
+                "cardine", "worktree", "check", identity.canonical_id, "--resume",
                 "--project", str(project_root), "--format", "json",
             ))
     return result
@@ -299,7 +299,7 @@ def inspect_task_worktree(
                       + f" --worktree-root {shlex.quote(str(root))}")
     if errors == ["dirty-worktree"]:
         result["resume"] = shlex.join((
-            "meridian", "worktree", "prepare", identity.canonical_id, "--resume",
+            "cardine", "worktree", "prepare", identity.canonical_id, "--resume",
             "--project", str(project_root), "--format", "json",
         ))
         if resume:

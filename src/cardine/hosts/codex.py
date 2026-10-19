@@ -31,11 +31,11 @@ prefix_rule(pattern=["git", "push", "origin", ["--force", "-f", "--force-with-le
 # Meridian read-only and task-lifecycle commands. Commands that change machine
 # or project configuration (setup/codex configure --apply, upgrade --apply,
 # lock, generate-*) keep prompting.
-prefix_rule(pattern=["meridian", ["--version", "self-check", "console", "audit", "profile", "locations", "project", "context", "adr", "report", "usage", "validation", "execution", "task", "review"]], decision="allow")
-prefix_rule(pattern=["meridian", "worktree"], decision="allow")
-prefix_rule(pattern=["meridian", "codex", ["doctor", "worktree-path"]], decision="allow")
-prefix_rule(pattern=["meridian", ["upgrade", "setup"], "--check"], decision="allow")
-prefix_rule(pattern=["meridian", "codex", "configure", "--check"], decision="allow")
+prefix_rule(pattern=["cardine", ["--version", "self-check", "console", "audit", "profile", "locations", "project", "context", "adr", "report", "usage", "validation", "execution", "task", "review"]], decision="allow")
+prefix_rule(pattern=["cardine", "worktree"], decision="allow")
+prefix_rule(pattern=["cardine", "codex", ["doctor", "worktree-path"]], decision="allow")
+prefix_rule(pattern=["cardine", ["upgrade", "setup"], "--check"], decision="allow")
+prefix_rule(pattern=["cardine", "codex", "configure", "--check"], decision="allow")
 
 # Read-only GitHub CLI. `gh api` stays unlisted: it can send writing requests.
 prefix_rule(pattern=["gh", "release", ["list", "view"]], decision="allow")
@@ -95,7 +95,7 @@ def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
             decision = ast.literal_eval(keywords["decision"])
         except (KeyError, ValueError, SyntaxError):
             continue
-        if decision == "allow" and pattern in (["meridian"], ["git", "push"]):
+        if decision == "allow" and pattern in (["cardine"], ["git", "push"]):
             warnings.append(f"{path}:{call.lineno}: broad allow rule {pattern!r} permits commands outside Meridian's prompt coverage")
     return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed, tuple(warnings))
 

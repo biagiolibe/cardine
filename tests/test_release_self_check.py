@@ -200,7 +200,7 @@ class SelfCheckLatestTest(unittest.TestCase):
                 sys,
                 "argv",
                 [
-                    "meridian",
+                    "cardine",
                     "--framework-root",
                     str(ROOT),
                     "self-check",
@@ -218,7 +218,7 @@ class SelfCheckLatestTest(unittest.TestCase):
 
     def test_self_check_without_opt_in_flag_never_opens_network(self) -> None:
         with (
-            mock.patch.object(sys, "argv", ["meridian", "self-check"]),
+            mock.patch.object(sys, "argv", ["cardine", "self-check"]),
             mock.patch.object(owner_release_update, "urlopen") as opener,
             redirect_stderr(io.StringIO()),
             self.assertRaises(SystemExit) as raised,

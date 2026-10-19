@@ -71,7 +71,7 @@ class CodexUserRulesTest(unittest.TestCase):
             self.assertEqual(self.rules.read_bytes().decode(), text)
 
     def test_foreign_broad_allow_warning_names_original_line(self):
-        text = '# foreign\nprefix_rule(pattern=["meridian"], decision="allow")\n' + owner_hosts_codex.CODEX_USER_RULES + 'prefix_rule(pattern = [\'git\', \'push\'], decision = \'allow\')\n'
+        text = '# foreign\nprefix_rule(pattern=["cardine"], decision="allow")\n' + owner_hosts_codex.CODEX_USER_RULES + 'prefix_rule(pattern = [\'git\', \'push\'], decision = \'allow\')\n'
         self.write(text)
         warnings = owner_hosts_codex.plan_codex_user_rules(self.rules).warnings
         self.assertEqual(len(warnings), 2)
@@ -87,9 +87,9 @@ class CodexUserRulesTest(unittest.TestCase):
         self.assertEqual(self.rules.read_text(), "# appeared later\n")
 
     def test_multiline_warning_ignores_comments_and_prompt_rules(self):
-        self.write('# prefix_rule(pattern=["meridian"], decision="allow")\n'
+        self.write('# prefix_rule(pattern=["cardine"], decision="allow")\n'
                    'prefix_rule(\n decision="allow",\n pattern=["git", "push"],\n)\n'
-                   'prefix_rule(pattern=["meridian"], decision="prompt")\n')
+                   'prefix_rule(pattern=["cardine"], decision="prompt")\n')
         warnings = owner_hosts_codex.plan_codex_user_rules(self.rules).warnings
         self.assertEqual(len(warnings), 1)
         self.assertIn(f"{self.rules}:2:", warnings[0])
@@ -135,12 +135,12 @@ class CodexUserRulesTest(unittest.TestCase):
             (["git", "rm", "--force", "x"], "prompt"),
             (["gh", "api", "repos/x"], None),
             (["gh", "issue", "close", "1"], None),
-            (["meridian", "worktree", "advance", "221"], "allow"),
+            (["cardine", "worktree", "advance", "221"], "allow"),
         ]
         for flag in ("--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"):
             for prefix in (["git", "push"], ["git", "push", "origin"]):
                 cases.append((prefix + [flag, "main"], "forbidden"))
-        for command in (["meridian", "setup"], ["meridian", "upgrade"], ["meridian", "codex", "configure"]):
+        for command in (["cardine", "setup"], ["cardine", "upgrade"], ["cardine", "codex", "configure"]):
             cases.extend([(command + ["--check"], "allow"), (command + ["--apply"], None)])
         for group, verbs in (("release", ["list", "view"]), ("run", ["list", "view", "watch"]), ("pr", ["list", "view", "checks", "diff"]), ("issue", ["list", "view"]), ("repo", ["view"]), ("auth", ["status"])):
             cases.extend((["gh", group, verb], "allow") for verb in verbs)

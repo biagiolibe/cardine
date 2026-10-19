@@ -305,7 +305,7 @@ def parse_capability_profiles(
 
     When `surface_gaps` is given, a declared surface that is a strict subset of
     the catalog surface is recorded there as `(profile, capability, missing
-    paths)` instead of failing: `meridian upgrade` completes it. Every other
+    paths)` instead of failing: `cardine upgrade` completes it. Every other
     mismatch still fails.
     """
     raw_profiles = manifest.get("capabilityProfiles", {})

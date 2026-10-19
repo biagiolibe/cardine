@@ -206,7 +206,7 @@ def decision(payload: object) -> tuple[bool, str | None]:
     return False, (
         f"Blocked: shell read of {joined} returns {total} effective lines, exceeding the read-guard threshold "
         f"({budget} lines). Use `rg -n` to locate lines, then a ranged `sed -n`; for the ADR log or a spec file use "
-        "`meridian context authority <TASK-ID>` or `meridian adr show <ADR-ID>`. To override, declare the file "
+        "`cardine context authority <TASK-ID>` or `cardine adr show <ADR-ID>`. To override, declare the file "
         "in the task's Authority or raise `Read-guard threshold` in docs/EXECUTION_EVIDENCE_PROFILE.md."
     )
 

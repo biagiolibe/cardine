@@ -113,7 +113,7 @@ def append_only_new_markers(local_text: str, base_text: str, template_text: str)
     from the base, a capability the base carried but the local file no longer
     does (a deliberate removal, not a merge target), or a local file that
     already carries more than one version of the same capability (itself the
-    symptom of this defect; do not compound it, let `meridian audit` surface
+    symptom of this defect; do not compound it, let `cardine audit` surface
     it for manual reconciliation instead).
     """
     base_pairs = set(marker_pairs(base_text))

@@ -315,7 +315,7 @@ def plan_from_baseline(
                 PlanItem(
                     item,
                     "edited-copy",
-                    "local edits will remain outside the released digest and make `meridian audit` fail; "
+                    "local edits will remain outside the released digest and make `cardine audit` fail; "
                     "restore the released text and keep project content in the project's own files",
                 )
             )

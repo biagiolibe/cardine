@@ -88,7 +88,7 @@ def main() -> int:
 
 def build_parser() -> CardineArgumentParser:
     """Build the CLI parser, also used to verify the published command surface."""
-    parser = CardineArgumentParser(prog="meridian")
+    parser = CardineArgumentParser(prog="cardine")
     parser.add_argument(
         "--framework-root",
         type=Path,
@@ -156,7 +156,7 @@ def build_parser() -> CardineArgumentParser:
 
     audit = subparsers.add_parser(
         "audit",
-        help="verify protected capability-marker regions were not edited outside meridian upgrade",
+        help="verify protected capability-marker regions were not edited outside cardine upgrade",
     )
     audit.add_argument("--project", type=Path, default=Path.cwd())
     audit.add_argument(
@@ -569,7 +569,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             elif arguments.codex_command == "worktree-path":
                 path = task_worktree_path(project_root, resolved_root.path, arguments.task_id)
                 validate_worktree_collision(project_root, path, arguments.task_id)
-                print("DEPRECATED: use `meridian worktree path`", file=sys.stderr)
+                print("DEPRECATED: use `cardine worktree path`", file=sys.stderr)
                 print(path)
             else:
                 report = codex_doctor(
@@ -855,7 +855,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             if str(arguments.project) != str(project_root):
                 detail = detail.replace(f"--project={project_root};",
                                         f"--project={arguments.project}; resolved project={project_root};", 1)
-            error = stop_error(error.code, detail, resume=shlex.join(("meridian", *rerun)))
+            error = stop_error(error.code, detail, resume=shlex.join(("cardine", *rerun)))
         journal.stopped(error.code)
         print(error, file=sys.stderr)
         return 2

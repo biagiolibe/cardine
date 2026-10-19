@@ -117,7 +117,7 @@ def retired_capability_versions(framework_root: Path) -> set[tuple[str, int]]:
     `managedPaths` named. Used by
     `audit_capability_markers` to tell "stale, upgrade hasn't run yet" apart
     from "retired, and this marker should already be gone" — the latter
-    reported `FAIL` rather than `SKIP`, since `meridian upgrade`'s own
+    reported `FAIL` rather than `SKIP`, since `cardine upgrade`'s own
     retirement path only ever touches the specific files a migration lists,
     so a marker in a file that migration's `managedPaths` omitted would
     otherwise sit as an invisible `SKIP` forever.

@@ -14,7 +14,7 @@ HEADER = (
     "|--------|----|-------|----------|------------|------|\n"
 )
 
-RESUME_001 = "Proceed with 001 (Resume: run meridian worktree prepare 001 --resume --format json)"
+RESUME_001 = "Proceed with 001 (Resume: run cardine worktree prepare 001 --resume --format json)"
 
 
 class RepoCase(unittest.TestCase):

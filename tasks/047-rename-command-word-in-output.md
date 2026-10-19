@@ -22,8 +22,10 @@ and stop-registry resume template.
   plan describes it, on the files it lists. A file the plan missed but that
   the same rename needs is in scope; the handoff lists it.
 - [ ] Every test under "Tests that prove it" for row R6 exists and passes.
-- [ ] Every `resume` value in `capabilities/stop-codes-v1.json` starts with
-  `cardine`, and no `code`, `human_decision`, or `resolution` value changes; a
+- [ ] Every Meridian command in a `resume` value in
+  `capabilities/stop-codes-v1.json` uses `cardine`; Git commands and other
+  operational instructions remain unchanged. No `code`, `human_decision`,
+  or `resolution` value changes; a
   test compares them with the values before the task.
 - [ ] Tests that compare generated output with group 2 template text normalize the
   program word through one helper marked `# remove in 5b`.
@@ -85,6 +87,10 @@ file.
 - **Blocks**: 048
 
 ## Developer decisions given in advance
+
+The developer clarified during execution on 2026-10-19 that only Meridian
+commands in registry resume values are renamed; other operational instructions
+remain unchanged. The acceptance criterion above records that clarification.
 
 The developer records these decisions in the task contract, so that they
 hold however the task is launched, including a bare `Proceed with <TASK-ID>`

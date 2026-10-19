@@ -80,7 +80,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
             "Status in docs/tasks/M19/TASK-007.md and the Status column of row TASK-007 in docs/TASK_QUEUE.md; "
             "accepted: equal values; found: task IN_PROGRESS, queue QUEUED; the actor may change "
             "docs/tasks/M19/TASK-007.md and docs/TASK_QUEUE.md together through the lifecycle; resume: change only "
-            "the document the message says this actor may change so the statuses are accepted, then rerun meridian "
+            "the document the message says this actor may change so the statuses are accepted, then rerun cardine "
             "execution preflight TASK-007 --project .",
             preflight.stderr,
         )
@@ -219,7 +219,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.assertEqual(
             self.blocked_line(missing_rationale),
             "BLOCKED HOST_IMPACT_DECLARATION_INVALID: NOT_APPLICABLE declaration is missing Rationale; resume: correct "
-            "the task's Host impact declaration as the detail names, then rerun the blocked meridian execution command",
+            "the task's Host impact declaration as the detail names, then rerun the blocked cardine execution command",
         )
 
         required = """Classification: REQUIRED
@@ -244,7 +244,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(missing_evidence),
             "BLOCKED HOST_IMPACT_DECLARATION_INVALID: REQUIRED declaration is missing Host execution evidence plan; "
-            "resume: correct the task's Host impact declaration as the detail names, then rerun the blocked meridian "
+            "resume: correct the task's Host impact declaration as the detail names, then rerun the blocked cardine "
             "execution command",
         )
 
@@ -277,7 +277,7 @@ Evidence plan:
             self.blocked_line(missing),
             "BLOCKED HOST_IMPACT_EVIDENCE_MISSING: enforced profile is missing Completion evidence: Meridian CLI / "
             "direct / project; resume: add a Completion evidence entry for each listed profile to the task's Host "
-            "impact section, then rerun the blocked meridian execution command",
+            "impact section, then rerun the blocked cardine execution command",
         )
 
         task.write_text(
@@ -540,7 +540,7 @@ Evidence plan:
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
             "BLOCKED EXECUTION_PROFILE_MISSING: rule: the execution contract derives from the project profile; "
             "source checked: docs/EXECUTION_EVIDENCE_PROFILE.md; expected: the file exists; found: no such file; "
-            "resume: add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked meridian "
+            "resume: add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked cardine "
             "execution command",
         )
         (self.project / "docs").mkdir()
@@ -550,7 +550,7 @@ Evidence plan:
         body = "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n"
         task.write_text(body, encoding="utf-8")
         digest = owner_tasks_contract.profile_digest(self.project)
-        resume = "resume: meridian execution reconcile TASK-020 --apply --project ."
+        resume = "resume: cardine execution reconcile TASK-020 --apply --project ."
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
             "BLOCKED EXECUTION_CONTRACT_UNRESOLVED: rule: a task needs a resolved execution contract; field "
@@ -573,13 +573,13 @@ Evidence plan:
             "BLOCKED TASK_RECORD_INCOMPLETE: rule: a normal task record must contain its required headings; source "
             "checked: tasks/TASK-020.md; accepted: ## Authority, ## Validation, ## Expected code surface; missing: "
             "## Expected code surface; resume: add the listed sections or fields to the task record, then rerun "
-            "meridian execution preflight TASK-020 --project .",
+            "cardine execution preflight TASK-020 --project .",
         )
         task.write_text(body.replace("QUEUED", "ACCEPTED"), encoding="utf-8")
         self.append_contract("TASK-020")
         accepted = (
             "resume: bring the task to QUEUED or IN_PROGRESS through its lifecycle, then rerun the blocked "
-            "meridian execution command"
+            "cardine execution command"
         )
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
@@ -598,12 +598,12 @@ Evidence plan:
             "BLOCKED VALIDATION_ENTRY_FORMAT: rule: every entry in the task's ## Validation section must be a named "
             "literal command; accepted form: - `validation-id`: `literal command`; found: '- `cargo fmt --check`'; "
             "resume: rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the "
-            "blocked meridian execution command",
+            "blocked cardine execution command",
         )
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "evidence", "TASK-020", "diagnostic", "--gap", " ")),
             "BLOCKED EXECUTION_EVIDENCE_ARGUMENTS: rule: evidence is recorded with the gap that justifies it; option "
-            "checked: --gap; accepted: a non-empty string; found: ' '; resume: rerun the meridian execution evidence "
+            "checked: --gap; accepted: a non-empty string; found: ' '; resume: rerun the cardine execution evidence "
             "command with the missing options",
         )
         self.assertIn(
@@ -632,12 +632,12 @@ Evidence plan:
         def check() -> subprocess.CompletedProcess[str]:
             return self.run_cli("execution", "handoff-check", "TASK-021", str(report))
 
-        resume = "then rerun meridian execution handoff-check TASK-021 <report> --project ."
+        resume = "then rerun cardine execution handoff-check TASK-021 <report> --project ."
         self.assertEqual(
             self.blocked_line(check()),
             f"BLOCKED HANDOFF_REPORT_MISSING: rule: the handoff check reads a completion report; source checked: "
             f"{report}; expected: an existing file; found: no such file; resume: write the completion report, "
-            "then run meridian execution handoff-check TASK-021 <report> --project .",
+            "then run cardine execution handoff-check TASK-021 <report> --project .",
         )
         required = ", ".join(fields)
         write(Validation=None)
@@ -702,7 +702,7 @@ Evidence plan:
             self.blocked_line(check()),
             "BLOCKED HANDOFF_VALIDATION_EVIDENCE_MISSING: rule: every declared validation needs a successful durable "
             "record; source checked: .meridian/execution-evidence.json for TASK-022; accepted: an entry with the "
-            "declared id and command and exitStatus 0; missing for: probe; resume: run meridian execution validate "
+            "declared id and command and exitStatus 0; missing for: probe; resume: run cardine execution validate "
             "TASK-022 <validation-id> --project . for each listed ID, then rerun the handoff check",
         )
         self.assertEqual(self.run_cli("execution", "validate", "TASK-022", "probe").returncode, 0)
@@ -716,7 +716,7 @@ Evidence plan:
             "BLOCKED HANDOFF_EXPLORATION_MISMATCH: rule: with no recorded investigation the report must say there was "
             "none; field checked: Isolated exploration against .meridian/execution-evidence.json; accepted: `none`, "
             "or text starting with `none` or `no`; found: 'explored the API'; expected `none` (or record the "
-            "investigation); resume: correct the Isolated exploration field or record the investigation with meridian "
+            "investigation); resume: correct the Isolated exploration field or record the investigation with cardine "
             "execution investigate TASK-022, then rerun the handoff check",
         )
         write("nothing")
@@ -734,7 +734,7 @@ Evidence plan:
             "BLOCKED HANDOFF_EXPLORATION_MISMATCH: rule: recorded investigations must be reported; field checked: "
             "Isolated exploration against .meridian/execution-evidence.json; accepted: a summary of each recorded "
             "investigation; found: `none` with 1 recorded; resume: correct the Isolated exploration field or record "
-            "the investigation with meridian execution investigate TASK-022, then rerun the handoff check",
+            "the investigation with cardine execution investigate TASK-022, then rerun the handoff check",
         )
         write("Which API?")
         self.assertEqual(
@@ -742,7 +742,7 @@ Evidence plan:
             "BLOCKED HANDOFF_EXPLORATION_SUMMARY_MISSING: rule: the report must contain each recorded question and "
             "finding; source checked: .meridian/execution-evidence.json; accepted: the exact question and finding "
             "text; missing the question or finding of: Which API?; resume: add each listed question and finding to "
-            "the report, then rerun meridian execution handoff-check TASK-022 <report> --project .",
+            "the report, then rerun cardine execution handoff-check TASK-022 <report> --project .",
         )
 
     def test_validation_runs_only_a_declared_literal_command_and_records_status(self) -> None:
@@ -764,7 +764,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(missing),
             "BLOCKED VALIDATION_ID_UNDECLARED: rule: only a task-declared validation ID runs; field checked: "
-            "Validation in the TASK-010 record; accepted: probe; found: 'not-declared'; resume: rerun meridian "
+            "Validation in the TASK-010 record; accepted: probe; found: 'not-declared'; resume: rerun cardine "
             "execution validate with a validation ID listed in the task's Validation section, or declare the command "
             "there first",
         )
@@ -817,7 +817,7 @@ Evidence plan:
             self.blocked_line(result),
             "BLOCKED EXECUTION_EVIDENCE_ARGUMENTS: rule: an investigation records its question, sources, and finding; "
             "options checked: --question, --source, --finding; accepted: a non-empty value for each; found: missing or "
-            "empty --question, --finding; resume: rerun meridian execution investigate with --question, --source, and "
+            "empty --question, --finding; resume: rerun cardine execution investigate with --question, --source, and "
             "--finding",
         )
 
@@ -826,7 +826,7 @@ Evidence plan:
         line = self.blocked_line(refused)
         self.assertTrue(line.startswith("BLOCKED COMMAND_REFUSED: "), line)
         self.assertTrue(
-            line.endswith("; resume: correct the condition that the detail names, then rerun the same meridian command"),
+            line.endswith("; resume: correct the condition that the detail names, then rerun the same cardine command"),
             line,
         )
         self.assertNotIn("BLOCKED:", refused.stderr)
@@ -839,6 +839,6 @@ Evidence plan:
         line = self.blocked_line(failed)
         self.assertTrue(line.startswith("BLOCKED OS_ACCESS_FAILED: "), line)
         self.assertTrue(
-            line.endswith("; resume: fix the access problem that the detail names, then rerun the same meridian command"),
+            line.endswith("; resume: fix the access problem that the detail names, then rerun the same cardine command"),
             line,
         )

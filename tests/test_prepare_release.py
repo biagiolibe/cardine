@@ -111,7 +111,7 @@ class ReleaseConsistencyTest(unittest.TestCase):
         self.write_baseline_changed(True)
         self.write_changelog(
             "Template-changing release: migration `x` advances the baseline.\n\n"
-            "### Upgrade notes\n\n- Run `meridian upgrade --apply`.\n\n### Added\n\n- Y."
+            "### Upgrade notes\n\n- Run `cardine upgrade --apply`.\n\n### Added\n\n- Y."
         )
         self.assertEqual(pr.check_release_consistency(self.root, "v1.2.3"), "1.2.3")
 

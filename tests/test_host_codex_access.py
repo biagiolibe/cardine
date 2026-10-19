@@ -266,6 +266,6 @@ class CodexWorktreeAccessTest(unittest.TestCase):
 
     def test_initializer_only_offers_explicit_check_and_apply(self) -> None:
         instructions = (ROOT / "commands/meridian-init.md").read_text(encoding="utf-8")
-        self.assertIn("meridian setup --check", instructions)
-        self.assertIn("meridian setup --apply` only after explicit confirmation", instructions)
+        self.assertIn("setup --check", instructions)
+        self.assertIn("setup --apply` only after explicit confirmation", instructions)
         self.assertIn("not invalidate initialization", instructions)

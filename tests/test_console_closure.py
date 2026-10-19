@@ -87,7 +87,7 @@ class ClosingTaskMixin:
     def check_cleanup_only(self, archived: bool) -> None:
         self.closing_project(archived=archived)
         before = self.refs_and_status()
-        resume = f"meridian worktree cleanup {self.done_id} --project /exact/project"
+        resume = f"cardine worktree cleanup {self.done_id} --project /exact/project"
         state = owner_console_state.ConsoleState(self.project)
         with mock.patch.object(owner_console_snapshot, "closure_status", return_value=self.report(
                 "C10", None, resume)) as status:
@@ -195,7 +195,7 @@ class ClosingTaskMixin:
     def test_steps_that_are_not_closure_work_never_surface_a_prepare_resume(self) -> None:
         self.closing_project()
         tasks, _status = self.load_closing(self.report(
-            "C4", "WRONG_WORKTREE", "meridian worktree prepare 1"))
+            "C4", "WRONG_WORKTREE", "cardine worktree prepare 1"))
         task = tasks[self.done_id]
         self.assertIsNone(task.closure_resume)
         self.assertIsNone(task.closure_stop_reason)

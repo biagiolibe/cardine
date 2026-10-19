@@ -335,7 +335,7 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
         self.assertEqual(task.readiness, "IN PROGRESS")
         self.assertEqual(
             task.launch_command,
-            "Proceed with TASK-001 (Resume: run meridian worktree prepare TASK-001 --resume --format json)",
+            "Proceed with TASK-001 (Resume: run cardine worktree prepare TASK-001 --resume --format json)",
         )
 
     def test_uncommitted_in_progress_row_supersedes_committed_queued(self) -> None:

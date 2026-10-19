@@ -418,6 +418,6 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("CONFLICT PROJECT_WORKFLOW.md", checked.stdout)
         self.assertIn(
             "BLOCKED UPGRADE_BLOCKED: 1 conflict(s); no files were changed; resume: resolve each conflict or router "
-            "requirement that the plan lists, then rerun meridian upgrade --check",
+            "requirement that the plan lists, then rerun cardine upgrade --check",
             checked.stdout,
         )

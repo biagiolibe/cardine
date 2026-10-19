@@ -48,7 +48,7 @@ def load_manifest(
     manifest_path = project_root / names().manifest_path
     if not manifest_path.is_file():
         raise CardineError(
-            "project is not locked; run `meridian lock --project <path> --mode <mode>` first"
+            "project is not locked; run `cardine lock --project <path> --mode <mode>` first"
         )
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))

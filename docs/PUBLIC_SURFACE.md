@@ -32,68 +32,68 @@ including command containers and nested subcommands.
 
 | Command | Tier |
 |---------|------|
-| `meridian self-check` | Stable |
-| `meridian self-update` | Experimental |
-| `meridian console` | Experimental |
-| `meridian lock` | Stable |
-| `meridian upgrade` | Stable |
-| `meridian audit` | Stable |
-| `meridian locations` | Stable |
-| `meridian project` | Stable |
-| `meridian setup` | Stable |
-| `meridian codex` | Stable |
-| `meridian codex configure` | Stable |
-| `meridian codex worktree-path` | Stable |
-| `meridian codex doctor` | Stable |
-| `meridian worktree` | Stable |
-| `meridian worktree path` | Stable |
-| `meridian worktree prepare` | Stable |
-| `meridian worktree check` | Stable |
-| `meridian worktree repair-base` | Stable |
-| `meridian worktree active` | Internal |
-| `meridian worktree states` | Internal |
-| `meridian worktree evidence` | Internal |
-| `meridian worktree closure-status` | Internal |
-| `meridian worktree advance` | Stable |
-| `meridian worktree integrate` | Stable |
-| `meridian worktree integrate stage` | Stable |
-| `meridian worktree integrate finalize` | Stable |
-| `meridian worktree integrate abort` | Stable |
-| `meridian worktree cleanup` | Stable |
-| `meridian validation` | Internal |
-| `meridian validation check` | Internal |
-| `meridian review` | Stable |
-| `meridian review verdict` | Stable |
-| `meridian task` | Stable |
-| `meridian task transition` | Stable |
-| `meridian task close` | Stable |
-| `meridian task state` | Stable |
-| `meridian task state import` | Stable |
-| `meridian task identity` | Stable |
-| `meridian task identity check` | Internal |
-| `meridian task identity next` | Stable |
-| `meridian adr` | Stable |
-| `meridian adr show` | Stable |
-| `meridian adr list` | Stable |
-| `meridian context` | Stable |
-| `meridian context authority` | Stable |
-| `meridian context size` | Stable |
-| `meridian usage` | Experimental |
-| `meridian usage report` | Experimental |
-| `meridian execution` | Stable |
-| `meridian execution start` | Stable |
-| `meridian execution deliver` | Stable |
-| `meridian execution preflight` | Stable |
-| `meridian execution contract` | Stable |
-| `meridian execution reconcile` | Stable |
-| `meridian execution handoff-check` | Stable |
-| `meridian execution ready-check` | Stable |
-| `meridian execution validate` | Stable |
-| `meridian execution evidence` | Stable |
-| `meridian execution investigate` | Stable |
-| `meridian hook` | Host-facing |
-| `meridian hook read-guard` | Host-facing |
-| `meridian hook stop-audit` | Host-facing |
+| `cardine self-check` | Stable |
+| `cardine self-update` | Experimental |
+| `cardine console` | Experimental |
+| `cardine lock` | Stable |
+| `cardine upgrade` | Stable |
+| `cardine audit` | Stable |
+| `cardine locations` | Stable |
+| `cardine project` | Stable |
+| `cardine setup` | Stable |
+| `cardine codex` | Stable |
+| `cardine codex configure` | Stable |
+| `cardine codex worktree-path` | Stable |
+| `cardine codex doctor` | Stable |
+| `cardine worktree` | Stable |
+| `cardine worktree path` | Stable |
+| `cardine worktree prepare` | Stable |
+| `cardine worktree check` | Stable |
+| `cardine worktree repair-base` | Stable |
+| `cardine worktree active` | Internal |
+| `cardine worktree states` | Internal |
+| `cardine worktree evidence` | Internal |
+| `cardine worktree closure-status` | Internal |
+| `cardine worktree advance` | Stable |
+| `cardine worktree integrate` | Stable |
+| `cardine worktree integrate stage` | Stable |
+| `cardine worktree integrate finalize` | Stable |
+| `cardine worktree integrate abort` | Stable |
+| `cardine worktree cleanup` | Stable |
+| `cardine validation` | Internal |
+| `cardine validation check` | Internal |
+| `cardine review` | Stable |
+| `cardine review verdict` | Stable |
+| `cardine task` | Stable |
+| `cardine task transition` | Stable |
+| `cardine task close` | Stable |
+| `cardine task state` | Stable |
+| `cardine task state import` | Stable |
+| `cardine task identity` | Stable |
+| `cardine task identity check` | Internal |
+| `cardine task identity next` | Stable |
+| `cardine adr` | Stable |
+| `cardine adr show` | Stable |
+| `cardine adr list` | Stable |
+| `cardine context` | Stable |
+| `cardine context authority` | Stable |
+| `cardine context size` | Stable |
+| `cardine usage` | Experimental |
+| `cardine usage report` | Experimental |
+| `cardine execution` | Stable |
+| `cardine execution start` | Stable |
+| `cardine execution deliver` | Stable |
+| `cardine execution preflight` | Stable |
+| `cardine execution contract` | Stable |
+| `cardine execution reconcile` | Stable |
+| `cardine execution handoff-check` | Stable |
+| `cardine execution ready-check` | Stable |
+| `cardine execution validate` | Stable |
+| `cardine execution evidence` | Stable |
+| `cardine execution investigate` | Stable |
+| `cardine hook` | Host-facing |
+| `cardine hook read-guard` | Host-facing |
+| `cardine hook stop-audit` | Host-facing |
 
 ## Stable registries and identities
 

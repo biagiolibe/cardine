@@ -196,7 +196,7 @@ def stage_task_integration(
     if lease_path.exists():
         raise stop_error(
             "LEASE_HELD",
-            f"an interrupted integration lease is retained at {lease_path}; use `meridian worktree integrate abort`",
+            f"an interrupted integration lease is retained at {lease_path}; use `cardine worktree integrate abort`",
             task_id=identity.canonical_id, project=project_root,
         )
     inspection, ready = inspect_task_worktree(
@@ -572,7 +572,7 @@ def cleanup_task_worktree(
             partial = "registered-directory-missing" if not expected.exists() else "registered-directory-present"
             raise stop_error(
                 "CLEANUP_BLOCKED", f"{partial}: worktree removal failed; cleanup needs write access to the primary checkout's .git directory; {removed.stderr.strip()}", task_id=identity.canonical_id, project=project_root,
-                resume=f"meridian worktree cleanup {shlex.quote(identity.canonical_id)} --project {shlex.quote(str(project_root))} --worktree-root {shlex.quote(str(root))} --format json"
+                resume=f"cardine worktree cleanup {shlex.quote(identity.canonical_id)} --project {shlex.quote(str(project_root))} --worktree-root {shlex.quote(str(root))} --format json"
             )
     # Codex launches Stop hooks with the session path as cwd, even after cleanup.
     # Keep an empty, unregistered directory so the host can start the hook.

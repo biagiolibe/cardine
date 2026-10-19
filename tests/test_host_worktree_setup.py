@@ -14,6 +14,7 @@ import sys
 import tempfile
 import tomllib
 import unittest
+from program_word_support import normalize_program_word
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
@@ -732,9 +733,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
         allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
         for command in (
             "Bash(git push origin main)",
-            "Bash(meridian worktree evidence:*)",
-            "Bash(meridian worktree closure-status:*)",
-            "Bash(meridian worktree integrate stage:*)",
+            "Bash(cardine worktree evidence:*)",
+            "Bash(cardine worktree closure-status:*)",
+            "Bash(cardine worktree integrate stage:*)",
             "Bash(python3 scripts/check_repository.py)",
             "Bash(python3 -m unittest discover -s tests)",
             "Bash(git mv tasks/:*)",
@@ -751,29 +752,29 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "contract",
             "investigate",
         ):
-            self.assertIn(f"Bash(meridian execution {subcommand}:*)", allowlist)
+            self.assertIn(f"Bash(cardine execution {subcommand}:*)", allowlist)
             self.assertNotIn(f"Bash(python3 scripts/cardine_cli.py execution {subcommand}:*)", allowlist)
         for unrelated in ("Bash(git mv:*)", "Bash(mv:*)", "Bash(sed:*)", "Bash(rg:*)", "Bash(find:*)"):
             self.assertNotIn(unrelated, allowlist)
-        self.assertNotIn("Bash(meridian execution reconcile:*)", allowlist)
+        self.assertNotIn("Bash(cardine execution reconcile:*)", allowlist)
         self.assertNotIn("Bash(python3 scripts/cardine_cli.py execution reconcile:*)", allowlist)
-        self.assertNotIn("Bash(meridian:*)", allowlist)
+        self.assertNotIn("Bash(meridian:*)", allowlist)  # MERIDIAN-OLD-NAME-TEST
         for forbidden in ("--tags", "--force", "rebase", "reset", "branch -D", "worktree add", "worktree remove", "worktree prune"):
             self.assertFalse(any(forbidden in command for command in allowlist), forbidden)
 
     def test_claude_allowlist_execution_commands_match_the_codex_rule(self) -> None:
-        rules = (ROOT / "templates/workflows/governed-sdd/.codex/rules/meridian.rules").read_text(encoding="utf-8")
+        rules = normalize_program_word((ROOT / "templates/workflows/governed-sdd/.codex/rules/meridian.rules").read_text(encoding="utf-8"))
         match = re.search(
-            r'prefix_rule\(pattern=\["meridian", "execution", \[(.*?)\]\], decision="allow"\)',
+            r'prefix_rule\(pattern=\["cardine", "execution", \[(.*?)\]\], decision="allow"\)',
             rules,
         )
         self.assertIsNotNone(match)
         codex_subcommands = set(re.findall(r'"([^"]+)"', match.group(1)))
         allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
         claude_subcommands = {
-            command.removeprefix("Bash(meridian execution ").removesuffix(":*)")
+            command.removeprefix("Bash(cardine execution ").removesuffix(":*)")
             for command in allowlist
-            if command.startswith("Bash(meridian execution ")
+            if command.startswith("Bash(cardine execution ")
         }
         python_subcommands = {
             command.removeprefix("Bash(python3 scripts/cardine_cli.py execution ").removesuffix(":*)")

@@ -65,13 +65,13 @@ def close_task(project_root: Path, task_id: str) -> dict[str, object]:
     project_root = project_root.resolve()
     _execution_worktree(project_root, task_id, command=("task", "close"))
     if detect_mode(project_root) != "lean-delivery":
-        raise stop_error("TASK_STATUS_REJECTED", "task close is Lean-only; use meridian task transition for Governed SDD",
+        raise stop_error("TASK_STATUS_REJECTED", "task close is Lean-only; use cardine task transition for Governed SDD",
                          task_id=task_id, project=project_root)
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
     record_path = identity.task_path
     if record_path.parent.name == "done":
-        raise stop_error("TASK_STATUS_REJECTED", "record is already archived; use meridian worktree advance",
+        raise stop_error("TASK_STATUS_REJECTED", "record is already archived; use cardine worktree advance",
                          task_id=task_id, project=project_root)
     archive = record_path.parent / "done" / record_path.name
     if archive.exists():
@@ -79,13 +79,13 @@ def close_task(project_root: Path, task_id: str) -> dict[str, object]:
                          task_id=task_id, project=project_root)
     handoff = identity.handoff_path.relative_to(project_root).as_posix()
     if not identity.handoff_path.is_file() or _run_git(project_root, "cat-file", "-e", f"HEAD:{handoff}").returncode:
-        raise stop_error("HANDOFF_REPORT_MISSING", "task close requires a committed handoff; commit it before meridian task close",
+        raise stop_error("HANDOFF_REPORT_MISSING", "task close requires a committed handoff; commit it before cardine task close",
                          task_id=task_id, project=project_root)
     path = state_path(project_root, task_id)
     if path.exists():
         state = read_task_state(project_root, task_id, "lean-delivery", stop_factory=stop_error)
         if state["status"] == "DONE":
-            raise stop_error("TASK_STATUS_REJECTED", "task is already DONE; use meridian worktree advance",
+            raise stop_error("TASK_STATUS_REJECTED", "task is already DONE; use cardine worktree advance",
                              task_id=task_id, project=project_root)
     # The transition validates everything before writing and is the single state writer.
     state = transition_task_state(project_root, task_id, "DONE")
