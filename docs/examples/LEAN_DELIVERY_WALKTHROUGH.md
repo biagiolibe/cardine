@@ -45,7 +45,7 @@ for path in Path.cwd().rglob("*"):
         path.write_text(text)
 Path("tasks/done").mkdir(exist_ok=True)
 PY
-meridian lock --project . --mode lean-delivery
+cardine lock --project . --mode lean-delivery
 ```
 
 The initialized files include `PROJECT_WORKFLOW.md` (the `LEAN_DELIVERY`
@@ -125,11 +125,11 @@ what the agent does. It uses the returned worktree rather than creating a
 second checkout. A successful Lean start may report no new machine state.
 
 ```bash
-meridian worktree prepare 001 --project "$PRIMARY" --format json > "$HOME/prepared.json"
+cardine worktree prepare 001 --project "$PRIMARY" --format json > "$HOME/prepared.json"
 export TASK_WORKTREE="$(python3 -c 'import json, os; print(json.load(open(os.environ["HOME"] + "/prepared.json"))["worktree"])')"
 cd "$TASK_WORKTREE"
-meridian worktree check 001 --project "$PRIMARY" --format json
-meridian execution start 001 --project .
+cardine worktree check 001 --project "$PRIMARY" --format json
+cardine execution start 001 --project .
 git status --short
 printf '\nThis project demonstrates Lean Delivery.\n' >> README.md
 git diff --check
@@ -178,10 +178,10 @@ Path("tasks/handoffs/001.md").write_text(f"""## Completion Report — 001
 PY
 git add tasks/001-purpose.md tasks/handoffs/001.md
 git commit -m "Record verified completion of task 001"
-meridian task close 001 --project .
+cardine task close 001 --project .
 git commit -m "Archive closed task 001"
 cd "$PRIMARY"
-meridian worktree advance 001 --project . --accepted --validation-command "git diff --check" --validation-exit-code 0 --format json
+cardine worktree advance 001 --project . --accepted --validation-command "git diff --check" --validation-exit-code 0 --format json
 ```
 
 For this unchanged base and declared policy, `advance` stages integration and
@@ -192,15 +192,15 @@ different action or `BLOCKED <CODE>`, follow that result and its resume command.
 
 ```bash
 git diff --check
-meridian worktree advance 001 --project . --accepted --candidate-command "git diff --check" --candidate-exit-code 0 --format json
+cardine worktree advance 001 --project . --accepted --candidate-command "git diff --check" --candidate-exit-code 0 --format json
 ```
 
 Successful finalization returns `action_required: push`.
 
 ```bash
 git push origin main
-meridian worktree advance 001 --project . --accepted --format json
-meridian worktree cleanup 001 --project . --format json
+cardine worktree advance 001 --project . --accepted --format json
+cardine worktree cleanup 001 --project . --format json
 git status --short
 git worktree list --porcelain
 git branch --list task-001

@@ -1,0 +1,210 @@
+{
+  "STALE_WORKTREE_BASE": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "ACCEPTANCE_UNMET": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "VALIDATION_RETRY_LIMIT": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "VALIDATION_FAILED": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "REVIEW_REQUIRED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "WRONG_WORKTREE": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "EVIDENCE_INCOMPLETE": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "PRIMARY_DIRTY": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "MAIN_BEHIND_ORIGIN": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "LEASE_HELD": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "INTEGRATION_CONFLICT": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "CANDIDATE_VALIDATION_FAILED": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "EVIDENCE_MISMATCH": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "PUSH_PENDING": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "PUSH_REJECTED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "CLEANUP_BLOCKED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "UNDECLARED_VALIDATION_COMMANDS": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "EXECUTION_CONTRACT_UNRESOLVED": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "EXECUTION_PROFILE_MISSING": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "VALIDATION_ENTRY_FORMAT": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "TASK_RECORD_INCOMPLETE": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "TASK_STATUS_REJECTED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "QUEUE_STATUS_MISMATCH": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "EXECUTION_EVIDENCE_ARGUMENTS": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_REPORT_MISSING": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_FIELDS_MISSING": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_FIELD_FORMAT": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_TASK_MISMATCH": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_VALIDATION_FAILING": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_VALIDATION_EVIDENCE_MISSING": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_EXPLORATION_MISMATCH": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HANDOFF_EXPLORATION_SUMMARY_MISSING": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "COMMAND_REFUSED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "OS_ACCESS_FAILED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "VALIDATION_ID_UNDECLARED": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HOST_IMPACT_DECLARATION_INVALID": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "HOST_IMPACT_EVIDENCE_MISSING": {
+    "human_decision": false,
+    "resolution": "failing-work"
+  },
+  "UPGRADE_BLOCKED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "WORKFLOW_UNREADABLE": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "RULE_CONFLICT": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SCOPE_CHANGE_REQUIRED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "REVIEW_LOOP_EXHAUSTED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "TASK_STATE_MISSING": {
+    "human_decision": false,
+    "resolution": "recoverable"
+  },
+  "TASK_STATE_INVALID": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "REVIEW_NOT_APPROVED": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "REVIEW_STALE": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SELF_UPDATE_PLUGIN_CACHE": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SELF_UPDATE_DIRTY": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SELF_UPDATE_BRANCH": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SELF_UPDATE_TARGET": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SELF_UPDATE_NON_FF": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  },
+  "SELF_UPDATE_VERIFY": {
+    "human_decision": true,
+    "resolution": "guardrail"
+  }
+}

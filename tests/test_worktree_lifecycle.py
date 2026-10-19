@@ -121,7 +121,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         errors = ", ".join(json.loads(wrong.stdout)["errors"])
         self.assertEqual(
             wrong.stderr.strip(),
-            f"BLOCKED WRONG_WORKTREE: worktree check reported: {errors}; resume: meridian worktree prepare 056 "
+            f"BLOCKED WRONG_WORKTREE: worktree check reported: {errors}; resume: cardine worktree prepare 056 "
             f"--project {self.project.resolve()} --format json",
         )
         recovery = run_recovery(resume_from(wrong.stderr), self.project, self.worktree_root)
@@ -237,7 +237,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 self.assertEqual(
                     result.stdout.strip(),
                     f"BLOCKED {expected_reason}: the task worktree, branch, or lifecycle state is missing or does not "
-                    f"match; resume: meridian worktree prepare 056 --project {self.project.resolve()} --format json",
+                    f"match; resume: cardine worktree prepare 056 --project {self.project.resolve()} --format json",
                 )
                 return
             report = json.loads(result.stdout)
@@ -546,7 +546,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(
             result.stderr.strip(),
             f"BLOCKED LEASE_HELD: an interrupted integration lease is retained at {lease}; use "
-            "`meridian worktree integrate abort`; resume: meridian worktree integrate abort 056 "
+            "`cardine worktree integrate abort`; resume: cardine worktree integrate abort 056 "
             f"--project {self.project.resolve()} --format json",
         )
 
@@ -569,7 +569,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "BLOCKED UNDECLARED_VALIDATION_COMMANDS: no project choice is recorded at "
             ".meridian/candidate-validation.json. Task validation commands: none recorded. Proposed declaration: "
             '{"state": "undeclared", "version": 1}; resume: write declared candidate validation fragments or '
-            "state none in .meridian/candidate-validation.json, then rerun the interrupted meridian worktree "
+            "state none in .meridian/candidate-validation.json, then rerun the interrupted cardine worktree "
             "integrate step",
         )
 
@@ -583,7 +583,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(
             result.stderr.strip(),
             "BLOCKED INTEGRATION_CONFLICT: integration conflict was aborted; task branch and worktree were "
-            "retained; resume: the developer resolves the conflict on the task branch, then rerun meridian "
+            "retained; resume: the developer resolves the conflict on the task branch, then rerun cardine "
             f"worktree integrate stage 056 --project {self.project.resolve()} --evidence {evidence_path} "
             "--format json",
         )
@@ -602,7 +602,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(
             result.stderr.strip(),
             "BLOCKED EVIDENCE_MISMATCH: candidate validation evidence is stale, mismatched, or failed; resume: "
-            f"meridian worktree integrate abort 056 --project {self.project.resolve()} --format json",
+            f"cardine worktree integrate abort 056 --project {self.project.resolve()} --format json",
         )
 
         recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
@@ -626,7 +626,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertEqual(
             result.stderr.strip(),
-            "BLOCKED CLEANUP_BLOCKED: task commit is not integrated into main; resume: rerun meridian worktree "
+            "BLOCKED CLEANUP_BLOCKED: task commit is not integrated into main; resume: rerun cardine worktree "
             f"cleanup 056 --project {self.project.resolve()} --format json after the named condition clears",
         )
 
@@ -977,7 +977,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 sys,
                 "argv",
                 [
-                    "meridian",
+                    "cardine",
                     "--framework-root",
                     str(ROOT),
                     "console",

@@ -1,4 +1,4 @@
-"""Regression tests for `meridian context size`."""
+"""Regression tests for `cardine context size`."""
 
 from __future__ import annotations
 

@@ -88,19 +88,19 @@ Any other file or behavior.
 MD
 mkdir -p .meridian
 printf '{"version": 1, "state": "none"}\n' > .meridian/candidate-validation.json
-meridian execution contract TASK-001 --project "$fixture" > contract.txt
+cardine execution contract TASK-001 --project "$fixture" > contract.txt
 printf '\n' >> tasks/TASK-001.md
 cat contract.txt >> tasks/TASK-001.md
 rm contract.txt
 git add -A
 git commit --quiet -m "Initial project"
-meridian lock --project "$fixture" --mode governed-sdd >/dev/null
+cardine lock --project "$fixture" --mode governed-sdd >/dev/null
 git add -A
 git commit --quiet -m "Lock Meridian"
 git push --quiet -u origin main
 
 # The implementer's first attempt, then the reviewer's CHANGES_REQUESTED handoff.
-prepared=$(meridian worktree prepare TASK-001 --project "$fixture" --format json)
+prepared=$(cardine worktree prepare TASK-001 --project "$fixture" --format json)
 worktree=$(printf '%s' "$prepared" | python3 -c 'import json,sys; print(json.load(sys.stdin)["worktree"])')
 branch=$(printf '%s' "$prepared" | python3 -c 'import json,sys; print(json.load(sys.stdin)["branch"])')
 cd "$worktree"

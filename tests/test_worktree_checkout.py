@@ -214,7 +214,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual((report["changed_paths"], report["untracked_paths"]), (1, 1))
         self.assertEqual(self.snapshot(worktree), before)
         self.assertEqual(shlex.split(resumed["next_command"]), [
-            "meridian", "worktree", "check", "056", "--resume", "--project", str(self.primary.resolve()), "--format", "json"])
+            "cardine", "worktree", "check", "056", "--resume", "--project", str(self.primary.resolve()), "--format", "json"])
 
 
     def test_resume_never_attempts_a_lifecycle_state_write(self) -> None:
@@ -264,7 +264,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual((resumed["resumed"], resumed["dirty"], resumed["branch"]), (True, True, "task-056"))
         self.assertEqual(
             resumed["state_repair"],
-            f"meridian worktree prepare 056 --project {self.primary.resolve()} --format json",
+            f"cardine worktree prepare 056 --project {self.primary.resolve()} --format json",
         )
         with self.assertRaisesRegex(shared_errors.CardineError, "dirty and was retained"):
             self.prepare()
@@ -341,7 +341,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
             active_writer=True,
         )
         directive = str(task.launch_command)
-        match = re.fullmatch(r"Proceed with 056 \(Resume: run (meridian worktree prepare 056 .*)\)", directive)
+        match = re.fullmatch(r"Proceed with 056 \(Resume: run (cardine worktree prepare 056 .*)\)", directive)
         self.assertIsNotNone(match, directive)
         arguments = match.group(1).split()[1:]
         self.assertIn("--resume", arguments)

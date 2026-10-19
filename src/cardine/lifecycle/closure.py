@@ -166,7 +166,7 @@ def advance_task_closure(
                         recovery_project, task, "existing", allow_archived_queue_links=True,
                     )
                     archived = recovery_identity.task_path.parent.name == "done"
-                    recovery = ["meridian", "task", "transition" if archived else "close", task]
+                    recovery = ["cardine", "task", "transition" if archived else "close", task]
                     if archived:
                         recovery.append("DONE")
                     recovery.extend(["--project", str(recovery_project)])
@@ -183,7 +183,7 @@ def advance_task_closure(
                     commands.append(shlex.join([
                         "git", "-C", str(recovery_project), "commit", "-m", f"Close task {task}",
                     ]))
-                    advance = ["meridian", "worktree", "advance", task, "--project", str(project_root),
+                    advance = ["cardine", "worktree", "advance", task, "--project", str(project_root),
                                "--format", "json"]
                     if worktree_root is not None:
                         advance.extend(["--worktree-root", str(worktree_root)])

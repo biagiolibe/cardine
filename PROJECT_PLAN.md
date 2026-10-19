@@ -87,7 +87,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 044 — Decouple the frozen-surface readers (rename plan R3).
 - `[x]` 045 — Rename the exception and parser classes (rename plan R4).
 - `[x]` 046 — Rename the executables, the adapter, and the test modules (rename.
-- `[ ]` 047 — Rename the command word in output and data (rename plan R6).
+- `[x]` 047 — Rename the command word in output and data (rename plan R6).
 - `[ ]` 048 — Rename the environment names and options (rename plan R7).
 - `[ ]` 049 — Rename the project directory and the profile id (rename plan R8).
 - `[ ]` 050 — Rename Git-internal files and the worktree root (rename plan R9).

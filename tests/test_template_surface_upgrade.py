@@ -19,7 +19,7 @@ from cardine.templates import adoption as owner_templates_adoption
 
 
 class ProfileSurfaceUpgradeTest(unittest.TestCase):
-    """`meridian upgrade` completes a profile declaration the catalog has outgrown."""
+    """`cardine upgrade` completes a profile declaration the catalog has outgrown."""
 
     PROFILE = "governed-sdd-consumer"
     CAPABILITY = "execution-evidence"

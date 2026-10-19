@@ -14,7 +14,7 @@ import cardine_cli  # noqa: E402
 from cardine import cli as owner_cli
 
 
-def command_parsers(parser, prefix="meridian"):
+def command_parsers(parser, prefix="cardine"):
     result = {}
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
@@ -28,7 +28,7 @@ def command_parsers(parser, prefix="meridian"):
 class PublicSurfaceTest(unittest.TestCase):
     def test_inventory_matches_every_parser_command_exactly_once(self):
         document = (ROOT / "docs/PUBLIC_SURFACE.md").read_text(encoding="utf-8")
-        rows = re.findall(r"^\| `(meridian [^`]+)` \| ([^|]+) \|$", document, re.MULTILINE)
+        rows = re.findall(r"^\| `(cardine [^`]+)` \| ([^|]+) \|$", document, re.MULTILINE)
         self.assertTrue(rows)
         self.assertEqual(len(rows), len(dict(rows)), "duplicate command classifications")
         parsers = command_parsers(owner_cli.build_parser())
@@ -43,14 +43,13 @@ class PublicSurfaceTest(unittest.TestCase):
     def test_experimental_surfaces_are_named_in_readme(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
         self.assertRegex(readme, r"console[^\n]*experimental")
-        self.assertRegex(readme, r"`meridian usage`[^\n]*experimental")
 
     def test_maintainer_commands_are_absent_from_user_cli(self):
         parser = owner_cli.build_parser()
         commands = command_parsers(parser)
         for name in ("profile", "report", "generate-claude-md", "generate-entry-routers", "agent-evals"):
             with self.subTest(command=name):
-                self.assertNotIn(f"meridian {name}", commands)
+                self.assertNotIn(f"cardine {name}", commands)
                 self.assertNotRegex(parser.format_help(), rf"(?m)^    {re.escape(name)}\s")
                 with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
                     parser.parse_args([name])

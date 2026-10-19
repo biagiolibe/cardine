@@ -144,7 +144,7 @@ PY
     printf '{"version": 1, "state": "none"}\n' > .meridian/candidate-validation.json
     git add -A
     git commit --quiet -m "Initial project"
-    meridian lock --project "$fixture" --mode lean-delivery >/dev/null
+    cardine lock --project "$fixture" --mode lean-delivery >/dev/null
     git add -A
     git commit --quiet -m "Lock Meridian"
     git push --quiet -u origin main

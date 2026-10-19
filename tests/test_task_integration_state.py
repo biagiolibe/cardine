@@ -282,8 +282,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 if missing:
                     command = shlex.split(result["commands"][0])
                     self.assertEqual(command[:3], ["cd", str(self.worker), "&&"])
-                    self.assertEqual(command[command.index("meridian"):command.index("meridian") + 4],
-                                     ["meridian", "task", "close", "056"])
+                    self.assertEqual(command[command.index("cardine"):command.index("cardine") + 4],
+                                     ["cardine", "task", "close", "056"])
                     self.assertEqual(command[command.index("--project") + 1], str(self.worker))
                     self.assertEqual(len(result["commands"]), 3)
                     self.assertEqual(result["resume"], " && ".join(result["commands"]))
@@ -325,7 +325,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 # exactly the emitted shell commands, including their locations.
                 bin_dir = self.root / "bin"
                 bin_dir.mkdir(exist_ok=True)
-                cli = bin_dir / "meridian"
+                cli = bin_dir / "cardine"
                 cli.write_text("#!/bin/sh\nexec " + shlex.join([
                     sys.executable, str(fixtures.ROOT / "scripts/cardine_cli.py")]) + ' "$@"\n')
                 cli.chmod(0o755)

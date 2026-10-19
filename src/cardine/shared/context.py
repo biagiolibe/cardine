@@ -220,7 +220,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
     total_bytes = sum(int(record["bytes"]) for record in present)
     locations = resolve_project_locations(project_root)
     unbounded = []
-    for path, note in ((locations.queue, "The routed workflow reads this only through the queue briefing."), (locations.adr_log, "The routed workflow reads this only through meridian context authority.")):
+    for path, note in ((locations.queue, "The routed workflow reads this only through the queue briefing."), (locations.adr_log, "The routed workflow reads this only through cardine context authority.")):
         record = _context_file_record(project_root, path, "unbounded-reference")
         record["note"] = note
         record["over_threshold"] = bool(effective_threshold is not None and isinstance(record["bytes"], int) and record["bytes"] > effective_threshold)

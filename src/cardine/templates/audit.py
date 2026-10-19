@@ -232,7 +232,7 @@ def audit_managed_copy_digests(
                 AuditResult(
                     "FAIL",
                     "managed-copy-digest",
-                    f"{relative}: differs from the digest `meridian upgrade` recorded; restore the released "
+                    f"{relative}: differs from the digest `cardine upgrade` recorded; restore the released "
                     "text and put project-specific content in the project's own files",
                 )
             )

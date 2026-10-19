@@ -1,4 +1,4 @@
-"""Regression tests for `meridian adr show`, `meridian adr list`, and `meridian context authority`."""
+"""Regression tests for `cardine adr show`, `cardine adr list`, and `cardine context authority`."""
 
 from __future__ import annotations
 

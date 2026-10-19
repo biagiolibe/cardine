@@ -104,7 +104,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_audit_fails_a_retired_marker_still_present_outside_managed_paths(self) -> None:
         """Task 007: a marker whose exact (capability, version) some migration
         declared `removes` must be reported FAIL, not the generic stale SKIP —
-        `meridian upgrade` only touches the files a retiring migration's
+        `cardine upgrade` only touches the files a retiring migration's
         `managedPaths` names, so a marker left in an unlisted file would
         otherwise sit as an invisible SKIP forever."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)

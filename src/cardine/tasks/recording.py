@@ -115,7 +115,7 @@ def record_investigation(
             "EXECUTION_EVIDENCE_ARGUMENTS",
             "rule: an investigation records its question, sources, and finding; options checked: --question, --source, "
             "--finding; accepted: a non-empty value for each; found: missing or empty " + ", ".join(empty),
-            resume="rerun meridian execution investigate with --question, --source, and --finding",
+            resume="rerun cardine execution investigate with --question, --source, and --finding",
         )
     if scope < 1:
         raise stop_error("EXECUTION_EVIDENCE_ARGUMENTS", "--scope must be an integer of 1 or more")

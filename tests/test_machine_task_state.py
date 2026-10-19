@@ -178,7 +178,7 @@ class MachineTaskStateTest(unittest.TestCase):
         with self.assertRaises(shared_errors.CardineStop) as caught:
             self.read()
         self.assertTrue(str(caught.exception).startswith("BLOCKED TASK_STATE_MISSING:"))
-        self.assertIn("meridian task state import 001", str(caught.exception))
+        self.assertIn("cardine task state import 001", str(caught.exception))
         self.assertFalse(self.path.exists())
         recovered = run_recovery(resume_from(str(caught.exception)), self.root)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)

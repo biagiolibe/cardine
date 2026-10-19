@@ -12,7 +12,7 @@ for PLUGIN_DIRECTORY in "${PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_ROOT:-}"; do
   [ -n "$PLUGIN_DIRECTORY" ] && MERIDIAN_BIN="$PLUGIN_DIRECTORY/bin/cardine"
 done
 if [ ! -x "$MERIDIAN_BIN" ]; then
-  MERIDIAN_BIN="$(command -v meridian 2>/dev/null || true)"
+  MERIDIAN_BIN="$(command -v cardine 2>/dev/null || true)"
 fi
 [ -n "$MERIDIAN_BIN" ] && [ -x "$MERIDIAN_BIN" ] || exit 0
 

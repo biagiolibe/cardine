@@ -91,10 +91,10 @@ def align(text: str) -> tuple[str, list[str]]:
     return text, notes
 
 
-def resolve_queue(project: Path, meridian: str | None) -> Path:
+def resolve_queue(project: Path, cardine: str | None) -> Path:
     """Ask the Meridian CLI for the declared queue; fall back to tasks/QUEUE.md."""
-    candidates = [meridian] if meridian else []
-    found = shutil.which("meridian")
+    candidates = [cardine] if cardine else []
+    found = shutil.which("cardine")
     if found:
         candidates.append(found)
     for executable in candidates:
@@ -115,12 +115,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("projects", nargs="+", type=Path)
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--meridian", help="path to bin/cardine used to resolve the queue location")
+    parser.add_argument("--cardine", help="path to bin/cardine used to resolve the queue location")
     args = parser.parse_args()
     status = 0
     for project in args.projects:
         project = project.resolve()
-        queue = resolve_queue(project, args.meridian)
+        queue = resolve_queue(project, args.cardine)
         if not queue.is_file():
             print(f"== {project}: no queue at {queue.relative_to(project)}, skipped")
             status = 1

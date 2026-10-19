@@ -53,7 +53,7 @@ def _execution_location(project_root: Path, task_id: str, *,
                      else "--project does not name the canonical task worktree"))
         recovery = None
         if "unregistered-worktree" not in result["errors"]:
-            recovery = shlex.join(("meridian", *command, identity.canonical_id, "--project", str(expected)))
+            recovery = shlex.join(("cardine", *command, identity.canonical_id, "--project", str(expected)))
         error = stop_error("WRONG_WORKTREE", detail, resume=recovery,
                            task_id=identity.canonical_id, project=shlex.quote(str(primary)))
         if recovery is not None:

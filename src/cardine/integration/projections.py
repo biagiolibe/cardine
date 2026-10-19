@@ -488,7 +488,7 @@ def _queue_archival_warnings(
                 warnings.append(
                     f"queue section {heading!r} stays open only because of INCONCLUSIVE row(s): "
                     + ", ".join(inconclusive)
-                    + "; run `meridian task state import --include-terminal` so archival reads task state"
+                    + "; run `cardine task state import --include-terminal` so archival reads task state"
                 )
     return warnings
 

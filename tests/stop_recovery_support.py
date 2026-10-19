@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def run_recovery(command: str, cwd: Path, worktree_root: Path | None = None) -> subprocess.CompletedProcess[str]:
     with tempfile.TemporaryDirectory() as directory:
-        launcher = Path(directory) / "meridian"
+        launcher = Path(directory) / "cardine"
         launcher.write_text(
             f"#!{sys.executable}\nimport os, sys\n"
             f"os.execv({sys.executable!r}, [{sys.executable!r}, {str(ROOT / 'scripts/cardine_cli.py')!r}, *sys.argv[1:]])\n",

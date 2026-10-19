@@ -86,7 +86,7 @@ def closure_status(
             return report(
                 "C10",
                 None,
-                f"meridian worktree cleanup {identity.canonical_id} --project {project} --format json",
+                f"cardine worktree cleanup {identity.canonical_id} --project {project} --format json",
             )
         return report(
             "C9",
@@ -124,7 +124,7 @@ def closure_status(
             return report(
                 "C6",
                 None,
-                f"meridian worktree integrate stage {identity.canonical_id} --project {project} "
+                f"cardine worktree integrate stage {identity.canonical_id} --project {project} "
                 f"--evidence {evidence_path} --format json",
             )
     return report("C5", "EVIDENCE_INCOMPLETE", stop_resume("EVIDENCE_INCOMPLETE"))

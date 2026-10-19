@@ -421,7 +421,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                     detail = (f'cwd={self.worker}; --project={project}; '
                               + (f'resolved project={project.resolve()}; ' if project != project.resolve() else '')
                               + f'expected worktree={self.worker}; --project does not name the canonical task worktree')
-                    resume = shlex.join(['meridian', *command, '--project', str(self.worker)])
+                    resume = shlex.join(['cardine', *command, '--project', str(self.worker)])
                     self.assertEqual(result.stderr.strip(), f'BLOCKED WRONG_WORKTREE: {detail}; resume: {resume}')
         self.assertFalse((self.worker / '.meridian/tasks/001.json').exists())
         self.assertEqual(self.git('status', '--porcelain'), '')
@@ -435,7 +435,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 action(self.primary, '001')
             detail = (f'cwd={self.primary.resolve()}; --project={self.primary.resolve()}; expected worktree={self.worker}; '
                       'no registered task worktree')
-            resume = f'meridian worktree prepare 001 --project {shlex.quote(str(self.primary.resolve()))} --format json'
+            resume = f'cardine worktree prepare 001 --project {shlex.quote(str(self.primary.resolve()))} --format json'
             self.assertEqual(str(caught.exception), f'BLOCKED WRONG_WORKTREE: {detail}; resume: {resume}')
 
     def test_instruction_ordering_and_skill_parity(self):

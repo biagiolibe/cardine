@@ -88,7 +88,7 @@ class SelfUpdateTest(unittest.TestCase):
         self.assertEqual(self.git(self.root, 'branch', '--show-current'), 'stable')
         self.assertEqual(self.git(self.root, 'rev-parse', 'HEAD'), self.git(self.remote, 'rev-parse', 'v1.3.0'))
         self.assertIn('Restart running Codex and Claude Code', self.output)
-        self.assertIn('meridian upgrade --check', self.output)
+        self.assertIn('cardine upgrade --check', self.output)
 
     def test_apply_tag_and_rollback(self):
         self.detach()
@@ -173,7 +173,7 @@ class SelfUpdateTest(unittest.TestCase):
         self.assertNotIn('self-update', owner_hosts_codex.CODEX_USER_RULES)
 
     def test_cli_uses_own_checkout_and_requires_explicit_mode(self):
-        with patch.object(sys, 'argv', ['meridian', '--framework-root', str(self.root),
+        with patch.object(sys, 'argv', ['cardine', '--framework-root', str(self.root),
                                       'self-update', '--check']), patch.object(
                 owner_cli, 'run_self_update', return_value=0) as update:
             self.assertEqual(owner_cli._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
