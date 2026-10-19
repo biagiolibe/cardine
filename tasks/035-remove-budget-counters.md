@@ -23,29 +23,29 @@ limit that replaces the counters belongs to work item 8.
 
 ## Acceptance Criteria
 
-- [ ] The `budget` command, `cardine.shared.budget`, and
+- [x] The `budget` command, `cardine.shared.budget`, and
   `cardine.shared.budget_commands` are removed with their tests. So are the
   budget fields that other modules read: execution contract, preflight,
   recording, closure status, worktree checkout, template audit and router,
   and host setup. The handoff lists each reader and what replaced it.
-- [ ] Template and workflow text no longer mentions budgets, budget caps,
+- [x] Template and workflow text no longer mentions budgets, budget caps,
   `budget spend`, `BUDGET_EXHAUSTED`, or the `Budget usage` handoff line. The
   text that keeps the read guard and the task-first reading rules stays.
   Template changes follow the pre-1.0 rule from task 031: capability version
   bump and baseline rewrite, with no migration.
-- [ ] Every stop code that only budgets use is removed from
+- [x] Every stop code that only budgets use is removed from
   `capabilities/stop-codes-v1.json`: `BUDGET_EXHAUSTED`,
   `BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION`, `CONTRACT_EXHAUSTED`, and any
   other. The handoff lists them.
-- [ ] Both template copies of `docs/CONTEXT_BUDGET_POLICY.md` retain their
+- [x] Both template copies of `docs/CONTEXT_BUDGET_POLICY.md` retain their
   names and are reduced to reading rules and the read guard; the installed
   managed copy and shared-source hook stay identical to main.
-- [ ] The read guard (`hooks/read-guard.sh`, `scripts/codex_read_guard.py`,
+- [x] The read guard (`hooks/read-guard.sh`, `scripts/codex_read_guard.py`,
   and `meridian hook read-guard`) behaves exactly as before, and its tests
   pass unchanged.
-- [ ] `.meridian/` is unchanged except for the state written by installed
+- [x] `.meridian/` is unchanged except for the state written by installed
   `meridian task close 035` to `.meridian/tasks/035.json`.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -87,7 +87,7 @@ The validation retry limit (work item 8), and `.meridian/`.
 
 The developer also directs this resume to use only installed `meridian`, never
 `scripts/meridian.py` from the task worktree, and never run `upgrade` here.
-The two CLI validation commands below therefore use installed `meridian`.
+The two CLI validation commands above therefore use installed `meridian`.
 Task 036 and its amendment on main (6bfc410) remain untouched.
 
 ### Scope amendment resolving the policy/manifest conflict
@@ -99,3 +99,19 @@ Task 036 and its amendment on main (6bfc410) remain untouched.
 > 3. Restore unchanged (identical to main) every surface the manifest declares: `docs/CONTEXT_BUDGET_POLICY.md` (this repository's managed copy, which belongs to the installed Meridian), `hooks/queue-briefing.sh`, `hooks/hooks.json`, `hooks/read-guard.sh`, `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/EXECUTION_EVIDENCE_PROFILE.md`, `.codex/hooks.json`, `.codex/rules/meridian.rules`, `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`.
 > 4. In `capabilities/catalog-v1.json`, the `meridian-self-hosting` profile keeps the same capabilities, IDs, and `managedSurface` (including `context-budgeting` → `docs/CONTEXT_BUDGET_POLICY.md`). Other catalog changes are allowed only if the doctor passes.
 > 5. The rest of the task stays: removing the modules, the `budget` command, the readers, the stop codes used only by budgets, and the budget text in the templates (capability version bump, baseline rewrite, `requiredVersion` aligned to the Governed SDD version, no migration).
+
+## Implementation evidence
+
+Implementation commit: `8c710a815b55f173c3c43d53604957c9ef914212`.
+All six required validation commands passed after that commit, including
+1,124 tests locally and in a clean clone, with zero failures/errors and one
+named AppleScript environment skip in each run. The skip is unrelated to
+these acceptance criteria and is documented with its test-reported reason
+and reporting command in `tasks/handoffs/035.md`.
+
+Both template policies retain their names and reading/read-guard rules.
+Installed managed surfaces, the shared-source briefing hook, the capability
+profile catalog, and every `.meridian/` file remain unchanged at this point.
+The only later permitted change is the state written by installed task close.
+The handoff inventories every former counter reader, the three removed stop
+codes, and both deferred task proposals without queueing them.
