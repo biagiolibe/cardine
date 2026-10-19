@@ -210,29 +210,13 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_project_workflow_carries_all_declared_baseline_capabilities(self) -> None:
         text = (self.WORKFLOW / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         pairs = self.marker_pairs(text)
+        baselines = json.loads((ROOT / "capabilities/marker-baselines.json").read_text(encoding="utf-8"))
         expected = {
-            capability: "1"
-            for capability in (
-                "workflow-mode-lock",
-                "document-precedence",
-                "execution-assets",
-                "roles",
-                "git-workflow",
-                "execution-discipline",
-            )
+            capability: str(entry["version"])
+            for capability, entry in baselines[
+                "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+            ].items()
         }
-        expected["workflow-mode-lock"] = "2"
-        expected["document-precedence"] = "2"
-        expected["execution-assets"] = "4"
-        expected["roles"] = "4"
-        expected["git-workflow"] = "14"
-        expected["bounded-worktree-lifecycle"] = "5"
-        expected["codex-worktree-access"] = "4"
-        expected["task-identity-policy"] = "1"
-        expected["task-lifecycle"] = "4"
-        expected["review-policy"] = "3"
-        expected["worktree-command-locations"] = "1"
-        expected["worktree-budget-retirement"] = "1"
         self.assertEqual(sorted(pairs), sorted(expected.items()))
 
     def test_git_workflow_block_drives_closure_through_advance(self) -> None:

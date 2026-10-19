@@ -19,7 +19,7 @@
   },
   "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
-      "sha256": "4810cec23c0165da1328cf1a42a5807b5eb85758df5f83dda28fe39f2c686861",
+      "sha256": "b9863a83cf996da21976d7c401f8d43c99cd2f60a31ac57839ccf261481f1b75",
       "version": 6
     },
     "codex-worktree-access": {
@@ -325,7 +325,7 @@
   },
   "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
-      "sha256": "df79ffa1d6ca51029dc3376a18484e8d6788b85b11ba88046ccc4f2a2313dee6",
+      "sha256": "259893b098141be06a0634808b5f58d2b2e56dc76cd78f1d6aa4742cbff38b93",
       "version": 8
     },
     "codex-worktree-access": {

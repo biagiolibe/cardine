@@ -20,6 +20,10 @@ from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin, SyntheticFra
 
 
 class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
+    def baseline_version(self, mode: str, relative: str, capability: str) -> int:
+        baselines = json.loads((ROOT / "capabilities/marker-baselines.json").read_text(encoding="utf-8"))
+        return baselines[f"templates/workflows/{mode}/{relative}"][capability]["version"]
+
     def test_spike_blueprint_upgrade_preserves_consumer_text_and_task_records(self) -> None:
         blueprint = self.framework / "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
@@ -188,7 +192,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("MIGRATION 011-synthetic-access", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        self.assertIn("capability=git-workflow v14", project_workflow.read_text(encoding="utf-8"))
+        self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
             "capability=task-worktree-boundary v10",
@@ -260,7 +264,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("MIGRATION 011-synthetic-access", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        self.assertIn("capability=git-workflow v14", project_workflow.read_text(encoding="utf-8"))
+        self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
             "capability=task-worktree-handoff v5",
@@ -637,7 +641,7 @@ worktree before the branch only after validated integration succeeds.
 
         for relative in paths:
             upgraded = (self.project / relative).read_text(encoding="utf-8")
-            self.assertIn("MERIDIAN:BEGIN capability=git-workflow v14", upgraded)
+            self.assertIn(f"MERIDIAN:BEGIN capability=git-workflow v{self.baseline_version('lean-delivery', relative, 'git-workflow')}", upgraded)
             self.assertIn("Task branches do not edit `tasks/QUEUE.md`", upgraded)
         self.assertIn("Consumer-owned closure note.", agents.read_text(encoding="utf-8"))
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
@@ -700,7 +704,7 @@ worktree before the branch only after validated integration succeeds.
         upgraded_workflow = (self.project / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         upgraded_implementation = implementation.read_text(encoding="utf-8")
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        self.assertIn("capability=git-workflow v14", upgraded_workflow)
+        self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", upgraded_workflow)
         self.assertIn("Review: REQUIRED` is a gate, not a request for authorization", upgraded_workflow)
         self.assertIn("capability=task-worktree-boundary v10", upgraded_implementation)
         self.assertIn("REVIEW_REQUIRED`; it is a gate", upgraded_implementation)
@@ -837,7 +841,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded = project_workflow.read_text(encoding="utf-8")
-        self.assertIn("capability=bounded-worktree-lifecycle v7", upgraded)
+        self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('lean-delivery', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded)
         self.assertIn("`--resume` is allowed only for that directive", upgraded)
         self.assertIn("Consumer-owned resume note.", upgraded)
         lifecycle = (self.project / "docs/WORKTREE_LIFECYCLE.md").read_text(encoding="utf-8")

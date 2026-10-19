@@ -20,7 +20,7 @@
       "adoptionRecord": "068-adr-list-discovery"
     },
     "bounded-worktree-lifecycle": {
-      "requiredVersion": 5,
+      "requiredVersion": 6,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -92,7 +92,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "git-workflow": {
-      "requiredVersion": 14,
+      "requiredVersion": 15,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"

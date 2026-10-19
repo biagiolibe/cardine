@@ -441,7 +441,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def test_stop_registry_covers_closure_codes_and_names_real_tests(self) -> None:
         registry = stops_registry.load_stop_registry()
         closure = (
-            "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "REVIEW_REQUIRED", "WRONG_WORKTREE", "EVIDENCE_INCOMPLETE",
+            "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "VALIDATION_RETRY_LIMIT", "REVIEW_REQUIRED", "WRONG_WORKTREE", "EVIDENCE_INCOMPLETE",
             "PRIMARY_DIRTY", "MAIN_BEHIND_ORIGIN", "LEASE_HELD", "INTEGRATION_CONFLICT",
             "CANDIDATE_VALIDATION_FAILED", "EVIDENCE_MISMATCH", "PUSH_PENDING", "PUSH_REJECTED", "CLEANUP_BLOCKED",
             "UNDECLARED_VALIDATION_COMMANDS", "STALE_WORKTREE_BASE", "REVIEW_NOT_APPROVED", "REVIEW_STALE",
@@ -467,7 +467,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             {code for code, entry in registry.items() if entry["class"] == "judgment"},
             {
                 "ACCEPTANCE_UNMET", "REVIEW_REQUIRED", "WORKFLOW_UNREADABLE", "RULE_CONFLICT", "CONTRACT_EXHAUSTED",
-                "SCOPE_CHANGE_REQUIRED", "REVIEW_LOOP_EXHAUSTED",
+                "SCOPE_CHANGE_REQUIRED", "REVIEW_LOOP_EXHAUSTED", "VALIDATION_RETRY_LIMIT",
             },
         )
         self.assertEqual(registry["PUSH_PENDING"]["kind"], "status")

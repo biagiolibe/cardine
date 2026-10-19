@@ -143,7 +143,7 @@ class MeridianCliFixtureMixin:
             flags=re.DOTALL,
         )
         previous_workflow = re.sub(
-            r"<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v5 -->.*?<!-- MERIDIAN:END -->\n",
+            r"<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v\d+ -->.*?<!-- MERIDIAN:END -->\n",
             legacy_workflow,
             current_workflow,
             count=1,

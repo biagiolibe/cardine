@@ -107,7 +107,8 @@ absolute path.
 
 A `Proceed with <TASK-ID>` directive that says to Resume starts with `meridian
 worktree prepare <task-id> --resume --project <primary-checkout> --format json`.
-This accepts the task's existing worktree even when it has uncommitted changes,
+`--resume` is allowed only for that directive. It accepts the task's existing
+worktree even when it has uncommitted changes,
 never creates or changes anything, and refuses when no worktree exists. Run
 `meridian worktree check <task-id> --resume --project <primary-checkout> --format
 json` from that exact worktree. Accept `status: ready-dirty`, read `git status`
