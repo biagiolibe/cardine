@@ -425,7 +425,7 @@ def run_once(scenario: Scenario, host: str, timeout: int, max_budget_usd: str, k
             **os.environ,
             **GIT_ENV_ISOLATION,
             "GIT_CONFIG_GLOBAL": str(gitconfig),
-            "MERIDIAN_WORKTREE_ROOT": str(temporary_root / "worktrees"),
+            "CARDINE_WORKTREE_ROOT": str(temporary_root / "worktrees"),
             "PATH": f"{ROOT / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}",
         }
         if host == "codex":

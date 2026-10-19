@@ -21,7 +21,7 @@ def run_recovery(command: str, cwd: Path, worktree_root: Path | None = None) -> 
         launcher.chmod(0o755)
         environment = {**os.environ, "PATH": directory + os.pathsep + os.environ["PATH"]}
         if worktree_root is not None:
-            environment["MERIDIAN_WORKTREE_ROOT"] = str(worktree_root)
+            environment["CARDINE_WORKTREE_ROOT"] = str(worktree_root)
         return subprocess.run(shlex.split(command), cwd=cwd, env=environment, text=True, capture_output=True)
 
 

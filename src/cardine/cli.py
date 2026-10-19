@@ -92,7 +92,7 @@ def build_parser() -> CardineArgumentParser:
     parser.add_argument(
         "--framework-root",
         type=Path,
-        default=Path(os.environ.get("MERIDIAN_ROOT", SCRIPTS_ROOT.parent)),
+        default=Path(os.environ.get("CARDINE_ROOT", SCRIPTS_ROOT.parent)),
     )
     parser.add_argument(
         "--version",

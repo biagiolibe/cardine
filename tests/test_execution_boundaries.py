@@ -47,7 +47,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.oldcwd = Path.cwd()
         os.chdir(self.primary)
         self.addCleanup(os.chdir, self.oldcwd)
-        self.env = mock.patch.dict(os.environ, {'MERIDIAN_WORKTREE_ROOT': str(Path(self.temp.name) / 'worktrees')})
+        self.env = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(Path(self.temp.name) / 'worktrees')})
         self.env.start()
         self.addCleanup(self.env.stop)
         prepared = owner_worktree_checkout.prepare_task_worktree('001', None, self.primary)

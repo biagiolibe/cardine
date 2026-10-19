@@ -793,7 +793,7 @@ def adopter_steps() -> str:
         "Adopter update steps (not run):",
         "  Claude Code: /plugin marketplace add biagiolibe/meridian#v<version>",
         "  Claude Code, ref \"stable\": /plugin marketplace update meridian",
-        "  Codex: git -C \"$MERIDIAN_ROOT\" fetch --tags && git -C \"$MERIDIAN_ROOT\" checkout v<version>",
+        "  Codex: git -C \"$CARDINE_ROOT\" fetch --tags && git -C \"$CARDINE_ROOT\" checkout v<version>",
     ))
 
 

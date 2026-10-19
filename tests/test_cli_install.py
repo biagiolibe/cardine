@@ -82,7 +82,7 @@ class CliInstallTest(unittest.TestCase):
     def test_supported_python_runs_cli(self):
         result = subprocess.run(
             [sys.executable, str(ROOT / "bin/cardine"), "--version"],
-            env={key: value for key, value in os.environ.items() if key != "MERIDIAN_ROOT"},
+            env={key: value for key, value in os.environ.items() if key != "CARDINE_ROOT"},
             text=True, capture_output=True, check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)

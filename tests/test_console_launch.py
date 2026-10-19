@@ -424,10 +424,24 @@ class AgentLaunchTest(unittest.TestCase):
         with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
              mock.patch.object(owner_console_launch.shutil, "which", return_value="/usr/bin/tool"), \
              mock.patch.object(owner_console_launch.subprocess, "run") as run:
-            run.return_value = mock.Mock(returncode=1, stderr="MERIDIAN_SESSION_NOT_FOUND", stdout="")
+            run.return_value = mock.Mock(returncode=1, stderr="CARDINE_SESSION_NOT_FOUND", stdout="")
             success, message = owner_console_launch._start_launch(request)
         self.assertFalse(success)
         self.assertEqual(message, "iTerm2 console session was not found; [copy] remains available")
+
+    def test_old_session_error_token_is_not_recognized(self) -> None:
+        request = owner_console_models.LaunchRequest(
+            "codex", "Proceed with 001", Path("/project"), "001",
+            "12345678-1234-1234-1234-123456789abc",
+        )
+        with mock.patch.object(owner_console_launch.sys, "platform", "darwin"), \
+             mock.patch.object(owner_console_launch.shutil, "which", return_value="/usr/bin/tool"), \
+             mock.patch.object(owner_console_launch.subprocess, "run") as run:
+            run.return_value = mock.Mock(returncode=1, stderr="MERIDIAN_SESSION_NOT_FOUND", stdout="")  # MERIDIAN-OLD-NAME-TEST
+            success, message = owner_console_launch._start_launch(request)
+        self.assertFalse(success)
+        self.assertTrue(message.startswith("iTerm2 is unavailable or rejected launch:"))
+        self.assertNotIn("session was not found", message)
 
     def test_start_revalidates_task_and_session_ids(self) -> None:
         request = owner_console_models.LaunchRequest("codex", "Proceed with 001", Path("/project"), "001; rm -rf /", "bad")

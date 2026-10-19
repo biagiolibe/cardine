@@ -307,7 +307,7 @@ class ParallelTestRunnerTest(unittest.TestCase):
     def test_each_shard_gets_a_private_temporary_directory(self) -> None:
         scratch = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, scratch, True)
-        code = "import os; print(os.environ['TMPDIR'], os.environ['MERIDIAN_TEST_SHARD'])"
+        code = "import os; print(os.environ['TMPDIR'], os.environ['CARDINE_TEST_SHARD'])"
         results = runner.run_shards([[sys.executable, "-c", code]] * 3, scratch, dict(os.environ))
 
         temporary = [result.output.split()[0] for result in results]
@@ -321,17 +321,38 @@ class ParallelTestRunnerTest(unittest.TestCase):
             with self.subTest(explicit_environment=explicit_environment):
                 scratch = Path(tempfile.mkdtemp())
                 self.addCleanup(shutil.rmtree, scratch, True)
-                environment = dict(os.environ, MERIDIAN_ROOT="/foreign/framework")
-                code = "import os; print(repr(os.environ.get('MERIDIAN_ROOT')))"
+                environment = dict(os.environ, CARDINE_ROOT="/foreign/framework")
+                code = "import os; print(repr(os.environ.get('CARDINE_ROOT')))"
                 with mock.patch.dict(os.environ, environment, clear=True):
                     results = runner.run_shards(
                         [[sys.executable, "-c", code]], scratch,
                         environment if explicit_environment else None,
                     )
-                    self.assertEqual(os.environ["MERIDIAN_ROOT"], "/foreign/framework")
+                    self.assertEqual(os.environ["CARDINE_ROOT"], "/foreign/framework")
                 self.assertEqual(results[0].returncode, 0)
                 self.assertEqual(results[0].output.strip(), "None")
-                self.assertEqual(environment["MERIDIAN_ROOT"], "/foreign/framework")
+                self.assertEqual(environment["CARDINE_ROOT"], "/foreign/framework")
+
+    def test_shards_ignore_all_retired_environment_names(self) -> None:
+        for explicit_environment in (False, True):
+            with self.subTest(explicit_environment=explicit_environment), tempfile.TemporaryDirectory() as directory:
+                environment = dict(os.environ)
+                # MERIDIAN-OLD-NAME-TEST
+                environment.update({f"MERIDIAN_{name}": "retired" for name in (
+                    "ROOT", "WORKTREE_ROOT", "TEST_SHARD", "FAILURE_VISIBILITY_PROBE", "OTHER",
+                )})
+                code = "import os, json; print(json.dumps(dict(os.environ)))"
+                with mock.patch.dict(os.environ, environment, clear=True):
+                    results = runner.run_shards(
+                        [[sys.executable, "-c", code]], Path(directory),
+                        environment if explicit_environment else None,
+                    )
+                import json
+                child = json.loads(results[0].output)
+                self.assertEqual(results[0].returncode, 0)
+                self.assertEqual(child["CARDINE_TEST_SHARD"], "1/1")
+                self.assertFalse(any(key.startswith("MERIDIAN_") for key in child))  # MERIDIAN-OLD-NAME-TEST
+                self.assertEqual(environment["MERIDIAN_TEST_SHARD"], "retired")  # MERIDIAN-OLD-NAME-TEST
 
     def test_direct_shard_removes_inherited_framework_root(self) -> None:
         directory = self.make_suite(["environment"])
@@ -339,13 +360,13 @@ class ParallelTestRunnerTest(unittest.TestCase):
         test_file = next(directory.glob("test_*.py"))
         test_file.write_text(
             "import os, unittest\n"
-            "assert 'MERIDIAN_ROOT' not in os.environ\n"
+            "assert 'CARDINE_ROOT' not in os.environ\n"
             "class GeneratedTest(unittest.TestCase):\n"
             "    def test_environment(self):\n"
-            "        self.assertNotIn('MERIDIAN_ROOT', os.environ)\n",
+            "        self.assertNotIn('CARDINE_ROOT', os.environ)\n",
             encoding="utf-8",
         )
-        with mock.patch.dict(os.environ, {"MERIDIAN_ROOT": "/foreign/framework"}):
+        with mock.patch.dict(os.environ, {"CARDINE_ROOT": "/foreign/framework"}):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--shard", "1/1", "--tests-directory", str(directory)],
                 cwd=ROOT, text=True, capture_output=True, check=False,

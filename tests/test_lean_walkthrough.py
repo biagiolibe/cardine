@@ -42,8 +42,8 @@ class LeanWalkthroughTest(unittest.TestCase):
                 script.append("python3 -c " + shlex.quote(check))
         return subprocess.run(
             ["bash", "-c", "\n".join(script)], cwd=self.fixture.project,
-            env={**os.environ, "HOME": str(self.home), "MERIDIAN_ROOT": str(ROOT),
-                 "MERIDIAN_WORKTREE_ROOT": str(self.fixture.worktree_root),
+            env={**os.environ, "HOME": str(self.home), "CARDINE_ROOT": str(ROOT),
+                 "CARDINE_WORKTREE_ROOT": str(self.fixture.worktree_root),
                  "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"},
             text=True, capture_output=True, timeout=120,
         )

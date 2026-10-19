@@ -211,7 +211,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         import shlex
         result = subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"),
                                  *shlex.split(resume)[1:]], cwd=self.primary, text=True, capture_output=True,
-                                env={**os.environ, "MERIDIAN_WORKTREE_ROOT": str(self.worktree_root)})
+                                env={**os.environ, "CARDINE_WORKTREE_ROOT": str(self.worktree_root)})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["recovered_from"], "registered-directory-missing")
         self.assertTrue(worktree.is_dir())

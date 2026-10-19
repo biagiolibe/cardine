@@ -171,7 +171,7 @@ def advance_task_closure(
                         recovery.append("DONE")
                     recovery.extend(["--project", str(recovery_project)])
                     if worktree_root is not None:
-                        recovery = ["env", f"MERIDIAN_WORKTREE_ROOT={worktree_root}", *recovery]
+                        recovery = ["env", f"CARDINE_WORKTREE_ROOT={worktree_root}", *recovery]
                     commands = [f"cd {shlex.quote(str(recovery_project))} && {shlex.join(recovery)}"]
                     if archived:
                         # close refuses archived records; recreate only their missing state.

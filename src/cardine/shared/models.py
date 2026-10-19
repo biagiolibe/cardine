@@ -169,7 +169,7 @@ class SetupPlan:
     framework_root: Path
     skill_links: tuple[tuple[str, Path, str, str], ...]
     skill_links_state: str
-    meridian_root_state: str
+    cardine_root_state: str
     changes: tuple[str, ...]
     warnings: tuple[str, ...]
 

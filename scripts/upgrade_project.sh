@@ -7,7 +7,7 @@
 #
 # Usage:
 #   upgrade_project.sh <project> [--apply] [--validate "<command>"]...
-#                      [--meridian-root <path>] [--branch <name>]
+#                      [--cardine-root <path>] [--branch <name>]
 #                      [--skip-setup] [--skip-queue] [--allow-untagged]
 set -euo pipefail
 
@@ -18,7 +18,7 @@ SKIP_SETUP=0
 SKIP_QUEUE=0
 ALLOW_UNTAGGED=0
 BRANCH=""
-MERIDIAN_ROOT="${MERIDIAN_ROOT:-}"
+CARDINE_ROOT="${CARDINE_ROOT:-}"
 VALIDATE=()
 
 ON_BRANCH=0
@@ -49,7 +49,7 @@ while [ $# -gt 0 ]; do
     --skip-queue) SKIP_QUEUE=1 ;;
     --allow-untagged) ALLOW_UNTAGGED=1 ;;
     --validate) shift; [ $# -gt 0 ] || die "--validate needs a command"; VALIDATE+=("$1") ;;
-    --meridian-root) shift; MERIDIAN_ROOT="${1:-}" ;;
+    --cardine-root) shift; CARDINE_ROOT="${1:-}" ;;
     --branch) shift; BRANCH="${1:-}" ;;
     -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
     -*) die "unknown option: $1" ;;
@@ -62,16 +62,16 @@ done
 PROJECT="$(cd "$PROJECT" && pwd)" || die "project path not found"
 
 # --- Framework -------------------------------------------------------------
-if [ -z "$MERIDIAN_ROOT" ]; then
+if [ -z "$CARDINE_ROOT" ]; then
   if command -v cardine >/dev/null 2>&1; then
-    MERIDIAN_ROOT="$(cd "$(dirname "$(command -v cardine)")/.." && pwd)"
+    CARDINE_ROOT="$(cd "$(dirname "$(command -v cardine)")/.." && pwd)"
   else
-    die "set MERIDIAN_ROOT or pass --meridian-root"
+    die "set CARDINE_ROOT or pass --cardine-root"
   fi
 fi
-M="$MERIDIAN_ROOT/bin/cardine"
+M="$CARDINE_ROOT/bin/cardine"
 [ -x "$M" ] || die "no executable $M"
-TARGET="$(tr -d '[:space:]' < "$MERIDIAN_ROOT/VERSION")"
+TARGET="$(tr -d '[:space:]' < "$CARDINE_ROOT/VERSION")"
 BRANCH="${BRANCH:-meridian-upgrade-$TARGET}"
 
 manifest_field() {
@@ -80,11 +80,11 @@ manifest_field() {
 }
 
 step "Framework"
-info "root:    $MERIDIAN_ROOT"
+info "root:    $CARDINE_ROOT"
 info "version: $TARGET"
-if git -C "$MERIDIAN_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
-  FRAMEWORK_HEAD="$(git -C "$MERIDIAN_ROOT" rev-parse HEAD)"
-  TAG_COMMIT="$(git -C "$MERIDIAN_ROOT" rev-parse -q --verify "refs/tags/v$TARGET^{commit}" || true)"
+if git -C "$CARDINE_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  FRAMEWORK_HEAD="$(git -C "$CARDINE_ROOT" rev-parse HEAD)"
+  TAG_COMMIT="$(git -C "$CARDINE_ROOT" rev-parse -q --verify "refs/tags/v$TARGET^{commit}" || true)"
   [ -n "$TAG_COMMIT" ] || die "framework checkout has no tag v$TARGET; upgrading from unreleased main is not supported"
   if [ "$FRAMEWORK_HEAD" != "$TAG_COMMIT" ]; then
     if [ "$ALLOW_UNTAGGED" = "1" ]; then
@@ -93,7 +93,7 @@ if git -C "$MERIDIAN_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
       die "framework HEAD is not tag v$TARGET; check out the tag or pass --allow-untagged"
     fi
   fi
-  [ -z "$(git -C "$MERIDIAN_ROOT" status --porcelain)" ] || info "warning: framework checkout has local changes"
+  [ -z "$(git -C "$CARDINE_ROOT" status --porcelain)" ] || info "warning: framework checkout has local changes"
 fi
 set +e
 "$M" self-check --check-latest
@@ -246,5 +246,5 @@ cat <<EOF
 
   Framework updates (before the next project upgrade, not per project):
        Claude Code:  /plugin marketplace update meridian
-       Codex:        git -C "\$MERIDIAN_ROOT" fetch --tags && git -C "\$MERIDIAN_ROOT" checkout v<version>
+       Codex:        git -C "\$CARDINE_ROOT" fetch --tags && git -C "\$CARDINE_ROOT" checkout v<version>
 EOF

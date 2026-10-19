@@ -6,15 +6,15 @@
 set -uo pipefail
 
 HOOK_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-MERIDIAN_BIN="$HOOK_ROOT/bin/cardine"
+CARDINE_BIN="$HOOK_ROOT/bin/cardine"
 for PLUGIN_DIRECTORY in "${PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_ROOT:-}"; do
-  [ -x "$MERIDIAN_BIN" ] && break
-  [ -n "$PLUGIN_DIRECTORY" ] && MERIDIAN_BIN="$PLUGIN_DIRECTORY/bin/cardine"
+  [ -x "$CARDINE_BIN" ] && break
+  [ -n "$PLUGIN_DIRECTORY" ] && CARDINE_BIN="$PLUGIN_DIRECTORY/bin/cardine"
 done
-if [ ! -x "$MERIDIAN_BIN" ]; then
-  MERIDIAN_BIN="$(command -v cardine 2>/dev/null || true)"
+if [ ! -x "$CARDINE_BIN" ]; then
+  CARDINE_BIN="$(command -v cardine 2>/dev/null || true)"
 fi
-[ -n "$MERIDIAN_BIN" ] && [ -x "$MERIDIAN_BIN" ] || exit 0
+[ -n "$CARDINE_BIN" ] && [ -x "$CARDINE_BIN" ] || exit 0
 
-"$MERIDIAN_BIN" hook stop-audit >/dev/null 2>&1
+"$CARDINE_BIN" hook stop-audit >/dev/null 2>&1
 exit 0

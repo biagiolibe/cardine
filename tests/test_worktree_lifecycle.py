@@ -84,7 +84,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertIn("DEPRECATED", alias.stderr)
 
     def test_worktree_and_codex_commands_accept_the_resolved_root_without_an_option(self) -> None:
-        environment = {**os.environ, "MERIDIAN_WORKTREE_ROOT": str(self.worktree_root)}
+        environment = {**os.environ, "CARDINE_WORKTREE_ROOT": str(self.worktree_root)}
         worktree = subprocess.run(
             [sys.executable, str(CLI), "worktree", "path", "056", "--project", str(self.project)],
             cwd=self.project,

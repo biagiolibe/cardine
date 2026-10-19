@@ -79,11 +79,46 @@ class CommandWordTest(unittest.TestCase):
             old = tools / "meridian"  # MERIDIAN-OLD-NAME-TEST
             old.write_text(f"#!/bin/sh\nprintf called > '{marker}'\n")
             old.chmod(0o755)
-            environment = {**os.environ, "PATH": str(tools) + ":/usr/bin:/bin", "PLUGIN_ROOT": "", "CLAUDE_PLUGIN_ROOT": "", "MERIDIAN_ROOT": ""}
+            environment = {**os.environ, "PATH": str(tools) + ":/usr/bin:/bin", "PLUGIN_ROOT": "", "CLAUDE_PLUGIN_ROOT": "", "CARDINE_ROOT": ""}
             result = subprocess.run(["/bin/bash", str(hook)], env=environment, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertFalse(marker.exists())  # MERIDIAN-OLD-NAME-TEST
             result = subprocess.run(["/bin/bash", str(ROOT / "scripts/upgrade_project.sh"), str(temporary)], env=environment, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("set MERIDIAN_ROOT or pass --meridian-root", result.stdout + result.stderr)
+            self.assertIn("set CARDINE_ROOT or pass --cardine-root", result.stdout + result.stderr)
             self.assertFalse(marker.exists())  # MERIDIAN-OLD-NAME-TEST
+
+    def test_upgrade_ignores_old_root_environment_and_rejects_old_option(self):
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            environment = {key: value for key, value in os.environ.items() if key != "CARDINE_ROOT"}
+            environment.update(PATH="/usr/bin:/bin")
+            environment["MERIDIAN_ROOT"] = str(ROOT)  # MERIDIAN-OLD-NAME-TEST
+            command = ["/bin/bash", str(ROOT / "scripts/upgrade_project.sh"), directory]
+            result = subprocess.run(command, env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("set CARDINE_ROOT or pass --cardine-root", result.stderr)
+            result = subprocess.run([*command, "--meridian-root", str(ROOT)], env=environment, capture_output=True, text=True)  # MERIDIAN-OLD-NAME-TEST
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("unknown option: --meridian-root", result.stderr)  # MERIDIAN-OLD-NAME-TEST
+            result = subprocess.run([*command, "--cardine-root", directory], env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn(f"no executable {temporary}/bin/cardine", result.stderr)
+
+    def test_stop_hook_ignores_old_bin_variable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            hook = temporary / "hooks/stop-audit.sh"
+            hook.parent.mkdir()
+            shutil.copyfile(ROOT / "hooks/stop-audit.sh", hook)
+            tools = temporary / "tools"
+            tools.mkdir()
+            called = temporary / "called"
+            current = tools / "cardine"
+            current.write_text(f"#!/bin/sh\nprintf '%s' \"$*\" > '{called}'\n")
+            current.chmod(0o755)
+            environment = {**os.environ, "PATH": f"{tools}:/usr/bin:/bin", "PLUGIN_ROOT": "", "CLAUDE_PLUGIN_ROOT": ""}
+            environment["MERIDIAN_BIN"] = "/retired/bin/meridian"  # MERIDIAN-OLD-NAME-TEST
+            result = subprocess.run(["/bin/bash", str(hook)], env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(called.read_text(), "hook stop-audit")
