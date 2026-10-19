@@ -140,8 +140,8 @@ class MarkerAndIsolationTest(unittest.TestCase):
     def test_marker_blocks_return_names_versions_and_complete_text(self):
         block = "<!-- MERIDIAN:BEGIN capability=sample v12 -->\nbody\n<!-- MERIDIAN:END -->"
         other = "<!-- CARDINE:BEGIN capability=other v1 -->ignored<!-- CARDINE:END -->"
-        self.assertEqual(installation.marker_blocks("prefix" + block + other), (("sample", 12, block),))
-        self.assertEqual(installation.marker_blocks("<!-- MERIDIAN:BEGIN capability=sample v1 -->"), ())
+        self.assertEqual(installation.meridian_marker_blocks("prefix" + block + other), (("sample", 12, block),))
+        self.assertEqual(installation.meridian_marker_blocks("<!-- MERIDIAN:BEGIN capability=sample v1 -->"), ())
 
     def test_marker_patterns_match_current_templates(self):
         count = 0
@@ -150,7 +150,7 @@ class MarkerAndIsolationTest(unittest.TestCase):
                 continue
             text = path.read_text(encoding="utf-8")
             expected = tuple((m.group(1), int(m.group(2)), m.group(0)) for m in MARKED_BLOCK.finditer(text))
-            self.assertEqual(installation.marker_blocks(text), expected, str(path))
+            self.assertEqual(installation.meridian_marker_blocks(text), expected, str(path))
             self.assertEqual(installation._CAPABILITY_MARKER.findall(text), CAPABILITY_MARKER.findall(text))
             count += len(expected)
         self.assertGreater(count, 0)

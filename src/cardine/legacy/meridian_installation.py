@@ -56,7 +56,7 @@ def read_task_state_file(project: Path, task_id: str) -> dict[str, object]:
     return _read_object(project / MERIDIAN_INSTALLATION_NAMES.tasks_path / f"{task_id}.json")
 
 
-def marker_blocks(text: str) -> tuple[tuple[str, int, str], ...]:
+def meridian_marker_blocks(text: str) -> tuple[tuple[str, int, str], ...]:
     """Return (capability, version, complete block) tuples in source order."""
     return tuple(
         (match.group(1), int(match.group(2)), match.group(0))
