@@ -9,8 +9,6 @@ but unresolved placeholders are never verification evidence.
 - Reuse unchanged sources and successful results from the active session.
 - Locate a large-file range before reading it; the default threshold is 400
   lines.
-- Allow at most two context expansions and three diagnostic hypotheses per
-  failure. Stop with `BLOCKED CONTRACT_EXHAUSTED` when the applicable task contract is exhausted.
 - Start with the failing check's ordinary bounded output, then run the
   narrowest single-test or file-specific diagnostic. Use verbose output or a
   full trace only when those two levels cannot identify the cause.
@@ -60,9 +58,7 @@ Long commands and suite runs:
 - Before and after material edits, use `git status --short` and
   `git diff --stat`; inspect every changed hunk with `git diff -- <path>`.
 - Prefer unit, integration, schema, hash, and command-output checks. Capture a
-  manual view only for a genuinely perceptual acceptance criterion, with at
-  most two distinct views per criterion unless the task explicitly authorizes
-  more.
+  manual view only for a genuinely perceptual acceptance criterion.
 
 ## Runtime configuration
 

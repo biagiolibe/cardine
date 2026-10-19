@@ -58,7 +58,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         audit = self.run_cli("audit")
         # This legacy lock fixture has no capabilityProfiles; audit reports
         # UNVERIFIED for that declaration independently of marker integrity.
-        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v18 matches the released text", audit.stdout)
+        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v19 matches the released text", audit.stdout)
         self.assertNotIn("FAIL           marker-integrity", audit.stdout)
         self.assertNotIn("DRIFT", audit.stdout)
         repeated = self.run_cli("upgrade", "--check")
@@ -74,7 +74,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         blueprint = self.framework / "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
         declaration = current.split("\n## Host impact\n", 1)[1].split("\n## Goal\n", 1)[0]
-        previous = current.replace("capability=task-blueprint v18", "capability=task-blueprint v11", 1)
+        previous = current.replace("capability=task-blueprint v19", "capability=task-blueprint v11", 1)
         previous = previous.replace("\n## Host impact\n" + declaration, "", 1)
 
         installed_baseline = self.project / ".meridian/baselines/1.1.39"
@@ -107,7 +107,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_blueprint = (self.project / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-blueprint v18", upgraded_blueprint)
+        self.assertIn("capability=task-blueprint v19", upgraded_blueprint)
         self.assertIn("Classification: NOT_APPLICABLE", upgraded_blueprint)
         self.assertIn("Classification: REQUIRED", upgraded_blueprint)
         self.assertIn("Project-owned task note.", upgraded_blueprint)
@@ -517,7 +517,8 @@ worktree before the branch only after validated integration succeeds.
 
     def test_1_4_0_template_capabilities_are_required(self) -> None:
         requirements = owner_templates_migrations.capability_requirements(self.framework)
-        for capability in ("worktree-command-locations", "worktree-budget-retirement", "handoff-correction-redelivery"):
+        self.assertNotIn("worktree-budget-retirement", requirements)
+        for capability in ("worktree-command-locations", "handoff-correction-redelivery"):
             with self.subTest(capability=capability):
                 self.assertEqual(requirements[capability], (1, "030-synthetic-delivery"))
 

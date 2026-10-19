@@ -8,7 +8,6 @@ import sys
 
 from cardine.hosts.codex import _write_exclusive_backup
 from cardine.release.version import read_version, require_release_version
-from cardine.shared.budget import migrate_budget_state
 from cardine.shared.constants import BASELINES_PATH, PROTOCOL_VERSION, STRICT_DIGEST_PROFILES
 from cardine.shared.errors import MeridianError
 from cardine.shared.hashing import sha256
@@ -240,8 +239,6 @@ def apply_plan(
     manifest["appliedMigrations"] = sorted(prior)
     complete_profile_surfaces(project_root, framework_root, manifest, plan)
     write_manifest(project_root, manifest, framework_root)
-    if migrate_budget_state(project_root):
-        print("Migrated legacy .meridian/budget.json out of the index; commit its deletion.", file=sys.stderr)
     print("Upgrade applied. Review the diff, run project checks, then commit it.")
 
 

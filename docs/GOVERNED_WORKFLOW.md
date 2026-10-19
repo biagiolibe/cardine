@@ -44,7 +44,7 @@ Declared task authority
 ```
 
 The worker or host used for the exploration is not normative. Delegating work
-does not erase its declared investigation budget, and a completion report is
+does not erase its investigation provenance, and a completion report is
 not accepted as a substitute for durable validation or exploration evidence.
 
 ### Task contract
@@ -79,13 +79,13 @@ of record.
 
 For source/build tasks, the execution-evidence profile is resolved into the
 task before implementation. This makes the task—not a separately remembered
-policy document—the operational contract for validation, evidence budgets, and
+policy document—the operational contract for validation, evidence provenance, and
 the review handoff.
 
 ```text
 Create or materially re-scope task
         |
-        +-- declare authority, scope, acceptance criteria, budget caps,
+        +-- declare authority, scope, acceptance criteria,
         |   and named literal validation commands
         |
         +-- meridian execution contract <TASK-ID> --project .
@@ -114,9 +114,8 @@ READY_FOR_REVIEW --> independent review --> APPROVE --> ACCEPTED/integration
                     +-- CHANGES_REQUESTED ----+--> IN_PROGRESS/remediation
 ```
 
-The wrapper records validation exit statuses and budgeted evidence in
-`.meridian/execution-evidence.json`; task-attempt counters live in
-`.meridian/budget.json`. A project upgrades its templates before using these
+The wrapper records validation exit statuses and evidence provenance in
+`.meridian/execution-evidence.json`. A project upgrades its templates before using these
 gates, then backfills only non-terminal tasks with their resolved contracts.
 
 For a fully delegated required-review task, `Run lifecycle <TASK-ID>` adds a

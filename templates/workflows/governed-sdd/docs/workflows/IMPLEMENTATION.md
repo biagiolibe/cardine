@@ -90,16 +90,16 @@ the handoff.
 
 <!-- MERIDIAN:BEGIN capability=host-impact-routing v2 -->Before implementation, read the task's `Host impact` declaration. `NOT_APPLICABLE` needs a non-empty rationale explaining why no host-facing contract can change. `REQUIRED` needs a host-independent policy outcome, one profile row with every declared column, all three evidence-plan categories, and a fallback for every profile. For a host-sensitive task, if the required static, host-execution, or manual-activation evidence cannot be obtained for a profile, stop and return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`; retain that profile as `unverified`, `advisory`, or `unsupported` with its fallback rather than claiming `enforced`. A template declaration is not host enforcement, and no automatic host probe is required by this routing rule.<!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=spike-routing v2 -->If any acceptance criterion cannot be evaluated without first discovering an unknown, do not implement past that point: return `BLOCKED SCOPE_CHANGE_REQUIRED`, naming the exact `Class: SPIKE` task (see `tasks/TASK_BLUEPRINT.md`'s spike shape) needed to resolve the unknown, proposing it if it does not exist yet. Do not investigate the unknown inside this task's own branch, commit, or budget — that is what turns a spike into an unbounded side-channel for work that should have gone through its own `Question`/`Budget` gate.<!-- MERIDIAN:END -->
+<!-- MERIDIAN:BEGIN capability=spike-routing v3 -->If any acceptance criterion cannot be evaluated without first discovering an unknown, do not implement past that point: return `BLOCKED SCOPE_CHANGE_REQUIRED`, naming the exact `Class: SPIKE` task (see `tasks/TASK_BLUEPRINT.md`'s spike shape) needed to resolve the unknown, proposing it if it does not exist yet. Do not investigate the unknown inside this task's own branch, commit, or timebox — that is what turns a spike into an unbounded side-channel for work that should have gone through its own `Question`/`Timebox` gate.<!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->
 Scope validation to the diff's actual surface, following the validation-scope rule in `docs/CONTEXT_BUDGET_POLICY.md`. Skip a full build, test, or lint suite for a documentation or policy-only change, and state the skip explicitly in the completion report.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=execution-command-gate v4 -->
+<!-- MERIDIAN:BEGIN capability=execution-command-gate v5 -->
 For a normal task, execute every named `Validation` entry only through
 `meridian execution validate <TASK-ID> <validation-id> --project .`; running
-the literal command directly is not completion evidence. Before a budgeted
+the literal command directly is not completion evidence. Before a
 diagnostic, capture, or context expansion, use `meridian execution evidence`.
 Before broad or uncertain-yield research outside the initial task authority,
 use `meridian execution investigate`. For `Review: REQUIRED`, commit implementation, finalize and commit the

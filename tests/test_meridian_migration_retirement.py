@@ -137,37 +137,6 @@ class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
             ["1.1.1"],
         )
 
-    def test_upgrade_migrates_a_tracked_legacy_budget_file_only_on_apply(self) -> None:
-        (self.framework / "VERSION").write_text("1.2.8\n", encoding="utf-8")
-        subprocess.run(("git", "init", str(self.project)), check=True, capture_output=True, text=True)
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
-        self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
-        legacy = self.project / ".meridian/budget.json"
-        legacy.write_text('{"TASK-001:1": {"diagnostic": 1}}\n', encoding="utf-8")
-        subprocess.run(("git", "-C", str(self.project), "add", "."), check=True, capture_output=True, text=True)
-        subprocess.run(
-            ("git", "-C", str(self.project), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
-             "commit", "-m", "legacy budget"),
-            check=True, capture_output=True, text=True,
-        )
-
-        checked = self.run_cli("upgrade", "--check")
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATE  .meridian/budget.json", checked.stdout)
-        self.assertEqual(
-            subprocess.run(("git", "-C", str(self.project), "status", "--porcelain"),
-                           check=True, capture_output=True, text=True).stdout,
-            "",
-        )
-
-        applied = self.run_cli("upgrade", "--apply")
-        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        self.assertIn("commit its deletion", applied.stderr)
-        self.assertFalse(legacy.exists())
-        self.assertIn("D  .meridian/budget.json", subprocess.run(
-            ("git", "-C", str(self.project), "status", "--porcelain"),
-            check=True, capture_output=True, text=True,
-        ).stdout)
 
     def test_upgrade_retires_a_capability_from_a_conflicting_file(self) -> None:
         """Task 007: a migration's `removes` entry deletes a retired capability's
@@ -409,7 +378,7 @@ class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertNotIn("reasoning-budget-contract", upgraded)
-        self.assertIn("capability=execution-evidence-profile v5", upgraded)
+        self.assertIn("capability=execution-evidence-profile v6", upgraded)
         self.assertIn("Task-First Loading (project wording)", upgraded)
 
     def test_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract(self) -> None:
@@ -431,4 +400,3 @@ class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
         self.assertIn("CONFLICT docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
         self.assertIn("locally customized.", local_policy.read_text(encoding="utf-8"))
-

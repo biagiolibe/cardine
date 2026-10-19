@@ -6,11 +6,6 @@ next implementation after a framework upgrade adds this file. Keep commands and
 tool choices current; the task's declared validation and acceptance criteria
 remain mandatory.
 
-The diagnostic-attempt, evidence-capture, context-expansion, and investigation
-budgets below are caps, not targets: reaching one requires `BLOCKED BUDGET_EXHAUSTED`, never a
-silently raised cap. Raising a default above its stated value requires a
-recorded rationale in the task.
-
 ## Context reuse
 
 - Sources already supplied by the active agent environment: `[describe them]`.
@@ -21,20 +16,9 @@ recorded rationale in the task.
   outside the task's Authority/exemptions; locate the needed lines with
   `grep -n` first, then read that range. Override with a different numeric
   value when this project's files are legitimately larger.
-- Context-expansion budget and the condition that requires `BLOCKED BUDGET_EXHAUSTED` rather
-  than another expansion: `Context expansions`: 2 per task. One expansion is
-  one read beyond the task's declared `Authority` and `Expected code
-  surface` — a file, ADR, specification, or prior chat opened to resolve a
-  blocker or verify an acceptance criterion. Override with the task's
-  `Context expansions` field.
-<!-- MERIDIAN:BEGIN capability=investigation-scope v2 -->
-- Isolated-exploration budget and the condition that requires `BLOCKED BUDGET_EXHAUSTED` rather
-  than a broader search: `Investigation scope`: 2 per task. One scope unit is
-  at most three primary files or 300 lines of primary material consulted to
-  answer one declared question outside the task's initial authority. Override
-  with the task's `Investigation scope` field. Record it with `meridian
-  execution investigate`; changing worker or session does not remove this
-  cost.
+<!-- MERIDIAN:BEGIN capability=investigation-scope v3 -->
+- Record broad exploration with its question, source scope, sources, and
+  finding using `meridian execution investigate`.
 <!-- MERIDIAN:END -->
 
 ## Successful validation output
@@ -104,13 +88,6 @@ Long commands and suite runs:
 
 - First targeted diagnostic or bounded-log procedure: `[procedure]`.
 - Conditions for full traces, verbose output, or complete logs: `[conditions]`.
-- Diagnostic-attempt budget and the condition that requires `BLOCKED BUDGET_EXHAUSTED` rather
-  than another implementation hypothesis: `Diagnostic attempts`: 3 per
-  failure. One attempt is one diagnostic action that changes the
-  implementation hypothesis — a new targeted probe, log capture, or
-  parameter change aimed at a different cause. Override with the task's
-  `Diagnostic attempts` field.
-
 ## Diff inspection
 
 - Change-summary command or procedure, run before the first code edit and
@@ -123,11 +100,6 @@ Long commands and suite runs:
   evidence tiers — where a tier-2 derived value is read back, and what channel
   captures a genuine tier-3 perceptual one: `[tier mapping]`.
 - Primary deterministic evidence when available: `[tests or checks]`.
-- Distinct capture views normally required and the escalation rule for more:
-  `Evidence captures`: 2 per acceptance criterion. One capture is one
-  distinct manual-evidence view — one screenshot, log export, or
-  interactive-tool session — gathered for a single acceptance criterion.
-  Override with the task's `Evidence captures` field.
 - Direct capture path and interactive-tool fallback: `[tools or procedure]`.
 
 ## Runtime configuration

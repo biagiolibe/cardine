@@ -358,7 +358,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
     def test_spike_start_and_close_never_fabricate_review(self):
         record = self.worker / self.record
         text = record.read_text().replace('Class: NORMAL', 'Class: SPIKE')
-        text += '\nQuestion: Does the probe pass?\nBudget: 1 iteration\nDeliverable: `answer.md`\n'
+        text += '\nQuestion: Does the probe pass?\nTimebox: 1 iteration\nDeliverable: `answer.md`\n'
         record.write_text(text)
         self.commit('Spike policy')
         owner_lifecycle_commands.execution_start(self.worker, '001')

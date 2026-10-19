@@ -31,7 +31,7 @@ prefix_rule(pattern=["git", "push", "origin", ["--force", "-f", "--force-with-le
 # Meridian read-only and task-lifecycle commands. Commands that change machine
 # or project configuration (setup/codex configure --apply, upgrade --apply,
 # lock, generate-*) keep prompting.
-prefix_rule(pattern=["meridian", ["--version", "self-check", "console", "audit", "profile", "locations", "project", "context", "adr", "budget", "report", "usage", "validation", "execution", "task", "review"]], decision="allow")
+prefix_rule(pattern=["meridian", ["--version", "self-check", "console", "audit", "profile", "locations", "project", "context", "adr", "report", "usage", "validation", "execution", "task", "review"]], decision="allow")
 prefix_rule(pattern=["meridian", "worktree"], decision="allow")
 prefix_rule(pattern=["meridian", "codex", ["doctor", "worktree-path"]], decision="allow")
 prefix_rule(pattern=["meridian", ["upgrade", "setup"], "--check"], decision="allow")

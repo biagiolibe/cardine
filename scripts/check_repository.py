@@ -316,12 +316,21 @@ STOP_LIST_TEST_FILES = (
 
 
 def managed_stop_text_files(root: Path) -> list[Path]:
-    """Return the managed templates and this repository's own managed copies."""
+    """Check checkout-owned text, excluding byte-identical installed copies.
+
+    The self-hosting manifest belongs to installed Meridian. Its unchanged
+    copies may name stops retired by this checkout; their digests are checked
+    separately. Edited copies still undergo the checkout registry check.
+    """
     paths = set((root / "templates").rglob("*.md"))
     manifest = root / ".meridian" / "manifest.json"
     if manifest.is_file():
         managed = json.loads(manifest.read_text(encoding="utf-8")).get("managedFiles", {})
-        paths.update(root / name for name in managed if name.endswith(".md") and (root / name).is_file())
+        for name, digest in managed.items():
+            path = root / name
+            if name.endswith(".md") and path.is_file():
+                if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                    paths.add(path)
     return sorted(paths)
 
 

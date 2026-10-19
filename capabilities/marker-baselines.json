@@ -43,8 +43,8 @@
       "version": 15
     },
     "review-policy": {
-      "sha256": "197e387dbaa735f705a3d014034c13dbd31181b77deb83710f50c4f105749d17",
-      "version": 3
+      "sha256": "fc26ac0304cb31964c49ee1434667c846dc875122d0c9016b4c9dd084cce6833",
+      "version": 4
     },
     "roles": {
       "sha256": "a6c91a961457c42e312aa51a0ecd9b69804b7dea6e9cdea40e1be18ed1016973",
@@ -55,16 +55,12 @@
       "version": 1
     },
     "task-lifecycle": {
-      "sha256": "e4e9b786e50b0b620791a09263ee8f89eabd41edd8a1d90014a14d86327ca358",
-      "version": 4
+      "sha256": "dc3c299c718df2b17b0413d054b886ca4e3f72ff8a67d633792a9ab25ac923d0",
+      "version": 5
     },
     "workflow-mode-lock": {
       "sha256": "c78393564487d9bcb41f08180e91c220ad7033e2408c8c2924bd1d574c71e0f5",
       "version": 2
-    },
-    "worktree-budget-retirement": {
-      "sha256": "f71e6003e3b0f2e34dfb6ecc1f8664d3c853917cd86fed91406c30e9724db9c2",
-      "version": 1
     },
     "worktree-command-locations": {
       "sha256": "a7784fa1a78084ce884379510cbf1b13c6517fb18fb8f92dbb7b3eb1e1824a0b",
@@ -117,12 +113,12 @@
       "version": 1
     },
     "execution-evidence-profile": {
-      "sha256": "df73002adae2864cc016a7557d817281bce400728f529e21c84dac65fbbee5d6",
-      "version": 5
+      "sha256": "81e826ee14d7ba6b9667d8a90cc8b13c3a08347c2b6a9e4f0467248d911776c1",
+      "version": 6
     },
     "isolated-exploration": {
-      "sha256": "955337a68eb42e39c91fdd7b7a7a82446b5a78d46d74c9e0d40675357211f937",
-      "version": 1
+      "sha256": "575b698766a31759028f5217ab9a073ed0de61a62b1258bcb1c3572de088ab46",
+      "version": 2
     },
     "minimal-read-only-status": {
       "sha256": "7f14cb011aad3e4020b32f6f459f7c0cf385e7980ae506d1c417902c42d07a6d",
@@ -147,8 +143,8 @@
   },
   "templates/workflows/governed-sdd/docs/EXECUTION_EVIDENCE_PROFILE.md": {
     "investigation-scope": {
-      "sha256": "16068a2752990dcfb2c49026da46b6162c1c2cba1f3aa7a6e56d15edc50c794a",
-      "version": 2
+      "sha256": "b98e831946177759a9af9292efa26110986c3d4b020fa389ea7958822461a483",
+      "version": 3
     },
     "long-command-waits": {
       "sha256": "942c3ebfa010f7aba0385d4e0fbb241edf1c17eea89158531a24cddb162198a8",
@@ -205,8 +201,8 @@
       "version": 2
     },
     "execution-command-gate": {
-      "sha256": "fe58c91b6ea1562b43936754ef3ca8f142c021cd0ab52d3069a73c63f58b3bb3",
-      "version": 4
+      "sha256": "a8371d53849703f7e3f97503dd153b4cd6eaddaa4992b2f47841cb470ec5d2af",
+      "version": 5
     },
     "host-impact-routing": {
       "sha256": "cf52d83970d2711f2b818dbbf5017344c1afd38c6714d524900f6c847d98dfc9",
@@ -221,8 +217,8 @@
       "version": 1
     },
     "spike-routing": {
-      "sha256": "d05a620308703a3d4963c19833a16df9e790a73b3b44dcd379372c5b3775d67b",
-      "version": 2
+      "sha256": "ad7246e5602198bd223e1650047633e08d321d2707ed47553c22280cb98e3cdd",
+      "version": 3
     },
     "task-worktree-boundary": {
       "sha256": "787346ab1eebcd31d4018589900ce94421df9513fb61c26f634964b029188318",
@@ -301,8 +297,8 @@
   },
   "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "1349619763ed2381d9345ad3031ba054411854316b65c171d113fec5d2b391d2",
-      "version": 18
+      "sha256": "f64e1f75e7e4e66452c007368988d99f8bc8d40721702b0dce88d52a80e2c48e",
+      "version": 19
     }
   },
   "templates/workflows/lean-delivery/AGENTS.md": {

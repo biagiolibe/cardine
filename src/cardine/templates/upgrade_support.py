@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from cardine.release.version import read_version
-from cardine.shared.budget import legacy_budget_migration_needed
 from cardine.shared.constants import BASELINES_PATH
 from cardine.shared.constants import MANIFEST_PATH
 from cardine.shared.constants import STRICT_DIGEST_PROFILES
@@ -151,8 +150,6 @@ def print_plan(
         print(f"{item.action.upper():8} {item.file.target} — {item.detail}")
         for problem in item.problems:
             print(f"MISSING-ROUTER {problem}")
-    if legacy_budget_migration_needed(project_root):
-        print("MIGRATE  .meridian/budget.json — remove legacy budget state from the index; commit its deletion")
     conflicts = sum(item.action == "conflict" for item in plan)
     edited_copies = sum(item.action == "edited-copy" for item in plan)
     router_blockers = sum(bool(item.problems) for item in plan)

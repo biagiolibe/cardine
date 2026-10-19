@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from cardine.shared.budget import BUDGET_FIELD_NAMES
-from cardine.shared.budget import BUDGET_KINDS
-from cardine.shared.budget_commands import task_cap
 from cardine.shared.git import TASK_BRANCH_OPEN_STATUSES
 from cardine.shared.git import current_branch
 from cardine.shared.text import read_task_field
@@ -33,13 +30,11 @@ def execution_contract(project_root: Path, task_id: str) -> str:
     text = task.read_text(encoding="utf-8")
     require_named_validation_commands(text)
     commands = ", ".join(validation_commands(text)) or "none"
-    caps = ", ".join(f"{BUDGET_FIELD_NAMES[kind]}: {task_cap(project_root, text, kind)}" for kind in BUDGET_KINDS)
     return "\n".join((
         "## Execution contract — resolved",
         "",
         "- Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`",
         f"- Profile revision: `sha256:{profile_digest(project_root)}`",
-        f"- Budgets: {caps}",
         f"- Validation IDs: {commands}",
         "- Execution commands: `required via meridian execution`",
     ))
@@ -150,10 +145,7 @@ def execution_preflight(project_root: Path, task_id: str) -> str:
                             task_id=task_id,
                         )
                     break
-    caps = ", ".join(
-        f"{BUDGET_FIELD_NAMES[kind]}={task_cap(project_root, text, kind)}" for kind in BUDGET_KINDS
-    )
-    return f"Execution contract: {task_file.relative_to(project_root)} · {caps}"
+    return f"Execution contract: {task_file.relative_to(project_root)}"
 
 
 def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) -> str:

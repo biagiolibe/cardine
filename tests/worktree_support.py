@@ -16,7 +16,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from cardine.integration import merge as owner_integration_merge
 from cardine.worktree import checkout as owner_worktree_checkout
-from cardine.shared import budget as owner_shared_budget
 import cardine.integration.decision as integration_decision
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
@@ -81,15 +80,6 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
             capture_output=True,
             check=check,
         )
-
-
-    def retired_budget(self, counters):
-        prepared = self.prepare()
-        self.git("worktree", "remove", prepared["worktree"])
-        self.git("branch", "-d", prepared["branch"])
-        state = {"056": {"attempt": 1, "lastStatus": "UNKNOWN"}, "056:1": counters}
-        owner_shared_budget.write_budget_state(self.primary, state)
-        return state
 
 
     def prepare(self) -> dict[str, object]:
@@ -217,7 +207,6 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
             "056", self.worktree_root, self.primary)["already_cleaned"])
 
 
-
 class GovernedCompletionRowsFixture(unittest.TestCase):
     def setUp(self) -> None:
         BoundedWorktreeLifecycleFixture.setUp(self)
@@ -251,4 +240,3 @@ class GovernedCompletionRowsFixture(unittest.TestCase):
 
     def prepare(self) -> dict[str, object]:
         return owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
-

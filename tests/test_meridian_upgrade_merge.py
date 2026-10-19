@@ -190,7 +190,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         profile = self.framework / "templates/workflows/governed-sdd/docs/EXECUTION_EVIDENCE_PROFILE.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v5 -->\n?.*?"
+            r"<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v6 -->\n?.*?"
             r"<!-- MERIDIAN:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -237,7 +237,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         self.assertIsNotNone(appended)
         self.assertIn("## Project validation baseline", appended)
-        self.assertIn("capability=execution-evidence-profile v5", appended)
+        self.assertIn("capability=execution-evidence-profile v6", appended)
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
@@ -248,7 +248,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertIn("## Project validation baseline", upgraded)
         self.assertIn("capability=validation-scoping v2", upgraded)
-        self.assertIn("capability=execution-evidence-profile v5", upgraded)
+        self.assertIn("capability=execution-evidence-profile v6", upgraded)
         self.assertTrue((self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file())
 
     def test_marker_insertion_promotes_an_identical_unmarked_local_rule(self) -> None:

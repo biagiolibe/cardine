@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from cardine.shared.budget import load_budget_state
 from cardine.shared.constants import TASK_IDENTITY_PATH
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import primary_project_root
@@ -48,16 +47,8 @@ def canonical_task_id(value: str) -> str:
 
 
 def task_identity_json(project_root: Path, identity: ResolvedTaskIdentity) -> dict[str, object]:
-    """Render the diagnostic with the same effective attempt used by budgets,
-    without persisting the transition that a mutating budget command records.
-    """
-    state = load_budget_state(project_root)
-    meta = dict(state.get(identity.canonical_id) or {"attempt": 1, "lastStatus": None})
-    status = read_task_field(identity.task_path.read_text(encoding="utf-8"), "Status") or "UNKNOWN"
-    attempt = int(meta.get("attempt", 1))
-    if meta.get("lastStatus") == "READY_FOR_REVIEW" and status == "IN_PROGRESS":
-        attempt += 1
-    return identity.as_json(project_root, attempt)
+    """Render task identity without consulting mutable execution state."""
+    return identity.as_json(project_root)
 
 
 def resolve_project_locations(project_root: Path) -> ProjectLocations:

@@ -390,7 +390,7 @@ class MeridianCliFixtureMixin:
             encoding="utf-8"
         )
         previous = current.replace(
-            "capability=execution-evidence-profile v5", "capability=execution-evidence-profile v3"
+            "capability=execution-evidence-profile v6", "capability=execution-evidence-profile v3"
         ).replace(
             "\n## Lifecycle orchestration", "\n" + self.REASONING_CONTRACT_BLOCK + "## Lifecycle orchestration", 1
         )
@@ -406,7 +406,7 @@ class MeridianCliFixtureMixin:
         (self.framework / "VERSION").write_text("1.2.9\n", encoding="utf-8")
         self.write_synthetic_migration(
             "002-synthetic-retire-contract", "1.2.8", "1.2.9", ["docs/CONTEXT_BUDGET_POLICY.md"],
-            capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 5}],
+            capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 6}],
             removes=[{"capability": "reasoning-budget-contract", "capabilityVersion": 1}],
         )
         return policy, self.project / "docs/CONTEXT_BUDGET_POLICY.md"

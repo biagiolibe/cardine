@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from cardine.shared.budget import load_budget_state
-from cardine.shared.budget import write_budget_state
-from cardine.shared.budget_commands import resolve_budget_key
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import _git_worktrees
 from cardine.shared.git import _run_git
@@ -78,15 +75,7 @@ def prepare_task_worktree(
     supplied_project: Path | None = None,
     base: str = "main",
     resume: bool = False,
-    new_attempt: bool = False,
-    reason: str | None = None,
 ) -> dict[str, object]:
-    if new_attempt and (not reason or not reason.strip()):
-        raise MeridianError("--new-attempt requires a non-empty --reason")
-    if reason is not None and not new_attempt:
-        raise MeridianError("--reason requires --new-attempt")
-    if new_attempt and resume:
-        raise MeridianError("--new-attempt cannot be combined with --resume")
     if base != "main":
         raise MeridianError("worktree prepare permits only the main base")
     project_root = _verified_lifecycle_project(supplied_project)
@@ -96,26 +85,11 @@ def prepare_task_worktree(
     state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
     records = _git_worktrees(project_root)
     registered = next((item for item in records if Path(item["worktree"]).resolve() == path), None)
-    if new_attempt and any(item.get("branch") == f"refs/heads/{identity.branch_name}" for item in records):
-        raise MeridianError("--new-attempt requires retiring the registered task worktree first")
-    budget_state = load_budget_state(project_root)
-    budget_key, _ = resolve_budget_key(project_root, budget_state, identity.canonical_id)
-    inherited = dict(budget_state.get(budget_key, {}))
-    previous_attempt = int(budget_state[identity.canonical_id]["attempt"])
-    if registered is None and any(int(value) > 0 for value in inherited.values()) and not new_attempt:
-        raise stop_error(
-            "BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION",
-            f"{identity.canonical_id} attempt {previous_attempt} has inherited counters: "
-            + json.dumps(inherited, sort_keys=True),
-            task_id=identity.canonical_id, project=shlex.quote(str(project_root)),
-        )
     branch_commit = _branch_commit(project_root, identity.branch_name)
     if (registered is None) != (branch_commit is None):
         raise MeridianError(
             f"partial task state retained for {identity.canonical_id}; branch and canonical worktree must both exist or both be absent"
         )
-    if new_attempt and identity.budget_key(previous_attempt + 1) in budget_state:
-        raise MeridianError("next budget attempt already has ledger history; retained unchanged")
     base_commit = git_output(project_root, "rev-parse", "--verify", f"{base}^{{commit}}")
     created = False
     prior: dict[str, object] = {}
@@ -143,19 +117,6 @@ def prepare_task_worktree(
         added = _run_git(project_root, "worktree", "add", "-b", identity.branch_name, str(path), base_commit)
         if added.returncode != 0:
             raise MeridianError(added.stderr.strip() or "git worktree add failed")
-        if new_attempt:
-            next_attempt = previous_attempt + 1
-            append_journal_line(project_root, {
-                "version": JOURNAL_VERSION,
-                "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "command": "worktree prepare new-attempt", "task": identity.canonical_id,
-                "result": "ok", "exit": 0,
-                "previous_attempt": previous_attempt, "new_attempt": next_attempt,
-                "reason": reason.strip(), "historical_counters": inherited,
-            })
-            budget_state[identity.canonical_id]["attempt"] = next_attempt
-            budget_state[identity.budget_key(next_attempt)] = {}
-            write_budget_state(project_root, budget_state)
         branch_commit = base_commit
         created = True
     else:

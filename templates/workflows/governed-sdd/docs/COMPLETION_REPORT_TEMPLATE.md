@@ -37,7 +37,6 @@ only to obtain `T1_CI`, at most once for that attempt. Amend and force-push rema
 - Validation skips: `<none | test name — test-reported reason; reported by `command`>`
 - Manual verification: `<none | screenshot path — view checked — result>`
 - Acceptance criteria: `<all met | list criterion IDs/status>`
-- Budget usage: `<diagnostics used/cap; captures used/cap by criterion; context expansions used/cap; investigation scope used/cap>`
 - Isolated exploration: `<none | question(s) recorded through meridian execution investigate>`
 - Rule discrepancies: `<none | rule, command result, and what was followed>` (optional)
 - Blockers/deviations: `<none | concrete issue, scope expansion, or context expansion and reason>`

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from cardine.shared.budget import BUDGET_PATH
 from cardine.shared.errors import MeridianError
 from pathlib import Path
 from cardine.shared.models import ResolvedTaskIdentity
@@ -104,8 +103,6 @@ def closure_status(
         if len(paths) > 10:
             listed += f", … (+{len(paths) - 10} more)"
         detail = f"primary checkout is dirty ({len(paths)} path(s): {listed})"
-        if paths == [str(BUDGET_PATH)]:
-            detail += "; .meridian/budget.json is the legacy budget file; commit its deletion to continue"
         return report(
             "C6",
             "PRIMARY_DIRTY",

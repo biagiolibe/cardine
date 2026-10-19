@@ -34,7 +34,7 @@ from cardine.templates.upgrade_support import recorded_managed_digests, profile_
 from cardine.templates.merge import copy_baseline, prune_stale_baselines, lock_project, merge_clean, apply_additive_move_checks, plan_from_baseline
 from cardine.templates.adoption import _capability_declaration, bootstrap_capability_profile
 from cardine.integration.merge import _spike_disallowed_paths, _integration_task_state, stage_task_integration, finalize_task_integration, runnable_candidate_validation_command, missing_candidate_validation_commands, abort_task_integration, cleanup_task_worktree
-from cardine.tasks.recording import record_validation, run_validation, record_execution_event, record_investigation
+from cardine.tasks.recording import EVIDENCE_EVENT_KINDS, record_validation, run_validation, record_execution_event, record_investigation
 from cardine.tasks.transitions import transition_task_state, close_task
 from cardine.templates.audit import _audit_evidence_reference, _audit_snapshot_evidence, _digest_exempt, installation_surface_diagnostics, _audit_probe_evidence, managed_copy_drift, declared_managed_copy_paths, is_markerless_managed_copy_digest_audited, audit_managed_copy_digests, audit_declared_capabilities, load_retired_text_registry, retired_text_advisories, run_audit, _load_profile_probe, profile_doctor
 from cardine.worktree.closure_status import closure_status
@@ -42,10 +42,9 @@ from cardine.tasks.preflight import execution_contract, execution_preflight, rec
 from cardine.worktree.checkout import repair_task_worktree_base, prepare_task_worktree, inspect_task_worktree, active_worktree_task, registered_worktree_task_states
 from cardine.integration.evidence import _validation_reason, validation_evidence_reasons, check_validation_evidence, _string_tuple, _bool_field, candidate_validation_declaration, proposed_candidate_validation_declaration, undeclared_validation_commands_error, _integration_evidence, record_task_evidence, _remove_owned_file, _lifecycle_changes_after_validation
 from cardine.lifecycle.execution import _execution_location, _execution_worktree, _execution_state, _execution_owned_paths, execution_source_digest, _delivery_current_commit, _delivery_later_commits, delivery_readiness
-from cardine.hosts.setup import plan_setup, print_setup_plan, apply_setup, CODEX_CLOSURE_POLICY_PROBES, _codex_policy_probe_state, codex_doctor
+from cardine.hosts.setup import proposed_project_identity, plan_setup, print_setup_plan, apply_setup, CODEX_CLOSURE_POLICY_PROBES, _codex_policy_probe_state, codex_doctor
 from cardine.templates.protocol import check_protocol_compatibility
 from cardine.hosts.claude import CLAUDE_PROJECT_ALLOWLIST, CLAUDE_PROJECT_DENYLIST, plan_claude_project_allowlist, apply_claude_project_allowlist, claude_hook_duplicate_advisories
-from cardine.shared.budget import BUDGET_PATH, BUDGET_STATE_NAME, BUDGET_KINDS, EVIDENCE_EVENT_KINDS, BUDGET_DEFAULT_CAPS, BUDGET_FIELD_NAMES, budget_state_path, tracked_budget_state, legacy_budget_migration_needed, migrate_budget_state, load_budget_state, write_budget_state
 from cardine.shared.project import _LEGACY_LOCATION_WARNING_PROJECTS, _safe_project_path, parse_project_declaration, read_project_declaration
 from cardine.templates.catalog import manifest_workflow_mode, _parse_catalog_surface, parse_capability_catalog, load_capability_catalog, _parse_evidence_snapshot, parse_capability_profiles
 from cardine.shared import project as shared_project
@@ -88,9 +87,8 @@ from cardine.worktree.paths import _normalized_local_repository_name, repository
 from cardine.hosts.skills import _directory_setup_state, CODEX_SKILL_NAMES, _framework_skill_links, _aggregate_skill_state, _stale_codex_skill_warnings, _setup_codex_state, codex_profile_root_mismatch
 from cardine.shared.flow import FLOW_TARGETS_PATH, FLOW_TARGETS_VERSION, FLOW_ORIGINS, FLOW_ORIGIN_PATTERN, FLOW_JOURNAL_TIME, FLOW_UNCODED, _flow_time, _flow_read_journal, _flow_origin, _flow_median, _flow_targets, _flow_tasks, flow_report, format_flow_report, _flow_duration
 from cardine.tasks.audit import audit_task_state_projections
-from cardine.tasks.contract import profile_cap, profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HANDOFF_FIELDS, EXECUTION_EVIDENCE_PATH, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, verify_host_impact_completion_evidence, execution_entries, verify_validation_skips, verify_execution_evidence, check_handoff, default_handoff_path
+from cardine.tasks.contract import profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HANDOFF_FIELDS, EXECUTION_EVIDENCE_PATH, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, verify_host_impact_completion_evidence, execution_entries, verify_validation_skips, verify_execution_evidence, check_handoff, default_handoff_path
 from cardine.tasks.importer import import_task_states
-from cardine.shared.budget_commands import proposed_project_identity, task_cap, resolve_budget_key, budget_show, budget_spend
 from cardine.templates.upgrade import plan_upgrade, complete_profile_surfaces, apply_plan, apply_upgrade
 from cardine.cli import CLAUDE_MD_SHARED_ANCHOR, MeridianArgumentParser, generate_claude_md, ShowVersionAction, main, build_parser, _run_cli
 

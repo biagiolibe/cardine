@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- MERIDIAN:BEGIN capability=task-blueprint v18 -->
+<!-- MERIDIAN:BEGIN capability=task-blueprint v19 -->
 Priority: [P0 / P1 / P2]
 Status: QUEUED
 Review: REQUIRED
@@ -8,22 +8,11 @@ Class: [omit for a normal task / SPIKE]
 Manual verification: [none / required]
 Manual verification rationale: [mandatory when Manual verification: required, omitted otherwise; name the tier-3 (perceptual) property that no tier-1 (structural) or tier-2 (derived-value) check can express — see docs/CONTEXT_BUDGET_POLICY.md's evidence tiers]
 Dependencies: [none / TASK-ID, ...]
-Diagnostic attempts: [optional; overrides the profile's default cap]
-Evidence captures: [optional; overrides the profile's default cap]
-Context expansions: [optional; overrides the profile's default cap]
-Investigation scope: [optional; overrides the profile's default cap]
 
 `Manual verification rationale` is checked before the evidence-availability
 probe, not after: a missing rationale, or one naming a property assertable at
 tier 1 or tier 2, returns `BLOCKED SCOPE_CHANGE_REQUIRED` asking for the task to be re-scoped as a
 deterministic check instead.
-
-`Diagnostic attempts`, `Evidence captures`, `Context expansions`, and
-`Investigation scope` are
-optional per-task caps; omit any of them to inherit
-`docs/EXECUTION_EVIDENCE_PROFILE.md`'s default. Each is a cap, not a target:
-exhausting it requires `BLOCKED BUDGET_EXHAUSTED`, not a silently raised cap. Setting one
-above the profile's default requires a one-line rationale in this task.
 
 ## Spike shape
 
@@ -33,7 +22,7 @@ A `Class: SPIKE` task replaces `Review`, `Goal`, `Expected code surface`, and
 ```text
 Class:       SPIKE
 Question:    [the thing that is not known]
-Budget:      [max iterations / max wall time]
+Timebox:     [max iterations / max wall time]
 Deliverable: an ADR or a documented reference value — not production code
 Branch:      canonical task branch in its dedicated task worktree
 Probe branch: optional separate local throwaway branch, never merged or pushed
@@ -129,18 +118,17 @@ Run source/build validation only through `meridian execution validate <TASK-ID>
 the runner executes no agent-supplied shell text and records its exit status in
 `.meridian/execution-evidence.json` for the completion handoff.
 
-Before a budgeted diagnostic, capture, or context expansion, record its
+Before a diagnostic, capture, or context expansion, record its
 specific evidence gap with `meridian execution evidence <TASK-ID>
 <diagnostic|captures|expansions> --gap <reason> --project .`. A capture also
-requires its acceptance-criterion ID and artifact path; the command consumes
-the corresponding cap and stores the durable evidence record.
+requires its acceptance-criterion ID and artifact path; the command stores
+the durable evidence record.
 
 Before a broad or uncertain-yield exploration outside the task's initial
 authority, record the question, bounded scope, source paths, and distilled
 finding with `meridian execution investigate <TASK-ID> --question <question>
 --scope <units> --source <path> --finding <finding> --project .`. This works
-with any host or worker arrangement; it records the investigation cost rather
-than treating delegated reading as free.
+with any host or worker arrangement; it preserves the investigation provenance.
 
 ## Execution contract — resolved
 
@@ -149,7 +137,6 @@ the task is created or materially re-scoped. Do not edit by hand. -->
 
 - Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`
 - Profile revision: `sha256:<generated profile digest>`
-- Budgets: `<generated resolved caps>`
 - Validation IDs: `<generated IDs>`
 - Execution commands: `required via meridian execution`
 
@@ -169,7 +156,7 @@ transcript.
 
 ## Completion
 
-- For `Review: REQUIRED`, commit implementation and validation evidence, finalize and commit the completion report at the resolved handoff location (`meridian locations`), then run `meridian execution ready-check <TASK-ID> --project .` before `meridian execution deliver <TASK-ID> --project .` as the final step. Stop writing after its clean committed result. Never edit a status or verdict by hand. The gate requires a complete handoff and declared budget use.
+- For `Review: REQUIRED`, commit implementation and validation evidence, finalize and commit the completion report at the resolved handoff location (`meridian locations`), then run `meridian execution ready-check <TASK-ID> --project .` before `meridian execution deliver <TASK-ID> --project .` as the final step. Stop writing after its clean committed result. Never edit a status or verdict by hand. The gate requires a complete handoff.
 - For `Review: NOT_REQUIRED`, run `meridian task transition <TASK-ID> ACCEPTED` only after validation passes.
-- For `Class: SPIKE`, once `Budget` is exhausted or `Question` is answered, whichever comes first, self-administer `PROJECT_WORKFLOW.md`'s spike close-out gate and run `meridian task transition <TASK-ID> ANSWERED` or `meridian task transition <TASK-ID> INCONCLUSIVE`.
+- For `Class: SPIKE`, once `Timebox` is exhausted or `Question` is answered, whichever comes first, self-administer `PROJECT_WORKFLOW.md`'s spike close-out gate and run `meridian task transition <TASK-ID> ANSWERED` or `meridian task transition <TASK-ID> INCONCLUSIVE`.
 <!-- MERIDIAN:END -->
