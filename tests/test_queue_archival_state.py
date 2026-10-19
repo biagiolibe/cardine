@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -214,12 +215,12 @@ class IncludeTerminalImportTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks/done").mkdir(parents=True)
-        write_project_config(self.root, "lean")
+        write_project_config(self.root, "lean", validation=VALIDATION)
         (self.root / "tasks/QUEUE.md").write_text(
             "### Phase\n\n| Status | ID | Title |\n|---|---|---|\n"
             "| `[x]` | 001 | Closed |\n| `[ ]` | 002 | Open |\n", encoding="utf-8")
-        (self.root / "tasks/done/001.md").write_text("# Task\n\n> **ID**: `001`\n\nStatus: DONE\n", encoding="utf-8")
-        (self.root / "tasks/002.md").write_text("# Task\n\n> **ID**: `002`\n\nStatus: QUEUED\n", encoding="utf-8")
+        (self.root / "tasks/done/001.md").write_text(contract_record("001", extra="Status: DONE\n"), encoding="utf-8")
+        (self.root / "tasks/002.md").write_text(contract_record("002", extra="Status: QUEUED\n"), encoding="utf-8")
         for args in (("init", "-q", "-b", "main"), ("add", "."),
                      ("-c", "user.name=T", "-c", "user.email=t@example.test", "commit", "-qm", "init")):
             subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
@@ -248,19 +249,19 @@ class IncludeTerminalImportTest(unittest.TestCase):
 
     def test_disagreeing_texts_stop_before_writing_anything(self) -> None:
         (self.root / "tasks/done/001.md").write_text(
-            "# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n", encoding="utf-8")
+            contract_record("001", extra="Status: QUEUED\n"), encoding="utf-8")
         with self.assertRaises(shared_errors.CardineStop) as raised:
             owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         self.assertFalse((self.root / ".cardine/tasks").exists())
 
     def test_governed_terminal_requires_a_consistent_recorded_verdict(self) -> None:
-        write_project_config(self.root, "governed")
+        write_project_config(self.root, "governed", validation=VALIDATION)
         (self.root / "tasks/QUEUE.md").write_text(
             "### Phase\n\n" + GOVERNED_HEADER + "| 1 | 001 | P0 | ACCEPTED | REQUIRED | — | [001](done/001.md) |\n",
             encoding="utf-8")
         (self.root / "tasks/done/001.md").write_text(
-            "# Task\n\n> **ID**: `001`\n\nStatus: ACCEPTED\nReview: REQUIRED\n", encoding="utf-8")
+            contract_record("001", extra="Status: ACCEPTED\nReview: REQUIRED\n"), encoding="utf-8")
         reviews = self.root / "tasks/reviews"
         reviews.mkdir()
         review = owner_tasks_identity.resolve_task_identity(self.root, "001", "existing").review_path

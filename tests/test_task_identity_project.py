@@ -68,6 +68,24 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertEqual(explicit.branch_name, "task-023")
         self.assertEqual(explicit.task_path, task.resolve())
 
+    def test_project_identity_policy_replaces_standalone_declaration(self) -> None:
+        self.declare("opaque")
+        path = self.project / ".cardine/project.json"
+        path.write_text(json.dumps({"version": 1, "preset": "lean", "taskIdentity": {"mode": "milestone"}}))
+        resolved = owner_tasks_identity.resolve_task_identity(self.project, "m4-api-001", "new")
+        self.assertEqual((resolved.canonical_id, resolved.kind), ("M4-API-001", "structured"))
+        with self.assertRaises(shared_errors.CardineError):
+            owner_tasks_identity.resolve_task_identity(self.project, "OTHER", "new")
+        path.write_text(json.dumps({"version": 1, "preset": "governed"}))
+        self.assertEqual(owner_tasks_identity.read_task_identity_policy(self.project).mode, "opaque")
+
+    def test_malformed_project_identity_does_not_fall_back(self) -> None:
+        self.declare("milestone")
+        (self.project / ".cardine/project.json").write_text(json.dumps(
+            {"version": 1, "preset": "lean", "taskIdentity": {"mode": "unknown"}}))
+        with self.assertRaises(shared_errors.CardineError):
+            owner_tasks_identity.read_task_identity_policy(self.project)
+
     def test_milestone_normalizes_command_input_and_derives_every_surface(self) -> None:
         self.declare()
         task = self.add_task("M30-INSPECT_UI-001")

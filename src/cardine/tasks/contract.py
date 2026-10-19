@@ -14,6 +14,121 @@ from cardine.stops.render import stop_error
 from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_task_identity
+from cardine.shared.project import parse_project_declaration, read_project_declaration
+from cardine.shared.project import resolve_project_configuration, project_validation_commands
+from cardine.tasks.evidence import require_named_validation_commands
+from copy import deepcopy
+
+
+def _contract_field(text: str, field: str) -> str | None:
+    """Read an inline blueprint field or a nonempty level-two section."""
+    inline = re.search(
+        rf"^(?:>\s*)?(?:\*\*)?{re.escape(field)}(?:\*\*)?:[ \t]*(.+)$",
+        text, re.MULTILINE | re.IGNORECASE,
+    )
+    if inline:
+        return inline.group(1).strip().strip("`") or None
+    section = re.search(
+        rf"^## [^\w\n]*{re.escape(field)}\s*$\n(.*?)(?=^## |\Z)",
+        text, re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    return section.group(1).strip() or None if section else None
+
+
+def task_contract_options(text: str) -> dict[str, object]:
+    """Options is a JSON object, inline or in a fenced ## Options section.
+
+    Review also accepts the historical REQUIRED/NOT_REQUIRED field spelling.
+    Conflicting duplicate declarations are rejected rather than guessed.
+    """
+    raw = _contract_field(text, "Options")
+    if raw and raw.startswith("```json\n") and raw.endswith("```"):
+        raw = raw[len("```json\n"):-3]
+    try:
+        options = json.loads(raw) if raw is not None else {}
+    except json.JSONDecodeError as error:
+        raise CardineError("task Options must be a JSON object") from error
+    if not isinstance(options, dict):
+        raise CardineError("task Options must be a JSON object")
+    review = _contract_field(text, "Review")
+    if review is not None:
+        review = review.lower()
+        if "review" in options and options["review"] != review:
+            raise CardineError("task Review conflicts with Options.review")
+        options["review"] = review
+    return options
+
+
+def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None = None) -> dict[str, object]:
+    """Build the creation snapshot reused by work item 7's task-new adapter.
+
+    This function never writes state or revises an existing snapshot. Category:
+    Quick selects the minimal registered record; its class remains standard.
+    Policy is preset -> project defaults -> explicit task Options/Review.
+    """
+    identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
+    if text is None:
+        text = identity.task_path.read_text(encoding="utf-8")
+    if _contract_field(text, "ID") != identity.canonical_id:
+        raise CardineError(f"task contract ID must be {identity.canonical_id!r}")
+    declaration = read_project_declaration(project_root)
+    configuration = resolve_project_configuration(project_root)
+    options = {**configuration["taskDefaults"], **task_contract_options(text)}
+    # Reuse project type, unknown-key and CI checks after task overrides.
+    parse_project_declaration({**declaration, "taskDefaults": options})
+    task_class = (_contract_field(text, "Class") or "standard").lower()
+    if task_class not in ("standard", "spike"):
+        raise CardineError("task Class must be standard or spike")
+    quick = (_contract_field(text, "Category") or "").lower() == "quick"
+    required = ["Dependencies"]
+    if task_class == "spike":
+        required.extend(SPIKE_PREFLIGHT_FIELDS)
+    else:
+        required.extend(("Objective", "Acceptance Criteria", "Validation"))
+    if not quick:
+        required.extend(("Priority", "Estimate", "Out of scope"))
+        if not (_contract_field(text, "Relevant Files") or _contract_field(text, "Technical Context")):
+            required.append("Relevant Files")
+        if not re.search(r"^# \S.+$", text, re.MULTILINE) and not _contract_field(text, "Title"):
+            required.append("Title")
+    if options["authorityRequired"]:
+        required.append("Authority")
+    if options["expectedCodeSurfaceRequired"]:
+        required.append("Expected code surface")
+    missing = [field for field in required if not _contract_field(text, field)]
+    if missing:
+        raise CardineError("task contract missing required fields: " + ", ".join(missing))
+    validate_host_impact_declaration(text)
+    require_named_validation_commands(text)
+    validation = deepcopy(configuration.get("validation"))
+    project_validation_commands(configuration)  # Absent is not explicit empty.
+    task_commands = validation_commands(text)
+    for key, command in task_commands.items():
+        if key in validation["commands"] and validation["commands"][key] != command:
+            raise CardineError(f"task validation ID {key!r} conflicts with the project command")
+        validation["commands"][key] = command
+        if key not in validation["baseline"]:
+            validation["baseline"].append(key)
+    # Keep literal commands and IDs; candidates always include the diff check.
+    diff_id = next((key for key, command in validation["commands"].items()
+                    if command == "git diff --check"), None)
+    if diff_id is None:
+        diff_id = "candidate-diff-check"
+        while diff_id in validation["commands"]:
+            diff_id += "-diff"
+        validation["commands"][diff_id] = "git diff --check"
+    for references in validation["candidate"].values():
+        if diff_id not in references and diff_id not in validation["baseline"]:
+            references.append(diff_id)
+    return {
+        "preset": configuration["preset"], "class": task_class,
+        "projectDigest": "sha256:" + hashlib.sha256(
+            json.dumps(declaration, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+        "options": options, "validation": validation,
+        "ci": deepcopy(configuration.get("ci", "none")),
+        "validationScoping": deepcopy(configuration.get("validationScoping", [])),
+    }
 
 
 def profile_digest(project_root: Path) -> str:

@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -22,7 +23,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        write_project_config(self.root, "governed")
+        write_project_config(self.root, "governed", validation=VALIDATION)
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.queue = self.root / "tasks/QUEUE.md"
@@ -36,8 +37,7 @@ class TaskStateImportTest(unittest.TestCase):
 
     def add_task(self, task_id, status="QUEUED", *, record_status=None, policy="REQUIRED", spike=False, review=None):
         record = self.root / f"tasks/{task_id}.md"
-        record.write_text(f"> **ID**: `{task_id}`\nStatus: {record_status or status}\nReview: {policy}\n"
-                          + ("Class: SPIKE\n" if spike else ""))
+        record.write_text(contract_record(task_id, extra=f"Status: {record_status or status}\nReview: {policy}\n", spike=spike))
         self.rows.append(f"| {task_id} | {status} | {policy} | [{task_id}]({task_id}.md) |")
         self.queue.write_text("| ID | Status | Review | Task file |\n|---|---|---|---|\n" + "\n".join(self.rows) + "\n")
         if review:
@@ -137,9 +137,9 @@ class TaskStateImportTest(unittest.TestCase):
                 self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
 
     def test_lean_missing_status_and_derived_progress(self):
-        write_project_config(self.root, "lean")
-        record = self.add_task("001", "`[/]`")
-        record.write_text("> **ID**: `001`\n")
+        write_project_config(self.root, "lean", validation=VALIDATION)
+        record = self.add_task("001", "`[/]`", policy="NOT_REQUIRED")
+        record.write_text(contract_record("001"))
         self.add_task("002", "`[x]`").unlink()
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
