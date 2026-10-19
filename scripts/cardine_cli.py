@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compatibility executable and explicit import adapter for Meridian."""
+"""Compatibility executable and explicit import adapter for Cardine."""
 from __future__ import annotations
 import sys
 from pathlib import Path

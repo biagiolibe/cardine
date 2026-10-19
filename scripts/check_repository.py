@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small dependency-free checks for Meridian's distributable repository."""
+"""Small dependency-free checks for Cardine's distributable repository."""
 
 from __future__ import annotations
 
@@ -63,6 +63,7 @@ REQUIRED_FILES = (
     "skills/meridian-lean-delivery/SKILL.md",
     "skills/meridian-lean-delivery-claude-code/SKILL.md",
 )
+# MERIDIAN-INSTALLATION-CHECK
 INSTALLED_MERIDIAN_RECORDS = (
     "hooks/hooks.json",  # MERIDIAN-INSTALLATION-CHECK
     "hooks/queue-briefing.sh",  # MERIDIAN-INSTALLATION-CHECK
@@ -89,6 +90,7 @@ def fail(message: str) -> None:
 
 
 def check_required_files() -> None:
+    # MERIDIAN-INSTALLATION-CHECK
     for name in (*REQUIRED_FILES, *INSTALLED_MERIDIAN_RECORDS):
         if not (ROOT / name).is_file():
             fail(f"required file is missing: {name}")
@@ -247,7 +249,7 @@ QUEUE_EDIT_STATEMENT = re.compile(
     r"queue (?:row|status|record)s?\b|task(?:/| and )queue|queue and task", re.IGNORECASE
 )
 # Governed blocks name a queue, queue-archive, review, or handoff location by role
-# and defer to `meridian locations`; only execution-assets may state the defaults.
+# and defer to `cardine locations`; only execution-assets may state the defaults.
 LITERAL_LOCATION = re.compile(r"tasks/QUEUE\.md|QUEUE_ARCHIVE\.md|TASK_QUEUE\.md|tasks/reviews/|tasks/handoffs/")
 LITERAL_LOCATION_EXEMPT_CAPABILITIES = ("execution-assets",)
 REVIEWER_IDENTITY_CAPABILITY = "reviewer-integrator-identity"
@@ -320,6 +322,7 @@ STOP_LIST_TEST_FILES = (
 def managed_stop_text_files(root: Path) -> list[Path]:
     """Check checkout-owned text, excluding byte-identical installed copies.
 
+    # MERIDIAN-INSTALLATION-CHECK
     The self-hosting manifest belongs to installed Meridian. Its unchanged
     copies may name stops retired by this checkout; their digests are checked
     separately. Edited copies still undergo the checkout registry check.
@@ -686,7 +689,7 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
     """capability marker content, by managed template file, for every mode.
 
     Every managed template (`owner_templates_files.managed_files`, the same set a project
-    actually receives and `meridian audit` checks) is scanned for its capability
+    actually receives and `cardine audit` checks) is scanned for its capability
     markers. The result maps relative file path -> capability -> {version,
     sha256 of that marker's exact content}. Two templates can legitimately hold
     different content for the same capability+version (task 014's
@@ -947,7 +950,7 @@ def main() -> None:
     check_managed_digests()
     check_no_machine_paths()
     check_no_private_names()
-    print("Meridian repository checks passed.")
+    print("Cardine repository checks passed.")
 
 
 if __name__ == "__main__":

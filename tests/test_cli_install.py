@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class CliInstallTest(unittest.TestCase):
     def test_renamed_executables_have_no_old_aliases(self):
+        # MERIDIAN-OLD-NAME-TEST
         for old in ("bin/meridian", "scripts/meridian.py"):
             with self.subTest(path=old):
                 self.assertFalse((ROOT / old).exists())  # MERIDIAN-OLD-NAME-TEST
@@ -29,8 +30,11 @@ class CliInstallTest(unittest.TestCase):
 
     def test_renamed_modules_have_no_old_aliases(self):
         names = {
+            # MERIDIAN-OLD-NAME-TEST
             "scripts": ["meridian"],
+            # MERIDIAN-OLD-NAME-TEST
             "tests": ["meridian_cli_support", *(
+                # MERIDIAN-OLD-NAME-TEST
                 "test_meridian_" + suffix for suffix in (
                     "adoption_audit", "cli_entry", "manifest_protocol",
                     "migration_retirement", "upgrade_lifecycle", "upgrade_merge",
@@ -51,9 +55,11 @@ class CliInstallTest(unittest.TestCase):
         sys.path.insert(0, str(ROOT / "src"))
         from cardine.hosts.claude import CLAUDE_PROJECT_ALLOWLIST
         local = (ROOT / ".codex/rules/local.rules").read_text()
+        # MERIDIAN-OLD-NAME-TEST
         for old in ("scripts/meridian.py", "scripts/cardine_cli.py"):
             self.assertNotIn(old, local)  # MERIDIAN-OLD-NAME-TEST
             self.assertFalse(any(old in rule for rule in CLAUDE_PROJECT_ALLOWLIST))  # MERIDIAN-OLD-NAME-TEST
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn('pattern=["meridian", "worktree", ["evidence", "closure-status", "advance"]', local)
 
     def test_old_python_exits_before_loading_cli(self):

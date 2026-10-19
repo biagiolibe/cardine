@@ -110,8 +110,8 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         path = self.root / name
         path.mkdir()
         subprocess.run(["git", "init", "-b", "main"], cwd=path, check=True, capture_output=True)
-        subprocess.run(["git", "config", "user.name", "Meridian Test"], cwd=path, check=True)
-        subprocess.run(["git", "config", "user.email", "meridian@example.invalid"], cwd=path, check=True)
+        subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=path, check=True)
+        subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=path, check=True)
         (path / "README.md").write_text(f"# {name}\n", encoding="utf-8")
         subprocess.run(["git", "add", "README.md"], cwd=path, check=True)
         subprocess.run(["git", "commit", "-m", "initial"], cwd=path, check=True, capture_output=True)

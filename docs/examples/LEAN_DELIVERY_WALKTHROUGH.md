@@ -8,7 +8,7 @@ The regression test is `tests/test_lean_walkthrough.py`.
 
 ## Environment and host steps
 
-Install Meridian first using the [quick start](../QUICKSTART.md). For this
+Install Cardine first using the [quick start](../QUICKSTART.md). For this
 exercise, start in an empty Git repository on `main`, with author identity
 configured and an empty **local bare** repository registered as `origin`.
 The test supplies these through the existing `WorktreeLifecycleCliTest`

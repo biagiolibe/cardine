@@ -96,7 +96,7 @@ git add -A
 git commit --quiet -m "Initial project"
 cardine lock --project "$fixture" --mode governed-sdd >/dev/null
 git add -A
-git commit --quiet -m "Lock Meridian"
+git commit --quiet -m "Lock Cardine"
 git push --quiet -u origin main
 
 # The implementer's first attempt, then the reviewer's CHANGES_REQUESTED handoff.

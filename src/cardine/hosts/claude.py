@@ -152,9 +152,9 @@ def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan) -> bool:
 
 
 def claude_hook_duplicate_advisories(project_root: Path, home: Path) -> tuple[str, ...]:
-    """Report direct hook registrations when the Meridian Claude plugin is enabled.
+    """Report direct hook registrations when the Cardine Claude plugin is enabled.
 
-    This is deliberately advisory and read-only: Meridian never writes Claude
+    This is deliberately advisory and read-only: Cardine never writes Claude
     hook registrations, so a hand-written duplicate must remain the user's
     choice to remove.
     """
@@ -182,5 +182,5 @@ def claude_hook_duplicate_advisories(project_root: Path, home: Path) -> tuple[st
         rendered = json.dumps(settings, sort_keys=True) if isinstance(settings, (dict, list)) else ""
         for command in ("queue-briefing.sh", "read-guard.sh"):
             if command in rendered:
-                advisories.append(f"{path}: direct {command} registration duplicates the enabled Meridian plugin")
+                advisories.append(f"{path}: direct {command} registration duplicates the enabled Cardine plugin")
     return tuple(advisories)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a real agent on a scripted Meridian fixture and grade it from the journal and Git state.
+"""Run a real agent on a scripted Cardine fixture and grade it from the journal and Git state.
 
 Agent runs cost tokens and are not deterministic, so this runner is on-demand and
 outside `unittest` and CI. Grading is a pure function of a recorded snapshot and

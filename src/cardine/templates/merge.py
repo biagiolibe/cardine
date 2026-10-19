@@ -101,7 +101,7 @@ def lock_project(
     }
     manifest["workflowBaselineVersion"] = baseline_version
     write_manifest(project_root, manifest, framework_root)
-    print(f"Locked {project_root} to Meridian {version} ({mode}).")
+    print(f"Locked {project_root} to Cardine {version} ({mode}).")
 
 
 

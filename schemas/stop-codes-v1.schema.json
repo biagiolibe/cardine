@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://meridian.local/schemas/stop-codes-v1.schema.json",
-  "title": "Meridian stop-code registry v1",
+  "$id": "https://cardine.local/schemas/stop-codes-v1.schema.json",
+  "title": "Cardine stop-code registry v1",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "stops"],

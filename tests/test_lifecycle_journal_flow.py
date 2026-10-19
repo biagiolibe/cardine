@@ -23,8 +23,8 @@ class LifecycleJournalTest(unittest.TestCase):
         self.project = self.root / "project"
         self.project.mkdir()
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
-        subprocess.run(["git", "config", "user.name", "Meridian Test"], cwd=self.project, check=True)
-        subprocess.run(["git", "config", "user.email", "meridian@example.invalid"], cwd=self.project, check=True)
+        subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=self.project, check=True)
+        subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=self.project, check=True)
         (self.project / "tasks").mkdir()
         (self.project / "tasks/056-lifecycle.md").write_text("# Task 056\n\n> **ID**: `056`\n", encoding="utf-8")
         (self.project / "tasks/QUEUE.md").write_text(

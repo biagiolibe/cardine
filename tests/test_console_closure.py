@@ -214,7 +214,7 @@ class ClosingTaskMixin:
              mock.patch.object(owner_console_snapshot, "lifecycle_started_at", return_value="2026-01-01T00:00:00Z"):
             state.refresh()
         text = owner_console_state.one_shot(state)
-        self.assertIn("MERIDIAN | ", text)
+        self.assertIn("CARDINE | ", text)
         self.assertIn(f"{self.done_id} [CLOSING]", text)
         self.assertIn("  Closure stop: PUSH_PENDING", text)
         self.assertIn("  Resume: git push origin main", text)

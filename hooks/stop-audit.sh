@@ -1,8 +1,8 @@
 #!/bin/bash
-# Meridian stop-audit — Stop hook.
+# Cardine stop-audit — Stop hook.
 # Records BLOCKED <CODE> reports in the final assistant message that no
-# Meridian command emitted. Advisory only: it always exits 0 and never blocks
-# the stop. The CLI decides whether the directory is a Meridian project.
+# Cardine command emitted. Advisory only: it always exits 0 and never blocks
+# the stop. The CLI decides whether the directory is a Cardine project.
 set -uo pipefail
 
 HOOK_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"

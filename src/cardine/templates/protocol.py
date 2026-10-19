@@ -15,7 +15,7 @@ def check_protocol_compatibility(manifest: dict[str, object]) -> int:
         raise CardineError("manifest protocolVersion must be a positive integer")
     if protocol_version > PROTOCOL_VERSION:
         raise CardineError(
-            f"manifest protocolVersion {protocol_version} is newer than this Meridian CLI "
-            f"supports ({PROTOCOL_VERSION}); update your Meridian checkout"
+            f"manifest protocolVersion {protocol_version} is newer than this Cardine CLI "
+            f"supports ({PROTOCOL_VERSION}); update your Cardine checkout"
         )
     return protocol_version

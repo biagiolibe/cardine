@@ -28,8 +28,8 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         self.primary = self.root / "project"
         self.primary.mkdir()
         self.git("init", "-b", "main")
-        self.git("config", "user.name", "Meridian Test")
-        self.git("config", "user.email", "meridian@example.invalid")
+        self.git("config", "user.name", "Cardine Test")
+        self.git("config", "user.email", "cardine@example.invalid")
         tasks = self.primary / "tasks"
         tasks.mkdir()
         (tasks / "056-lifecycle.md").write_text(

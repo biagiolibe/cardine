@@ -49,7 +49,7 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
             with self.subTest(action=action):
                 result = self.run_cli("upgrade", action)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertIn("Meridian 2.0.0 -> 2.0.0", result.stdout)
+                self.assertIn("Cardine 2.0.0 -> 2.0.0", result.stdout)
                 self.assertIn("Framework: 2.0.0 -> 2.0.0", result.stdout)
                 self.assertNotIn("MIGRATION", result.stdout)
                 self.assertNotIn("CONFLICT", result.stdout)

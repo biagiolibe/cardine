@@ -1,4 +1,4 @@
-"""Command parsing and dispatch for Meridian."""
+"""Command parsing and dispatch for Cardine."""
 
 from __future__ import annotations
 
@@ -102,7 +102,7 @@ def build_parser() -> CardineArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     self_check = subparsers.add_parser(
-        "self-check", help="inspect this Meridian installation"
+        "self-check", help="inspect this Cardine installation"
     )
     self_check.add_argument(
         "--check-latest",
@@ -291,7 +291,7 @@ def build_parser() -> CardineArgumentParser:
     integrate_finalize.add_argument("--project", type=Path)
     integrate_finalize.add_argument("--evidence", type=Path, required=True)
     integrate_finalize.add_argument("--format", choices=("json",), required=True)
-    integrate_abort = integrate_sub.add_parser("abort", help="abort one Meridian-owned staged integration")
+    integrate_abort = integrate_sub.add_parser("abort", help="abort one Cardine-owned staged integration")
     integrate_abort.add_argument("task_id")
     integrate_abort.add_argument("--project", type=Path)
     integrate_abort.add_argument("--format", choices=("json",), required=True)
@@ -437,7 +437,7 @@ def build_parser() -> CardineArgumentParser:
     investigate.add_argument("--finding", required=True)
     investigate.add_argument("--project", type=Path, default=Path.cwd())
 
-    hook = subparsers.add_parser("hook", help="run a Meridian host hook entry point")
+    hook = subparsers.add_parser("hook", help="run a Cardine host hook entry point")
     hook_sub = hook.add_subparsers(dest="hook_command", required=True)
     read_guard = hook_sub.add_parser("read-guard", help="apply the advisory-safe read guard")
     read_guard.add_argument("--host", choices=("codex",), required=True)

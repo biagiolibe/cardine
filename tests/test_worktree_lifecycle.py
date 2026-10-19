@@ -32,8 +32,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.project = self.root / "project"
         self.project.mkdir()
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
-        subprocess.run(["git", "config", "user.name", "Meridian Test"], cwd=self.project, check=True)
-        subprocess.run(["git", "config", "user.email", "meridian@example.invalid"], cwd=self.project, check=True)
+        subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=self.project, check=True)
+        subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=self.project, check=True)
         # Fixture commits must not leave detached Git maintenance running during snapshots.
         subprocess.run(["git", "config", "maintenance.auto", "false"], cwd=self.project, check=True)
         self.worktree_root = self.root / "worktrees"
@@ -388,8 +388,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         remote = self.root / "origin.git"
         clone = self.root / "origin-writer"
         subprocess.run(["git", "clone", "--branch", "main", str(remote), str(clone)], check=True, capture_output=True)
-        subprocess.run(["git", "config", "user.name", "Meridian Test"], cwd=clone, check=True)
-        subprocess.run(["git", "config", "user.email", "meridian@example.invalid"], cwd=clone, check=True)
+        subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=clone, check=True)
+        subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=clone, check=True)
         (clone / "upstream.txt").write_text("upstream\n", encoding="utf-8")
         subprocess.run(["git", "add", "upstream.txt"], cwd=clone, check=True)
         subprocess.run(["git", "commit", "-m", "upstream advance"], cwd=clone, check=True, capture_output=True)

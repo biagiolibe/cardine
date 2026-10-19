@@ -252,7 +252,7 @@ def audit_declared_capabilities(
     except CardineError as error:
         # Preserve the CLI's protocol-compatibility diagnostic: callers must
         # update the framework before this version can interpret the manifest.
-        if "newer than this Meridian CLI supports" in str(error):
+        if "newer than this Cardine CLI supports" in str(error):
             raise
         return [AuditResult("FAIL", "declaration/manifest", str(error))], requested_mode
 
@@ -425,7 +425,7 @@ def audit_declared_capabilities(
                 detail = (
                     "; ".join(verification_failures)
                     if verification_failures
-                    else f"verified at {verification.verified_at} by Meridian {verification.verifier_version}"
+                    else f"verified at {verification.verified_at} by Cardine {verification.verifier_version}"
                 )
             elif verification.state == "NOT_APPLICABLE":
                 verification_status = "FAIL"

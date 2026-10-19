@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://meridian.local/schemas/manifest-v2.schema.json",
+  "$id": "https://cardine.local/schemas/manifest-v2.schema.json",
   "properties": {
     "appliedMigrations": {
       "items": {
@@ -66,7 +66,7 @@
     "managedFiles",
     "appliedMigrations"
   ],
-  "title": "Meridian manifest protocol v2",
+  "title": "Cardine manifest protocol v2",
   "type": "object",
   "$defs": {
     "capabilityDeclaration": {

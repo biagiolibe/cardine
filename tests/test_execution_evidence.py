@@ -227,7 +227,7 @@ Policy outcome: The lifecycle gate validates host-impact evidence.
 
 | Profile | Before | Intended after | Activation preconditions | Fallback |
 |---|---|---|---|---|
-| Meridian CLI / direct invocation / project | advisory | enforced | Run through execution. | Block missing evidence. |
+| Cardine CLI / direct invocation / project | advisory | enforced | Run through execution. | Block missing evidence. |
 
 Evidence plan:
 - Static: parser test
@@ -257,7 +257,7 @@ Evidence plan:
             "## Host impact\n\nClassification: REQUIRED\nPolicy outcome: Accurate host claims.\n\n"
             "| Profile | Before | Intended after | Activation preconditions | Fallback |\n"
             "|---|---|---|---|---|\n"
-            "| Meridian CLI / direct / project | advisory | enforced | Run execution. | Block claim. |\n"
+            "| Cardine CLI / direct / project | advisory | enforced | Run execution. | Block claim. |\n"
             "| Codex / project / trusted rules | advisory | unverified | Probe unavailable. | Retain unverified. |\n\n"
             "Evidence plan:\n- Static: parser test\n- Host execution: fixture command\n- Manual activation: project subdirectory\n",
             encoding="utf-8",
@@ -275,7 +275,7 @@ Evidence plan:
         self.assertNotEqual(missing.returncode, 0)
         self.assertEqual(
             self.blocked_line(missing),
-            "BLOCKED HOST_IMPACT_EVIDENCE_MISSING: enforced profile is missing Completion evidence: Meridian CLI / "
+            "BLOCKED HOST_IMPACT_EVIDENCE_MISSING: enforced profile is missing Completion evidence: Cardine CLI / "
             "direct / project; resume: add a Completion evidence entry for each listed profile to the task's Host "
             "impact section, then rerun the blocked cardine execution command",
         )
@@ -283,7 +283,7 @@ Evidence plan:
         task.write_text(
             task.read_text(encoding="utf-8").replace(
                 "\n## Execution contract — resolved",
-                "\nCompletion evidence:\n- [Meridian CLI / direct / project]: fixture observed the gate.\n"
+                "\nCompletion evidence:\n- [Cardine CLI / direct / project]: fixture observed the gate.\n"
                 "\n## Execution contract — resolved",
             ),
             encoding="utf-8",

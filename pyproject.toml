@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "cardine"
 dynamic = ["version"]
-description = "Cardine development package for the Meridian workflow CLI"
+description = "Cardine workflow CLI development package"
 requires-python = ">=3.12"
 license = "MIT"
 

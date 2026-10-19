@@ -1,4 +1,4 @@
-"""Stop-hook audit of `BLOCKED <CODE>` reports that no Meridian command emitted (task 173).
+"""Stop-hook audit of `BLOCKED <CODE>` reports that no Cardine command emitted (task 173).
 
 Advisory only: every failure is a silent no-op and the exit status is always 0.
 The hook reads only the final assistant message and never stores its text; a

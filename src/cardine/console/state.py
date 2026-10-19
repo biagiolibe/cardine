@@ -1,4 +1,4 @@
-"""Local terminal dashboard for a Meridian project."""
+"""Local terminal dashboard for a Cardine project."""
 
 from __future__ import annotations
 
@@ -135,7 +135,7 @@ def one_shot(state: ConsoleState) -> str:
         return "No project snapshot available"
     stamp = state.last_success.strftime("%Y-%m-%d %H:%M:%S %Z") if state.last_success else "unknown"
     lines = [
-        (f"MERIDIAN | {state.framework.label} | {snapshot.project} | {snapshot.branch}"
+        (f"CARDINE | {state.framework.label} | {snapshot.project} | {snapshot.branch}"
          f" | {snapshot.git_summary}"),
         (f"Updated: {stamp} | Open: {sum(not task.cleanup_pending for task in snapshot.tasks)}"
          f" | Done: {snapshot.done_count}"),

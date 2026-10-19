@@ -1,4 +1,4 @@
-"""Local terminal dashboard for a Meridian project."""
+"""Local terminal dashboard for a Cardine project."""
 
 from __future__ import annotations
 

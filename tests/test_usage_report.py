@@ -32,15 +32,15 @@ class UsageReportTest(unittest.TestCase):
     def test_reports_codex_counters_without_message_content(self) -> None:
         path = self.home / ".codex/sessions/2026/10/03/rollout-sample.jsonl"
         self.write_jsonl(path, [
-            {"timestamp": "2026-10-03T10:00:00Z", "type": "session_meta", "payload": {"timestamp": "2026-10-03T10:00:00Z", "cwd": "meridian", "model": "gpt-test", "instructions": "PRIVATE CODEX MESSAGE"}},
+            {"timestamp": "2026-10-03T10:00:00Z", "type": "session_meta", "payload": {"timestamp": "2026-10-03T10:00:00Z", "cwd": "cardine", "model": "gpt-test", "instructions": "PRIVATE CODEX MESSAGE"}},
             {"type": "event_msg", "payload": {"type": "token_count", "info": {"last_token_usage": {"input_tokens": 18000, "cached_input_tokens": 0, "output_tokens": 20}}}},
             {"type": "event_msg", "payload": {"type": "token_count", "info": {"last_token_usage": {"input_tokens": 65000, "cached_input_tokens": 62000, "output_tokens": 30}}}},
             "{truncated",
         ])
-        report = shared_usage.usage_report("codex", Path("/any/meridian"), "2026-10-03", True, self.home)
+        report = shared_usage.usage_report("codex", Path("/any/cardine"), "2026-10-03", True, self.home)
         self.assertEqual(report["status"], "ok")
         session = report["sessions"][0]
-        self.assertEqual(session["project"], "meridian")
+        self.assertEqual(session["project"], "cardine")
         self.assertEqual(session["calls"], 2)
         self.assertEqual(session["first_call_input"], 18000)
         self.assertEqual(session["cumulative_input"], 83000)
@@ -51,21 +51,21 @@ class UsageReportTest(unittest.TestCase):
         self.assertNotIn("PRIVATE", rendered)
 
     def test_reports_claude_counters_and_sorts_sessions(self) -> None:
-        project = self.home / ".claude/projects/-Users-example-meridian"
+        project = self.home / ".claude/projects/-Users-example-cardine"
         self.write_jsonl(project / "later.jsonl", [
-            {"type": "assistant", "timestamp": "2026-10-03T11:00:00Z", "cwd": "meridian", "message": {"model": "claude-test", "text": "PRIVATE CLAUDE MESSAGE", "usage": {"input_tokens": 38000, "cache_read_input_tokens": 0, "output_tokens": 10}}},
+            {"type": "assistant", "timestamp": "2026-10-03T11:00:00Z", "cwd": "cardine", "message": {"model": "claude-test", "text": "PRIVATE CLAUDE MESSAGE", "usage": {"input_tokens": 38000, "cache_read_input_tokens": 0, "output_tokens": 10}}},
         ])
         self.write_jsonl(project / "earlier.jsonl", [
-            {"type": "assistant", "timestamp": "2026-10-03T09:00:00Z", "cwd": "meridian", "message": {"usage": {"input_tokens": 65000, "cache_read_input_tokens": 64000, "output_tokens": 12}}},
+            {"type": "assistant", "timestamp": "2026-10-03T09:00:00Z", "cwd": "cardine", "message": {"usage": {"input_tokens": 65000, "cache_read_input_tokens": 64000, "output_tokens": 12}}},
         ])
-        report = shared_usage.usage_report("claude", Path("/work/meridian"), None, False, self.home)
+        report = shared_usage.usage_report("claude", Path("/work/cardine"), None, False, self.home)
         self.assertEqual([session["start"] for session in report["sessions"]], ["2026-10-03T09:00:00Z", "2026-10-03T11:00:00Z"])
         self.assertEqual(report["sessions"][0]["cached_input"], 64000)
         self.assertNotIn("PRIVATE CLAUDE MESSAGE", shared_usage.format_usage_report(report))
 
     def claude_report(self, usages: list[dict[str, object]], breakdown: bool = False) -> dict[str, object]:
-        rows = [{"type": "assistant", "timestamp": "2026-10-03T09:00:00Z", "cwd": "meridian", "message": {"usage": usage}} for usage in usages]
-        self.write_jsonl(self.home / ".claude/projects/-Users-example-meridian/s.jsonl", rows)
+        rows = [{"type": "assistant", "timestamp": "2026-10-03T09:00:00Z", "cwd": "cardine", "message": {"usage": usage}} for usage in usages]
+        self.write_jsonl(self.home / ".claude/projects/-Users-example-cardine/s.jsonl", rows)
         return shared_usage.usage_report("claude", None, None, breakdown, self.home)
 
     def test_claude_input_includes_cache_read_and_creation(self) -> None:
@@ -96,13 +96,13 @@ class UsageReportTest(unittest.TestCase):
 
     def test_mixed_project_report_keeps_hosts_comparable(self) -> None:
         self.write_jsonl(self.home / ".codex/sessions/2026/10/03/rollout-a.jsonl", [
-            {"type": "session_meta", "payload": {"timestamp": "2026-10-03T10:00:00Z", "cwd": "meridian"}},
+            {"type": "session_meta", "payload": {"timestamp": "2026-10-03T10:00:00Z", "cwd": "cardine"}},
             {"type": "event_msg", "payload": {"type": "token_count", "info": {"last_token_usage": {"input_tokens": 18000, "cached_input_tokens": 9000, "output_tokens": 1}}}},
         ])
-        self.write_jsonl(self.home / ".claude/projects/-Users-example-meridian/s.jsonl", [
-            {"type": "assistant", "timestamp": "2026-10-03T11:00:00Z", "cwd": "meridian", "message": {"usage": {"input_tokens": 2, "cache_read_input_tokens": 9000, "cache_creation_input_tokens": 9000}}},
+        self.write_jsonl(self.home / ".claude/projects/-Users-example-cardine/s.jsonl", [
+            {"type": "assistant", "timestamp": "2026-10-03T11:00:00Z", "cwd": "cardine", "message": {"usage": {"input_tokens": 2, "cache_read_input_tokens": 9000, "cache_creation_input_tokens": 9000}}},
         ])
-        report = shared_usage.usage_report(None, Path("/work/meridian"), None, False, self.home)
+        report = shared_usage.usage_report(None, Path("/work/cardine"), None, False, self.home)
         codex, claude = report["sessions"]
         self.assertEqual((codex["host"], codex["first_call_input"], codex["cached_input"], codex["cache_ratio"]), ("codex", 18000, 9000, 0.5))
         self.assertEqual((claude["host"], claude["first_call_input"], claude["cached_input"], claude["cache_ratio"]), ("claude", 18002, 9000, round(9000 / 18002, 4)))

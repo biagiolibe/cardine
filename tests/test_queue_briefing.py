@@ -61,7 +61,7 @@ class QueueBriefingTest(unittest.TestCase):
         )
         return target
 
-    def test_silent_exit_outside_a_meridian_project(self) -> None:
+    def test_silent_exit_outside_a_cardine_project(self) -> None:
         result = run_hook(self.project)
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout, "")
@@ -115,6 +115,7 @@ class QueueBriefingTest(unittest.TestCase):
         )
         notice = [line for line in result.stdout.splitlines() if "ownership repair" in line]
         self.assertEqual(len(notice), 1, result.stdout)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("meridian setup --apply", notice[0])
         self.assertNotIn("Codex worktree root differs", result.stdout)
 
@@ -124,10 +125,13 @@ class QueueBriefingTest(unittest.TestCase):
         result = run_hook(self.project)
 
         self.assertEqual(result.returncode, 0, result.stderr)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("[Meridian Language Policy]", result.stdout)
         self.assertIn("Conversation language: Italian", result.stdout)
         self.assertIn("Repository artifacts: English only", result.stdout)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertNotIn("Meridian Governed Queue", result.stdout)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertNotIn("Meridian Lean Delivery Queue", result.stdout)
 
     def test_does_not_present_a_placeholder_as_a_configured_language(self) -> None:
@@ -165,6 +169,7 @@ class QueueBriefingTest(unittest.TestCase):
         result = run_hook(self.project)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Conversation language: Italian", result.stdout)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("[Meridian Governed Queue]", result.stdout)
         self.assertIn("In progress: TASK-002", result.stdout)
         self.assertIn("In review: TASK-005", result.stdout)
@@ -260,6 +265,7 @@ class QueueBriefingTest(unittest.TestCase):
         )
         result = run_hook(self.project)
         self.assertEqual(result.returncode, 0, result.stderr)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("[Meridian Governed Queue]", result.stdout)
         self.assertIn("In progress: TASK-001", result.stdout)
 
@@ -302,6 +308,7 @@ class QueueBriefingTest(unittest.TestCase):
         )
         result = run_hook(self.project)
         self.assertEqual(result.returncode, 0, result.stderr)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("[Meridian Lean Delivery Queue]", result.stdout)
         self.assertIn("In progress: Active thing", result.stdout)
         self.assertIn("Queued: 003 - Next thing", result.stdout)
@@ -361,6 +368,7 @@ class QueueBriefingTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("In-progress lookup skipped", result.stdout)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertLess(result.stdout.index("[Meridian Language Policy]"), result.stdout.index("In-progress lookup skipped"))
 
     def test_lean_registered_active_task_does_not_require_a_checkbox_edit(self) -> None:
@@ -402,6 +410,7 @@ class QueueBriefingTest(unittest.TestCase):
         result = run_hook(self.project)
 
         self.assertEqual(result.returncode, 0, result.stderr)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("[Meridian Governed Queue]", result.stdout)
         self.assertIn("In progress: TASK-100", result.stdout)
 
