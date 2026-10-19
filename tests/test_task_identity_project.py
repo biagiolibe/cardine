@@ -17,7 +17,6 @@ from cardine.shared import project as owner_shared_project
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
-from cardine.shared import budget_commands as owner_shared_budget_commands
 from cardine.hosts import setup as owner_hosts_setup
 
 
@@ -82,7 +81,6 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertEqual(resolved.task_path, task.resolve())
         self.assertEqual(resolved.handoff_path, (self.project / "tasks/handoffs/M30-INSPECT_UI-001.md").resolve())
         self.assertEqual(resolved.review_path, (self.project / "tasks/reviews/M30-INSPECT_UI-001.md").resolve())
-        self.assertEqual(resolved.budget_key(2), "M30-INSPECT_UI-001:2")
 
     def test_milestone_retains_known_legacy_and_restricts_new_identities(self) -> None:
         self.declare()
@@ -190,9 +188,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         payload = json.loads(checked.stdout)
         direct = owner_tasks_identity.resolve_task_identity(self.project, "m9-cli-003", "existing")
         self.assertEqual(payload, owner_tasks_identity.task_identity_json(self.project, direct))
-        runtime_state: dict[str, object] = {}
-        runtime_key, _text = owner_shared_budget_commands.resolve_budget_key(self.project, runtime_state, "m9-cli-003")
-        self.assertEqual(payload["budget_key"], runtime_key)
+        self.assertNotIn("budget_key", payload)
         after = {path.relative_to(self.project): path.read_bytes() for path in self.project.rglob("*") if path.is_file()}
         self.assertEqual(before, after)
 
@@ -208,23 +204,6 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertEqual(usage.returncode, 64)
         self.assertEqual(usage.stdout, "")
 
-    def test_cli_budget_key_matches_the_runtime_attempt_without_writing(self) -> None:
-        self.add_task("TASK-009")
-        self.write_queue([("TASK-009", "TASK-009.md")])
-        state = {"TASK-009": {"attempt": 2, "lastStatus": "READY_FOR_REVIEW"}}
-        budget = self.project / ".meridian/budget.json"
-        budget.parent.mkdir(parents=True)
-        budget.write_text(json.dumps(state), encoding="utf-8")
-        checked = self.run_cli(
-            "task", "identity", "check", "009",
-            "--project", str(self.project), "--format", "json",
-        )
-        self.assertEqual(checked.returncode, 0, checked.stderr)
-        self.assertEqual(json.loads(checked.stdout)["budget_key"], "TASK-009:3")
-        self.assertEqual(json.loads(budget.read_text(encoding="utf-8")), state)
-        runtime_state = json.loads(budget.read_text(encoding="utf-8"))
-        key, _text = owner_shared_budget_commands.resolve_budget_key(self.project, runtime_state, "009")
-        self.assertEqual(key, "TASK-009:3")
 
     def test_next_identity_uses_matching_authorities_and_is_read_only(self) -> None:
         self.declare()

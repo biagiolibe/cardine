@@ -159,7 +159,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         task = self.primary / "tasks/056-lifecycle.md"
         task.write_text(
             "# Task 056\n\n> **ID**: `056`\n\nClass: SPIKE\nStatus: QUEUED\n"
-            "Question: Does the declared probe pass?\nBudget: 1 iteration\n"
+            "Question: Does the declared probe pass?\nTimebox: 1 iteration\n"
             "Deliverable: `docs/answer.md#result`\n\n## Authority\n\n"
             "## Validation\n\n- `probe`: `test -f docs/answer.md`\n",
             encoding="utf-8",

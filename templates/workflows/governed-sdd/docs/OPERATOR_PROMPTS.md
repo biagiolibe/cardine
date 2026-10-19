@@ -88,7 +88,7 @@ canonical task blueprint: declare dependencies,
 review policy, authority, expected code surface, measurable acceptance
 criteria, validation, and out-of-scope boundaries. When an unresolved question
 must be answered before a task can be scoped or verified, create a `Class:
-SPIKE` task with a bounded `Question`, `Budget`, and non-production
+SPIKE` task with a bounded `Question`, `Timebox`, and non-production
 `Deliverable`; do not investigate it inside a normal task.
 
 Verify the documentation diff. Create a commit only if the governing workflow

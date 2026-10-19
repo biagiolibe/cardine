@@ -74,7 +74,7 @@
       "adoptionRecord": "063-retire-reasoning-budget-contract"
     },
     "execution-command-gate": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -86,7 +86,7 @@
       "adoptionRecord": "010-project-workflow-baseline-capabilities"
     },
     "execution-evidence-profile": {
-      "requiredVersion": 5,
+      "requiredVersion": 6,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
@@ -116,13 +116,13 @@
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "investigation-scope": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "isolated-exploration": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "030-isolated-exploration-evidence"
@@ -218,7 +218,7 @@
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "review-policy": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
@@ -248,13 +248,13 @@
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "spike-routing": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 18,
+      "requiredVersion": 19,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -266,7 +266,7 @@
       "adoptionRecord": "049-task-identity-policy"
     },
     "task-lifecycle": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -327,9 +327,9 @@
     },
     "worktree-budget-retirement": {
       "requiredVersion": 1,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "070-worktree-template-delivery"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "worktree-command-locations": {
       "requiredVersion": 1,

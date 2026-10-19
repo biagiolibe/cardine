@@ -140,7 +140,6 @@ For a structured identity, the derivations are:
 | Worktree leaf | `m30-inspect-001` below the repository-qualified worktree root |
 | Handoff path | `<handoff-root>/M30-INSPECT-001.md` |
 | Review path | `<review-root>/M30-INSPECT-001.md` |
-| Budget state key | `M30-INSPECT-001:<attempt>` |
 
 For `opaque` and `legacy-opaque` identities, the same surfaces derive from the
 single resolved canonical ID without interpreting its components. Existing
@@ -187,7 +186,6 @@ task_path
 queue_path
 handoff_path
 review_path
-budget_key(attempt)
 ```
 
 The resolver performs these steps in order:
@@ -204,9 +202,9 @@ The resolver performs these steps in order:
 6. return the complete result, without reading status or other task semantics
    into the identity.
 
-Every path, branch, handoff, review, and budget consumer uses this result.
-`meridian worktree path`, `prepare`, `check`, integration, cleanup, execution
-budget commands, context commands, hooks, and audits must not maintain
+Every path, branch, handoff, and review consumer uses this result.
+`meridian worktree path`, `prepare`, `check`, integration, cleanup, execution,
+context commands, hooks, and audits must not maintain
 host-specific or command-specific task-ID parsers. The deprecated
 `meridian codex worktree-path` alias calls the same resolver and may not retain
 its current numeric-only implementation.
@@ -220,7 +218,7 @@ present.
 ## First implementation verification
 
 The first implementation includes a CLI check because documentation alone
-cannot prove that Task 056, budget handling, customized locations, and
+cannot prove that Task 056, customized locations, and
 historical compatibility share one resolver. The exact diagnostic command is:
 
 ```text
@@ -238,7 +236,7 @@ command applies current aliases and existing location rules and succeeds for
 every unambiguous project-valid historical ID; it does not require or suggest
 conversion to the milestone grammar. In a `milestone` project it reports
 `structured` or `legacy-opaque` explicitly. Tests must compare its output with
-the values consumed by worktree and budget operations so the diagnostic
+the values consumed by worktree operations so the diagnostic
 cannot drift from runtime resolution.
 
 The first implementation does not add a repository-wide hook or make the
@@ -258,7 +256,7 @@ Bounded surface:
   review locations once;
 - replace numeric-only task canonicalization with the resolver contract;
 - add `meridian task identity check` with the exact behavior above;
-- route task lookup, review/handoff lookup, and budget keys through it;
+- route task and review/handoff lookup through it;
 - add deterministic fixtures for absent/explicit opaque policy, structured
   grammar and case, historical non-matching tasks, aliases, custom locations,
   ambiguity, collisions, traversal, and malformed declarations.
@@ -274,7 +272,7 @@ CLI assertions including exit codes and JSON shape, and `git diff --check`.
 
 Task 056 remains responsible for the host-neutral worktree state machine. Its
 identity surface is limited to calling Task 063's resolver result for path,
-branch, handoff, review, and budget identities and proving that the deprecated
+branch, handoff, and review identities and proving that the deprecated
 Codex alias is equivalent. It must not add another grammar or compatibility
 path. Its existing template, migration, capability-marker, host-probe, and
 full validation requirements remain unchanged.

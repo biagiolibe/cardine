@@ -65,6 +65,24 @@ class ModuleInventoryTest(unittest.TestCase):
                 owners[name].append(str(path.relative_to(ROOT)))
         # Task 034 retires historical adoption without rewriting the split inventory.
         retired = {
+            # Task 035 removes self-reported counters.
+            'BUDGET_PATH',
+            'BUDGET_STATE_NAME',
+            'BUDGET_KINDS',
+            'BUDGET_DEFAULT_CAPS',
+            'BUDGET_FIELD_NAMES',
+            'budget_state_path',
+            'tracked_budget_state',
+            'legacy_budget_migration_needed',
+            'migrate_budget_state',
+            'load_budget_state',
+            'write_budget_state',
+            'task_cap',
+            'resolve_budget_key',
+            'budget_show',
+            'budget_spend',
+            'profile_cap',
+
             'ADOPTION_RETRY_LIMIT',
             'ADOPTION_REVIEW_PATH',
             'ADOPTION_VERDICTS',

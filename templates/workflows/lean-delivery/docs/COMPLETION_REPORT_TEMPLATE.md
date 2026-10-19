@@ -13,7 +13,6 @@ Save it at `tasks/handoffs/<TASK-ID>.md`.
 - Validation skips: `<none | test name — test-reported reason; reported by `command`>`
 - Manual verification: `<none | evidence and result>`
 - Acceptance criteria: `<all met | list criterion IDs/status>`
-- Budget usage: `<diagnostics; captures; context expansions; investigation scope>`
 - Isolated exploration: `<none | recorded question(s) and finding(s)>`
 - Rule discrepancies: `<none | rule, command result, and what was followed>` (optional)
 - Blockers/deviations: `<none | concrete issue and reason>`

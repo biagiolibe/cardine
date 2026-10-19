@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.worktree.paths import repository_identity
+
 from cardine.hosts.claude import apply_claude_project_allowlist
 from cardine.hosts.claude import claude_hook_duplicate_advisories
 from cardine.hosts.claude import plan_claude_project_allowlist
@@ -18,7 +20,6 @@ from cardine.hosts.skills import _stale_codex_skill_warnings
 from cardine.hosts.skills import codex_profile_root_mismatch
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.evidence import proposed_candidate_validation_declaration
-from cardine.shared.budget_commands import proposed_project_identity
 from cardine.shared.constants import PROJECT_DECLARATION_PATH
 from cardine.shared.constants import TASK_IDENTITY_PATH
 from cardine.shared.errors import MeridianError
@@ -573,3 +574,11 @@ def codex_doctor(
     )
     return result
 
+
+def proposed_project_identity(project_root: Path) -> dict[str, str]:
+    """Derive a stable setup proposal even before a directory is a Git repository."""
+    try:
+        slug = repository_identity(project_root).repository
+    except MeridianError:
+        slug = project_root.resolve().name.lower()
+    return {"name": slug.replace("-", " ").title(), "slug": slug}

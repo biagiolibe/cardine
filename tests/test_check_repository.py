@@ -288,12 +288,12 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         """The baseline guard's original task-014 behavior: an absence with
         no accounting migration is still an unauthorized change, retirement
         infrastructure or not."""
-        self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 2)
+        self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
         with self.assertRaises(SystemExit):
             cr.check_capability_marker_baselines(self.root)
 
     def test_a_capability_retired_in_the_catalog_passes_without_a_migration(self) -> None:
-        self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 2)
+        self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
         path = self.root / "capabilities/markers-v1.json"
         catalog = json.loads(path.read_text(encoding="utf-8"))
         catalog["capabilities"]["spike-routing"].update(retired=True, required=False)
@@ -1041,6 +1041,19 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
 
     def test_registered_text_passes_and_unrelated_uppercase_lists_are_ignored(self) -> None:
         cr.check_stop_code_registry(self.root)
+
+    def test_unchanged_installed_copy_uses_its_installed_registry(self) -> None:
+        installed = self.root / "docs/INSTALLED_POLICY.md"
+        installed.parent.mkdir()
+        installed.write_text("Stop with BLOCKED RETIRED_STOP.\n", encoding="utf-8")
+        manifest = self.root / ".meridian/manifest.json"
+        manifest.parent.mkdir()
+        manifest.write_text(json.dumps({"managedFiles": {
+            "docs/INSTALLED_POLICY.md": hashlib.sha256(installed.read_bytes()).hexdigest(),
+        }}), encoding="utf-8")
+        cr.check_stop_code_registry(self.root)
+        installed.write_text(installed.read_text() + "Edited locally.\n", encoding="utf-8")
+        self.assertIn("docs/INSTALLED_POLICY.md:1: unregistered stop code RETIRED_STOP", self.failure())
 
     def test_unregistered_token_after_blocked_names_file_line_and_token(self) -> None:
         self.text += "\nThen BLOCKED GAMMA_STOP: detail.\n"

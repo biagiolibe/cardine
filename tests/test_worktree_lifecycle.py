@@ -299,7 +299,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         legacy.parent.mkdir(exist_ok=True)
         legacy.write_text("{}\n", encoding="utf-8")
         subprocess.run(["git", "add", ".meridian/budget.json"], cwd=self.project, check=True)
-        status("C6", "PRIMARY_DIRTY", resume_contains="legacy budget file; commit its deletion")
+        status("C6", "PRIMARY_DIRTY", resume_contains="primary checkout is dirty")
         subprocess.run(["git", "reset", "HEAD", "--", ".meridian/budget.json"], cwd=self.project, check=True)
         legacy.unlink()
         evidence_path.unlink()
@@ -455,10 +455,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "HANDOFF_EXPLORATION_SUMMARY_MISSING", "TASK_STATE_MISSING", "TASK_STATE_INVALID",
         )
         remaining = (
-            "COMMAND_REFUSED", "OS_ACCESS_FAILED", "VALIDATION_ID_UNDECLARED", "BUDGET_EXHAUSTED",
-            "BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION",
+            "COMMAND_REFUSED", "OS_ACCESS_FAILED", "VALIDATION_ID_UNDECLARED",
             "HOST_IMPACT_DECLARATION_INVALID", "HOST_IMPACT_EVIDENCE_MISSING", "UPGRADE_BLOCKED",
-            "WORKFLOW_UNREADABLE", "RULE_CONFLICT", "CONTRACT_EXHAUSTED", "SCOPE_CHANGE_REQUIRED",
+            "WORKFLOW_UNREADABLE", "RULE_CONFLICT", "SCOPE_CHANGE_REQUIRED",
             "REVIEW_LOOP_EXHAUSTED", "SELF_UPDATE_PLUGIN_CACHE", "SELF_UPDATE_DIRTY",
             "SELF_UPDATE_BRANCH", "SELF_UPDATE_TARGET", "SELF_UPDATE_NON_FF", "SELF_UPDATE_VERIFY",
         )
@@ -466,7 +465,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(
             {code for code, entry in registry.items() if entry["class"] == "judgment"},
             {
-                "ACCEPTANCE_UNMET", "REVIEW_REQUIRED", "WORKFLOW_UNREADABLE", "RULE_CONFLICT", "CONTRACT_EXHAUSTED",
+                "ACCEPTANCE_UNMET", "REVIEW_REQUIRED", "WORKFLOW_UNREADABLE", "RULE_CONFLICT",
                 "SCOPE_CHANGE_REQUIRED", "REVIEW_LOOP_EXHAUSTED", "VALIDATION_RETRY_LIMIT",
             },
         )

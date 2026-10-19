@@ -1,4 +1,4 @@
-# Context Budget and Reasoning Policy
+# Context Reading and Evidence Policy
 
 This policy reduces context and reasoning overhead while preserving governed-SDD authority and review quality.
 
@@ -24,7 +24,7 @@ then read that range.
 
 Dependencies establish readiness; they do not automatically require rereading their entire implementation history.
 
-<!-- MERIDIAN:BEGIN capability=isolated-exploration v1 -->
+<!-- MERIDIAN:BEGIN capability=isolated-exploration v2 -->
 ## Isolated exploration
 
 When one specific question requires broad or uncertain-yield material outside a
@@ -37,12 +37,9 @@ worker, or a direct read when the declared scope is small.
   before reading. A file already named by the task remains a targeted direct
   read; do not add process overhead for it.
 - Record broad exploration with `meridian execution investigate <TASK-ID>`:
-  question, scope units, sources materially used, and the distilled finding.
+  question, source scope, sources materially used, and the distilled finding.
   Return or retain that finding, not a raw transcript or unconstrained search
   output.
-- Delegation never erases cost. Each scope unit covers at most three primary
-  files or 300 lines of primary material; a larger scope consumes additional
-  `Investigation scope` budget or requires a task revision.
 - The implementation worker remains responsible for validating any finding
   that becomes material to an acceptance criterion or implementation decision.
 
@@ -114,7 +111,7 @@ property belongs to; only tier 3 justifies it.
 If the property is readable as a value anywhere in the program, assert it instead of capturing it.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v5 -->
+<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v6 -->
 ## Execution evidence discipline
 
 Apply the project-specific `docs/EXECUTION_EVIDENCE_PROFILE.md` before an
@@ -142,8 +139,7 @@ first implementation after an upgrade that adds it.
   implementation hypothesis, state the evidence gap it will resolve. If a
   focused failure exposes a conflict between the task's acceptance criteria,
   authority, or allowed code surface, return `BLOCKED SCOPE_CHANGE_REQUIRED`; do not continue
-  searching for a workaround past the profile's declared diagnostic-attempt
-  budget.
+  searching for a workaround.
 - Inspect every changed hunk, beginning with a change summary and then
   per-file/hunk evidence. A complete printed diff is not required merely to
   establish diff scope.

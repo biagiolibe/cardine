@@ -1,4 +1,4 @@
-"""Framework CLI regression tests for budget context."""
+"""Execution contracts, provenance, and handoff regression tests."""
 
 from __future__ import annotations
 
@@ -11,16 +11,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from cardine.shared import budget as owner_shared_budget
 import cardine.shared.errors as shared_errors
-from cardine.shared import budget_commands as owner_shared_budget_commands
 from cardine.tasks import contract as owner_tasks_contract
 from cardine.tasks import preflight as owner_tasks_preflight
 
 
-class BudgetCliTest(unittest.TestCase):
-    """`meridian budget`: durable per-task-per-attempt diagnostic/evidence/
-    context-expansion counters (task 006 of docs/PLAN_TOKEN_EFFICIENCY.md)."""
+class ExecutionEvidenceTest(unittest.TestCase):
+    """Execution evidence remains durable without self-reported counters."""
 
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -38,8 +35,6 @@ class BudgetCliTest(unittest.TestCase):
             "\n".join(lines) + "\n", encoding="utf-8"
         )
 
-    def budget_state(self) -> dict:
-        return json.loads((self.project / ".meridian/budget.json").read_text(encoding="utf-8"))
 
     def append_contract(self, task_id: str) -> None:
         path = self.project / "tasks" / f"{task_id}.md"
@@ -53,87 +48,6 @@ class BudgetCliTest(unittest.TestCase):
             check=False,
         )
 
-    def test_show_defaults_with_no_state(self) -> None:
-        self.write_task("TASK-001", "IN_PROGRESS")
-        result = self.run_cli("budget", "show", "TASK-001")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(
-            result.stdout.strip(),
-            "Attempt 1 · Diagnostics 0/3 · Captures 0/2 · Expansions 0/2 · Investigations 0/2",
-        )
-
-    def test_show_resolves_nested_project_tasks_and_profile_defaults(self) -> None:
-        (self.project / "tasks/TASK-007.md").unlink(missing_ok=True)
-        nested = self.project / "docs/tasks/M19"
-        nested.mkdir(parents=True)
-        (nested / "TASK-007.md").write_text("Status: IN_PROGRESS\n", encoding="utf-8")
-        (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
-            "<!-- MERIDIAN:END -->\n"
-            "Task files live under `docs/tasks/<milestone>/`; queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n",
-            encoding="utf-8",
-        )
-        profile = self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md"
-        profile.parent.mkdir(exist_ok=True)
-        profile.write_text(
-            "`Diagnostic attempts`: 4 per failure.\n"
-            "`Evidence captures`: 5 per acceptance criterion.\n"
-            "`Context expansions`: 6 per task.\n"
-            "`Investigation scope`: 7 per task.\n",
-            encoding="utf-8",
-        )
-        result = self.run_cli("budget", "show", "TASK-007")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(
-            result.stdout.strip(),
-            "Attempt 1 · Diagnostics 0/4 · Captures 0/5 · Expansions 0/6 · Investigations 0/7",
-        )
-
-    def test_show_ignores_nested_review_record_with_the_same_task_id(self) -> None:
-        nested = self.project / "docs/tasks/M19"
-        review = self.project / "docs/tasks/reviews"
-        nested.mkdir(parents=True)
-        review.mkdir(parents=True)
-        (nested / "M19-HUD-010.md").write_text(
-            "Status: IN_PROGRESS\n", encoding="utf-8"
-        )
-        (review / "M19-HUD-010.md").write_text(
-            "Verdict: CHANGES_REQUESTED\n", encoding="utf-8"
-        )
-        (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
-            "<!-- MERIDIAN:END -->\n"
-            "Task files live under `docs/tasks/<milestone>/`; queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n",
-            encoding="utf-8",
-        )
-
-        result = self.run_cli("budget", "show", "M19-HUD-010")
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Diagnostics 0/3", result.stdout)
-
-    def test_show_ignores_nested_completion_handoff_with_the_same_task_id(self) -> None:
-        nested = self.project / "docs/tasks/M19"
-        handoffs = self.project / "tasks/handoffs"
-        nested.mkdir(parents=True)
-        handoffs.mkdir(parents=True)
-        (nested / "M19-HUD-010.md").write_text(
-            "Status: IN_PROGRESS\n", encoding="utf-8"
-        )
-        (handoffs / "M19-HUD-010.md").write_text(
-            "## Completion Report — M19-HUD-010\n", encoding="utf-8"
-        )
-        (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
-            "<!-- MERIDIAN:END -->\n"
-            "Task files live under `docs/tasks/<milestone>/`; queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n",
-            encoding="utf-8",
-        )
-
-        result = self.run_cli("budget", "show", "M19-HUD-010")
-
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Diagnostics 0/3", result.stdout)
 
     def test_locations_and_preflight_use_the_declared_queue(self) -> None:
         (self.project / "docs/tasks/M19").mkdir(parents=True)
@@ -269,7 +183,7 @@ class BudgetCliTest(unittest.TestCase):
         task = self.project / "tasks/TASK-018.md"
         task.write_text(
             "Status: QUEUED\nClass: SPIKE\nQuestion: What behavior is correct?\n"
-            "Budget: 2 iterations\nDeliverable: An ADR\n\n## Authority\n\n## Validation\n",
+            "Timebox: 2 iterations\nDeliverable: An ADR\n\n## Authority\n\n## Validation\n",
             encoding="utf-8",
         )
         self.append_contract("TASK-018")
@@ -277,7 +191,7 @@ class BudgetCliTest(unittest.TestCase):
         passed = self.run_cli("execution", "preflight", "TASK-018")
         self.assertEqual(passed.returncode, 0, passed.stderr)
 
-        for field in ("Question", "Budget", "Deliverable"):
+        for field in ("Question", "Timebox", "Deliverable"):
             with self.subTest(field=field):
                 text = task.read_text(encoding="utf-8")
                 task.write_text(
@@ -353,7 +267,7 @@ Evidence plan:
         report.write_text(
             "## Completion Report — TASK-020\n\n- Files changed: none\n- Validation: exit 0\n"
             "- Validation skips: none\n"
-            "- Manual verification: none\n- Acceptance criteria: all met\n- Budget usage: 0/3\n"
+            "- Manual verification: none\n- Acceptance criteria: all met\n"
             "- Isolated exploration: none\n- Blockers/deviations: none\n",
             encoding="utf-8",
         )
@@ -448,19 +362,6 @@ Evidence plan:
         self.assertIn("skipped for terminal task", result.stdout)
         self.assertEqual(task.read_text(encoding="utf-8"), original)
 
-    def test_handoff_check_rejects_missing_budget_usage(self) -> None:
-        report = self.project / "handoff.md"
-        report.write_text(
-            "## Completion Report — TASK-009\n\n"
-            "- Files changed: `a.rs`\n- Validation: `cargo test` exit 0\n"
-            "- Validation skips: none\n"
-            "- Manual verification: none\n- Acceptance criteria: all met\n"
-            "- Blockers/deviations: none\n",
-            encoding="utf-8",
-        )
-        result = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Budget usage", result.stderr)
 
     def test_ready_check_combines_preflight_and_handoff(self) -> None:
         (self.project / "docs").mkdir()
@@ -474,7 +375,7 @@ Evidence plan:
         report.write_text(
             "## Completion Report — TASK-012\n\n- Files changed: none\n- Validation: exit 0\n"
             "- Validation skips: none\n"
-            "- Manual verification: none\n- Acceptance criteria: all met\n- Budget usage: 0/3\n"
+            "- Manual verification: none\n- Acceptance criteria: all met\n"
             "- Isolated exploration: none\n"
             "- Blockers/deviations: none\n",
             encoding="utf-8",
@@ -500,7 +401,7 @@ Evidence plan:
             "## Completion Report — TASK-013\n\n- Files changed: none\n"
             "- Validation: `printf validation-ok` exit 0\n- Manual verification: none\n"
             "- Validation skips: none\n"
-            "- Acceptance criteria: all met\n- Budget usage: 0/3\n"
+            "- Acceptance criteria: all met\n"
             "- Isolated exploration: none\n- Blockers/deviations: none\n",
             encoding="utf-8",
         )
@@ -513,9 +414,8 @@ Evidence plan:
             "execution", "investigate", "TASK-013", "--question", "Which API owns the value?",
             "--scope", "2", "--source", "vendor/api.rs", "--finding", "Window owns the value.",
         )
-        # The default `Investigation scope: 2` admits exactly one scope-2 use.
         self.assertEqual(investigated.returncode, 0, investigated.stderr)
-        self.assertIn("2/2 recorded", investigated.stdout)
+        self.assertIn("Investigation TASK-013: recorded", investigated.stdout)
         missing_question = self.run_cli("execution", "handoff-check", "TASK-013", str(report))
         self.assertNotEqual(missing_question.returncode, 0)
         self.assertIn("BLOCKED HANDOFF_EXPLORATION_MISMATCH:", missing_question.stderr)
@@ -537,7 +437,7 @@ Evidence plan:
             "- Validation: `python3 -m unittest discover -s tests -v` exit 0\n"
             "- Validation skips: none\n"
             "- Manual verification: none\n- Acceptance criteria: all met\n"
-            "- Budget usage: 0/3\n- Isolated exploration: none\n"
+            "- Isolated exploration: none\n"
             "%s- Blockers/deviations: none\n"
         )
         for extra in (
@@ -557,7 +457,7 @@ Evidence plan:
             "- Validation: `python3 -m unittest discover -s tests -v` exit 0\n"
             "- Validation skips: none\n"
             "- Manual verification: none\n- Acceptance criteria: all met\n"
-            "- Budget usage: 0/3\n- Isolated exploration: none\n"
+            "- Isolated exploration: none\n"
             "- Blockers/deviations: none\n",
             encoding="utf-8",
         )
@@ -718,7 +618,7 @@ Evidence plan:
         report = self.project / "report.md"
         fields = {
             "Files changed": "none", "Validation": "`x` exit 0", "Validation skips": "none",
-            "Manual verification": "none", "Acceptance criteria": "all met", "Budget usage": "0/3",
+            "Manual verification": "none", "Acceptance criteria": "all met",
             "Isolated exploration": "none", "Blockers/deviations": "none",
         }
 
@@ -790,7 +690,7 @@ Evidence plan:
             report.write_text(
                 "## Completion Report — TASK-022\n\n- Files changed: none\n- Validation: `printf ok` exit 0\n"
                 "- Validation skips: none\n- Manual verification: none\n- Acceptance criteria: all met\n"
-                f"- Budget usage: 0/3\n- Isolated exploration: {exploration}\n- Blockers/deviations: none\n",
+                f"- Isolated exploration: {exploration}\n- Blockers/deviations: none\n",
                 encoding="utf-8",
             )
 
@@ -888,44 +788,27 @@ Evidence plan:
             "--criterion", "AC-5", "--artifact", "/tmp/second.png",
         )
         self.assertEqual(other.returncode, 0, other.stderr)
-        shown = self.run_cli("budget", "show", "TASK-011")
-        self.assertIn("AC-4 1/2, AC-5 1/2", shown.stdout)
+        self.assertNotIn("count", evidence["TASK-011"][0])
+        self.assertNotIn("cap", evidence["TASK-011"][0])
 
-    def test_spend_increments_and_reports(self) -> None:
-        self.write_task("TASK-002", "IN_PROGRESS")
-        first = self.run_cli("budget", "spend", "TASK-002", "diagnostic")
-        self.assertEqual(first.returncode, 0, first.stderr)
-        self.assertEqual(first.stdout.strip(), "TASK-002: diagnostic 1/3")
-        second = self.run_cli("budget", "spend", "TASK-002", "diagnostic")
-        self.assertEqual(second.stdout.strip(), "TASK-002: diagnostic 2/3")
-        third = self.run_cli("budget", "spend", "TASK-002", "diagnostic")
-        self.assertEqual(third.returncode, 0, third.stderr)
-        self.assertEqual(third.stdout.strip(), "TASK-002: diagnostic 3/3")
-        self.assertIn("Diagnostics 3/3", self.run_cli("budget", "show", "TASK-002").stdout)
 
-    def test_spend_returns_non_zero_and_names_blocked_once_cap_is_used(self) -> None:
-        self.write_task("TASK-003", "IN_PROGRESS")
-        # Default cap is 2 captures; both uses are admitted.
-        for used in (1, 2):
-            accepted = self.run_cli("budget", "spend", "TASK-003", "captures")
-            self.assertEqual(accepted.returncode, 0, accepted.stderr)
-            self.assertEqual(accepted.stdout.strip(), f"TASK-003: captures {used}/2")
-        exhausted = self.run_cli("budget", "spend", "TASK-003", "captures")
-        self.assertNotEqual(exhausted.returncode, 0)
-        self.assertEqual(
-            self.blocked_line(exhausted),
-            "BLOCKED BUDGET_EXHAUSTED: Evidence captures exhausted for TASK-003: 2 of 2 allowed uses already "
-            "recorded, 1 more requested; do not raise the cap; resume: report this stop and ask the developer to "
-            "raise the cap or re-scope the task; never raise the cap yourself",
-        )
-        with self.assertRaises(shared_errors.MeridianStop) as invalid:
-            owner_shared_budget_commands.budget_spend(self.project, "TASK-003", "captures", amount=0)
-        self.assertEqual(
-            str(invalid.exception),
-            "BLOCKED EXECUTION_EVIDENCE_ARGUMENTS: rule: a budget use is at least one; option checked: --scope; "
-            "accepted: an integer of 1 or more; found: 0; resume: rerun meridian execution investigate with --scope "
-            "of 1 or more",
-        )
+    def test_evidence_has_no_capture_cap_or_budget_ledger(self) -> None:
+        self.write_task("TASK-011", "IN_PROGRESS")
+        for index in range(4):
+            recorded = self.run_cli(
+                "execution", "evidence", "TASK-011", "captures", "--gap", "rendered property",
+                "--criterion", "AC-1", "--artifact", f"capture-{index}.png",
+            )
+            self.assertEqual(recorded.returncode, 0, recorded.stderr)
+        events = json.loads((self.project / ".meridian/execution-evidence.json").read_text())["TASK-011"]
+        self.assertEqual(len(events), 4)
+        self.assertTrue(all("count" not in event and "cap" not in event for event in events))
+        self.assertFalse((self.project / ".meridian/budget.json").exists())
+
+    def test_budget_command_is_removed(self) -> None:
+        rejected = self.run_cli("budget", "show", "TASK-011")
+        self.assertEqual(rejected.returncode, 2, rejected.stderr)
+        self.assertIn("invalid choice: 'budget'", rejected.stderr)
 
     def test_investigation_arguments_name_the_missing_options(self) -> None:
         self.write_task("TASK-406", "IN_PROGRESS")
@@ -939,7 +822,7 @@ Evidence plan:
         )
 
     def test_uncoded_command_refusal_reports_command_refused(self) -> None:
-        refused = self.run_cli("budget", "show", "TASK-404")
+        refused = self.run_cli("task", "identity", "check", "TASK-404", "--format", "json")
         line = self.blocked_line(refused)
         self.assertTrue(line.startswith("BLOCKED COMMAND_REFUSED: "), line)
         self.assertTrue(
@@ -951,151 +834,11 @@ Evidence plan:
     def test_operating_system_failure_reports_os_access_failed(self) -> None:
         self.write_task("TASK-405", "IN_PROGRESS")
         (self.project / ".meridian").mkdir()
-        (self.project / ".meridian/budget.json").mkdir()
-        failed = self.run_cli("budget", "spend", "TASK-405", "diagnostic")
+        (self.project / ".meridian/execution-evidence.json").mkdir()
+        failed = self.run_cli("execution", "evidence", "TASK-405", "diagnostic", "--gap", "missing output")
         line = self.blocked_line(failed)
         self.assertTrue(line.startswith("BLOCKED OS_ACCESS_FAILED: "), line)
         self.assertTrue(
             line.endswith("; resume: fix the access problem that the detail names, then rerun the same meridian command"),
             line,
         )
-
-    def test_spend_respects_task_override_cap(self) -> None:
-        self.write_task("TASK-004", "IN_PROGRESS", **{"Diagnostic attempts": "1"})
-        first = self.run_cli("budget", "spend", "TASK-004", "diagnostic")
-        self.assertEqual(first.returncode, 0, first.stderr)
-        self.assertEqual(first.stdout.strip(), "TASK-004: diagnostic 1/1")
-        second = self.run_cli("budget", "spend", "TASK-004", "diagnostic")
-        self.assertNotEqual(second.returncode, 0)
-        self.assertIn("1 of 1 allowed uses already recorded", second.stderr)
-
-    def test_spend_rejected_by_cap_leaves_state_unchanged(self) -> None:
-        self.write_task("TASK-010", "IN_PROGRESS")
-        for used in (1, 2):
-            accepted = self.run_cli("budget", "spend", "TASK-010", "captures")
-            self.assertEqual(accepted.returncode, 0, accepted.stderr)
-            self.assertEqual(accepted.stdout.strip(), f"TASK-010: captures {used}/2")
-
-        # A spend beyond the cap must be rejected without durably consuming
-        # the unit it could not deliver: the persisted counter stays at the
-        # last accepted value, not the rejected one.
-        first_rejection = self.run_cli("budget", "spend", "TASK-010", "captures")
-        self.assertNotEqual(first_rejection.returncode, 0)
-        self.assertIn("2 of 2 allowed uses already recorded", first_rejection.stderr)
-        self.assertEqual(self.budget_state()["TASK-010:1"]["captures"], 2)
-
-        # Retrying after a rejection must see the same unchanged state, not
-        # a counter that keeps climbing past the cap with every attempt.
-        second_rejection = self.run_cli("budget", "spend", "TASK-010", "captures")
-        self.assertNotEqual(second_rejection.returncode, 0)
-        self.assertIn("2 of 2 allowed uses already recorded", second_rejection.stderr)
-        self.assertEqual(self.budget_state()["TASK-010:1"]["captures"], 2)
-
-    def test_multi_unit_spend_crossing_the_cap_is_rejected_without_writing(self) -> None:
-        self.write_task("TASK-014", "IN_PROGRESS")
-        # Default investigation scope is 2, so a single scope-2 use is admitted.
-        count, cap = owner_shared_budget_commands.budget_spend(self.project, "TASK-014", "investigations", amount=2)
-        self.assertEqual((count, cap), (2, 2))
-        self.assertEqual(self.budget_state()["TASK-014:1"]["investigations"], 2)
-
-        self.write_task("TASK-015", "IN_PROGRESS", **{"Investigation scope": "3"})
-        owner_shared_budget_commands.budget_spend(self.project, "TASK-015", "investigations", amount=2)
-        with self.assertRaises(shared_errors.MeridianError) as raised:
-            owner_shared_budget_commands.budget_spend(self.project, "TASK-015", "investigations", amount=2)
-        message = str(raised.exception)
-        self.assertIn("BLOCKED", message)
-        self.assertIn("2 of 3 allowed uses already recorded, 2 more requested", message)
-        self.assertEqual(self.budget_state()["TASK-015:1"]["investigations"], 2)
-        # The one remaining unit is still spendable after the rejection.
-        self.assertEqual(
-            owner_shared_budget_commands.budget_spend(self.project, "TASK-015", "investigations", amount=1), (3, 3)
-        )
-
-    def test_unknown_task_is_blocked_without_writing_state(self) -> None:
-        result = self.run_cli("budget", "show", "TASK-NOPE")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("unknown task", result.stderr)
-        self.assertFalse((self.project / ".meridian/budget.json").exists())
-
-    def test_missing_budget_file_is_treated_as_a_fresh_project(self) -> None:
-        self.write_task("TASK-005", "IN_PROGRESS")
-        self.assertFalse((self.project / ".meridian/budget.json").exists())
-        result = self.run_cli("budget", "show", "TASK-005")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("0/3", result.stdout)
-
-    def test_git_budget_state_uses_common_metadata_and_migrates_legacy_file(self) -> None:
-        self.write_task("TASK-016", "IN_PROGRESS")
-        subprocess.run(("git", "init", str(self.project)), check=True, capture_output=True, text=True)
-        legacy = self.project / ".meridian/budget.json"
-        legacy.parent.mkdir(exist_ok=True)
-        legacy.write_text(json.dumps({"TASK-016:1": {"diagnostic": 1}}), encoding="utf-8")
-        subprocess.run(("git", "-C", str(self.project), "add", "."), check=True, capture_output=True, text=True)
-        subprocess.run(("git", "-C", str(self.project), "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "legacy state"), check=True, capture_output=True, text=True)
-        shown = self.run_cli("budget", "show", "TASK-016")
-        self.assertEqual(shown.returncode, 0, shown.stderr)
-        self.assertIn("Diagnostics 1/3", shown.stdout)
-        self.assertEqual(subprocess.run(
-            ("git", "-C", str(self.project), "status", "--porcelain"),
-            check=True, capture_output=True, text=True,
-        ).stdout, "")
-
-        result = self.run_cli("budget", "spend", "TASK-016", "diagnostic")
-        self.assertEqual(result.stdout.strip(), "TASK-016: diagnostic 2/3")
-        self.assertIn("commit its deletion", result.stderr)
-        self.assertFalse(legacy.exists())
-        self.assertEqual(json.loads(owner_shared_budget.budget_state_path(self.project).read_text(encoding="utf-8"))["TASK-016:1"]["diagnostic"], 2)
-        self.assertNotEqual(subprocess.run(("git", "-C", str(self.project), "ls-files", "--error-unmatch", ".meridian/budget.json"), capture_output=True, text=True, check=False).returncode, 0)
-        second = self.run_cli("budget", "spend", "TASK-016", "diagnostic")
-        self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertNotIn("commit its deletion", second.stderr)
-
-    def test_budget_command_from_a_task_worktree_leaves_its_index_unchanged(self) -> None:
-        self.write_task("TASK-017", "IN_PROGRESS")
-        subprocess.run(("git", "init", str(self.project)), check=True, capture_output=True, text=True)
-        legacy = self.project / ".meridian/budget.json"
-        legacy.parent.mkdir(exist_ok=True)
-        legacy.write_text('{"TASK-017:1": {"diagnostic": 1}}\n', encoding="utf-8")
-        subprocess.run(("git", "-C", str(self.project), "add", "."), check=True, capture_output=True, text=True)
-        subprocess.run(
-            ("git", "-C", str(self.project), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
-             "commit", "-m", "legacy state"), check=True, capture_output=True, text=True,
-        )
-        worktree = Path(self.temporary.name) / "task-worktree"
-        subprocess.run(("git", "-C", str(self.project), "worktree", "add", "-b", "task-017", str(worktree)),
-                       check=True, capture_output=True, text=True)
-
-        count, cap = owner_shared_budget_commands.budget_spend(worktree, "TASK-017", "diagnostic")
-        self.assertEqual((count, cap), (2, 3))
-        self.assertEqual(subprocess.run(
-            ("git", "-C", str(worktree), "status", "--porcelain"),
-            check=True, capture_output=True, text=True,
-        ).stdout, "")
-        self.assertIn("D  .meridian/budget.json", subprocess.run(
-            ("git", "-C", str(self.project), "status", "--porcelain"),
-            check=True, capture_output=True, text=True,
-        ).stdout)
-
-    def test_new_review_attempt_gets_a_fresh_allocation(self) -> None:
-        self.write_task("TASK-006", "IN_PROGRESS")
-        self.run_cli("budget", "spend", "TASK-006", "diagnostic")
-        self.run_cli("budget", "spend", "TASK-006", "diagnostic")
-
-        # Reviewer's handoff commit moves the task to READY_FOR_REVIEW...
-        self.write_task("TASK-006", "READY_FOR_REVIEW")
-        # A mutation at that status records the transition; `budget show` is
-        # deliberately read-only and must not do so.
-        self.run_cli("budget", "spend", "TASK-006", "diagnostic")
-        # ...then `Address review TASK-006` moves it back to IN_PROGRESS: a
-        # new remediation attempt, which must not inherit the old counters.
-        self.write_task("TASK-006", "IN_PROGRESS")
-
-        after = self.run_cli("budget", "spend", "TASK-006", "diagnostic")
-        self.assertEqual(after.returncode, 0, after.stderr)
-        self.assertEqual(after.stdout.strip(), "TASK-006: diagnostic 1/3")
-
-        state = self.budget_state()
-        self.assertIn("Attempt 2", self.run_cli("budget", "show", "TASK-006").stdout)
-        self.assertEqual(state["TASK-006"]["attempt"], 2)
-        self.assertEqual(state["TASK-006:1"]["diagnostic"], 3)
-        self.assertEqual(state["TASK-006:2"]["diagnostic"], 1)

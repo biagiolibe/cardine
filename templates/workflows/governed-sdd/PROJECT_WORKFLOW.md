@@ -36,7 +36,7 @@ When documents conflict, the first applicable document wins:
 Implementation never resolves a conflict silently: update the lower-precedence document or record an ADR.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=task-lifecycle v4 -->
+<!-- MERIDIAN:BEGIN capability=task-lifecycle v5 -->
 ## Task lifecycle
 
 ```text
@@ -56,7 +56,7 @@ Only `ACCEPTED` tasks satisfy dependencies. `ANSWERED` also satisfies a
 dependency — it is a `SPIKE`'s completion state and records that its
 deliverable (an ADR or a documented reference value; see `tasks/TASK_BLUEPRINT.md`'s
 spike shape) answered the declared `Question`. `INCONCLUSIVE` does not
-satisfy a dependency: it records that the spike's `Budget` was exhausted
+satisfy a dependency: it records that the spike's `Timebox` was exhausted
 without answering `Question`, and the dependent task stays blocked until a
 follow-up spike or a redesign removes the dependency.
 
@@ -117,7 +117,7 @@ do not provide a second identity policy or imply task semantics.
 The developer drives these roles with five command triggers, defined in `AGENTS.md`/`CLAUDE.md`: `Proceed with <TASK-ID>` starts implementation, `Review <TASK-ID>` starts independent review, `Address review <TASK-ID>` starts the bounded remediation recorded by the reviewer, `Run lifecycle <TASK-ID>` authorizes the orchestrated implementation-to-integration loop, and `Accept <TASK-ID>` records the owner's own review as an `APPROVE` attempt and continues the closure at C6, skipping the agent review without skipping any later gate.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=review-policy v3 -->
+<!-- MERIDIAN:BEGIN capability=review-policy v4 -->
 ## Review policy
 
 Every task declares `Review: REQUIRED`, `Review: NOT_REQUIRED`, or is a
@@ -132,11 +132,11 @@ unresolved design question and whose deliverable is never production code.
 A `SPIKE` task does not declare `Review: REQUIRED` or `NOT_REQUIRED`; the
 queue's `Review` column carries `SPIKE` for it instead. At close-out
 the implementer self-administers this gate: does the committed
-deliverable answer the declared `Question` within the declared `Budget`? If
-yes, record `ANSWERED`; if `Budget` is exhausted first, record
+deliverable answer the declared `Question` within the declared `Timebox`? If
+yes, record `ANSWERED`; if `Timebox` is exhausted first, record
 `INCONCLUSIVE`. No separate reviewer pass is required — a spike's bounded
 blast radius (it integrates only its deliverable, never merges production
-code, and has a declared budget) is what justifies skipping full review. If the
+code, and has a declared timebox) is what justifies skipping full review. If the
 committed deliverable does not self-evidently answer `Question`, record
 `INCONCLUSIVE` rather than `ANSWERED` on the strength of author judgment.
 <!-- MERIDIAN:END -->
@@ -303,17 +303,4 @@ test name, reason, and reporting command as `Validation skips:` in the handoff.
 ## Execution discipline
 
 Apply `docs/CONTEXT_BUDGET_POLICY.md`. The review-policy restrictions above remain authoritative; use parallel agents only when their scopes and worktrees are independent.
-<!-- MERIDIAN:END -->
-
-<!-- MERIDIAN:BEGIN capability=worktree-budget-retirement v1 -->
-## Budget attempts after worktree retirement
-
-Retiring a worktree does not reset its budget. If preparation reports
-`BLOCKED BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION`, the agent stops and reports
-the inherited counters and resume command. Only the developer may authorize
-`meridian worktree prepare <TASK-ID> --new-attempt --reason "<text>" --format json`,
-as with a budget overrun. A general Proceed directive does not authorize this
-option. It requires no registered task worktree, records the reason and prior
-counters in the journal, and starts the next attempt at zero while preserving
-history, task status, and caps.
 <!-- MERIDIAN:END -->

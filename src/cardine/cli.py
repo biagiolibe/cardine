@@ -21,8 +21,6 @@ from cardine.release.update import run_self_check, run_self_update
 from cardine.release.version import parse_semver, read_raw_version
 from cardine.review.verdict import record_review_verdict
 from cardine.shared.authority import adr_list, adr_show, context_authority
-from cardine.shared.budget import BUDGET_KINDS, EVIDENCE_EVENT_KINDS
-from cardine.shared.budget_commands import budget_show, budget_spend
 from cardine.shared.constants import BASELINES_PATH, MARKED_BLOCK, USAGE_HOSTS
 from cardine.shared.context import context_size_report, format_context_size_report
 from cardine.shared.errors import MeridianError, MeridianStop
@@ -38,7 +36,7 @@ from cardine.tasks.contract import check_handoff, default_handoff_path
 from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
 from cardine.tasks.importer import import_task_states
 from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check, reconcile_execution_contract
-from cardine.tasks.recording import record_execution_event, record_investigation, run_validation
+from cardine.tasks.recording import EVIDENCE_EVENT_KINDS, record_execution_event, record_investigation, run_validation
 from cardine.tasks.state import state_path
 from cardine.tasks.transitions import close_task, transition_task_state
 from cardine.templates.adoption import bootstrap_capability_profile
@@ -295,8 +293,6 @@ def build_parser() -> MeridianArgumentParser:
         action="store_true",
         help="accept an existing dirty worktree of this task; never creates or changes anything",
     )
-    worktree_prepare.add_argument("--new-attempt", action="store_true", help="developer-authorized fresh budget attempt after retirement")
-    worktree_prepare.add_argument("--reason", help="developer reason for the new attempt, recorded in the journal")
     worktree_prepare.add_argument("--format", choices=("json",), required=True)
     worktree_check = worktree_sub.add_parser("check", help="inspect the effective worker worktree without mutation")
     worktree_check.add_argument("task_id")
@@ -464,23 +460,6 @@ def build_parser() -> MeridianArgumentParser:
     report_flow_parser.add_argument("--since", help="include journal records on or after YYYY-MM-DD")
     report_flow_parser.add_argument("--format", choices=("json", "text"), default="text")
 
-    budget = subparsers.add_parser(
-        "budget", description="Framework-internal: no compatibility promise.",
-        help="track a governed-SDD task's diagnostic/evidence/context-expansion/investigation caps (framework-internal)",
-    )
-    budget_sub = budget.add_subparsers(dest="budget_command", required=True)
-
-    budget_show_parser = budget_sub.add_parser("show", description="Framework-internal: no compatibility promise.", help="print the active attempt's budget state (framework-internal)")
-    budget_show_parser.add_argument("task_id")
-    budget_show_parser.add_argument("--project", type=Path, default=Path.cwd())
-
-    budget_spend_parser = budget_sub.add_parser(
-        "spend", description="Framework-internal: no compatibility promise.", help="record one diagnostic/evidence/context use and check the declared cap (framework-internal)"
-    )
-    budget_spend_parser.add_argument("task_id")
-    budget_spend_parser.add_argument("kind", choices=BUDGET_KINDS)
-    budget_spend_parser.add_argument("--project", type=Path, default=Path.cwd())
-
     execution = subparsers.add_parser("execution", help="validate a governed task's durable execution evidence")
     execution_sub = execution.add_subparsers(dest="execution_command", required=True)
     for operation in ("start", "deliver"):
@@ -514,7 +493,7 @@ def build_parser() -> MeridianArgumentParser:
     validate.add_argument("task_id")
     validate.add_argument("validation_id")
     validate.add_argument("--project", type=Path, default=Path.cwd())
-    evidence = execution_sub.add_parser("evidence", help="record the gap and one budgeted diagnostic, capture, or expansion")
+    evidence = execution_sub.add_parser("evidence", help="record the gap and one diagnostic, capture, or expansion")
     evidence.add_argument("task_id")
     evidence.add_argument("kind", choices=EVIDENCE_EVENT_KINDS)
     evidence.add_argument("--gap", required=True)
@@ -736,8 +715,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     project_root,
                     arguments.base,
                     arguments.resume,
-                    arguments.new_attempt,
-                    arguments.reason,
                 )
                 journal.observe(prepared)
                 print(json.dumps(prepared, sort_keys=True))
@@ -898,12 +875,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             report = flow_report(_verified_lifecycle_project(arguments.project), arguments.since)
             print(json.dumps(report, sort_keys=True) if arguments.format == "json" else format_flow_report(report))
             return 0
-        elif arguments.command == "budget":
-            if arguments.budget_command == "show":
-                print(budget_show(project_root, arguments.task_id))
-            else:
-                count, cap = budget_spend(project_root, arguments.task_id, arguments.kind)
-                print(f"{arguments.task_id}: {arguments.kind} {count}/{cap}")
         elif arguments.command == "execution":
             if arguments.execution_command == "start":
                 print(json.dumps(execution_start(project_root, arguments.task_id, resume=arguments.resume), sort_keys=True))

@@ -7,29 +7,11 @@ import json
 from pathlib import Path
 import re
 
-from cardine.shared.budget import BUDGET_DEFAULT_CAPS
-from cardine.shared.budget import BUDGET_FIELD_NAMES
 from cardine.shared.errors import MeridianError
 from cardine.stops.render import stop_error
 from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_task_identity
-
-
-def profile_cap(project_root: Path, kind: str) -> int:
-    """Read the project's declared budget default, retaining framework defaults
-    only for pre-profile projects.
-
-    The profile is prose by design, but each shipped default has a stable
-    backticked field name followed by its numeric cap.  Keeping this lookup
-    here prevents the CLI's default silently drifting from project policy.
-    """
-    profile = project_root / "docs" / "EXECUTION_EVIDENCE_PROFILE.md"
-    if not profile.is_file():
-        return BUDGET_DEFAULT_CAPS[kind]
-    field = re.escape(BUDGET_FIELD_NAMES[kind])
-    match = re.search(rf"`{field}`:\s*(\d+)", profile.read_text(encoding="utf-8"))
-    return int(match.group(1)) if match else BUDGET_DEFAULT_CAPS[kind]
 
 
 def profile_digest(project_root: Path) -> str:
@@ -58,7 +40,7 @@ PREFLIGHT_HEADINGS = ("Authority", "Validation")
 NORMAL_PREFLIGHT_HEADINGS = ("Expected code surface",)
 
 
-SPIKE_PREFLIGHT_FIELDS = ("Question", "Budget", "Deliverable")
+SPIKE_PREFLIGHT_FIELDS = ("Question", "Timebox", "Deliverable")
 
 
 HANDOFF_FIELDS = (
@@ -67,7 +49,6 @@ HANDOFF_FIELDS = (
     "Validation skips",
     "Manual verification",
     "Acceptance criteria",
-    "Budget usage",
     "Isolated exploration",
     "Blockers/deviations",
 )

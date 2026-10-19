@@ -6,8 +6,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from cardine.shared.errors import MeridianError
-
 
 CODEX_PERMISSION_PROFILE = "meridian-worktrees"
 
@@ -80,12 +78,8 @@ class ResolvedTaskIdentity:
     handoff_path: Path
     review_path: Path
 
-    def budget_key(self, attempt: int) -> str:
-        if attempt < 1:
-            raise MeridianError("budget attempt must be positive")
-        return f"{self.canonical_id}:{attempt}"
 
-    def as_json(self, project_root: Path, attempt: int = 1) -> dict[str, object]:
+    def as_json(self, project_root: Path) -> dict[str, object]:
         project_root = project_root.resolve()
 
         def display(path: Path) -> str:
@@ -106,7 +100,6 @@ class ResolvedTaskIdentity:
             "queue_path": display(self.queue_path),
             "handoff_path": display(self.handoff_path),
             "review_path": display(self.review_path),
-            "budget_key": self.budget_key(attempt),
         }
 
 

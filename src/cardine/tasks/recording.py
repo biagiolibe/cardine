@@ -4,7 +4,6 @@ from cardine.tasks.contract import EXECUTION_EVIDENCE_PATH
 from cardine.shared.errors import MeridianError
 from pathlib import Path
 from cardine.shared.git import _run_git
-from cardine.shared.budget_commands import budget_spend
 from cardine.tasks.preflight import execution_preflight
 from cardine.lifecycle.execution import execution_source_digest
 from cardine.tasks.identity import find_task_file
@@ -13,6 +12,9 @@ from cardine.tasks.identity import resolve_task_identity
 from cardine.stops.render import stop_error
 import subprocess
 from cardine.tasks.evidence import validation_commands
+
+
+EVIDENCE_EVENT_KINDS = ("diagnostic", "captures", "expansions")
 
 
 def record_validation(project_root: Path, task_id: str, command_id: str, command: str, status: int,
@@ -62,7 +64,7 @@ def record_execution_event(
     criterion: str | None,
     artifact: str | None,
 ) -> str:
-    """Spend a semantic budget only alongside the evidence that justifies it."""
+    """Record an evidence gap and its provenance without self-reported counters."""
     if not gap.strip():
         raise stop_error(
             "EXECUTION_EVIDENCE_ARGUMENTS",
@@ -76,7 +78,6 @@ def record_execution_event(
             "rule: captures need provenance; options checked: --criterion and --artifact; "
             "accepted: both non-empty; missing: " + ", ".join(absent),
         )
-    count, cap = budget_spend(project_root, task_id, kind, criterion if kind == "captures" else None)
     path = project_root / EXECUTION_EVIDENCE_PATH
     state: dict[str, object] = {}
     if path.is_file():
@@ -86,7 +87,7 @@ def record_execution_event(
             raise MeridianError(f"invalid execution evidence state: {path}") from error
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     events = list(state.get(canonical_id, []))
-    event: dict[str, object] = {"kind": kind, "gap": gap, "count": count, "cap": cap}
+    event: dict[str, object] = {"kind": kind, "gap": gap}
     if criterion:
         event["criterion"] = criterion
     if artifact:
@@ -95,7 +96,7 @@ def record_execution_event(
     state[canonical_id] = events
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return f"Evidence {task_id}: {kind} {count}/{cap} recorded"
+    return f"Evidence {task_id}: {kind} recorded"
 
 
 def record_investigation(
@@ -115,8 +116,9 @@ def record_investigation(
             "--finding; accepted: a non-empty value for each; found: missing or empty " + ", ".join(empty),
             resume="rerun meridian execution investigate with --question, --source, and --finding",
         )
+    if scope < 1:
+        raise stop_error("EXECUTION_EVIDENCE_ARGUMENTS", "--scope must be an integer of 1 or more")
     execution_preflight(project_root, task_id)
-    count, cap = budget_spend(project_root, task_id, "investigations", amount=scope)
     path = project_root / EXECUTION_EVIDENCE_PATH
     state: dict[str, object] = {}
     if path.is_file():
@@ -132,10 +134,8 @@ def record_investigation(
         "scope": scope,
         "sources": sources,
         "finding": finding,
-        "count": count,
-        "cap": cap,
     })
     state[canonical_id] = events
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return f"Investigation {task_id}: {count}/{cap} recorded"
+    return f"Investigation {task_id}: recorded"

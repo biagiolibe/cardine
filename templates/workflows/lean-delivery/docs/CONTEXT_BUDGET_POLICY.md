@@ -1,4 +1,4 @@
-# Context Budget and Evidence Policy
+# Context Reading and Evidence Policy
 
 This policy is workflow-neutral. It limits context and validation cost without
 adding lifecycle states, roles, or acceptance gates.

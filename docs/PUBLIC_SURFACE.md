@@ -85,9 +85,6 @@ including command containers and nested subcommands.
 | `meridian usage report` | Experimental |
 | `meridian report` | Internal |
 | `meridian report flow` | Internal |
-| `meridian budget` | Internal |
-| `meridian budget show` | Internal |
-| `meridian budget spend` | Internal |
 | `meridian execution` | Stable |
 | `meridian execution start` | Stable |
 | `meridian execution deliver` | Stable |

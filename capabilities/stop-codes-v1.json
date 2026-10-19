@@ -4,7 +4,10 @@
     {
       "code": "STALE_WORKTREE_BASE",
       "class": "tool",
-      "workflows": ["lean-delivery", "governed-sdd"],
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
       "step": "C4",
       "emitter": "`meridian worktree check`; `prepare`; `closure-status`",
       "human_decision": false,
@@ -277,7 +280,7 @@
       "resume": "meridian execution reconcile {task_id} --apply --project .",
       "kind": "stop",
       "summary": "the task has no current resolved execution contract",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "recoverable"
     },
     {
@@ -291,7 +294,7 @@
       "resume": "add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked meridian execution command",
       "kind": "stop",
       "summary": "the execution evidence profile that the contract derives from is missing",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "guardrail"
     },
     {
@@ -305,7 +308,7 @@
       "resume": "rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the blocked meridian execution command",
       "kind": "stop",
       "summary": "a task Validation entry is not a named literal command",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -319,7 +322,7 @@
       "resume": "add the listed sections or fields to the task record, then rerun meridian execution preflight {task_id} --project .",
       "kind": "stop",
       "summary": "the task record lacks a section or field the preflight requires",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -333,7 +336,7 @@
       "resume": "bring the task to QUEUED or IN_PROGRESS through its lifecycle, then rerun the blocked meridian execution command",
       "kind": "stop",
       "summary": "the task status is not one the execution command accepts",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "guardrail"
     },
     {
@@ -347,7 +350,7 @@
       "resume": "change only the document the message says this actor may change so the statuses are accepted, then rerun meridian execution preflight {task_id} --project .",
       "kind": "stop",
       "summary": "the task record status disagrees with its queue row",
-      "test": "tests.test_budget_context.BudgetCliTest.test_locations_and_preflight_use_the_declared_queue",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_locations_and_preflight_use_the_declared_queue",
       "resolution": "failing-work"
     },
     {
@@ -361,7 +364,7 @@
       "resume": "rerun the meridian execution evidence command with the missing options",
       "kind": "stop",
       "summary": "an execution evidence, investigation, or budget command lacks a required option or has an invalid one",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -375,7 +378,7 @@
       "resume": "write the completion report, then run meridian execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
       "summary": "the completion report file does not exist",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -389,7 +392,7 @@
       "resume": "add each missing field as `- <Field>: <value>`, then rerun meridian execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
       "summary": "required handoff fields are missing",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -403,7 +406,7 @@
       "resume": "rewrite each listed field as `- <Field>: <value>`, then rerun meridian execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
       "summary": "a required handoff field has text between its name and the colon",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -417,7 +420,7 @@
       "resume": "correct the report heading to name this task, then rerun meridian execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
       "summary": "the completion report does not identify the task",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -431,7 +434,7 @@
       "resume": "fix the failing validation and report its passing result, then rerun meridian execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
       "summary": "the report declares a failing validation",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -445,7 +448,7 @@
       "resume": "run meridian execution validate {task_id} <validation-id> --project . for each listed ID, then rerun the handoff check",
       "kind": "stop",
       "summary": "a declared validation has no successful durable record",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -459,7 +462,7 @@
       "resume": "correct the Isolated exploration field or record the investigation with meridian execution investigate {task_id}, then rerun the handoff check",
       "kind": "stop",
       "summary": "the Isolated exploration field disagrees with the durable investigation records",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -473,7 +476,7 @@
       "resume": "add each listed question and finding to the report, then rerun meridian execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
       "summary": "the report omits a recorded exploration question or finding",
-      "test": "tests.test_budget_context.BudgetCliTest.test_handoff_gates_report_coded_actionable_stops",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },
     {
@@ -488,7 +491,7 @@
       "resume": "correct the condition that the detail names, then rerun the same meridian command",
       "kind": "stop",
       "summary": "a meridian command refused to run because a precondition on its inputs or on the project state is not met",
-      "test": "tests.test_budget_context.BudgetCliTest.test_uncoded_command_refusal_reports_command_refused",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_uncoded_command_refusal_reports_command_refused",
       "resolution": "guardrail"
     },
     {
@@ -503,7 +506,7 @@
       "resume": "fix the access problem that the detail names, then rerun the same meridian command",
       "kind": "stop",
       "summary": "an operating-system call failed while a meridian command read or wrote a file",
-      "test": "tests.test_budget_context.BudgetCliTest.test_operating_system_failure_reports_os_access_failed",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_operating_system_failure_reports_os_access_failed",
       "resolution": "guardrail"
     },
     {
@@ -517,22 +520,8 @@
       "resume": "rerun meridian execution validate with a validation ID listed in the task's Validation section, or declare the command there first",
       "kind": "stop",
       "summary": "the requested validation ID is not declared in the task record",
-      "test": "tests.test_budget_context.BudgetCliTest.test_validation_runs_only_a_declared_literal_command_and_records_status",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_validation_runs_only_a_declared_literal_command_and_records_status",
       "resolution": "failing-work"
-    },
-    {
-      "code": "BUDGET_EXHAUSTED",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`meridian budget spend`; `meridian execution investigate`",
-      "human_decision": true,
-      "resume": "report this stop and ask the developer to raise the cap or re-scope the task; never raise the cap yourself",
-      "kind": "stop",
-      "summary": "a task budget cap is reached and the requested use would exceed it",
-      "test": "tests.test_budget_context.BudgetCliTest.test_spend_returns_non_zero_and_names_blocked_once_cap_is_used",
-      "resolution": "guardrail"
     },
     {
       "code": "HOST_IMPACT_DECLARATION_INVALID",
@@ -545,7 +534,7 @@
       "resume": "correct the task's Host impact declaration as the detail names, then rerun the blocked meridian execution command",
       "kind": "stop",
       "summary": "the task's Host impact declaration is malformed or incomplete",
-      "test": "tests.test_budget_context.BudgetCliTest.test_execution_preflight_validates_host_impact_declarations",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_preflight_validates_host_impact_declarations",
       "resolution": "failing-work"
     },
     {
@@ -559,7 +548,7 @@
       "resume": "add a Completion evidence entry for each listed profile to the task's Host impact section, then rerun the blocked meridian execution command",
       "kind": "stop",
       "summary": "an enforced host-impact profile has no completion evidence",
-      "test": "tests.test_budget_context.BudgetCliTest.test_ready_check_requires_evidence_only_for_enforced_host_profiles",
+      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_ready_check_requires_evidence_only_for_enforced_host_profiles",
       "resolution": "failing-work"
     },
     {
@@ -603,20 +592,6 @@
       "resume": "report both rules and ask the developer which governs; never write false state to satisfy a gate",
       "kind": "stop",
       "summary": "a gate seems to contradict another rule or authority, so neither can be followed without breaking the other",
-      "resolution": "guardrail"
-    },
-    {
-      "code": "CONTRACT_EXHAUSTED",
-      "class": "judgment",
-      "workflows": [
-        "lean-delivery",
-        "governed-sdd"
-      ],
-      "emitter": "agent judgment: the task's diagnostic, evidence, or context-expansion allowance is used up; `meridian budget spend` reports the counted form as BUDGET_EXHAUSTED",
-      "human_decision": true,
-      "resume": "report this stop and ask the developer to raise the allowance or re-scope the task; never raise it yourself",
-      "kind": "stop",
-      "summary": "the task's declared allowance for diagnostics, evidence, or context expansion is exhausted",
       "resolution": "guardrail"
     },
     {
@@ -792,21 +767,6 @@
       "resume": "inspect the framework checkout, then rerun meridian self-update --check",
       "kind": "stop",
       "summary": "self-update Git operation or final verification failed",
-      "resolution": "guardrail"
-    },
-    {
-      "code": "BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd",
-        "lean-delivery"
-      ],
-      "emitter": "`meridian worktree prepare`",
-      "human_decision": true,
-      "resume": "only after explicit developer authorization, run meridian worktree prepare {task_id} --project {project} --new-attempt --reason \"<developer reason>\" --format json",
-      "kind": "stop",
-      "summary": "a retired task attempt has inherited budget spends and needs developer authorization for a new attempt",
-      "test": "tests.test_worktree_checkout.WorktreeCheckoutTest.test_prepare_blocks_inherited_budget_spends",
       "resolution": "guardrail"
     }
   ]

@@ -35,7 +35,6 @@ import re
 from cardine.shared.project import read_project_declaration
 from cardine.release.version import read_version
 from cardine.shared.hashing import sha256
-from cardine.shared.budget import tracked_budget_state
 from cardine.release.version import version_key
 
 
@@ -594,11 +593,6 @@ def run_audit(
             results.append(AuditResult("ADVISORY", "project-declaration", "advisory-incomplete; missing project identity"))
     except MeridianError as error:
         results.append(AuditResult("FAIL", "project-declaration", str(error)))
-    try:
-        if tracked_budget_state(project_root):
-            results.append(AuditResult("ADVISORY", "budget-state", "tracked legacy .meridian/budget.json; the next budget write migrates it"))
-    except MeridianError as error:
-        results.append(AuditResult("FAIL", "budget-state", str(error)))
 
     results.sort(key=lambda result: (result.identity, result.detail))
     for result in results:

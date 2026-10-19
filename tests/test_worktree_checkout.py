@@ -22,67 +22,21 @@ from cardine.worktree import closure_status as owner_worktree_closure_status
 from cardine.integration import evidence as owner_integration_evidence
 from cardine.worktree import checkout as owner_worktree_checkout
 from cardine.shared import journal as owner_shared_journal
-from cardine.shared import budget as owner_shared_budget
 import cardine.shared.errors as shared_errors
 from cardine.console import models as project_console
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
-from cardine.shared import budget_commands as owner_shared_budget_commands
 
 from stop_recovery_support import run_recovery, resume_from
 import worktree_support as support
 
 
 class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
-    def test_prepare_blocks_inherited_budget_spends(self):
-        state = self.retired_budget({"diagnostic": 2, "captures:AC1": 1})
-        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED BUDGET_ATTEMPT_REQUIRES_AUTHORIZATION.*diagnostic.*resume:"):
-            self.prepare()
-        self.assertEqual(owner_shared_budget.load_budget_state(self.primary), state)
-        self.assertEqual(len(meridian._git_worktrees(self.primary)), 1)
-
-
-    def test_prepare_retired_without_spends(self):
-        self.retired_budget({"diagnostic": 0})
+    def test_prepare_does_not_read_or_write_the_retired_ledger(self):
+        ledger = meridian.canonical_git_common_dir(self.primary) / "meridian-budget.json"
+        ledger.write_text("invalid retired ledger\n", encoding="utf-8")
         self.assertTrue(self.prepare()["created"])
-        self.assertIn("Attempt 1", owner_shared_budget_commands.budget_show(self.primary, "056"))
-
-
-    def test_new_budget_attempt_preserves_history_and_journals_reason(self):
-        state = self.retired_budget({"diagnostic": 2, "captures:AC1": 1})
-        task = owner_tasks_identity.find_task_file(self.primary, "056")
-        original = task.read_bytes()
-        result = subprocess.run([
-            sys.executable, str(ROOT / "scripts/meridian.py"), "worktree", "prepare", "056",
-            "--project", str(self.primary), "--worktree-root", str(self.worktree_root),
-            "--new-attempt", "--reason", "Developer approved redesign", "--format", "json",
-        ], cwd=self.primary, text=True, capture_output=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        ledger = owner_shared_budget.load_budget_state(self.primary)
-        self.assertEqual(ledger["056:1"], state["056:1"])
-        self.assertEqual(ledger["056:2"], {})
-        self.assertEqual(ledger["056"]["attempt"], 2)
-        self.assertEqual(task.read_bytes(), original)
-        self.assertIn("Attempt 2", owner_shared_budget_commands.budget_show(self.primary, "056"))
-        journal = meridian.canonical_git_common_dir(self.primary) / owner_shared_journal.JOURNAL_NAME
-        event = next(json.loads(line) for line in journal.read_text().splitlines()
-                     if json.loads(line)["command"] == "worktree prepare new-attempt")
-        self.assertEqual(event["task"], "056")
-        self.assertEqual((event["previous_attempt"], event["new_attempt"]), (1, 2))
-        self.assertEqual(event["historical_counters"], state["056:1"])
-        self.assertEqual(event["reason"], "Developer approved redesign")
-
-
-    def test_new_budget_attempt_requires_reason_and_retired_worktree(self):
-        for reason in (None, "", "   "):
-            with self.assertRaisesRegex(shared_errors.MeridianError, "non-empty --reason"):
-                owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary,
-                                               new_attempt=True, reason=reason)
-        self.prepare()
-        with self.assertRaisesRegex(shared_errors.MeridianError, "registered task worktree"):
-            owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary,
-                                           new_attempt=True, reason="Approved")
-        self.assertEqual(owner_shared_budget.load_budget_state(self.primary), {})
+        self.assertEqual(ledger.read_text(encoding="utf-8"), "invalid retired ledger\n")
 
 
     def test_stale_base_check_and_repair(self) -> None:
@@ -422,7 +376,6 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertTrue(ready, correct)
         self.assertEqual(correct["branch"], "task-056")
         self.assertTrue(correct["clean"])
-
 
 
 if __name__ == "__main__":
