@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from cardine.tasks.contract import EXECUTION_EVIDENCE_PATH
+from cardine.shared.layout import names
+
 from cardine.shared.errors import MeridianError
 from pathlib import Path
 from cardine.shared.git import _run_git
@@ -19,7 +20,7 @@ EVIDENCE_EVENT_KINDS = ("diagnostic", "captures", "expansions")
 
 def record_validation(project_root: Path, task_id: str, command_id: str, command: str, status: int,
                       binding: dict[str, str] | None = None) -> None:
-    path = project_root / EXECUTION_EVIDENCE_PATH
+    path = project_root / names().execution_evidence_path
     state: dict[str, object] = {}
     if path.is_file():
         try:
@@ -78,7 +79,7 @@ def record_execution_event(
             "rule: captures need provenance; options checked: --criterion and --artifact; "
             "accepted: both non-empty; missing: " + ", ".join(absent),
         )
-    path = project_root / EXECUTION_EVIDENCE_PATH
+    path = project_root / names().execution_evidence_path
     state: dict[str, object] = {}
     if path.is_file():
         try:
@@ -119,7 +120,7 @@ def record_investigation(
     if scope < 1:
         raise stop_error("EXECUTION_EVIDENCE_ARGUMENTS", "--scope must be an integer of 1 or more")
     execution_preflight(project_root, task_id)
-    path = project_root / EXECUTION_EVIDENCE_PATH
+    path = project_root / names().execution_evidence_path
     state: dict[str, object] = {}
     if path.is_file():
         try:

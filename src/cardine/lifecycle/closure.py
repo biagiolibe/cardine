@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.evidence import record_task_evidence
 from cardine.integration.merge import _integration_task_state
@@ -175,7 +177,7 @@ def advance_task_closure(
                         # close refuses archived records; recreate only their missing state.
                         commands.append(shlex.join([
                             "git", "-C", str(recovery_project), "add", "--",
-                            f".meridian/tasks/{task}.json",
+                            (names().tasks_path / f"{task}.json").as_posix(),
                             recovery_identity.task_path.relative_to(recovery_project).as_posix(),
                         ]))
                     commands.append(shlex.join([

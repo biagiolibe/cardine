@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import _git_worktrees
 from cardine.shared.git import _run_git
@@ -13,7 +15,6 @@ from cardine.shared.journal import append_journal_line
 from cardine.shared.jsonio import _read_json_object
 from cardine.shared.jsonio import _write_json_atomic
 from cardine.shared.models import ResolvedTaskIdentity
-from cardine.shared.models import WORKTREE_STATE_DIRECTORY
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.stops.render import stop_resume
@@ -324,7 +325,7 @@ def active_worktree_task(directory: Path) -> dict[str, object] | None:
     if registered is None:
         return None
     branch = registered.get("branch", "").removeprefix("refs/heads/")
-    state_directory = canonical_git_common_dir(primary) / WORKTREE_STATE_DIRECTORY
+    state_directory = canonical_git_common_dir(primary) / names().worktree_state_directory
     context: TaskIdentityContext | None = None
     for state_path in sorted(state_directory.glob("*.json")) if state_directory.is_dir() else ():
         try:
@@ -342,7 +343,7 @@ def active_worktree_task(directory: Path) -> dict[str, object] | None:
             continue
         archived = identity.task_path.parent / "done" / identity.task_path.name
         exempt = [identity.task_path, archived, identity.handoff_path, identity.review_path,
-                  primary / ".meridian/tasks" / f"{identity.canonical_id}.json"]
+                  primary / names().tasks_path / f"{identity.canonical_id}.json"]
         return {
             "task_id": identity.canonical_id,
             "branch": branch,
@@ -360,7 +361,7 @@ def registered_worktree_task_states(project_root: Path) -> list[dict[str, str]]:
         for item in _git_worktrees(primary) if "worktree" in item
     }
     states: list[dict[str, str]] = []
-    state_directory = canonical_git_common_dir(primary) / WORKTREE_STATE_DIRECTORY
+    state_directory = canonical_git_common_dir(primary) / names().worktree_state_directory
     context: TaskIdentityContext | None = None
     for state_path in sorted(state_directory.glob("*.json")) if state_directory.is_dir() else ():
         try:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.worktree.paths import repository_identity
 
 from cardine.hosts.claude import apply_claude_project_allowlist
@@ -20,13 +22,10 @@ from cardine.hosts.skills import _stale_codex_skill_warnings
 from cardine.hosts.skills import codex_profile_root_mismatch
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.evidence import proposed_candidate_validation_declaration
-from cardine.shared.constants import PROJECT_DECLARATION_PATH
-from cardine.shared.constants import TASK_IDENTITY_PATH
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import _run_git
 from cardine.shared.git import primary_project_root
 from cardine.shared.jsonio import _write_json_atomic
-from cardine.shared.models import CANDIDATE_VALIDATION_PATH
 from cardine.shared.models import SetupPlan
 from cardine.shared.project import parse_project_declaration
 from cardine.shared.project import read_project_declaration
@@ -73,7 +72,7 @@ def plan_setup(
     # Applying with a higher-precedence source must never overwrite malformed
     # lower-precedence user state without first reporting it.
     existing_config = _read_user_configuration(resolution.config_path)
-    default_root = home / ".meridian/worktrees"
+    default_root = home / names().worktree_root
     expected_config = {"version": 1, "worktreeRoot": str(resolution.path)}
     if resolution.path == default_root:
         config_action = "remove" if existing_config is not None else "none"
@@ -105,7 +104,7 @@ def plan_setup(
     claude_state = claude_plan.status
     claude_detail = claude_plan.detail
     claude_hook_duplicates = claude_hook_duplicate_advisories(project_root, home)
-    candidate_validation_path = project_root / CANDIDATE_VALIDATION_PATH
+    candidate_validation_path = project_root / names().candidate_validation_path
     candidate_validation_proposal: dict[str, object] | None = None
     try:
         candidate_validation_state, _candidate_fragments = candidate_validation_declaration(project_root)
@@ -118,7 +117,7 @@ def plan_setup(
     except MeridianError:
         candidate_validation_state = "blocked"
 
-    project_declaration_path = project_root / PROJECT_DECLARATION_PATH
+    project_declaration_path = project_root / names().project_declaration_path
     project_declaration_proposal: dict[str, object] | None = None
     try:
         if project_declaration_path.exists():
@@ -148,7 +147,7 @@ def plan_setup(
     except MeridianError:
         project_declaration_state = "blocked"
 
-    task_identity_path = project_root / TASK_IDENTITY_PATH
+    task_identity_path = project_root / names().task_identity_path
     task_identity_proposal: dict[str, object] | None = None
     task_identity_detail = "no task-identity choice requested"
     if task_identity is None:

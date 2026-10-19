@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.release.version import read_version
 from cardine.release.version import require_release_version
 from cardine.release.version import version_key
-from cardine.shared.constants import BASELINES_PATH
 from cardine.shared.constants import ENTRY_ROUTER_PATH
 from cardine.shared.constants import PROTOCOL_VERSION
 from cardine.shared.errors import MeridianError
@@ -53,7 +54,7 @@ def copy_baseline(
     version: str,
     managed_files_override: list[ManagedFile] | None = None,
 ) -> None:
-    destination_root = project_root / BASELINES_PATH / version
+    destination_root = project_root / names().baselines_path / version
     for item in managed_files_override or managed_files(framework_root, mode):
         destination = destination_root / item.target
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -68,7 +69,7 @@ def prune_stale_baselines(project_root: Path, keep_version: str) -> None:
     (see `plan_upgrade`); older snapshots are dead weight the moment an
     upgrade or adoption completes.
     """
-    baselines_root = project_root / BASELINES_PATH
+    baselines_root = project_root / names().baselines_path
     if not baselines_root.is_dir():
         return
     for entry in baselines_root.iterdir():

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import PRODUCT_NAMES
+
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,16 +21,16 @@ CODEX_MANAGED_END = "# MERIDIAN:END worktree-permissions"
 SAFE_PATH_COMPONENT = re.compile(r"[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?")
 
 
-CANDIDATE_VALIDATION_PATH = Path(".meridian/candidate-validation.json")
+CANDIDATE_VALIDATION_PATH = PRODUCT_NAMES.candidate_validation_path
 
 
-WORKTREE_STATE_DIRECTORY = "meridian-worktrees"
+WORKTREE_STATE_DIRECTORY = PRODUCT_NAMES.worktree_state_directory
 
 
-INTEGRATION_LEASE_NAME = "meridian-integration.lock"
+INTEGRATION_LEASE_NAME = PRODUCT_NAMES.integration_lease_name
 
 
-INTEGRATION_STATE_NAME = "meridian-integration.json"
+INTEGRATION_STATE_NAME = PRODUCT_NAMES.integration_state_name
 
 
 STRUCTURED_TASK_ID = re.compile(

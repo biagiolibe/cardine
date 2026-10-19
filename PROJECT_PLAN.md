@@ -82,7 +82,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 039 — Check the self-hosting installation only with the installed Meridian.
 - `[x]` 040 — Plan the rename of code identifiers (work item 5a).
 - `[x]` 041 — Plan the single workflow (work item 6).
-- `[ ]` 042 — Introduce the project names accessor (rename plan R1).
+- `[x]` 042 — Introduce the project names accessor (rename plan R1).
 - `[ ]` 043 — Extract the read-only Meridian installation reader (rename plan R2).
 - `[ ]` 044 — Decouple the frozen-surface readers (rename plan R3).
 - `[ ]` 045 — Rename the exception and parser classes (rename plan R4).

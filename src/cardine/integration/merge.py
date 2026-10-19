@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from cardine.tasks.contract import EXECUTION_EVIDENCE_PATH
+from cardine.shared.layout import names
+
 from cardine.integration.decision import IntegrationValidationOutcome
 from cardine.shared.errors import MeridianError
 from pathlib import Path
@@ -62,7 +63,7 @@ def _spike_disallowed_paths(
         str(archived_path.relative_to(project_root)),
         str(identity.handoff_path.relative_to(project_root)),
         str(find_adr_log(project_root).relative_to(project_root)),
-        EXECUTION_EVIDENCE_PATH.as_posix(),
+        names().execution_evidence_path.as_posix(),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
     }
     deliverable = read_task_field(task_record, "Deliverable") or ""
@@ -152,7 +153,7 @@ def _integration_task_state(
             record.as_posix(), (record.parent / "done" / record.name).as_posix(),
             identity.handoff_path.relative_to(project_root).as_posix(),
             identity.review_path.relative_to(project_root).as_posix(),
-            relative.as_posix(), EXECUTION_EVIDENCE_PATH.as_posix(),
+            relative.as_posix(), names().execution_evidence_path.as_posix(),
         }
         changed = git_output(project_root, "diff", "--name-only", str(reviewed), task_commit).splitlines()
         offending = sorted(set(changed) - allowed)

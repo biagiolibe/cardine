@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.shared.constants import VALIDATION_EVIDENCE_SCHEMA_PATH
 from cardine.shared.constants import VALIDATION_EXIT_FAILED
 from cardine.shared.constants import VALIDATION_EXIT_PASSED
@@ -12,10 +14,8 @@ from cardine.shared.git import git_output
 from cardine.shared.jsonio import _read_json_object
 from cardine.shared.jsonio import _write_json_atomic
 from cardine.shared.models import CANDIDATE_VALIDATION_OUTCOMES
-from cardine.shared.models import CANDIDATE_VALIDATION_PATH
 from cardine.shared.models import ResolvedTaskIdentity
 from cardine.stops.render import stop_error
-from cardine.tasks.contract import EXECUTION_EVIDENCE_PATH
 from cardine.tasks.identity import resolve_project_locations
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.state import state_path
@@ -149,7 +149,7 @@ def _bool_field(value: object, label: str) -> bool:
 
 def candidate_validation_declaration(project_root: Path) -> tuple[str, dict[str, tuple[str, ...]]]:
     """Load the consumer-owned candidate-validation declaration without running it."""
-    path = project_root / CANDIDATE_VALIDATION_PATH
+    path = project_root / names().candidate_validation_path
     if not path.exists():
         return "undeclared", {}
     data = _read_json_object(path, "candidate-validation declaration")
@@ -205,7 +205,7 @@ def undeclared_validation_commands_error(project_root: Path, evidence: dict[str,
     proposal = json.dumps(proposed_candidate_validation_declaration(project_root), sort_keys=True)
     return stop_error(
         "UNDECLARED_VALIDATION_COMMANDS",
-        f"no project choice is recorded at {CANDIDATE_VALIDATION_PATH}. "
+        f"no project choice is recorded at {names().candidate_validation_path}. "
         f"Task validation commands: {recorded}. Proposed declaration: {proposal}",
     )
 
@@ -336,7 +336,7 @@ def _lifecycle_changes_after_validation(
         str(identity.handoff_path.relative_to(project_root)),
         str(identity.review_path.relative_to(project_root)),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
-        EXECUTION_EVIDENCE_PATH.as_posix(),
+        names().execution_evidence_path.as_posix(),
         str(plan_path),
         "tasks/QUEUE_ARCHIVE.md",
     }

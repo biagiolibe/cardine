@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import PRODUCT_NAMES
+
 import re
 from pathlib import Path
 
 
-MANIFEST_PATH = Path(".meridian/manifest.json")
+# Default-value exports for the legacy adapter; readers use names() at call time.
+MANIFEST_PATH = PRODUCT_NAMES.manifest_path
 
 VALIDATION_EVIDENCE_SCHEMA_PATH = Path("schemas/validation-evidence-v1.schema.json")
 
@@ -20,7 +23,7 @@ CAPABILITY_CATALOG_VERSION = 1
 
 CAPABILITY_CATALOG_PATH = Path("capabilities/catalog-v1.json")
 
-BASELINES_PATH = Path(".meridian/baselines")
+BASELINES_PATH = PRODUCT_NAMES.baselines_path
 
 
 # Bump only when the manifest's shape or semantics change in a way that an
@@ -110,7 +113,7 @@ ENTRY_ROUTER_SAFEGUARDS = {
     "audit": ("audit",),
 }
 
-CONTEXT_SIZE_CONFIG_PATH = Path(".meridian/context-size.json")
+CONTEXT_SIZE_CONFIG_PATH = PRODUCT_NAMES.context_size_config_path
 
 CONTEXT_SIZE_POLICY_PATH = Path("docs/CONTEXT_BUDGET_POLICY.md")
 
@@ -135,6 +138,6 @@ USAGE_ADAPTER_NOTES = {
     "claude": "Claude Code project JSONL adapter (observed assistant usage schema, 2026-10-04; input = input_tokens + cache_read_input_tokens + cache_creation_input_tokens).",
 }
 
-TASK_IDENTITY_PATH = Path(".meridian/task-identity.json")
+TASK_IDENTITY_PATH = PRODUCT_NAMES.task_identity_path
 
-PROJECT_DECLARATION_PATH = Path(".meridian/project.json")
+PROJECT_DECLARATION_PATH = PRODUCT_NAMES.project_declaration_path
