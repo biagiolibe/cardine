@@ -45,4 +45,5 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 4, and decisions 5 and 7.
 | `[x]` | 038 | Reject a stale `requiredVersion` in the marker catalog | 🔴 P1 | 029 | [038](done/038-check-marker-required-versions.md) |
 | `[x]` | 034 | Remove release baselines and adoption from historical versions | 🔴 P1 | 029, 038 | [034](done/034-remove-release-baselines-and-historical-adoption.md) |
 | `[ ]` | 035 | Remove the self-reported budget counters | 🔴 P1 | 034 | [035](035-remove-budget-counters.md) |
-| `[ ]` | 036 | Move maintainer commands out of the user CLI and merge the generators | 🔴 P1 | 035 | [036](036-move-maintainer-commands.md) |
+| `[ ]` | 039 | Check this repository's installation only with the installed Meridian | 🔴 P1 | 035 | [039](039-check-self-hosting-with-installed-meridian.md) |
+| `[ ]` | 036 | Move maintainer commands out of the user CLI and merge the generators | 🔴 P1 | 035, 039 | [036](036-move-maintainer-commands.md) |

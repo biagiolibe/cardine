@@ -32,7 +32,6 @@ one release script belongs to work item 12.
   routers. Its `--check` mode passes on the current templates, and it
   replaces both old commands.
 - [ ] Every caller uses the new entry point:
-  - `.github/workflows/validate.yml`;
   - `CONTRIBUTING.md`;
   - `scripts/check_repository.py`;
   - the tests;
@@ -53,13 +52,14 @@ one release script belongs to work item 12.
 | `scripts/meridian.py`, `src/cardine/cli.py` | Command registration, wherever task 022 left it. |
 | `scripts/dev.py` (new) or equivalent | Development entry point. |
 | `src/cardine/templates/router.py` and the shared-body generator | The two generators to merge. |
-| `.github/workflows/validate.yml`, `CONTRIBUTING.md` | Callers of `profile doctor`. |
+| `CONTRIBUTING.md`, `tests/` | Remaining callers of `profile` and `report`. |
 
 ## Technical Context
 
-- Every task contract today validates with `python3 scripts/meridian.py
-  --framework-root . profile doctor meridian-self-hosting --project .`, and
-  CI runs the same command. Both callers move.
+- Task 039 checks this repository's installation only with the installed
+  Meridian and removes the checkout's `profile doctor` and `audit` from CI and
+  from the task validation lines. The callers of `profile` that remain are
+  the tests and the documentation, and they move to the new entry point.
 - Task 030 extends the journal report that `report flow` prints. That
   behavior moves with the command.
 
@@ -70,14 +70,14 @@ Hook duplicates (work item 9), the release script merge (work item 12), and
 
 ## Dependencies
 
-- **Depends on**: 035
+- **Depends on**: 035, 039
 - **Blocks**: none
 
 ## Validation
 
 - `python3 scripts/check_repository.py`
-- `python3 scripts/dev.py profile doctor meridian-self-hosting --project .`
-- `python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
+- `meridian profile doctor meridian-self-hosting --project .`
+- `meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
