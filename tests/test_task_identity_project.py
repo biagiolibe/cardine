@@ -31,7 +31,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
 
     def declare(self, mode: str = "milestone", **extra: object) -> None:
         declaration: dict[str, object] = {"version": 1, "mode": mode, **extra}
-        identity = self.project / ".meridian/task-identity.json"
+        identity = self.project / ".cardine/task-identity.json"
         identity.parent.mkdir(parents=True, exist_ok=True)
         identity.write_text(json.dumps(declaration), encoding="utf-8")
 
@@ -115,7 +115,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertEqual(resolved.review_path, (self.project / "artifacts/reviews/M8-API-011.md").resolve())
 
     def test_policy_and_authority_fail_closed(self) -> None:
-        identity = self.project / ".meridian/task-identity.json"
+        identity = self.project / ".cardine/task-identity.json"
         identity.parent.mkdir(parents=True)
         malformed = (
             "{",
@@ -321,7 +321,7 @@ class ProjectDeclarationTest(unittest.TestCase):
         self.temporary.cleanup()
 
     def write(self, declaration: object) -> None:
-        path = self.project / ".meridian/project.json"
+        path = self.project / ".cardine/project.json"
         path.parent.mkdir(exist_ok=True)
         path.write_text(json.dumps(declaration), encoding="utf-8")
 

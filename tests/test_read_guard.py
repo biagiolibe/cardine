@@ -134,9 +134,9 @@ class ReadGuardTest(unittest.TestCase):
         target = self.write_file("PROJECT_WORKFLOW.md", 500)
         target.write_text("LEAN_DELIVERY\n" * 500, encoding="utf-8")
         # MERIDIAN-INSTALLATION-CHECK
-        (self.project / ".meridian").mkdir()
+        (self.project / ".cardine").mkdir()
         # MERIDIAN-INSTALLATION-CHECK
-        (self.project / ".meridian/context-size.json").write_text(
+        (self.project / ".cardine/context-size.json").write_text(
             '{"version": 1, "routerFileLinesCeiling": 100}\n', encoding="utf-8"
         )
         result = run_hook(self.payload(target))

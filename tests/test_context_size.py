@@ -66,8 +66,8 @@ class ContextSizeTest(unittest.TestCase):
 
     def test_task_authority_milestone_threshold_and_no_writes(self) -> None:
         self.governed()
-        (self.project / ".meridian").mkdir()
-        (self.project / ".meridian/task-identity.json").write_text('{"version": 1, "mode": "milestone"}\n', encoding="utf-8")
+        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine/task-identity.json").write_text('{"version": 1, "mode": "milestone"}\n', encoding="utf-8")
         (self.project / "docs/ARCHITECTURE_DECISIONS.md").write_text("## ADR-0001 — Test\n\nBody.\n", encoding="utf-8")
         task = self.project / "tasks/M1-CORE-001.md"
         task.write_text("# Task\n\n## Authority\n\n- ADR-0001\n", encoding="utf-8")
@@ -81,8 +81,8 @@ class ContextSizeTest(unittest.TestCase):
 
     def test_router_file_ceiling_is_reported_and_fails(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n" * 3, encoding="utf-8")
-        (self.project / ".meridian").mkdir()
-        (self.project / ".meridian/context-size.json").write_text(
+        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine/context-size.json").write_text(
             '{"version": 1, "routerFileLinesCeiling": 1}\n', encoding="utf-8"
         )
         result = self.run_cli("--role", "implementation", "--format", "json")

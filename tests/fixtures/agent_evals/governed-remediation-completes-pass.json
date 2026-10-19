@@ -2,7 +2,7 @@
   "agent_commits": [
     {
       "paths": [
-        ".meridian/execution-evidence.json",
+        ".cardine/execution-evidence.json",
         "tasks/handoffs/TASK-001.md"
       ],
       "sha": "d84964c1a98a681dce3c6e71d13925ea563d49a1"
@@ -69,8 +69,8 @@
   "origin_main_files": [
     ".claudeignore",
     ".gitignore",
-    ".meridian/candidate-validation.json",
-    ".meridian/manifest.json",
+    ".cardine/candidate-validation.json",
+    ".cardine/manifest.json",
     "AGENTS.md",
     "CLAUDE.md",
     "LANGUAGE_POLICY.md",

@@ -62,7 +62,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.git('commit', '-qm', subject)
 
     def state(self):
-        return json.loads((self.worker / '.meridian/tasks/001.json').read_text())
+        return json.loads((self.worker / '.cardine/tasks/001.json').read_text())
 
     def assert_stop(self, code, action):
         with self.assertRaises(shared_errors.CardineStop) as caught:
@@ -160,10 +160,10 @@ class ExecutionBoundariesTest(unittest.TestCase):
         (self.worker / self.record).write_text(text.replace('Profile revision:', 'Missing revision:'))
         self.commit('Unresolved contract')
         self.assert_stop('EXECUTION_CONTRACT_UNRESOLVED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
-        self.assertFalse((self.worker / '.meridian/tasks/001.json').exists())
+        self.assertFalse((self.worker / '.cardine/tasks/001.json').exists())
         os.chdir(self.primary)
         self.assert_stop('WRONG_WORKTREE', lambda: owner_lifecycle_commands.execution_start(self.primary, '001'))
-        self.assertFalse((self.primary / '.meridian/tasks/001.json').exists())
+        self.assertFalse((self.primary / '.cardine/tasks/001.json').exists())
 
     def test_lean_start_is_read_only_and_preserves_machine(self):
         (self.worker / 'PROJECT_WORKFLOW.md').write_text('LEAN_DELIVERY\n')
@@ -172,7 +172,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         result = owner_lifecycle_commands.execution_start(self.worker, '001')
         self.assertEqual(result['status'], 'QUEUED')
         self.assertFalse(result['started'])
-        self.assertFalse((self.worker / '.meridian/tasks/001.json').exists())
+        self.assertFalse((self.worker / '.cardine/tasks/001.json').exists())
         self.assertEqual(self.git('status', '--porcelain'), before)
 
     def test_delivery_commits_only_owned_projections_and_is_idempotent(self):
@@ -182,7 +182,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(result['status'], 'READY_FOR_REVIEW')
         self.assertTrue(result['clean'])
         self.assertEqual(set(self.git('diff', '--name-only', before, 'HEAD').splitlines()),
-                         {'.meridian/tasks/001.json', 'tasks/001.md'})
+                         {'.cardine/tasks/001.json', 'tasks/001.md'})
         state = self.state()
         self.assertEqual(state['transitions'][-1]['commit'], before)
         self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), result)
@@ -237,10 +237,10 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.reject_later_change('tasks/001.md')
 
     def test_later_execution_evidence_change_is_rejected_even_if_reverted(self):
-        self.reject_later_change('.meridian/execution-evidence.json')
+        self.reject_later_change('.cardine/execution-evidence.json')
 
     def test_later_state_file_change_is_rejected_even_if_reverted(self):
-        self.reject_later_change('.meridian/tasks/001.json')
+        self.reject_later_change('.cardine/tasks/001.json')
 
     def test_current_commit_field_is_checked_before_first_delivery(self):
         identity = self.implemented()
@@ -337,7 +337,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.git('status', '--porcelain'), '')
 
     def test_invalid_machine_state_stops_without_repair_or_start(self):
-        path = self.worker / '.meridian/tasks/001.json'
+        path = self.worker / '.cardine/tasks/001.json'
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('{invalid JSON')
         self.commit('Invalid state fixture')
@@ -389,7 +389,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.git('rev-parse', 'HEAD^'), before)
         self.assertEqual(self.git('log', '-1', '--format=%s'), 'Deliver 001 for review')
         self.assertEqual(set(self.git('diff', '--name-only', before, 'HEAD').splitlines()),
-                         {'.meridian/tasks/001.json', 'tasks/001.md'})
+                         {'.cardine/tasks/001.json', 'tasks/001.md'})
         self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), delivered)
         self.assertEqual(Path.cwd(), directory.resolve())
         self.assertEqual(self.git('status', '--porcelain'), '')
@@ -423,7 +423,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                               + f'expected worktree={self.worker}; --project does not name the canonical task worktree')
                     resume = shlex.join(['cardine', *command, '--project', str(self.worker)])
                     self.assertEqual(result.stderr.strip(), f'BLOCKED WRONG_WORKTREE: {detail}; resume: {resume}')
-        self.assertFalse((self.worker / '.meridian/tasks/001.json').exists())
+        self.assertFalse((self.worker / '.cardine/tasks/001.json').exists())
         self.assertEqual(self.git('status', '--porcelain'), '')
 
     def test_no_registered_worktree_keeps_prepare_resume(self):

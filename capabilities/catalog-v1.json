@@ -358,10 +358,10 @@
         "validation-scoping": 1
       },
       "hostProbes": {
-        "claude-project": ".meridian/probes/governed-sdd-consumer/claude-project-v1.json",
-        "codex-project": ".meridian/probes/governed-sdd-consumer/codex-project-v1.json"
+        "claude-project": ".cardine/probes/governed-sdd-consumer/claude-project-v1.json",
+        "codex-project": ".cardine/probes/governed-sdd-consumer/codex-project-v1.json"
       },
-      "verificationProbe": ".meridian/probes/governed-sdd-consumer/host-neutral-ci-v1.json",
+      "verificationProbe": ".cardine/probes/governed-sdd-consumer/host-neutral-ci-v1.json",
       "version": 1,
       "workflowModes": [
         "governed-sdd"
@@ -376,16 +376,16 @@
         "validation-scoping": 1
       },
       "hostProbes": {
-        "claude-project": ".meridian/probes/lean-delivery-consumer/claude-project-v1.json",
-        "codex-project": ".meridian/probes/lean-delivery-consumer/codex-project-v1.json"
+        "claude-project": ".cardine/probes/lean-delivery-consumer/claude-project-v1.json",
+        "codex-project": ".cardine/probes/lean-delivery-consumer/codex-project-v1.json"
       },
-      "verificationProbe": ".meridian/probes/lean-delivery-consumer/host-neutral-ci-v1.json",
+      "verificationProbe": ".cardine/probes/lean-delivery-consumer/host-neutral-ci-v1.json",
       "version": 1,
       "workflowModes": [
         "lean-delivery"
       ]
     },
-    "meridian-self-hosting": {
+    "cardine-self-hosting": {
       "capabilities": {
         "context-budgeting": 1,
         "execution-evidence": 1,
@@ -397,10 +397,10 @@
         "worktree-safety": 1
       },
       "hostProbes": {
-        "claude-project": ".meridian/probes/meridian-self-hosting/claude-project-v1.json",
-        "codex-project": ".meridian/probes/meridian-self-hosting/codex-project-v1.json"
+        "claude-project": ".cardine/probes/cardine-self-hosting/claude-project-v1.json",
+        "codex-project": ".cardine/probes/cardine-self-hosting/codex-project-v1.json"
       },
-      "verificationProbe": ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",
+      "verificationProbe": ".cardine/probes/cardine-self-hosting/host-neutral-ci-v1.json",
       "version": 1
     }
   }

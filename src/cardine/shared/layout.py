@@ -15,7 +15,8 @@ from typing import Iterator
 
 @dataclass(frozen=True)
 class ProjectNames:
-    project_directory: str = ".meridian"
+    project_directory: str = ".cardine"
+    worktree_root_directory: str | None = None
     worktree_state_directory: str = "meridian-worktrees"
     integration_lease_name: str = "meridian-integration.lock"
     integration_state_name: str = "meridian-integration.json"
@@ -63,7 +64,7 @@ class ProjectNames:
     @property
     def worktree_root(self) -> Path:
         """Default worktree root, relative to the user's home directory."""
-        return Path(self.project_directory) / "worktrees"
+        return Path(self.worktree_root_directory or self.project_directory) / "worktrees"
 
     @property
     def user_configuration_path(self) -> Path:
@@ -71,7 +72,8 @@ class ProjectNames:
         return Path(self.user_configuration_directory) / "config.json"
 
 
-PRODUCT_NAMES = ProjectNames()
+# The machine-level root moves separately from project state (rename plan R9).
+PRODUCT_NAMES = ProjectNames(worktree_root_directory=".meridian")
 _NAMES: ContextVar[ProjectNames] = ContextVar("project_names", default=PRODUCT_NAMES)
 
 

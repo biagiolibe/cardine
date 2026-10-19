@@ -77,7 +77,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         previous = current.replace("capability=task-blueprint v19", "capability=task-blueprint v11", 1)
         previous = previous.replace("\n## Host impact\n" + declaration, "", 1)
 
-        installed_baseline = self.project / ".meridian/baselines/1.1.39"
+        installed_baseline = self.project / ".cardine/baselines/1.1.39"
         for root in (self.project, installed_baseline):
             path = root / "tasks/TASK_BLUEPRINT.md"
             path.write_text(previous, encoding="utf-8")
@@ -114,7 +114,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         upgraded_routing = (self.project / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
         self.assertIn("capability=host-impact-routing v2", upgraded_routing)
         self.assertIn("return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`", upgraded_routing)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.40")
         self.assertEqual(manifest["appliedMigrations"][-1], "007-synthetic-host")
 
@@ -200,7 +200,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         report = (self.project / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertIn("never an absolute path", report)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.48")
         self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
         audited = self.run_cli("audit", "--mode", "governed-sdd")
@@ -270,7 +270,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
             "capability=task-worktree-handoff v5",
             (self.project / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8"),
         )
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.48")
         self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
 
@@ -380,7 +380,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Consumer-owned review note.", upgraded)
         self.assertNotIn("uses that same primary checkout", upgraded)
         self.assertNotIn("git switch <task-branch>", upgraded)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.48")
         self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
 
@@ -411,7 +411,7 @@ worktree before the branch only after validated integration succeeds.
                 (self.framework / "VERSION").write_text("1.1.50\n", encoding="utf-8")
                 locked = self.run_cli("lock", "--mode", mode)
                 self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
-                manifest_path = self.project / ".meridian/manifest.json"
+                manifest_path = self.project / ".cardine/manifest.json"
                 locked_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
                 self.assertEqual(locked_manifest["frameworkVersion"], "1.1.50")
                 self.assertEqual(locked_manifest["workflowBaselineVersion"], "1.1.49")
@@ -454,7 +454,7 @@ worktree before the branch only after validated integration succeeds.
         upgraded_workflow = project_workflow.read_text(encoding="utf-8")
         self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded_workflow)
         self.assertIn("Consumer-owned worktree note.", upgraded_workflow)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.54")
         self.assertEqual(manifest["appliedMigrations"][-1], "017-synthetic-manual")
 
@@ -511,7 +511,7 @@ worktree before the branch only after validated integration succeeds.
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
         self.assertIn("capability=task-worktree-review-procedure v13", upgraded_review)
         self.assertIn("resolve it to the registered task branch `HEAD`", upgraded_review)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.55")
         self.assertEqual(manifest["appliedMigrations"][-1], "018-synthetic-handoff")
 
@@ -564,7 +564,7 @@ worktree before the branch only after validated integration succeeds.
                     for relative in paths:
                         expected = ROOT / "templates/workflows" / mode / relative
                         self.assertEqual((self.project / relative).read_bytes(), expected.read_bytes())
-                    manifest = json.loads((self.project / ".meridian/manifest.json").read_text())
+                    manifest = json.loads((self.project / ".cardine/manifest.json").read_text())
                     self.assertEqual(manifest["workflowBaselineVersion"], "1.4.0")
                     self.assertEqual(manifest["appliedMigrations"][-1], "030-synthetic-delivery")
 
@@ -599,7 +599,7 @@ worktree before the branch only after validated integration succeeds.
         for name, text in current.items():
             self.assertEqual((self.project / name).read_text(), text)
             self.assertIn("meridian task close <TASK-ID>", text)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text())
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text())
         self.assertEqual(manifest["workflowBaselineVersion"], "1.3.0")
         self.assertEqual(manifest["appliedMigrations"][-1], "029-synthetic-close")
 
@@ -645,7 +645,7 @@ worktree before the branch only after validated integration succeeds.
             self.assertIn(f"MERIDIAN:BEGIN capability=git-workflow v{self.baseline_version('lean-delivery', relative, 'git-workflow')}", upgraded)
             self.assertIn("Task branches do not edit `tasks/QUEUE.md`", upgraded)
         self.assertIn("Consumer-owned closure note.", agents.read_text(encoding="utf-8"))
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.4")
         self.assertEqual(manifest["appliedMigrations"][-1], "020-synthetic-lean-closure")
 
@@ -712,7 +712,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("capability=task-worktree-review-procedure v13", upgraded_review)
         self.assertIn("reviewer-integrator performs C6 through C10", upgraded_review)
         self.assertIn("Consumer-owned closure note.", upgraded_implementation)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.5")
         self.assertEqual(manifest["appliedMigrations"][-1], "021-synthetic-governed-closure")
 
@@ -777,7 +777,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertNotIn("Project integration smoke command", project_workflow.read_text(encoding="utf-8"))
 
         project_workflow.write_text(locked.replace("`none`", "`make smoke`"), encoding="utf-8")
-        shutil.rmtree(self.project / ".meridian")
+        shutil.rmtree(self.project / ".cardine")
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
         (workflow / relative).write_text(current.replace(anchor, smoke + anchor, 1), encoding="utf-8")
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
@@ -891,10 +891,10 @@ worktree before the branch only after validated integration succeeds.
                 if state == "missing":
                     lifecycle.unlink()
                     baseline_lifecycle = (
-                        self.project / ".meridian/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md"
+                        self.project / ".cardine/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md"
                     )
                     baseline_lifecycle.unlink()
-                    manifest_path = self.project / ".meridian/manifest.json"
+                    manifest_path = self.project / ".cardine/manifest.json"
                     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
                     manifest["managedFiles"].pop("docs/WORKTREE_LIFECYCLE.md")
                     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -902,10 +902,10 @@ worktree before the branch only after validated integration succeeds.
                     lifecycle.write_text(previous + "\nConsumer-owned lifecycle note.\n", encoding="utf-8")
                 elif state.startswith("adopt-"):
                     baseline_lifecycle = (
-                        self.project / ".meridian/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md"
+                        self.project / ".cardine/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md"
                     )
                     baseline_lifecycle.unlink()
-                    manifest_path = self.project / ".meridian/manifest.json"
+                    manifest_path = self.project / ".cardine/manifest.json"
                     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
                     manifest["managedFiles"].pop("docs/WORKTREE_LIFECYCLE.md")
                     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -923,7 +923,7 @@ worktree before the branch only after validated integration succeeds.
                                 agents.read_text(encoding="utf-8") + "\nUndeclared local edit.\n",
                                 encoding="utf-8",
                             )
-                            (self.project / ".meridian/baselines/1.2.5/AGENTS.md").unlink()
+                            (self.project / ".cardine/baselines/1.2.5/AGENTS.md").unlink()
 
                 template.write_text(current, encoding="utf-8")
                 (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")

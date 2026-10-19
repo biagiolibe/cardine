@@ -43,7 +43,7 @@ class StateArchivalTest(unittest.TestCase):
         for target in ROUTES[status]:
             transitions.append({"from": current, "to": target, "commit": SHA, "at": AT})
             current = target
-        path = self.root / ".meridian/tasks" / f"{task_id}.json"
+        path = self.root / ".cardine/tasks" / f"{task_id}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"version": 1, "task_id": task_id, "workflow": workflow,
                                     "status": current, "transitions": transitions}), encoding="utf-8")
@@ -104,7 +104,7 @@ class StateArchivalTest(unittest.TestCase):
 
     def test_invalid_state_retains_the_section_with_its_reason(self) -> None:
         self.state("A", "DONE")
-        path = self.root / ".meridian/tasks/A.json"
+        path = self.root / ".cardine/tasks/A.json"
         path.write_text(path.read_text(encoding="utf-8").replace('"lean-delivery"', '"governed-sdd"'), encoding="utf-8")
         contents = "## Phase\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n"
         retained, _archived, report = self.archive_queue(contents)
@@ -235,15 +235,15 @@ class IncludeTerminalImportTest(unittest.TestCase):
         self.assertEqual(self.actions(preview), {"001": "write", "002": "write"})
         done = next(item for item in preview["tasks"] if item["task_id"] == "001")
         self.assertEqual(done["state"]["status"], "DONE")
-        self.assertFalse((self.root / ".meridian/tasks/001.json").exists())
+        self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
         applied = owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(self.actions(applied), {"001": "write", "002": "write"})
-        written = json.loads((self.root / ".meridian/tasks/001.json").read_text(encoding="utf-8"))
+        written = json.loads((self.root / ".cardine/tasks/001.json").read_text(encoding="utf-8"))
         self.assertEqual(written["status"], "DONE")
-        marker = (self.root / ".meridian/tasks/001.json").read_bytes()
+        marker = (self.root / ".cardine/tasks/001.json").read_bytes()
         again = owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(self.actions(again), {"001": "skip-existing", "002": "skip-existing"})
-        self.assertEqual((self.root / ".meridian/tasks/001.json").read_bytes(), marker)
+        self.assertEqual((self.root / ".cardine/tasks/001.json").read_bytes(), marker)
 
     def test_disagreeing_texts_stop_before_writing_anything(self) -> None:
         (self.root / "tasks/done/001.md").write_text(
@@ -251,7 +251,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         with self.assertRaises(shared_errors.CardineStop) as raised:
             owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
-        self.assertFalse((self.root / ".meridian/tasks").exists())
+        self.assertFalse((self.root / ".cardine/tasks").exists())
 
     def test_governed_terminal_requires_a_consistent_recorded_verdict(self) -> None:
         (self.root / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n", encoding="utf-8")

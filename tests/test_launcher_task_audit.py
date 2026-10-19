@@ -38,11 +38,11 @@ class TaskStateAuditTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.project = Path(self.temp.name)
         (self.project / "tasks").mkdir()
-        (self.project / ".meridian/tasks").mkdir(parents=True)
+        (self.project / ".cardine/tasks").mkdir(parents=True)
         (self.project / "tasks/001.md").write_text("# Task 001 — Task\nStatus: QUEUED\n")
         (self.project / "tasks/QUEUE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
-        self.path = self.project / ".meridian/tasks/001.json"
+        self.path = self.project / ".cardine/tasks/001.json"
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "governed-sdd",
                                          "status": "QUEUED", "transitions": []}))
 
@@ -59,7 +59,7 @@ class TaskStateAuditTest(unittest.TestCase):
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].status, "ADVISORY")
-        self.assertIn(".meridian/tasks/001.json", rows[0].detail)
+        self.assertIn(".cardine/tasks/001.json", rows[0].detail)
         self.assertIn("tasks/QUEUE.md queue Status: state=QUEUED, projection=IN_PROGRESS", rows[0].detail)
         self.assertIn("tasks/001.md record Status: state=QUEUED, projection=ACCEPTED", rows[0].detail)
         self.assertEqual(before, {p: p.read_bytes() for p in before})

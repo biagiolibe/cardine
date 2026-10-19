@@ -132,10 +132,10 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         state = {"version": 1, "task_id": "056", "workflow": "lean-delivery",
                  "status": "QUEUED", "transitions": []}
-        path = self.primary / ".meridian/tasks/056.json"
+        path = self.primary / ".cardine/tasks/056.json"
         path.parent.mkdir(parents=True)
         path.write_text(json.dumps(state), encoding="utf-8")
-        self.git("add", ".meridian/tasks/056.json")
+        self.git("add", ".cardine/tasks/056.json")
         self.git("commit", "-m", "track queued state")
         with self.assertRaisesRegex(shared_errors.CardineError, "nonterminal tracked task state"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
@@ -144,7 +144,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         path.write_text(json.dumps(state), encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.CardineError, "primary checkout must be clean"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
-        self.git("add", ".meridian/tasks/056.json")
+        self.git("add", ".cardine/tasks/056.json")
         self.git("commit", "-m", "track terminal state")
         self.assert_cleanup_finished(prepared, "branch-already-deleted")
 

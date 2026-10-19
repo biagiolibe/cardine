@@ -448,7 +448,7 @@ class LinklessQueueTest(support.RepoCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.write(self.project, ".meridian/task-identity.json",
+        self.write(self.project, ".cardine/task-identity.json",
                    json.dumps({"version": 1, "mode": "milestone"}))
         self.write(self.project, "PROJECT_WORKFLOW.md", (
             f"# {self.lock}\n\n<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
@@ -820,7 +820,7 @@ class RefreshCostTest(support.RepoCase):
             owner_console_snapshot.load_snapshot(self.project, cache)
             owner_console_snapshot.load_snapshot(self.project, cache)
             self.assertEqual(resolver.call_count, 2)
-            self.write(self.project, ".meridian/task-identity.json",
+            self.write(self.project, ".cardine/task-identity.json",
                        json.dumps({"version": 1, "mode": "opaque"}))
             owner_console_snapshot.load_snapshot(self.project, cache)
             self.assertEqual(resolver.call_count, 4)
@@ -999,7 +999,7 @@ class SnapshotCostTest(support.RepoCase):
         self.commit(wt)
         assert_rechecked("handoff added")
         for relative, label in (("tasks/handoffs/TASK-002.md", "handoff stat"),
-                                (".meridian/tasks/TASK-002.json", "state file stat")):
+                                (".cardine/tasks/TASK-002.json", "state file stat")):
             os.utime(wt / relative, ns=(1_000_000_000, 2_000_000_000 + calls))
             assert_rechecked(label)
         self.write(self.project, "main.txt", "main moved\n")

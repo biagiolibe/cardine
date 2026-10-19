@@ -25,11 +25,11 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertNotEqual(locked.returncode, 0)
         self.assertIn("prerelease", locked.stderr)
         self.assertIn("1.2.0-rc.1", locked.stderr)
-        self.assertFalse((self.project / ".meridian").exists())
+        self.assertFalse((self.project / ".cardine").exists())
 
     def test_upgrade_apply_rejects_a_prerelease_target_before_touching_files(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         manifest_before = manifest_path.read_bytes()
         workflow = self.framework / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8") + "\nPrerelease marker.\n", encoding="utf-8")
@@ -50,7 +50,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         locked = self.run_cli("lock", "--mode", "governed-sdd")
 
         self.assertEqual(locked.returncode, 0, locked.stderr)
-        manifest_text = (self.project / ".meridian/manifest.json").read_text(encoding="utf-8")
+        manifest_text = (self.project / ".cardine/manifest.json").read_text(encoding="utf-8")
         self.assertEqual(json.loads(manifest_text)["frameworkVersion"], "1.1.0")
         self.assertNotIn("+dev", manifest_text)
 
@@ -64,13 +64,13 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_cli_only_upgrade_advances_framework_without_rekeying_baseline(self) -> None:
         self.configure_version_split_fixture()
-        baseline_root = self.project / ".meridian/baselines/1.1.0"
+        baseline_root = self.project / ".cardine/baselines/1.1.0"
         baseline_before = {
             path.relative_to(baseline_root): path.read_bytes()
             for path in baseline_root.rglob("*")
             if path.is_file()
         }
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         manifest_before = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest_before["workflowBaselineVersion"], "1.1.0")
 
@@ -129,7 +129,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_manifest_protocol_compatibility_for_upgrade_check_and_audit(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         commands = (
             ("upgrade --check", ("upgrade", "--check")),
             ("audit", ("audit", "--mode", "governed-sdd")),
@@ -167,7 +167,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_upgrade_apply_rejects_newer_protocol_before_touching_project(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["protocolVersion"] = shared_constants.PROTOCOL_VERSION + 1
         manifest_path.write_text(
@@ -195,7 +195,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_upgrade_apply_rewrites_lower_protocol_to_current(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["protocolVersion"] = shared_constants.PROTOCOL_VERSION - 1
         manifest_path.write_text(
@@ -211,7 +211,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_manifest_protocol_version_must_be_an_integer(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["protocolVersion"] = "1"
         manifest_path.write_text(
@@ -226,7 +226,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_legacy_manifest_uses_framework_version_as_baseline_fallback(self) -> None:
         self.configure_version_split_fixture()
-        manifest_path = self.project / ".meridian/manifest.json"
+        manifest_path = self.project / ".cardine/manifest.json"
         legacy_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         del legacy_manifest["workflowBaselineVersion"]
         manifest_path.write_text(

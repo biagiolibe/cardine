@@ -701,7 +701,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(check()),
             "BLOCKED HANDOFF_VALIDATION_EVIDENCE_MISSING: rule: every declared validation needs a successful durable "
-            "record; source checked: .meridian/execution-evidence.json for TASK-022; accepted: an entry with the "
+            "record; source checked: .cardine/execution-evidence.json for TASK-022; accepted: an entry with the "
             "declared id and command and exitStatus 0; missing for: probe; resume: run cardine execution validate "
             "TASK-022 <validation-id> --project . for each listed ID, then rerun the handoff check",
         )
@@ -714,7 +714,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(check()),
             "BLOCKED HANDOFF_EXPLORATION_MISMATCH: rule: with no recorded investigation the report must say there was "
-            "none; field checked: Isolated exploration against .meridian/execution-evidence.json; accepted: `none`, "
+            "none; field checked: Isolated exploration against .cardine/execution-evidence.json; accepted: `none`, "
             "or text starting with `none` or `no`; found: 'explored the API'; expected `none` (or record the "
             "investigation); resume: correct the Isolated exploration field or record the investigation with cardine "
             "execution investigate TASK-022, then rerun the handoff check",
@@ -732,7 +732,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(check()),
             "BLOCKED HANDOFF_EXPLORATION_MISMATCH: rule: recorded investigations must be reported; field checked: "
-            "Isolated exploration against .meridian/execution-evidence.json; accepted: a summary of each recorded "
+            "Isolated exploration against .cardine/execution-evidence.json; accepted: a summary of each recorded "
             "investigation; found: `none` with 1 recorded; resume: correct the Isolated exploration field or record "
             "the investigation with cardine execution investigate TASK-022, then rerun the handoff check",
         )
@@ -740,7 +740,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(check()),
             "BLOCKED HANDOFF_EXPLORATION_SUMMARY_MISSING: rule: the report must contain each recorded question and "
-            "finding; source checked: .meridian/execution-evidence.json; accepted: the exact question and finding "
+            "finding; source checked: .cardine/execution-evidence.json; accepted: the exact question and finding "
             "text; missing the question or finding of: Which API?; resume: add each listed question and finding to "
             "the report, then rerun cardine execution handoff-check TASK-022 <report> --project .",
         )
@@ -757,7 +757,7 @@ Evidence plan:
         result = self.run_cli("execution", "validate", "TASK-010", "probe")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("validation-ok", result.stdout)
-        evidence = json.loads((self.project / ".meridian/execution-evidence.json").read_text(encoding="utf-8"))
+        evidence = json.loads((self.project / ".cardine/execution-evidence.json").read_text(encoding="utf-8"))
         self.assertEqual(evidence["TASK-010"][0]["id"], "probe")
         missing = self.run_cli("execution", "validate", "TASK-010", "not-declared")
         self.assertNotEqual(missing.returncode, 0)
@@ -780,7 +780,7 @@ Evidence plan:
             "--criterion", "AC-4", "--artifact", "/tmp/capture.png",
         )
         self.assertEqual(recorded.returncode, 0, recorded.stderr)
-        evidence = json.loads((self.project / ".meridian/execution-evidence.json").read_text(encoding="utf-8"))
+        evidence = json.loads((self.project / ".cardine/execution-evidence.json").read_text(encoding="utf-8"))
         self.assertEqual(evidence["TASK-011"][0]["criterion"], "AC-4")
         self.assertEqual(evidence["TASK-011"][0]["artifact"], "/tmp/capture.png")
         other = self.run_cli(
@@ -800,10 +800,10 @@ Evidence plan:
                 "--criterion", "AC-1", "--artifact", f"capture-{index}.png",
             )
             self.assertEqual(recorded.returncode, 0, recorded.stderr)
-        events = json.loads((self.project / ".meridian/execution-evidence.json").read_text())["TASK-011"]
+        events = json.loads((self.project / ".cardine/execution-evidence.json").read_text())["TASK-011"]
         self.assertEqual(len(events), 4)
         self.assertTrue(all("count" not in event and "cap" not in event for event in events))
-        self.assertFalse((self.project / ".meridian/budget.json").exists())
+        self.assertFalse((self.project / ".cardine/budget.json").exists())
 
     def test_budget_command_is_removed(self) -> None:
         rejected = self.run_cli("budget", "show", "TASK-011")
@@ -833,8 +833,8 @@ Evidence plan:
 
     def test_operating_system_failure_reports_os_access_failed(self) -> None:
         self.write_task("TASK-405", "IN_PROGRESS")
-        (self.project / ".meridian").mkdir()
-        (self.project / ".meridian/execution-evidence.json").mkdir()
+        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine/execution-evidence.json").mkdir()
         failed = self.run_cli("execution", "evidence", "TASK-405", "diagnostic", "--gap", "missing output")
         line = self.blocked_line(failed)
         self.assertTrue(line.startswith("BLOCKED OS_ACCESS_FAILED: "), line)

@@ -6,6 +6,8 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+
+from cardine.shared.layout import names
 from cardine.console import models as owner_console_models
 from cardine.console import snapshot as owner_console_snapshot
 
@@ -151,6 +153,6 @@ class MachineStateConsoleFixture(RepoCase):
         if verdict:
             snapshot["review"] = {"required": required, "verdict": verdict, "attempt": 1,
                                   "reviewed_commit": "a" * 40, "approved_by": "reviewer"}
-        self.write(root, f".meridian/tasks/{task_id}.json", json.dumps(snapshot))
+        self.write(root, str(names().tasks_path / f"{task_id}.json"), json.dumps(snapshot))
 
     queue = LeanEffectiveStateFixture.queue

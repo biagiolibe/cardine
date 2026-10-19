@@ -140,8 +140,8 @@ PY
         rm -f tasks/901-add-greeting.md.bak
     fi
 
-    mkdir -p .meridian
-    printf '{"version": 1, "state": "none"}\n' > .meridian/candidate-validation.json
+    mkdir -p .cardine
+    printf '{"version": 1, "state": "none"}\n' > .cardine/candidate-validation.json
     git add -A
     git commit --quiet -m "Initial project"
     cardine lock --project "$fixture" --mode lean-delivery >/dev/null

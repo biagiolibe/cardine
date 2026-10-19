@@ -516,9 +516,9 @@ def check_capability_catalog(root: Path = ROOT) -> None:
         catalog = catalog_provider.load_capability_catalog(root)
     except cardine_cli.CardineError as error:
         fail(f"invalid capability catalog: {error}")
-    profile = catalog.profile("meridian-self-hosting")
+    profile = catalog.profile("cardine-self-hosting")
     if profile is None or not profile.capabilities:
-        fail("capability catalog is missing the versioned meridian-self-hosting profile")
+        fail("capability catalog is missing the versioned cardine-self-hosting profile")
 
 
 def check_migrations(root: Path = ROOT) -> None:

@@ -26,7 +26,7 @@ class InstallationFixture:
         self.catalog = owner_templates_catalog.load_capability_catalog(framework)
 
     def manifest(self, mode: str = "lean-delivery") -> dict[str, object]:
-        profile = self.catalog.profile("meridian-self-hosting")
+        profile = self.catalog.profile("cardine-self-hosting")
         assert profile is not None
         capabilities: dict[str, object] = {}
         for capability_id, version in profile.capabilities:
@@ -66,7 +66,7 @@ class InstallationFixture:
             "managedFiles": {},
             "appliedMigrations": ["014-minimal-read-only-status", "040-pretooluse-read-guard"],
             "capabilityProfiles": {
-                "meridian-self-hosting": {
+                "cardine-self-hosting": {
                     "profileVersion": profile.version,
                     "capabilities": capabilities,
                 }
@@ -79,7 +79,7 @@ class InstallationFixture:
         manifest = self.manifest(mode)
         managed_files: dict[str, str] = {}
         for capability_id, declaration in manifest["capabilityProfiles"][
-            "meridian-self-hosting"
+            "cardine-self-hosting"
         ]["capabilities"].items():
             surface_digests = []
             for surface in declaration["managedSurface"]:
@@ -125,7 +125,7 @@ class InstallationFixture:
 
     def write_probes(self, project: Path) -> None:
         """Build probe records from the product catalog, never the checkout installation."""
-        profile = self.catalog.profile("meridian-self-hosting")
+        profile = self.catalog.profile("cardine-self-hosting")
         for host, relative in (("host-neutral-ci", profile.verification_probe), *profile.host_probes):
             capabilities = [
                 capability_id for capability_id, _version in profile.capabilities

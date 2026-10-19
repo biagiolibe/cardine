@@ -60,7 +60,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         implementation = self.project / "docs/workflows/IMPLEMENTATION.md"
         self.assertIn("capability=route-rule v1", implementation.read_text(encoding="utf-8"))
 
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.2")
         self.assertEqual(
             manifest["appliedMigrations"],
@@ -89,7 +89,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         agents = self.project / "AGENTS.md"
         self.assertNotIn("capability=route-rule", agents.read_text(encoding="utf-8"))
         self.assertEqual(target.read_text(encoding="utf-8"), "# Implementation\n\n" + moved + "\n")
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.3")
         self.assertEqual(
             manifest["appliedMigrations"],
@@ -128,12 +128,12 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         manifest = json.loads(
-            (self.project / ".meridian/manifest.json").read_text(encoding="utf-8")
+            (self.project / ".cardine/manifest.json").read_text(encoding="utf-8")
         )
         self.assertEqual(manifest["frameworkVersion"], "1.1.1")
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.1")
         self.assertEqual(
-            sorted(path.name for path in (self.project / ".meridian/baselines").iterdir()),
+            sorted(path.name for path in (self.project / ".cardine/baselines").iterdir()),
             ["1.1.1"],
         )
 

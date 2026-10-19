@@ -65,10 +65,10 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         )
 
     def read_manifest(self) -> dict[str, object]:
-        return json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        return json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
 
     def write_manifest(self, manifest: dict[str, object]) -> None:
-        (self.project / ".meridian/manifest.json").write_text(
+        (self.project / ".cardine/manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
 

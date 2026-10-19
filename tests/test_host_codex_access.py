@@ -46,7 +46,7 @@ class CodexRulesUpgradeTest(unittest.TestCase):
         (self.project / ".codex/rules/meridian.rules").unlink()
         (
             self.project
-            / ".meridian/baselines/1.1.37/.codex/rules/meridian.rules"
+            / ".cardine/baselines/1.1.37/.codex/rules/meridian.rules"
         ).unlink()
         (self.project / ".codex/rules").rmdir()
         (self.project / ".codex/hooks.json").unlink()

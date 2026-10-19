@@ -207,7 +207,7 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
         self.assertIsNone(tasks["002"].launch_command)
 
     def test_milestone_identity_resolves_the_task_branch(self) -> None:
-        self.write(self.project, ".meridian/task-identity.json",
+        self.write(self.project, ".cardine/task-identity.json",
                    json.dumps({"version": 1, "mode": "milestone"}))
         self.setup_project({"M1-CORE-001": " "})
         self.set_branch_status(self.worktree("m1-core-001"), "M1-CORE-001", "/")
@@ -397,7 +397,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
     def test_invalid_state_is_per_task_and_never_falls_back(self) -> None:
         self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—"),
                             ("TASK-002", "QUEUED", "REQUIRED", "—")])
-        self.write(self.project, ".meridian/tasks/TASK-001.json", '{"version": 99}')
+        self.write(self.project, ".cardine/tasks/TASK-001.json", '{"version": 99}')
         tasks = self.load()
         invalid, legacy = tasks["TASK-001"], tasks["TASK-002"]
         self.assertIn("TASK_STATE_INVALID", invalid.state_error)
@@ -419,7 +419,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
         wt = self.worktree("task-001")
         self.state(wt, "TASK-001", "IN_PROGRESS")
         self.commit(wt)
-        self.write(wt, ".meridian/tasks/TASK-001.json", "invalid JSON")
+        self.write(wt, ".cardine/tasks/TASK-001.json", "invalid JSON")
         task = self.load()["TASK-001"]
         self.assertIn("TASK_STATE_INVALID", task.state_error)
         self.assertIsNone(task.launch_command)
@@ -431,7 +431,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
             f"| {n} | OLD-{n} | P1 | ACCEPTED | REQUIRED | — | — |\n" for n in range(150))
         self.write(self.project, "tasks/QUEUE_ARCHIVE.md", archived)
         for n in range(150):
-            self.write(self.project, f".meridian/tasks/OLD-{n}.json", "invalid archived state")
+            self.write(self.project, f".cardine/tasks/OLD-{n}.json", "invalid archived state")
         original = Path.read_text
         opened = []
         def observe(path, *args, **kwargs):
@@ -440,7 +440,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
             return original(path, *args, **kwargs)
         original_glob = Path.glob
         def observe_glob(path, *args, **kwargs):
-            if path == self.project / ".meridian/tasks":
+            if path == self.project / ".cardine/tasks":
                 raise AssertionError("state directory scan")
             return original_glob(path, *args, **kwargs)
         with mock.patch.object(Path, "read_text", observe), mock.patch.object(Path, "glob", observe_glob):
@@ -461,7 +461,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
         self.assertFalse(task.legacy)
         self.assertIn("branch task-001", task.source)
         self.write(self.project, "tasks/TASK-001.md", "# Task TASK-001 — Spike\nClass: SPIKE\nStatus: QUEUED\n")
-        self.write(self.project, ".meridian/tasks/TASK-001.json", json.dumps({
+        self.write(self.project, ".cardine/tasks/TASK-001.json", json.dumps({
             "version": 1, "task_id": "TASK-001", "workflow": "governed-sdd", "status": "ANSWERED",
             "transitions": [{"from": before, "to": after, "commit": "a" * 40,
                              "at": "2026-10-11T12:00:00Z"}
