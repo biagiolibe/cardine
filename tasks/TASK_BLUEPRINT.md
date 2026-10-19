@@ -61,6 +61,31 @@
 claude "$(cat tasks/[NNN]-name.md)"$'\n\nExecute this task in the current project.'
 ```
 
+## Developer decisions given in advance
+
+The developer records these decisions in the task contract, so that they
+hold however the task is launched, including a bare `Proceed with <TASK-ID>`
+from the project console (ADR decision 12). None of these situations needs a
+new decision from the developer. After fixing a failure, continue with
+revalidation in the same turn; do not stop to report the fix.
+
+- A required command that exits non-zero because of a precondition the agent
+  can satisfy (command order, an uncommitted worktree, a missing argument):
+  satisfy it and run the command again, once.
+- A validation failure caused by this task's own changes, including a name
+  collision, a stale reference, a broken link, or a test expectation that the
+  task made obsolete: fix it and revalidate, at most 3 counted attempts. A
+  test that fails once and passes on an identical unchanged rerun is
+  intermittent, recorded in the handoff, and does not count. Only after 3
+  counted failures stop with `BLOCKED VALIDATION_FAILED` and a summary of the
+  failures.
+- A `BLOCKED <CODE>` from a Meridian command whose entry in
+  `capabilities/stop-codes-v1.json` of the primary checkout's `main` has
+  `human_decision: false`: run the command the stop names, once. If it stops
+  again with the same code, stop.
+- The deny list, `RULE_CONFLICT`, every guardrail, and a change of scope
+  remain stops.
+
 ## Validation
 
 - `python3 scripts/check_repository.py`
