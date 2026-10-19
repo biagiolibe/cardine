@@ -34,7 +34,7 @@ with the framework that owns it.
 
 ## Acceptance Criteria
 
-- [ ] The installation of this repository is checked only by the installed
+- [x] The installation of this repository is checked only by the installed
   Meridian, with these two commands:
   - `meridian profile doctor meridian-self-hosting --project .`;
   - `meridian audit --project . --mode lean-delivery --ci-profile
@@ -45,32 +45,32 @@ with the framework that owns it.
   meridian-self-hosting` lines. No validation line runs the checkout's
   `profile doctor` or `audit` against this repository's `.meridian/`. The
   planning commit of this task already updated task 036.
-- [ ] `.github/workflows/validate.yml` no longer runs the checkout's
+- [x] `.github/workflows/validate.yml` no longer runs the checkout's
   `profile doctor` or `audit` against this repository. CI has no installed
   Meridian, and installation integrity is a local lifecycle check. Any
   release workflow step that does the same is removed too. The handoff lists
   the removed steps.
-- [ ] `check_self_hosting_baseline` is removed from `scripts/check_repository.py`.
+- [x] `check_self_hosting_baseline` is removed from `scripts/check_repository.py`.
   It compares the checkout's migrations and releases with the installed
   baseline, and its message tells the contributor to run the checkout's
   `upgrade`, which is forbidden on this repository.
-- [ ] `check_managed_digests` stays: it compares the managed copies with the
+- [x] `check_managed_digests` stays: it compares the managed copies with the
   digests the installed Meridian recorded, which is a valid integrity check.
   Its failure message tells the contributor to restore the managed copy from
   `main`, not to rewrite digests. The `--write-managed-digests` option of
   `check_repository.py` is removed if only this repository used it.
   Otherwise it refuses to write this repository's `.meridian/manifest.json`.
   The handoff says which applies.
-- [ ] `profile doctor` and `audit` keep their behavior for other projects.
+- [x] `profile doctor` and `audit` keep their behavior for other projects.
   Tests that run them on synthetic projects still pass. A new test changes
   the `meridian-self-hosting` profile surface in a temporary copy of the
   repository's catalog and proves that `check_repository.py` passes.
-- [ ] `CONTRIBUTING.md`, section "Managed copies of this repository", says:
+- [x] `CONTRIBUTING.md`, section "Managed copies of this repository", says:
   - the installed Meridian owns `.meridian/` and the managed copies;
   - the two commands above check them;
   - they are never edited by hand, and the checkout's `upgrade` is never run
     on this repository.
-- [ ] No file under `templates/` or `migrations/` changes, and this
+- [x] No file under `templates/` or `migrations/` changes, and this
   repository's managed files (`CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
   `LANGUAGE_POLICY.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/EXECUTION_EVIDENCE_PROFILE.md`,
@@ -78,7 +78,7 @@ with the framework that owns it.
   `hooks/read-guard.sh`) stay unchanged. `.meridian/` is unchanged, except
   `.meridian/tasks/039.json`, which only the installed `meridian task close
   039` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
