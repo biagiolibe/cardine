@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from cardine import cli as owner_cli
+from cardine.templates import generator as owner_generator
 from cardine.templates import markers as templates_markers
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
@@ -18,7 +18,7 @@ from cardine.templates import router as owner_templates_router
 
 class GenerateClaudeMdTest(unittest.TestCase):
     """`CLAUDE.md` is generated from `AGENTS.md` (task 004 of
-    docs/PLAN_TOKEN_EFFICIENCY.md): from `owner_cli.CLAUDE_MD_SHARED_ANCHOR`'s
+    docs/PLAN_TOKEN_EFFICIENCY.md): from `owner_generator.CLAUDE_MD_SHARED_ANCHOR`'s
     heading onward, the committed `CLAUDE.md` must be byte-identical to what
     `generate_claude_md` derives from the committed `AGENTS.md`, so the two
     files cannot independently drift on content meant to be shared. Everything
@@ -26,16 +26,16 @@ class GenerateClaudeMdTest(unittest.TestCase):
     """
 
     def test_committed_claude_md_matches_the_generator_for_every_mode(self) -> None:
-        for mode in owner_cli.CLAUDE_MD_SHARED_ANCHOR:
+        for mode in owner_generator.CLAUDE_MD_SHARED_ANCHOR:
             workflow = ROOT / "templates" / "workflows" / mode
             agents_text = (workflow / "AGENTS.md").read_text(encoding="utf-8")
             claude_text = (workflow / "CLAUDE.md").read_text(encoding="utf-8")
-            generated = owner_cli.generate_claude_md(mode, agents_text, claude_text)
+            generated = owner_generator.generate_claude_md(mode, agents_text, claude_text)
             self.assertEqual(
                 generated,
                 claude_text,
                 f"{mode}: CLAUDE.md has drifted from AGENTS.md past the shared anchor "
-                f"{owner_cli.CLAUDE_MD_SHARED_ANCHOR[mode]!r}",
+                f"{owner_generator.CLAUDE_MD_SHARED_ANCHOR[mode]!r}",
             )
 
     def test_generator_reports_drift_when_claude_md_diverges(self) -> None:
@@ -47,7 +47,7 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "# [Project Name]\n\nown preamble\n\n"
             "## Code organization\n\nSTALE shared body.\n"
         )
-        generated = owner_cli.generate_claude_md("governed-sdd", agents_text, stale_claude_text)
+        generated = owner_generator.generate_claude_md("governed-sdd", agents_text, stale_claude_text)
         self.assertNotEqual(generated, stale_claude_text)
         self.assertIn("own preamble", generated)
         self.assertIn("shared body.\n", generated)
@@ -79,7 +79,7 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "ORIGINAL RELEASED WORDING.\n"
             "<!-- MERIDIAN:END -->\n"
         )
-        generated = owner_cli.generate_claude_md("governed-sdd", agents_text, claude_text)
+        generated = owner_generator.generate_claude_md("governed-sdd", agents_text, claude_text)
         self.assertIn("ORIGINAL RELEASED WORDING.", generated)
         self.assertNotIn("NEW WORDING", generated)
         for capability, version in templates_markers.marker_pairs(claude_text):
@@ -101,14 +101,14 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "<!-- MERIDIAN:END -->\n"
         )
         claude_text = "# [Project Name]\n\nown preamble\n\n## Code organization\n\nno markers here.\n"
-        generated = owner_cli.generate_claude_md("governed-sdd", agents_text, claude_text)
+        generated = owner_generator.generate_claude_md("governed-sdd", agents_text, claude_text)
         self.assertIn("First-ever wording.", generated)
 
     def test_generator_raises_when_the_anchor_heading_is_missing(self) -> None:
         with self.assertRaises(shared_errors.MeridianError):
-            owner_cli.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
+            owner_generator.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
         with self.assertRaises(shared_errors.MeridianError):
-            owner_cli.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
+            owner_generator.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
 
     def test_cli_check_and_write_round_trip_on_a_stale_copy(self) -> None:
         temporary = tempfile.TemporaryDirectory()
@@ -129,10 +129,10 @@ class GenerateClaudeMdTest(unittest.TestCase):
             return subprocess.run(
                 [
                     sys.executable,
-                    str(CLI),
+                    str(ROOT / "scripts/dev.py"),
                     "--framework-root",
                     str(framework),
-                    "generate-claude-md",
+                    "generate-entry-routers",
                     "--mode",
                     "governed-sdd",
                     *extra,
@@ -223,7 +223,7 @@ class GeneratedEntryRouterTest(unittest.TestCase):
             owner_templates_router.entry_router_outputs(self.project)
 
     def test_cli_checks_and_writes_both_entry_points(self) -> None:
-        command = [sys.executable, str(CLI), "--framework-root", str(ROOT), "generate-entry-routers", "--project", str(self.project)]
+        command = [sys.executable, str(ROOT / "scripts/dev.py"), "--framework-root", str(ROOT), "generate-entry-routers", "--project", str(self.project)]
         stale = subprocess.run(command + ["--check"], text=True, capture_output=True, check=False)
         self.assertEqual(stale.returncode, 2, stale.stdout + stale.stderr)
         written = subprocess.run(command + ["--write"], text=True, capture_output=True, check=False)

@@ -90,7 +90,7 @@ from cardine.tasks.audit import audit_task_state_projections
 from cardine.tasks.contract import profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HANDOFF_FIELDS, EXECUTION_EVIDENCE_PATH, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, verify_host_impact_completion_evidence, execution_entries, verify_validation_skips, verify_execution_evidence, check_handoff, default_handoff_path
 from cardine.tasks.importer import import_task_states
 from cardine.templates.upgrade import plan_upgrade, complete_profile_surfaces, apply_plan, apply_upgrade
-from cardine.cli import CLAUDE_MD_SHARED_ANCHOR, MeridianArgumentParser, generate_claude_md, ShowVersionAction, main, build_parser, _run_cli
+from cardine.cli import MeridianArgumentParser, ShowVersionAction, main, build_parser, _run_cli
 
 if __name__ == "__main__":
     raise SystemExit(main())

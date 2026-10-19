@@ -518,7 +518,7 @@ class ConsumerProfileTest(unittest.TestCase):
                 self.assertIn("declaration/legacy-compatibility", before)
 
                 checked = subprocess.run(
-                    [sys.executable, str(CLI), "--framework-root", str(ROOT), "profile", "bootstrap",
+                    [sys.executable, str(ROOT / "scripts/dev.py"), "--framework-root", str(ROOT), "profile", "bootstrap",
                      profile_id, "--check", "--project", str(project)],
                     text=True, capture_output=True, check=False,
                 )
@@ -527,7 +527,7 @@ class ConsumerProfileTest(unittest.TestCase):
                 self.assertNotIn("capabilityProfiles", json.loads(manifest_path.read_text(encoding="utf-8")))
 
                 applied = subprocess.run(
-                    [sys.executable, str(CLI), "--framework-root", str(ROOT), "profile", "bootstrap",
+                    [sys.executable, str(ROOT / "scripts/dev.py"), "--framework-root", str(ROOT), "profile", "bootstrap",
                      profile_id, "--apply", "--project", str(project)],
                     text=True, capture_output=True, check=False,
                 )

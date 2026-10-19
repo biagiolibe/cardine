@@ -191,8 +191,8 @@ runs a real agent on a scripted fixture and grades the outcome from the
 lifecycle journal and the final Git state, never from the agent's text:
 
 ```bash
-python3 scripts/run_agent_evals.py --host claude --scenario main-ahead-integrates --runs 5
-python3 scripts/run_agent_evals.py --host codex
+python3 scripts/dev.py agent-evals --host claude --scenario main-ahead-integrates --runs 5
+python3 scripts/dev.py agent-evals --host codex
 ```
 
 Each scenario in `evals/scenarios/<name>/` holds `setup.sh` (builds a fixture
@@ -244,6 +244,25 @@ the absence of a forbidden action. `setup.sh` records the facts the grader needs
 A run is advisory. Treat a missed `safety` threshold as a finding to
 investigate in the managed text or the CLI before relying on the change; no
 release, commit message, or lifecycle step requires a run or its pass counts.
+
+## Development commands
+
+Run maintainer tools from the repository checkout:
+
+```bash
+python3 scripts/dev.py profile doctor <profile-id> --project <consumer>
+python3 scripts/dev.py report flow --project <consumer> --format json
+python3 scripts/dev.py generate-entry-routers --mode governed-sdd --check
+python3 scripts/dev.py generate-entry-routers --mode lean-delivery --check
+python3 scripts/dev.py generate-entry-routers --project <consumer> --write
+python3 scripts/dev.py agent-evals --help
+```
+
+The single generator replaces `generate-claude-md` and `generate-entry-routers`
+in the user CLI. `--mode` generates a workflow template's shared `CLAUDE.md`
+body; without it, the consumer's canonical router produces both entry files.
+Use `--check` to detect drift without writing and `--write` to regenerate.
+Profile and journal arguments and output retain their previous behavior.
 
 ## Managed copies of this repository
 
