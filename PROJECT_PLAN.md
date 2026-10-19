@@ -65,4 +65,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 038 — Reject a stale `requiredVersion` in the marker catalog.
 - `[x]` 039 — Check the self-hosting installation only with the installed Meridian.
 - `[ ]` 040 — Plan the rename of code identifiers (work item 5a).
-- `[ ]` 041 — Plan the single workflow (work item 6).
+- `[x]` 041 — Plan the single workflow (work item 6).

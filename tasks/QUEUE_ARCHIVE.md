@@ -119,3 +119,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 4, and decisions 5 and 7.
 | `[x]` | 035 | Remove the self-reported budget counters | 🔴 P1 | 034 | [035](done/035-remove-budget-counters.md) |
 | `[x]` | 039 | Check the self-hosting installation only with the installed Meridian | 🔴 P1 | 035 | [039](done/039-check-self-hosting-with-installed-meridian.md) |
 | `[x]` | 036 | Move maintainer commands out of the user CLI and merge the generators | 🔴 P1 | 035, 039 | [036](done/036-move-maintainer-commands.md) |
+
+### Phase 13 — Single workflow
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 6, and decisions 3 and 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 041 | Plan the single workflow (work item 6) | 🔴 P1 | — | [041](done/041-plan-single-workflow.md) |
