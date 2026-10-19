@@ -92,6 +92,10 @@ revalidation in the same turn; do not stop to report the fix.
   intermittent, recorded in the handoff, and does not count. Only after 3
   counted failures stop with `BLOCKED VALIDATION_FAILED` and a summary of the
   failures.
+- A counted attempt is one run of the whole Validation section on a
+  committed implementation that the agent considers complete. Test runs
+  during implementation are development, not attempts, however many fail.
+  An unfinished implementation is never a reason to stop: finish it first.
 - A `BLOCKED <CODE>` from a Meridian command whose entry in
   `capabilities/stop-codes-v1.json` of the primary checkout's `main` has
   `human_decision: false`: run the command the stop names, once. If it stops
