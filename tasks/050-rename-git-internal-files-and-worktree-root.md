@@ -19,20 +19,20 @@ distribution identifiers in code.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row R9 in `docs/RENAME_PLAN.md` is implemented as the
+- [x] The scope of row R9 in `docs/RENAME_PLAN.md` is implemented as the
   plan describes it, on the files it lists. A file the plan missed but that
   the same rename needs is in scope; the handoff lists it.
-- [ ] Every test under "Tests that prove it" for row R9 exists and passes.
-- [ ] The product ignores `.git/meridian-journal.jsonl`,
+- [x] Every test under "Tests that prove it" for row R9 exists and passes.
+- [x] The product ignores `.git/meridian-journal.jsonl`,
   `.git/meridian-integration.*`, and `.git/meridian-worktrees/`; the default
   worktree root is `~/.cardine/worktrees`; `meridian/config.json` is not read;
   `load_meridian_snapshot` still reads the Meridian names.
-- [ ] The `setup --check` output keys `codex-profile`, `codex-detail`, and
+- [x] The `setup --check` output keys `codex-profile`, `codex-detail`, and
   `codex-root-mismatch` do not change, because the frozen hook parses them.
-- [ ] A test proves that each renamed old name is ignored, not accepted as an
+- [x] A test proves that each renamed old name is ignored, not accepted as an
   alias (plan rule 1). Each such test carries the tag `MERIDIAN-OLD-NAME-TEST`
   on the line or the line above.
-- [ ] No group 2, group 3, or group 4 identifier changes, except the group 4
+- [x] No group 2, group 3, or group 4 identifier changes, except the group 4
   exceptions the plan names (`docs/PUBLIC_SURFACE.md` and
   `docs/examples/LEAN_DELIVERY_WALKTHROUGH.md`). The frozen files stay
   unchanged: `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
@@ -42,17 +42,17 @@ distribution identifiers in code.
   `.codex/rules/meridian.rules`, `hooks/hooks.json`,
   `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, and the `meridian
   worktree` line of `.codex/rules/local.rules`.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/050.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/050.json`, which only
   the installed `meridian task close 050` writes. No task of this phase runs the
   checkout's `setup --apply` against the real home directory (plan choice 7).
-- [ ] A test expectation that this task makes stale, such as a renamed
+- [x] A test expectation that this task makes stale, such as a renamed
   path, class, or string, is updated in this task without weakening any
   other assertion. The parallel suite reports the same coverage `total`
   before and after the task, except for new tests, which the handoff lists.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean task
   worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
