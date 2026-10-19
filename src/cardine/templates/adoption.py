@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from cardine.shared.constants import STRICT_DIGEST_PROFILES
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.hashing import sha256
 from cardine.shared.models import CatalogCapability
 from cardine.templates.audit import _digest_exempt
@@ -48,7 +48,7 @@ def _capability_declaration(
                 # would launder a drifted copy. A marker-bearing consumer file is
                 # verified region by region, so its recorded digest is left alone.
                 if recorded is not None and recorded != digest and not digest_exempt:
-                    raise MeridianError(
+                    raise CardineError(
                         f"managed copy {surface.path} differs from the digest recorded at install; "
                         "restore the released text before bootstrapping"
                     )
@@ -95,10 +95,10 @@ def bootstrap_capability_profile(
     catalog = load_capability_catalog(framework_root)
     profile = catalog.profile(profile_id)
     if profile is None:
-        raise MeridianError(f"capability profile is not present in the catalog: {profile_id}")
+        raise CardineError(f"capability profile is not present in the catalog: {profile_id}")
     workflow_mode = manifest_workflow_mode(manifest)
     if profile.workflow_modes and workflow_mode not in profile.workflow_modes:
-        raise MeridianError(
+        raise CardineError(
             f"profile {profile_id} applies to {', '.join(profile.workflow_modes)}, not {workflow_mode}"
         )
     strict = profile_id in STRICT_DIGEST_PROFILES
@@ -108,7 +108,7 @@ def bootstrap_capability_profile(
         capability = catalog.capability(capability_id)
         assert capability is not None
         if workflow_mode not in capability.workflow_modes:
-            raise MeridianError(
+            raise CardineError(
                 f"profile {profile_id} capability {capability_id} excludes workflow {workflow_mode}"
             )
         declarations[capability_id] = _capability_declaration(

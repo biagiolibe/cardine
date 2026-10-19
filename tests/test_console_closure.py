@@ -184,7 +184,7 @@ class ClosingTaskMixin:
 
     def test_lifecycle_read_failure_keeps_the_task_with_unavailable_progress(self) -> None:
         self.closing_project()
-        for error in (owner_shared_errors.MeridianError("boom"), OSError("boom"), ValueError("boom")):
+        for error in (owner_shared_errors.CardineError("boom"), OSError("boom"), ValueError("boom")):
             with self.subTest(error=type(error).__name__):
                 tasks, _status = self.load_closing(error=error)
                 task = tasks[self.done_id]

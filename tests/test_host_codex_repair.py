@@ -66,7 +66,7 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def assert_blocked_unchanged(self, text: str, pattern: str) -> None:
         self.config.write_text(text, encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, pattern):
+        with self.assertRaisesRegex(shared_errors.CardineError, pattern):
             owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(self.config.read_text(encoding="utf-8"), text)
 
@@ -197,7 +197,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         changed = self.rewritten() + "# edited after planning\n"
         self.config.write_text(changed, encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "changed since"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "changed since"):
             owner_hosts_codex.apply_codex_configuration(plan)
         self.assertEqual(self.config.read_text(encoding="utf-8"), changed)
 
@@ -245,7 +245,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assert_blocked_unchanged(self.rewritten(tables=dotted), "exactly one plain")
         self.assert_blocked_unchanged(self.rewritten() + self.profile_tables(), "malformed")
         self.config.write_text(f'sandbox_mode = "workspace-write"\n{self.rewritten()}', encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "legacy"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "legacy"):
             owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
 
     def test_stray_markers_without_a_profile_remain_blocked(self) -> None:

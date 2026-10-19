@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from cardine.shared.layout import names
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from pathlib import Path
 from cardine.shared.git import _run_git
 from cardine.tasks.preflight import execution_preflight
@@ -26,7 +26,7 @@ def record_validation(project_root: Path, task_id: str, command_id: str, command
         try:
             state = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
-            raise MeridianError(f"invalid execution evidence state: {path}") from error
+            raise CardineError(f"invalid execution evidence state: {path}") from error
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     entries = list(state.get(canonical_id, []))
     entries.append({"id": command_id, "command": command, "exitStatus": status, **(binding or {})})
@@ -85,7 +85,7 @@ def record_execution_event(
         try:
             state = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
-            raise MeridianError(f"invalid execution evidence state: {path}") from error
+            raise CardineError(f"invalid execution evidence state: {path}") from error
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     events = list(state.get(canonical_id, []))
     event: dict[str, object] = {"kind": kind, "gap": gap}
@@ -126,7 +126,7 @@ def record_investigation(
         try:
             state = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
-            raise MeridianError(f"invalid execution evidence state: {path}") from error
+            raise CardineError(f"invalid execution evidence state: {path}") from error
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     events = list(state.get(canonical_id, []))
     events.append({

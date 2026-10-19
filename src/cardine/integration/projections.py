@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from cardine.shared.console_workflow import latest_review_verdict
 from cardine.shared.console_workflow import record_review
-from cardine.shared.errors import MeridianError
-from cardine.shared.errors import MeridianStop
+from cardine.shared.errors import CardineError
+from cardine.shared.errors import CardineStop
 from cardine.shared.models import ResolvedTaskIdentity
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
@@ -26,7 +26,7 @@ def _completed_task_row(contents: str, task_id: str, path: Path, pattern: str) -
     """Return one known task row with its status set to complete."""
     matches = list(re.finditer(pattern, contents, flags=re.MULTILINE))
     if len(matches) != 1:
-        raise MeridianError(
+        raise CardineError(
             f"unrecognized completion row for task {task_id} in {path}"
         )
     match = matches[0]
@@ -98,9 +98,9 @@ _GOVERNED_QUEUE_STATUSES = frozenset(
 _MARKDOWN_HEADING = re.compile(r"^(?P<marks>#{1,6})\s+(?P<title>.+?)\s*$")
 
 
-def _governed_completion_error(path: Path, section: str, reason: str) -> MeridianError:
+def _governed_completion_error(path: Path, section: str, reason: str) -> CardineError:
     """Build an actionable error for an unrecognized Governed queue table."""
-    return MeridianError(f"unrecognized completion row in {path}, section {section}: {reason}")
+    return CardineError(f"unrecognized completion row in {path}, section {section}: {reason}")
 
 
 def _governed_completion_row(
@@ -326,7 +326,7 @@ def _queue_state_resolver(
                 )
                 status = str(state["status"])
                 result = ("terminal" if status in terminal else "open", status)
-        except (MeridianStop, TaskStateInvalid, OSError, UnicodeError) as error:
+        except (CardineStop, TaskStateInvalid, OSError, UnicodeError) as error:
             result = ("invalid", str(error))
         cache[supplied] = result
         return result

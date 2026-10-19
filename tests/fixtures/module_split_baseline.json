@@ -223,7 +223,7 @@
       "line": 132
     },
     {
-      "name": "MeridianError",
+      "name": "CardineError",
       "kind": "ClassDef",
       "line": 138
     },
@@ -253,7 +253,7 @@
       "line": 151
     },
     {
-      "name": "MeridianStop",
+      "name": "CardineStop",
       "kind": "ClassDef",
       "line": 155
     },
@@ -2503,7 +2503,7 @@
       "line": 12016
     },
     {
-      "name": "MeridianArgumentParser",
+      "name": "CardineArgumentParser",
       "kind": "ClassDef",
       "line": 12022
     },

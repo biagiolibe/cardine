@@ -82,7 +82,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
         return manifest["capabilityProfiles"][self.PROFILE]["capabilities"][self.CAPABILITY]
 
     def test_strict_validation_still_rejects_the_older_surface(self) -> None:
-        with self.assertRaisesRegex(shared_errors.MeridianError, "must completely match the catalog surface"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "must completely match the catalog surface"):
             owner_templates_manifest.validate_manifest(self.old, self.catalog)
 
         gaps: list[tuple[str, str, tuple[str, ...]]] = []
@@ -174,5 +174,5 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
             unknown_path, unsupported_form, duplicate_path, swapped_path,
             wrong_profile_version, wrong_capability_version, missing_capability,
         ):
-            with self.subTest(change=change.__name__), self.assertRaises(shared_errors.MeridianError):
+            with self.subTest(change=change.__name__), self.assertRaises(shared_errors.CardineError):
                 owner_templates_manifest.validate_manifest(mutated(change), self.catalog, [])

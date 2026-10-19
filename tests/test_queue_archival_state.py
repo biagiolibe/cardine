@@ -248,7 +248,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
     def test_disagreeing_texts_stop_before_writing_anything(self) -> None:
         (self.root / "tasks/done/001.md").write_text(
             "# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n", encoding="utf-8")
-        with self.assertRaises(shared_errors.MeridianStop) as raised:
+        with self.assertRaises(shared_errors.CardineStop) as raised:
             owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         self.assertFalse((self.root / ".meridian/tasks").exists())
@@ -265,7 +265,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         review = owner_tasks_identity.resolve_task_identity(self.root, "001", "existing").review_path
         review.parent.mkdir(parents=True, exist_ok=True)
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — Remediation\n", encoding="utf-8")
-        with self.assertRaises(shared_errors.MeridianStop) as raised:
+        with self.assertRaises(shared_errors.CardineStop) as raised:
             owner_tasks_importer.import_task_states(self.root, [], include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — APPROVE\n", encoding="utf-8")

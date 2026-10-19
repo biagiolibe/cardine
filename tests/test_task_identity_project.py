@@ -88,9 +88,9 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.write_queue([("LEGACY-7", "LEGACY-7.md")])
         legacy = owner_tasks_identity.resolve_task_identity(self.project, "LEGACY-7", "existing")
         self.assertEqual(legacy.kind, "legacy-opaque")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "unknown"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "unknown"):
             owner_tasks_identity.resolve_task_identity(self.project, "OTHER-7", "existing")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "must use"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "must use"):
             owner_tasks_identity.resolve_task_identity(self.project, "OTHER-7", "new")
         created = owner_tasks_identity.resolve_task_identity(self.project, "m31-build-999", "new")
         self.assertEqual((created.canonical_id, created.kind), ("M31-BUILD-999", "structured"))
@@ -127,7 +127,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         for declaration in malformed:
             with self.subTest(declaration=declaration):
                 identity.write_text(declaration, encoding="utf-8")
-                with self.assertRaises(shared_errors.MeridianError):
+                with self.assertRaises(shared_errors.CardineError):
                     owner_tasks_identity.resolve_task_identity(self.project, "TASK-001", "new")
 
     def test_ambiguity_collisions_mixed_case_and_traversal_are_rejected(self) -> None:
@@ -135,16 +135,16 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.add_task("M2-API-001")
         self.add_task("M2-Api-002")
         self.write_queue([("M2-API-001", "M2-API-001.md"), ("M2-Api-002", "M2-Api-002.md")])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "canonical uppercase"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "canonical uppercase"):
             owner_tasks_identity.resolve_task_identity(self.project, "M2-Api-002", "existing")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_tasks_identity.resolve_task_identity(self.project, "../M2-API-001", "existing")
 
         self.declare("opaque")
         self.add_task("TASK-007")
         self.add_task("007")
         self.write_queue([("TASK-007", "TASK-007.md"), ("007", "007.md")])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "collision"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "collision"):
             owner_tasks_identity.resolve_task_identity(self.project, "TASK-007", "existing")
 
     def test_mismatched_duplicate_and_unsafe_authorities_are_rejected(self) -> None:
@@ -152,17 +152,17 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.add_task("M4-API-001")
         self.add_task("M4-API-002")
         self.write_queue([("M4-API-001", "M4-API-002.md")])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "disagree"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "disagree"):
             owner_tasks_identity.resolve_task_identity(self.project, "M4-API-001", "existing")
 
         duplicate = self.project / "tasks/nested/M4-API-001.md"
         duplicate.parent.mkdir()
         duplicate.write_text("ID: M4-API-001\n", encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "ambiguous"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "ambiguous"):
             owner_tasks_identity.resolve_task_identity(self.project, "M4-API-001", "existing")
 
         self.declare("opaque")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_tasks_identity.resolve_task_identity(self.project, "foo..bar", "new")
 
     def test_structured_grammar_rejects_noncanonical_new_ids(self) -> None:
@@ -172,7 +172,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
             "M1-API_-001", "M1-API-000", "M1-API-1000", "M1-API-01",
         )
         for task_id in invalid:
-            with self.subTest(task_id=task_id), self.assertRaises(shared_errors.MeridianError):
+            with self.subTest(task_id=task_id), self.assertRaises(shared_errors.CardineError):
                 owner_tasks_identity.resolve_task_identity(self.project, task_id, "new")
 
     def test_cli_json_exit_codes_and_read_only_behavior(self) -> None:
@@ -335,7 +335,7 @@ class ProjectDeclarationTest(unittest.TestCase):
         self.assertEqual((locations.queue, locations.task_roots, locations.plan), (Path("docs/QUEUE.md"), (Path("work/tasks"),), Path("docs/PLAN.md")))
         for declaration in ({"version": 2}, {"version": 1, "unknown": True}, {"version": 1, "locations": {"queue": "/tmp/QUEUE.md"}}, {"version": 1, "locations": {"queue": "../QUEUE.md"}}):
             self.write(declaration)
-            with self.subTest(declaration=declaration), self.assertRaises(shared_errors.MeridianError):
+            with self.subTest(declaration=declaration), self.assertRaises(shared_errors.CardineError):
                 owner_shared_project.read_project_declaration(self.project)
 
     def test_declaration_overrides_legacy_and_cli_fields(self) -> None:

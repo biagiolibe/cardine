@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from cardine.shared.layout import names
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.git import canonical_project_root
@@ -25,7 +25,7 @@ def _verified_lifecycle_project(supplied_project: Path | None = None) -> Path:
         supplied = supplied_project.expanduser().resolve()
         supplied_primary = canonical_project_root(supplied)
         if supplied != supplied_primary or supplied_primary != current_project:
-            raise MeridianError(
+            raise CardineError(
                 f"--project must name the canonical current project {current_project}, found {supplied}"
             )
     return current_project
@@ -47,14 +47,14 @@ def _read_user_configuration(path: Path) -> dict[str, object] | None:
         return None
     value = _read_json_object(path, "Meridian user configuration")
     if set(value) != {"version", "worktreeRoot"} or value.get("version") != 1:
-        raise MeridianError(
+        raise CardineError(
             f"Meridian user configuration must contain only version 1 and worktreeRoot: {path}"
         )
     root = value.get("worktreeRoot")
     if not isinstance(root, str) or not root.strip():
-        raise MeridianError(f"Meridian user configuration worktreeRoot must be a non-empty string: {path}")
+        raise CardineError(f"Meridian user configuration worktreeRoot must be a non-empty string: {path}")
     if not Path(root).expanduser().is_absolute():
-        raise MeridianError(f"Meridian user configuration worktreeRoot must be absolute: {path}")
+        raise CardineError(f"Meridian user configuration worktreeRoot must be absolute: {path}")
     return value
 
 
@@ -74,7 +74,7 @@ def resolve_worktree_root(
         Path(environment_value).expanduser().resolve() if environment_value else None
     )
     if explicit_path is not None and environment_path is not None and explicit_path != environment_path:
-        raise MeridianError(
+        raise CardineError(
             "conflicting worktree roots: --worktree-root supplied "
             f"{explicit_path}; MERIDIAN_WORKTREE_ROOT supplied {environment_path}"
         )
@@ -91,7 +91,7 @@ def resolve_worktree_root(
             root = user_home / names().worktree_root
             source = "default"
     if root in {Path(root.anchor), user_home}:
-        raise MeridianError(
+        raise CardineError(
             f"worktree root from {source} must be a dedicated directory, not the filesystem root or home: {root}"
         )
     return ResolvedWorktreeRoot(root, source, selected_config)
@@ -116,7 +116,7 @@ def _branch_commit(project_root: Path, branch: str) -> str | None:
     if result.returncode == 1:
         return None
     if result.returncode != 0:
-        raise MeridianError(result.stderr.strip() or f"cannot inspect branch {branch}")
+        raise CardineError(result.stderr.strip() or f"cannot inspect branch {branch}")
     return result.stdout.strip()
 
 
@@ -145,7 +145,7 @@ def _dirty_summary(worktree: Path) -> dict[str, int]:
     """Count changed and untracked paths without refreshing the index or naming files."""
     result = _run_git(worktree, "--no-optional-locks", "status", "--porcelain", "-z")
     if result.returncode != 0:
-        raise MeridianError(result.stderr.strip() or f"cannot inspect task worktree status: {worktree}")
+        raise CardineError(result.stderr.strip() or f"cannot inspect task worktree status: {worktree}")
     records = iter(item for item in result.stdout.split("\0") if item)
     changed = untracked = 0
     for record in records:

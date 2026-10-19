@@ -10,7 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from cardine.shared.errors import MeridianError, MeridianStop
+from cardine.shared.errors import CardineError, CardineStop
 from cardine.stops.render import stop_error
 from cardine.shared.flow import flow_report, format_flow_report
 from cardine.templates.adoption import bootstrap_capability_profile
@@ -82,10 +82,10 @@ def main(argv: list[str] | None = None) -> int:
                     path.write_text(text, encoding="utf-8")
                 print(f"Regenerated {next(iter(outputs))}." if arguments.mode else "Generated AGENTS.md and CLAUDE.md from ENTRY_ROUTER.md.")
         return 0
-    except MeridianStop as error:
+    except CardineStop as error:
         print(error, file=sys.stderr)
         return 2
-    except MeridianError as error:
+    except CardineError as error:
         print(stop_error("COMMAND_REFUSED", str(error)), file=sys.stderr)
         return 2
     except OSError as error:

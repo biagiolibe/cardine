@@ -64,7 +64,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(before, self.snapshot(worktree))
         self.assertEqual(self.resume()["base_commit"], self.base)
         self.assertEqual(before, self.snapshot(worktree))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED STALE_WORKTREE_BASE:"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED STALE_WORKTREE_BASE:"):
             self.prepare()
         closure, _ = owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)
         self.assertEqual(closure["stop_reason"], "STALE_WORKTREE_BASE")
@@ -116,7 +116,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         before = evidence_path.read_bytes()
         os.chdir(self.primary)
         self.assertEqual(owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C5")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED EVIDENCE_MISMATCH:"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED EVIDENCE_MISMATCH:"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(evidence_path.read_bytes(), before)
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
@@ -134,7 +134,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         for path, contents in mutations:
             with self.subTest(path=path.name):
                 path.write_text(contents, encoding="utf-8")
-                with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
+                with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED WRONG_WORKTREE:"):
                     owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
                 self.assertEqual(state_path.read_bytes(), original)
                 path.unlink()
@@ -144,12 +144,12 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
                 state[field] = "unrelated"
                 state_path.write_text(json.dumps(state), encoding="utf-8")
                 before = state_path.read_bytes()
-                with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
+                with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED WRONG_WORKTREE:"):
                     owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
                 self.assertEqual(state_path.read_bytes(), before)
                 state_path.write_bytes(original)
         self.git("switch", "-c", "unrelated", cwd=worktree)
-        with self.assertRaisesRegex(shared_errors.MeridianError, "BLOCKED WRONG_WORKTREE:"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED WRONG_WORKTREE:"):
             owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
 
@@ -164,14 +164,14 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.git("commit", "-m", "main work")
         self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "unproven-fast-forward"):
             owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
         # Even after main contains the task commit, ancestry alone cannot prove recovery.
         self.git("merge", "task-056", "--no-edit")
         self.git("merge", "main", "--ff-only", cwd=worktree)
         self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "unproven-fast-forward"):
             owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
 
@@ -180,14 +180,14 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.git("reflog", "expire", "--expire=now", "refs/heads/task-056")
         self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary,
                                                       require_effective_worktree=False)[1])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "unproven-fast-forward"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "unproven-fast-forward"):
             owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
 
 
     def test_resume_accepts_a_dirty_worktree_and_changes_nothing(self) -> None:
         prepared, worktree = self.dirty_worktree()
         before = self.snapshot(worktree)
-        with self.assertRaisesRegex(shared_errors.MeridianError, "existing task worktree is dirty and was retained"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "existing task worktree is dirty and was retained"):
             self.prepare()
         resumed = self.resume()
         self.assertEqual(self.snapshot(worktree), before)
@@ -240,7 +240,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         state_path = next((self.primary / ".git/meridian-worktrees").glob("*.json"))
         original = state_path.read_text(encoding="utf-8")
         state_path.write_text(original.replace('"branch": "task-056"', '"branch": "other"'), encoding="utf-8")
-        with self.assertRaises(shared_errors.MeridianStop) as raised:
+        with self.assertRaises(shared_errors.CardineStop) as raised:
             self.resume()
         self.assertEqual(raised.exception.code, "WRONG_WORKTREE")
         message = str(raised.exception)
@@ -266,7 +266,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
             resumed["state_repair"],
             f"meridian worktree prepare 056 --project {self.primary.resolve()} --format json",
         )
-        with self.assertRaisesRegex(shared_errors.MeridianError, "dirty and was retained"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "dirty and was retained"):
             self.prepare()
         self.git("checkout", "--", "README.md", cwd=worktree)
         (worktree / "new.txt").unlink()
@@ -293,7 +293,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
 
 
     def test_resume_without_a_worktree_creates_nothing(self) -> None:
-        with self.assertRaisesRegex(shared_errors.MeridianError, "nothing to resume"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "nothing to resume"):
             self.resume()
         self.assertEqual(self.git("branch", "--list", "task-056").stdout, "")
         self.assertEqual(list(self.worktree_root.rglob("task-056")), [])
@@ -305,31 +305,31 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         state_path = next((self.primary / ".git/meridian-worktrees").glob("*.json"))
         original = state_path.read_text(encoding="utf-8")
         state_path.write_text(original.replace('"branch": "task-056"', '"branch": "other"'), encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "lifecycle state mismatch"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "lifecycle state mismatch"):
             self.resume()
         state_path.write_text(original, encoding="utf-8")
         for name in ("meridian-integration.lock", "meridian-integration.json"):
             with self.subTest(retained=name):
                 retained = self.primary / ".git" / name
                 retained.write_text(json.dumps({"task_id": "056"}), encoding="utf-8")
-                with self.assertRaisesRegex(shared_errors.MeridianError, "integration lease or staged merge"):
+                with self.assertRaisesRegex(shared_errors.CardineError, "integration lease or staged merge"):
                     self.resume()
                 retained.unlink()
         self.git("checkout", "-b", "elsewhere", cwd=worktree)
-        with self.assertRaisesRegex(shared_errors.MeridianError, "canonical worktree mismatch"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "canonical worktree mismatch"):
             self.resume()
         self.git("checkout", "task-056", cwd=worktree)
         self.git("commit", "--allow-empty", "-m", "advance", cwd=worktree)
         self.assertTrue(self.resume()["dirty"])
         self.git("worktree", "remove", "--force", str(worktree))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "partial task state"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "partial task state"):
             self.resume()
         self.git("branch", "-D", "task-056")
         collision = Path(str(prepared["worktree"]))
         collision.mkdir(parents=True)
-        with self.assertRaisesRegex(shared_errors.MeridianError, "nothing to resume"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "nothing to resume"):
             self.resume()
-        with self.assertRaisesRegex(shared_errors.MeridianError, "worktree path collision"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "worktree path collision"):
             self.prepare()
 
 

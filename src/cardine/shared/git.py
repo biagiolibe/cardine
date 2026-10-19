@@ -10,7 +10,7 @@ import subprocess
 from collections.abc import Iterator
 from pathlib import Path
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 
 
 def git_output(project_root: Path, *arguments: str) -> str:
@@ -21,7 +21,7 @@ def git_output(project_root: Path, *arguments: str) -> str:
         check=False,
     )
     if completed.returncode != 0:
-        raise MeridianError(completed.stderr.strip() or f"git {' '.join(arguments)} failed")
+        raise CardineError(completed.stderr.strip() or f"git {' '.join(arguments)} failed")
     return completed.stdout.strip()
 
 
@@ -92,7 +92,7 @@ def canonical_project_root(path: Path) -> Path:
     candidate = path.expanduser().resolve()
     records = _git_worktrees(candidate)
     if not records or "worktree" not in records[0]:
-        raise MeridianError(f"cannot identify the primary checkout from {candidate}")
+        raise CardineError(f"cannot identify the primary checkout from {candidate}")
     return Path(records[0]["worktree"]).resolve()
 
 
@@ -103,7 +103,7 @@ def primary_project_root(project_root: Path) -> Path:
     """
     try:
         return canonical_project_root(project_root)
-    except MeridianError:
+    except CardineError:
         return project_root.expanduser().resolve()
 
 
@@ -114,5 +114,5 @@ def current_branch(project_root: Path) -> str | None:
     """Return the checked-out branch name, or None outside Git or on a detached HEAD."""
     try:
         return git_output(project_root, "symbolic-ref", "--short", "-q", "HEAD") or None
-    except MeridianError:
+    except CardineError:
         return None

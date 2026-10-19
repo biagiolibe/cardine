@@ -175,7 +175,7 @@ class MachineTaskStateTest(unittest.TestCase):
     def test_missing_stop(self):
         (self.root / "tasks/QUEUE.md").write_text(
             "| ID | Status | Task file |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
-        with self.assertRaises(shared_errors.MeridianStop) as caught:
+        with self.assertRaises(shared_errors.CardineStop) as caught:
             self.read()
         self.assertTrue(str(caught.exception).startswith("BLOCKED TASK_STATE_MISSING:"))
         self.assertIn("meridian task state import 001", str(caught.exception))

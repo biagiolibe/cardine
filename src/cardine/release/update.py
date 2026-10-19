@@ -11,8 +11,8 @@ from cardine.shared.constants import LATEST_RELEASE_TIMEOUT_SECONDS
 from cardine.shared.constants import LATEST_RELEASE_URL
 from cardine.shared.constants import SELF_CHECK_UNKNOWN
 from cardine.shared.constants import SELF_CHECK_UPDATE_AVAILABLE
-from cardine.shared.errors import MeridianError
-from cardine.shared.errors import MeridianStop
+from cardine.shared.errors import CardineError
+from cardine.shared.errors import CardineStop
 from cardine.shared.git import git_output
 from cardine.stops.render import stop_error
 from http.client import HTTPException
@@ -77,7 +77,7 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         refuse("SELF_UPDATE_PLUGIN_CACHE", "plugin manager owns this checkout; use /plugin marketplace update meridian")
     try:
         if Path(git_output(root, "rev-parse", "--show-toplevel")).resolve() != root:
-            raise MeridianError("not the framework Git root")
+            raise CardineError("not the framework Git root")
         if git_output(root, "status", "--porcelain", "--untracked-files=all"):
             refuse("SELF_UPDATE_DIRTY", "commit or remove checkout changes before updating")
         branch = git_output(root, "branch", "--show-current")
@@ -101,7 +101,7 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
                 refuse("SELF_UPDATE_TARGET", f"{target_tag} is not a published release")
             print(f"Latest: unknown ({error})")
             return SELF_CHECK_UNKNOWN
-        except (HTTPException, URLError, TimeoutError, OSError, ValueError, MeridianError) as error:
+        except (HTTPException, URLError, TimeoutError, OSError, ValueError, CardineError) as error:
             print(f"Latest: unknown ({error})")
             return SELF_CHECK_UNKNOWN
         tag = f"v{version}"
@@ -122,7 +122,7 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
                 git_output(probe, "fetch", "--quiet", "--no-tags", "--", remote,
                            f"refs/tags/{tag}:refs/tags/{tag}",
                            *(["refs/heads/stable:refs/heads/stable"] if branch else []))
-            except MeridianError as error:
+            except CardineError as error:
                 refuse("SELF_UPDATE_TARGET", f"cannot resolve release refs: {error}")
             target = git_output(probe, "rev-parse", f"refs/tags/{tag}^{{commit}}")
             if branch:
@@ -153,9 +153,9 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         if templates == "template-changing":
             print("Run meridian upgrade --check in each project.")
         return 0
-    except MeridianStop:
+    except CardineStop:
         raise
-    except (MeridianError, OSError) as error:
+    except (CardineError, OSError) as error:
         refuse("SELF_UPDATE_VERIFY", f"Git operation failed: {error}; inspect checkout and retry meridian self-update --check")
 
 
@@ -190,7 +190,7 @@ def plugin_ref_report(settings_path: Path, latest_version: str | None) -> str:
         return "Plugin ref: stable"
     try:
         pinned = parse_semver(ref[1:]) if ref.startswith("v") else None
-    except MeridianError:
+    except CardineError:
         pinned = None
     if pinned is None:
         return f"Plugin ref: {ref} (neither stable nor a release tag)"
@@ -227,7 +227,7 @@ def run_self_check(framework_root: Path, *, urlopen_fn=None, settings_path: Path
         print(f"Reason: network error: {reason}")
         print(plugin_ref_report(settings, None))
         return SELF_CHECK_UNKNOWN
-    except (MeridianError, ValueError) as error:
+    except (CardineError, ValueError) as error:
         print("Status: UNKNOWN")
         print(f"Reason: malformed response: {error}")
         print(plugin_ref_report(settings, None))

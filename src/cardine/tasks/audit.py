@@ -7,7 +7,7 @@ from cardine.shared.layout import names
 from pathlib import Path
 
 from cardine.integration.projections import _queue_task_rows
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import AuditResult
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
@@ -48,7 +48,7 @@ def audit_task_state_projections(project_root: Path, workflow: str) -> list[Audi
                 project_root, task_id, workflow, review_required=None,
                 spike=read_task_field(record_text, "Class") == "SPIKE", stop_factory=stop_error,
             )
-        except (MeridianError, OSError, UnicodeError) as error:
+        except (CardineError, OSError, UnicodeError) as error:
             results.append(AuditResult("FAIL", "task-state", f"{relative}: {error}"))
             continue
         expected = state["status"]

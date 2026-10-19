@@ -6,7 +6,7 @@ from cardine.lifecycle.execution import _execution_owned_paths
 from cardine.lifecycle.execution import _execution_state
 from cardine.lifecycle.execution import _execution_worktree
 from cardine.lifecycle.execution import delivery_readiness
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
@@ -70,7 +70,7 @@ def execution_deliver(project_root: Path, task_id: str) -> dict[str, object]:
         return delivery_readiness(project_root, task_id)
     try:
         transition_task_state(project_root, task_id, "READY_FOR_REVIEW")
-    except (OSError, MeridianError) as error:
+    except (OSError, CardineError) as error:
         actual = _execution_state(project_root, task_id)["status"]
         raise stop_error("EVIDENCE_INCOMPLETE", f"delivery transition failed: {error}; actual state {actual}; inspect git status and repair command-owned state/projection before retrying delivery",
                          task_id=task_id, project=canonical_project_root(project_root)) from error

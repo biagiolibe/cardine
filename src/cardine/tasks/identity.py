@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from cardine.shared.layout import names
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import primary_project_root
 from cardine.shared.models import NUMERIC_TASK_ALIAS
 from cardine.shared.models import ProjectLocations
@@ -30,9 +30,9 @@ def _safe_component(value: str, label: str) -> str:
     """Return one unambiguous, portable path component."""
     normalized = unicodedata.normalize("NFKC", value).strip().lower()
     if not normalized or normalized in {".", ".."}:
-        raise MeridianError(f"{label} is empty or traversing")
+        raise CardineError(f"{label} is empty or traversing")
     if normalized != value.strip().lower() or not SAFE_PATH_COMPONENT.fullmatch(normalized):
-        raise MeridianError(f"{label} is not an unambiguous portable path component: {value!r}")
+        raise CardineError(f"{label} is not an unambiguous portable path component: {value!r}")
     return normalized
 
 
@@ -40,10 +40,10 @@ def canonical_task_id(value: str) -> str:
     normalized = value.strip().lower()
     match = re.fullmatch(r"(?:task-)?([0-9]+)", normalized)
     if match is None:
-        raise MeridianError(f"invalid task ID: {value!r}")
+        raise CardineError(f"invalid task ID: {value!r}")
     number = match.group(1)
     if int(number) <= 0 or number != str(int(number)).zfill(len(number)):
-        raise MeridianError(f"ambiguous task ID: {value!r}")
+        raise CardineError(f"ambiguous task ID: {value!r}")
     return f"task-{number}"
 
 
@@ -127,7 +127,7 @@ def resolve_project_locations(project_root: Path) -> ProjectLocations:
         *(("task root", root) for root in roots),
     ):
         if path.is_absolute() or ".." in path.parts:
-            raise MeridianError(f"canonical {label} must be a safe project-relative path: {path}")
+            raise CardineError(f"canonical {label} must be a safe project-relative path: {path}")
     project_root = project_root.resolve()
     if legacy_used and project_root not in shared_project._LEGACY_LOCATION_WARNING_PROJECTS:
         print("DEPRECATED: resolve canonical locations with .meridian/project.json", file=sys.stderr)
@@ -153,13 +153,13 @@ class _TaskAuthority:
 def parse_task_identity_policy(declaration: object) -> TaskIdentityPolicy:
     """Validate the closed task-identity declaration schema."""
     if not isinstance(declaration, dict):
-        raise MeridianError("task identity declaration must be a JSON object")
+        raise CardineError("task identity declaration must be a JSON object")
     if set(declaration) != {"version", "mode"}:
-        raise MeridianError("task identity declaration accepts only version and mode")
+        raise CardineError("task identity declaration accepts only version and mode")
     if type(declaration["version"]) is not int or declaration["version"] != 1:
-        raise MeridianError(f"unsupported task identity policy version: {declaration['version']!r}")
+        raise CardineError(f"unsupported task identity policy version: {declaration['version']!r}")
     if declaration["mode"] not in ("opaque", "milestone"):
-        raise MeridianError(f"unsupported task identity mode: {declaration['mode']!r}")
+        raise CardineError(f"unsupported task identity mode: {declaration['mode']!r}")
     return TaskIdentityPolicy(version=1, mode=str(declaration["mode"]))
 
 
@@ -168,11 +168,11 @@ def read_task_identity_policy(project_root: Path) -> TaskIdentityPolicy:
     if not path.exists():
         return TaskIdentityPolicy(version=1, mode="opaque")
     if not path.is_file():
-        raise MeridianError(f"invalid task identity declaration: {path}")
+        raise CardineError(f"invalid task identity declaration: {path}")
     try:
         declaration = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as error:
-        raise MeridianError(f"invalid task identity declaration: {path}") from error
+        raise CardineError(f"invalid task identity declaration: {path}") from error
     return parse_task_identity_policy(declaration)
 
 
@@ -241,7 +241,7 @@ def _task_authorities(project_root: Path, locations: ProjectLocations) -> dict[s
             if link_value and "://" not in link_value and not link_value.startswith("#"):
                 resolved = (queue_path.parent / link_value.split("#", 1)[0]).resolve()
                 if project_root.resolve() not in (resolved, *resolved.parents):
-                    raise MeridianError(f"queue task link escapes the project: {link_value}")
+                    raise CardineError(f"queue task link escapes the project: {link_value}")
                 queue_links.setdefault(canonical, set()).add(resolved)
 
     identities = set(task_paths) | set(queue_counts)
@@ -282,7 +282,7 @@ def _identity_names(canonical_id: str, kind: str) -> tuple[str, str, dict[str, o
     semantic: dict[str, object] | None = None
     if kind == "structured":
         if structured is None:
-            raise MeridianError(f"invalid structured task ID: {canonical_id!r}")
+            raise CardineError(f"invalid structured task ID: {canonical_id!r}")
         semantic = {
             "milestone": int(structured.group("milestone")),
             "workstream": structured.group("workstream"),
@@ -295,9 +295,9 @@ def _identity_names(canonical_id: str, kind: str) -> tuple[str, str, dict[str, o
     artifact = canonical_id
     normalized = unicodedata.normalize("NFKC", artifact)
     if normalized != artifact or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", artifact):
-        raise MeridianError(f"task ID is not a safe filesystem component: {canonical_id!r}")
+        raise CardineError(f"task ID is not a safe filesystem component: {canonical_id!r}")
     if artifact in (".", "..") or artifact.casefold() in {"con", "prn", "aux", "nul"} or artifact.endswith((".", ".lock")):
-        raise MeridianError(f"task ID is a reserved filesystem or Git component: {canonical_id!r}")
+        raise CardineError(f"task ID is a reserved filesystem or Git component: {canonical_id!r}")
     return branch, artifact, semantic
 
 
@@ -309,7 +309,7 @@ def _check_branch_name(canonical_id: str, branch: str) -> None:
         check=False,
     )
     if checked.returncode != 0 or not SAFE_PATH_COMPONENT.fullmatch(branch):
-        raise MeridianError(f"task ID does not derive a safe Git branch: {canonical_id!r}")
+        raise CardineError(f"task ID does not derive a safe Git branch: {canonical_id!r}")
 
 
 def _identity_derivations(canonical_id: str, kind: str) -> tuple[str, str, dict[str, object] | None]:
@@ -328,39 +328,39 @@ def resolve_task_identity(
     allow_archived_queue_links: bool = False,
 ) -> ResolvedTaskIdentity:
     if intent not in ("existing", "new"):
-        raise MeridianError(f"unsupported task identity intent: {intent!r}")
+        raise CardineError(f"unsupported task identity intent: {intent!r}")
     project_root = project_root.resolve()
     supplied = supplied_id.strip()
     if not supplied or supplied != supplied_id.strip() or any(separator in supplied for separator in ("/", "\\")):
-        raise MeridianError(f"invalid task ID: {supplied_id!r}")
+        raise CardineError(f"invalid task ID: {supplied_id!r}")
     context = context or task_identity_context(project_root)
     policy = context.policy
     locations = context.locations
     authorities = context.authorities
     matches = _authority_matches(authorities, supplied)
     if len(matches) > 1:
-        raise MeridianError(f"ambiguous task identity {supplied_id!r}: {', '.join(sorted(matches))}")
+        raise CardineError(f"ambiguous task identity {supplied_id!r}: {', '.join(sorted(matches))}")
     if intent == "existing" and not matches:
-        raise MeridianError(f"unknown task identity: {supplied_id!r}")
+        raise CardineError(f"unknown task identity: {supplied_id!r}")
 
     if matches:
         canonical = matches[0]
     elif policy.mode == "milestone":
         canonical = supplied.upper()
         if STRUCTURED_TASK_ID.fullmatch(canonical) is None:
-            raise MeridianError("new milestone-mode tasks must use M<milestone>-<WORKSTREAM>-<ordinal>")
+            raise CardineError("new milestone-mode tasks must use M<milestone>-<WORKSTREAM>-<ordinal>")
     else:
         canonical = supplied
 
     structured = STRUCTURED_TASK_ID.fullmatch(canonical)
     structured_casefold = STRUCTURED_TASK_ID.fullmatch(canonical.upper())
     if policy.mode == "milestone" and structured_casefold and structured is None:
-        raise MeridianError(f"authoritative structured task ID is not canonical uppercase: {canonical!r}")
+        raise CardineError(f"authoritative structured task ID is not canonical uppercase: {canonical!r}")
     if policy.mode == "milestone" and structured:
         kind = "structured"
     elif policy.mode == "milestone":
         if not matches:
-            raise MeridianError(f"unknown legacy task identity: {supplied_id!r}")
+            raise CardineError(f"unknown legacy task identity: {supplied_id!r}")
         kind = "legacy-opaque"
     else:
         kind = "opaque"
@@ -369,7 +369,7 @@ def resolve_task_identity(
     authority = authorities.get(canonical)
     if authority is not None:
         if len(authority.task_paths) > 1 or authority.queue_records > 1 or len(authority.queue_links) > 1:
-            raise MeridianError(f"ambiguous authoritative artifacts for task {canonical}")
+            raise CardineError(f"ambiguous authoritative artifacts for task {canonical}")
         if check_queue_links:
             links = authority.queue_links
             if allow_archived_queue_links and len(authority.task_paths) == 1:
@@ -380,14 +380,14 @@ def resolve_task_identity(
                 )
             linked_existing = tuple(path for path in links if path.is_file())
             if authority.queue_links and len(linked_existing) != len(authority.queue_links):
-                raise MeridianError(f"queue link for task {canonical} does not resolve to an existing task file")
+                raise CardineError(f"queue link for task {canonical} does not resolve to an existing task file")
             if linked_existing and not authority.task_paths:
-                raise MeridianError(f"queue and task authorities disagree for {canonical}")
+                raise CardineError(f"queue and task authorities disagree for {canonical}")
             if authority.task_paths and linked_existing and authority.task_paths[0] != linked_existing[0]:
-                raise MeridianError(f"task and queue authorities disagree for {canonical}")
+                raise CardineError(f"task and queue authorities disagree for {canonical}")
         paths = authority.task_paths
         if not paths:
-            raise MeridianError(f"task {canonical} has no authoritative task file")
+            raise CardineError(f"task {canonical} has no authoritative task file")
         task_path = paths[0]
     else:
         task_path = (project_root / locations.task_roots[0] / f"{artifact}.md").resolve()
@@ -403,9 +403,9 @@ def resolve_task_identity(
             # Only a colliding ID needs the Git ref check, so the subprocess cost
             # does not grow with the number of known tasks.
             _check_branch_name(other_id, other_branch)
-        except MeridianError:
+        except CardineError:
             continue
-        raise MeridianError(f"task identity collision between {canonical!r} and {other_id!r}")
+        raise CardineError(f"task identity collision between {canonical!r} and {other_id!r}")
 
     return ResolvedTaskIdentity(
         policy_version=policy.version,
@@ -436,11 +436,11 @@ def next_milestone_task_identity(
     """Resolve the next unused structured identity from the task authorities."""
     context = task_identity_context(project_root)
     if context.policy.mode != "milestone":
-        raise MeridianError("next task identity requires a milestone task-identity policy")
+        raise CardineError("next task identity requires a milestone task-identity policy")
     if re.fullmatch(r"[1-9][0-9]*", milestone) is None:
-        raise MeridianError("invalid milestone: expected a positive integer without a leading zero")
+        raise CardineError("invalid milestone: expected a positive integer without a leading zero")
     if re.fullmatch(r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*", workstream) is None:
-        raise MeridianError("invalid workstream: expected canonical uppercase task-ID grammar")
+        raise CardineError("invalid workstream: expected canonical uppercase task-ID grammar")
 
     project_root = project_root.resolve()
     authorities = context.authorities
@@ -459,7 +459,7 @@ def next_milestone_task_identity(
             highest = max(highest, int(structured.group("ordinal")))
 
     if highest >= 999:
-        raise MeridianError(f"next ordinal exceeds 999 for M{milestone}-{workstream}")
+        raise CardineError(f"next ordinal exceeds 999 for M{milestone}-{workstream}")
     return resolve_task_identity(
         project_root, f"M{milestone}-{workstream}-{highest + 1:03d}", "new", context=context
     )

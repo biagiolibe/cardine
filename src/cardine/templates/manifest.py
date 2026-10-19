@@ -5,7 +5,7 @@ from __future__ import annotations
 from cardine.shared.layout import names
 
 from cardine.shared.constants import PROTOCOL_VERSION
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import CapabilityCatalog
 from cardine.shared.models import CapabilityProfileDeclaration
 from cardine.shared.validation import _repository_relative_path
@@ -31,11 +31,11 @@ def validate_manifest(
     for path, digest in managed_files.items():
         _repository_relative_path(path, "manifest managedFiles path")
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
-            raise MeridianError(f"manifest managedFiles.{path} must be a SHA-256 digest")
+            raise CardineError(f"manifest managedFiles.{path} must be a SHA-256 digest")
     if "capabilityProfiles" not in manifest:
         return ()
     if catalog is None:
-        raise MeridianError("manifest capabilityProfiles require a capability catalog")
+        raise CardineError("manifest capabilityProfiles require a capability catalog")
     return parse_capability_profiles(manifest, catalog, surface_gaps)
 
 
@@ -47,15 +47,15 @@ def load_manifest(
 ) -> dict[str, object]:
     manifest_path = project_root / names().manifest_path
     if not manifest_path.is_file():
-        raise MeridianError(
+        raise CardineError(
             "project is not locked; run `meridian lock --project <path> --mode <mode>` first"
         )
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise MeridianError(f"invalid manifest: {manifest_path}") from error
+        raise CardineError(f"invalid manifest: {manifest_path}") from error
     if not isinstance(manifest, dict):
-        raise MeridianError(f"invalid manifest: {manifest_path} must contain a JSON object")
+        raise CardineError(f"invalid manifest: {manifest_path} must contain a JSON object")
     catalog = load_capability_catalog(framework_root) if framework_root is not None else None
     validate_manifest(manifest, catalog, [] if defer_surface_gaps else None)
     return manifest

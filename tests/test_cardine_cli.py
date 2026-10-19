@@ -13,6 +13,41 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class CardineCliTests(unittest.TestCase):
+    def test_error_class_has_no_old_name_alias(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import meridian
+        from cardine import cli
+        from cardine.shared import errors
+
+        self.assertIs(meridian.CardineError, errors.CardineError)
+        self.assertTrue(issubclass(errors.CardineError, RuntimeError))
+        for module in (errors, cli, meridian):
+            with self.subTest(module=module.__name__):
+                self.assertFalse(hasattr(module, "MeridianError"))  # MERIDIAN-OLD-NAME-TEST
+
+    def test_stop_class_has_no_old_name_alias(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import meridian
+        from cardine import cli
+        from cardine.shared import errors
+
+        self.assertIs(meridian.CardineStop, errors.CardineStop)
+        self.assertTrue(issubclass(errors.CardineStop, errors.CardineError))
+        for module in (errors, cli, meridian):
+            with self.subTest(module=module.__name__):
+                self.assertFalse(hasattr(module, "MeridianStop"))  # MERIDIAN-OLD-NAME-TEST
+
+    def test_parser_class_has_no_old_name_alias(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import meridian
+        from cardine import cli
+
+        self.assertIs(meridian.CardineArgumentParser, cli.CardineArgumentParser)
+        self.assertIs(type(cli.build_parser()), cli.CardineArgumentParser)
+        for module in (cli, meridian):
+            with self.subTest(module=module.__name__):
+                self.assertFalse(hasattr(module, "MeridianArgumentParser"))  # MERIDIAN-OLD-NAME-TEST
+
     def test_version_uses_checkout_without_inherited_framework_root(self):
         environment = {key: value for key, value in os.environ.items() if key != "MERIDIAN_ROOT"}
         environment["PYTHONPATH"] = str(ROOT / "src")
@@ -81,7 +116,7 @@ class CardineCliTests(unittest.TestCase):
         from cardine.templates import upgrade
 
         self.assertIs(meridian.main, cli.main)
-        self.assertIs(meridian.MeridianArgumentParser, cli.MeridianArgumentParser)
+        self.assertIs(meridian.CardineArgumentParser, cli.CardineArgumentParser)
         self.assertIs(meridian.ManagedFile, models.ManagedFile)
         self.assertIs(meridian.PlanItem, models.PlanItem)
         self.assertIs(meridian.apply_plan, upgrade.apply_plan)

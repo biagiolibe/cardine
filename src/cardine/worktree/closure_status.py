@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from pathlib import Path
 from cardine.shared.models import ResolvedTaskIdentity
 from cardine.worktree.storage import _branch_commit
@@ -112,7 +112,7 @@ def closure_status(
     if evidence_path.is_file():
         try:
             evidence = _integration_evidence(evidence_path)
-        except MeridianError:
+        except CardineError:
             evidence = None
         if (
             evidence is not None

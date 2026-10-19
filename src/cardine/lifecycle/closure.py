@@ -12,8 +12,8 @@ from cardine.integration.merge import missing_candidate_validation_commands
 from cardine.integration.merge import runnable_candidate_validation_command
 from cardine.integration.merge import stage_task_integration
 from cardine.shared.errors import InternalStopError
-from cardine.shared.errors import MeridianError
-from cardine.shared.errors import MeridianStop
+from cardine.shared.errors import CardineError
+from cardine.shared.errors import CardineStop
 from cardine.shared.journal import JOURNAL_VERSION
 from cardine.shared.journal import append_journal_line
 from cardine.shared.jsonio import _read_json_object
@@ -47,7 +47,7 @@ def _journal_advance_step(project_root: Path, command: str, task_id: str, step: 
     }
     try:
         append_journal_line(project_root, line)
-    except (OSError, MeridianError, InternalStopError) as error:
+    except (OSError, CardineError, InternalStopError) as error:
         print(f"warning: lifecycle journal not written: {type(error).__name__}", file=sys.stderr)
 
 
@@ -73,12 +73,12 @@ def advance_task_closure(
     candidate_commands = candidate_commands or []
     candidate_exit_codes = candidate_exit_codes or []
     if len(validation_commands) != len(validation_exit_codes):
-        raise MeridianError("each --validation-command requires one --validation-exit-code")
+        raise CardineError("each --validation-command requires one --validation-exit-code")
     if len(candidate_commands) != len(candidate_exit_codes):
-        raise MeridianError("each --candidate-command requires one --candidate-exit-code")
+        raise CardineError("each --candidate-command requires one --candidate-exit-code")
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
-        raise MeridianError("worktree advance must run from the canonical primary checkout")
+        raise CardineError("worktree advance must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
     state_path, _lease_path, integration_path = _lifecycle_paths(project_root, identity)
     evidence_path = state_path.with_suffix(".evidence.json")
@@ -124,7 +124,7 @@ def advance_task_closure(
         step = str(status["step"])
         code = status["stop_reason"] if isinstance(status["stop_reason"], str) else None
         if step in performed:
-            raise MeridianError(f"closure state did not advance after {step}; run closure-status")
+            raise CardineError(f"closure state did not advance after {step}; run closure-status")
         if step == "C1":
             return result("C1", "run-validation", stop_code="ACCEPTANCE_UNMET")
         if step == "C5":
@@ -158,7 +158,7 @@ def advance_task_closure(
                 if ready:
                     _integration_task_state(project_root, identity, str(inspection["task_commit"]),
                                             Path(str(inspection["worktree"])), require_tracked=True)
-            except MeridianStop as error:
+            except CardineStop as error:
                 resume = stop_resume(error.code, task_id=task, project=project_root)
                 if error.code == "TASK_STATE_MISSING" and detect_mode(project_root) == "lean-delivery":
                     recovery_project = _task_state_recovery_project(project_root, task)
@@ -199,7 +199,7 @@ def advance_task_closure(
                 return result("C6", "resolve", commands=[resume], stop_code=error.code, resume=resume, blocked=True)
             try:
                 staged = stage_task_integration(task, worktree_root, evidence_path, project_root)
-            except MeridianStop as error:
+            except CardineStop as error:
                 return stopped("C6", error.code)
             performed.append("C6")
             _journal_advance_step(project_root, "integrate stage", task, str(staged.get("next_action", "C6")))
@@ -258,7 +258,7 @@ def advance_task_closure(
             })
             try:
                 finalize_task_integration(task, candidate_evidence, project_root)
-            except MeridianStop as error:
+            except CardineStop as error:
                 return stopped("C8", error.code)
             performed.append("C8")
             _journal_advance_step(project_root, "integrate finalize", task, "C8")
@@ -274,5 +274,5 @@ def advance_task_closure(
                 _journal_advance_step(project_root, "cleanup", task, "C10")
             return result("C10", "none")
         else:
-            raise MeridianError(f"unexpected closure state at {step}; run closure-status")
+            raise CardineError(f"unexpected closure state at {step}; run closure-status")
 

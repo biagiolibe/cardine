@@ -105,9 +105,9 @@ class GenerateClaudeMdTest(unittest.TestCase):
         self.assertIn("First-ever wording.", generated)
 
     def test_generator_raises_when_the_anchor_heading_is_missing(self) -> None:
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_generator.generate_claude_md("governed-sdd", "no anchor here", "## Code organization\nbody")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_generator.generate_claude_md("governed-sdd", "## Code organization\nbody", "no anchor here")
 
     def test_cli_check_and_write_round_trip_on_a_stale_copy(self) -> None:
@@ -199,7 +199,7 @@ class GeneratedEntryRouterTest(unittest.TestCase):
         self.assertIn("<!-- Claude host metadata -->", outputs[Path("CLAUDE.md")])
         self.assertNotIn("<!-- Claude host metadata -->", outputs[Path("AGENTS.md")])
         overlay.write_text("Read this extra instruction.\n", encoding="utf-8")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_templates_router.entry_router_outputs(self.project)
 
     def test_audit_reports_generated_drift_missing_route_and_budget_failure(self) -> None:
@@ -212,14 +212,14 @@ class GeneratedEntryRouterTest(unittest.TestCase):
         (self.project / "docs/workflows/ENTRY_ROUTER_MAP.json").write_text("{}\n", encoding="utf-8")
         self.assertTrue(any("route map must declare exactly" in detail for _status, detail in owner_templates_router.audit_entry_router(self.project)))
         self.router.write_text("x" * (shared_constants.ENTRY_ROUTER_BUDGET_BYTES + 1), encoding="utf-8")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_templates_router.entry_router_outputs(self.project)
 
     def test_generator_refuses_to_emit_a_pointer(self) -> None:
         self.router.write_text(
             "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\nRead `AGENTS.md`.\n", encoding="utf-8"
         )
-        with self.assertRaisesRegex(shared_errors.MeridianError, "must not emit a Claude-to-AGENTS pointer"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "must not emit a Claude-to-AGENTS pointer"):
             owner_templates_router.entry_router_outputs(self.project)
 
     def test_cli_checks_and_writes_both_entry_points(self) -> None:

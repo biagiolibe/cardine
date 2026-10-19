@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from cardine.shared.layout import names
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
@@ -38,10 +38,10 @@ def _execution_location(project_root: Path, task_id: str, *,
         try:
             primary = canonical_project_root(candidate)
             break
-        except MeridianError:
+        except CardineError:
             continue
     if primary is None:
-        raise MeridianError(f"cannot identify the primary checkout from {supplied}")
+        raise CardineError(f"cannot identify the primary checkout from {supplied}")
     identity = resolve_task_identity(primary, task_id, "existing", allow_archived_queue_links=True)
     result, _valid = inspect_task_worktree(
         task_id, None, primary, require_effective_worktree=False,

@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 
 from cardine.integration.projections import _queue_task_rows
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import git_output
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
@@ -84,7 +84,7 @@ def import_task_states(
         try:
             identity = resolve_task_identity(project_root, task_id, "existing", context=context,
                                              allow_archived_queue_links=True)
-        except MeridianError as error:
+        except CardineError as error:
             invalid(str(error))
         record = identity.task_path.read_text(encoding="utf-8")
         record_status = read_task_field(record, "Status")

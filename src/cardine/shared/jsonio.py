@@ -7,7 +7,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 
 
 def _write_json_atomic(path: Path, value: dict[str, object], *, exclusive: bool = False) -> None:
@@ -32,7 +32,7 @@ def _read_json_object(path: Path, label: str) -> dict[str, object]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise MeridianError(f"cannot read {label} at {path}: {error}") from error
+        raise CardineError(f"cannot read {label} at {path}: {error}") from error
     if not isinstance(value, dict):
-        raise MeridianError(f"{label} must be a JSON object: {path}")
+        raise CardineError(f"{label} must be a JSON object: {path}")
     return value

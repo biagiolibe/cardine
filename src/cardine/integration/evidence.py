@@ -8,7 +8,7 @@ from cardine.shared.constants import VALIDATION_EVIDENCE_SCHEMA_PATH
 from cardine.shared.constants import VALIDATION_EXIT_FAILED
 from cardine.shared.constants import VALIDATION_EXIT_PASSED
 from cardine.shared.constants import VALIDATION_EXIT_PENDING
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import git_output
 from cardine.shared.jsonio import _read_json_object
@@ -113,7 +113,7 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
         resolved = git_output(project_root, "rev-parse", f"{record.get('commit', '')}^{{commit}}")
         _validation_reason(reasons, resolved == target, "commit: does not equal the expected commit")
         _validation_reason(reasons, git_output(project_root, "rev-parse", f"{resolved}^{{tree}}") == record.get("tree"), "tree: does not equal commit tree")
-    except MeridianError as error:
+    except CardineError as error:
         reasons.append(f"commit: {error}")
     _validation_reason(reasons, record.get("exit_code") == 0, "exit_code: must be 0")
     unknown_ci_count = level == "T1_CI" and record.get("tests_run") is None
@@ -137,13 +137,13 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
 
 def _string_tuple(value: object, label: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
-        raise MeridianError(f"integration evidence field {label!r} must be an array of non-empty strings")
+        raise CardineError(f"integration evidence field {label!r} must be an array of non-empty strings")
     return tuple(value)
 
 
 def _bool_field(value: object, label: str) -> bool:
     if not isinstance(value, bool):
-        raise MeridianError(f"integration evidence field {label!r} must be boolean")
+        raise CardineError(f"integration evidence field {label!r} must be boolean")
     return value
 
 
@@ -154,30 +154,30 @@ def candidate_validation_declaration(project_root: Path) -> tuple[str, dict[str,
         return "undeclared", {}
     data = _read_json_object(path, "candidate-validation declaration")
     if data.get("version") != 1:
-        raise MeridianError(f"{path}: version must be 1")
+        raise CardineError(f"{path}: version must be 1")
     state = data.get("state")
     if state == "undeclared":
         if set(data) != {"version", "state"}:
-            raise MeridianError(f"{path}: undeclared state must contain only version and state")
+            raise CardineError(f"{path}: undeclared state must contain only version and state")
         return state, {}
     if state == "none":
         if set(data) != {"version", "state"}:
-            raise MeridianError(f"{path}: none state must contain only version and state")
+            raise CardineError(f"{path}: none state must contain only version and state")
         return state, {}
     if state != "declared":
-        raise MeridianError(f"{path}: state must be declared, none, or undeclared")
+        raise CardineError(f"{path}: state must be declared, none, or undeclared")
     outcomes = data.get("outcomes")
     if set(data) != {"version", "state", "outcomes"} or not isinstance(outcomes, dict):
-        raise MeridianError(f"{path}: declared state requires only version, state, and outcomes")
+        raise CardineError(f"{path}: declared state requires only version, state, and outcomes")
     if set(outcomes) != set(CANDIDATE_VALIDATION_OUTCOMES):
-        raise MeridianError(f"{path}: outcomes must declare REUSE, BOUNDED, and FULL")
+        raise CardineError(f"{path}: outcomes must declare REUSE, BOUNDED, and FULL")
     parsed: dict[str, tuple[str, ...]] = {}
     for outcome in CANDIDATE_VALIDATION_OUTCOMES:
         fragments = outcomes[outcome]
         if not isinstance(fragments, list) or not fragments or not all(
             isinstance(fragment, str) and fragment.strip() for fragment in fragments
         ):
-            raise MeridianError(f"{path}: outcomes.{outcome} must be a non-empty array of non-empty strings")
+            raise CardineError(f"{path}: outcomes.{outcome} must be a non-empty array of non-empty strings")
         parsed[outcome] = tuple(fragments)
     return state, parsed
 
@@ -199,7 +199,7 @@ def proposed_candidate_validation_declaration(project_root: Path) -> dict[str, o
     return {"version": 1, "state": "declared", "outcomes": outcomes}
 
 
-def undeclared_validation_commands_error(project_root: Path, evidence: dict[str, object]) -> MeridianError:
+def undeclared_validation_commands_error(project_root: Path, evidence: dict[str, object]) -> CardineError:
     commands = evidence.get("validation_commands")
     recorded = ", ".join(commands) if isinstance(commands, list) and commands else "none recorded"
     proposal = json.dumps(proposed_candidate_validation_declaration(project_root), sort_keys=True)
@@ -227,7 +227,7 @@ def _integration_evidence(path: Path) -> dict[str, object]:
     }
     missing = sorted(required - evidence.keys())
     if missing:
-        raise MeridianError(f"integration evidence is incomplete; missing: {', '.join(missing)}")
+        raise CardineError(f"integration evidence is incomplete; missing: {', '.join(missing)}")
     for field in ("accepted", "validation_passed", "full_validation_required", "interaction_assessment_complete"):
         _bool_field(evidence[field], field)
     for field in (
@@ -240,7 +240,7 @@ def _integration_evidence(path: Path) -> dict[str, object]:
         _string_tuple(evidence[field], field)
     for field in ("validated_task_commit", "validated_base_commit"):
         if not isinstance(evidence[field], str) or not re.fullmatch(r"[0-9a-f]{40}", evidence[field]):
-            raise MeridianError(f"integration evidence field {field!r} must be a full Git object ID")
+            raise CardineError(f"integration evidence field {field!r} must be a full Git object ID")
     return evidence
 
 
@@ -261,9 +261,9 @@ def record_task_evidence(
 ) -> dict[str, object]:
     """Record Git-derived task-validation facts without running validation."""
     if len(validation_commands) != len(validation_exit_codes):
-        raise MeridianError("each --validation-command requires one --validation-exit-code")
+        raise CardineError("each --validation-command requires one --validation-exit-code")
     if not validation_commands or any(not command.strip() for command in validation_commands):
-        raise MeridianError("at least one non-empty --validation-command is required")
+        raise CardineError("at least one non-empty --validation-command is required")
     project_root = _verified_lifecycle_project(supplied_project)
     identity = resolve_task_identity(project_root, task_id, "existing")
     inspection, ready = inspect_task_worktree(
@@ -273,7 +273,7 @@ def record_task_evidence(
         require_effective_worktree=require_effective_worktree,
     )
     if not ready:
-        raise MeridianError(f"task worktree is not ready: {', '.join(inspection['errors'])}")
+        raise CardineError(f"task worktree is not ready: {', '.join(inspection['errors'])}")
     state_path, _lease, _integration = _lifecycle_paths(project_root, identity)
     state = _read_json_object(state_path, "worktree lifecycle state")
     task_commit = str(inspection["task_commit"])
@@ -362,14 +362,14 @@ def _lifecycle_changes_after_validation(
         index += 1
         if status.startswith(("R", "C")):
             if index + 1 >= len(fields):
-                raise MeridianError("invalid rename-aware Git diff output")
+                raise CardineError("invalid rename-aware Git diff output")
             old_path, new_path = fields[index], fields[index + 1]
             index += 2
             if status != "R100" or old_path != str(active_record) or new_path != str(archive_record):
                 offending.update((old_path, new_path))
             continue
         if index >= len(fields):
-            raise MeridianError("invalid rename-aware Git diff output")
+            raise CardineError("invalid rename-aware Git diff output")
         path = fields[index]
         index += 1
         if path not in allowed:

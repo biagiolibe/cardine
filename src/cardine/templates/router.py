@@ -8,7 +8,7 @@ from cardine.shared.constants import ENTRY_ROUTER_OVERLAYS
 from cardine.shared.constants import ENTRY_ROUTER_PATH
 from cardine.shared.constants import ENTRY_ROUTER_ROUTES
 from cardine.shared.constants import ENTRY_ROUTER_SAFEGUARDS
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import ManagedFile
 from cardine.templates.markers import CLAUDE_AGENTS_POINTER_MARKER
 from cardine.templates.markers import extract_marker_block
@@ -25,7 +25,7 @@ def entry_router_overlay(text: str, path: Path) -> str:
     if not text:
         return ""
     if len(text.encode("utf-8")) > 256 or not re.fullmatch(r"<!--[^\n]*-->\n?", text):
-        raise MeridianError(
+        raise CardineError(
             f"{path}: an entry-router host overlay must be one HTML comment of at most 256 UTF-8 bytes"
         )
     return text.rstrip() + "\n"
@@ -40,21 +40,21 @@ def entry_router_outputs(project_root: Path) -> dict[Path, str]:
     """Return the expected generated entry points, or fail without writing."""
     router = project_root / ENTRY_ROUTER_PATH
     if not router.is_file():
-        raise MeridianError(f"entry-router source is missing: {router}")
+        raise CardineError(f"entry-router source is missing: {router}")
     router_text = router.read_text(encoding="utf-8")
     if len(router_text.encode("utf-8")) > ENTRY_ROUTER_BUDGET_BYTES:
-        raise MeridianError(
+        raise CardineError(
             f"{router}: exceeds the {ENTRY_ROUTER_BUDGET_BYTES}-byte entry-router budget"
         )
     if CLAUDE_AGENTS_POINTER_MARKER in router_text or is_agents_pointer(router_text):
-        raise MeridianError(f"{router}: a generated entry router must not emit a Claude-to-AGENTS pointer")
+        raise CardineError(f"{router}: a generated entry router must not emit a Claude-to-AGENTS pointer")
     result = {}
     for target, relative_overlay in ENTRY_ROUTER_OVERLAYS.items():
         overlay = project_root / relative_overlay
         overlay_text = entry_router_overlay(overlay.read_text(encoding="utf-8"), overlay) if overlay.is_file() else ""
         output = render_entry_router(router_text, overlay_text)
         if len(output.encode("utf-8")) > ENTRY_ROUTER_BUDGET_BYTES:
-            raise MeridianError(f"{target}: exceeds the {ENTRY_ROUTER_BUDGET_BYTES}-byte entry-router budget")
+            raise CardineError(f"{target}: exceeds the {ENTRY_ROUTER_BUDGET_BYTES}-byte entry-router budget")
         result[Path(target)] = output
     return result
 
@@ -99,10 +99,10 @@ def entry_router_trigger_requirements(
     }
     source = templates.get(Path("AGENTS.md")) or templates.get(Path("CLAUDE.md"))
     if source is None:
-        raise MeridianError("upgrade plan has no managed entry-point template for command-triggers")
+        raise CardineError("upgrade plan has no managed entry-point template for command-triggers")
     block = extract_marker_block(source.read_text(encoding="utf-8"), "command-triggers", version)
     if block is None:
-        raise MeridianError(
+        raise CardineError(
             f"entry-point template lacks capability=command-triggers v{version} required by the migration ledger"
         )
 
@@ -119,7 +119,7 @@ def entry_router_trigger_requirements(
             continue
         targets = [value for value in re.findall(r"`([^`]+)`", route) if value.endswith(".md")]
         if not targets:
-            raise MeridianError(f"command trigger has no routed Markdown target: {stripped}")
+            raise CardineError(f"command trigger has no routed Markdown target: {stripped}")
         target = targets[-1]
         for trigger in triggers:
             if any(trigger in router_line and target in router_line for router_line in router_lines):
@@ -144,7 +144,7 @@ def audit_entry_router(project_root: Path) -> list[tuple[str, str]]:
     results = []
     try:
         outputs = entry_router_outputs(project_root)
-    except MeridianError as error:
+    except CardineError as error:
         return [("FAIL", str(error))]
     for target, expected in outputs.items():
         actual = project_root / target

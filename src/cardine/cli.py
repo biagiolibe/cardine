@@ -24,7 +24,7 @@ from cardine.review.verdict import record_review_verdict
 from cardine.shared.authority import adr_list, adr_show, context_authority
 from cardine.shared.constants import USAGE_HOSTS
 from cardine.shared.context import context_size_report, format_context_size_report
-from cardine.shared.errors import MeridianError, MeridianStop
+from cardine.shared.errors import CardineError, CardineStop
 from cardine.shared.git import canonical_project_root
 from cardine.shared.journal import LifecycleJournalEntry
 from cardine.shared.paths import SCRIPTS_ROOT
@@ -54,7 +54,7 @@ from cardine.worktree.storage import _effective_worktree_root, _verified_lifecyc
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
-class MeridianArgumentParser(argparse.ArgumentParser):
+class CardineArgumentParser(argparse.ArgumentParser):
     """Use sysexits-style usage status for machine-oriented namespaces."""
 
     def error(self, message: str) -> None:
@@ -86,9 +86,9 @@ def main() -> int:
     return exit_code
 
 
-def build_parser() -> MeridianArgumentParser:
+def build_parser() -> CardineArgumentParser:
     """Build the CLI parser, also used to verify the published command surface."""
-    parser = MeridianArgumentParser(prog="meridian")
+    parser = CardineArgumentParser(prog="meridian")
     parser.add_argument(
         "--framework-root",
         type=Path,
@@ -466,12 +466,12 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             return run_self_check(framework_root)
         if arguments.command == "console":
             if not 0.2 <= arguments.interval <= 60:
-                raise MeridianError("--interval must be between 0.2 and 60")
+                raise CardineError("--interval must be between 0.2 and 60")
             if not sys.stdin.isatty() or not sys.stdout.isatty():
-                raise MeridianError("interactive console requires a terminal")
+                raise CardineError("interactive console requires a terminal")
             console_path = framework_root / "scripts" / "project_console.py"
             if not console_path.is_file():
-                raise MeridianError(f"console is unavailable from framework root: {framework_root}")
+                raise CardineError(f"console is unavailable from framework root: {framework_root}")
             sys.path.insert(0, str(console_path.parent))
             from cardine.console import entry as project_console
 
@@ -515,7 +515,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             if arguments.field == "reviewer-author":
                 project_info = declaration.get("project")
                 if not isinstance(project_info, dict):
-                    raise MeridianError("project declaration key 'project' is required for reviewer-author")
+                    raise CardineError("project declaration key 'project' is required for reviewer-author")
                 value = f"{project_info['name']} Reviewer-Integrator <reviewer-integrator@{project_info['slug']}.local>"
             elif arguments.field == "validation-scoping":
                 value = declaration.get("validationScoping", [])
@@ -761,7 +761,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 print(context_authority(project_root, arguments.task_id, arguments.labels_only))
             else:
                 if arguments.threshold_bytes is not None and arguments.threshold_bytes < 0:
-                    raise MeridianError("--threshold-bytes must be a non-negative integer")
+                    raise CardineError("--threshold-bytes must be a non-negative integer")
                 report = context_size_report(project_root, arguments.role, arguments.context_task_id, arguments.threshold_bytes)
                 print(json.dumps(report, sort_keys=True) if arguments.format == "json" else format_context_size_report(report))
                 return 2 if report["exceeded"] else 0
@@ -811,7 +811,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 return stop_audit_main(arguments.host)
         elif arguments.check:
             if arguments.owner_reconciled:
-                raise MeridianError("--owner-reconciled only applies to --apply")
+                raise CardineError("--owner-reconciled only applies to --apply")
             base_manifest, target_override, managed_override = prepare_upgrade_targets(
                 project_root, framework_root, arguments.stop_before_retirement
             )
@@ -840,7 +840,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 arguments.owner_reconciled,
                 arguments.stop_before_retirement,
             )
-    except MeridianStop as error:
+    except CardineStop as error:
         if getattr(error, "recovery_worktree", None) is not None:
             # Preserve the exact invocation, including optional flags and values.
             rerun = []
@@ -859,7 +859,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
         journal.stopped(error.code)
         print(error, file=sys.stderr)
         return 2
-    except MeridianError as error:
+    except CardineError as error:
         refused = stop_error("COMMAND_REFUSED", str(error))
         journal.stopped(refused.code)
         print(refused, file=sys.stderr)

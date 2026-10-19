@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.jsonio import _write_json_atomic
 from cardine.shared.models import ClaudeConfigurationPlan
 from pathlib import Path
@@ -160,12 +160,12 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
 
 def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan) -> bool:
     if plan.status == "blocked":
-        raise MeridianError(f"Claude project allowlist is blocked: {plan.detail}")
+        raise CardineError(f"Claude project allowlist is blocked: {plan.detail}")
     if plan.proposed_settings is None:
         return False
     current_text = plan.settings_path.read_text(encoding="utf-8") if plan.settings_path.is_file() else ""
     if current_text != plan.current_text:
-        raise MeridianError("Claude settings changed since they were planned; rerun --check")
+        raise CardineError("Claude settings changed since they were planned; rerun --check")
     _write_json_atomic(plan.settings_path, plan.proposed_settings)
     return True
 

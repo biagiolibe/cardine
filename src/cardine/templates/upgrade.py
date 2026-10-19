@@ -11,7 +11,7 @@ import sys
 from cardine.hosts.codex import _write_exclusive_backup
 from cardine.release.version import read_version, require_release_version
 from cardine.shared.constants import PROTOCOL_VERSION, STRICT_DIGEST_PROFILES
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.hashing import sha256
 from cardine.shared.models import ManagedFile, PlanItem
 from cardine.templates.adoption import _capability_declaration
@@ -94,7 +94,7 @@ def apply_plan(
 ) -> None:
     print_plan(project_root, manifest, framework_root, plan, target_version_override=target_version_override)
     if plan_has_blockers(plan, owner_reconciled=owner_reconciled):
-        raise MeridianError("upgrade has blocking plan items")
+        raise CardineError("upgrade has blocking plan items")
 
     installed_version = manifest_baseline_version(manifest)
     target_version = target_version_override or read_version(framework_root)
@@ -119,12 +119,12 @@ def apply_plan(
                 shutil.copyfile(item.file.source, local)
             elif item.action == "adopt-replace":
                 if item.backup is None:
-                    raise MeridianError(f"adoption backup is missing for {item.file.target}")
+                    raise CardineError(f"adoption backup is missing for {item.file.target}")
                 _write_exclusive_backup(local, project_root / item.backup)
                 shutil.copyfile(item.file.source, local)
             elif item.action == "restructure":
                 if item.backup is None:
-                    raise MeridianError(f"restructure backup is missing for {item.file.target}")
+                    raise CardineError(f"restructure backup is missing for {item.file.target}")
                 local_text = local.read_text(encoding="utf-8")
                 updated = restructured_text(
                     local_text,
@@ -143,7 +143,7 @@ def apply_plan(
                     merged.decode("utf-8"), item.file.source.read_text(encoding="utf-8")
                 )
                 if normalized is None:
-                    raise MeridianError(
+                    raise CardineError(
                         f"marker deduplication is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(normalized, encoding="utf-8")
@@ -152,7 +152,7 @@ def apply_plan(
                     local.read_text(encoding="utf-8"), item.file.source.read_text(encoding="utf-8")
                 )
                 if normalized is None:
-                    raise MeridianError(
+                    raise CardineError(
                         f"marker deduplication is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(normalized, encoding="utf-8")
@@ -164,7 +164,7 @@ def apply_plan(
                     item.file.source.read_text(encoding="utf-8"),
                 )
                 if appended is None:
-                    raise MeridianError(
+                    raise CardineError(
                         f"marker-aware insertion is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(appended, encoding="utf-8")
@@ -179,7 +179,7 @@ def apply_plan(
                 removal_pairs = [(capability, version) for capability, version, _superseded_by in removals]
                 retired = remove_retired_markers(appended or "", base.read_text(encoding="utf-8"), removal_pairs)
                 if appended is None or retired is None:
-                    raise MeridianError(
+                    raise CardineError(
                         f"marker-aware relocation is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(retired, encoding="utf-8")
@@ -188,7 +188,7 @@ def apply_plan(
                     local.read_text(encoding="utf-8"), item.file.source.read_text(encoding="utf-8")
                 )
                 if normalized is None:
-                    raise MeridianError(
+                    raise CardineError(
                         f"marker normalization is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(normalized, encoding="utf-8")
@@ -199,7 +199,7 @@ def apply_plan(
                 local_text = local.read_text(encoding="utf-8")
                 retired = remove_retired_markers(local_text, base.read_text(encoding="utf-8"), removal_pairs)
                 if retired is None or retired == local_text:
-                    raise MeridianError(
+                    raise CardineError(
                         f"marker retirement is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(retired, encoding="utf-8")
@@ -211,7 +211,7 @@ def apply_plan(
             detail for status, detail in audit_entry_router(project_root) if status == "FAIL"
         ]
         if router_failures:
-            raise MeridianError(
+            raise CardineError(
                 "entry-router audit failed after regeneration: " + "; ".join(router_failures)
             )
 
