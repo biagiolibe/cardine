@@ -25,7 +25,7 @@ Only the coordinator's review found the omission.
 
 ## Acceptance Criteria
 
-- [ ] `check_repository.py` checks every required capability in
+- [x] `check_repository.py` checks every required capability in
   `capabilities/markers-v1.json` that is not retired. Its `requiredVersion`
   must equal the version that adoption detection reads from the current
   Governed SDD templates. That version comes from the first marker of the
@@ -36,12 +36,12 @@ Only the coordinator's review found the omission.
   reads only the catalog, the templates, and `managed_files`. It does not
   call `capability_presence_map`, because task 034 may remove that function
   with the adoption code.
-- [ ] A required, non-retired capability with no marker in the Governed SDD
+- [x] A required, non-retired capability with no marker in the Governed SDD
   templates fails the check with its name. Today there is none.
-- [ ] The failure message names the capability, the catalog value, the version
+- [x] The failure message names the capability, the catalog value, the version
   the templates ship, and the file that ships it. It tells the contributor to
   update `requiredVersion` in `capabilities/markers-v1.json`.
-- [ ] Tests in `tests/test_check_repository.py` cover these cases, each on a
+- [x] Tests in `tests/test_check_repository.py` cover these cases, each on a
   temporary copy of the catalog and templates:
   - a bumped Governed SDD marker with an unchanged `requiredVersion` fails;
   - a `requiredVersion` above the shipped version fails;
@@ -52,18 +52,18 @@ Only the coordinator's review found the omission.
     `lifecycle-orchestration` ships v12 in `docs/LIFECYCLE_ORCHESTRATION.md`
     and v3 in `docs/workflows/LIFECYCLE.md`, and its `requiredVersion` 12 is
     the version detection reads.
-- [ ] The check passes on the current `main`. If task 029 has been integrated,
+- [x] The check passes on the current `main`. If task 029 has been integrated,
   it also passes with that task's `requiredVersion` values.
-- [ ] `CONTRIBUTING.md` explains the rule in the pre-1.0 template paragraph:
+- [x] `CONTRIBUTING.md` explains the rule in the pre-1.0 template paragraph:
   `requiredVersion` is the version that the Governed SDD templates ship,
   because adoption detection reads only those templates. A Lean-only bump
   therefore does not change it.
-- [ ] No file under `templates/`, `capabilities/marker-baselines.json`,
+- [x] No file under `templates/`, `capabilities/marker-baselines.json`,
   `migrations/`, or `VERSION` changes. This repository's managed files
   (`CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`) and `.meridian/` stay
   unchanged, except `.meridian/tasks/038.json`, which only the installed
   `meridian task close 038` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

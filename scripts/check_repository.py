@@ -22,6 +22,7 @@ from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
 from cardine.templates import files as owner_templates_files
+from cardine.templates.markers import find_capability_marker_version
 from cardine.templates import migration_audit as owner_templates_migration_audit
 from cardine.templates import migrations as owner_templates_migrations
 from cardine.templates import manifest as owner_templates_manifest
@@ -760,6 +761,37 @@ def check_capability_marker_baselines(root: Path = ROOT) -> None:
                 fail(f"{relative}: recorded capability={capability} baseline no longer present in the template")
 
 
+def check_capability_required_versions(root: Path = ROOT) -> None:
+    """Match catalog requirements to the first shipped Governed SDD marker."""
+    catalog_path = "capabilities/markers-v1.json"
+    catalog = json.loads((root / catalog_path).read_text(encoding="utf-8"))
+    templates = [
+        (item.source, item.source.read_text(encoding="utf-8"))
+        for item in owner_templates_files.managed_files(root, "governed-sdd")
+    ]
+    for capability, entry in catalog["capabilities"].items():
+        if not entry["required"] or entry["retired"]:
+            continue
+        required = entry["requiredVersion"]
+        for source, text in templates:
+            shipped = find_capability_marker_version(text, capability)
+            if shipped is None:
+                continue
+            if required != shipped:
+                fail(
+                    f"capability={capability}: catalog requiredVersion={required}, "
+                    f"but {source.relative_to(root)} ships v{shipped}; "
+                    f"update requiredVersion in {catalog_path} to {shipped}"
+                )
+            break
+        else:
+            fail(
+                f"capability={capability}: catalog requiredVersion={required}, "
+                "but no marker ships in the Governed SDD managed templates; "
+                f"restore its marker and update requiredVersion in {catalog_path}"
+            )
+
+
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
     """Return managed-copy and installation-evidence drift without host probes."""
     try:
@@ -1002,6 +1034,7 @@ def main() -> None:
     check_bash()
     check_local_markdown_links()
     check_capability_marker_baselines()
+    check_capability_required_versions()
     check_self_hosting_baseline()
     check_managed_digests()
     check_no_machine_paths()

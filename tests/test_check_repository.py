@@ -302,6 +302,100 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         cr.check_capability_marker_baselines(self.root)
 
 
+class CapabilityRequiredVersionsTest(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        shutil.copytree(ROOT / "templates", self.root / "templates")
+        shutil.copytree(ROOT / "capabilities", self.root / "capabilities")
+        self.catalog_path = self.root / "capabilities/markers-v1.json"
+        self.catalog = json.loads(self.catalog_path.read_text(encoding="utf-8"))
+
+    def save_catalog(self) -> None:
+        self.catalog_path.write_text(json.dumps(self.catalog), encoding="utf-8")
+
+    def failure(self) -> str:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+            cr.check_capability_required_versions(self.root)
+        return output.getvalue()
+
+    def test_matching_catalog_passes(self) -> None:
+        cr.check_capability_required_versions(self.root)
+
+    def test_bumped_marker_with_unchanged_requirement_fails(self) -> None:
+        required = self.catalog["capabilities"]["git-workflow"]["requiredVersion"]
+        relative = "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        target = self.root / relative
+        text = target.read_text(encoding="utf-8")
+        marker = f"capability=git-workflow v{required} -->"
+        self.assertIn(marker, text)
+        target.write_text(text.replace(marker, f"capability=git-workflow v{required + 1} -->", 1), encoding="utf-8")
+        message = self.failure()
+        for expected in ("git-workflow", f"requiredVersion={required}", f"ships v{required + 1}", relative,
+                         "update requiredVersion in capabilities/markers-v1.json"):
+            self.assertIn(expected, message)
+
+    def test_requirement_above_shipped_version_fails(self) -> None:
+        entry = self.catalog["capabilities"]["git-workflow"]
+        shipped = entry["requiredVersion"]
+        entry["requiredVersion"] += 1
+        self.save_catalog()
+        message = self.failure()
+        for expected in ("git-workflow", f"requiredVersion={shipped + 1}", f"ships v{shipped}",
+                         "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"):
+            self.assertIn(expected, message)
+
+    def test_retired_capability_is_ignored_even_if_required(self) -> None:
+        self.catalog["capabilities"]["retired-test-capability"] = {
+            "required": True, "retired": True, "requiredVersion": 999,
+        }
+        self.save_catalog()
+        cr.check_capability_required_versions(self.root)
+
+    def test_optional_capability_is_ignored(self) -> None:
+        self.catalog["capabilities"]["optional-test-capability"] = {
+            "required": False, "retired": False, "requiredVersion": 999,
+        }
+        self.save_catalog()
+        cr.check_capability_required_versions(self.root)
+
+    def test_required_capability_without_a_marker_fails(self) -> None:
+        self.catalog["capabilities"]["missing-test-capability"] = {
+            "required": True, "retired": False, "requiredVersion": 1,
+        }
+        self.save_catalog()
+        message = self.failure()
+        self.assertIn("missing-test-capability", message)
+        self.assertIn("no marker ships in the Governed SDD managed templates", message)
+
+    def test_first_managed_file_wins_over_later_higher_or_lower_versions(self) -> None:
+        first = self.root / "templates/workflows/governed-sdd/docs/LIFECYCLE_ORCHESTRATION.md"
+        later = self.root / "templates/workflows/governed-sdd/docs/workflows/LIFECYCLE.md"
+        self.assertIn("capability=lifecycle-orchestration v12 -->", first.read_text(encoding="utf-8"))
+        original = later.read_text(encoding="utf-8")
+        self.assertIn("capability=lifecycle-orchestration v3 -->", original)
+        for version in (3, 99):
+            with self.subTest(later_version=version):
+                later.write_text(original.replace("capability=lifecycle-orchestration v3 -->",
+                                                 f"capability=lifecycle-orchestration v{version} -->"), encoding="utf-8")
+                cr.check_capability_required_versions(self.root)
+        self.catalog["capabilities"]["lifecycle-orchestration"]["requiredVersion"] = 99
+        self.save_catalog()
+        message = self.failure()
+        self.assertIn("ships v12", message)
+        self.assertIn(str(first.relative_to(self.root)), message)
+
+    def test_first_marker_in_a_file_wins(self) -> None:
+        target = self.root / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        target.write_text("<!-- MERIDIAN:BEGIN capability=git-workflow v999 -->\n<!-- MERIDIAN:END -->\n"
+                          + target.read_text(encoding="utf-8"), encoding="utf-8")
+        self.catalog["capabilities"]["git-workflow"]["requiredVersion"] = 999
+        self.save_catalog()
+        cr.check_capability_required_versions(self.root)
+
+
 class GovernedReviewWorktreeContractTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()

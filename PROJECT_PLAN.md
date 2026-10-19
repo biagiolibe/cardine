@@ -62,4 +62,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 035 — Remove the self-reported budget counters.
 - `[ ]` 036 — Move maintainer commands out of the user CLI and merge the generators.
 - `[x]` 037 — Scan only repository files in `check_repository.py`.
-- `[ ]` 038 — Reject a stale `requiredVersion` in the marker catalog.
+- `[x]` 038 — Reject a stale `requiredVersion` in the marker catalog.
