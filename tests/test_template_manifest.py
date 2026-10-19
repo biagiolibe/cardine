@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from meridian_cli_support import CLI, ROOT
+from installation_fixture import InstallationFixture
 import io
 import json
 import shutil
@@ -70,13 +71,16 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
 
     def test_detect_capabilities_distinguishes_absent_stale_and_satisfied(self) -> None:
         self.write_migration("001-widget.json", "widget", 2)
+        # MERIDIAN-INSTALLATION-CHECK
         agents = self.project / "AGENTS.md"
+        # MERIDIAN-INSTALLATION-CHECK
         claude = self.project / "CLAUDE.md"
         for path in (agents, claude):
             path.write_text("", encoding="utf-8")
 
         import meridian as m
 
+        # MERIDIAN-INSTALLATION-CHECK
         managed = [m.ManagedFile(source=Path("unused"), target=Path("AGENTS.md"))]
         original_managed_files = owner_templates_marker_history.managed_files
         owner_templates_marker_history.managed_files = lambda framework_root, mode: managed
@@ -117,6 +121,7 @@ class MarkerCatalogTest(unittest.TestCase):
                 owner_templates_migrations.retired_capability_ids(framework),
                 owner_templates_migrations.retired_capability_ids(ROOT),
             )
+            # MERIDIAN-INSTALLATION-CHECK
             managed = mock.Mock(target=Path("AGENTS.md"))
             with mock.patch.object(owner_templates_marker_history, "managed_files", return_value=[managed]):
                 self.assertEqual(
@@ -145,102 +150,10 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         self.catalog = owner_templates_catalog.load_capability_catalog(ROOT)
 
     def manifest(self, mode: str = "lean-delivery") -> dict[str, object]:
-        profile = self.catalog.profile("meridian-self-hosting")
-        self.assertIsNotNone(profile)
-        capabilities: dict[str, object] = {}
-        for capability_id, version in profile.capabilities:
-            capability = self.catalog.capability(capability_id)
-            self.assertIsNotNone(capability)
-            capabilities[capability_id] = {
-                "requiredVersion": version,
-                "managedSurface": [
-                    {"path": surface.path, "form": surface.forms[0]}
-                    for surface in capability.managed_surfaces
-                ],
-                "installation": {
-                    "state": "MISSING",
-                    "evidence": [],
-                    "notApplicableRationale": None,
-                },
-                "hostActivation": {
-                    host_id: {
-                        "state": "UNVERIFIED",
-                        "evidence": [],
-                        "notApplicableRationale": None,
-                    }
-                    for host_id, _evidence_kind in capability.host_profiles
-                },
-                "verification": {
-                    "state": "UNVERIFIED",
-                    "evidence": [],
-                    "verifiedAt": None,
-                    "verifierVersion": None,
-                    "notApplicableRationale": None,
-                },
-            }
-        return {
-            "protocolVersion": shared_constants.PROTOCOL_VERSION,
-            "frameworkVersion": "1.1.0",
-            "workflowMode": mode,
-            "managedFiles": {},
-            "appliedMigrations": ["014-minimal-read-only-status", "040-pretooluse-read-guard"],
-            "capabilityProfiles": {
-                "meridian-self-hosting": {
-                    "profileVersion": profile.version,
-                    "capabilities": capabilities,
-                }
-            },
-        }
+        return InstallationFixture().manifest(mode)
 
-    def installed_project(
-        self, project: Path, mode: str = "lean-delivery"
-    ) -> dict[str, object]:
-        manifest = self.manifest(mode)
-        managed_files: dict[str, str] = {}
-        for capability_id, declaration in manifest["capabilityProfiles"][
-            "meridian-self-hosting"
-        ]["capabilities"].items():
-            surface_digests = []
-            for surface in declaration["managedSurface"]:
-                path = project / surface["path"]
-                if not path.exists():
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_text(f"surface: {surface['path']}\n", encoding="utf-8")
-                digest = shared_hashing.sha256(path)
-                surface_digests.append(f"sha256:{digest}")
-                if surface["form"] == "managed-copy":
-                    managed_files[surface["path"]] = digest
-            declaration["installation"] = {
-                "state": "INSTALLED",
-                "evidence": surface_digests,
-                "notApplicableRationale": None,
-            }
-            host_activation = {}
-            for host_id in declaration["hostActivation"]:
-                probe_path = f".meridian/evidence/{capability_id}-{host_id}.json"
-                probe = project / probe_path
-                probe.parent.mkdir(parents=True, exist_ok=True)
-                probe.write_text("{}\n", encoding="utf-8")
-                host_activation[host_id] = {
-                    "state": "ENFORCED",
-                    "evidence": [f"probe:{probe_path}"],
-                    "notApplicableRationale": None,
-                }
-            declaration["hostActivation"] = host_activation
-            verification_path = f".meridian/evidence/{capability_id}-verification.json"
-            verification_probe = project / verification_path
-            verification_probe.parent.mkdir(parents=True, exist_ok=True)
-            verification_probe.write_text("{}\n", encoding="utf-8")
-            declaration["verification"] = {
-                "state": "PASS",
-                "evidence": [f"probe:{verification_path}"],
-                "verifiedAt": "2026-09-28T00:00:00Z",
-                "verifierVersion": meridian.read_version(ROOT),
-                "notApplicableRationale": None,
-            }
-        manifest["managedFiles"] = managed_files
-        owner_templates_manifest.write_manifest(project, manifest, ROOT)
-        return manifest
+    def installed_project(self, project: Path, mode: str = "lean-delivery") -> dict[str, object]:
+        return InstallationFixture().installed_project(project, mode)
 
     def audit(self, project: Path, mode: str = "lean-delivery") -> tuple[int, str]:
         output = io.StringIO()
@@ -262,6 +175,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         profile = self.catalog.profile("meridian-self-hosting")
         self.assertEqual(
             profile.verification_probe,
+            # MERIDIAN-INSTALLATION-CHECK
             ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",
         )
         self.assertEqual(
@@ -269,21 +183,25 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         )
 
     def test_profile_doctor_is_read_only_and_resolves_required_probes(self) -> None:
-        before = {
-            path.relative_to(ROOT): path.read_bytes()
-            for path in ROOT.rglob("*")
-            if path.is_file() and ".git" not in path.parts
-        }
-        output = io.StringIO()
-        with redirect_stdout(output):
-            return_code = owner_templates_audit.profile_doctor(
-                ROOT, ROOT, "meridian-self-hosting"
-            )
-        after = {
-            path.relative_to(ROOT): path.read_bytes()
-            for path in ROOT.rglob("*")
-            if path.is_file() and ".git" not in path.parts
-        }
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            self.installed_project(project)
+            InstallationFixture().write_probes(project)
+            before = {
+                path.relative_to(project): path.read_bytes()
+                for path in project.rglob("*")
+                if path.is_file() and ".git" not in path.parts
+            }
+            output = io.StringIO()
+            with redirect_stdout(output):
+                return_code = owner_templates_audit.profile_doctor(
+                    project, ROOT, "meridian-self-hosting"
+                )
+            after = {
+                path.relative_to(project): path.read_bytes()
+                for path in project.rglob("*")
+                if path.is_file() and ".git" not in path.parts
+            }
         self.assertEqual(return_code, 0, output.getvalue())
         self.assertEqual(after, before)
         self.assertIn("probe/claude-project", output.getvalue())
@@ -294,9 +212,9 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         for mutation, diagnostic in (("missing", "required probe is missing"), ("incomplete", "missing capability checks")):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as directory:
                 project = Path(directory)
-                shutil.copytree(ROOT / ".meridian/probes", project / ".meridian/probes")
+                InstallationFixture().write_probes(project)
                 self.installed_project(project)
-                probe = project / ".meridian/probes/meridian-self-hosting/codex-project-v1.json"
+                probe = project / dict(self.catalog.profile("meridian-self-hosting").host_probes)["codex-project"]
                 if mutation == "missing":
                     probe.unlink()
                 else:
@@ -336,6 +254,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("SUMMARY worst=UNVERIFIED", output.getvalue())
             self.assertIn("CI_GATE profile=meridian-self-hosting worst=PASS", output.getvalue())
 
+            # MERIDIAN-INSTALLATION-CHECK
             (project / ".codex/hooks.json").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
@@ -343,12 +262,14 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                     project, ROOT, "lean-delivery", "meridian-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
+            # MERIDIAN-INSTALLATION-CHECK
             self.assertIn("missing managed-copy surface .codex/hooks.json", output.getvalue())
 
     def test_ci_profile_gate_rejects_missing_managed_policy_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             self.installed_project(project)
+            # MERIDIAN-INSTALLATION-CHECK
             (project / "docs/CONTEXT_BUDGET_POLICY.md").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
@@ -357,6 +278,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
+                # MERIDIAN-INSTALLATION-CHECK
                 "missing managed-copy surface docs/CONTEXT_BUDGET_POLICY.md",
                 output.getvalue(),
             )
@@ -365,6 +287,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             self.installed_project(project)
+            # MERIDIAN-INSTALLATION-CHECK
             (project / "hooks/queue-briefing.sh").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
@@ -373,6 +296,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
+                # MERIDIAN-INSTALLATION-CHECK
                 "missing shared-source surface hooks/queue-briefing.sh",
                 output.getvalue(),
             )
@@ -390,7 +314,8 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("CI_GATE profile=unknown-profile worst=FAIL", output.getvalue())
 
     def test_live_manifest_has_no_host_claim_or_machine_specific_path(self) -> None:
-        manifest_text = (ROOT / shared_constants.MANIFEST_PATH).read_text(encoding="utf-8")
+        # MERIDIAN-INSTALLATION-CHECK
+        manifest_text = (ROOT / ".meridian/manifest.json").read_text(encoding="utf-8")
         manifest = json.loads(manifest_text)
         capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]
         self.assertNotIn(str(Path.home()), manifest_text)
@@ -551,6 +476,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             self.installed_project(project)
+            # MERIDIAN-INSTALLATION-CHECK
             (project / ".meridian/candidate-validation.json").write_text('{"version": 1, "state": "none"}\n', encoding="utf-8")
             baseline_code, _ = self.audit(project)
             self.assertEqual(baseline_code, 0)
@@ -569,6 +495,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertEqual(code, baseline_code, output)
             self.assertIn("SUMMARY worst=ADVISORY", output)
             self.assertEqual(output.count("ADVISORY       retired-text"), 2)
+            # MERIDIAN-INSTALLATION-CHECK
             self.assertIn("docs/CONTEXT_BUDGET_POLICY.md:2:", output)
             after = {path.relative_to(project): path.read_bytes() for path in project.rglob("*") if path.is_file()}
             self.assertEqual(after, before)
@@ -578,6 +505,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
                 project = Path(directory)
                 self.installed_project(project, mode)
+                # MERIDIAN-INSTALLATION-CHECK
                 (project / ".meridian/candidate-validation.json").write_text(
                     '{"version": 1, "state": "none"}\n', encoding="utf-8"
                 )
@@ -593,8 +521,11 @@ class CapabilityProfileManifestTest(unittest.TestCase):
 
     def test_audit_fails_missing_and_drifted_managed_surfaces(self) -> None:
         missing_surfaces = (
+            # MERIDIAN-INSTALLATION-CHECK
             ("LANGUAGE_POLICY.md", "missing managed-copy surface LANGUAGE_POLICY.md"),
+            # MERIDIAN-INSTALLATION-CHECK
             (".codex/hooks.json", "missing managed-copy surface .codex/hooks.json"),
+            # MERIDIAN-INSTALLATION-CHECK
             ("hooks/read-guard.sh", "missing shared-source surface hooks/read-guard.sh"),
         )
         for relative_path, diagnostic in missing_surfaces:
@@ -612,6 +543,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             self.installed_project(project)
+            # MERIDIAN-INSTALLATION-CHECK
             hook = project / "hooks/read-guard.sh"
             hook.write_text("drifted\n", encoding="utf-8")
 
@@ -619,6 +551,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
 
             self.assertEqual(return_code, 2, output)
             self.assertIn("stale digest evidence", output)
+            # MERIDIAN-INSTALLATION-CHECK
             self.assertIn("shared-source:hooks/read-guard.sh", output)
 
     def test_audit_rejects_empty_surfaces_and_invalid_positive_claims(self) -> None:
@@ -747,6 +680,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "notApplicableRationale": "host-profile-unsupported",
             }
             owner_templates_manifest.write_manifest(project, manifest, framework)
+            # MERIDIAN-INSTALLATION-CHECK
             (project / ".meridian/candidate-validation.json").write_text(
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
@@ -793,10 +727,15 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         }
         self.assertTrue(
             {
+                # MERIDIAN-INSTALLATION-CHECK
                 "LANGUAGE_POLICY.md",
+                # MERIDIAN-INSTALLATION-CHECK
                 "docs/CONTEXT_BUDGET_POLICY.md",
+                # MERIDIAN-INSTALLATION-CHECK
                 "docs/EXECUTION_EVIDENCE_PROFILE.md",
+                # MERIDIAN-INSTALLATION-CHECK
                 ".codex/hooks.json",
+                # MERIDIAN-INSTALLATION-CHECK
                 ".codex/rules/meridian.rules",
             }
             <= lean_paths
@@ -858,6 +797,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("SUMMARY worst=UNVERIFIED", output)
 
     def test_live_execution_profile_has_no_unresolved_configuration_placeholder(self) -> None:
+        # MERIDIAN-INSTALLATION-CHECK
         profile = (ROOT / "docs/EXECUTION_EVIDENCE_PROFILE.md").read_text(
             encoding="utf-8"
         )

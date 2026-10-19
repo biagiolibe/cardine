@@ -27,7 +27,9 @@ class LeanWalkthroughTest(unittest.TestCase):
         script = ["set -euo pipefail"]
         for kind, body in blocks:
             if kind == "bash":
-                script.append(body)
+                # Replay the published commands against this checkout's explicit entry point.
+                # The document's PATH setup must not select an installed command in tests.
+                script.append(re.sub(r"(?m)^meridian(?=\s)", shlex.quote(str(ROOT / "bin/meridian")), body))
             else:
                 self.assertTrue(kind.startswith("text checked="), kind)
                 path = kind.removeprefix("text checked=")

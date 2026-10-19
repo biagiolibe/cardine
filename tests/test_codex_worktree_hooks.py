@@ -66,8 +66,10 @@ class CodexWorktreeHooksTest(unittest.TestCase):
             git("init", "-b", "main")
             git("config", "user.name", "Meridian Test")
             git("config", "user.email", "meridian@example.invalid")
+            # MERIDIAN-INSTALLATION-CHECK
             (primary / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n")
             (primary / ".codex").mkdir()
+            # MERIDIAN-INSTALLATION-CHECK
             (primary / ".codex/hooks.json").write_bytes((ROOT / ".codex/hooks.json").read_bytes())
             (primary / "large.txt").write_text("x\n" * 500)
             git("add", ".")
@@ -76,6 +78,7 @@ class CodexWorktreeHooksTest(unittest.TestCase):
             git("worktree", "add", "-b", "task-222", str(worktree))
             journal = primary / ".git" / owner_shared_journal.JOURNAL_NAME
             journal.write_text("")
+            # MERIDIAN-INSTALLATION-CHECK
             hooks = json.loads((primary / ".codex/hooks.json").read_text())["hooks"]
             payload = {"cwd": str(worktree), "tool_name": "Bash",
                        "tool_input": {"command": "cat large.txt"},

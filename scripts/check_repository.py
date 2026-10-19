@@ -38,8 +38,6 @@ REQUIRED_FILES = (
     "CONTRIBUTING.md",
     ".claude-plugin/plugin.json",
     ".claude-plugin/marketplace.json",
-    "hooks/hooks.json",
-    "hooks/queue-briefing.sh",
     "hooks/stop-audit.sh",
     "bin/meridian",
     "scripts/meridian.py",
@@ -52,9 +50,6 @@ REQUIRED_FILES = (
     "schemas/capability-catalog-v1.schema.json",
     "schemas/stop-codes-v1.schema.json",
     "schemas/manifest-v2.schema.json",
-    ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",
-    ".meridian/probes/meridian-self-hosting/claude-project-v1.json",
-    ".meridian/probes/meridian-self-hosting/codex-project-v1.json",
     "migrations/README.md",
     "commands/meridian-upgrade.md",
     "commands/meridian-audit.md",
@@ -67,6 +62,13 @@ REQUIRED_FILES = (
     "templates/workflows/lean-delivery/.codex/hooks.json",
     "skills/meridian-lean-delivery/SKILL.md",
     "skills/meridian-lean-delivery-claude-code/SKILL.md",
+)
+INSTALLED_MERIDIAN_RECORDS = (
+    "hooks/hooks.json",  # MERIDIAN-INSTALLATION-CHECK
+    "hooks/queue-briefing.sh",  # MERIDIAN-INSTALLATION-CHECK
+    ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",  # MERIDIAN-INSTALLATION-CHECK
+    ".meridian/probes/meridian-self-hosting/claude-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
+    ".meridian/probes/meridian-self-hosting/codex-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
 )
 LANGUAGE_POLICY_FILES = (
     "templates/base/LANGUAGE_POLICY.md",
@@ -87,7 +89,7 @@ def fail(message: str) -> None:
 
 
 def check_required_files() -> None:
-    for name in REQUIRED_FILES:
+    for name in (*REQUIRED_FILES, *INSTALLED_MERIDIAN_RECORDS):
         if not (ROOT / name).is_file():
             fail(f"required file is missing: {name}")
 
@@ -323,7 +325,7 @@ def managed_stop_text_files(root: Path) -> list[Path]:
     separately. Edited copies still undergo the checkout registry check.
     """
     paths = set((root / "templates").rglob("*.md"))
-    manifest = root / ".meridian" / "manifest.json"
+    manifest = root / ".meridian/manifest.json"  # MERIDIAN-INSTALLATION-CHECK
     if manifest.is_file():
         managed = json.loads(manifest.read_text(encoding="utf-8")).get("managedFiles", {})
         for name, digest in managed.items():
@@ -801,6 +803,7 @@ def check_capability_required_versions(root: Path = ROOT) -> None:
 
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
     """Check recorded installation digests without consulting the product catalog."""
+    # MERIDIAN-INSTALLATION-CHECK
     manifest = json.loads((root / ".meridian/manifest.json").read_text(encoding="utf-8"))
     managed_files = manifest["managedFiles"]
     diagnostics = [
