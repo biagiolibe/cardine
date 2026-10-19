@@ -53,6 +53,10 @@ no adoption command.
   upgrade tests with a missing `release-baselines` directory.
 - `cardine.shared.constants`, `cardine.templates.adoption`, and
   `cardine.templates.files` reference the baseline directory.
+- Task 038 adds a `check_repository.py` check that compares `requiredVersion`
+  in `capabilities/markers-v1.json` with the Governed SDD templates through
+  `managed_files`. If this task removes or changes code that check uses, it
+  keeps the check working, and the handoff says how.
 
 ## Out of scope
 
@@ -60,7 +64,7 @@ Work item 10's conversion command, and `.meridian/`.
 
 ## Dependencies
 
-- **Depends on**: 029
+- **Depends on**: 029, 038
 - **Blocks**: 035
 
 ## Validation
