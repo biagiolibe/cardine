@@ -14,6 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 from unittest import mock
 from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
@@ -43,7 +44,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             return
         (self.project / "tasks").mkdir()
         (self.project / "tasks/056-lifecycle.md").write_text(
-            "# Task 056\n\n> **ID**: `056`\n", encoding="utf-8"
+            contract_record("056"), encoding="utf-8"
         )
         (self.project / "tasks/QUEUE.md").write_text(
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
@@ -333,7 +334,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             (self.project / ".cardine/candidate-validation.json").write_text(
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
-            write_project_config(self.project, "lean")
+            write_project_config(self.project, "lean", validation=VALIDATION)
             (self.project / "tasks").mkdir(exist_ok=True)
             (self.project / "tasks/QUEUE.md").write_text(
                 "| Status | ID | Title | Priority | Depends | Task |\n"
@@ -653,7 +654,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "worktree", "path", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
         ).stdout)["path"])
-        owner_tasks_transitions.transition_task_state(worktree, "056", "DONE")
+        owner_tasks_transitions.transition_task_state(worktree, "056", "in_progress")
         subprocess.run(["git", "add", "."], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "record terminal state"], cwd=worktree, check=True, capture_output=True)
         (self.project / ".cardine/candidate-validation.json").write_text(

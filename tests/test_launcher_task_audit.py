@@ -39,12 +39,12 @@ class TaskStateAuditTest(unittest.TestCase):
         self.project = Path(self.temp.name)
         (self.project / "tasks").mkdir()
         (self.project / ".cardine/tasks").mkdir(parents=True)
-        (self.project / "tasks/001.md").write_text("# Task 001 — Task\nStatus: QUEUED\n")
+        (self.project / "tasks/001.md").write_text("# Task 001 — Task\nStatus: queued\n")
         (self.project / "tasks/QUEUE.md").write_text(
-            "| ID | Status | File |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
+            "| ID | Status | File |\n|---|---|---|\n| 001 | queued | [001](001.md) |\n")
         self.path = self.project / ".cardine/tasks/001.json"
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "governed-sdd",
-                                         "status": "QUEUED", "transitions": []}))
+                                         "status": "queued", "transitions": []}))
 
     def test_audit_pass_and_drift_are_one_read_only_row_per_state(self):
         before = {p: p.read_bytes() for p in self.project.rglob("*") if p.is_file()}
@@ -54,14 +54,14 @@ class TaskStateAuditTest(unittest.TestCase):
         self.assertEqual(before, {p: p.read_bytes() for p in before})
         (self.project / "tasks/001.md").write_text("# Task 001 — Task\nStatus: ACCEPTED\n")
         (self.project / "tasks/QUEUE.md").write_text(
-            "| ID | Status | File |\n|---|---|---|\n| 001 | IN_PROGRESS | [001](001.md) |\n")
+            "| ID | Status | File |\n|---|---|---|\n| 001 | in_progress | [001](001.md) |\n")
         before = {p: p.read_bytes() for p in before}
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].status, "ADVISORY")
         self.assertIn(".cardine/tasks/001.json", rows[0].detail)
-        self.assertIn("tasks/QUEUE.md queue Status: state=QUEUED, projection=IN_PROGRESS", rows[0].detail)
-        self.assertIn("tasks/001.md record Status: state=QUEUED, projection=ACCEPTED", rows[0].detail)
+        self.assertIn("tasks/QUEUE.md queue Status: state=queued, projection=in_progress", rows[0].detail)
+        self.assertIn("tasks/001.md record Status: state=queued, projection=ACCEPTED", rows[0].detail)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
         with mock.patch.object(owner_templates_audit, "audit_declared_capabilities", return_value=([], "governed-sdd")), \
                 mock.patch.object(owner_templates_audit, "audit_capability_markers", return_value=[]), \
@@ -80,12 +80,13 @@ class TaskStateAuditTest(unittest.TestCase):
     def test_audit_normalizes_lean_checkbox_and_finds_archived_records(self):
         (self.project / "tasks/done").mkdir()
         (self.project / "tasks/001.md").rename(self.project / "tasks/done/001.md")
-        (self.project / "tasks/done/001.md").write_text("# Task 001 — Task\nStatus: DONE\n")
+        (self.project / "tasks/done/001.md").write_text("# Task 001 — Task\nStatus: done\n")
         (self.project / "tasks/QUEUE.md").write_text("")
         (self.project / "tasks/QUEUE_ARCHIVE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | `[x]` | — |\n")
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "lean-delivery",
-            "status": "DONE", "transitions": [{"from": "QUEUED", "to": "DONE", "commit": "a" * 40,
-                                                "at": "2026-10-11T12:00:00Z"}]}))
+            "status": "done", "transitions": [{"from": before, "to": after, "commit": "a" * 40,
+                                                "at": "2026-10-11T12:00:00Z"}
+                                               for before, after in (("queued", "in_progress"), ("in_progress", "done"))]}))
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "lean-delivery")
         self.assertEqual(rows[0].status, "PASS")

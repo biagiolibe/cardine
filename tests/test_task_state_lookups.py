@@ -31,7 +31,7 @@ class TaskStateLookupTest(unittest.TestCase):
         for number in range(1, 301):
             task_id = f"{number:03d}"
             (self.root / "tasks" / f"{task_id}.md").write_text(
-                f"> **ID**: `{task_id}`\n\nStatus: IN_PROGRESS\n", encoding="utf-8"
+                f"> **ID**: `{task_id}`\n\nStatus: in_progress\n", encoding="utf-8"
             )
         state_dir = self.root / ".git" / cardine_cli.WORKTREE_STATE_DIRECTORY
         state_dir.mkdir()
@@ -40,7 +40,7 @@ class TaskStateLookupTest(unittest.TestCase):
         }), encoding="utf-8")
         (self.worker / "tasks").mkdir()
         (self.worker / "tasks" / "001.md").write_text(
-            "> **ID**: `001`\n\nStatus: IN_PROGRESS\n", encoding="utf-8"
+            "> **ID**: `001`\n\nStatus: in_progress\n", encoding="utf-8"
         )
         self.records = [
             {"worktree": str(self.root), "branch": "refs/heads/main"},
@@ -64,7 +64,7 @@ class TaskStateLookupTest(unittest.TestCase):
              mock.patch.object(owner_worktree_checkout, "canonical_project_root", return_value=self.root), \
              mock.patch.object(owner_tasks_identity, "_task_authorities", side_effect=counted):
             states = owner_worktree_checkout.registered_worktree_task_states(self.root)
-            self.assertEqual(states, [{"task_id": "001", "status": "IN_PROGRESS"}])
+            self.assertEqual(states, [{"task_id": "001", "status": "in_progress"}])
             self.assertEqual(calls, 1)
 
             calls = 0

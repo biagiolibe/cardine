@@ -52,12 +52,12 @@ class ExecutionEvidenceTest(unittest.TestCase):
     def test_locations_and_preflight_use_the_declared_queue(self) -> None:
         (self.project / "docs/tasks/M19").mkdir(parents=True)
         (self.project / "docs/tasks/M19/TASK-007.md").write_text(
-            "Status: IN_PROGRESS\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
+            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
             encoding="utf-8",
         )
         (self.project / "docs/TASK_QUEUE.md").write_text(
             "| Order | ID | Priority | Status | Dependencies |\n|---:|---|---|---|---|\n"
-            "| 1 | TASK-007 | P0 | QUEUED | — |\n",
+            "| 1 | TASK-007 | P0 | queued | — |\n",
             encoding="utf-8",
         )
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
@@ -78,14 +78,14 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.assertIn(
             "BLOCKED QUEUE_STATUS_MISMATCH: rule: the task record and its queue row must agree; sources checked: "
             "Status in docs/tasks/M19/TASK-007.md and the Status column of row TASK-007 in docs/TASK_QUEUE.md; "
-            "accepted: equal values; found: task IN_PROGRESS, queue QUEUED; the actor may change "
+            "accepted: equal values; found: task in_progress, queue queued; the actor may change "
             "docs/tasks/M19/TASK-007.md and docs/TASK_QUEUE.md together through the lifecycle; resume: change only "
             "the document the message says this actor may change so the statuses are accepted, then rerun cardine "
             "execution preflight TASK-007 --project .",
             preflight.stderr,
         )
 
-    def remediation_project(self, branch: str, record_status: str, queue_status: str = "QUEUED") -> Path:
+    def remediation_project(self, branch: str, record_status: str, queue_status: str = "queued") -> Path:
         """A Git project on `branch` whose queue row is `queue_status` and whose record is `record_status`."""
         subprocess.run(["git", "init", "-q", "-b", branch, str(self.project)], check=True)
         (self.project / "docs").mkdir(exist_ok=True)
@@ -105,9 +105,9 @@ class ExecutionEvidenceTest(unittest.TestCase):
         return task
 
     def test_task_branch_preflight_accepts_every_state_the_workflow_produces(self) -> None:
-        # Issue #6: a task branch cannot edit the queue, and a review returns the record to IN_PROGRESS.
-        task = self.remediation_project("task-007", "IN_PROGRESS")
-        for status in ("QUEUED", "IN_PROGRESS", "CHANGES_REQUESTED", "READY_FOR_REVIEW"):
+        # Issue #6: a task branch cannot edit the queue, and a review returns the record to in_progress.
+        task = self.remediation_project("task-007", "in_progress")
+        for status in ("queued", "in_progress", "in_review"):
             with self.subTest(status=status):
                 text = task.read_text(encoding="utf-8")
                 task.write_text(f"Status: {status}\n" + text.split("\n", 1)[1], encoding="utf-8")
@@ -115,7 +115,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_remediation_commands_share_the_preflight_on_a_task_branch(self) -> None:
-        self.remediation_project("task-007", "IN_PROGRESS")
+        self.remediation_project("task-007", "in_progress")
         validated = self.run_cli("execution", "validate", "TASK-007", "check")
         self.assertEqual(validated.returncode, 0, validated.stderr)
         investigated = self.run_cli(
@@ -131,45 +131,45 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.assertNotIn("TASK_STATUS_REJECTED", ready.stderr)
 
     def test_task_branch_preflight_still_rejects_states_the_workflow_cannot_produce(self) -> None:
-        self.remediation_project("task-007", "IN_PROGRESS", queue_status="DONE")
+        self.remediation_project("task-007", "in_progress", queue_status="done")
         mismatch = self.run_cli("execution", "preflight", "TASK-007")
         self.assertNotEqual(mismatch.returncode, 0)
         self.assertIn(
             "BLOCKED QUEUE_STATUS_MISMATCH: rule: the task record and its queue row must agree; sources checked: "
             "Status in tasks/TASK-007.md and the Status column of row TASK-007 in tasks/QUEUE.md; accepted: equal "
-            "values, or queue QUEUED with task QUEUED, IN_PROGRESS, CHANGES_REQUESTED, READY_FOR_REVIEW; "
-            "found: task IN_PROGRESS, queue DONE; on task branch task-007 the actor may change only "
-            "tasks/TASK-007.md, and the queue row stays QUEUED; resume: ",
+            "values, or queue queued with task queued, in_progress, in_review; "
+            "found: task in_progress, queue done; on task branch task-007 the actor may change only "
+            "tasks/TASK-007.md, and the queue row stays queued; resume: ",
             mismatch.stderr,
         )
         task = self.project / "tasks/TASK-007.md"
-        task.write_text(task.read_text(encoding="utf-8").replace("Status: IN_PROGRESS", "Status: ACCEPTED"), encoding="utf-8")
+        task.write_text(task.read_text(encoding="utf-8").replace("Status: in_progress", "Status: ACCEPTED"), encoding="utf-8")
         rejected = self.run_cli("execution", "preflight", "TASK-007")
         self.assertIn(
             "BLOCKED TASK_STATUS_REJECTED: rule: preflight runs only on an open task; field checked: Status in "
-            "tasks/TASK-007.md; accepted: QUEUED, IN_PROGRESS, CHANGES_REQUESTED, READY_FOR_REVIEW; found: ACCEPTED",
+            "tasks/TASK-007.md; accepted: queued, in_progress, in_review; found: ACCEPTED",
             rejected.stderr,
         )
 
     def test_outside_the_task_branch_the_record_and_queue_must_still_agree(self) -> None:
-        self.remediation_project("main", "IN_PROGRESS")
+        self.remediation_project("main", "in_progress")
         result = self.run_cli("execution", "preflight", "TASK-007")
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("accepted: equal values; found: task IN_PROGRESS, queue QUEUED", result.stderr)
+        self.assertIn("accepted: equal values; found: task in_progress, queue queued", result.stderr)
         self.assertIn("together through the lifecycle", result.stderr)
         task = self.project / "tasks/TASK-007.md"
-        task.write_text(task.read_text(encoding="utf-8").replace("Status: IN_PROGRESS", "Status: CHANGES_REQUESTED"), encoding="utf-8")
-        self.assertIn("accepted: QUEUED, IN_PROGRESS; found: CHANGES_REQUESTED", self.run_cli("execution", "preflight", "TASK-007").stderr)
+        task.write_text(task.read_text(encoding="utf-8").replace("Status: in_progress", "Status: CHANGES_REQUESTED"), encoding="utf-8")
+        self.assertIn("accepted: queued, in_progress; found: CHANGES_REQUESTED", self.run_cli("execution", "preflight", "TASK-007").stderr)
 
     def test_execution_preflight_requires_profile_and_task_contract(self) -> None:
-        self.write_task("TASK-008", "QUEUED")
+        self.write_task("TASK-008", "queued")
         missing = self.run_cli("execution", "preflight", "TASK-008")
         self.assertNotEqual(missing.returncode, 0)
         self.assertIn("BLOCKED EXECUTION_PROFILE_MISSING:", missing.stderr)
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-008.md").write_text(
-            "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
+            "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
             encoding="utf-8",
         )
         self.append_contract("TASK-008")
@@ -182,7 +182,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-018.md"
         task.write_text(
-            "Status: QUEUED\nClass: SPIKE\nQuestion: What behavior is correct?\n"
+            "Status: queued\nClass: SPIKE\nQuestion: What behavior is correct?\n"
             "Timebox: 2 iterations\nDeliverable: An ADR\n\n## Authority\n\n## Validation\n",
             encoding="utf-8",
         )
@@ -207,7 +207,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         (self.project / "docs").mkdir(exist_ok=True)
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-019.md"
-        base = "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n"
+        base = "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n"
         not_applicable = "\n## Host impact\n\nClassification: NOT_APPLICABLE\nRationale: This task changes only application behavior.\n"
         task.write_text(base + not_applicable, encoding="utf-8")
         self.append_contract("TASK-019")
@@ -253,7 +253,7 @@ Evidence plan:
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-020.md"
         task.write_text(
-            "Status: IN_PROGRESS\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n"
+            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n"
             "## Host impact\n\nClassification: REQUIRED\nPolicy outcome: Accurate host claims.\n\n"
             "| Profile | Before | Intended after | Activation preconditions | Fallback |\n"
             "|---|---|---|---|---|\n"
@@ -296,7 +296,7 @@ Evidence plan:
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-014.md"
         task.write_text(
-            "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n## Completion\n",
+            "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n## Completion\n",
             encoding="utf-8",
         )
         legacy_contract = owner_tasks_preflight.execution_contract(self.project, "TASK-014").replace(
@@ -319,7 +319,7 @@ Evidence plan:
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-016.md"
         task.write_text(
-            "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
+            "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
             encoding="utf-8",
         )
 
@@ -339,7 +339,7 @@ Evidence plan:
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-017.md"
         task.write_text(
-            "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n"
+            "Status: queued\n\n## Authority\n\n## Expected code surface\n\n"
             "## Validation\n\n- `cargo fmt --check`\n",
             encoding="utf-8",
         )
@@ -355,7 +355,7 @@ Evidence plan:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-015.md"
-        task.write_text("Status: ACCEPTED\n\n## Completion\n- historical record\n", encoding="utf-8")
+        task.write_text("Status: done\n\n## Completion\n- historical record\n", encoding="utf-8")
         original = task.read_text(encoding="utf-8")
         result = self.run_cli("execution", "reconcile", "TASK-015", "--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -367,7 +367,7 @@ Evidence plan:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-012.md").write_text(
-            "Status: IN_PROGRESS\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
+            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n## Validation\n",
             encoding="utf-8",
         )
         self.append_contract("TASK-012")
@@ -385,13 +385,13 @@ Evidence plan:
         handoff.write_text("## Completion Report — TASK-012\n", encoding="utf-8")
         result = self.run_cli("execution", "ready-check", "TASK-012", str(report))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("READY_FOR_REVIEW gate passed", result.stdout)
+        self.assertIn("in_review gate passed", result.stdout)
 
     def test_handoff_rejects_fabricated_validation_and_requires_recorded_investigation(self) -> None:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-013.md").write_text(
-            "Status: IN_PROGRESS\n\n## Authority\n\n## Expected code surface\n\n"
+            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n"
             "## Validation\n\n- `probe`: `printf validation-ok`\n",
             encoding="utf-8",
         )
@@ -430,7 +430,7 @@ Evidence plan:
         self.assertEqual(self.run_cli("execution", "handoff-check", "TASK-013", str(report)).returncode, 0)
 
     def test_handoff_accepts_report_with_or_without_rule_discrepancies(self) -> None:
-        self.write_task("TASK-009", "IN_PROGRESS")
+        self.write_task("TASK-009", "in_progress")
         report = self.project / "rule-discrepancies.md"
         body = (
             "## Completion Report — TASK-009\n\n- Files changed: none\n"
@@ -450,7 +450,7 @@ Evidence plan:
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_handoff_accepts_non_project_specific_skips_and_rejects_failures(self) -> None:
-        self.write_task("TASK-009", "IN_PROGRESS")
+        self.write_task("TASK-009", "in_progress")
         report = self.project / "validation-skips.md"
         report.write_text(
             "## Completion Report — TASK-009\n\n- Files changed: none\n"
@@ -526,7 +526,7 @@ Evidence plan:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-020.md").write_text(
-            "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n", encoding="utf-8")
+            "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n", encoding="utf-8")
         stopped = self.run_cli("execution", "preflight", "TASK-020")
         self.assertIn("BLOCKED EXECUTION_CONTRACT_UNRESOLVED:", self.blocked_line(stopped))
         recovered = run_recovery(resume_from(stopped.stderr), self.project)
@@ -535,7 +535,7 @@ Evidence plan:
         self.assertEqual(retried.returncode, 0, retried.stderr)
 
     def test_execution_gates_report_coded_actionable_stops(self) -> None:
-        self.write_task("TASK-020", "QUEUED")
+        self.write_task("TASK-020", "queued")
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
             "BLOCKED EXECUTION_PROFILE_MISSING: rule: the execution contract derives from the project profile; "
@@ -547,7 +547,7 @@ Evidence plan:
         profile = self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md"
         profile.write_text("profile\n", encoding="utf-8")
         task = self.project / "tasks/TASK-020.md"
-        body = "Status: QUEUED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n"
+        body = "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n"
         task.write_text(body, encoding="utf-8")
         digest = owner_tasks_contract.profile_digest(self.project)
         resume = "resume: cardine execution reconcile TASK-020 --apply --project ."
@@ -575,22 +575,22 @@ Evidence plan:
             "## Expected code surface; resume: add the listed sections or fields to the task record, then rerun "
             "cardine execution preflight TASK-020 --project .",
         )
-        task.write_text(body.replace("QUEUED", "ACCEPTED"), encoding="utf-8")
+        task.write_text(body.replace("queued", "ACCEPTED"), encoding="utf-8")
         self.append_contract("TASK-020")
         accepted = (
-            "resume: bring the task to QUEUED or IN_PROGRESS through its lifecycle, then rerun the blocked "
+            "resume: bring the task to queued or in_progress through its lifecycle, then rerun the blocked "
             "cardine execution command"
         )
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
             "BLOCKED TASK_STATUS_REJECTED: rule: preflight runs only on an open task; field checked: Status in "
-            "tasks/TASK-020.md; accepted: QUEUED, IN_PROGRESS; found: ACCEPTED; " + accepted,
+            "tasks/TASK-020.md; accepted: queued, in_progress; found: ACCEPTED; " + accepted,
         )
-        task.write_text(body.replace("QUEUED", "DRAFT"), encoding="utf-8")
+        task.write_text(body.replace("queued", "DRAFT"), encoding="utf-8")
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "reconcile", "TASK-020")),
             "BLOCKED TASK_STATUS_REJECTED: rule: reconcile refreshes only an open task; field checked: Status in "
-            "tasks/TASK-020.md; accepted: QUEUED, IN_PROGRESS (terminal tasks are skipped); found: DRAFT; " + accepted,
+            "tasks/TASK-020.md; accepted: queued, in_progress (terminal tasks are skipped); found: DRAFT; " + accepted,
         )
         task.write_text(body + "\n- `cargo fmt --check`\n", encoding="utf-8")
         self.assertEqual(
@@ -614,7 +614,7 @@ Evidence plan:
         )
 
     def test_handoff_gates_report_coded_actionable_stops(self) -> None:
-        self.write_task("TASK-021", "IN_PROGRESS")
+        self.write_task("TASK-021", "in_progress")
         report = self.project / "report.md"
         fields = {
             "Files changed": "none", "Validation": "`x` exit 0", "Validation skips": "none",
@@ -679,7 +679,7 @@ Evidence plan:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-022.md").write_text(
-            "Status: IN_PROGRESS\n\n## Authority\n\n## Expected code surface\n\n"
+            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n"
             "## Validation\n\n- `probe`: `printf ok`\n",
             encoding="utf-8",
         )
@@ -749,7 +749,7 @@ Evidence plan:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-010.md").write_text(
-            "Status: IN_PROGRESS\n\n## Authority\n\n## Expected code surface\n\n"
+            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n"
             "## Validation\n\n- `probe`: `printf validation-ok`\n",
             encoding="utf-8",
         )
@@ -770,7 +770,7 @@ Evidence plan:
         )
 
     def test_evidence_requires_a_gap_and_capture_provenance(self) -> None:
-        self.write_task("TASK-011", "IN_PROGRESS")
+        self.write_task("TASK-011", "in_progress")
         missing = self.run_cli("execution", "evidence", "TASK-011", "captures", "--gap", "text is perceptual")
         self.assertNotEqual(missing.returncode, 0)
         self.assertIn("BLOCKED EXECUTION_EVIDENCE_ARGUMENTS:", missing.stderr)
@@ -793,7 +793,7 @@ Evidence plan:
 
 
     def test_evidence_has_no_capture_cap_or_budget_ledger(self) -> None:
-        self.write_task("TASK-011", "IN_PROGRESS")
+        self.write_task("TASK-011", "in_progress")
         for index in range(4):
             recorded = self.run_cli(
                 "execution", "evidence", "TASK-011", "captures", "--gap", "rendered property",
@@ -811,7 +811,7 @@ Evidence plan:
         self.assertIn("invalid choice: 'budget'", rejected.stderr)
 
     def test_investigation_arguments_name_the_missing_options(self) -> None:
-        self.write_task("TASK-406", "IN_PROGRESS")
+        self.write_task("TASK-406", "in_progress")
         result = self.run_cli("execution", "investigate", "TASK-406", "--question", " ", "--scope", "1", "--source", "x", "--finding", "")
         self.assertEqual(
             self.blocked_line(result),
@@ -832,7 +832,7 @@ Evidence plan:
         self.assertNotIn("BLOCKED:", refused.stderr)
 
     def test_operating_system_failure_reports_os_access_failed(self) -> None:
-        self.write_task("TASK-405", "IN_PROGRESS")
+        self.write_task("TASK-405", "in_progress")
         (self.project / ".cardine").mkdir()
         (self.project / ".cardine/execution-evidence.json").mkdir()
         failed = self.run_cli("execution", "evidence", "TASK-405", "diagnostic", "--gap", "missing output")

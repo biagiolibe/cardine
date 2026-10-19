@@ -235,7 +235,7 @@ class ClosingTaskMixin:
 
 
 class LeanClosingTaskTest(ClosingTaskMixin, state_tests.LeanEffectiveStateTest):
-    done_id, open_id, done_token = "001", "002", "DONE"
+    done_id, open_id, done_token = "001", "002", "done"
 
     def closing_project(self, worktree: bool = True, archived: bool = False) -> None:
         self.setup_project({"001": "x", "002": " "}, {"002": "001"})
@@ -252,12 +252,12 @@ class LeanClosingTaskTest(ClosingTaskMixin, state_tests.LeanEffectiveStateTest):
 
 
 class GovernedClosingTaskTest(ClosingTaskMixin, state_tests.GovernedEffectiveStateTest):
-    done_id, open_id, done_token = "TASK-001", "TASK-002", "ACCEPTED"
+    done_id, open_id, done_token = "TASK-001", "TASK-002", "done"
 
     def closing_project(self, worktree: bool = True, archived: bool = False) -> None:
         self.setup_project([
-            ("TASK-001", "ACCEPTED", "REQUIRED", "—"),
-            ("TASK-002", "QUEUED", "REQUIRED", "TASK-001"),
+            ("TASK-001", "done", "REQUIRED", "—"),
+            ("TASK-002", "queued", "REQUIRED", "TASK-001"),
         ])
         if archived:
             queue = (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8")
@@ -269,17 +269,17 @@ class GovernedClosingTaskTest(ClosingTaskMixin, state_tests.GovernedEffectiveSta
             self.worktree("task-001")
 
     def test_reserved_worktree_derives_in_progress_without_a_queue_edit(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         self.worktree("task-001")
         task = self.load()["TASK-001"]
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
         self.assertEqual(task.source, "branch task-001")
-        self.assertIn("QUEUED", (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8"))
+        self.assertIn("queued", (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8"))
 
     def test_record_ready_for_review_with_queued_row_is_derived_and_shows_progress(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
-        self.write_record(wt, "TASK-001", "READY_FOR_REVIEW")
+        self.write_record(wt, "TASK-001", "in_review")
         self.commit(wt, "ready")
         with mock.patch.object(owner_console_snapshot, "closure_status") as status, \
              mock.patch.object(owner_console_snapshot, "lifecycle_started_at",
@@ -295,7 +295,7 @@ class GovernedClosingTaskTest(ClosingTaskMixin, state_tests.GovernedEffectiveSta
         self.assertNotEqual(owner_console_render._elapsed(task.started_at), "unavailable")
 
     def test_ready_for_review_without_a_worktree_shows_no_progress(self) -> None:
-        self.setup_project([("TASK-001", "READY_FOR_REVIEW", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "in_review", "REQUIRED", "—")])
         task = self.load()["TASK-001"]
         self.assertFalse(task.shows_progress)
         self.assertEqual(task.progress_phase, "unavailable")

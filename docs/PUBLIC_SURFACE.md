@@ -66,6 +66,7 @@ including command containers and nested subcommands.
 | `cardine review verdict` | Stable |
 | `cardine task` | Stable |
 | `cardine task transition` | Stable |
+| `cardine task outcome` | Stable |
 | `cardine task close` | Stable |
 | `cardine task state` | Stable |
 | `cardine task state import` | Stable |

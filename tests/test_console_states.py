@@ -96,7 +96,7 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
             "PUSH_PENDING", "PUSH_REJECTED", "CLEANUP_BLOCKED",
         )
         for reason in reasons:
-            task = owner_console_models.Task("001", "Task", "IN_PROGRESS", (), (), None, (), (),
+            task = owner_console_models.Task("001", "Task", "in_progress", (), (), None, (), (),
                                 readiness="IN PROGRESS", lifecycle="in_progress",
                                 closure_stop_reason=reason, closure_resume="resume command")
             lines = [value for value, _ in owner_console_render._detail_lines(task, 60, palette)]
@@ -127,7 +127,7 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
         self.write(wt, "tasks/QUEUE.md", queue)
         task = self.load()["001"]
         self.assertEqual(task.readiness, "MISMATCH")
-        self.assertIn("working tree TODO", task.mismatch or "")
+        self.assertIn("working tree queued", task.mismatch or "")
 
     def test_unparseable_working_queue_falls_back_to_committed_state(self) -> None:
         self.setup_project({"001": " "})
@@ -150,7 +150,7 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
 
     def test_completed_branch_with_done_handoff_is_ready_for_review(self) -> None:
         self.setup_project({"001": " "})
-        self.set_branch_status(self.worktree("task-001"), "001", "x", handoff="DONE")
+        self.set_branch_status(self.worktree("task-001"), "001", "x", handoff="done")
         task = self.load()["001"]
         self.assertEqual((task.readiness, task.lifecycle), ("READY FOR REVIEW", "ready_for_review"))
         self.assertEqual(owner_console_render._state_label(task), ("Review", "ready"))
@@ -166,7 +166,7 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
     def test_completed_branch_with_dirty_worktree_stays_in_progress(self) -> None:
         self.setup_project({"001": " "})
         wt = self.worktree("task-001")
-        self.set_branch_status(wt, "001", "x", handoff="DONE")
+        self.set_branch_status(wt, "001", "x", handoff="done")
         self.write(wt, "scratch.txt", "uncommitted")
         task = self.load()["001"]
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
@@ -193,14 +193,14 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
         self.set_branch_status(wt, "001", " ")
         task = self.load()["001"]
         self.assertEqual(task.readiness, "MISMATCH")
-        self.assertIn("main IN_PROGRESS", task.mismatch or "")
-        self.assertIn("task-001 TODO", task.mismatch or "")
+        self.assertIn("main in_progress", task.mismatch or "")
+        self.assertIn("task-001 queued", task.mismatch or "")
         self.assertIsNone(task.launch_command)
         self.assertEqual(owner_console_render._state_label(task)[0], "Mismatch")
 
     def test_dependencies_are_satisfied_by_integrated_state_only(self) -> None:
         self.setup_project({"001": " ", "002": " "}, deps={"002": "001"})
-        self.set_branch_status(self.worktree("task-001"), "001", "x", handoff="DONE")
+        self.set_branch_status(self.worktree("task-001"), "001", "x", handoff="done")
         tasks = self.load()
         self.assertEqual(tasks["001"].readiness, "READY FOR REVIEW")
         self.assertEqual(tasks["002"].readiness, "BLOCKED: 001")
@@ -226,7 +226,7 @@ class LeanEffectiveStateTest(support.LeanEffectiveStateFixture):
         output = owner_console_state.one_shot(state)
         self.assertIn("State from: branch task-001", output)
         self.assertIn("Markers: active writer", output)
-        self.assertIn("Mismatch: main IN_PROGRESS, task-002 TODO", output)
+        self.assertIn("Mismatch: main in_progress, task-002 queued", output)
 
 
 
@@ -237,15 +237,25 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
 
     def test_queue_statuses_map_to_normalized_phases_and_dependencies(self) -> None:
         self.setup_project([
-            ("TASK-001", "ACCEPTED", "REQUIRED", "—"),
-            ("TASK-002", "QUEUED", "REQUIRED", "TASK-001"),
-            ("TASK-003", "IN_PROGRESS", "REQUIRED", "—"),
-            ("TASK-004", "READY_FOR_REVIEW", "REQUIRED", "—"),
-            ("TASK-005", "ANSWERED", "SPIKE", "—"),
-            ("TASK-006", "QUEUED", "REQUIRED", "TASK-005"),
-            ("TASK-007", "INCONCLUSIVE", "SPIKE", "—"),
-            ("TASK-008", "QUEUED", "REQUIRED", "TASK-007"),
+            ("TASK-001", "done", "REQUIRED", "—"),
+            ("TASK-002", "queued", "REQUIRED", "TASK-001"),
+            ("TASK-003", "in_progress", "REQUIRED", "—"),
+            ("TASK-004", "in_review", "REQUIRED", "—"),
+            ("TASK-005", "done", "SPIKE", "—"),
+            ("TASK-006", "queued", "REQUIRED", "TASK-005"),
+            ("TASK-007", "done", "SPIKE", "—"),
+            ("TASK-008", "queued", "REQUIRED", "TASK-007"),
         ])
+        for task_id, outcome in (("TASK-005", "ANSWERED"), ("TASK-007", "INCONCLUSIVE")):
+            self.write_record(self.project, task_id, "done")
+            path = self.project / f"tasks/{task_id}.md"
+            path.write_text(path.read_text() + "\nClass: spike\n")
+            support.MachineStateConsoleFixture.state(self, self.project, task_id, "done", required=False)
+            state_path = self.project / f".cardine/tasks/{task_id}.json"
+            snapshot = json.loads(state_path.read_text())
+            snapshot["outcome"] = outcome
+            state_path.write_text(json.dumps(snapshot))
+        self.commit(self.project, "landed spike outcomes")
         tasks = self.load()
         self.assertEqual({tid: t.lifecycle for tid, t in tasks.items()}, {
             "TASK-002": "todo", "TASK-003": "in_progress", "TASK-004": "ready_for_review",
@@ -260,8 +270,8 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
 
     def test_dependency_on_unaccepted_task_is_blocked(self) -> None:
         self.setup_project([
-            ("TASK-001", "READY_FOR_REVIEW", "REQUIRED", "—"),
-            ("TASK-002", "QUEUED", "REQUIRED", "TASK-001"),
+            ("TASK-001", "in_review", "REQUIRED", "—"),
+            ("TASK-002", "queued", "REQUIRED", "TASK-001"),
         ])
         self.assertEqual(self.load()["TASK-002"].readiness, "BLOCKED: TASK-001")
 
@@ -271,64 +281,64 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
             owner_console_snapshot.load_snapshot(self.project)
 
     def test_ready_for_review_requires_record_queue_and_review_agreement(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
-        self.set_branch(wt, "TASK-001", "READY_FOR_REVIEW")
+        self.set_branch(wt, "TASK-001", "in_review")
         task = self.load()["TASK-001"]
         self.assertEqual((task.readiness, task.lifecycle), ("READY FOR REVIEW", "ready_for_review"))
         self.assertEqual(task.source, "branch task-001")
-        self.set_branch(wt, "TASK-001", "READY_FOR_REVIEW", record="IN_PROGRESS")
+        self.set_branch(wt, "TASK-001", "in_review", record="in_progress")
         task = self.load()["TASK-001"]
         self.assertEqual(task.readiness, "MISMATCH")
-        self.assertIn("task record IN_PROGRESS", task.mismatch or "")
+        self.assertIn("task record in_progress", task.mismatch or "")
         self.assertIsNone(task.launch_command)
 
     def test_ready_for_review_without_required_review_is_a_mismatch(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "NOT_REQUIRED", "—")])
-        self.set_branch(self.worktree("task-001"), "TASK-001", "READY_FOR_REVIEW")
+        self.setup_project([("TASK-001", "queued", "NOT_REQUIRED", "—")])
+        self.set_branch(self.worktree("task-001"), "TASK-001", "in_review")
         task = self.load()["TASK-001"]
         self.assertEqual(task.readiness, "MISMATCH")
         self.assertIn("Review NOT_REQUIRED", task.mismatch or "")
 
     def test_latest_changes_requested_attempt_marks_in_progress_task(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
         review = (
             "# Review Record — TASK-001\n\n## Attempt 1 — CHANGES_REQUESTED\n\n- x\n\n"
             "## Attempt 2 — CHANGES_REQUESTED\n\n- y\n"
         )
-        self.set_branch(wt, "TASK-001", "IN_PROGRESS", review=review)
+        self.set_branch(wt, "TASK-001", "in_progress", review=review)
         task = self.load()["TASK-001"]
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
         self.assertTrue(task.changes_requested)
         self.assertEqual(task.markers, ("changes requested",))
         self.assertEqual(task.launch_command, "Address review TASK-001")
         approved = review + "\n## Attempt 3 — APPROVE\n\n- z\n"
-        self.set_branch(wt, "TASK-001", "IN_PROGRESS", review=approved)
+        self.set_branch(wt, "TASK-001", "in_progress", review=approved)
         self.assertFalse(self.load()["TASK-001"].changes_requested)
 
     def test_resubmission_after_changes_requested_is_ready_for_review(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         review = "# Review Record — TASK-001\n\n## Attempt 1 — CHANGES_REQUESTED\n\n- x\n"
-        self.set_branch(self.worktree("task-001"), "TASK-001", "READY_FOR_REVIEW", review=review)
+        self.set_branch(self.worktree("task-001"), "TASK-001", "in_review", review=review)
         task = self.load()["TASK-001"]
         self.assertEqual(task.lifecycle, "ready_for_review")
         self.assertFalse(task.changes_requested)
 
     def test_branch_accepted_is_done_on_branch_and_does_not_unblock_dependents(self) -> None:
         self.setup_project([
-            ("TASK-001", "QUEUED", "REQUIRED", "—"),
-            ("TASK-002", "QUEUED", "REQUIRED", "TASK-001"),
+            ("TASK-001", "queued", "REQUIRED", "—"),
+            ("TASK-002", "queued", "REQUIRED", "TASK-001"),
         ])
-        self.set_branch(self.worktree("task-001"), "TASK-001", "ACCEPTED")
+        self.set_branch(self.worktree("task-001"), "TASK-001", "in_progress", review="## Attempt 1 — APPROVE\n")
         tasks = self.load()
-        self.assertEqual(tasks["TASK-001"].readiness, "DONE ON BRANCH")
+        self.assertEqual(tasks["TASK-001"].readiness, "IN PROGRESS")
         self.assertEqual(tasks["TASK-002"].readiness, "BLOCKED: TASK-001")
 
     def test_dirty_worktree_shows_active_writer(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
-        self.set_branch(wt, "TASK-001", "IN_PROGRESS")
+        self.set_branch(wt, "TASK-001", "in_progress")
         self.write(wt, "scratch.txt", "uncommitted")
         task = self.load()["TASK-001"]
         self.assertTrue(task.active_writer)
@@ -339,10 +349,10 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
         )
 
     def test_uncommitted_in_progress_row_supersedes_committed_queued(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
         queue = (wt / "tasks/QUEUE.md").read_text(encoding="utf-8").replace(
-            "| TASK-001 | P1 | QUEUED", "| TASK-001 | P1 | IN_PROGRESS")
+            "| TASK-001 | P1 | queued", "| TASK-001 | P1 | in_progress")
         self.write(wt, "tasks/QUEUE.md", queue)
         task = self.load()["TASK-001"]
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
@@ -368,16 +378,16 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
 
 
     def test_state_wins_over_queue_record_and_review_prose(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
-        self.state(wt, "TASK-001", "CHANGES_REQUESTED", verdict="CHANGES_REQUESTED")
-        self.write_record(wt, "TASK-001", "ACCEPTED")
+        self.state(wt, "TASK-001", "in_progress", verdict="CHANGES_REQUESTED")
+        self.write_record(wt, "TASK-001", "done")
         self.write(wt, "tasks/reviews/TASK-001.md", "## Attempt 9 — APPROVE\n")
         self.commit(wt)
         before = self.refs_and_status()
         task = self.load()["TASK-001"]
         self.assertEqual(self.refs_and_status(), before)
-        self.assertEqual(task.status, "CHANGES_REQUESTED")
+        self.assertEqual(task.status, "in_progress")
         self.assertEqual(task.review_verdict, "CHANGES_REQUESTED")
         self.assertTrue(task.changes_requested)
         self.assertFalse(task.legacy)
@@ -386,16 +396,16 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
 
     def test_state_is_read_before_even_an_unknown_queue_status(self) -> None:
         self.setup_project([("TASK-001", "BROKEN_PROJECTION", "NOT REQUIRED", "—")])
-        self.state(self.project, "TASK-001", "READY_FOR_REVIEW")
+        self.state(self.project, "TASK-001", "in_review")
         task = self.load()["TASK-001"]
-        self.assertEqual(task.status, "READY_FOR_REVIEW")
+        self.assertEqual(task.status, "in_review")
         self.assertEqual(task.review, "REQUIRED")
         self.assertIsNone(task.launch_command)
         self.assertEqual(task.readiness, "PENDING DELIVERY/CHANGES")
 
     def test_invalid_state_is_per_task_and_never_falls_back(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—"),
-                            ("TASK-002", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—"),
+                            ("TASK-002", "queued", "REQUIRED", "—")])
         self.write(self.project, ".cardine/tasks/TASK-001.json", '{"version": 99}')
         tasks = self.load()
         invalid, legacy = tasks["TASK-001"], tasks["TASK-002"]
@@ -409,14 +419,14 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
         state.snapshot = owner_console_snapshot.load_snapshot(self.project)
         output = owner_console_state.one_shot(state)
         self.assertIn("State error: BLOCKED TASK_STATE_INVALID", output)
-        self.assertIn("Status: QUEUED | Verdict: none | legacy", output)
+        self.assertIn("Status: queued | Verdict: none | legacy", output)
         palette = dict.fromkeys(("base", "text", "title", "muted", "blocked", "action", "working", "ready", "unknown", "line"), 0)
         self.assertIn("legacy", [text for text, _style in owner_console_render._detail_lines(legacy, 100, palette)])
 
     def test_uncommitted_invalid_worktree_state_blocks_only_that_task(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
-        self.state(wt, "TASK-001", "IN_PROGRESS")
+        self.state(wt, "TASK-001", "in_progress")
         self.commit(wt)
         self.write(wt, ".cardine/tasks/TASK-001.json", "invalid JSON")
         task = self.load()["TASK-001"]
@@ -424,10 +434,10 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
         self.assertIsNone(task.launch_command)
 
     def test_archived_state_files_are_never_opened_or_enumerated(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
-        self.state(self.project, "TASK-001", "IN_PROGRESS")
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
+        self.state(self.project, "TASK-001", "in_progress")
         archived = self.header + "".join(
-            f"| {n} | OLD-{n} | P1 | ACCEPTED | REQUIRED | — | — |\n" for n in range(150))
+            f"| {n} | OLD-{n} | P1 | done | REQUIRED | — | — |\n" for n in range(150))
         self.write(self.project, "tasks/QUEUE_ARCHIVE.md", archived)
         for n in range(150):
             self.write(self.project, f".cardine/tasks/OLD-{n}.json", "invalid archived state")
@@ -446,25 +456,25 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
             snapshot = owner_console_snapshot.load_snapshot(self.project)
         self.assertEqual(opened, ["TASK-001.json"])
         self.assertEqual(snapshot.done_count, 150)
-        self.assertEqual(snapshot.tasks[0].status, "IN_PROGRESS")
+        self.assertEqual(snapshot.tasks[0].status, "in_progress")
 
     def test_state_on_branch_without_worktree_and_spike_terminal_state(self) -> None:
-        self.setup_project([("TASK-001", "QUEUED", "REQUIRED", "—")])
+        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
         wt = self.worktree("task-001")
-        self.state(wt, "TASK-001", "ACCEPTED", verdict="APPROVE")
+        self.state(wt, "TASK-001", "in_progress", verdict="APPROVE")
         self.commit(wt)
         self.git(self.project, "worktree", "remove", str(wt))
         task = self.load()["TASK-001"]
-        self.assertEqual(task.status, "ACCEPTED")
+        self.assertEqual(task.status, "in_progress")
         self.assertEqual(task.review_verdict, "APPROVE")
         self.assertFalse(task.legacy)
         self.assertIn("branch task-001", task.source)
-        self.write(self.project, "tasks/TASK-001.md", "# Task TASK-001 — Spike\nClass: SPIKE\nStatus: QUEUED\n")
+        self.write(self.project, "tasks/TASK-001.md", "# Task TASK-001 — Spike\nClass: SPIKE\nStatus: queued\n")
         self.write(self.project, ".cardine/tasks/TASK-001.json", json.dumps({
-            "version": 1, "task_id": "TASK-001", "workflow": "governed-sdd", "status": "ANSWERED",
+            "version": 1, "task_id": "TASK-001", "workflow": "governed-sdd", "status": "done", "outcome": "ANSWERED",
             "transitions": [{"from": before, "to": after, "commit": "a" * 40,
                              "at": "2026-10-11T12:00:00Z"}
-                            for before, after in [("QUEUED", "IN_PROGRESS"), ("IN_PROGRESS", "ANSWERED")]],
+                            for before, after in [("queued", "in_progress"), ("in_progress", "done")]],
         }))
         snapshot = owner_console_snapshot.load_snapshot(self.project)
         self.assertEqual(snapshot.done_count, 1)
@@ -473,11 +483,11 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
     def test_lean_machine_state_keeps_worktree_derived_progress(self) -> None:
         support.write_project_config(self.project, "lean")
         support.LeanEffectiveStateFixture.setup_project(self, {"001": " "})
-        self.state(self.project, "001", "QUEUED", workflow="lean-delivery")
+        self.state(self.project, "001", "queued", workflow="lean-delivery")
         self.commit(self.project)
         self.worktree("task-001")
         task = self.load()["001"]
-        self.assertEqual((task.status, task.lifecycle), ("QUEUED", "in_progress"))
+        self.assertEqual((task.status, task.lifecycle), ("queued", "in_progress"))
         self.assertFalse(task.legacy)
 
 

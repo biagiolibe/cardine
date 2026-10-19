@@ -51,8 +51,12 @@ class InstallationTest(RepoCase):
 
     def test_snapshot_equals_current_builder_on_synthetic_installation(self):
         (self.project / ".cardine/project.json").unlink()
+        expected = installation.load_meridian_snapshot(self.project)
         with use(installation.MERIDIAN_INSTALLATION_NAMES):
-            expected = load_snapshot(self.project, workflow_resolver=installation.detect_meridian_mode)
+            from cardine.shared.errors import CardineStop
+            from cardine.stops.render import stop_error
+            with self.assertRaisesRegex(CardineStop, "TASK_STATE_INVALID"):
+                read_task_state(self.project, "001", "lean-delivery", stop_factory=stop_error)
         self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
         self.assertEqual(expected.done_count, 1)
         self.assertEqual(expected.tasks[0].task_id, "002")
@@ -61,6 +65,32 @@ class InstallationTest(RepoCase):
         with use(ProjectNames(project_directory=".other")):
             self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
             self.assertEqual(names().project_directory, ".other")
+
+    def test_all_meridian_statuses_map_only_in_the_read_only_adapter(self):
+        from cardine.shared.errors import CardineStop
+        from cardine.stops.render import stop_error
+        path = self.project / ".meridian/tasks/001.json"
+        for old, new in installation.MERIDIAN_STATUSES.items():
+            value = {"version": 1, "task_id": "001", "workflow": "lean-delivery",
+                     "status": old, "transitions": []}
+            path.write_text(json.dumps(value))
+            before = path.read_bytes()
+            with self.subTest(old=old):
+                mapped = installation.snapshot_task_state(value)
+                self.assertEqual(mapped["status"], new)
+                if old in ("ANSWERED", "INCONCLUSIVE"):
+                    self.assertEqual(mapped["outcome"], old)
+                snapshot = installation.load_meridian_snapshot(self.project)
+                task = next((task for task in snapshot.tasks if task.task_id == "001"), None)
+                if old == "DONE":
+                    self.assertIsNone(task)
+                else:
+                    self.assertEqual(task.status, new)
+                with use(installation.MERIDIAN_INSTALLATION_NAMES):
+                    with self.assertRaisesRegex(CardineStop, "TASK_STATE_INVALID"):
+                        read_task_state(self.project, "001", "lean-delivery", stop_factory=stop_error)
+                self.assertEqual(path.read_bytes(), before)
+                self.assertEqual(value["status"], old)
 
     def test_snapshot_opens_only_declared_meridian_paths_and_never_writes(self):
         opened = []

@@ -14,6 +14,7 @@ from cardine.shared.errors import CardineError
 from cardine.console.models import Snapshot
 from cardine.console.snapshot import load_snapshot
 from cardine.shared.layout import ProjectNames, use
+from cardine.shared.snapshot_adapters import state_adapter, status_adapter
 
 
 MERIDIAN_INSTALLATION_NAMES = ProjectNames(
@@ -88,7 +89,33 @@ def detect_meridian_mode(project_root: Path) -> str:
     )
 
 
+MERIDIAN_STATUSES = {
+    "QUEUED": "queued", "IN_PROGRESS": "in_progress", "READY_FOR_REVIEW": "in_review",
+    "CHANGES_REQUESTED": "in_progress", "ACCEPTED": "in_progress",
+    "ANSWERED": "in_progress", "INCONCLUSIVE": "in_progress", "DONE": "done",
+}
+
+
+def snapshot_task_state(state):
+    """Map historical installation data in memory; never rewrite an installation."""
+    value = json.loads(json.dumps(state))
+    old = value["status"]
+    value["status"] = MERIDIAN_STATUSES[old]
+    if old in ("ANSWERED", "INCONCLUSIVE"):
+        value["outcome"] = old
+    for transition in value["transitions"]:
+        transition["from"] = MERIDIAN_STATUSES[transition["from"]]
+        transition["to"] = MERIDIAN_STATUSES[transition["to"]]
+    return value
+
+
 def load_meridian_snapshot(project: Path) -> Snapshot:
     """Build an installation snapshot under the frozen Meridian names."""
-    with use(MERIDIAN_INSTALLATION_NAMES):
-        return load_snapshot(project, workflow_resolver=detect_meridian_mode)
+    state_token = state_adapter.set(snapshot_task_state)
+    status_token = status_adapter.set(lambda value: MERIDIAN_STATUSES.get(value, value))
+    try:
+        with use(MERIDIAN_INSTALLATION_NAMES):
+            return load_snapshot(project, workflow_resolver=detect_meridian_mode)
+    finally:
+        state_adapter.reset(state_token)
+        status_adapter.reset(status_token)

@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,17 +23,17 @@ class ReviewVerdictTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
-        write_project_config(self.root, "governed")
+        write_project_config(self.root, "governed", validation=VALIDATION)
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.record = self.root / "tasks/001.md"
-        self.record.write_text("# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n")
+        self.record.write_text(contract_record(extra="Status: queued\n"))
         self.path = self.root / ".cardine/tasks/001.json"
         self.review = self.root / "tasks/reviews/001.md"
         self.git("init", "-q", "-b", "main")
         self.commit()
         self.git("switch", "-qc", "task-001")
-        for status in ("IN_PROGRESS", "READY_FOR_REVIEW"):
+        for status in ("in_progress", "in_review"):
             # This fixture isolates verdict authority; delivery gates have real-Git coverage elsewhere.
             with mock.patch.object(owner_tasks_transitions, "delivery_readiness"):
                 owner_tasks_transitions.transition_task_state(self.root, "001", status)
@@ -55,8 +56,8 @@ class ReviewVerdictTest(unittest.TestCase):
         return {str(p.relative_to(self.root)): p.read_bytes() for p in (self.path, self.record, self.review) if p.exists()}
 
     def test_each_verdict_commit_binding_body_and_projection(self):
-        for verdict, status in (("APPROVE", "ACCEPTED"), ("CHANGES_REQUESTED", "CHANGES_REQUESTED"),
-                                ("BLOCKED", "READY_FOR_REVIEW")):
+        for verdict, status in (("APPROVE", "in_progress"), ("CHANGES_REQUESTED", "in_progress"),
+                                ("BLOCKED", "in_review")):
             with self.subTest(verdict=verdict):
                 # Restore the fixture by constructing a fresh test environment.
                 if verdict != "APPROVE":
@@ -68,10 +69,22 @@ class ReviewVerdictTest(unittest.TestCase):
                 self.assertEqual(state, json.loads(self.path.read_text()))
                 self.assertEqual(state["status"], status)
                 self.assertEqual(state["review"], {"required": True, "verdict": verdict, "attempt": 1,
-                                                 "reviewed_commit": head, "approved_by": "reviewer"})
+                                                 "reviewed_commit": head, "approved_by": "reviewer", "source": "local"})
                 self.assertEqual(len(state["transitions"]), 2 if verdict == "BLOCKED" else 3)
                 self.assertIn(f"Status: {status}", self.record.read_text())
                 self.assertIn(f"## Attempt 1 — {verdict}\n\nFree-form findings.", self.review.read_text())
+
+    def test_approval_requires_resubmission_after_an_implementation_commit(self):
+        (self.root / "feature.txt").write_text("changed after submission\n")
+        self.commit()
+        before = self.snapshot()
+        result = self.cli("APPROVE")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("REVIEW_STALE", result.stderr)
+        self.assertEqual(self.snapshot(), before)
+        # Requested changes can always return the task to implementation.
+        self.assertEqual(self.cli("CHANGES_REQUESTED").returncode, 0)
+        self.assertEqual(json.loads(self.path.read_text())["status"], "in_progress")
 
     def test_owner(self):
         result = self.cli("APPROVE", "--owner")
@@ -81,14 +94,18 @@ class ReviewVerdictTest(unittest.TestCase):
     def test_attempts_and_existing_prose_are_preserved(self):
         self.assertEqual(self.cli("CHANGES_REQUESTED", "--body", "First findings").returncode, 0)
         self.commit()
-        for status in ("IN_PROGRESS", "READY_FOR_REVIEW"):
+        for status in ("in_review",):
             # This fixture isolates verdict authority; delivery gates have real-Git coverage elsewhere.
             with mock.patch.object(owner_tasks_transitions, "delivery_readiness"):
                 owner_tasks_transitions.transition_task_state(self.root, "001", status)
         self.commit()
         result = self.cli("APPROVE", "--body", "Fixed")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout)["review"]["attempt"], 2)
+        reviewed_state = json.loads(result.stdout)
+        self.assertEqual(reviewed_state["review"]["attempt"], 2)
+        self.assertEqual([item["verdict"] for item in reviewed_state["review_history"]],
+                         ["CHANGES_REQUESTED", "APPROVE"])
+        self.assertEqual([item["attempt"] for item in reviewed_state["review_history"]], [1, 2])
         self.assertEqual(self.review.read_text(), "## Attempt 1 — CHANGES_REQUESTED\n\nFirst findings\n\n## Attempt 2 — APPROVE\n\nFixed\n")
 
     def test_same_commit_rerun_is_noop_for_every_verdict(self):
@@ -160,9 +177,9 @@ class ReviewVerdictTest(unittest.TestCase):
         def replace(source, destination):
             self.assertEqual(self.snapshot(), before)
             state = json.loads(Path(source).read_text())
-            self.assertEqual(state["status"], "ACCEPTED")
+            self.assertEqual(state["status"], "in_progress")
             self.assertEqual(state["review"]["verdict"], "APPROVE")
-            self.assertEqual(state["transitions"][-1]["to"], "ACCEPTED")
+            self.assertEqual(state["transitions"][-1]["to"], "in_progress")
             replacements.append(destination)
             real_replace(source, destination)
 

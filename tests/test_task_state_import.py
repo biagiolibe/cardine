@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import cardine_cli
 from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.tasks.state as task_state
+from cardine.shared.errors import CardineStop
 from cardine.stops import render as owner_stops_render
 
 
@@ -35,7 +36,7 @@ class TaskStateImportTest(unittest.TestCase):
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True, text=True).stdout.strip()
 
-    def add_task(self, task_id, status="QUEUED", *, record_status=None, policy="REQUIRED", spike=False, review=None):
+    def add_task(self, task_id, status="queued", *, record_status=None, policy="REQUIRED", spike=False, review=None):
         record = self.root / f"tasks/{task_id}.md"
         record.write_text(contract_record(task_id, extra=f"Status: {record_status or status}\nReview: {policy}\n", spike=spike))
         self.rows.append(f"| {task_id} | {status} | {policy} | [{task_id}]({task_id}.md) |")
@@ -52,14 +53,14 @@ class TaskStateImportTest(unittest.TestCase):
                               capture_output=True, text=True)
 
     def test_preview_apply_repeat_and_subset_preserve_text(self):
-        record = self.add_task("001", "IN_PROGRESS")
+        record = self.add_task("001", "in_progress")
         self.add_task("002")
         before = record.read_bytes(), self.queue.read_bytes()
         result = self.cli("task-001")
         self.assertEqual(result.returncode, 0, result.stderr)
         proposal = json.loads(result.stdout)["tasks"][0]
         self.assertEqual(proposal["path"], ".cardine/tasks/001.json")
-        self.assertEqual(proposal["evidence"]["queue"]["status"], "IN_PROGRESS")
+        self.assertEqual(proposal["evidence"]["queue"]["status"], "in_progress")
         self.assertEqual(proposal["evidence"]["record"]["path"], "tasks/001.md")
         self.assertFalse(proposal["evidence"]["review"]["exists"])
         self.assertFalse((self.root / ".cardine/tasks").exists())
@@ -67,7 +68,7 @@ class TaskStateImportTest(unittest.TestCase):
         path = self.root / proposal["path"]
         state = task_state.read_task_state(self.root, "001", "governed-sdd", stop_factory=owner_stops_render.stop_error)
         self.assertEqual(state["transitions"][0]["commit"], self.git("rev-parse", "HEAD"))
-        self.assertEqual(state["status"], "IN_PROGRESS")
+        self.assertEqual(state["status"], "in_progress")
         original = path.read_bytes()
         again = self.cli("001", "--apply")
         self.assertEqual(json.loads(again.stdout)["tasks"][0]["action"], "skip-existing")
@@ -76,7 +77,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertFalse((self.root / ".cardine/tasks/002.json").exists())
 
     def test_archived_record_import_preserves_record_and_stale_queue_link(self):
-        record = self.add_task("001", "IN_PROGRESS")
+        record = self.add_task("001", "in_progress")
         archived = self.root / "tasks/done/001.md"
         archived.parent.mkdir()
         record.rename(archived)
@@ -85,12 +86,12 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         proposal = json.loads(result.stdout)["tasks"][0]
         self.assertEqual(proposal["evidence"]["record"]["path"], "tasks/done/001.md")
-        self.assertEqual(json.loads((self.root / proposal["path"]).read_text())["status"], "IN_PROGRESS")
+        self.assertEqual(json.loads((self.root / proposal["path"]).read_text())["status"], "in_progress")
         self.assertEqual((archived.read_bytes(), self.queue.read_bytes()), before)
         self.assertFalse(record.exists())
 
     def test_archived_recovery_refuses_unrelated_missing_queue_link(self):
-        record = self.add_task("001", "IN_PROGRESS")
+        record = self.add_task("001", "in_progress")
         archived = self.root / "tasks/done/001.md"
         archived.parent.mkdir()
         record.rename(archived)
@@ -100,7 +101,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
 
     def test_terminal_tasks_need_no_record_or_state(self):
-        for task_id, status in (("001", "ACCEPTED"), ("002", "ANSWERED"), ("003", "INCONCLUSIVE")):
+        for task_id, status in (("001", "done"), ("002", "cancelled")):
             self.add_task(task_id, status).unlink()
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -109,15 +110,15 @@ class TaskStateImportTest(unittest.TestCase):
 
     def test_all_proposals_validated_before_any_write(self):
         self.add_task("001")
-        self.add_task("002", "IN_PROGRESS", record_status="READY_FOR_REVIEW")
+        self.add_task("002", "in_progress", record_status="in_review")
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 2)
         self.assertIn("BLOCKED TASK_STATE_INVALID:", result.stderr)
-        self.assertIn("queue Status='IN_PROGRESS'; record Status='READY_FOR_REVIEW'", result.stderr)
+        self.assertIn("queue Status='in_progress'; record Status='in_review'", result.stderr)
         self.assertFalse((self.root / ".cardine/tasks").exists())
 
     def test_dated_review_headings_preserved_and_imported(self):
-        self.add_task("001", "CHANGES_REQUESTED", review="## Attempt 2 — 2026-10-11 — CHANGES_REQUESTED\nFindings\n")
+        self.add_task("001", "in_progress", review="## Attempt 2 — 2026-10-11 — CHANGES_REQUESTED\nFindings\n")
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
         state = json.loads((self.root / ".cardine/tasks/001.json").read_text())
@@ -130,7 +131,7 @@ class TaskStateImportTest(unittest.TestCase):
         for review in ("## Attempt 1 — 2026-10-11 — APPROVE\n", "## Attempt 1 — unknown\n"):
             with self.subTest(review=review):
                 self.rows.clear()
-                self.add_task("001", "READY_FOR_REVIEW", review=review)
+                self.add_task("001", "in_review", review=review)
                 result = self.cli("--apply")
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("TASK_STATE_INVALID", result.stderr)
@@ -144,13 +145,13 @@ class TaskStateImportTest(unittest.TestCase):
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
         state = task_state.read_task_state(self.root, "001", "lean-delivery", stop_factory=owner_stops_render.stop_error)
-        self.assertEqual(state["status"], "QUEUED")
-        self.assertEqual(state["transitions"], [])
+        self.assertEqual(state["status"], "in_progress")
+        self.assertEqual(len(state["transitions"]), 1)
         self.assertEqual(json.loads(result.stdout)["tasks"][1]["action"], "skip-terminal")
 
     def test_spike_and_no_review_use_their_legal_machines(self):
-        self.add_task("001", "IN_PROGRESS", spike=True, policy="NOT_REQUIRED")
-        self.add_task("002", "IN_PROGRESS", policy="NOT_REQUIRED")
+        self.add_task("001", "in_progress", spike=True, policy="NOT_REQUIRED")
+        self.add_task("002", "in_progress", policy="NOT_REQUIRED")
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
         for task_id, spike in (("001", True), ("002", False)):
@@ -158,7 +159,9 @@ class TaskStateImportTest(unittest.TestCase):
                                                review_required=None, stop_factory=owner_stops_render.stop_error)
             self.assertFalse(state["review"]["required"])
             if not spike:
-                owner_tasks_transitions.transition_task_state(self.root, task_id, "ACCEPTED")
+                with self.assertRaises(CardineStop) as caught:
+                    owner_tasks_transitions.transition_task_state(self.root, task_id, "done")
+                self.assertIn("verified landing", str(caught.exception))
                 task_state.read_task_state(self.root, task_id, "governed-sdd", review_required=None,
                                            stop_factory=owner_stops_render.stop_error)
 

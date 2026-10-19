@@ -94,6 +94,9 @@ revalidation in the same turn; do not stop to report the fix.
 - A required command that exits non-zero because of a precondition the agent
   can satisfy (command order, an uncommitted worktree, a missing argument):
   satisfy it and run the command again, once.
+- A counted attempt is a run of the whole Validation section on a committed,
+  complete implementation. Development runs on unfinished or uncommitted code
+  do not count (developer clarification on Resume, 2026-10-19).
 - A validation failure caused by this task's own changes, including a name
   collision, a stale reference, a broken link, or a test expectation that the
   task made obsolete: fix it and revalidate, at most 3 counted attempts. A

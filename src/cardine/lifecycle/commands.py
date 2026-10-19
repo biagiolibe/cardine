@@ -29,27 +29,31 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
     workflow = detect_mode(project_root)
     record = identity.task_path.read_text(encoding="utf-8")
     state = read_task_state(project_root, task_id, workflow,
-                            spike=read_task_field(record, "Class") == "SPIKE",
-                            review_required=read_task_field(record, "Review") != "NOT_REQUIRED",
+                            spike=(read_task_field(record, "Class") or "").lower() == "spike",
+                            review_required=None,
                             stop_factory=stop_error) if state_path(project_root, task_id).exists() else None
     _execution_worktree(project_root, task_id, resume=resume,
-                        repeated_start=bool(state and state["status"] == "IN_PROGRESS"), inspection=inspection)
-    status = state["status"] if state else "QUEUED"
-    if resume and workflow == "lean-delivery" and status == "DONE" and identity.task_path.parent.name == "done":
+                        repeated_start=bool(state and state["status"] == "in_progress"), inspection=inspection)
+    status = state["status"] if state else "queued"
+    if identity.task_path.parent.name == "done":
+        if not resume or status != "in_progress":
+            raise stop_error("TASK_STATUS_REJECTED", "archived task requires closure recovery", task_id=task_id, project=project_root)
         dirty = bool(git_output(project_root, "status", "--porcelain"))
         return {"task_id": task_id, "workflow": workflow, "status": status, "started": False,
                 "state": state, "commit": git_output(project_root, "rev-parse", "HEAD"),
                 "next_action": "commit-closure-records" if dirty else "worktree-advance"}
-    eligible = ("QUEUED",) if workflow == "lean-delivery" else ("QUEUED", "IN_PROGRESS")
+    eligible = ("queued", "in_progress")
     if status not in eligible:
         raise stop_error("TASK_STATUS_REJECTED", f"execution start allows {eligible}; found {status}", task_id=task_id, project=canonical_project_root(project_root))
-    if workflow == "governed-sdd":
-        execution_preflight(project_root, task_id)
-        if status == "QUEUED":
-            state = transition_task_state(project_root, task_id, "IN_PROGRESS")
-    # Lean has no execution-contract requirement or IN_PROGRESS machine state.
+    if status == "queued":
+        if (project_root / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file():
+            from cardine.tasks.contract import resolve_task_contract
+            options = resolve_task_contract(project_root, task_id, text=record)["options"]
+            execution_preflight(project_root, task_id, options=options)
+        state = transition_task_state(project_root, task_id, "in_progress")
+
     return {"task_id": task_id, "workflow": workflow, "status": state["status"] if state else status,
-            "started": workflow == "governed-sdd", "state": state,
+            "started": True, "state": state,
             "commit": git_output(project_root, "rev-parse", "HEAD")}
 
 
@@ -57,7 +61,7 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
 def execution_deliver(project_root: Path, task_id: str) -> dict[str, object]:
     result = delivery_readiness(project_root, task_id, allow_handoff_correction=True)
     task_id = str(result["task_id"])
-    if result["status"] == "READY_FOR_REVIEW":
+    if result["status"] == "in_review":
         identity = resolve_task_identity(project_root, task_id, "existing")
         later = _delivery_later_commits(
             project_root, task_id, _execution_state(project_root, task_id), str(result["commit"]),
@@ -69,7 +73,7 @@ def execution_deliver(project_root: Path, task_id: str) -> dict[str, object]:
                                  task_id=task_id, project=canonical_project_root(project_root))
         return delivery_readiness(project_root, task_id)
     try:
-        transition_task_state(project_root, task_id, "READY_FOR_REVIEW")
+        transition_task_state(project_root, task_id, "in_review")
     except (OSError, CardineError) as error:
         actual = _execution_state(project_root, task_id)["status"]
         raise stop_error("EVIDENCE_INCOMPLETE", f"delivery transition failed: {error}; actual state {actual}; inspect git status and repair command-owned state/projection before retrying delivery",
@@ -80,6 +84,6 @@ def execution_deliver(project_root: Path, task_id: str) -> dict[str, object]:
     for args in (("add", "--", *paths), ("commit", "-m", f"Deliver {task_id} for review", "--", *paths)):
         completed = _run_git(project_root, *args)
         if completed.returncode:
-            raise stop_error("EVIDENCE_INCOMPLETE", f"delivery {args[0]} failed: {completed.stderr.strip()}; actual state READY_FOR_REVIEW, pending delivery; inspect git status, commit only state/projection, then rerun execution deliver", task_id=task_id, project=canonical_project_root(project_root))
+            raise stop_error("EVIDENCE_INCOMPLETE", f"delivery {args[0]} failed: {completed.stderr.strip()}; actual state in_review, pending delivery; inspect git status, commit only state/projection, then rerun execution deliver", task_id=task_id, project=canonical_project_root(project_root))
     return delivery_readiness(project_root, task_id)
 

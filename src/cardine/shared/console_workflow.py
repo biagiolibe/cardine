@@ -6,13 +6,14 @@ import posixpath
 import re
 from dataclasses import dataclass
 from typing import Callable
+from cardine.shared.snapshot_adapters import status_adapter
 
 
 PHASES = ("todo", "in_progress", "ready_for_review", "done")
 ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 LINK_PATTERN = re.compile(r"\[[^]]+\]\(([^)#]+)(?:#[^)]*)?\)")
-HANDOFF_STATUS = re.compile(r"^[-*\s]*Status:\s*`?([A-Z_]+)`?\s*$", re.MULTILINE)
-RECORD_STATUS = re.compile(r"^Status:\s*`?([A-Z_]+)`?\s*$", re.MULTILINE)
+HANDOFF_STATUS = re.compile(r"^[-*\s]*Status:\s*`?([A-Za-z_]+)`?\s*$", re.MULTILINE)
+RECORD_STATUS = re.compile(r"^Status:\s*`?([A-Za-z_]+)`?\s*$", re.MULTILINE)
 RECORD_REVIEW = re.compile(r"^Review:\s*(.*?)\s*$", re.MULTILINE)
 REVIEW_ATTEMPT = re.compile(
     r"^## Attempt (\d+) — (CHANGES_REQUESTED|APPROVE|BLOCKED)\s*$", re.MULTILINE
@@ -40,29 +41,14 @@ class Profile:
 
 
 PROFILES = {
-    "lean-delivery": Profile(
-        name="lean-delivery",
-        tokens={"[ ]": "TODO", "[/]": "IN_PROGRESS", "[x]": "DONE"},
-        phases={"TODO": "todo", "QUEUED": "todo", "IN_PROGRESS": "in_progress",
-                "STATE_ERROR": "in_progress", "DONE": "done"},
-        satisfying=frozenset({"DONE"}),
-        closing_status="DONE",
-    ),
-    "governed-sdd": Profile(
-        name="governed-sdd",
-        tokens={name: name for name in (
-            "QUEUED", "IN_PROGRESS", "READY_FOR_REVIEW", "ACCEPTED",
-            "ANSWERED", "INCONCLUSIVE",
-        )},
-        phases={
-            "QUEUED": "todo", "IN_PROGRESS": "in_progress",
-            "CHANGES_REQUESTED": "in_progress", "STATE_ERROR": "in_progress",
-            "READY_FOR_REVIEW": "ready_for_review", "ACCEPTED": "done",
-            "ANSWERED": "done", "INCONCLUSIVE": "done",
-        },
-        satisfying=frozenset({"ACCEPTED", "ANSWERED"}),
-        closing_status="ACCEPTED",
-    ),
+    mode: Profile(
+        name=mode,
+        tokens={"[ ]": "queued", "[/]": "in_progress", "[x]": "done",
+                **{value: value for value in ("queued", "in_progress", "in_review", "done", "cancelled")}},
+        phases={"queued": "todo", "in_progress": "in_progress", "in_review": "ready_for_review",
+                "done": "done", "cancelled": "done", "STATE_ERROR": "in_progress"},
+        satisfying=frozenset({"done"}), closing_status="done",
+    ) for mode in ("lean-delivery", "governed-sdd")
 }
 
 
@@ -118,6 +104,9 @@ def parse_queue(text: str, label: str, profile: Profile,
         status = status_reader(task_id, row) if status_reader else None
         if status is None:
             token = row.get("Status", "").strip("`")
+            adapter = status_adapter.get()
+            if adapter is not None:
+                token = adapter(token)
             if token not in profile.tokens:
                 raise ConsoleError(f"Unknown task status in {label}:{line_number}: {row.get('Status')}")
             status = profile.tokens[token]
@@ -177,13 +166,15 @@ def heading_title(text: str) -> str:
 
 def record_status(text: str | None) -> str | None:
     match = RECORD_STATUS.search(text or "")
-    return match.group(1) if match else None
+    value = match.group(1) if match else None
+    adapter = status_adapter.get()
+    return adapter(value) if adapter is not None and value else value
 
 
 def record_review(text: str | None) -> str | None:
     """Return a declared task-record review policy, if it is recognized."""
     match = RECORD_REVIEW.search(text or "")
-    value = match.group(1).strip() if match else None
+    value = match.group(1).strip().replace("_", " ") if match else None
     return value if value in ("REQUIRED", "NOT REQUIRED") else None
 
 
@@ -240,7 +231,7 @@ def effective_state(profile: Profile, primary: QueueRow, primary_record: str | N
         source = facts.state_source if facts and facts.state is not None else "task state on main"
         lifecycle = profile.phases[status]
         writer = bool(facts and facts.dirty)
-        if (profile.name == "lean-delivery" and status == "QUEUED" and facts
+        if (profile.name == "lean-delivery" and status == "queued" and facts
                 and facts.worktree_available and facts.record_path
                 and not facts.record_path.startswith("tasks/done/")):
             lifecycle = "in_progress"
@@ -274,12 +265,12 @@ def effective_state(profile: Profile, primary: QueueRow, primary_record: str | N
             if working_phase > committed_phase:
                 row = facts.working_row
                 source = f"uncommitted {facts.branch}"
-        if (profile.name == "lean-delivery" and primary.status == "TODO"
-                and row.status == "TODO" and facts.worktree_available
+        if (profile.name == "lean-delivery" and primary.status == "queued"
+                and row.status == "queued" and facts.worktree_available
                 and facts.record_path and not facts.record_path.startswith("tasks/done/")):
             # Lean Delivery keeps [/] derived: reserving the canonical branch and
             # worktree starts the task without a shared queue-file edit.
-            return Effective("in_progress", "IN_PROGRESS", source, active_writer=writer)
+            return Effective("in_progress", "in_progress", source, active_writer=writer)
         if row.status == primary.status:
             source = "main"
 
@@ -289,40 +280,40 @@ def effective_state(profile: Profile, primary: QueueRow, primary_record: str | N
     phase = profile.phases[row.status]
     if profile.name == "governed-sdd":
         review_value = row.review if review is None else review
-        if (facts is not None and primary.status == "QUEUED" and row.status == "QUEUED"
+        if (facts is not None and primary.status == "queued" and row.status == "queued"
                 and facts.worktree_available and facts.record_path
                 and not facts.record_path.startswith("tasks/done/")
-                and record in (None, "QUEUED", "IN_PROGRESS", "READY_FOR_REVIEW")):
+                and record in (None, "queued", "in_progress", "in_review")):
             # Task branches never edit the shared queue, so a Governed task's
             # in-branch state is derived from its record, like the Lean `[/]`.
             derived = f"branch {facts.branch}"
-            if record == "READY_FOR_REVIEW":
+            if record == "in_review":
                 if review_value not in (None, "REQUIRED"):
-                    return mismatch(f"queue QUEUED, Review {review_value or 'unset'}")
-                return Effective("ready_for_review", "READY_FOR_REVIEW", derived,
+                    return mismatch(f"queue queued, Review {review_value or 'unset'}")
+                return Effective("ready_for_review", "in_review", derived,
                                  active_writer=writer)
             return Effective(
-                "in_progress", "IN_PROGRESS", derived, active_writer=writer,
+                "in_progress", "in_progress", derived, active_writer=writer,
                 changes_requested=facts.review_verdict == "CHANGES_REQUESTED",
             )
-        if row.status == "READY_FOR_REVIEW" or record == "READY_FOR_REVIEW":
+        if row.status == "in_review" or record == "in_review":
             if record != row.status:
                 return mismatch(f"queue {row.status}, task record {record or 'no status'}")
             if review_value not in (None, "REQUIRED"):
-                return mismatch(f"queue READY_FOR_REVIEW, Review {review_value or 'unset'}")
+                return mismatch(f"queue in_review, Review {review_value or 'unset'}")
         return Effective(
             phase, row.status, source, active_writer=writer,
             changes_requested=bool(
-                facts and row.status == "IN_PROGRESS"
+                facts and row.status == "in_progress"
                 and facts.review_verdict == "CHANGES_REQUESTED"
             ),
         )
-    if row.status == "DONE" and facts is not None:
-        if facts.handoff != "DONE":
+    if row.status == "done" and facts is not None:
+        if facts.handoff != "done":
             return mismatch(f"{facts.branch} queue [x], handoff {facts.handoff or 'missing'}")
         if not facts.ahead:
             return mismatch(f"{facts.branch} queue [x], branch is not ahead of main")
         if facts.worktree and not facts.dirty:
-            return Effective("ready_for_review", "READY_FOR_REVIEW", source)
-        return Effective("in_progress", "IN_PROGRESS", source, active_writer=writer)
+            return Effective("ready_for_review", "in_review", source)
+        return Effective("in_progress", "in_progress", source, active_writer=writer)
     return Effective(phase, row.status, source, active_writer=writer)

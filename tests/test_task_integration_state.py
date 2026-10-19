@@ -33,12 +33,12 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def start(self, *, workflow="governed-sdd", spike=False):
         if workflow == "lean-delivery":
-            write_project_config(self.primary, "lean")
+            write_project_config(self.primary, "lean", validation=fixtures.VALIDATION)
             (self.primary / "tasks/QUEUE.md").write_text("| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n")
             (self.primary / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Lifecycle\n")
         elif spike:
             (self.primary / "tasks/056-lifecycle.md").write_text(
-                "# Task 056\n\n> **ID**: `056`\nClass: SPIKE\nStatus: IN_PROGRESS\n")
+                "# Task 056\n\n> **ID**: `056`\nClass: SPIKE\nStatus: in_progress\n")
         self.git("add", ".")
         self.git("commit", "--allow-empty", "-m", "configure task")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()
@@ -52,24 +52,21 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.workflow = workflow
 
     def write_state(self, *, required=True, verdict="APPROVE", status=None, reviewed=None, spike=False):
-        status = status or ("DONE" if self.workflow == "lean-delivery" else "ANSWERED" if spike else "ACCEPTED")
-        if self.workflow == "lean-delivery":
-            sequence = ["QUEUED", "DONE"]
-        elif spike:
-            sequence = ["QUEUED", "IN_PROGRESS", status]
-        elif required:
-            sequence = ["QUEUED", "IN_PROGRESS", "READY_FOR_REVIEW", "ACCEPTED"]
-        else:
-            sequence = ["QUEUED", "IN_PROGRESS", "ACCEPTED"]
-        if status in sequence:
-            sequence = sequence[:sequence.index(status) + 1]
+        outcome = status if spike else None
+        status = "in_progress" if status in (None, "ANSWERED", "INCONCLUSIVE") else status
+        sequence = ["queued", "in_progress"]
+        if required:
+            sequence += ["in_review", "in_progress"]
+        if status == "in_review":
+            sequence = ["queued", "in_progress", "in_review"]
         state = {"version": 1, "task_id": "056", "workflow": self.workflow, "status": status,
                  "transitions": [{"from": before, "to": after, "commit": self.reviewed,
                                   "at": "2026-10-11T00:00:00Z"}
                                  for before, after in zip(sequence, sequence[1:])]}
-        if self.workflow != "lean-delivery":
-            state["review"] = {"required": required, "verdict": verdict, "attempt": 1,
-                               "reviewed_commit": reviewed or self.reviewed, "approved_by": "reviewer"}
+        state["review"] = {"required": required, "verdict": verdict, "attempt": 1,
+                           "reviewed_commit": reviewed or self.reviewed, "approved_by": "reviewer"}
+        if spike:
+            state["outcome"] = outcome or "ANSWERED"
         self.state_file = self.worker / ".cardine/tasks/056.json"
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state_file.write_text(json.dumps(state))
@@ -122,7 +119,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         staged = self.stage(self.reviewed)
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual(staged["completion"]["source"], "machine")
-        self.assertIn("| ACCEPTED |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
+        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
         validation = self.root / "candidate.json"
         validation.write_text(json.dumps({"candidate_tree": staged["candidate_tree"], "passed": True,
                                          "scope": "bounded", "commands": ["git diff --check", "scripts/check_repository.py"]}))
@@ -133,6 +130,15 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start()
         self.write_state()
         (self.worker / "feature.txt").write_text("changed after review\n")
+        self.commit()
+        self.assert_stop("REVIEW_STALE", "feature.txt")
+
+    def test_reverted_implementation_commit_still_invalidates_approval(self):
+        self.start()
+        self.write_state()
+        (self.worker / "feature.txt").write_text("change after approval\n")
+        self.commit()
+        (self.worker / "feature.txt").write_text("approved code\n")
         self.commit()
         self.assert_stop("REVIEW_STALE", "feature.txt")
 
@@ -172,8 +178,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_nonterminal_state_stop(self):
         self.start()
-        self.write_state(status="READY_FOR_REVIEW")
-        self.assert_stop("TASK_STATE_INVALID", "status expected ('ACCEPTED',); found 'READY_FOR_REVIEW'")
+        self.write_state(status="in_review")
+        self.assert_stop("TASK_STATE_INVALID", "status expected ('in_progress',); found 'in_review'")
 
     def test_nonancestor_review_stop(self):
         self.start()
@@ -208,7 +214,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start()
         self.write_state()
         state = json.loads(self.state_file.read_text())
-        state["transitions"][0]["to"] = "ACCEPTED"
+        state["transitions"][0]["to"] = "done"
         self.state_file.write_text(json.dumps(state))
         self.commit()
         self.assert_stop("TASK_STATE_INVALID", "transitions[0].to")
@@ -217,20 +223,20 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start()
         self.write_state(required=False, verdict=None)
         self.assertEqual(self.stage()["completion"]["source"], "machine")
-        self.assertIn("| ACCEPTED |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
+        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
-    def check_spike_projection(self, status):
+    def check_spike_projection(self, status, *, required=False):
         self.start(spike=True)
-        self.write_state(spike=True, status=status, verdict=None)
+        self.write_state(spike=True, status=status, verdict="APPROVE" if required else None, required=required)
         staged = self.stage(self.reviewed)
         self.assertEqual(staged["decision"], "REUSE")
         # Archival reads task state, so a terminal spike closes its section, INCONCLUSIVE included.
-        self.assertIn(f"| {status} |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
+        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_spike_terminal_projection_ignores_record_status(self):
-        self.check_spike_projection("ANSWERED")
+        self.check_spike_projection("ANSWERED", required=True)
 
     def test_inconclusive_spike_projection(self):
         self.check_spike_projection("INCONCLUSIVE")
@@ -238,12 +244,12 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_ordinary_task_cannot_use_spike_state_to_skip_review(self):
         self.start()
         self.write_state(spike=True, verdict=None)
-        self.assert_stop("TASK_STATE_INVALID", "transitions[1].to")
+        self.assert_stop("TASK_STATE_INVALID", "outcome")
 
     def test_spike_cannot_integrate_with_accepted_status(self):
         self.start(spike=True)
         self.write_state(required=False)
-        self.assert_stop("TASK_STATE_INVALID", "transitions[1].to")
+        self.assert_stop("TASK_STATE_INVALID", "spike landing requires an outcome")
 
     def test_lean_done_projection(self):
         self.start(workflow="lean-delivery")
@@ -264,13 +270,13 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_advance_state_gate_runs_before_stage(self):
         self.start(workflow="lean-delivery")
-        self.write_state(required=False, status="QUEUED")
+        self.write_state(required=False, status="queued")
         for missing in (True, False):
             with self.subTest(missing=missing):
                 if missing:
                     self.state_file.unlink()
                 else:
-                    self.write_state(required=False, status="QUEUED")
+                    self.write_state(required=False, status="queued")
                 self.git("add", "-A", cwd=self.worker)
                 self.git("commit", "--allow-empty", "-m", "set closure state", cwd=self.worker)
                 before = {path: self.git("write-tree", cwd=path).stdout for path in (self.primary, self.worker)}
@@ -284,9 +290,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     command = shlex.split(result["commands"][0])
                     self.assertEqual(command[:3], ["cd", str(self.worker), "&&"])
                     self.assertEqual(command[command.index("cardine"):command.index("cardine") + 4],
-                                     ["cardine", "task", "close", "056"])
+                                     ["cardine", "task", "transition", "056"])
                     self.assertEqual(command[command.index("--project") + 1], str(self.worker))
-                    self.assertEqual(len(result["commands"]), 3)
+                    self.assertEqual(len(result["commands"]), 6)
                     self.assertEqual(result["resume"], " && ".join(result["commands"]))
                 for path, tree in before.items():
                     self.assertEqual(self.git("write-tree", cwd=path).stdout, tree)
@@ -319,7 +325,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
-                self.assertIn("task transition 056 DONE" if archived else "task close 056", result["resume"])
+                self.assertIn("task transition 056 in_progress" if archived else "task close 056", result["resume"])
                 if archived:
                     self.assertNotIn("task close", result["resume"])
                 # Supply the CLI from this source tree through PATH, then execute
@@ -341,7 +347,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.assertFalse((self.worker / "tasks/056-lifecycle.md").exists())
                 self.git("cat-file", "-e", "HEAD:tasks/done/056-lifecycle.md", cwd=self.worker)
                 state = json.loads(self.git("show", "HEAD:.cardine/tasks/056.json", cwd=self.worker).stdout)
-                self.assertEqual(state["status"], "DONE")
+                self.assertEqual(state["status"], "in_progress")
                 owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_advance_governed_missing_state_keeps_import_resume(self):
@@ -382,6 +388,6 @@ class TaskIntegrationStateTest(unittest.TestCase):
         record.write_text(record.read_text() + "Review: REQUIRED\n")
         # A project-shaped queue without Review uses the legacy record policy.
         queue = self.worker / "tasks/QUEUE.md"
-        queue.write_text("| ID | Status |\n|---|---|\n| 056 | QUEUED |\n")
+        queue.write_text("| ID | Status |\n|---|---|\n| 056 | queued |\n")
         self.commit()
         self.assert_stop("REVIEW_NOT_APPROVED", "legacy")

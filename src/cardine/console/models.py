@@ -75,7 +75,7 @@ class Task:
     def is_resume(self) -> bool:
         """Whether Proceed with would resume ordinary implementation work."""
         return (self.lifecycle == "in_progress"
-                and not (self.workflow == "governed-sdd" and self.changes_requested))
+                and not self.changes_requested)
 
     @property
     def resume_confirmations(self) -> int:
@@ -96,12 +96,9 @@ class Task:
         if self.lifecycle == "todo" and self.readiness == "READY":
             return f"Proceed with {self.task_id}"
         if self.lifecycle == "ready_for_review":
-            if self.workflow == "lean-delivery":
+            if self.review == "REQUIRED" or (self.legacy and self.workflow == "lean-delivery"):
                 return f"Review {self.task_id}"
-            if self.workflow == "governed-sdd" and self.review == "REQUIRED":
-                return f"Review {self.task_id}"
-        if (self.workflow == "governed-sdd" and self.lifecycle == "in_progress"
-                and self.changes_requested):
+        if self.lifecycle == "in_progress" and self.changes_requested:
             return f"Address review {self.task_id}"
         return None
 
@@ -109,7 +106,7 @@ class Task:
     def shows_progress(self) -> bool:
         """Whether elapsed time and lifecycle progress apply to this task."""
         return self.lifecycle in ("in_progress", "closing") or (
-            self.workflow == "governed-sdd" and self.lifecycle == "ready_for_review"
+            self.lifecycle == "ready_for_review"
             and self.worktree is not None
         )
 

@@ -22,9 +22,9 @@ from cardine.tasks import importer as owner_tasks_importer
 SHA = "a" * 40
 AT = "2026-10-14T12:00:00Z"
 ROUTES = {
-    "DONE": ("DONE",), "QUEUED": (), "ACCEPTED": ("IN_PROGRESS", "READY_FOR_REVIEW", "ACCEPTED"),
-    "IN_PROGRESS": ("IN_PROGRESS",), "ANSWERED": ("IN_PROGRESS", "ANSWERED"),
-    "INCONCLUSIVE": ("IN_PROGRESS", "INCONCLUSIVE"),
+    "done": ("in_progress", "done"), "queued": (),
+    "in_progress": ("in_progress",), "ANSWERED": ("in_progress", "done"),
+    "INCONCLUSIVE": ("in_progress", "done"),
 }
 LEAN_HEADER = "| Status | ID | Title |\n|---|---|---|\n"
 GOVERNED_HEADER = "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n|---|---|---|---|---|---|---|\n"
@@ -41,14 +41,14 @@ class StateArchivalTest(unittest.TestCase):
         self.archive = self.root / "tasks/QUEUE_ARCHIVE.md"
 
     def state(self, task_id: str, status: str, workflow: str = "lean-delivery", spike: bool = False) -> None:
-        current, transitions = "QUEUED", []
+        current, transitions = "queued", []
         for target in ROUTES[status]:
             transitions.append({"from": current, "to": target, "commit": SHA, "at": AT})
             current = target
         path = self.root / ".cardine/tasks" / f"{task_id}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({"version": 1, "task_id": task_id, "workflow": workflow,
-                                    "status": current, "transitions": transitions}), encoding="utf-8")
+                                    "status": current, "transitions": transitions, **({"outcome": status} if status in ("ANSWERED", "INCONCLUSIVE") else {})}), encoding="utf-8")
         if spike:
             (self.root / "tasks" / f"{task_id}.md").write_text(
                 f"# Task\n\n> **ID**: `{task_id}`\n\nClass: SPIKE\n", encoding="utf-8")
@@ -62,7 +62,7 @@ class StateArchivalTest(unittest.TestCase):
 
     def test_section_at_any_heading_level_closes_when_every_state_is_terminal(self) -> None:
         for task in ("A", "B"):
-            self.state(task, "DONE")
+            self.state(task, "done")
         # Column order and status wording are not read: the cell may say anything.
         contents = ("# Queue\n\n## Phase — Bootstrap\n\n| Title | ID | Priority | Status |\n|---|---|---|---|\n"
                     "| One | A | P1 | shipped |\n| Two | `B` | P1 | whatever |\n\n## Phase — Next\nPlanned.\n")
@@ -77,24 +77,24 @@ class StateArchivalTest(unittest.TestCase):
     def test_governed_inconclusive_spike_closes_its_section(self) -> None:
         write_project_config(self.root, "governed")
         self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
-        self.state("057", "ACCEPTED", "governed-sdd")
+        self.state("057", "done", "governed-sdd")
         contents = ("## Spikes\n\n" + GOVERNED_HEADER
-                    + "| 1 | 056 | P0 | INCONCLUSIVE | SPIKE | — | [056](056.md) |\n"
-                    + "| 2 | 057 | P0 | ACCEPTED | NOT_REQUIRED | — | [057](057.md) |\n")
+                    + "| 1 | 056 | P0 | done | SPIKE | — | [056](056.md) |\n"
+                    + "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n")
         retained, archived, report = self.archive_queue(contents, "governed-sdd")
         self.assertEqual(retained, "\n")
-        self.assertIn("| 1 | 056 | P0 | INCONCLUSIVE |", archived or "")
+        self.assertIn("| 1 | 056 | P0 | done |", archived or "")
         self.assertTrue(report["## Spikes"]["archive"])
         # Without state the conservative table rule still holds the INCONCLUSIVE row open.
         held, none_archived, held_report = self.archive_queue(
-            contents.replace("## Spikes", "### Spikes"), "governed-sdd", with_state=False)
-        self.assertEqual(held, contents.replace("## Spikes", "### Spikes"))
+            contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"), "governed-sdd", with_state=False)
+        self.assertEqual(held, contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"))
         self.assertIsNone(none_archived)
         self.assertFalse(held_report["### Spikes"]["archive"])
 
     def test_section_with_one_open_state_is_retained_and_names_it(self) -> None:
-        self.state("A", "DONE")
-        self.state("B", "QUEUED")
+        self.state("A", "done")
+        self.state("B", "queued")
         contents = "## Phase\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n| `[x]` | B | Claimed done |\n"
         retained, archived, report = self.archive_queue(contents)
         self.assertEqual(retained, contents)
@@ -105,9 +105,9 @@ class StateArchivalTest(unittest.TestCase):
         self.assertIn("open by task state: B", str(entry["reason"]))
 
     def test_invalid_state_retains_the_section_with_its_reason(self) -> None:
-        self.state("A", "DONE")
+        self.state("A", "done")
         path = self.root / ".cardine/tasks/A.json"
-        path.write_text(path.read_text(encoding="utf-8").replace('"lean-delivery"', '"governed-sdd"'), encoding="utf-8")
+        path.write_text(path.read_text(encoding="utf-8").replace('"lean-delivery"', '"unknown"'), encoding="utf-8")
         contents = "## Phase\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n"
         retained, _archived, report = self.archive_queue(contents)
         self.assertEqual(retained, contents)
@@ -131,7 +131,7 @@ class StateArchivalTest(unittest.TestCase):
                 self.assertEqual(report["### Open"]["legacy"], ["C"] if with_state else [])
 
     def test_mixed_section_needs_both_rules_to_agree(self) -> None:
-        self.state("A", "DONE")
+        self.state("A", "done")
         table = LEAN_HEADER + "| `[x]` | A | By state |\n| `[x]` | B | By table |\n"
         closed = "### Mixed\n\n" + table
         retained, archived, report = self.archive_queue(closed)
@@ -150,7 +150,7 @@ class StateArchivalTest(unittest.TestCase):
 
     def test_containers_never_archive_the_queue_around_a_closed_phase(self) -> None:
         for task in ("205", "206"):
-            self.state(task, "DONE")
+            self.state(task, "done")
         contents = (
             "# Task Execution Queue\n\nIntro.\n\n## Priorities\n\n| Code | Meaning |\n|---|---|\n| P1 | Critical |\n\n"
             "## 🏃 Active Queue\n\nOrdered by return.\n\n### Phase 64 — Issues\n\n"
@@ -169,7 +169,7 @@ class StateArchivalTest(unittest.TestCase):
 
     def test_outermost_section_wins_and_nested_sections_are_not_duplicated(self) -> None:
         for task in ("A", "B"):
-            self.state(task, "DONE")
+            self.state(task, "done")
         contents = ("## Outer\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n### Inner\n\n"
                     + LEAN_HEADER + "| `[x]` | B | Done |\n\n## After\nKeep.\n")
         retained, archived, report = self.archive_queue(contents)
@@ -182,26 +182,28 @@ class StateArchivalTest(unittest.TestCase):
 
         write_project_config(self.root, "governed")
         self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
-        self.state("057", "ACCEPTED", "governed-sdd")
+        self.state("057", "done", "governed-sdd")
         contents = ("## Closed\n\n" + GOVERNED_HEADER
-                    + "| 1 | 056 | P0 | INCONCLUSIVE | SPIKE | — | [056](056.md) |\n"
-                    + "| 2 | 057 | P0 | ACCEPTED | NOT_REQUIRED | — | [057](057.md) |\n\n"
+                    + "| 1 | 056 | P0 | done | SPIKE | — | [056](056.md) |\n"
+                    + "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n\n"
                     "## Next\n\n" + GOVERNED_HEADER
-                    + "| 3 | 058 | P1 | QUEUED | NOT_REQUIRED | 056 | [058](058.md) |\n"
-                    + "| 4 | 059 | P1 | QUEUED | NOT_REQUIRED | 057 | [059](059.md) |\n")
+                    + "| 3 | 058 | P1 | queued | NOT_REQUIRED | 056 | [058](058.md) |\n"
+                    + "| 4 | 059 | P1 | queued | NOT_REQUIRED | 057 | [059](059.md) |\n")
         retained, archived, _report = self.archive_queue(contents, "governed-sdd")
         self.assertNotIn("| 1 | 056 |", retained)
         self.assertIn("| 1 | 056 |", archived or "")
         profile = PROFILES["governed-sdd"]
         rows = (*parse_queue(retained, "QUEUE.md", profile), *parse_queue(archived or "", "QUEUE_ARCHIVE.md", profile))
         by_id = {row.task_id: row.status for row in rows}
+        from cardine.tasks.state import dependency_satisfied
         waiting = {row.task_id for row in rows for dependency in row.dependencies.split(",")
-                   if dependency.strip() in by_id and by_id[dependency.strip()] not in profile.satisfying}
+                   if dependency.strip() in by_id and not dependency_satisfied(json.loads(
+                       (self.root / f".cardine/tasks/{dependency.strip()}.json").read_text()))}
         self.assertEqual(waiting, {"058"})
 
     def test_stage_report_and_warnings_cover_state_sections(self) -> None:
-        self.state("A", "DONE")
-        self.state("B", "QUEUED")
+        self.state("A", "done")
+        self.state("B", "queued")
         contents = ("## Closed\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n"
                     "## Open\n\n" + LEAN_HEADER + "| `[ ]` | B | Waiting |\n")
         resolver = owner_integration_projections._queue_state_resolver(self.root, "lean-delivery")
@@ -219,8 +221,8 @@ class IncludeTerminalImportTest(unittest.TestCase):
         (self.root / "tasks/QUEUE.md").write_text(
             "### Phase\n\n| Status | ID | Title |\n|---|---|---|\n"
             "| `[x]` | 001 | Closed |\n| `[ ]` | 002 | Open |\n", encoding="utf-8")
-        (self.root / "tasks/done/001.md").write_text(contract_record("001", extra="Status: DONE\n"), encoding="utf-8")
-        (self.root / "tasks/002.md").write_text(contract_record("002", extra="Status: QUEUED\n"), encoding="utf-8")
+        (self.root / "tasks/done/001.md").write_text(contract_record("001", extra="Status: done\n"), encoding="utf-8")
+        (self.root / "tasks/002.md").write_text(contract_record("002", extra="Status: queued\n"), encoding="utf-8")
         for args in (("init", "-q", "-b", "main"), ("add", "."),
                      ("-c", "user.name=T", "-c", "user.email=t@example.test", "commit", "-qm", "init")):
             subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True)
@@ -236,12 +238,12 @@ class IncludeTerminalImportTest(unittest.TestCase):
         preview = owner_tasks_importer.import_task_states(self.root, [], include_terminal=True)
         self.assertEqual(self.actions(preview), {"001": "write", "002": "write"})
         done = next(item for item in preview["tasks"] if item["task_id"] == "001")
-        self.assertEqual(done["state"]["status"], "DONE")
+        self.assertEqual(done["state"]["status"], "done")
         self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
         applied = owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(self.actions(applied), {"001": "write", "002": "write"})
         written = json.loads((self.root / ".cardine/tasks/001.json").read_text(encoding="utf-8"))
-        self.assertEqual(written["status"], "DONE")
+        self.assertEqual(written["status"], "done")
         marker = (self.root / ".cardine/tasks/001.json").read_bytes()
         again = owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(self.actions(again), {"001": "skip-existing", "002": "skip-existing"})
@@ -249,7 +251,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
 
     def test_disagreeing_texts_stop_before_writing_anything(self) -> None:
         (self.root / "tasks/done/001.md").write_text(
-            contract_record("001", extra="Status: QUEUED\n"), encoding="utf-8")
+            contract_record("001", extra="Status: queued\n"), encoding="utf-8")
         with self.assertRaises(shared_errors.CardineStop) as raised:
             owner_tasks_importer.import_task_states(self.root, [], apply=True, include_terminal=True)
         self.assertEqual(raised.exception.code, "TASK_STATE_INVALID")
@@ -258,10 +260,10 @@ class IncludeTerminalImportTest(unittest.TestCase):
     def test_governed_terminal_requires_a_consistent_recorded_verdict(self) -> None:
         write_project_config(self.root, "governed", validation=VALIDATION)
         (self.root / "tasks/QUEUE.md").write_text(
-            "### Phase\n\n" + GOVERNED_HEADER + "| 1 | 001 | P0 | ACCEPTED | REQUIRED | — | [001](done/001.md) |\n",
+            "### Phase\n\n" + GOVERNED_HEADER + "| 1 | 001 | P0 | done | REQUIRED | — | [001](done/001.md) |\n",
             encoding="utf-8")
         (self.root / "tasks/done/001.md").write_text(
-            contract_record("001", extra="Status: ACCEPTED\nReview: REQUIRED\n"), encoding="utf-8")
+            contract_record("001", extra="Status: done\nReview: REQUIRED\n"), encoding="utf-8")
         reviews = self.root / "tasks/reviews"
         reviews.mkdir()
         review = owner_tasks_identity.resolve_task_identity(self.root, "001", "existing").review_path
@@ -273,7 +275,7 @@ class IncludeTerminalImportTest(unittest.TestCase):
         review.write_text("# Review\n\n## Attempt 1 — CHANGES_REQUESTED\n\n## Attempt 2 — APPROVE\n", encoding="utf-8")
         result = owner_tasks_importer.import_task_states(self.root, [], include_terminal=True)
         state = result["tasks"][0]["state"]
-        self.assertEqual((state["status"], state["review"]["verdict"]), ("ACCEPTED", "APPROVE"))
+        self.assertEqual((state["status"], state["review"]["verdict"]), ("done", "APPROVE"))
         self.assertIsNone(state["review"]["reviewed_commit"])
 
 

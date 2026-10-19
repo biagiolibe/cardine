@@ -324,8 +324,15 @@ def build_parser() -> CardineArgumentParser:
     transition = task_sub.add_parser("transition", help="apply a tracked task-state transition")
     transition.add_argument("task_id")
     transition.add_argument("status")
+    transition.add_argument("--cancellation-authority", default="")
+    transition.add_argument("--reason", default="")
     transition.add_argument("--project", type=Path, default=Path.cwd())
     transition.add_argument("--format", choices=("json",), default="json")
+    outcome = task_sub.add_parser("outcome", help="record a spike result without closing the task")
+    outcome.add_argument("task_id")
+    outcome.add_argument("outcome", choices=("ANSWERED", "INCONCLUSIVE"))
+    outcome.add_argument("--project", type=Path, default=Path.cwd())
+    outcome.add_argument("--format", choices=("json",), default="json")
     close = task_sub.add_parser("close", help="stage Lean task state and record archive without committing")
     close.add_argument("task_id")
     close.add_argument("--project", type=Path, default=Path.cwd())
@@ -724,7 +731,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                                                    owner=arguments.owner, body=arguments.body), sort_keys=True))
         elif arguments.command == "task":
             if arguments.task_command == "transition":
-                print(json.dumps(transition_task_state(project_root, arguments.task_id, arguments.status), sort_keys=True))
+                print(json.dumps(transition_task_state(project_root, arguments.task_id, arguments.status,
+                    cancellation_authority=arguments.cancellation_authority, reason=arguments.reason), sort_keys=True))
+            elif arguments.task_command == "outcome":
+                from cardine.tasks.transitions import record_spike_outcome
+                print(json.dumps(record_spike_outcome(project_root, arguments.task_id, arguments.outcome), sort_keys=True))
             elif arguments.task_command == "close":
                 print(json.dumps(close_task(project_root, arguments.task_id), sort_keys=True))
             elif arguments.task_command == "state":

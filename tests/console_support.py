@@ -142,18 +142,27 @@ class MachineStateConsoleFixture(RepoCase):
 
     def state(self, root: Path, task_id: str, status: str, *, workflow="governed-sdd",
               verdict=None, required=True) -> None:
-        route = (["QUEUED", "DONE"] if workflow == "lean-delivery" else
-                 ["QUEUED", "IN_PROGRESS", "READY_FOR_REVIEW", status])
-        route = route[:route.index(status) + 1]
+        # MERIDIAN-INSTALLATION-CHECK
+        if names().project_directory == ".meridian":
+            # Deliberately historical installation data, read only by the legacy adapter.
+            route = ["QUEUED"] if status == "QUEUED" else ["QUEUED", status]
+        else:
+            route = ["queued"]
+            if status != "queued":
+                route.append("in_progress")
+            if status == "in_review" or (verdict and status == "in_progress"):
+                route.append("in_review")
+            if route[-1] != status:
+                route.append(status)
         snapshot = {
             "version": 1, "task_id": task_id, "workflow": workflow, "status": status,
             "transitions": [{"from": before, "to": after, "commit": "a" * 40,
                              "at": "2026-10-11T12:00:00Z"}
                             for before, after in zip(route, route[1:])],
         }
-        if verdict:
-            snapshot["review"] = {"required": required, "verdict": verdict, "attempt": 1,
-                                  "reviewed_commit": "a" * 40, "approved_by": "reviewer"}
+        snapshot["review"] = {"required": required, "verdict": verdict, "attempt": 1,
+                              "reviewed_commit": "a" * 40 if verdict else None,
+                              "approved_by": "reviewer" if verdict else None}
         self.write(root, str(names().tasks_path / f"{task_id}.json"), json.dumps(snapshot))
 
     queue = LeanEffectiveStateFixture.queue

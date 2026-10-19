@@ -382,7 +382,7 @@ def registered_worktree_task_states(project_root: Path) -> list[dict[str, str]]:
         record = worktree / identity.task_path.relative_to(primary)
         if not record.is_file():
             continue
-        status = read_task_field(record.read_text(encoding="utf-8"), "Status") or "IN_PROGRESS"
+        status = read_task_field(record.read_text(encoding="utf-8"), "Status") or "in_progress"
         states.append({"task_id": identity.canonical_id, "status": status})
     return states
 

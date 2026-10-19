@@ -15,7 +15,7 @@ from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.preflight import readiness_check
-from cardine.tasks.state import read_task_state
+from cardine.tasks.state import read_task_state, review_is_required
 from cardine.tasks.state import state_path
 from cardine.templates.mode import detect_mode
 from cardine.worktree.checkout import inspect_task_worktree
@@ -79,16 +79,18 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
             changed = set(git_output(project_root, "diff", "HEAD", "--name-only").splitlines())
             untracked = set(git_output(project_root, "ls-files", "--others", "--exclude-standard").splitlines())
             prior_record = _run_git(project_root, "show", f"HEAD:{identity.task_path.relative_to(project_root)}")
-            expected_record = re.sub(r"^Status:[^\n]*", "Status: IN_PROGRESS", prior_record.stdout, flags=re.MULTILINE)
+            expected_record = re.sub(r"^Status:[^\n]*", "Status: in_progress", prior_record.stdout, flags=re.MULTILINE)
             state = _execution_state(project_root, task_id)
             previous = _run_git(project_root, "show", f"HEAD:{state_path(project_root, task_id).relative_to(project_root)}")
             if previous.returncode:
-                original = {"version": 1, "task_id": task_id, "workflow": "governed-sdd", "status": "QUEUED", "transitions": []}
+                original = {"version": 1, "task_id": task_id, "workflow": detect_mode(project_root), "status": "queued", "transitions": []}
             else:
                 original = json.loads(previous.stdout)
             expected_state = dict(original)
-            if original["status"] == "QUEUED" and state["transitions"]:
-                expected_state.update(status="IN_PROGRESS", transitions=original["transitions"] + [state["transitions"][-1]])
+            if "contract" not in original and "contract" in state:
+                expected_state["contract"] = state["contract"]
+            if original["status"] == "queued" and state["transitions"]:
+                expected_state.update(status="in_progress", transitions=original["transitions"] + [state["transitions"][-1]])
             # A repeated start tolerates only the exact command-owned projection.
             if (changed | untracked <= owned and prior_record.returncode == 0
                     and identity.task_path.read_text(encoding="utf-8") == expected_record
@@ -105,8 +107,8 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
 def _execution_state(project_root: Path, task_id: str) -> dict[str, object]:
     record = find_task_file(project_root, task_id).read_text(encoding="utf-8")
     return read_task_state(project_root, task_id, detect_mode(project_root),
-                           spike=read_task_field(record, "Class") == "SPIKE",
-                           review_required=read_task_field(record, "Review") != "NOT_REQUIRED",
+                           spike=(read_task_field(record, "Class") or "").lower() == "spike",
+                           review_required=None,
                            stop_factory=stop_error)
 
 
@@ -173,7 +175,7 @@ def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, o
                          task_id=task_id, project=canonical_project_root(project_root))
     commits = git_output(project_root, "rev-list", "--reverse", f"{transition_head}..{head}").splitlines()
     if not commits:
-        raise stop_error("EVIDENCE_INCOMPLETE", "READY_FOR_REVIEW needs a committed delivery",
+        raise stop_error("EVIDENCE_INCOMPLETE", "in_review needs a committed delivery",
                          task_id=task_id, project=canonical_project_root(project_root))
     delivery_paths = owned - {names().execution_evidence_path.as_posix(), report_path}
     later = []
@@ -192,16 +194,15 @@ def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, o
 
 def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: bool = True,
                        allow_handoff_correction: bool = False) -> dict[str, object]:
-    """Read-only delivery gate, also used by direct READY_FOR_REVIEW transitions."""
+    """Read-only delivery gate, also used by direct in_review transitions."""
     inspection = _execution_location(project_root, task_id, command=("execution", "deliver"))
     identity = resolve_task_identity(project_root, task_id, "existing")
     task_id = identity.canonical_id
     state = _execution_state(project_root, task_id)
     record = identity.task_path.read_text(encoding="utf-8")
-    if (state["workflow"] != "governed-sdd" or read_task_field(record, "Class") == "SPIKE"
-            or not state.get("review", {}).get("required", True)
-            or state["status"] not in ("IN_PROGRESS", "READY_FOR_REVIEW")):
-        raise stop_error("TASK_STATUS_REJECTED", f"delivery requires a review-required Governed task; found {state['status']}", task_id=task_id, project=canonical_project_root(project_root))
+    if (not review_is_required(state)
+            or state["status"] not in ("in_progress", "in_review")):
+        raise stop_error("TASK_STATUS_REJECTED", f"delivery requires a review-required task; found {state['status']}", task_id=task_id, project=canonical_project_root(project_root))
     if verify_worktree:
         worktree = _execution_worktree(project_root, task_id, inspection=inspection)
     else:
@@ -236,10 +237,10 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
                 or entry.get("sourceDigest") != digest or not re.fullmatch(r"[0-9a-f]{40}", str(commit))
                 or _run_git(project_root, "merge-base", "--is-ancestor", str(commit), head).returncode):
             raise stop_error("EVIDENCE_INCOMPLETE", f"validation {command_id} is missing, failing, or stale; rerun execution validate and commit evidence/handoff", task_id=task_id, project=canonical_project_root(project_root))
-    if state["status"] == "READY_FOR_REVIEW":
+    if state["status"] == "in_review":
         persisted = _run_git(project_root, "show", f"HEAD:{state_path(project_root, task_id).relative_to(project_root)}")
         if persisted.returncode or json.loads(persisted.stdout) != state:
-            raise stop_error("EVIDENCE_INCOMPLETE", "READY_FOR_REVIEW state must be committed", task_id=task_id, project=canonical_project_root(project_root))
+            raise stop_error("EVIDENCE_INCOMPLETE", "in_review state must be committed", task_id=task_id, project=canonical_project_root(project_root))
         later = _delivery_later_commits(project_root, task_id, state, head, owned, report_path)
         if later and not allow_handoff_correction:
             raise stop_error("EVIDENCE_INCOMPLETE", "handoff correction requires execution deliver before review",

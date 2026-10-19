@@ -84,6 +84,9 @@ Path("README.md").write_text("# Walkthrough\n")
 Path("tasks/001-purpose.md").write_text("""# Task 001 — Add the purpose sentence
 
 > **ID**: `001`
+Priority: P1
+Estimate: 15m
+Status: queued
 
 ## Objective
 
@@ -97,10 +100,13 @@ Add the project purpose to README.md.
 
 - README.md — project introduction.
 
+## Out of scope
+
+Application code and other tasks.
+
 ## Validation
 
-- git diff --check
-- Inspect the requested sentence in README.md.
+- `whitespace`: `git diff --check`
 
 ## Dependencies
 
@@ -111,6 +117,7 @@ queue.write_text(queue.read_text().replace("Initial setup", "Add the purpose sen
 plan = Path("PROJECT_PLAN.md")
 plan.write_text(plan.read_text().replace("- `[ ]` Initial project setup", "- `[ ]` 001 — Add the purpose sentence"))
 PY
+cardine execution reconcile 001 --apply --project .
 git add .
 git commit -m "Initialize the documentation project and task 001"
 git push -u origin main
@@ -128,7 +135,7 @@ git push -u origin main
 
 **Host step — assignment:** send `Proceed with 001`. The commands below show
 what the agent does. It uses the returned worktree rather than creating a
-second checkout. A successful Lean start may report no new machine state.
+second checkout. Starting records `in_progress` with the resolved task policy.
 
 ```bash
 cardine worktree prepare 001 --project "$PRIMARY" --format json > "$HOME/prepared.json"
@@ -143,7 +150,7 @@ python3 - <<'PY'
 from pathlib import Path
 assert "This project demonstrates Lean Delivery." in Path("README.md").read_text()
 PY
-git add README.md
+git add README.md tasks/001-purpose.md .cardine/tasks/001.json
 git commit -m "Add the project purpose sentence"
 ```
 
@@ -151,7 +158,8 @@ git commit -m "Add the project purpose sentence"
 
 The handoff records actual validation, task/base commits, and the relative
 worktree identity. Queue and plan stay untouched on the task branch. Close
-through the CLI; do not write machine status fields yourself.
+through the CLI; do not write machine status fields yourself. Archival leaves
+the task `in_progress`; only validated landing projects `done` on the candidate.
 
 ```bash
 python3 - <<'PY'

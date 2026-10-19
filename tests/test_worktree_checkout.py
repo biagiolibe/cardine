@@ -374,7 +374,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
     def test_console_resume_directive_is_accepted_by_prepare_resume(self) -> None:
         prepared, worktree = self.dirty_worktree()
         task = project_console.Task(
-            task_id="056", title="t", status="IN_PROGRESS", phase=(), dependencies=(), path=None,
+            task_id="056", title="t", status="in_progress", phase=(), dependencies=(), path=None,
             objective=(), criteria=(), readiness="IN PROGRESS", lifecycle="in_progress",
             active_writer=True,
         )

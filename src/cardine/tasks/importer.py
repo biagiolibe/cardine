@@ -49,12 +49,12 @@ def import_task_states(
     seen = set()
     head = None
     at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    terminal = {"DONE", "ACCEPTED", "ANSWERED", "INCONCLUSIVE"}
+    terminal = {"done", "cancelled"}
 
     def normalize(value):
         if workflow == "lean-delivery":
-            return {"[ ]": "QUEUED", "TODO": "QUEUED", "[/]": "QUEUED", "IN_PROGRESS": "QUEUED",
-                    "[x]": "DONE"}.get(value, value)
+            return {"[ ]": "queued", "[/]": "in_progress",
+                    "[x]": "done"}.get(value, value)
         return value
 
     for supplied in selected:
@@ -125,18 +125,16 @@ def import_task_states(
                                              "heading": latest[3] if latest else None,
                                              "verdict": latest[1] if latest else None}
         if latest and status not in terminal and (
-                latest[1] == "APPROVE" or status == "QUEUED"
-                or (latest[1] == "BLOCKED" and status != "READY_FOR_REVIEW")):
+                (latest[1] == "APPROVE" and status != "in_progress") or status == "queued"
+                or (latest[1] == "BLOCKED" and status != "in_review")):
             invalid(f"queue/record Status={status!r}; review verdict={latest[1]!r}")
         if status in terminal and workflow == "governed-sdd" and required and latest and latest[1] != "APPROVE":
             # A recorded verdict must agree with the terminal text; an absent
             # record stays absent (verdict null), so an import never invents an approval.
             invalid(f"queue/record Status={status!r}; review verdict: allowed 'APPROVE'; found {latest[1]!r}")
-        if status == "CHANGES_REQUESTED" and (not latest or latest[1] != "CHANGES_REQUESTED"):
-            invalid(f"queue/record Status={status!r}; review verdict={latest[1] if latest else None!r}")
         states = machine(workflow, spike, required)
         # A shortest legal path bootstraps current state without inventing old reviews.
-        routes = [("QUEUED", [])]
+        routes = [("queued", [])]
         visited = set()
         route = None
         while routes:
@@ -152,7 +150,7 @@ def import_task_states(
             invalid(f"queue Status: allowed {list(states)}; found {status!r}")
         state = {"version": 1, "task_id": task_id, "workflow": workflow, "status": status,
                  "transitions": [], "contract": contract}
-        current = "QUEUED"
+        current = "queued"
         for target in route:
             head = head or git_output(project_root, "rev-parse", "HEAD")
             state["transitions"].append({"from": current, "to": target, "commit": head, "at": at})

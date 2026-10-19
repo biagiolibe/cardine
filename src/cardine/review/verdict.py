@@ -29,8 +29,8 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
     record = identity.task_path.read_text(encoding="utf-8")
-    spike = read_task_field(record, "Class") == "SPIKE"
-    required = read_task_field(record, "Review") != "NOT_REQUIRED"
+    spike = (read_task_field(record, "Class") or "").lower() == "spike"
+    required = None
     path = state_path(project_root, task_id)
     head = git_output(project_root, "rev-parse", "HEAD")
     approved_by = "owner" if owner else "reviewer"
@@ -44,11 +44,14 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         invalid(f"verdict: allowed APPROVE, CHANGES_REQUESTED, BLOCKED; found {verdict!r}")
     state = read_task_state(project_root, task_id, workflow, spike=spike,
                             review_required=required, stop_factory=stop_error)
+    from cardine.tasks.state import review_is_required
+    if not review_is_required(state):
+        invalid("review requires a required-review task")
     previous = state.get("review", {})
     repeated = (previous.get("verdict") == verdict and previous.get("reviewed_commit") == head
                 and previous.get("approved_by") == approved_by
-                and state["status"] == {"APPROVE": "ACCEPTED", "CHANGES_REQUESTED": "CHANGES_REQUESTED",
-                                        "BLOCKED": "READY_FOR_REVIEW"}[verdict])
+                and state["status"] == {"APPROVE": "in_progress", "CHANGES_REQUESTED": "in_progress",
+                                        "BLOCKED": "in_review"}[verdict])
     dirty = git_output(project_root, "status", "--porcelain", "--untracked-files=all")
     if repeated and dirty:
         # A retry at the reviewed HEAD necessarily sees this command's uncommitted
@@ -83,8 +86,23 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         invalid("worktree: allowed clean worktree; found uncommitted changes")
     if repeated:
         return state
-    if state["status"] != "READY_FOR_REVIEW":
-        invalid(f"review status: allowed READY_FOR_REVIEW; found {state['status']!r}")
+    if state["status"] != "in_review":
+        invalid(f"review status: allowed in_review; found {state['status']!r}")
+    if verdict == "APPROVE":
+        # Submission binds the implementation to the transition's parent.
+        # Governance commits preserve it; any later implementation commit,
+        # including a change that was reverted, needs a new submission.
+        submitted = state["transitions"][-1]["commit"]
+        allowed = {path.relative_to(project_root).as_posix(),
+                   identity.task_path.relative_to(project_root).as_posix(),
+                   identity.handoff_path.relative_to(project_root).as_posix(),
+                   identity.review_path.relative_to(project_root).as_posix()}
+        if _run_git(project_root, "merge-base", "--is-ancestor", submitted, head).returncode:
+            invalid("submission commit is not an ancestor of the review HEAD")
+        changed = git_output(project_root, "log", "--format=", "--name-only", f"{submitted}..{head}").splitlines()
+        if set(filter(None, changed)) - allowed:
+            raise stop_error("REVIEW_STALE", "implementation changed after submission; request changes and submit a new attempt",
+                             task_id=task_id, project=project_root)
     at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     state = _review_verdict_projection(state, verdict, head, approved_by, at)
     try:
@@ -106,9 +124,10 @@ def _review_verdict_projection(state, verdict, head, approved_by, at):
     state = json.loads(json.dumps(state))
     attempt = state.get("review", {}).get("attempt", 0) + 1
     state["review"] = {"required": True, "verdict": verdict, "attempt": attempt,
-                       "reviewed_commit": head, "approved_by": approved_by}
+                       "reviewed_commit": head, "approved_by": approved_by, "source": "local"}
+    state.setdefault("review_history", []).append(dict(state["review"]))
     if verdict != "BLOCKED":
-        destination = "ACCEPTED" if verdict == "APPROVE" else "CHANGES_REQUESTED"
+        destination = "in_progress"
         state["transitions"].append({"from": state["status"], "to": destination,
                                      "commit": head, "at": at})
         state["status"] = destination

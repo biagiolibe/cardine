@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -33,13 +34,14 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.git('init', '-q', '-b', 'main', cwd=self.primary)
         self.git('config', 'user.name', 'Test', cwd=self.primary)
         self.git('config', 'user.email', 'test@example.invalid', cwd=self.primary)
-        write_project_config(self.primary, "governed")
+        write_project_config(self.primary, "governed", validation=VALIDATION)
         (self.primary / 'tasks').mkdir()
         (self.primary / 'docs').mkdir()
         (self.primary / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
-        (self.primary / 'tasks/QUEUE.md').write_text('| Status | ID | Title | Priority | Depends on | File |\n|---|---|---|---|---|---|\n| QUEUED | 001 | Example | P2 | — | [task](001.md) |\n')
+        (self.primary / 'tasks/QUEUE.md').write_text('| Status | ID | Title | Priority | Depends on | File |\n|---|---|---|---|---|---|\n| queued | 001 | Example | P2 | — | [task](001.md) |\n')
         self.record = Path('tasks/001.md')
-        text = '# Task 001 — Example\n\n> **ID**: `001`\n\nStatus: QUEUED\nClass: NORMAL\nReview: REQUIRED\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n- `check`: `true`\n'
+        text = contract_record(extra="Status: queued\nClass: standard\nReview: REQUIRED\n")
+        text = text.replace("- `task-check`: `python3 -c 'pass'`", "- `check`: `true`")
         (self.primary / self.record).write_text(text)
         text += owner_tasks_preflight.execution_contract(self.primary, '001') + '\n'
         (self.primary / self.record).write_text(text)
@@ -89,15 +91,15 @@ class ExecutionBoundariesTest(unittest.TestCase):
         before = self.git('rev-parse', 'HEAD')
         result = owner_lifecycle_commands.execution_start(self.worker, '001')
         state = self.state()
-        self.assertEqual(result['status'], 'IN_PROGRESS')
+        self.assertEqual(result['status'], 'in_progress')
         self.assertEqual(state['transitions'][0]['commit'], before)
         self.assertTrue(state['transitions'][0]['at'].endswith('Z'))
         owner_lifecycle_commands.execution_start(self.worker, '001')
         self.assertEqual(self.state(), state)
-        self.assertIn('Status: IN_PROGRESS', (self.worker / self.record).read_text())
-        self.assertIn('| QUEUED |', (self.worker / 'tasks/QUEUE.md').read_text())
+        self.assertIn('Status: in_progress', (self.worker / self.record).read_text())
+        self.assertIn('| queued |', (self.worker / 'tasks/QUEUE.md').read_text())
         task = project_console.load_snapshot(self.primary).tasks[0]
-        self.assertEqual(task.status, 'IN_PROGRESS')
+        self.assertEqual(task.status, 'in_progress')
         self.assertEqual(task.started_at, state['transitions'][0]['at'])
 
     def test_resume_preserves_history_and_requires_explicit_dirty_authorization(self):
@@ -167,21 +169,23 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertFalse((self.primary / '.cardine/tasks/001.json').exists())
 
     def test_lean_start_is_read_only_and_preserves_machine(self):
-        write_project_config(self.primary, "lean")
-        write_project_config(self.worker, "lean")
+        write_project_config(self.primary, "lean", validation=VALIDATION)
+        write_project_config(self.worker, "lean", validation=VALIDATION)
         self.commit('Select Lean')
         before = self.git('status', '--porcelain')
         result = owner_lifecycle_commands.execution_start(self.worker, '001')
-        self.assertEqual(result['status'], 'QUEUED')
-        self.assertFalse(result['started'])
-        self.assertFalse((self.worker / '.cardine/tasks/001.json').exists())
-        self.assertEqual(self.git('status', '--porcelain'), before)
+        self.assertEqual(result['status'], 'in_progress')
+        self.assertTrue(result['started'])
+        state = self.state()
+        self.assertEqual(state['contract']['preset'], 'lean')
+        self.assertEqual(state['contract']['options']['review'], 'required')
+        self.assertNotEqual(self.git('status', '--porcelain'), before)
 
     def test_delivery_commits_only_owned_projections_and_is_idempotent(self):
         identity = self.implemented()
         before = self.git('rev-parse', 'HEAD')
         result = owner_lifecycle_commands.execution_deliver(self.worker, '001')
-        self.assertEqual(result['status'], 'READY_FOR_REVIEW')
+        self.assertEqual(result['status'], 'in_review')
         self.assertTrue(result['clean'])
         self.assertEqual(set(self.git('diff', '--name-only', before, 'HEAD').splitlines()),
                          {'.cardine/tasks/001.json', 'tasks/001.md'})
@@ -193,7 +197,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(task.launch_command, 'Review 001')
         (self.worker / 'feature.txt').write_text('later changes\n')
         task = project_console.load_snapshot(self.primary).tasks[0]
-        self.assertEqual(task.status, 'READY_FOR_REVIEW')
+        self.assertEqual(task.status, 'in_review')
         self.assertEqual(task.readiness, 'PENDING DELIVERY/CHANGES')
         self.assertIsNone(task.launch_command)
 
@@ -263,20 +267,20 @@ class ExecutionBoundariesTest(unittest.TestCase):
                     self.assertIn('Current task commit', str(caught.exception))
                     self.assertIn('subject', str(caught.exception))
                     self.assertEqual(self.git('rev-parse', 'HEAD'), head)
-                    self.assertEqual(self.state()['status'], 'IN_PROGRESS')
+                    self.assertEqual(self.state()['status'], 'in_progress')
 
     def test_dirty_incomplete_stale_and_direct_transition_cannot_deliver(self):
         owner_lifecycle_commands.execution_start(self.worker, '001')
-        self.assert_stop('WRONG_WORKTREE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'READY_FOR_REVIEW'))
-        self.assertEqual(self.state()['status'], 'IN_PROGRESS')
+        self.assert_stop('WRONG_WORKTREE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'in_review'))
+        self.assertEqual(self.state()['status'], 'in_progress')
         self.commit('Start')
         self.assert_stop('HANDOFF_REPORT_MISSING', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         self.implemented()
         (self.worker / 'feature.txt').write_text('changed after validation\n')
         self.commit('Change code')
         self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
-        self.assertEqual(self.state()['status'], 'IN_PROGRESS')
-        self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'READY_FOR_REVIEW'))
+        self.assertEqual(self.state()['status'], 'in_progress')
+        self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'in_review'))
 
     def test_commit_failure_reports_pending_actual_state_and_recovers(self):
         self.implemented()
@@ -287,7 +291,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
             return run(root, *args)
         with mock.patch.object(owner_lifecycle_commands, '_run_git', side_effect=fail_commit):
             self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
-        self.assertEqual(self.state()['status'], 'READY_FOR_REVIEW')
+        self.assertEqual(self.state()['status'], 'in_review')
         task = project_console.load_snapshot(self.primary).tasks[0]
         self.assertIsNone(task.launch_command)
         self.assertEqual(task.readiness, 'PENDING DELIVERY/CHANGES')
@@ -302,15 +306,40 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.state(), original)
         owner_review_verdict.record_review_verdict(self.worker, '001', 'CHANGES_REQUESTED', body='Fix code')
         self.commit('Request changes')
-        self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
-        owner_tasks_transitions.transition_task_state(self.worker, '001', 'IN_PROGRESS')
-        self.commit('Begin remediation')
+        rejected = self.state()
+        owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
+        self.assertEqual(self.state(), rejected)
         owner_tasks_recording.run_validation(self.worker, '001', 'check')
         self.commit('Renew evidence')
         owner_lifecycle_commands.execution_deliver(self.worker, '001')
         owner_review_verdict.record_review_verdict(self.worker, '001', 'APPROVE', body='Approved')
         self.commit('Approve')
-        self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
+        approved = self.state()
+        owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
+        self.assertEqual(self.state(), approved)
+        self.assertEqual(approved['status'], 'in_progress')
+
+    def test_lean_review_required_spike_uses_the_same_delivery_and_verdict(self):
+        write_project_config(self.primary, "lean", validation=VALIDATION)
+        write_project_config(self.worker, "lean", validation=VALIDATION)
+        record = self.worker / self.record
+        record.write_text(record.read_text().replace("Class: standard", "Class: spike")
+                          + "\nQuestion: Can this probe answer the question?\nTimebox: 1h\nDeliverable: docs/result.md\n")
+        self.commit('Declare Lean review-required spike')
+        self.implemented()
+        owner_tasks_transitions.record_spike_outcome(self.worker, '001', 'ANSWERED')
+        self.commit('Record research result')
+        # The outcome is metadata and does not waive the task's required review.
+        self.assertEqual(self.state()['status'], 'in_progress')
+        self.assertEqual(self.state()['contract']['preset'], 'lean')
+        self.assertEqual(self.state()['contract']['class'], 'spike')
+        self.assertEqual(self.state()['contract']['options']['review'], 'required')
+        owner_lifecycle_commands.execution_deliver(self.worker, '001')
+        self.assertEqual(self.state()['status'], 'in_review')
+        owner_review_verdict.record_review_verdict(self.worker, '001', 'APPROVE')
+        self.assertEqual(self.state()['status'], 'in_progress')
+        self.assertEqual(self.state()['review']['verdict'], 'APPROVE')
+        self.assertEqual(self.state()['outcome'], 'ANSWERED')
 
     def test_incomplete_and_uncommitted_handoff_never_publish_ready(self):
         identity = self.implemented()
@@ -318,7 +347,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assert_stop('WRONG_WORKTREE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         self.commit('Incomplete handoff')
         self.assert_stop('HANDOFF_FIELDS_MISSING', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
-        self.assertEqual(self.state()['status'], 'IN_PROGRESS')
+        self.assertEqual(self.state()['status'], 'in_progress')
 
     def test_cli_boundaries_and_ready_check_are_committed_and_read_only(self):
         script = Path(__file__).resolve().parents[1] / 'scripts/cardine_cli.py'
@@ -353,20 +382,23 @@ class ExecutionBoundariesTest(unittest.TestCase):
         record.write_text(record.read_text().replace('Review: REQUIRED', 'Review: NOT_REQUIRED'))
         self.commit('No review policy')
         owner_lifecycle_commands.execution_start(self.worker, '001')
-        owner_tasks_transitions.transition_task_state(self.worker, '001', 'ACCEPTED')
-        self.assertEqual(self.state()['status'], 'ACCEPTED')
+        self.assert_stop('TASK_STATE_INVALID', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'done'))
+        self.assertEqual(self.state()['status'], 'in_progress')
         self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
 
     def test_spike_start_and_close_never_fabricate_review(self):
         record = self.worker / self.record
-        text = record.read_text().replace('Class: NORMAL', 'Class: SPIKE')
+        text = record.read_text().replace('Class: standard', 'Class: spike')
         text += '\nQuestion: Does the probe pass?\nTimebox: 1 iteration\nDeliverable: `answer.md`\n'
         record.write_text(text)
         self.commit('Spike policy')
         owner_lifecycle_commands.execution_start(self.worker, '001')
-        owner_tasks_transitions.transition_task_state(self.worker, '001', 'ANSWERED')
-        self.assertEqual(self.state()['status'], 'ANSWERED')
-        self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001', resume=True))
+        owner_tasks_transitions.record_spike_outcome(self.worker, '001', 'ANSWERED')
+        self.assertEqual(self.state()['status'], 'in_progress')
+        self.assertEqual(self.state()['outcome'], 'ANSWERED')
+        before = self.state()
+        owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
+        self.assertEqual(self.state(), before)
 
     def external_lifecycle(self, location):
         directory = self.primary if location == 'primary' else Path(self.temp.name)
@@ -387,7 +419,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.implemented()
         before = self.git('rev-parse', 'HEAD')
         delivered = owner_lifecycle_commands.execution_deliver(self.worker, '001')
-        self.assertEqual(delivered['status'], 'READY_FOR_REVIEW')
+        self.assertEqual(delivered['status'], 'in_review')
         self.assertEqual(self.git('rev-parse', 'HEAD^'), before)
         self.assertEqual(self.git('log', '-1', '--format=%s'), 'Deliver 001 for review')
         self.assertEqual(set(self.git('diff', '--name-only', before, 'HEAD').splitlines()),

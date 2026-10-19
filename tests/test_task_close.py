@@ -27,13 +27,18 @@ class TaskCloseTest(unittest.TestCase):
 
     def setUp(self):
         boundaries.ExecutionBoundariesTest.setUp(self)
-        write_project_config(self.primary, "lean")
-        write_project_config(self.worker, "lean")
+        write_project_config(self.primary, "lean", validation=boundaries.VALIDATION)
+        write_project_config(self.worker, "lean", validation=boundaries.VALIDATION)
         identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
         identity.handoff_path.parent.mkdir(parents=True)
         identity.handoff_path.write_text('## Completion Report — 001\n')
         self.commit('Select Lean and commit handoff')
         self.identity = identity
+        record = identity.task_path
+        record.write_text(record.read_text().replace('Review: REQUIRED', 'Review: NOT_REQUIRED'))
+        self.commit('Resolve no-review task')
+        owner_lifecycle_commands.execution_start(self.worker, '001')
+        self.commit('Start task')
 
     def snapshot(self):
         return ({p.relative_to(self.worker).as_posix(): p.read_bytes()
@@ -46,24 +51,18 @@ class TaskCloseTest(unittest.TestCase):
         self.assertEqual(self.snapshot(), before)
 
     def test_success_stages_exact_archive_and_identical_transition_state_without_commit(self):
-        clock = mock.Mock()
-        clock.now.return_value = datetime(2026, 10, 15, tzinfo=timezone.utc)
-        with mock.patch.object(owner_tasks_transitions, 'datetime', clock):
-            expected = owner_tasks_transitions.transition_task_state(self.worker, '001', 'DONE')
-            # Restore only the output of the comparison transition in this fixture.
-            cardine_cli.state_path(self.worker, '001').unlink()
-            (self.worker / self.record).write_bytes(self.git('show', 'HEAD:tasks/001.md').encode() + b'\n')
-            before = self.git('rev-parse', 'HEAD')
-            result = owner_tasks_transitions.close_task(self.worker, '001')
+        expected = json.loads(cardine_cli.state_path(self.worker, '001').read_text())
+        before = self.git('rev-parse', 'HEAD')
+        result = owner_tasks_transitions.close_task(self.worker, '001')
         self.assertEqual(result['state'], expected)
         self.assertFalse(result['committed'])
         self.assertEqual(self.git('rev-parse', 'HEAD'), before)
         self.assertFalse((self.worker / self.record).exists())
         self.assertTrue((self.worker / 'tasks/done/001.md').is_file())
         self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
-                         {'.cardine/tasks/001.json', 'tasks/001.md', 'tasks/done/001.md'})
+                         {'tasks/001.md', 'tasks/done/001.md'})
         self.assertEqual(self.git('diff', '--name-only'), '')
-        self.assertIn('Status: DONE', (self.worker / result['archive']).read_text())
+        self.assertIn('Status: in_progress', (self.worker / result['archive']).read_text())
 
     def test_primary_and_dirty_worktrees_refuse_without_writes(self):
         (self.worker / 'partial').write_text('unfinished')
@@ -88,10 +87,14 @@ class TaskCloseTest(unittest.TestCase):
         self.identity.task_path.rename(archive)
         self.commit('Archive without state')
         self.refused('TASK_STATUS_REJECTED')
-        self.assertFalse(cardine_cli.state_path(self.worker, '001').exists())
+        self.assertEqual(json.loads(cardine_cli.state_path(self.worker, '001').read_text())['status'], 'in_progress')
 
     def test_done_and_invalid_state_refuse_without_archive(self):
-        owner_tasks_transitions.transition_task_state(self.worker, '001', 'DONE')
+        path = cardine_cli.state_path(self.worker, '001')
+        state = json.loads(path.read_text())
+        state['transitions'].append(dict(state['transitions'][-1], **{'from': 'in_progress', 'to': 'done'}))
+        state['status'] = 'done'
+        path.write_text(json.dumps(state))
         self.commit('Already done')
         self.refused('TASK_STATUS_REJECTED')
         path = cardine_cli.state_path(self.worker, '001')
@@ -103,9 +106,10 @@ class TaskCloseTest(unittest.TestCase):
         write_project_config(self.primary, "governed")
         write_project_config(self.worker, "governed")
         self.commit('Select Governed')
-        self.refused('TASK_STATUS_REJECTED')
-        with self.assertRaisesRegex(shared_errors.CardineStop, 'cardine task transition'):
-            owner_tasks_transitions.close_task(self.worker, '001')
+        # The existing task keeps its original policy after a preset switch.
+        result = owner_tasks_transitions.close_task(self.worker, '001')
+        self.assertEqual(result['state']['status'], 'in_progress')
+        self.assertEqual(result['state']['contract']['preset'], 'lean')
 
     def test_resume_archived_done_with_staged_and_committed_closure(self):
         owner_tasks_transitions.close_task(self.worker, '001')
@@ -125,11 +129,11 @@ class TaskCloseTest(unittest.TestCase):
         os.chdir(directory)
         before = self.git('rev-parse', 'HEAD')
         result = owner_tasks_transitions.close_task(self.worker, '001')
-        self.assertEqual(result['state']['status'], 'DONE')
-        self.assertEqual(result['state']['transitions'][-1]['commit'], before)
+        self.assertEqual(result['state']['status'], 'in_progress')
+        self.assertEqual(result['state']['transitions'][-1]['commit'], self.git('rev-parse', 'HEAD^'))
         self.assertEqual(self.git('rev-parse', 'HEAD'), before)
         self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
-                         {'.cardine/tasks/001.json', 'tasks/001.md', 'tasks/done/001.md'})
+                         {'tasks/001.md', 'tasks/done/001.md'})
         self.assertEqual(self.git('diff', '--name-only'), '')
         self.assertEqual(Path.cwd(), directory.resolve())
 

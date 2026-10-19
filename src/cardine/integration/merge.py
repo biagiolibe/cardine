@@ -56,12 +56,13 @@ def _spike_disallowed_paths(
         if shown.returncode == 0:
             task_record = shown.stdout
             break
-    if read_task_field(task_record, "Class") != "SPIKE":
+    if (read_task_field(task_record, "Class") or "").lower() != "spike":
         return ()
     allowed = {
         str(record_path.relative_to(project_root)),
         str(archived_path.relative_to(project_root)),
         str(identity.handoff_path.relative_to(project_root)),
+        str(identity.review_path.relative_to(project_root)),
         str(find_adr_log(project_root).relative_to(project_root)),
         names().execution_evidence_path.as_posix(),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
@@ -123,20 +124,24 @@ def _integration_task_state(
         if snapshot.returncode == 0:
             record_text = snapshot.stdout
             break
-    spike = workflow == "governed-sdd" and read_task_field(record_text, "Class") == "SPIKE"
+    spike = (read_task_field(record_text, "Class") or "").lower() == "spike"
     state = read_task_state(
         project_root, identity.canonical_id, workflow, spike=spike, review_required=None,
         stop_factory=lambda code, detail, **context: stop_error(code, f"{relative}: {detail}", **context),
         text=shown.stdout,
     )
+    spike = state.get("contract", {}).get("class", "spike" if spike else "standard") == "spike"
     review = state.get("review", {})
-    required = not spike and review.get("required", workflow == "governed-sdd")
-    terminal = ("ANSWERED", "INCONCLUSIVE") if spike else ("ACCEPTED",) if workflow == "governed-sdd" else ("DONE",)
+    from cardine.tasks.state import review_is_required
+    required = review_is_required(state)
+    terminal = ("in_progress",)
     if state["status"] not in terminal:
         raise stop_error(
             "TASK_STATE_INVALID", f"{relative}: status expected {terminal}; found {state['status']!r}",
             task_id=identity.canonical_id, project=project_root,
         )
+    if spike and state.get("outcome") not in ("ANSWERED", "INCONCLUSIVE"):
+        raise stop_error("TASK_STATE_INVALID", "spike landing requires an outcome", task_id=identity.canonical_id, project=project_root)
     if required:
         if review.get("verdict") != "APPROVE":
             raise stop_error(
@@ -155,8 +160,8 @@ def _integration_task_state(
             identity.review_path.relative_to(project_root).as_posix(),
             relative.as_posix(), names().execution_evidence_path.as_posix(),
         }
-        changed = git_output(project_root, "diff", "--name-only", str(reviewed), task_commit).splitlines()
-        offending = sorted(set(changed) - allowed)
+        changed = git_output(project_root, "log", "--format=", "--name-only", f"{reviewed}..{task_commit}").splitlines()
+        offending = sorted(set(filter(None, changed)) - allowed)
         if offending:
             raise stop_error(
                 "REVIEW_STALE", f"{relative}: expected only task governance paths after {reviewed}; offending paths: {', '.join(offending)}",
@@ -323,6 +328,27 @@ def stage_task_integration(
         )
     try:
         archival: list[dict[str, object]] = []
+        if task_state is not None:
+            from datetime import datetime, timezone
+            import copy
+            task_state = copy.deepcopy(task_state)
+            task_state["transitions"].append({"from": "in_progress", "to": "done", "commit": task_commit,
+                                              "at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")})
+            task_state["status"] = "done"
+            path = state_path(project_root, identity.canonical_id)
+            _write_json_atomic(path, task_state)
+            record_path = identity.task_path
+            if not record_path.exists():
+                record_path = record_path.parent / "done" / record_path.name
+            if record_path.exists():
+                contents = record_path.read_text(encoding="utf-8")
+                record_path.write_text(re.sub(r"^Status:[^\n]*", "Status: done", contents, flags=re.MULTILINE), encoding="utf-8")
+            paths = [path.relative_to(project_root).as_posix()]
+            if record_path.exists():
+                paths.append(record_path.relative_to(project_root).as_posix())
+            staged_state = _run_git(project_root, "add", "--", *paths)
+            if staged_state.returncode:
+                raise CardineError(staged_state.stderr.strip() or "could not stage landed task state")
         completion = _apply_task_completion_rows(project_root, identity, task_state, archival)
         queue_warnings = _queue_archival_warnings(
             identity.queue_path.read_text(encoding="utf-8"), detect_mode(project_root),
@@ -547,12 +573,12 @@ def cleanup_task_worktree(
             if shown.returncode != 0:
                 raise CardineError("missing tracked task state")
             workflow = detect_mode(project_root)
-            spike = read_task_field(identity.task_path.read_text(encoding="utf-8"), "Class") == "SPIKE"
+            spike = (read_task_field(identity.task_path.read_text(encoding="utf-8"), "Class") or "").lower() == "spike"
             state = read_task_state(
                 project_root, identity.canonical_id, workflow, spike=spike, review_required=None,
                 stop_factory=stop_error, text=shown.stdout,
             )
-            terminal = ("ANSWERED", "INCONCLUSIVE") if spike else ("ACCEPTED",) if workflow == "governed-sdd" else ("DONE",)
+            terminal = ("done",)
             if state["status"] not in terminal:
                 raise CardineError(f"nonterminal tracked task state: {state['status']}")
         except CardineError as error:
