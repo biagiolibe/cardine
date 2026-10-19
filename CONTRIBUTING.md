@@ -257,11 +257,17 @@ upgrade` writes them.
 
 Until Cardine 1.0, no project runs Cardine. A template change bumps the
 capability version, updates its `requiredVersion` in
-`capabilities/markers-v1.json`, and runs:
+`capabilities/markers-v1.json` to the version shipped by the Governed SDD
+managed templates, and runs:
 
 ```bash
 python3 scripts/check_repository.py --write-marker-baselines
 ```
+
+Adoption detection reads only the Governed SDD templates and uses the first
+marker in managed-file order. `requiredVersion` must equal that version; a
+Lean-only bump therefore does not change it. `check_repository.py` enforces
+this equality for every required, non-retired capability.
 
 Commit the template, catalog, and `capabilities/marker-baselines.json`
 together. Add no migration and do not bump `VERSION` for a template change.
