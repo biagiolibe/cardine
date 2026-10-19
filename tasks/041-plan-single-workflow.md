@@ -18,7 +18,7 @@ the design and the task sequence before any template or code changes.
 
 ## Acceptance Criteria
 
-- [ ] `docs/SINGLE_WORKFLOW_PLAN.md` exists, in English, and contains:
+- [x] `docs/SINGLE_WORKFLOW_PLAN.md` exists, in English, and contains:
   - **Project configuration.** The file under `.cardine/` that declares the
     preset and the project defaults, and its schema. It covers at least:
     - review;
@@ -66,16 +66,16 @@ the design and the task sequence before any template or code changes.
     scope, the files it touches, the tests that prove it, and its
     dependencies. Every task depends on the last task of work item 5a, which
     task 040 defines. Two tasks that touch the same file are never parallel.
-- [ ] The plan uses the Cardine names that ADR work item 5a fixes, such as
+- [x] The plan uses the Cardine names that ADR work item 5a fixes, such as
   `.cardine/` and `cardine`, without planning the rename itself.
-- [ ] The plan does not plan work items 5b, 7, 8, or 9, but it names any
+- [x] The plan does not plan work items 5b, 7, 8, or 9, but it names any
   choice that would make them harder. Skills, one per host, belong to work
   item 9. The plan states which template files they read.
-- [ ] No file changes outside `docs/SINGLE_WORKFLOW_PLAN.md` and this task's
+- [x] No file changes outside `docs/SINGLE_WORKFLOW_PLAN.md` and this task's
   records: the task record, its handoff, its archive under `tasks/done/`,
   and `.meridian/tasks/041.json`, which only the installed `meridian task
   close 041` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -119,3 +119,10 @@ Changing any template, catalog, or code. Work items 5a, 5b, 7, 8, and 9.
 This task changes documentation only. Under the validation-scoping rule of
 `PROJECT_WORKFLOW.md`, it skips the test suites and records that skip in the
 handoff.
+
+## Completion evidence
+
+The plan defines configuration, frozen task options, states, all 37 template
+source dispositions, capability version reconciliation, briefing regressions,
+the complete Governed SDD parity ledger, and seven serial implementation tasks.
+No follow-up task was queued or started. See `tasks/handoffs/041.md`.
