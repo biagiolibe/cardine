@@ -23,27 +23,27 @@ one release script belongs to work item 12.
 
 ## Acceptance Criteria
 
-- [ ] `profile`, `generate-claude-md`, `generate-entry-routers`, and `report`
+- [x] `profile`, `generate-claude-md`, `generate-entry-routers`, and `report`
   are no longer subcommands of the user CLI. They run from one development
   entry point, for example `python3 scripts/dev.py <command>`, with the same
   arguments and output. `scripts/run_agent_evals.py` is reachable from it
   too.
-- [ ] One generator produces both the `CLAUDE.md` shared body and the entry
+- [x] One generator produces both the `CLAUDE.md` shared body and the entry
   routers. Its `--check` mode passes on the current templates, and it
   replaces both old commands.
-- [ ] Every caller uses the new entry point:
+- [x] Every caller uses the new entry point:
   - `CONTRIBUTING.md`;
   - `scripts/check_repository.py`;
   - the tests;
   - the validation lines in `tasks/TASK_BLUEPRINT.md`, if any.
   The planning commit that follows this task updates the open task
   contracts.
-- [ ] The CLI help lists only user and host-facing commands. A test fails if
+- [x] The CLI help lists only user and host-facing commands. A test fails if
   a maintainer command returns to it.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/036.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/036.json`, which only
   the installed `meridian task close 036` writes. The manifest, the baselines,
   and every other file under `.meridian/` stay as they are.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
