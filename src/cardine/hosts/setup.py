@@ -176,6 +176,18 @@ def plan_setup(
         task_identity_state = "planned"
         task_identity_detail = f"write task identity declaration with mode {task_identity}"
 
+    if project_declaration_proposal is not None and not project_declaration_path.exists():
+        # A newly declared project owns naming policy. Retain the selected
+        # identity when folding the standalone declaration into project.json.
+        try:
+            project_declaration_proposal["taskIdentity"] = {
+                "mode": (task_identity_proposal["mode"] if task_identity_proposal is not None
+                         else read_task_identity_policy(project_root).mode)
+            }
+        except CardineError as error:
+            task_identity_state = "blocked"
+            task_identity_detail = str(error)
+
     changes: list[str] = []
     if user_rules.proposed_text is not None:
         changes.append(f"configure Cardine Codex user-rules block in {user_rules.path}")
