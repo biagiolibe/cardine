@@ -92,7 +92,7 @@ def align(text: str) -> tuple[str, list[str]]:
 
 
 def resolve_queue(project: Path, cardine: str | None) -> Path:
-    """Ask the Meridian CLI for the declared queue; fall back to tasks/QUEUE.md."""
+    """Ask the Cardine CLI for the declared queue; fall back to tasks/QUEUE.md."""
     candidates = [cardine] if cardine else []
     found = shutil.which("cardine")
     if found:

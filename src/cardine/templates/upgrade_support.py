@@ -123,7 +123,7 @@ def print_plan(
     installed_baseline_version = manifest_baseline_version(manifest)
     target_baseline_version = latest_migration_to(framework_root, target_version)
     print(
-        f"Meridian {installed_baseline_version} -> {target_baseline_version} "
+        f"Cardine {installed_baseline_version} -> {target_baseline_version} "
         f"({manifest_workflow_mode(manifest)})"
     )
     framework_delta = f"Framework: {manifest['frameworkVersion']} -> {target_version}"

@@ -11,7 +11,7 @@ and deprecation rules are in [CONTRIBUTING.md](../CONTRIBUTING.md#versioning-and
   adopter sections, together with their exit statuses and JSON field names.
   Container commands inherit the tier needed to reach their stable children.
 - **Host-facing**: `hook` and the hook and skill entry points invoked by the
-  host configuration. These are stable toward the configuration Meridian
+  host configuration. These are stable toward the configuration Cardine
   installs; adopters must not invoke them directly.
 - **Experimental**: explicitly labelled in CLI help and the README. The console
   (including interactive keys and agent launch) and local session usage reports
@@ -117,7 +117,7 @@ list of entries. Changes follow the versioning and deprecation rules above.
 
 ## Project conversion
 
-Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
+Conversion of projects without Cardine and of existing installations returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
 
 Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow`,
 `generate-entry-routers`, and `agent-evals`. They are internal development

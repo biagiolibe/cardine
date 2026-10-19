@@ -135,3 +135,20 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 5a, and decision 1.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 040 | Plan the rename of code identifiers (work item 5a) | 🔴 P1 | — | [040](done/040-plan-code-identifier-rename.md) |
+
+### Phase 14 — Code identifier rename
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 5a and decision 1, and `docs/RENAME_PLAN.md`.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 042 | Introduce the project names accessor (rename plan R1) | 🔴 P1 | — | [042](done/042-introduce-names-accessor.md) |
+| `[x]` | 043 | Extract the read-only Meridian installation reader (rename plan R2) | 🔴 P1 | 042 | [043](done/043-extract-meridian-installation-reader.md) |
+| `[x]` | 044 | Decouple the frozen-surface readers (rename plan R3) | 🔴 P1 | 043 | [044](done/044-decouple-frozen-surface-readers.md) |
+| `[x]` | 045 | Rename the exception and parser classes (rename plan R4) | 🔴 P1 | 044 | [045](done/045-rename-exception-and-parser-classes.md) |
+| `[x]` | 046 | Rename the executables, the adapter, and the test modules (rename | 🔴 P1 | 045 | [046](done/046-rename-executables-adapter-and-test-modules.md) |
+| `[x]` | 047 | Rename the command word in output and data (rename plan R6) | 🔴 P1 | 046 | [047](done/047-rename-command-word-in-output.md) |
+| `[x]` | 048 | Rename the environment names and options (rename plan R7) | 🔴 P1 | 047 | [048](done/048-rename-environment-names-and-options.md) |
+| `[x]` | 049 | Rename the project directory and the profile id (rename plan R8) | 🔴 P1 | 048 | [049](done/049-rename-project-directory-and-profile-id.md) |
+| `[x]` | 050 | Rename Git-internal files and the worktree root (rename plan R9) | 🔴 P1 | 049 | [050](done/050-rename-git-internal-files-and-worktree-root.md) |
+| `[x]` | 051 | Rename the product strings and guard against Meridian identifiers | 🔴 P1 | 050 | [051](done/051-rename-strings-and-guard.md) |

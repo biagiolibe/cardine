@@ -89,7 +89,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
 
         self.assertEqual(plan.status, "repair-and-replace-required")
-        self.assertIn("restores Meridian's ownership metadata and replaces the one configured worktree root", plan.detail)
+        self.assertIn("restores Cardine's ownership metadata and replaces the one configured worktree root", plan.detail)
         self.assertEqual(self.config.read_text(encoding="utf-8"), original)
         expected = tomllib.loads(original)
         expected["permissions"]["meridian-worktrees"]["workspace_roots"] = {str(self.worktrees): True}

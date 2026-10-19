@@ -64,6 +64,22 @@ class ValidationEvidenceTest(unittest.TestCase):
         self.assertEqual(code, shared_constants.VALIDATION_EXIT_PASSED)
         self.assertEqual(report, {"status": "VALIDATION_PASSED", "level": "T2_SHARDED", "reasons": []})
 
+    def test_retired_schema_id_is_rejected_instead_of_used_as_an_alias(self) -> None:
+        framework = self.project / "framework"
+        scripts = framework / "scripts"
+        scripts.mkdir(parents=True)
+        schema = framework / "schemas/validation-evidence-v1.schema.json"
+        schema.parent.mkdir()
+        record = self.write(self.record())
+        with mock.patch.object(owner_integration_evidence, "SCRIPTS_ROOT", scripts):
+            schema.write_text(json.dumps({"$id": "https://meridian.local/schemas/validation-evidence-v1.schema.json"}))  # MERIDIAN-OLD-NAME-TEST
+            report, code = owner_integration_evidence.check_validation_evidence(record, self.project, self.commit)
+            self.assertEqual(code, shared_constants.VALIDATION_EXIT_FAILED)
+            self.assertIn("schema: validation-evidence-v1 is invalid", report["reasons"])
+            schema.write_text(json.dumps({"$id": "https://cardine.local/schemas/validation-evidence-v1.schema.json"}))
+            report, code = owner_integration_evidence.check_validation_evidence(record, self.project, self.commit)
+            self.assertEqual((code, report["reasons"]), (shared_constants.VALIDATION_EXIT_PASSED, []))
+
     def test_invalid_proofs_name_the_failing_field(self) -> None:
         cases = (("tree", "wrong-tree"), ("tests_run", 0), ("tests_run", None), ("tests_run", True), ("level", "unknown"))
         for field, value in cases:

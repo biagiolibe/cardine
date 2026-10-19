@@ -317,7 +317,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         # MERIDIAN-INSTALLATION-CHECK
         manifest_text = (ROOT / ".meridian/manifest.json").read_text(encoding="utf-8")
         manifest = json.loads(manifest_text)
-        capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]
+        capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]  # MERIDIAN-INSTALLATION-CHECK
         self.assertNotIn(str(Path.home()), manifest_text)
         for declaration in capabilities.values():
             for activation in declaration["hostActivation"].values():

@@ -1,4 +1,4 @@
-"""Decision-table and structural tests for Meridian's Codex rules template."""
+"""Decision-table and structural tests for Cardine's Codex rules template."""
 
 from __future__ import annotations
 

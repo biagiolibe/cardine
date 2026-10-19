@@ -79,7 +79,7 @@ class StopAuditTest(unittest.TestCase):
         self.assertEqual(self.run_audit("All done. This was not BLOCKED by anything."), [])
         self.assertEqual(len(self.journal.read_text().splitlines()), 1)
 
-    def test_non_meridian_directory_and_missing_journal_do_nothing(self) -> None:
+    def test_non_cardine_directory_and_missing_journal_do_nothing(self) -> None:
         self.assertEqual(self.run_audit("BLOCKED WRONG_WORKTREE"), [])
         self.assertFalse(self.journal.exists())
         with tempfile.TemporaryDirectory() as other:

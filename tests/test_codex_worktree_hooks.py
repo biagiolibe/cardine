@@ -26,7 +26,7 @@ class CodexWorktreeHooksTest(unittest.TestCase):
             cwd=cwd, input=json.dumps(payload), text=True, capture_output=True,
         )
 
-    def test_non_meridian_directory_is_a_silent_noop(self) -> None:
+    def test_non_cardine_directory_is_a_silent_noop(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             cwd = Path(directory)
             (cwd / "large.txt").write_text("x\n" * 500)
@@ -64,8 +64,8 @@ class CodexWorktreeHooksTest(unittest.TestCase):
             def git(*args: str) -> None:
                 subprocess.run(["git", *args], cwd=primary, check=True, capture_output=True)
             git("init", "-b", "main")
-            git("config", "user.name", "Meridian Test")
-            git("config", "user.email", "meridian@example.invalid")
+            git("config", "user.name", "Cardine Test")
+            git("config", "user.email", "cardine@example.invalid")
             # MERIDIAN-INSTALLATION-CHECK
             (primary / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n")
             (primary / ".codex").mkdir()

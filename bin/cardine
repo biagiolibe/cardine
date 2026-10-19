@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Run the Meridian framework maintenance CLI from a source checkout."""
+"""Run the Cardine framework maintenance CLI from a source checkout."""
 
 import sys
 
 if sys.version_info < (3, 12):
     sys.stderr.write(
-        "Meridian requires Python 3.12 or newer; found Python {} at {}. "
+        "Cardine requires Python 3.12 or newer; found Python {} at {}. "
         "See docs/QUICKSTART.md#prerequisites for Python and PATH setup.\n".format(
             ".".join(str(part) for part in sys.version_info[:3]), sys.executable
         )

@@ -592,8 +592,8 @@ class CheckMigrationsVersionGateTest(unittest.TestCase):
             json.dumps({"migrations": migrations}), encoding="utf-8"
         )
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=self.root, check=True)
-        subprocess.run(["git", "config", "user.name", "Meridian Test"], cwd=self.root, check=True)
-        subprocess.run(["git", "config", "user.email", "meridian@example.invalid"], cwd=self.root, check=True)
+        subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=self.root, check=True)
+        subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=self.root, check=True)
         (self.root / "README.md").write_text("# Test\n", encoding="utf-8")
         subprocess.run(["git", "add", "README.md"], cwd=self.root, check=True)
         subprocess.run(["git", "commit", "-qm", "initial"], cwd=self.root, check=True)
@@ -757,7 +757,7 @@ class MachinePathTest(unittest.TestCase):
         self.assertIn(fragment, output.getvalue())
 
     def test_clean_tree_passes(self) -> None:
-        self.track("README.md", b"Use <checkout>/scripts and ../meridian-task-1.\n")
+        self.track("README.md", b"Use <checkout>/scripts and ../cardine-task-1.\n")
         self.track("docs/a.md", b"path `/Us" + b"ers/<name>/x` placeholder\n")
         self.track("image.bin", b"\xff\xfe" + self.FORBIDDEN["macos"].encode())
 
@@ -904,7 +904,7 @@ class ManagedDigestTest(unittest.TestCase):
         )
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Meridian repository checks passed.", result.stdout)
+        self.assertIn("Cardine repository checks passed.", result.stdout)
         # MERIDIAN-INSTALLATION-CHECK
         self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
 
@@ -915,7 +915,7 @@ class ManagedDigestTest(unittest.TestCase):
             InstallationFixture().write_probes(project)
             # MERIDIAN-INSTALLATION-CHECK: the repository checker reads its frozen layout.
             (project / ".meridian").mkdir()
-            shutil.copyfile(project / ".cardine/manifest.json", project / ".meridian/manifest.json")
+            shutil.copyfile(project / ".cardine/manifest.json", project / ".meridian/manifest.json")  # MERIDIAN-INSTALLATION-CHECK
             # MERIDIAN-INSTALLATION-CHECK
             target = project / "docs/CONTEXT_BUDGET_POLICY.md"
             target.write_text(target.read_text(encoding="utf-8") + "\nDrift.\n", encoding="utf-8")

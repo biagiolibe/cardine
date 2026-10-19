@@ -28,7 +28,7 @@ prefix_rule(pattern=["git", "push", "origin"], decision="allow")
 prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"]], decision="forbidden")
 prefix_rule(pattern=["git", "push", "origin", ["--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"]], decision="forbidden")
 
-# Meridian read-only and task-lifecycle commands. Commands that change machine
+# Cardine read-only and task-lifecycle commands. Commands that change machine
 # or project configuration (setup/codex configure --apply, upgrade --apply,
 # lock, generate-*) keep prompting.
 prefix_rule(pattern=["cardine", ["--version", "self-check", "console", "audit", "profile", "locations", "project", "context", "adr", "report", "usage", "validation", "execution", "task", "review"]], decision="allow")
@@ -96,7 +96,7 @@ def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
         except (KeyError, ValueError, SyntaxError):
             continue
         if decision == "allow" and pattern in (["cardine"], ["git", "push"]):
-            warnings.append(f"{path}:{call.lineno}: broad allow rule {pattern!r} permits commands outside Meridian's prompt coverage")
+            warnings.append(f"{path}:{call.lineno}: broad allow rule {pattern!r} permits commands outside Cardine's prompt coverage")
     return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed, tuple(warnings))
 
 
@@ -269,7 +269,7 @@ def _plan_codex_ownership_repair(
     differences = _codex_profile_divergence(parsed, root)
     if differences:
         raise CardineError(
-            f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} exists without intact Meridian ownership "
+            f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} exists without intact Cardine ownership "
             f"markers and differs from the expected profile in: {', '.join(differences)}; reconcile it manually"
         )
     stripped = _without_codex_profile_text(text)
@@ -280,7 +280,7 @@ def _plan_codex_ownership_repair(
         raise CardineError(f"proposed Codex ownership repair would be invalid: {error}") from error
     if reparsed != parsed:
         raise CardineError(
-            "Codex ownership repair would change effective configuration beyond Meridian's markers; "
+            "Codex ownership repair would change effective configuration beyond Cardine's markers; "
             "reconcile it manually"
         )
     return CodexConfigurationPlan(
@@ -290,7 +290,7 @@ def _plan_codex_ownership_repair(
         "permission-profile",
         proposed,
         "ownership-metadata-repair: the effective profile is identical; explicit --apply restores only "
-        "Meridian's ownership markers and block position",
+        "Cardine's ownership markers and block position",
         text,
     )
 
@@ -300,7 +300,7 @@ def _plan_codex_ownership_repair_and_root_replacement(
 ) -> CodexConfigurationPlan | None:
     """Plan the one safe combined recovery, or return None for a normal refusal.
 
-    Lost comments are not ownership evidence.  The profile's exact Meridian
+    Lost comments are not ownership evidence.  The profile's exact Cardine
     shape is, but only when it contains one enabled root that differs from the
     requested root.  Keep this predicate deliberately narrower than parsed
     divergence so foreign grants and unusual shapes cannot be adopted.
@@ -341,7 +341,7 @@ def _plan_codex_ownership_repair_and_root_replacement(
         root,
         "permission-profile",
         proposed,
-        "ownership-metadata-repair-and-root-replacement: explicit --apply restores Meridian's ownership "
+        "ownership-metadata-repair-and-root-replacement: explicit --apply restores Cardine's ownership "
         "metadata and replaces the one configured worktree root",
         text,
     )
@@ -380,7 +380,7 @@ def plan_codex_configuration(
             return replacement
         return _plan_codex_ownership_repair(config_path, text, parsed, root)
     if managed_present and not _codex_markers_intact(text):
-        raise CardineError("Codex configuration contains an incomplete or damaged Meridian-managed block")
+        raise CardineError("Codex configuration contains an incomplete or damaged Cardine-managed block")
     base_text = text
     if "default_permissions" in parsed and not managed_present:
         base_text = _without_top_level_default_permissions(text)

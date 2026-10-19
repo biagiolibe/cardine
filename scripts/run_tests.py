@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Meridian's unittest suite in deterministic, disjoint shards."""
+"""Run Cardine's unittest suite in deterministic, disjoint shards."""
 
 from __future__ import annotations
 
@@ -35,11 +35,13 @@ FAILURE_BLOCK = re.compile(r"^(?:FAIL|ERROR): .*\n^-{5,}\n.*?^-{5,}$", re.MULTIL
 
 
 @contextmanager
+# MERIDIAN-INSTALLATION-CHECK
 def reject_path_meridian():
     """Fail the current test even when a nested hook swallows a PATH command's exit."""
     with tempfile.TemporaryDirectory(prefix="installation-guard-") as directory:
         root = Path(directory)
         marker = root / "called"
+        # MERIDIAN-INSTALLATION-CHECK
         executable = root / "meridian"
         executable.write_text(
             "#!/bin/sh\nprintf '%s\\n' \"$*\" >> " + shlex.quote(str(marker)) + "\nexit 97\n",
@@ -53,6 +55,7 @@ def reject_path_meridian():
             def stopTest(self, test):
                 if marker.exists():
                     try:
+                        # MERIDIAN-INSTALLATION-CHECK
                         raise AssertionError("test spawned meridian through PATH: " + marker.read_text())
                     except AssertionError:
                         self.addFailure(test, sys.exc_info())
@@ -179,6 +182,7 @@ def isolated_environment(environment: Mapping[str, str]) -> dict[str, str]:
     """Keep test roots independent and exclude retired framework variables."""
     return {
         key: value for key, value in environment.items()
+        # MERIDIAN-INSTALLATION-CHECK
         if key != "CARDINE_ROOT" and not key.startswith("MERIDIAN_")
     }
 
@@ -356,6 +360,7 @@ def main(arguments: list[str] | None = None) -> int:
         return run_clean_clone(options.parallel)
     # Tests select their own framework roots; do not inherit the launcher's.
     for key in tuple(os.environ):
+        # MERIDIAN-INSTALLATION-CHECK
         if key == "CARDINE_ROOT" or key.startswith("MERIDIAN_"):
             os.environ.pop(key)
     # `python -m unittest` puts the working directory on sys.path; a script run
@@ -378,6 +383,7 @@ def main(arguments: list[str] | None = None) -> int:
     )
     if not selected:
         parser().error(f"shard {index}/{count} selects no tests")
+    # MERIDIAN-INSTALLATION-CHECK
     with reject_path_meridian() as result_class:
         outcome = unittest.TextTestRunner(verbosity=2, resultclass=result_class).run(unittest.TestSuite(selected))
     print(

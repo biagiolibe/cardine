@@ -1,7 +1,7 @@
 """Regression tests for hooks/read-guard.sh (task 035): mechanical
 enforcement of the file-read discipline docs/CONTEXT_BUDGET_POLICY.md
 already states in prose -- a `Read` of a large file with no `offset`/`limit`
-is denied unless the file is exempt or the project isn't a Meridian one.
+is denied unless the file is exempt or the project isn't a Cardine one.
 """
 
 from __future__ import annotations
@@ -72,7 +72,9 @@ class ReadGuardTest(unittest.TestCase):
         self.assertIn("500", result.stderr)
         self.assertIn("400", result.stderr)
         self.assertIn("grep -n", result.stderr)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("meridian context authority", result.stderr)
+        # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("meridian adr show", result.stderr)
         output = json.loads(result.stdout)
         self.assertEqual(output["hookSpecificOutput"]["permissionDecision"], "deny")
@@ -143,7 +145,7 @@ class ReadGuardTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("Shrink the file", result.stderr)
 
-    def test_inactive_outside_a_meridian_project(self) -> None:
+    def test_inactive_outside_a_cardine_project(self) -> None:
         outside = Path(self.temporary.name) / "not-a-project"
         outside.mkdir()
         target = outside / "big.txt"

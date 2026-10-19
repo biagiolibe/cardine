@@ -77,7 +77,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("Meridian 1.1.0 -> 1.1.0", checked.stdout)
+        self.assertIn("Cardine 1.1.0 -> 1.1.0", checked.stdout)
         self.assertIn(
             "Framework: 1.1.0 -> 1.1.1 (CLI-only; no baseline change)",
             checked.stdout,
@@ -163,7 +163,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
                         result.stdout + result.stderr,
                     )
                     if case_name == "newer":
-                        self.assertIn("update your Meridian checkout", result.stderr)
+                        self.assertIn("update your Cardine checkout", result.stderr)
 
     def test_upgrade_apply_rejects_newer_protocol_before_touching_project(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
@@ -183,7 +183,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
 
         self.assertEqual(applied.returncode, 2, applied.stdout + applied.stderr)
-        self.assertIn("update your Meridian checkout", applied.stderr)
+        self.assertIn("update your Cardine checkout", applied.stderr)
         self.assertEqual(
             {
                 path.relative_to(self.project): path.read_bytes()

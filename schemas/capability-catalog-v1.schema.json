@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://meridian.local/schemas/capability-catalog-v1.schema.json",
+  "$id": "https://cardine.local/schemas/capability-catalog-v1.schema.json",
   "additionalProperties": false,
   "properties": {
     "capabilities": {
@@ -197,7 +197,7 @@
     "capabilities",
     "profiles"
   ],
-  "title": "Meridian capability catalog v1",
+  "title": "Cardine capability catalog v1",
   "type": "object",
   "$defs": {
     "stringList": {

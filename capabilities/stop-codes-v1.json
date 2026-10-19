@@ -9,10 +9,10 @@
         "governed-sdd"
       ],
       "step": "C4",
-      "emitter": "`meridian worktree check`; `prepare`; `closure-status`",
+      "emitter": "`cardine worktree check`; `prepare`; `closure-status`",
       "human_decision": false,
       "resume": "cardine worktree repair-base {task_id} --project {project} --format json",
-      "tool_hint": "meridian worktree repair-base",
+      "tool_hint": "cardine worktree repair-base",
       "kind": "stop",
       "summary": "a proven commit-less main fast-forward left an obsolete task base",
       "test": "tests.test_worktree_checkout.WorktreeCheckoutTest.test_stale_base_check_and_repair",
@@ -26,10 +26,10 @@
         "governed-sdd"
       ],
       "step": "C1",
-      "emitter": "agent judgment; `meridian worktree closure-status` also reports it when the task branch has no commits",
+      "emitter": "agent judgment; `cardine worktree closure-status` also reports it when the task branch has no commits",
       "human_decision": false,
       "resume": "complete the task and rerun task validation",
-      "tool_hint": "meridian worktree closure-status",
+      "tool_hint": "cardine worktree closure-status",
       "kind": "stop",
       "summary": "the task has no completed work or an acceptance criterion is unmet",
       "resolution": "failing-work"
@@ -87,7 +87,7 @@
         "governed-sdd"
       ],
       "step": "C4",
-      "emitter": "`meridian worktree closure-status`; `meridian worktree check`; `meridian worktree prepare` on a mismatched lifecycle state file; `meridian execution start/deliver/ready-check`; `meridian task close` (project mismatches override the default resume with the original invocation targeting the registered worktree)",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree check`; `cardine worktree prepare` on a mismatched lifecycle state file; `cardine execution start/deliver/ready-check`; `cardine task close` (project mismatches override the default resume with the original invocation targeting the registered worktree)",
       "human_decision": true,
       "resume": "cardine worktree prepare {task_id} --project {project} --format json",
       "kind": "stop",
@@ -103,7 +103,7 @@
         "governed-sdd"
       ],
       "step": "C5",
-      "emitter": "`meridian worktree closure-status`",
+      "emitter": "`cardine worktree closure-status`",
       "human_decision": false,
       "resume": "record machine evidence",
       "kind": "stop",
@@ -119,7 +119,7 @@
         "governed-sdd"
       ],
       "step": "C6",
-      "emitter": "`meridian worktree closure-status`; `meridian worktree integrate stage`",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree integrate stage`",
       "human_decision": true,
       "resume": "clean the primary checkout and run integration stage",
       "kind": "stop",
@@ -135,7 +135,7 @@
         "governed-sdd"
       ],
       "step": "C6",
-      "emitter": "`meridian worktree integrate stage`",
+      "emitter": "`cardine worktree integrate stage`",
       "human_decision": false,
       "resume": "git -C {project} merge --ff-only origin/main",
       "kind": "stop",
@@ -151,7 +151,7 @@
         "governed-sdd"
       ],
       "step": "C6",
-      "emitter": "`meridian worktree closure-status`; `meridian worktree integrate stage`",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree integrate stage`",
       "human_decision": true,
       "resume": "cardine worktree integrate abort {task_id} --project {project} --format json",
       "kind": "stop",
@@ -167,7 +167,7 @@
         "governed-sdd"
       ],
       "step": "C6",
-      "emitter": "`meridian worktree integrate stage`",
+      "emitter": "`cardine worktree integrate stage`",
       "human_decision": true,
       "resume": "the developer resolves the conflict on the task branch, then rerun cardine worktree integrate stage {task_id} --project {project} --evidence {evidence} --format json",
       "kind": "stop",
@@ -198,7 +198,7 @@
         "governed-sdd"
       ],
       "step": "C8",
-      "emitter": "`meridian worktree integrate finalize`",
+      "emitter": "`cardine worktree integrate finalize`",
       "human_decision": false,
       "resume": "cardine worktree integrate abort {task_id} --project {project} --format json",
       "kind": "stop",
@@ -214,7 +214,7 @@
         "governed-sdd"
       ],
       "step": "C9",
-      "emitter": "`meridian worktree closure-status`",
+      "emitter": "`cardine worktree closure-status`",
       "human_decision": false,
       "resume": "git push origin main",
       "kind": "status",
@@ -245,7 +245,7 @@
         "governed-sdd"
       ],
       "step": "C10",
-      "emitter": "`meridian worktree cleanup`",
+      "emitter": "`cardine worktree cleanup`",
       "human_decision": true,
       "resume": "rerun cardine worktree cleanup {task_id} --project {project} --format json after the named condition clears",
       "kind": "stop",
@@ -261,7 +261,7 @@
         "governed-sdd"
       ],
       "step": "C6",
-      "emitter": "`meridian worktree integrate stage`; `meridian worktree integrate finalize`",
+      "emitter": "`cardine worktree integrate stage`; `cardine worktree integrate finalize`",
       "human_decision": true,
       "resume": "write declared candidate validation fragments or state none in .cardine/candidate-validation.json, then rerun the interrupted cardine worktree integrate step",
       "kind": "stop",
@@ -275,7 +275,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`; `meridian execution contract`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`; `cardine execution contract`",
       "human_decision": false,
       "resume": "cardine execution reconcile {task_id} --apply --project .",
       "kind": "stop",
@@ -289,7 +289,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution contract`; `meridian execution reconcile`; `meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
       "human_decision": true,
       "resume": "add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -303,7 +303,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution contract`; `meridian execution reconcile`; `meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
       "human_decision": false,
       "resume": "rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -317,7 +317,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
       "human_decision": false,
       "resume": "add the listed sections or fields to the task record, then rerun cardine execution preflight {task_id} --project .",
       "kind": "stop",
@@ -331,7 +331,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution preflight`; `meridian execution reconcile`; `meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "emitter": "`cardine execution preflight`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
       "human_decision": true,
       "resume": "bring the task to QUEUED or IN_PROGRESS through its lifecycle, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -345,7 +345,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution preflight`; `meridian execution ready-check`; `meridian execution validate`; `meridian execution investigate`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
       "human_decision": false,
       "resume": "change only the document the message says this actor may change so the statuses are accepted, then rerun cardine execution preflight {task_id} --project .",
       "kind": "stop",
@@ -359,7 +359,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution evidence`; `meridian execution investigate`; `meridian budget spend`",
+      "emitter": "`cardine execution evidence`; `cardine execution investigate`; `cardine budget spend`",
       "human_decision": false,
       "resume": "rerun the cardine execution evidence command with the missing options",
       "kind": "stop",
@@ -373,7 +373,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "write the completion report, then run cardine execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
@@ -387,7 +387,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "add each missing field as `- <Field>: <value>`, then rerun cardine execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
@@ -401,7 +401,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "rewrite each listed field as `- <Field>: <value>`, then rerun cardine execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
@@ -415,7 +415,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "correct the report heading to name this task, then rerun cardine execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
@@ -429,7 +429,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "fix the failing validation and report its passing result, then rerun cardine execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
@@ -443,7 +443,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "run cardine execution validate {task_id} <validation-id> --project . for each listed ID, then rerun the handoff check",
       "kind": "stop",
@@ -457,7 +457,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "correct the Isolated exploration field or record the investigation with cardine execution investigate {task_id}, then rerun the handoff check",
       "kind": "stop",
@@ -471,7 +471,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution handoff-check`; `meridian execution ready-check`",
+      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "add each listed question and finding to the report, then rerun cardine execution handoff-check {task_id} <report> --project .",
       "kind": "stop",
@@ -486,11 +486,11 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "any `meridian` command that refuses to run without a more specific code",
+      "emitter": "any `cardine` command that refuses to run without a more specific code",
       "human_decision": true,
       "resume": "correct the condition that the detail names, then rerun the same cardine command",
       "kind": "stop",
-      "summary": "a meridian command refused to run because a precondition on its inputs or on the project state is not met",
+      "summary": "a cardine command refused to run because a precondition on its inputs or on the project state is not met",
       "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_uncoded_command_refusal_reports_command_refused",
       "resolution": "guardrail"
     },
@@ -501,11 +501,11 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "any `meridian` command whose file or process access fails at the operating-system level",
+      "emitter": "any `cardine` command whose file or process access fails at the operating-system level",
       "human_decision": true,
       "resume": "fix the access problem that the detail names, then rerun the same cardine command",
       "kind": "stop",
-      "summary": "an operating-system call failed while a meridian command read or wrote a file",
+      "summary": "an operating-system call failed while a cardine command read or wrote a file",
       "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_operating_system_failure_reports_os_access_failed",
       "resolution": "guardrail"
     },
@@ -515,7 +515,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution validate`",
+      "emitter": "`cardine execution validate`",
       "human_decision": false,
       "resume": "rerun cardine execution validate with a validation ID listed in the task's Validation section, or declare the command there first",
       "kind": "stop",
@@ -529,7 +529,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution preflight`; `meridian execution ready-check`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "correct the task's Host impact declaration as the detail names, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -543,7 +543,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`meridian execution preflight`; `meridian execution ready-check`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`",
       "human_decision": false,
       "resume": "add a Completion evidence entry for each listed profile to the task's Host impact section, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -558,7 +558,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "`meridian upgrade --check`; `meridian upgrade --apply`",
+      "emitter": "`cardine upgrade --check`; `cardine upgrade --apply`",
       "human_decision": true,
       "resume": "resolve each conflict or router requirement that the plan lists, then rerun cardine upgrade --check",
       "kind": "stop",
@@ -628,10 +628,10 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "shared task-state reader; `meridian task transition`; worktree advance C6",
+      "emitter": "shared task-state reader; `cardine task transition`; worktree advance C6",
       "human_decision": false,
       "resume": "cardine task state import {task_id} --project {project} --apply --include-terminal",
-      "tool_hint": "meridian task transition",
+      "tool_hint": "cardine task transition",
       "kind": "stop",
       "summary": "a task has no tracked state file; Lean advance resumes with task close, commit staged closure records, then advance; already archived records use transition DONE and stage state/record before committing; Governed SDD retains state import; recovery uses the registered task worktree when present",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_missing_stop",
@@ -644,10 +644,10 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "shared task-state reader; `meridian task transition`",
+      "emitter": "shared task-state reader; `cardine task transition`",
       "human_decision": true,
       "resume": "fix the named state field, then cardine task transition {task_id} <STATUS> --project {project} --format json",
-      "tool_hint": "meridian task transition",
+      "tool_hint": "cardine task transition",
       "kind": "stop",
       "summary": "a task state field or transition history is invalid",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_invalid_stop",
@@ -660,10 +660,10 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian worktree integrate stage",
+      "emitter": "cardine worktree integrate stage",
       "human_decision": true,
       "resume": "cardine review verdict {task_id} APPROVE --project {project} --format json",
-      "tool_hint": "meridian review verdict",
+      "tool_hint": "cardine review verdict",
       "kind": "stop",
       "summary": "a required review verdict is absent or not APPROVE",
       "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_missing_verdict_stop",
@@ -676,10 +676,10 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian worktree integrate stage",
+      "emitter": "cardine worktree integrate stage",
       "human_decision": true,
       "resume": "review the current task commit, then cardine review verdict {task_id} APPROVE --project {project} --format json",
-      "tool_hint": "meridian review verdict",
+      "tool_hint": "cardine review verdict",
       "kind": "stop",
       "summary": "the reviewed commit is not an ancestor or code changed after approval",
       "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_stale_review_stop",
@@ -692,7 +692,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian self-update",
+      "emitter": "cardine self-update",
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",
@@ -706,7 +706,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian self-update",
+      "emitter": "cardine self-update",
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",
@@ -720,7 +720,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian self-update",
+      "emitter": "cardine self-update",
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",
@@ -734,7 +734,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian self-update",
+      "emitter": "cardine self-update",
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",
@@ -748,7 +748,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian self-update",
+      "emitter": "cardine self-update",
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",
@@ -762,7 +762,7 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "meridian self-update",
+      "emitter": "cardine self-update",
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",

@@ -71,7 +71,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertFalse(state_path.exists())
 
     def test_prepare_does_not_read_or_write_the_retired_ledger(self):
-        ledger = cardine_cli.canonical_git_common_dir(self.primary) / "meridian-budget.json"
+        ledger = cardine_cli.canonical_git_common_dir(self.primary) / "cardine-budget.json"
         ledger.write_text("invalid retired ledger\n", encoding="utf-8")
         self.assertTrue(self.prepare()["created"])
         self.assertEqual(ledger.read_text(encoding="utf-8"), "invalid retired ledger\n")

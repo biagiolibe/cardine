@@ -66,7 +66,7 @@ class CodexReadGuardTest(unittest.TestCase):
         self.assertFalse(allowed)
         self.assertIn(f"{target} (500 lines)", reason or "")
 
-    def test_exempt_and_non_meridian_cwds_allow(self) -> None:
+    def test_exempt_and_non_cardine_cwds_allow(self) -> None:
         self.write("LANGUAGE_POLICY.md", 500)
         self.assertTrue(decision(self.payload("cat LANGUAGE_POLICY.md"))[0])
         payload = self.payload("cat LANGUAGE_POLICY.md")

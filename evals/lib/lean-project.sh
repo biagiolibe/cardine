@@ -146,6 +146,6 @@ PY
     git commit --quiet -m "Initial project"
     cardine lock --project "$fixture" --mode lean-delivery >/dev/null
     git add -A
-    git commit --quiet -m "Lock Meridian"
+    git commit --quiet -m "Lock Cardine"
     git push --quiet -u origin main
 }

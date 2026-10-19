@@ -145,7 +145,7 @@ class ProjectConsoleTest(unittest.TestCase):
                     capture_output=True, text=True, check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIn("MERIDIAN |", result.stdout)
+                self.assertIn("CARDINE |", result.stdout)
                 self.assertIn("Updated:", result.stdout)
                 self.assertIn("Open:", result.stdout)
                 self.assertIn("Agent activity: unavailable", result.stdout)
@@ -306,7 +306,7 @@ class ProjectConsoleTest(unittest.TestCase):
             state.framework = identity
             state.snapshot = self.snapshot()
             output = owner_console_state.one_shot(state)
-            self.assertTrue(output.startswith("MERIDIAN | v9.8.7 | ~/framework |"))
+            self.assertTrue(output.startswith("CARDINE | v9.8.7 | ~/framework |"))
 
     def test_framework_identity_missing_version_is_nonfatal(self) -> None:
         identity = owner_console_state._framework_identity(self.project / "framework" / "scripts" / "console.py")
@@ -316,13 +316,13 @@ class ProjectConsoleTest(unittest.TestCase):
         state = owner_console_state.ConsoleState(self.project)
         state.framework = identity
         state.snapshot = self.snapshot()
-        self.assertIn("MERIDIAN | version unknown |", owner_console_state.one_shot(state))
+        self.assertIn("CARDINE | version unknown |", owner_console_state.one_shot(state))
 
     def test_terminal_title_identifies_console_without_an_absolute_path(self) -> None:
         output = mock.Mock()
         with mock.patch.object(owner_console_launch.sys, "stdout", output):
             owner_console_launch._set_terminal_title(Path("/private/project-name"))
-        self.assertIn("Meridian console", output.write.call_args.args[0])
+        self.assertIn("Cardine console", output.write.call_args.args[0])
         self.assertIn("project-name", output.write.call_args.args[0])
         self.assertNotIn("/private", output.write.call_args.args[0])
 

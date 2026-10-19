@@ -32,7 +32,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check", "--stop-before-retirement")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("Meridian 1.1.0 -> 1.1.2", checked.stdout)
+        self.assertIn("Cardine 1.1.0 -> 1.1.2", checked.stdout)
         self.assertIn("MIGRATION 001-establish-route-rule", checked.stdout)
         self.assertIn("MIGRATION 002-add-route-rule", checked.stdout)
         self.assertNotIn("MIGRATION 003-retire-route-rule", checked.stdout)
@@ -81,7 +81,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         # with no false conflict from the intermediate stopping point.
         resumed_check = self.run_cli("upgrade", "--check")
         self.assertEqual(resumed_check.returncode, 0, resumed_check.stdout + resumed_check.stderr)
-        self.assertIn("Meridian 1.1.2 -> 1.1.3", resumed_check.stdout)
+        self.assertIn("Cardine 1.1.2 -> 1.1.3", resumed_check.stdout)
         self.assertIn("MIGRATION 003-retire-route-rule", resumed_check.stdout)
 
         resumed_apply = self.run_cli("upgrade", "--apply")
@@ -121,7 +121,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("Meridian 1.1.0 -> 1.1.1", checked.stdout)
+        self.assertIn("Cardine 1.1.0 -> 1.1.1", checked.stdout)
         self.assertIn("Framework: 1.1.0 -> 1.1.1", checked.stdout)
         self.assertIn("MIGRATION 002-next-baseline", checked.stdout)
 

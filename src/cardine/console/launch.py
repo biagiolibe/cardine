@@ -55,7 +55,7 @@ def _agent_defaults(home: Path | None = None) -> dict[str, AgentDefaults]:
 def _set_terminal_title(project: Path) -> None:
     """Best-effort terminal title that intentionally contains no project path."""
     try:
-        sys.stdout.write(f"\033]0;Meridian console — {project.name}\007")
+        sys.stdout.write(f"\033]0;Cardine console — {project.name}\007")
         sys.stdout.flush()
     except OSError:
         pass

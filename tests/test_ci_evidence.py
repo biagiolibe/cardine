@@ -56,7 +56,7 @@ class CiEvidenceTest(unittest.TestCase):
 
     def run_data(self, status="completed", conclusion="success", commit=None) -> dict[str, object]:
         return {"databaseId": 42, "headSha": commit or self.commit, "event": "push", "status": status,
-                "conclusion": conclusion, "url": "https://github.com/example/meridian/actions/runs/42", "workflowName": "Validate repository"}
+                "conclusion": conclusion, "url": "https://github.com/example/cardine/actions/runs/42", "workflowName": "Validate repository"}
 
     def test_success_writes_a_verifier_compatible_t1_record(self) -> None:
         run = self.run_data()

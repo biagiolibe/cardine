@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upgrade one Meridian-managed project to the installed framework release.
+# Upgrade one Cardine-managed project to the installed framework release.
 #
 # Default is a dry run: preflight plus every read-only check. With --apply it
 # creates a dedicated branch, runs upgrade/setup/queue alignment, validates,
@@ -101,7 +101,7 @@ SELF=$?
 set -e
 case "$SELF" in
   0) info "framework is the latest release" ;;
-  10) die "a newer Meridian release exists; update the framework first (see the final steps)" ;;
+  10) die "a newer Cardine release exists; update the framework first (see the final steps)" ;;
   *) info "latest-release check inconclusive (exit $SELF); continuing with $TARGET" ;;
 esac
 
@@ -218,7 +218,7 @@ if git -C "$PROJECT" diff --cached --quiet; then
   info "no changes to commit"
 else
   git -C "$PROJECT" diff --cached --stat
-  git -C "$PROJECT" commit -q -m "Upgrade Meridian to $TARGET"
+  git -C "$PROJECT" commit -q -m "Upgrade Cardine to $TARGET"
   info "committed $(git -C "$PROJECT" rev-parse --short HEAD)"
 fi
 

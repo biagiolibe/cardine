@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare one local Meridian release without contacting the network."""
+"""Prepare one local Cardine release without contacting the network."""
 
 from __future__ import annotations
 
@@ -798,7 +798,7 @@ def adopter_steps() -> str:
 
 
 def publish_main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="Publish the prepared Meridian release.")
+    parser = argparse.ArgumentParser(description="Publish the prepared Cardine release.")
     parser.add_argument("--confirm", metavar="vVERSION")
     parser.add_argument("--no-wait", action="store_true")
     parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
@@ -844,7 +844,7 @@ def publish_main(argv: list[str]) -> int:
 
 
 def verify_main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="Verify a published Meridian release without changing Git state.")
+    parser = argparse.ArgumentParser(description="Verify a published Cardine release without changing Git state.")
     parser.add_argument("--version", required=True)
     parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
@@ -866,7 +866,7 @@ def main(argv: list[str] | None = None) -> int:
     values = list(sys.argv[1:] if argv is None else argv)
     if values == ["--help"]:
         parser = argparse.ArgumentParser(
-            description="Prepare, publish, or verify a Meridian release.",
+            description="Prepare, publish, or verify a Cardine release.",
             epilog="prepare makes a local release commit; publish pushes main, the release tag, and stable; verify is read-only.",
         )
         subcommands = parser.add_subparsers(title="commands")

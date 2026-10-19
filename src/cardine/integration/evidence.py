@@ -88,7 +88,7 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
     reasons: list[str] = []
     try:
         schema = json.loads((SCRIPTS_ROOT.parent / VALIDATION_EVIDENCE_SCHEMA_PATH).read_text(encoding="utf-8"))
-        if not isinstance(schema, dict) or schema.get("$id") != "https://meridian.local/schemas/validation-evidence-v1.schema.json":
+        if not isinstance(schema, dict) or schema.get("$id") != "https://cardine.local/schemas/validation-evidence-v1.schema.json":
             reasons.append("schema: validation-evidence-v1 is invalid")
     except (OSError, json.JSONDecodeError) as error:
         reasons.append(f"schema: {error}")

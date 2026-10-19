@@ -45,16 +45,16 @@ def user_configuration_path(
 def _read_user_configuration(path: Path) -> dict[str, object] | None:
     if not path.exists():
         return None
-    value = _read_json_object(path, "Meridian user configuration")
+    value = _read_json_object(path, "Cardine user configuration")
     if set(value) != {"version", "worktreeRoot"} or value.get("version") != 1:
         raise CardineError(
-            f"Meridian user configuration must contain only version 1 and worktreeRoot: {path}"
+            f"Cardine user configuration must contain only version 1 and worktreeRoot: {path}"
         )
     root = value.get("worktreeRoot")
     if not isinstance(root, str) or not root.strip():
-        raise CardineError(f"Meridian user configuration worktreeRoot must be a non-empty string: {path}")
+        raise CardineError(f"Cardine user configuration worktreeRoot must be a non-empty string: {path}")
     if not Path(root).expanduser().is_absolute():
-        raise CardineError(f"Meridian user configuration worktreeRoot must be absolute: {path}")
+        raise CardineError(f"Cardine user configuration worktreeRoot must be absolute: {path}")
     return value
 
 

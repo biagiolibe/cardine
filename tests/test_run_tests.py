@@ -127,15 +127,19 @@ class ParallelTestRunnerTest(unittest.TestCase):
             check=False,
         )
 
+    # MERIDIAN-OLD-NAME-TEST
     def test_path_meridian_spawn_fails_even_when_its_status_is_ignored(self) -> None:
         for invocation in (
+            # MERIDIAN-OLD-NAME-TEST
             "__import__('subprocess').run(['meridian', '--version'], capture_output=True)",
+            # MERIDIAN-OLD-NAME-TEST
             "__import__('subprocess').run(['sh', '-c', 'meridian --version >/dev/null 2>&1; exit 0'])",
         ):
             with self.subTest(invocation=invocation):
                 directory = self.make_suite([invocation])
                 result = self.run_parallel(directory, "--parallel", "1")
                 self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                # MERIDIAN-OLD-NAME-TEST
                 self.assertIn("test spawned meridian through PATH", result.stdout + result.stderr)
                 self.assertIn("ran=1 failures=1 errors=0", result.stdout)
 
@@ -337,6 +341,7 @@ class ParallelTestRunnerTest(unittest.TestCase):
         for explicit_environment in (False, True):
             with self.subTest(explicit_environment=explicit_environment), tempfile.TemporaryDirectory() as directory:
                 environment = dict(os.environ)
+                # MERIDIAN-OLD-NAME-TEST
                 # MERIDIAN-OLD-NAME-TEST
                 environment.update({f"MERIDIAN_{name}": "retired" for name in (
                     "ROOT", "WORKTREE_ROOT", "TEST_SHARD", "FAILURE_VISIBILITY_PROBE", "OTHER",

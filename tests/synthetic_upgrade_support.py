@@ -2,7 +2,7 @@
 
 The rich CLI scenarios reuse the current template vocabulary so their content
 assertions remain useful. Release boundaries and operations belong to the test,
-not to Meridian's release history. Small scenarios can supply their own files.
+not to Cardine's release history. Small scenarios can supply their own files.
 """
 
 from __future__ import annotations

@@ -88,7 +88,7 @@ def _git_worktrees(project_root: Path) -> list[dict[str, str]]:
 
 
 def canonical_project_root(path: Path) -> Path:
-    """Return the first registered worktree, which is Meridian's primary checkout."""
+    """Return the first registered worktree, which is Cardine's primary checkout."""
     candidate = path.expanduser().resolve()
     records = _git_worktrees(candidate)
     if not records or "worktree" not in records[0]:

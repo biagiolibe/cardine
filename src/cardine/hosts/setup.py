@@ -177,7 +177,7 @@ def plan_setup(
 
     changes: list[str] = []
     if user_rules.proposed_text is not None:
-        changes.append(f"configure Meridian Codex user-rules block in {user_rules.path}")
+        changes.append(f"configure Cardine Codex user-rules block in {user_rules.path}")
     if directory_state != "ready":
         changes.append(directory_change)
     if config_action == "write":

@@ -23,8 +23,8 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         self.primary = self.root / "project"
         self.primary.mkdir()
         self.git("init", "-b", "main")
-        self.git("config", "user.name", "Meridian Test")
-        self.git("config", "user.email", "meridian@example.invalid")
+        self.git("config", "user.name", "Cardine Test")
+        self.git("config", "user.email", "cardine@example.invalid")
         (self.primary / "QUEUE.md").write_text(
             "Task 051: TODO\n"
             + "\n".join(f"shared context {index}" for index in range(10))
