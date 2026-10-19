@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 import importlib
 import hashlib
 import json
@@ -21,7 +21,7 @@ import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.stops import render as owner_stops_render
 from cardine.worktree import storage as owner_worktree_storage
-import meridian
+import cardine_cli
 from stop_recovery_support import run_recovery, resume_from
 
 
@@ -727,7 +727,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         script.write_text("from pathlib import Path\nassert Path('PROJECT_WORKFLOW.md').is_file()\n", encoding="utf-8")
         script.chmod(0o644)
         command = "python3 scripts/check_repository.py"
-        (self.project / meridian.CANDIDATE_VALIDATION_PATH).write_text(json.dumps({
+        (self.project / cardine_cli.CANDIDATE_VALIDATION_PATH).write_text(json.dumps({
             "version": 1, "state": "declared",
             "outcomes": {outcome: [command] for outcome in ("REUSE", "BOUNDED", "FULL")},
         }), encoding="utf-8")

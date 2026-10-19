@@ -8,7 +8,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
-from meridian_cli_support import ROOT
+from cardine_cli_support import ROOT
 import dev
 
 

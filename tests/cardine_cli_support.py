@@ -11,16 +11,16 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import markers as templates_markers
 import cardine.shared.constants as shared_constants
 from cardine.templates import router as owner_templates_router
 
 ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "meridian.py"
+CLI = ROOT / "scripts" / "cardine_cli.py"
 
 
-class MeridianCliFixtureMixin:
+class CardineCliFixtureMixin:
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         root = Path(self.temporary.name)

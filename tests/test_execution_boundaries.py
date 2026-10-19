@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-import meridian
+import cardine_cli
 from cardine.tasks import recording as owner_tasks_recording
 from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.lifecycle import execution as owner_lifecycle_execution
@@ -112,7 +112,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         owner_lifecycle_commands.execution_start(self.worker, '001')
         self.commit('Start before interruption')
         original = self.state()
-        script = str(Path(meridian.__file__).resolve())
+        script = str(Path(cardine_cli.__file__).resolve())
         for dirty in (False, True):
             with self.subTest(dirty=dirty):
                 if dirty:
@@ -134,7 +134,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 self.assertEqual(self.state(), original)
 
     def test_resume_check_keeps_other_errors_blocking(self):
-        script = str(Path(meridian.__file__).resolve())
+        script = str(Path(cardine_cli.__file__).resolve())
         for dirty in (False, True):
             with self.subTest(dirty=dirty):
                 if dirty:
@@ -278,7 +278,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
 
     def test_commit_failure_reports_pending_actual_state_and_recovers(self):
         self.implemented()
-        run = meridian._run_git
+        run = cardine_cli._run_git
         def fail_commit(root, *args):
             if args[0] == 'commit':
                 return subprocess.CompletedProcess(args, 1, '', 'test commit failure')
@@ -319,7 +319,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.state()['status'], 'IN_PROGRESS')
 
     def test_cli_boundaries_and_ready_check_are_committed_and_read_only(self):
-        script = Path(__file__).resolve().parents[1] / 'scripts/meridian.py'
+        script = Path(__file__).resolve().parents[1] / 'scripts/cardine_cli.py'
         def cli(operation):
             return subprocess.run([sys.executable, str(script), 'execution', operation, '001',
                                    '--project', str(self.worker)], cwd=self.worker,
@@ -405,7 +405,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
 
     def test_wrong_project_cli_preserves_arguments_and_names_paths(self):
         import shlex
-        script = Path(__file__).resolve().parents[1] / 'scripts/meridian.py'
+        script = Path(__file__).resolve().parents[1] / 'scripts/cardine_cli.py'
         other = Path(self.temp.name) / 'other task'
         self.git('worktree', 'add', '-qb', 'task-002', str(other), cwd=self.primary)
         stale = self.primary / 'stale-worktree'

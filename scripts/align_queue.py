@@ -115,7 +115,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("projects", nargs="+", type=Path)
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--meridian", help="path to bin/meridian used to resolve the queue location")
+    parser.add_argument("--meridian", help="path to bin/cardine used to resolve the queue location")
     args = parser.parse_args()
     status = 0
     for project in args.projects:

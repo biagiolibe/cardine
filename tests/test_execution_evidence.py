@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI
+from cardine_cli_support import CLI
 from stop_recovery_support import run_recovery, resume_from
 import json
 import re

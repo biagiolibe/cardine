@@ -175,7 +175,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         worktree = Path(str(prepared["worktree"]))
         (worktree / "docs/answer.md").write_text("# Result\n\nThe probe passes.\n", encoding="utf-8")
         validated = subprocess.run(
-            [sys.executable, str(ROOT / "scripts/meridian.py"), "execution", "validate", "056", "probe",
+            [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "execution", "validate", "056", "probe",
              "--project", str(worktree)], cwd=worktree, text=True, capture_output=True, check=False,
         )
         self.assertEqual(validated.returncode, 0, validated.stderr)

@@ -9,15 +9,15 @@ from pathlib import Path
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import markers as templates_markers
 import cardine.shared.hashing as shared_hashing
 from cardine.templates import router as owner_templates_router
 
-from meridian_cli_support import MeridianCliFixtureMixin, CLI
+from cardine_cli_support import CardineCliFixtureMixin, CLI
 
 
-class CliEntryTest(MeridianCliFixtureMixin, unittest.TestCase):
+class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_version_flag_prints_full_semver(self) -> None:
         for raw in ("1.2.0", "1.2.0-rc.1", "1.2.0-rc.1+build.7", "1.2.0+build.7"):
             (self.framework / "VERSION").write_text(raw + "\n", encoding="utf-8")

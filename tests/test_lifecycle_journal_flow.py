@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 import json
 import subprocess
 import sys
@@ -173,8 +173,8 @@ class LifecycleJournalTest(unittest.TestCase):
             ["git", "worktree", "add", "-b", "other", str(other)], cwd=self.project, check=True, capture_output=True
         )
         script = (
-            "import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); import meridian; "
-            "[meridian.append_journal_line(Path(sys.argv[2]), "
+            "import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); import cardine_cli; "
+            "[cardine_cli.append_journal_line(Path(sys.argv[2]), "
             "{'version': 1, 'command': 'check', 'pad': 'p' * 3000, 'n': i}) for i in range(150)]"
         )
         processes = [

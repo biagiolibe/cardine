@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from meridian_cli_support import CLI
+from cardine_cli_support import CLI
 from synthetic_upgrade_support import SyntheticFramework
 
 

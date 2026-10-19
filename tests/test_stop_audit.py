@@ -14,7 +14,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.shared import journal as owner_shared_journal
 import stop_audit  # noqa: E402
 from cardine.shared import flow as owner_shared_flow
@@ -155,7 +155,7 @@ class StopAuditTest(unittest.TestCase):
 
     def test_cli_host_option_defaults_to_claude_and_rejects_others(self) -> None:
         self.seed(self.blocked("PRIMARY_DIRTY"))
-        command = [sys.executable, str(ROOT / "scripts" / "meridian.py"), "hook", "stop-audit"]
+        command = [sys.executable, str(ROOT / "scripts" / "cardine_cli.py"), "hook", "stop-audit"]
         payload = json.dumps(self.codex_input("BLOCKED WRONG_WORKTREE"))
         for extra, expected in (([], "claude"), (["--host", "codex"], "codex")):
             done = subprocess.run([*command, *extra], input=payload, text=True, capture_output=True)

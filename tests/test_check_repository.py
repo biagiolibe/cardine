@@ -989,7 +989,7 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         for directory in ("capabilities", "templates", "scripts", "tests"):
             (self.root / directory).mkdir()
-        (self.root / "scripts/meridian.py").write_text("", encoding="utf-8")
+        (self.root / "scripts/cardine_cli.py").write_text("", encoding="utf-8")
         (self.root / "tests/test_emit.py").write_text(
             "class EmitTest:\n    def test_tool_line(self):\n        pass\n", encoding="utf-8"
         )
@@ -1078,7 +1078,7 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
     def test_code_emitted_only_by_the_cli_is_not_dead(self) -> None:
         self.registry.append({"code": "CLI_STOP", "class": "judgment", "resolution": "failing-work", "human_decision": False})
         self.write()
-        (self.root / "scripts/meridian.py").write_text('report("C1", "CLI_STOP")\n', encoding="utf-8")
+        (self.root / "scripts/cardine_cli.py").write_text('report("C1", "CLI_STOP")\n', encoding="utf-8")
         cr.check_stop_code_registry(self.root)
 
     def test_blocked_line_without_a_code_in_managed_text_fails(self) -> None:
@@ -1104,16 +1104,16 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
         self.assertIn("templates/workflow.md:2: BLOCKED without a registered stop code", self.failure())
 
     def test_uncoded_blocked_in_the_cli_fails_and_coded_forms_pass(self) -> None:
-        cli = self.root / "scripts/meridian.py"
+        cli = self.root / "scripts/cardine_cli.py"
         cli.write_text('STATE = "BLOCKED"\nFORMAT = f"BLOCKED {code}: {detail}; resume: {resume}"\n'
                        'print("BLOCKED ALPHA_STOP: detail")\n', encoding="utf-8")
         cr.check_stop_code_registry(self.root)
         cli.write_text('x = 1\nraise CardineError("validation BLOCKED: bad id")\n', encoding="utf-8")
-        self.assertIn("scripts/meridian.py:2: BLOCKED without a registered stop code", self.failure())
+        self.assertIn("scripts/cardine_cli.py:2: BLOCKED without a registered stop code", self.failure())
         cli.write_text('print(f"BLOCKED: {error}")\n', encoding="utf-8")
-        self.assertIn("scripts/meridian.py:1: BLOCKED without a registered stop code", self.failure())
+        self.assertIn("scripts/cardine_cli.py:1: BLOCKED without a registered stop code", self.failure())
         cli.write_text('print("BLOCKED NOT_REGISTERED: detail")\n', encoding="utf-8")
-        self.assertIn("scripts/meridian.py:1: BLOCKED without a registered stop code", self.failure())
+        self.assertIn("scripts/cardine_cli.py:1: BLOCKED without a registered stop code", self.failure())
 
     def test_repository_passes(self) -> None:
         cr.check_stop_code_registry(ROOT)

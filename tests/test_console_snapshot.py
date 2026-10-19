@@ -915,7 +915,7 @@ class SnapshotCostTest(support.RepoCase):
                 self.assertIs(identity, cache.resolve(self.project, identity.canonical_id))
 
     def test_lifecycle_readers_skip_resolution_when_given_an_identity(self) -> None:
-        import meridian
+        import cardine_cli
         from cardine.worktree import closure_status as owner_worktree_closure_status
         import cardine.shared.errors as shared_errors
         self.populate()

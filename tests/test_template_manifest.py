@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 from installation_fixture import InstallationFixture
 import io
 import json
@@ -25,7 +25,7 @@ from cardine.templates import migrations as owner_templates_migrations
 from cardine.templates import manifest as owner_templates_manifest
 from cardine.templates import marker_history as owner_templates_marker_history
 from cardine.templates import adoption as owner_templates_adoption
-import meridian
+import cardine_cli
 
 
 class CapabilityVersionDetectionTest(unittest.TestCase):
@@ -78,7 +78,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
         for path in (agents, claude):
             path.write_text("", encoding="utf-8")
 
-        import meridian as m
+        import cardine_cli as m
 
         # MERIDIAN-INSTALLATION-CHECK
         managed = [m.ManagedFile(source=Path("unused"), target=Path("AGENTS.md"))]
@@ -485,7 +485,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(relative_path + "\n## Reasoning profile\n", encoding="utf-8")
             manifest = self.installed_project(project)
-            manifest["frameworkVersion"] = meridian.read_version(ROOT)
+            manifest["frameworkVersion"] = cardine_cli.read_version(ROOT)
             owner_templates_manifest.write_manifest(project, manifest, ROOT)
             with mock.patch.object(owner_templates_audit, "retired_text_advisories", return_value=[]):
                 baseline_code, _ = self.audit(project)
@@ -706,7 +706,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 {
                     "protocolVersion": 1,
                     "mode": "lean-delivery",
-                    "frameworkVersion": meridian.read_version(ROOT),
+                    "frameworkVersion": cardine_cli.read_version(ROOT),
                     "managedFiles": {},
                     "appliedMigrations": ["040-pretooluse-read-guard"],
                 },
@@ -757,7 +757,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             project = Path(directory)
             manifest = {
                 "protocolVersion": shared_constants.PROTOCOL_VERSION,
-                "frameworkVersion": meridian.read_version(ROOT),
+                "frameworkVersion": cardine_cli.read_version(ROOT),
                 "workflowMode": "lean-delivery",
                 "managedFiles": {},
                 "appliedMigrations": [],

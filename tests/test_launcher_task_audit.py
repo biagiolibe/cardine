@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import ROOT
+from cardine_cli_support import ROOT
 import io
 import json
 import os
@@ -24,7 +24,7 @@ class LauncherTest(unittest.TestCase):
         environment = dict(os.environ)
         environment.pop("MERIDIAN_ROOT", None)
         result = subprocess.run(
-            [sys.executable, str(ROOT / "bin" / "meridian"), "--version"],
+            [sys.executable, str(ROOT / "bin" / "cardine"), "--version"],
             cwd=tempfile.gettempdir(), capture_output=True, text=True, check=False,
             env=environment,
         )

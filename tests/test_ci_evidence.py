@@ -17,7 +17,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import ci_evidence  # noqa: E402
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.integration import evidence as owner_integration_evidence
 import cardine.shared.constants as shared_constants
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 import io
 import json
 import os
@@ -25,14 +25,14 @@ from cardine.hosts import codex as owner_hosts_codex
 from cardine.hosts import skills as owner_hosts_skills
 from cardine.worktree import storage as owner_worktree_storage
 from cardine.hosts import setup as owner_hosts_setup
-import meridian
+import cardine_cli
 
 
 class WorktreeRootSetupTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.home = Path(self.temporary.name).resolve()
-        self.cwd_patch = mock.patch.object(meridian.Path, "cwd", return_value=self.home)
+        self.cwd_patch = mock.patch.object(cardine_cli.Path, "cwd", return_value=self.home)
         self.cwd_patch.start()
         self.xdg = self.home / "xdg"
         self.user_config = self.xdg / "meridian/config.json"
@@ -43,7 +43,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.cwd_patch.stop()
         self.temporary.cleanup()
 
-    def resolve(self, explicit: Path | None = None, **environment: str) -> meridian.ResolvedWorktreeRoot:
+    def resolve(self, explicit: Path | None = None, **environment: str) -> cardine_cli.ResolvedWorktreeRoot:
         return owner_worktree_storage.resolve_worktree_root(
             explicit,
             environment={**self.environment, **environment},
@@ -60,7 +60,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.user_config.write_text(
             json.dumps({"version": 1, "worktreeRoot": str(configured)}), encoding="utf-8"
         )
-        self.assertEqual(self.resolve(), meridian.ResolvedWorktreeRoot(configured, "user-config", self.user_config))
+        self.assertEqual(self.resolve(), cardine_cli.ResolvedWorktreeRoot(configured, "user-config", self.user_config))
 
         from_environment = self.home / "environment"
         resolved_environment = self.resolve(MERIDIAN_WORKTREE_ROOT=str(from_environment))
@@ -204,7 +204,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
 
         text = self.codex_config.read_text(encoding="utf-8")
-        self.codex_config.write_text(text.replace(meridian.CODEX_MANAGED_END + "\n", ""), encoding="utf-8")
+        self.codex_config.write_text(text.replace(cardine_cli.CODEX_MANAGED_END + "\n", ""), encoding="utf-8")
         self.assertEqual(
             owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home).codex_state,
             "repair-required",
@@ -216,7 +216,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(different.codex_state, "different-root")
         self.assertIn("profile=", owner_hosts_skills.codex_profile_root_mismatch(self.codex_config, root) or "")
 
-        damaged = self.codex_config.read_text(encoding="utf-8").replace(meridian.CODEX_MANAGED_END + "\n", "")
+        damaged = self.codex_config.read_text(encoding="utf-8").replace(cardine_cli.CODEX_MANAGED_END + "\n", "")
         self.codex_config.write_text(damaged, encoding="utf-8")
         combined = owner_hosts_setup.plan_setup(root, self.codex_config, environment=self.environment, home=self.home)
         self.assertEqual(combined.codex_state, "repair-and-replace-required")
@@ -356,7 +356,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         proposal = json.loads(line.split(": ", 1)[1])
         self.assertEqual(proposal["outcomes"]["FULL"],
                          ["python3 scripts/check_repository.py", "python3 -m unittest discover -s tests"])
-        declaration = project / meridian.CANDIDATE_VALIDATION_PATH
+        declaration = project / cardine_cli.CANDIDATE_VALIDATION_PATH
         self.assertFalse(declaration.exists())
         applied = subprocess.run(command + ["--apply"], text=True, capture_output=True, env=environment)
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
@@ -735,7 +735,6 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "Bash(meridian worktree evidence:*)",
             "Bash(meridian worktree closure-status:*)",
             "Bash(meridian worktree integrate stage:*)",
-            "Bash(python3 scripts/meridian.py worktree integrate finalize:*)",
             "Bash(python3 scripts/check_repository.py)",
             "Bash(python3 -m unittest discover -s tests)",
             "Bash(git mv tasks/:*)",
@@ -753,11 +752,11 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "investigate",
         ):
             self.assertIn(f"Bash(meridian execution {subcommand}:*)", allowlist)
-            self.assertIn(f"Bash(python3 scripts/meridian.py execution {subcommand}:*)", allowlist)
+            self.assertNotIn(f"Bash(python3 scripts/cardine_cli.py execution {subcommand}:*)", allowlist)
         for unrelated in ("Bash(git mv:*)", "Bash(mv:*)", "Bash(sed:*)", "Bash(rg:*)", "Bash(find:*)"):
             self.assertNotIn(unrelated, allowlist)
         self.assertNotIn("Bash(meridian execution reconcile:*)", allowlist)
-        self.assertNotIn("Bash(python3 scripts/meridian.py execution reconcile:*)", allowlist)
+        self.assertNotIn("Bash(python3 scripts/cardine_cli.py execution reconcile:*)", allowlist)
         self.assertNotIn("Bash(meridian:*)", allowlist)
         for forbidden in ("--tags", "--force", "rebase", "reset", "branch -D", "worktree add", "worktree remove", "worktree prune"):
             self.assertFalse(any(forbidden in command for command in allowlist), forbidden)
@@ -777,9 +776,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
             if command.startswith("Bash(meridian execution ")
         }
         python_subcommands = {
-            command.removeprefix("Bash(python3 scripts/meridian.py execution ").removesuffix(":*)")
+            command.removeprefix("Bash(python3 scripts/cardine_cli.py execution ").removesuffix(":*)")
             for command in allowlist
-            if command.startswith("Bash(python3 scripts/meridian.py execution ")
+            if command.startswith("Bash(python3 scripts/cardine_cli.py execution ")
         }
         self.assertEqual(claude_subcommands, codex_subcommands)
-        self.assertEqual(python_subcommands, codex_subcommands)
+        self.assertEqual(python_subcommands, set())

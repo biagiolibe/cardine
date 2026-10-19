@@ -10,7 +10,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian
+import cardine_cli
 from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.review import verdict as owner_review_verdict
 
@@ -46,7 +46,7 @@ class ReviewVerdictTest(unittest.TestCase):
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Fixture")
 
     def cli(self, verdict, *args):
-        return subprocess.run([sys.executable, str(ROOT / "scripts/meridian.py"), "review", "verdict", "001", verdict,
+        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "review", "verdict", "001", verdict,
                                "--project", str(self.root), "--format", "json", *args],
                               cwd=self.root, capture_output=True, text=True)
 
@@ -153,7 +153,7 @@ class ReviewVerdictTest(unittest.TestCase):
 
     def test_atomic_write_contains_review_and_transition_and_failure_changes_nothing(self):
         before = self.snapshot()
-        real_replace = meridian.os.replace
+        real_replace = cardine_cli.os.replace
         replacements = []
 
         def replace(source, destination):
@@ -165,11 +165,11 @@ class ReviewVerdictTest(unittest.TestCase):
             replacements.append(destination)
             real_replace(source, destination)
 
-        with mock.patch.object(meridian.os, "replace", side_effect=OSError("write failed")):
+        with mock.patch.object(cardine_cli.os, "replace", side_effect=OSError("write failed")):
             with self.assertRaises(OSError):
                 owner_review_verdict.record_review_verdict(self.root, "001", "APPROVE")
         self.assertEqual(self.snapshot(), before)
-        with mock.patch.object(meridian.os, "replace", side_effect=replace):
+        with mock.patch.object(cardine_cli.os, "replace", side_effect=replace):
             owner_review_verdict.record_review_verdict(self.root, "001", "APPROVE")
         self.assertEqual(replacements, [self.path])
 

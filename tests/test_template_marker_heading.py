@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import ROOT
+from cardine_cli_support import ROOT
 import json
 import re
 import shutil

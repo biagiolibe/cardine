@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-import meridian
+import cardine_cli
 from cardine.integration import merge as owner_integration_merge
 from cardine.worktree import checkout as owner_worktree_checkout
 import cardine.shared.errors as shared_errors
@@ -90,7 +90,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.assertNotIn(str(task_worktree), self.git("worktree", "list", "--porcelain").stdout)
         for hook in ("read-guard", "stop-audit"):
             result = subprocess.run(
-                [sys.executable, str(ROOT / "scripts/meridian.py"), "hook", hook, "--host", "codex"],
+                [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "hook", hook, "--host", "codex"],
                 cwd=task_worktree, input=json.dumps({"cwd": str(task_worktree),
                     "tool_name": "Bash", "tool_input": {"command": "cat missing.txt"},
                     "last_assistant_message": "BLOCKED WRONG_WORKTREE"}),
@@ -209,7 +209,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         resume = str(caught.exception).split("resume: ", 1)[1].strip()
         # Run the emitted arguments using the repository CLI entry point.
         import shlex
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/meridian.py"),
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"),
                                  *shlex.split(resume)[1:]], cwd=self.primary, text=True, capture_output=True,
                                 env={**os.environ, "MERIDIAN_WORKTREE_ROOT": str(self.worktree_root)})
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -250,7 +250,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.prepare()
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _task_state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
-        meridian._write_json_atomic(
+        cardine_cli._write_json_atomic(
             lease_path,
             {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary)},
             exclusive=True,
@@ -266,7 +266,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.prepare()
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _task_state, lease_path, _integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
-        meridian._write_json_atomic(
+        cardine_cli._write_json_atomic(
             lease_path,
             {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary)},
             exclusive=True,

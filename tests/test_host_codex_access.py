@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 import shutil
 import subprocess
 import sys
@@ -15,7 +15,7 @@ import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.hosts import codex as owner_hosts_codex
 from cardine.worktree import paths as owner_worktree_paths
-import meridian
+import cardine_cli
 
 
 class CodexRulesUpgradeTest(unittest.TestCase):
@@ -190,8 +190,8 @@ class CodexWorktreeAccessTest(unittest.TestCase):
             parsed["permissions"]["meridian-worktrees"]["workspace_roots"],
             {str(root.resolve()): True},
         )
-        self.assertLess(changed.index('model = "gpt-test"'), changed.index(meridian.CODEX_MANAGED_BEGIN))
-        self.assertLess(changed.index(meridian.CODEX_MANAGED_END), changed.index("[features]"))
+        self.assertLess(changed.index('model = "gpt-test"'), changed.index(cardine_cli.CODEX_MANAGED_BEGIN))
+        self.assertLess(changed.index(cardine_cli.CODEX_MANAGED_END), changed.index("[features]"))
         self.assertEqual(config.with_name("config.toml.meridian.bak").read_text(encoding="utf-8"), original)
         second = owner_hosts_codex.plan_codex_configuration(config, root)
         self.assertEqual(second.status, "ready")
@@ -219,14 +219,14 @@ class CodexWorktreeAccessTest(unittest.TestCase):
             parsed["permissions"]["meridian-worktrees"]["workspace_roots"],
             {str(root): True},
         )
-        self.assertLess(repaired.index('model = "gpt-test"'), repaired.index(meridian.CODEX_MANAGED_BEGIN))
+        self.assertLess(repaired.index('model = "gpt-test"'), repaired.index(cardine_cli.CODEX_MANAGED_BEGIN))
 
     def test_atomic_replace_failure_keeps_original(self) -> None:
         config = self.root / "config.toml"
         original = 'model = "gpt-test"\n'
         config.write_text(original, encoding="utf-8")
         plan = owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
-        with mock.patch.object(meridian.os, "replace", side_effect=OSError("simulated")):
+        with mock.patch.object(cardine_cli.os, "replace", side_effect=OSError("simulated")):
             with self.assertRaises(OSError):
                 owner_hosts_codex.apply_codex_configuration(plan)
         self.assertEqual(config.read_text(encoding="utf-8"), original)

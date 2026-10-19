@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from codex_read_guard import decision, extract_targets  # noqa: E402
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import files as owner_templates_files
 
 
@@ -100,7 +100,7 @@ class CodexReadGuardTest(unittest.TestCase):
     def test_cli_emits_stderr_and_structured_denial(self) -> None:
         self.write("big.txt", 500)
         result = subprocess.run(
-            [sys.executable, str(ROOT / "scripts/meridian.py"), "hook", "read-guard", "--host", "codex"],
+            [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "hook", "read-guard", "--host", "codex"],
             input=json.dumps(self.payload("cat big.txt")), text=True, capture_output=True, check=False,
         )
         self.assertEqual(result.returncode, 2)

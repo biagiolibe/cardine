@@ -69,7 +69,7 @@ if [ -z "$MERIDIAN_ROOT" ]; then
     die "set MERIDIAN_ROOT or pass --meridian-root"
   fi
 fi
-M="$MERIDIAN_ROOT/bin/meridian"
+M="$MERIDIAN_ROOT/bin/cardine"
 [ -x "$M" ] || die "no executable $M"
 TARGET="$(tr -d '[:space:]' < "$MERIDIAN_ROOT/VERSION")"
 BRANCH="${BRANCH:-meridian-upgrade-$TARGET}"

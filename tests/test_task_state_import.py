@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian
+import cardine_cli
 from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.tasks.state as task_state
 from cardine.stops import render as owner_stops_render
@@ -46,7 +46,7 @@ class TaskStateImportTest(unittest.TestCase):
         return record
 
     def cli(self, *args):
-        return subprocess.run([sys.executable, str(ROOT / "scripts/meridian.py"), "--framework-root", str(ROOT),
+        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "--framework-root", str(ROOT),
                                "task", "state", "import", *args, "--project", str(self.root), "--format", "json"],
                               capture_output=True, text=True)
 

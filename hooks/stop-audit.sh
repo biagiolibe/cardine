@@ -6,10 +6,10 @@
 set -uo pipefail
 
 HOOK_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-MERIDIAN_BIN="$HOOK_ROOT/bin/meridian"
+MERIDIAN_BIN="$HOOK_ROOT/bin/cardine"
 for PLUGIN_DIRECTORY in "${PLUGIN_ROOT:-}" "${CLAUDE_PLUGIN_ROOT:-}"; do
   [ -x "$MERIDIAN_BIN" ] && break
-  [ -n "$PLUGIN_DIRECTORY" ] && MERIDIAN_BIN="$PLUGIN_DIRECTORY/bin/meridian"
+  [ -n "$PLUGIN_DIRECTORY" ] && MERIDIAN_BIN="$PLUGIN_DIRECTORY/bin/cardine"
 done
 if [ ! -x "$MERIDIAN_BIN" ]; then
   MERIDIAN_BIN="$(command -v meridian 2>/dev/null || true)"

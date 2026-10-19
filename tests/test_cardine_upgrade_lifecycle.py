@@ -12,10 +12,10 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import migrations as owner_templates_migrations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin, SyntheticFramework
 
 
