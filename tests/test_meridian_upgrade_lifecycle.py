@@ -452,7 +452,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("capability=task-worktree-boundary v10", implementation.read_text(encoding="utf-8"))
         self.assertIn("**Manually triggered.**", implementation.read_text(encoding="utf-8"))
         upgraded_workflow = project_workflow.read_text(encoding="utf-8")
-        self.assertIn("capability=bounded-worktree-lifecycle v5", upgraded_workflow)
+        self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded_workflow)
         self.assertIn("Consumer-owned worktree note.", upgraded_workflow)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.54")

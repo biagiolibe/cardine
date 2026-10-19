@@ -145,3 +145,11 @@ Only installed `meridian` runs lifecycle commands; the task's doctor and audit
 commands remain validation of the framework checkout. Never run upgrade on this
 repository. The local managed configuration stays unchanged; `meridian task close`
 owns the separately authorized task-state and archive records.
+
+The first amended validation attempt at `6b85704` exposed one additional
+hard-coded `bounded-worktree-lifecycle v5` assertion in the same authorized
+upgrade test file, after the version-agnostic fixture advanced past its earlier
+failure. An unchanged rerun of that test reproduced the failure. The same
+baseline-version substitution was applied there, preserving every behavioral
+assertion. Thus six version assertions were updated rather than the five
+identified in the amendment; no tests were deleted.
