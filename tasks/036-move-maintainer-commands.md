@@ -41,7 +41,9 @@ one release script belongs to work item 12.
   contracts.
 - [ ] The CLI help lists only user and host-facing commands. A test fails if
   a maintainer command returns to it.
-- [ ] `.meridian/` is unchanged.
+- [ ] `.meridian/` is unchanged, except `.meridian/tasks/036.json`, which only
+  the installed `meridian task close 036` writes. The manifest, the baselines,
+  and every other file under `.meridian/` stay as they are.
 - [ ] Every command under Validation passes.
 
 ## Relevant Files
@@ -64,7 +66,7 @@ one release script belongs to work item 12.
 ## Out of scope
 
 Hook duplicates (work item 9), the release script merge (work item 12), and
-`.meridian/`.
+`.meridian/` other than this task's own state file.
 
 ## Dependencies
 
