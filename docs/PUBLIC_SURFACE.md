@@ -119,8 +119,7 @@ The following also belong to the stable surface:
 - The manifest and its `protocolVersion`. A protocol version that an older CLI
   refuses requires a major release.
 - Capability-marker identities and managed paths, and the migration path
-  between published releases. See [CAPABILITY_MARKERS.md](../migrations/CAPABILITY_MARKERS.md)
-  and [the capability catalog](../capabilities/catalog-v1.json).
+  between published releases. See [the capability catalog](../capabilities/catalog-v1.json).
 - Plugin slash-command names in [commands/](../commands/) and skill names in
   [skills/](../skills/). Skill names are stable adopter identities; host-invoked
   skill entry points additionally have the Host-facing compatibility contract.

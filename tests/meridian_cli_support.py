@@ -61,6 +61,15 @@ class MeridianCliFixtureMixin:
             check=False,
         )
 
+    def write_synthetic_migration(
+        self, identifier: str, source: str, target: str, paths: list[str] | None = None, **declared: object
+    ) -> None:
+        record = {
+            "id": identifier, "from": source, "to": target, "description": "Synthetic " + identifier,
+            "managedPaths": paths or [], "verification": ["fixture assertions"], **declared,
+        }
+        (self.framework / "migrations" / f"{identifier}.json").write_text(json.dumps(record), encoding="utf-8")
+
     def configure_1_1_40_to_1_1_41_upgrade(self) -> None:
         """Lock the entry points immediately before migration 044."""
         workflow = self.framework / "templates/workflows/governed-sdd"
@@ -76,11 +85,16 @@ class MeridianCliFixtureMixin:
             current.write_text(old_text, encoding="utf-8")
             (self.project / name).write_text(old_text, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.40\n", encoding="utf-8")
+        self.write_synthetic_migration("001-synthetic-before-restart", "1.1.39", "1.1.40")
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         for name in ("AGENTS.md", "CLAUDE.md"):
             source = ROOT / "templates/workflows/governed-sdd" / name
             (workflow / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.41\n", encoding="utf-8")
+        self.write_synthetic_migration(
+            "002-synthetic-restart", "1.1.40", "1.1.41", ["AGENTS.md", "CLAUDE.md"],
+            capabilities=[{"capability": "command-triggers", "capabilityVersion": 3}],
+        )
 
     def configure_1_1_53_to_1_1_54_manual_proceed_upgrade(self) -> tuple[Path, Path]:
         """Lock the two governed worktree capabilities immediately before 056."""
@@ -362,21 +376,6 @@ class MeridianCliFixtureMixin:
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-    def _reinsert_role_scoped_agent_rules_block(self, text: str) -> str:
-        block = (
-            "<!-- MERIDIAN:BEGIN capability=role-scoped-agent-rules v1 -->\n"
-            "## Role-scoped agent-rules reading\n\n"
-            "`AGENTS.md`/`CLAUDE.md` states rules for every role in one file; reading all\n"
-            "of it in every session is more than a given role needs. Read only the\n"
-            "sections your current role requires, identified by heading text:\n\n"
-            "- **Every role** reads the file's shared core: the introductory rules\n"
-            "  through \"Command triggers\", plus \"Owner-acceptance workflow\".\n"
-            "<!-- MERIDIAN:END -->\n\n"
-        )
-        anchor = "<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->"
-        self.assertIn(anchor, text)
-        return text.replace(anchor, block + anchor, 1)
-
     REASONING_CONTRACT_BLOCK = (
         "<!-- MERIDIAN:BEGIN capability=reasoning-budget-contract v1 -->\n"
         "## Reasoning budget contract\n\n"
@@ -399,12 +398,18 @@ class MeridianCliFixtureMixin:
         self.assertIn("reasoning-budget-contract", previous)
         policy.write_text(previous, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.8\n", encoding="utf-8")
+        self.write_synthetic_migration("001-synthetic-before-retirement", "1.2.7", "1.2.8")
         shutil.rmtree(self.project)
         self.project.mkdir()
         self.copy_governed_templates()
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         policy.write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.9\n", encoding="utf-8")
+        self.write_synthetic_migration(
+            "002-synthetic-retire-contract", "1.2.8", "1.2.9", ["docs/CONTEXT_BUDGET_POLICY.md"],
+            capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 5}],
+            removes=[{"capability": "reasoning-budget-contract", "capabilityVersion": 1}],
+        )
         return policy, self.project / "docs/CONTEXT_BUDGET_POLICY.md"
 
     def seed_unlocked_project_from_baseline(self) -> None:

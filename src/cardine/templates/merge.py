@@ -17,9 +17,7 @@ from cardine.templates.files import managed_files
 from cardine.templates.manifest import write_manifest
 from cardine.templates.marker_history import declared_capability_moves
 from cardine.templates.marker_history import pending_migration_establishes_move_source
-from cardine.templates.markers import CLAUDE_AGENTS_POINTER_MARKER
 from cardine.templates.markers import agents_pointer_can_follow_upgrade
-from cardine.templates.markers import agents_pointer_satisfies_claude
 from cardine.templates.markers import append_only_new_markers
 from cardine.templates.markers import capability_ids_in_template
 from cardine.templates.markers import deduplicate_identical_template_markers
@@ -322,22 +320,6 @@ def plan_from_baseline(
             )
         if sha256(item.source) == sha256(base):
             local_text = local.read_text(encoding="utf-8")
-            if (
-                item.target == Path("CLAUDE.md")
-                and CLAUDE_AGENTS_POINTER_MARKER not in local_text
-                and "036-explicit-claude-agents-pointer" in pending_migrations
-                and agents_pointer_satisfies_claude(
-                    project_root, framework_root, mode, item.source.read_text(encoding="utf-8"), local_text
-                )
-            ):
-                plan.append(
-                    PlanItem(
-                        item,
-                        "pointer-upgrade",
-                        "add the explicit Claude-to-AGENTS pointer marker without changing project-owned pointer text",
-                    )
-                )
-                continue
             normalized = deduplicate_identical_template_markers(
                 local_text, item.source.read_text(encoding="utf-8")
             )
@@ -378,16 +360,10 @@ def plan_from_baseline(
             if item.target == Path("CLAUDE.md") and agents_pointer_can_follow_upgrade(
                 project_root, framework_root, mode, baseline_root, template_text, local_text
             ):
-                legacy_pointer = CLAUDE_AGENTS_POINTER_MARKER not in local_text
-                action = (
-                    "pointer-upgrade"
-                    if legacy_pointer and "036-explicit-claude-agents-pointer" in pending_migrations
-                    else "pointer-verified"
-                )
                 plan.append(
                     PlanItem(
                         item,
-                        action,
+                        "pointer-verified",
                         "project declares CLAUDE.md as an AGENTS.md pointer; shared markers are current or "
                         "will be updated safely in AGENTS.md",
                     )

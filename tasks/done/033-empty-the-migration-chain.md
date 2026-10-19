@@ -17,7 +17,7 @@ replay Meridian's history.
 
 ## Acceptance Criteria
 
-- [ ] `migrations/` keeps only what the mechanism needs going forward, such
+- [x] `migrations/` keeps only what the mechanism needs going forward, such
   as its README, which describes an empty chain. Every numbered migration
   record and its history documents are deleted:
   - `ASSISTED_ADOPTION.md`;
@@ -25,25 +25,25 @@ replay Meridian's history.
   - `marker-baselines/`, now in `capabilities/` after task 031.
 
   The handoff lists what remains.
-- [ ] The tests that still read real migrations use synthetic fixtures:
+- [x] The tests that still read real migrations use synthetic fixtures:
   `CapabilityMarkerTest`, `ManagedCopyDigestAuditTest`,
   `RetiredInlineMarkerUpgradeTest`, `CapabilityProfileManifestTest`,
   `TaskIdentityResolverTest`, `CapabilityMarkerBaselineTest`, and the
   repository-check tests. A test that only proves a fact about Meridian's
   history is deleted, and the handoff lists each one with the reason. An
   example is "role-scoped agent rules were retired, not deleted by hand".
-- [ ] Code that exists only for Meridian's history is removed, and so are its
+- [x] Code that exists only for Meridian's history is removed, and so are its
   tests. This covers the historical parts of `cardine.templates.marker_history`
   and `cardine.templates.migration_audit`. The mechanism still loads, orders,
   validates, and applies a chain, and synthetic tests prove it.
-- [ ] `scripts/check_repository.py` no longer requires any migration file,
+- [x] `scripts/check_repository.py` no longer requires any migration file,
   and it accepts an empty chain.
-- [ ] `scripts/release.py` and its tests work with an empty chain. A release
+- [x] `scripts/release.py` and its tests work with an empty chain. A release
   without migrations is a CLI-only release unless templates changed.
-- [ ] `.meridian/` is unchanged.
-- [ ] The parallel suite reports the same coverage `total` before and after
+- [x] `.meridian/` is unchanged.
+- [x] The parallel suite reports the same coverage `total` before and after
   the task, minus the deleted history tests listed in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

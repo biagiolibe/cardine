@@ -54,23 +54,7 @@ REQUIRED_FILES = (
     ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",
     ".meridian/probes/meridian-self-hosting/claude-project-v1.json",
     ".meridian/probes/meridian-self-hosting/codex-project-v1.json",
-    "migrations/001-review-remediation-record.json",
-    "migrations/002-lifecycle-orchestration.json",
-    "migrations/003-framework-updater.json",
-    "migrations/004-validation-scoping.json",
-    "migrations/005-ci-verified-validation.json",
-    "migrations/006-capability-markers.json",
-    "migrations/007-validation-capability-markers.json",
-    "migrations/008-review-remediation-record-v2.json",
-    "migrations/009-lifecycle-orchestration-v2.json",
-    "migrations/010-project-workflow-baseline-capabilities.json",
-    "migrations/011-whole-file-baseline-capabilities.json",
-    "migrations/012-agents-claude-residual-capabilities.json",
-    "migrations/013-language-policy-v2.json",
-    "migrations/048-manifest-capability-profile-schema.json",
-    "migrations/052-install-meridian-self-hosting-surfaces.json",
     "migrations/README.md",
-    "migrations/ASSISTED_ADOPTION.md",
     "release-baselines/1.0.0/templates/workflows/governed-sdd/PROJECT_WORKFLOW.md",
     "commands/meridian-upgrade.md",
     "commands/meridian-adopt.md",
@@ -525,26 +509,10 @@ def check_capability_catalog(root: Path = ROOT) -> None:
     profile = catalog.profile("meridian-self-hosting")
     if profile is None or not profile.capabilities:
         fail("capability catalog is missing the versioned meridian-self-hosting profile")
-    transition_path = root / "migrations/048-manifest-capability-profile-schema.json"
-    if not transition_path.is_file():
-        fail("manifest capability-profile schema transition is missing")
-    transition = json.loads(transition_path.read_text(encoding="utf-8")).get(
-        "schemaTransition", {}
-    )
-    if transition != {
-        "catalogVersion": constants.CAPABILITY_CATALOG_VERSION,
-        "fromProtocolVersion": constants.LEGACY_PROTOCOL_VERSION,
-        "legacyWorkflowModeField": "mode",
-        "toProtocolVersion": constants.PROTOCOL_VERSION,
-        "workflowModeField": "workflowMode",
-    }:
-        fail("manifest capability-profile schema transition does not match the parser")
 
 
 def check_migrations(root: Path = ROOT) -> None:
     migration_paths = sorted((root / "migrations").glob("[0-9][0-9][0-9]-*.json"))
-    if not migration_paths:
-        fail("no framework migrations are defined")
     tag_listing = subprocess.run(
         ["git", "-C", str(root), "tag", "--list", "v*"],
         check=False,
@@ -582,8 +550,9 @@ def check_migrations(root: Path = ROOT) -> None:
         previous_to = data["to"]
     current_version = (root / "VERSION").read_text(encoding="utf-8").strip()
     # A CLI-only release bumps VERSION without a migration, so the last
-    # migration may lag behind VERSION but must never be ahead of it.
-    if meridian.version_key(previous_to) > meridian.version_key(current_version):
+    # migration may lag behind VERSION but must never be ahead of it. An empty
+    # chain has no last migration.
+    if previous_to is not None and meridian.version_key(previous_to) > meridian.version_key(current_version):
         fail("a migration must never target a version ahead of the current release")
     for error in owner_templates_migration_audit.validate_capability_moves(root, "governed-sdd"):
         fail(f"invalid capability move: {error}")
@@ -627,8 +596,11 @@ def check_releases(root: Path = ROOT) -> None:
             fail(f"{relative}: migrations must be a list")
         if data["baselineChanged"] is not bool(migrations):
             fail(f"{relative}: baselineChanged must be true iff migrations is non-empty")
+        # Ledgers for releases that predate the empty chain name migration
+        # records that no longer exist; they are checked against the chain
+        # only while the chain still carries the record.
         for migration_id in migrations:
-            if migration_targets.get(migration_id) != data["workflowBaselineVersion"]:
+            if migration_id in migration_targets and migration_targets[migration_id] != data["workflowBaselineVersion"]:
                 fail(
                     f"{relative}: migration {migration_id!r} does not target "
                     "workflowBaselineVersion"
@@ -638,15 +610,18 @@ def check_releases(root: Path = ROOT) -> None:
     if any(a >= b for a, b in zip(versions, versions[1:])):
         fail("release versions are not monotonically increasing across files")
     latest = max(records, key=lambda record: meridian.version_key(record["version"]))
-    try:
-        expected_baseline = owner_templates_files.latest_migration_to(root, latest["version"])
-    except meridian.MeridianError as error:
-        fail(f"cannot derive workflowBaselineVersion: {error}")
-    if latest["workflowBaselineVersion"] != expected_baseline:
-        fail(
-            f"releases/{latest['version']}.json workflowBaselineVersion does not match "
-            f"the migration-derived baseline {expected_baseline}"
-        )
+    if migration_targets:
+        try:
+            expected_baseline = owner_templates_files.latest_migration_to(root, latest["version"])
+        except meridian.MeridianError as error:
+            fail(f"cannot derive workflowBaselineVersion: {error}")
+        if latest["workflowBaselineVersion"] != expected_baseline:
+            fail(
+                f"releases/{latest['version']}.json workflowBaselineVersion does not match "
+                f"the migration-derived baseline {expected_baseline}"
+            )
+    elif meridian.version_key(latest["workflowBaselineVersion"]) > meridian.version_key(latest["version"]):
+        fail(f"releases/{latest['version']}.json workflowBaselineVersion is ahead of its version")
 
 
 def check_bash() -> None:
@@ -838,7 +813,21 @@ def check_self_hosting_baseline(root: Path = ROOT) -> None:
         return
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     recorded = owner_templates_files.manifest_baseline_version(manifest)
-    expected = owner_templates_files.latest_migration_to(root, meridian.read_version(root))
+    version = meridian.read_version(root)
+    # The newest chain target at or below VERSION; with none, the baseline the
+    # newest release ledger at or below VERSION records.
+    released = [
+        str(json.loads(path.read_text(encoding="utf-8"))["to"])
+        for path in (root / "migrations").glob("[0-9][0-9][0-9]-*.json")
+    ] or [
+        str(json.loads(path.read_text(encoding="utf-8"))["workflowBaselineVersion"])
+        for path in (root / "releases").glob("*.json")
+    ]
+    expected = max(
+        (item for item in released if meridian.version_key(item) <= meridian.version_key(version)),
+        key=meridian.version_key,
+        default=recorded,
+    )
     if meridian.version_key(recorded) < meridian.version_key(expected):
         fail(
             f".meridian/manifest.json workflowBaselineVersion {recorded} is older than the newest "

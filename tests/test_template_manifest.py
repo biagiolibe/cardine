@@ -105,20 +105,6 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
 
 
 class MarkerCatalogTest(unittest.TestCase):
-    def test_catalog_preserves_current_migration_requirements_and_retirements(self) -> None:
-        expected = {}
-        retired = set()
-        for path in sorted((ROOT / "migrations").glob("*.json")):
-            data = json.loads(path.read_text(encoding="utf-8"))
-            for capability, version in owner_templates_migrations.migration_capability_entries(data):
-                if capability not in expected or version > expected[capability][0]:
-                    expected[capability] = (version, data["id"])
-            for capability, _version, _replacement in owner_templates_migrations.migration_capability_removals(data):
-                expected.pop(capability, None)
-                retired.add(capability)
-        self.assertEqual(owner_templates_catalog.marker_requirements(ROOT), expected)
-        self.assertEqual(owner_templates_migrations.retired_capability_ids(ROOT), retired)
-
     def test_catalog_readers_work_without_migration_records(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             framework = Path(temporary)

@@ -21,7 +21,7 @@ import re
 def audit_capability_markers(
     project_root: Path, framework_root: Path, mode: str
 ) -> list[tuple[str, str]]:
-    """Phase 4 of migrations/CAPABILITY_MARKERS.md: protected-region integrity.
+    """Protected-region integrity.
 
     For every capability marker found in a project's managed files, compare
     its exact bracketed content against the framework's own current template
