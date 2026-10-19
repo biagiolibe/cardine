@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 import unittest
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from contextlib import contextmanager
 from pathlib import Path
@@ -175,6 +175,14 @@ def shard_command(index: int, count: int, tests_directory: Path) -> list[str]:
     return command
 
 
+def isolated_environment(environment: Mapping[str, str]) -> dict[str, str]:
+    """Keep test roots independent and exclude retired framework variables."""
+    return {
+        key: value for key, value in environment.items()
+        if key != "CARDINE_ROOT" and not key.startswith("MERIDIAN_")
+    }
+
+
 def run_shards(
     commands: Sequence[Sequence[str]], scratch: Path, environment: dict[str, str] | None = None
 ) -> list[ShardResult]:
@@ -186,11 +194,10 @@ def run_shards(
             (private / "tmp").mkdir(parents=True)
             output_path = private / "output.txt"
             shard_environment = {
-                **(os.environ if environment is None else environment),
+                **isolated_environment(os.environ if environment is None else environment),
                 "TMPDIR": str(private / "tmp"),
-                "MERIDIAN_TEST_SHARD": f"{position}/{len(commands)}",
+                "CARDINE_TEST_SHARD": f"{position}/{len(commands)}",
             }
-            shard_environment.pop("MERIDIAN_ROOT", None)
             with output_path.open("wb") as output:
                 process = subprocess.Popen(
                     list(command), stdout=output, stderr=subprocess.STDOUT, env=shard_environment, cwd=ROOT
@@ -307,7 +314,7 @@ def run_clean_clone(requested: int, source: Path = ROOT) -> int:
     commit = git(source, "rev-parse", "HEAD").stdout.strip()
     scratch = Path(tempfile.mkdtemp(prefix="meridian-clean-clone-"))
     clone = scratch / "clone"
-    environment = {key: value for key, value in os.environ.items() if key != "MERIDIAN_ROOT"}
+    environment = isolated_environment(os.environ)
     environment["TMPDIR"] = str(scratch)
     total, digest, outcome = "unknown", "unknown", "FAILED"
     try:
@@ -348,7 +355,9 @@ def main(arguments: list[str] | None = None) -> int:
             parser().error("--clean-clone requires --parallel")
         return run_clean_clone(options.parallel)
     # Tests select their own framework roots; do not inherit the launcher's.
-    os.environ.pop("MERIDIAN_ROOT", None)
+    for key in tuple(os.environ):
+        if key == "CARDINE_ROOT" or key.startswith("MERIDIAN_"):
+            os.environ.pop(key)
     # `python -m unittest` puts the working directory on sys.path; a script run
     # puts only scripts/, so tests that import `tests.*` need the root as well.
     if str(ROOT) not in sys.path:

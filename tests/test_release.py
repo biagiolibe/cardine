@@ -867,13 +867,23 @@ class ReleasePublishTest(unittest.TestCase):
 
 class FailureVisibilityProbe(unittest.TestCase):
     def test_genuine_assertion_is_visible(self) -> None:
-        if os.environ.get("MERIDIAN_FAILURE_VISIBILITY_PROBE") == "1":
+        if os.environ.get("CARDINE_FAILURE_VISIBILITY_PROBE") == "1":
             self.fail("intentional assertion failure visibility probe")
 
 
 class FailureVisibilityTest(unittest.TestCase):
+    def test_old_probe_environment_name_is_ignored(self) -> None:
+        environment = {key: value for key, value in os.environ.items() if key != "CARDINE_FAILURE_VISIBILITY_PROBE"}
+        environment["MERIDIAN_FAILURE_VISIBILITY_PROBE"] = "1"  # MERIDIAN-OLD-NAME-TEST
+        result = subprocess.run(
+            [sys.executable, "-m", "unittest", "tests.test_release.FailureVisibilityProbe.test_genuine_assertion_is_visible"],
+            cwd=ROOT, text=True, capture_output=True, env=environment,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OK", result.stderr)
+
     def test_genuine_assertion_in_this_module_remains_visible(self) -> None:
-        environment = {**os.environ, "MERIDIAN_FAILURE_VISIBILITY_PROBE": "1"}
+        environment = {**os.environ, "CARDINE_FAILURE_VISIBILITY_PROBE": "1"}
         result = subprocess.run(
             [sys.executable, "-m", "unittest", "tests.test_release.FailureVisibilityProbe.test_genuine_assertion_is_visible"],
             cwd=ROOT,

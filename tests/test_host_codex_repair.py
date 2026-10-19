@@ -329,7 +329,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertEqual(blocked["profile-ownership"], "blocked")
         self.assertEqual(blocked["worktree-root-write"], "approval-required")
 
-    def test_doctor_reports_skill_links_and_meridian_root_without_writing(self) -> None:
+    def test_doctor_reports_skill_links_and_cardine_root_without_writing(self) -> None:
         before = sorted(path.relative_to(self.root) for path in self.root.rglob("*"))
         report = owner_hosts_setup.codex_doctor(
             self.root,
@@ -337,9 +337,9 @@ class CodexProfileRepairTest(unittest.TestCase):
             self.worktrees,
             framework_root=ROOT,
             home=self.root,
-            environment={"MERIDIAN_ROOT": str(ROOT)},
+            environment={"CARDINE_ROOT": str(ROOT)},
         )
         self.assertEqual(report["skill-links"], "missing")
-        self.assertEqual(report["MERIDIAN_ROOT"], "ready")
+        self.assertEqual(report["CARDINE_ROOT"], "ready")
         after = sorted(path.relative_to(self.root) for path in self.root.rglob("*"))
         self.assertEqual(before, after)

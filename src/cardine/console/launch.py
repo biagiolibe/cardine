@@ -94,7 +94,7 @@ def _apple_script(command: str, session_uuid: str) -> str:
         "        end repeat",
         "    end repeat",
         "end repeat",
-        "if targetSession is missing value then error \"MERIDIAN_SESSION_NOT_FOUND\"",
+        "if targetSession is missing value then error \"CARDINE_SESSION_NOT_FOUND\"",
         "tell targetSession",
         "set newSession to split horizontally with default profile",
         f'tell newSession to write text "{quoted}"',
@@ -126,7 +126,7 @@ def _start_launch(request: LaunchRequest) -> tuple[bool, str]:
         return False, f"iTerm2 launch failed: {error}; [copy] remains available"
     if result.returncode:
         detail = (result.stderr or result.stdout).strip()
-        if "MERIDIAN_SESSION_NOT_FOUND" in detail:
+        if "CARDINE_SESSION_NOT_FOUND" in detail:
             return False, "iTerm2 console session was not found; [copy] remains available"
         return False, (f"iTerm2 is unavailable or rejected launch: {detail}; [copy] remains available"
                        if detail else "iTerm2 launch failed; [copy] remains available")

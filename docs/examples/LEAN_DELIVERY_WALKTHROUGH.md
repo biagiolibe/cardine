@@ -13,8 +13,8 @@ exercise, start in an empty Git repository on `main`, with author identity
 configured and an empty **local bare** repository registered as `origin`.
 The test supplies these through the existing `WorktreeLifecycleCliTest`
 fixture and its `create_bare_origin` helper. It needs no network or host setup.
-Set `MERIDIAN_ROOT` to the installed framework checkout and
-`MERIDIAN_WORKTREE_ROOT` to a writable disposable worktree directory. The test
+Set `CARDINE_ROOT` to the installed framework checkout and
+`CARDINE_WORKTREE_ROOT` to a writable disposable worktree directory. The test
 sets both, plus a disposable HOME, so it does not touch your user configuration.
 
 **Host step — initialization:** in Claude Code use `/meridian-init`; in Codex
@@ -27,13 +27,13 @@ worktree access as described in the quick start.
 
 ```bash
 set -euo pipefail
-export PATH="$MERIDIAN_ROOT/bin:$PATH"
+export PATH="$CARDINE_ROOT/bin:$PATH"
 export PRIMARY="$PWD"
 python3 - <<'PY'
 import os
 import shutil
 from pathlib import Path
-root = Path(os.environ["MERIDIAN_ROOT"])
+root = Path(os.environ["CARDINE_ROOT"])
 for source in (root / "templates/base", root / "templates/workflows/lean-delivery"):
     shutil.copytree(source, Path.cwd(), dirs_exist_ok=True)
 for path in Path.cwd().rglob("*"):

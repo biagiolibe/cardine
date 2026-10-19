@@ -49,7 +49,7 @@ class CardineCliTests(unittest.TestCase):
                 self.assertFalse(hasattr(module, "MeridianArgumentParser"))  # MERIDIAN-OLD-NAME-TEST
 
     def test_version_uses_checkout_without_inherited_framework_root(self):
-        environment = {key: value for key, value in os.environ.items() if key != "MERIDIAN_ROOT"}
+        environment = {key: value for key, value in os.environ.items() if key != "CARDINE_ROOT"}
         environment["PYTHONPATH"] = str(ROOT / "src")
         result = subprocess.run(
             [sys.executable, "-m", "cardine.cli", "--version"],
@@ -58,6 +58,18 @@ class CardineCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), (ROOT / "VERSION").read_text().strip())
         self.assertEqual(result.stderr, "")
+
+    def test_old_framework_root_does_not_select_another_installation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "VERSION").write_text("9.9.9\n")
+            environment = {key: value for key, value in os.environ.items() if key != "CARDINE_ROOT"}
+            environment["MERIDIAN_ROOT"] = directory  # MERIDIAN-OLD-NAME-TEST
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "bin/cardine"), "--version"],
+                env=environment, capture_output=True, text=True,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), (ROOT / "VERSION").read_text().strip())
 
     def test_all_entry_points_preserve_arguments_output_and_exit_codes(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -82,10 +94,10 @@ class CardineCliTests(unittest.TestCase):
                 [sys.executable, "-m", "cardine.cli"],
             ]
             for inherited in (False, True):
-                environment = {key: value for key, value in os.environ.items() if key != "MERIDIAN_ROOT"}
+                environment = {key: value for key, value in os.environ.items() if key != "CARDINE_ROOT"}
                 environment["PYTHONPATH"] = str(ROOT / "src")
                 if inherited:
-                    environment["MERIDIAN_ROOT"] = str(other_root)
+                    environment["CARDINE_ROOT"] = str(other_root)
                 for arguments, code in [
                     (["--version"], 0), (["--help"], 0), (["--unknown"], 2),
                     (["adopt"], 2), (["finalize-adoption"], 2),

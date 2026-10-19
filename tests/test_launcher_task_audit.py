@@ -22,7 +22,7 @@ class LauncherTest(unittest.TestCase):
         # The source launcher must resolve the package and script hook adapters
         # from its own checkout when invoked outside the repository.
         environment = dict(os.environ)
-        environment.pop("MERIDIAN_ROOT", None)
+        environment.pop("CARDINE_ROOT", None)
         result = subprocess.run(
             [sys.executable, str(ROOT / "bin" / "cardine"), "--version"],
             cwd=tempfile.gettempdir(), capture_output=True, text=True, check=False,

@@ -69,19 +69,19 @@ def resolve_worktree_root(
     user_home = (home or Path.home()).expanduser().resolve()
     selected_config = config_path or user_configuration_path(values, user_home)
     explicit_path = explicit.expanduser().resolve() if explicit is not None else None
-    environment_value = values.get("MERIDIAN_WORKTREE_ROOT")
+    environment_value = values.get("CARDINE_WORKTREE_ROOT")
     environment_path = (
         Path(environment_value).expanduser().resolve() if environment_value else None
     )
     if explicit_path is not None and environment_path is not None and explicit_path != environment_path:
         raise CardineError(
             "conflicting worktree roots: --worktree-root supplied "
-            f"{explicit_path}; MERIDIAN_WORKTREE_ROOT supplied {environment_path}"
+            f"{explicit_path}; CARDINE_WORKTREE_ROOT supplied {environment_path}"
         )
     if explicit_path is not None:
         root, source = explicit_path, "--worktree-root"
     elif environment_path is not None:
-        root, source = environment_path, "MERIDIAN_WORKTREE_ROOT"
+        root, source = environment_path, "CARDINE_WORKTREE_ROOT"
     else:
         configuration = _read_user_configuration(selected_config)
         if configuration is not None:

@@ -217,16 +217,16 @@ def plan_setup(
         changes = ["none; setup is blocked before mutation"]
     elif skill_links_state == "missing" and changes != ["none; setup is blocked before mutation"]:
         changes.append(f"create missing Codex skill links in {home / '.agents/skills'}")
-    meridian_root_value = environment.get("MERIDIAN_ROOT")
-    meridian_root_state = (
+    cardine_root_value = environment.get("CARDINE_ROOT")
+    cardine_root_state = (
         "unset"
-        if meridian_root_value is None
+        if cardine_root_value is None
         else "ready"
-        if Path(meridian_root_value).expanduser().resolve() == framework_root
+        if Path(cardine_root_value).expanduser().resolve() == framework_root
         else "mismatch"
     )
-    if meridian_root_state == "mismatch":
-        warnings.append(f"MERIDIAN_ROOT differs from framework root: {meridian_root_value}")
+    if cardine_root_state == "mismatch":
+        warnings.append(f"CARDINE_ROOT differs from framework root: {cardine_root_value}")
     warnings.extend(_stale_codex_skill_warnings(home))
     temporary_root = Path(tempfile.gettempdir()).resolve()
     if resolution.path == temporary_root or temporary_root in resolution.path.parents:
@@ -268,7 +268,7 @@ def plan_setup(
         framework_root,
         skill_links,
         skill_links_state,
-        meridian_root_state,
+        cardine_root_state,
         tuple(changes),
         tuple(warnings),
     )
@@ -316,9 +316,9 @@ def print_setup_plan(plan: SetupPlan) -> None:
     print(f"codex-skill-links: {plan.skill_links_state}")
     for name, path, state, detail in plan.skill_links:
         print(f"codex-skill-{name}: {state} ({path}; {detail})")
-    print(f"MERIDIAN_ROOT: {plan.meridian_root_state}")
-    print(f"shell-profile-MERIDIAN_ROOT: export MERIDIAN_ROOT={plan.framework_root}")
-    print('shell-profile-PATH: export PATH="$MERIDIAN_ROOT/bin:$PATH"')
+    print(f"CARDINE_ROOT: {plan.cardine_root_state}")
+    print(f"shell-profile-CARDINE_ROOT: export CARDINE_ROOT={plan.framework_root}")
+    print('shell-profile-PATH: export PATH="$CARDINE_ROOT/bin:$PATH"')
     for warning in plan.warnings:
         print(f"warning: {warning}")
     print("changes:")
@@ -563,12 +563,12 @@ def codex_doctor(
     except CardineError:
         result["user-command-policy"] = "stale"
     result["skill-links"] = _aggregate_skill_state(_framework_skill_links(framework_root, home))
-    meridian_root_value = (environment or os.environ).get("MERIDIAN_ROOT")
-    result["MERIDIAN_ROOT"] = (
+    cardine_root_value = (environment or os.environ).get("CARDINE_ROOT")
+    result["CARDINE_ROOT"] = (
         "unset"
-        if meridian_root_value is None
+        if cardine_root_value is None
         else "ready"
-        if Path(meridian_root_value).expanduser().resolve() == framework_root
+        if Path(cardine_root_value).expanduser().resolve() == framework_root
         else "mismatch"
     )
     return result
