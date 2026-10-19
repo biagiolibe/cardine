@@ -401,3 +401,15 @@ this repository continues closing tasks with installed Meridian.
 No 1.1 pull-request implementation is planned. Keeping landing policy and
 external review provenance independent of presets preserves that extension
 without inventing additional states or a second template set.
+
+## Coordinator notes (2026-10-19)
+
+- `5a-final` is task 051, the last row (R10) of `docs/RENAME_PLAN.md`.
+- `cardine.legacy.meridian_installation.load_meridian_snapshot` (rename plan
+  row R2) builds the coordinator's snapshot of this repository through the
+  same snapshot code, and that code reads the workflow through `detect_mode`,
+  from the frozen `PROJECT_WORKFLOW.md` and `tasks/QUEUE.md`. When row SW1
+  makes every consumer of `detect_mode` use the configuration resolver, the
+  Meridian workflow detection moves into `cardine.legacy`, and
+  `load_meridian_snapshot` keeps reading this repository until work item 10.
+  Rename plan choice 5 states the same constraint.

@@ -531,7 +531,9 @@ surfaces only and leave those files unchanged.
      code keeps one read-only reader of `.meridian/` and `MERIDIAN:BEGIN`
      markers for the conversion of item 10. That reader is not an alias of
      decision 1: no command accepts the Meridian names as input for its own
-     work.
+     work. Until item 10 the same reader also gives the coordinator a
+     read-only snapshot of this repository, which the installed Meridian
+     still runs; no command dispatches it.
    - **5b, after item 6:** the markers become `CARDINE:BEGIN`, and every
      capability restarts at `v1`. The marker baseline and `requiredVersion`
      values are rewritten to match. Template text, skills, and slash
