@@ -23,7 +23,7 @@ must leave alone.
 
 ## Acceptance Criteria
 
-- [ ] `docs/RENAME_PLAN.md` exists, in English, and contains:
+- [x] `docs/RENAME_PLAN.md` exists, in English, and contains:
   - **Identifier classes.** One section per class, with the current and new
     name and every file that uses it, found with `git ls-files` and `git
     grep`. The classes are:
@@ -72,13 +72,13 @@ must leave alone.
     with its scope, the files it touches, the tests that prove it, and its
     dependencies. Two tasks that touch the same file are never parallel. The
     last task adds a test that fails when a group 1 identifier returns.
-- [ ] The plan does not plan work item 5b, 6, or 10, but it names any choice
+- [x] The plan does not plan work item 5b, 6, or 10, but it names any choice
   that would make them harder.
-- [ ] No file changes outside `docs/RENAME_PLAN.md` and this task's records:
+- [x] No file changes outside `docs/RENAME_PLAN.md` and this task's records:
   the task record, its handoff, its archive under `tasks/done/`, and
   `.meridian/tasks/040.json`, which only the installed `meridian task close
   040` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

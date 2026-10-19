@@ -32,11 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 12 — Rename code identifiers
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work item 5a, and decision 1.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 040 | Plan the rename of code identifiers (work item 5a) | 🔴 P1 | — | [040](040-plan-code-identifier-rename.md) |

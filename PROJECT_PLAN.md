@@ -64,5 +64,5 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 037 — Scan only repository files in `check_repository.py`.
 - `[x]` 038 — Reject a stale `requiredVersion` in the marker catalog.
 - `[x]` 039 — Check the self-hosting installation only with the installed Meridian.
-- `[ ]` 040 — Plan the rename of code identifiers (work item 5a).
+- `[x]` 040 — Plan the rename of code identifiers (work item 5a).
 - `[x]` 041 — Plan the single workflow (work item 6).
