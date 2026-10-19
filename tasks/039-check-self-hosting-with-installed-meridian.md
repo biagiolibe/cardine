@@ -1,4 +1,4 @@
-# Task 039 — Check this repository's installation only with the installed Meridian
+# Task 039 — Check the self-hosting installation only with the installed Meridian
 
 > **ID**: `039`
 > **Category**: Bugfix

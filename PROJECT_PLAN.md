@@ -63,4 +63,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 036 — Move maintainer commands out of the user CLI and merge the generators.
 - `[x]` 037 — Scan only repository files in `check_repository.py`.
 - `[x]` 038 — Reject a stale `requiredVersion` in the marker catalog.
-- `[ ]` 039 — Check this repository's installation only with the installed Meridian.
+- `[ ]` 039 — Check the self-hosting installation only with the installed Meridian.
