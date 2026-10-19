@@ -38,7 +38,7 @@ showed two things:
 
 ## Acceptance Criteria
 
-- [ ] The managed `git-workflow` text in
+- [x] The managed `git-workflow` text in
   `templates/workflows/lean-delivery/CLAUDE.md` and `AGENTS.md`, and the
   Governed SDD text that carries the same stop rules, state the three classes
   of decision 12:
@@ -53,34 +53,34 @@ showed two things:
     rerun passes, record the test as intermittent in the handoff, and the
     attempt does not count. After 3 consecutive counted failures, stop with
     `BLOCKED VALIDATION_RETRY_LIMIT` and a summary of the failures.
-- [ ] The text keeps the deny list, the ban on writing false state to pass a
+- [x] The text keeps the deny list, the ban on writing false state to pass a
   gate, `RULE_CONFLICT`, and the rule that guidance no command backs is
   advice, word for word where they do not conflict with decision 12.
-- [ ] The managed `bounded-worktree-lifecycle` text in both
+- [x] The managed `bounded-worktree-lifecycle` text in both
   `templates/workflows/*/PROJECT_WORKFLOW.md` describes the Resume that task
   028 implemented: run `meridian worktree check <task-id> --resume`, accept
   `status: ready-dirty`, read the status and the diff, then run `execution
   start --resume`. It never writes a bare `BLOCKED` without a registered
   code, so the repository check passes.
-- [ ] The text tells the agent where to read a code's class. No CLI command
+- [x] The text tells the agent where to read a code's class. No CLI command
   shows a registry entry today, so the text names
   `capabilities/stop-codes-v1.json` in the framework, or a new read-only
   command if the task adds one. The handoff names the choice.
-- [ ] The registry gains `VALIDATION_RETRY_LIMIT` with `human_decision:
+- [x] The registry gains `VALIDATION_RETRY_LIMIT` with `human_decision:
   true`. `VALIDATION_FAILED` keeps `human_decision: false`: a single failed
   validation is failing work, not a stop. Every code that the new text names
   exists in the registry.
-- [ ] Template changes follow the pre-1.0 rule of task 031: the capability
+- [x] Template changes follow the pre-1.0 rule of task 031: the capability
   version is bumped and the marker baseline is rewritten. The task adds no
   migration and does not change `VERSION`, `.claude-plugin/plugin.json`, or
   `releases/`.
-- [ ] This repository's own `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
+- [x] This repository's own `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
   and `.meridian/` are unchanged, and the checkout's `upgrade` is not run on
   this repository.
-- [ ] A test proves that every code the new text names as a guardrail has
+- [x] A test proves that every code the new text names as a guardrail has
   `human_decision: true`, and that the text names no code missing from the
   registry.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -123,3 +123,43 @@ engine (work item 8), and stop behavior in the commands themselves.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Developer amendment — Resume, 2026-10-19
+
+The developer authorized this bounded extension after the coordinator confirmed
+that all 9 failures at `244d12b` were stale test expectations, not behavior defects:
+
+> Developer amendment to the task scope (record it in the record and in the handoff, quoting this authorization):
+> 1. `capabilities/markers-v1.json`: set `requiredVersion` to 15 for `git-workflow` and to 6 for `bounded-worktree-lifecycle` (the lowest version shipped between the two templates, the existing convention), as the task 031 rule in CONTRIBUTING.md requires. The coordinator has verified that check_repository, doctor, and the audit CI_GATE still pass.
+> 2. You may edit these tests, only to remove the hard-coded marker versions:
+>    - `tests/test_meridian_upgrade_lifecycle.py` (the 5 assertions on `git-workflow v14` / `bounded-worktree-lifecycle v7`) and `tests/test_template_marker_heading.py` (the `expected` dictionary): read the expected version from `capabilities/marker-baselines.json` for the template concerned, not from a literal.
+>    - `tests/meridian_cli_support.py`, `configure_1_1_53_to_1_1_54_manual_proceed_upgrade`: make the `bounded-worktree-lifecycle` regex version-agnostic (`v\d+`), keeping the `assertNotEqual` checks.
+>    - `tests/test_worktree_lifecycle.py`, `test_stop_registry_covers_closure_codes_and_names_real_tests`: add `VALIDATION_RETRY_LIMIT` to the matching groups (code set and `judgment` set).
+>    Do not weaken any other assertion and do not delete tests.
+
+The developer also authorized the following validation handling for this task:
+
+> Validation: rerun the whole Validation section (clean-clone on the final commit). Apply the rule this task introduces: when a failure comes from this task's changes, fix it and revalidate, at most 3 counted attempts; a test that fails once and passes on an identical unchanged rerun is intermittent, recorded in the handoff, and does not count. Only after 3 counted failures stop with BLOCKED VALIDATION_FAILED and a summary.
+
+Only installed `meridian` runs lifecycle commands; the task's doctor and audit
+commands remain validation of the framework checkout. Never run upgrade on this
+repository. The local managed configuration stays unchanged; `meridian task close`
+owns the separately authorized task-state and archive records.
+
+The first amended validation attempt at `6b85704` exposed one additional
+hard-coded `bounded-worktree-lifecycle v5` assertion in the same authorized
+upgrade test file, after the version-agnostic fixture advanced past its earlier
+failure. An unchanged rerun of that test reproduced the failure. The same
+baseline-version substitution was applied there, preserving every behavioral
+assertion. Thus six version assertions were updated rather than the five
+identified in the amendment; no tests were deleted.
+
+## Completion evidence
+
+All amended acceptance criteria are met. The final implementation commit is
+`76e5b64d8107a47ed688da04867d8a965155b9fc`, validated against base main
+`966335aea2bc2258d88eda66bb5fa32b04d797b0`. All six required validation
+commands passed, including both 1,141-test suites with zero failures, errors,
+or skips and clean-clone outcome OK on that implementation commit. See
+`tasks/handoffs/029.md` for exact commands, retry history, and the registry
+lookup decision. Only installed Meridian performs closure and integration.

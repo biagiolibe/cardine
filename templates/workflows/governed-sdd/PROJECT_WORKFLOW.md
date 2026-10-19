@@ -164,7 +164,7 @@ Before switching from worktree prepare/check to execution start, consult the
 [command location table](docs/WORKTREE_LIFECYCLE.md#command-locations).
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v5 -->
+<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v6 -->
 For coordinator-launched implementation, review, or remediation work, the
 coordinator runs `meridian worktree prepare` before creating the worker and
 passes the returned existing path, branch, primary checkout, and worktree root
@@ -188,9 +188,20 @@ Absolute paths are runtime launch inputs only. A handoff or other tracked
 record that names the worktree uses the `handoff_worktree` value returned by
 `meridian worktree prepare`, the path relative to the worktree root, never an
 absolute path.
+
+A `Proceed with <TASK-ID>` directive that says to Resume starts with `meridian
+worktree prepare <task-id> --resume --project <primary-checkout> --format json`.
+`--resume` is allowed only for that directive. It accepts the task's existing
+worktree even when it has uncommitted changes,
+never creates or changes anything, and refuses when no worktree exists. Run
+`meridian worktree check <task-id> --resume --project <primary-checkout> --format
+json` from that exact worktree. Accept `status: ready-dirty`, read `git status`
+and the diff, confirm sole writer ownership, then run `meridian execution start
+<TASK-ID> --resume --project <task-worktree>`. Classify any other result under
+Stops and denials; never treat an unrelated check error as accepted dirt.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=git-workflow v14 -->
+<!-- MERIDIAN:BEGIN capability=git-workflow v15 -->
 ## Git workflow
 
 ### Authority of `Proceed with`
@@ -200,8 +211,8 @@ passes: implementation and validation on the task branch; completion and
 archive records; `meridian worktree integrate stage`, the selected candidate
 validation, and `integrate finalize` or `abort`; one plain `git push origin
 main` of the resulting integration; and `meridian worktree cleanup`. Do not
-ask for confirmation at any of these steps. When a gate fails, stop once with
-`BLOCKED <CODE>` and the resume command.
+ask for confirmation at any of these steps. When a gate fails, classify the outcome
+under Stops and denials and follow that class in the same turn.
 
 After `APPROVE`, `Review <TASK-ID>` carries the same authority for C6 through
 C10, including the one plain `git push origin main` and cleanup, subject to the
@@ -239,10 +250,28 @@ conflict; or work on another task.
 
 ### Stops and denials
 
-The deny list above stays in force without a supporting command. A stop is
-valid only when it is backed by a `BLOCKED <CODE>` line from a Meridian
-command, a non-zero exit of a required command, an acceptance criterion you
-can name as unmet, or a judgment stop that this workflow names with its code. Guidance that no command backs is advice: follow it when you
+The deny list above stays in force without a supporting command. Classify
+outcomes using `capabilities/stop-codes-v1.json` in the framework: its
+`human_decision` field determines whether a code needs a person.
+
+- **Guardrail.** Stop on a `BLOCKED <CODE>` whose registry entry has
+  `human_decision: true`, on a denied action, or on a scope change. Report
+  the code and the resume command. `BLOCKED RULE_CONFLICT` and
+  `BLOCKED VALIDATION_RETRY_LIMIT` are guardrails.
+- **Recoverable state.** For a code without `human_decision: true`, run the
+  recovery command the outcome names in the same turn and continue. Never
+  run a recovery twice. If it returns the same code again, report that
+  `BLOCKED <CODE>` and its recovery history to the person.
+- **Failing work.** A non-zero validation exit or an unmet acceptance
+  criterion calls for work on the assigned task. Rerun a failed validation
+  once without changes. If the rerun passes, record the test as intermittent
+  in the handoff; the attempt does not count. If the rerun fails, count the
+  attempt, fix the task's own work, and validate again. After 3 consecutive
+  counted failures, stop with `BLOCKED VALIDATION_RETRY_LIMIT` and a summary
+  of the failures. `VALIDATION_FAILED` has `human_decision: false`; a single
+  failed validation does not stop the agent.
+
+Guidance that no command backs is advice: follow it when you
 can, and never stop on its strength alone.
 
 Never satisfy a gate by writing false state, such as setting a status only to
@@ -252,7 +281,7 @@ report both rules.
 When a Meridian command accepted a state that this text appears to forbid,
 follow the command and record the difference under `Rule discrepancies:` in the
 handoff. This never covers an action on the deny list and never overrides a
-stop that a command printed.
+guardrail, including a repeated recovery failure.
 
 ### Closure
 
@@ -262,8 +291,8 @@ and handoff, run `meridian worktree advance <TASK-ID> --project
 <primary-checkout> --format json` from the primary checkout, giving each result
 as `--validation-command`/`--validation-exit-code` with `--accepted`. Perform
 exactly its `action_required`, rerun it with the results (candidate validation
-uses `--candidate-command`/`--candidate-exit-code`), and report its `BLOCKED <CODE>`
-line when it stops. `docs/WORKTREE_LIFECYCLE.md` keeps the single-step commands
+uses `--candidate-command`/`--candidate-exit-code`), and classify any `BLOCKED <CODE>`
+under Stops and denials before deciding whether to stop. `docs/WORKTREE_LIFECYCLE.md` keeps the single-step commands
 for diagnosis and manual recovery.
 A named sandbox skip is not a validation failure only when the test itself
 reports it and no acceptance criterion depends solely on that test. Record its

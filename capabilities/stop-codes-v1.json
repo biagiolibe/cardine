@@ -32,6 +32,21 @@
       "resolution": "failing-work"
     },
     {
+      "code": "VALIDATION_RETRY_LIMIT",
+      "class": "judgment",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C2",
+      "emitter": "agent judgment after 3 consecutive counted validation failures",
+      "human_decision": true,
+      "resume": "report the failures and obtain the developer's decision before resuming validation",
+      "kind": "stop",
+      "summary": "validation exhausted the limit of 3 consecutive counted failures after unchanged reruns",
+      "resolution": "guardrail"
+    },
+    {
       "code": "VALIDATION_FAILED",
       "class": "command-exit",
       "workflows": [

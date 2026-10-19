@@ -95,3 +95,12 @@ Authority: the developer decision of 2026-10-18 after the Meridian task 232 cand
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 037 | Scan only repository files in `check_repository.py` | 🔴 P1 | — | [037](done/037-check-repository-scans-only-repository-files.md) |
+
+### Phase 9 — Stops reserved for decisions that need a person
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 12.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 029 | Make agents stop only for decisions that need a person | 🔴 P1 | 033 | [029](done/029-stop-only-for-human-decisions.md) |
+| `[x]` | 030 | Classify every stop code and prove each recovery command | 🔴 P1 | 028 | [030](done/030-audit-stop-codes-and-prove-recoveries.md) |
