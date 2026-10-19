@@ -81,25 +81,25 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
         original_managed_files = owner_templates_marker_history.managed_files
         owner_templates_marker_history.managed_files = lambda framework_root, mode: managed
         try:
-            absent = m.detect_capabilities(self.project, "governed-sdd", self.framework)
+            absent = owner_templates_marker_history.capability_presence_map(self.project, "governed-sdd", self.framework)
             self.assertEqual(len(absent), 1)
-            self.assertFalse(absent[0].present)
-            self.assertIn("no MERIDIAN:BEGIN", absent[0].evidence)
+            self.assertFalse(absent["widget"][0])
+            self.assertIn("no MERIDIAN:BEGIN", absent["widget"][1])
 
             agents.write_text(
                 "<!-- MERIDIAN:BEGIN capability=widget v1 -->text<!-- MERIDIAN:END -->",
                 encoding="utf-8",
             )
-            stale = m.detect_capabilities(self.project, "governed-sdd", self.framework)
-            self.assertFalse(stale[0].present)
-            self.assertEqual(stale[0].evidence, "marker present at v1, but v2 is required")
+            stale = owner_templates_marker_history.capability_presence_map(self.project, "governed-sdd", self.framework)
+            self.assertFalse(stale["widget"][0])
+            self.assertEqual(stale["widget"][1], "marker present at v1, but v2 is required")
 
             agents.write_text(
                 "<!-- MERIDIAN:BEGIN capability=widget v2 -->text<!-- MERIDIAN:END -->",
                 encoding="utf-8",
             )
-            satisfied = m.detect_capabilities(self.project, "governed-sdd", self.framework)
-            self.assertTrue(satisfied[0].present)
+            satisfied = owner_templates_marker_history.capability_presence_map(self.project, "governed-sdd", self.framework)
+            self.assertTrue(satisfied["widget"][0])
         finally:
             owner_templates_marker_history.managed_files = original_managed_files
 
@@ -120,8 +120,8 @@ class MarkerCatalogTest(unittest.TestCase):
             managed = mock.Mock(target=Path("AGENTS.md"))
             with mock.patch.object(owner_templates_marker_history, "managed_files", return_value=[managed]):
                 self.assertEqual(
-                    owner_templates_adoption.detect_capabilities(framework, "governed-sdd", framework),
-                    owner_templates_adoption.detect_capabilities(framework, "governed-sdd", ROOT),
+                    owner_templates_marker_history.capability_presence_map(framework, "governed-sdd", framework),
+                    owner_templates_marker_history.capability_presence_map(framework, "governed-sdd", ROOT),
                 )
 
     def test_invalid_marker_catalog_fields_fail(self) -> None:
@@ -490,7 +490,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             root = Path(directory)
             framework = root / "framework"
             project = root / "project"
-            for source in ("templates", "migrations", "release-baselines", "capabilities"):
+            for source in ("templates", "migrations", "capabilities"):
                 shutil.copytree(ROOT / source, framework / source)
             (framework / "VERSION").write_text("1.1.0\n", encoding="utf-8")
             source = framework / "templates/workflows/governed-sdd"

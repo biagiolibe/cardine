@@ -22,7 +22,6 @@ CAPABILITY_CATALOG_PATH = Path("capabilities/catalog-v1.json")
 
 BASELINES_PATH = Path(".meridian/baselines")
 
-ADOPTION_REVIEW_PATH = Path(".meridian/adoption-review.md")
 
 # Bump only when the manifest's shape or semantics change in a way that an
 # older CLI cannot safely read. Add backward-compatible fields without a bump.
@@ -74,9 +73,6 @@ SELF_CHECK_UNKNOWN = 11
 # by advancing this boundary without changing the compatibility result below.
 CAPABILITY_DECLARATION_REQUIRED_PROTOCOL = 3
 
-ADOPTION_VERDICTS = ("APPROVE", "CHANGES_REQUESTED", "BLOCKED")
-
-ADOPTION_RETRY_LIMIT = 2
 
 CAPABILITY_MARKER = re.compile(r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->")
 

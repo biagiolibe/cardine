@@ -60,7 +60,7 @@ class FrameworkFixture(unittest.TestCase):
         base = Path(self.temporary.name)
         self.framework = base / "framework"
         self.project = base / "project"
-        for name in ("templates", "migrations", "release-baselines", "capabilities"):
+        for name in ("templates", "migrations", "capabilities"):
             shutil.copytree(ROOT / name, self.framework / name)
         shutil.copyfile(ROOT / "VERSION", self.framework / "VERSION")
         self.project.mkdir()

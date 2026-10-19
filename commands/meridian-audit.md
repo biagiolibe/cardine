@@ -17,7 +17,7 @@ marker found:
 - `PASS` — the protected content between the markers matches the framework's
   released text for that exact capability version, in that exact file.
 - `FAIL` — it does not. The protected region was edited outside
-  `meridian upgrade`/`adopt`, or the marker's version is wrong for what the
+  `meridian upgrade`, or the marker's version is wrong for what the
   text actually says. Exit code `2`.
 - `SKIP` — the project's marker names a version the current framework
   template no longer carries in that file (typically because the project is

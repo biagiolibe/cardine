@@ -11,21 +11,7 @@ Run the CLI from this plugin source. First inspect the plan:
 ${CLAUDE_PLUGIN_ROOT}/bin/meridian upgrade --project . --check
 ```
 
-If this is a project created before framework locking, use a packaged baseline
-to preview adoption first (`--mode` and `--from` are detected automatically
-when unambiguous):
-
-```bash
-${CLAUDE_PLUGIN_ROOT}/bin/meridian adopt --project . --check
-```
-
-Run the same command with `--apply` only after a conflict-free plan and explicit
-developer authorization. The CLI refuses to infer an unrecorded baseline.
-
-When the generic plan conflicts because the project has an intentional local
-workflow adaptation, use `/meridian-adopt` instead. It detects which framework
-capabilities are already present, scopes an agent migration to only the missing
-ones, and finalizes the lockfile after an independent review.
+Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
 
 If the plan has no `CONFLICT` entries and the developer authorizes the update,
 apply it:

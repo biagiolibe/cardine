@@ -37,8 +37,6 @@ including command containers and nested subcommands.
 | `meridian console` | Experimental |
 | `meridian lock` | Stable |
 | `meridian upgrade` | Stable |
-| `meridian adopt` | Stable |
-| `meridian finalize-adoption` | Stable |
 | `meridian audit` | Stable |
 | `meridian profile` | Internal |
 | `meridian profile doctor` | Internal |
@@ -126,3 +124,7 @@ The following also belong to the stable surface:
 
 Registry membership is defined by these published files, rather than a copied
 list of entries. Changes follow the versioning and deprecation rules above.
+
+## Project conversion
+
+Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.

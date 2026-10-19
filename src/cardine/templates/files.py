@@ -62,9 +62,7 @@ def managed_files_for_workflow(workflow: Path, mode: str) -> list[ManagedFile]:
                 ],
             ]
         )
-    # Packaged legacy baselines predate these managed files. Include each file
-    # when the particular workflow snapshot supplies it, without making a
-    # historical adoption baseline claim a file it never shipped.
+    # Include optional managed files only when the workflow supplies them.
     optional_paths = [Path(".codex/rules/meridian.rules"), Path(".codex/hooks.json")]
     if mode == "lean-delivery":
         optional_paths.append(Path("docs/WORKTREE_LIFECYCLE.md"))
@@ -170,22 +168,3 @@ def capped_managed_files(
         capped_path.write_text(capped_text, encoding="utf-8")
         result.append(ManagedFile(source=capped_path, target=item.target))
     return result
-
-
-def detect_source_version(framework_root: Path, mode: str) -> str:
-    baselines_root = framework_root / "release-baselines"
-    candidates = sorted(
-        path.name
-        for path in baselines_root.iterdir()
-        if path.is_dir() and (path / "templates" / "workflows" / mode).is_dir()
-    ) if baselines_root.is_dir() else []
-    if len(candidates) == 1:
-        return candidates[0]
-    if not candidates:
-        raise MeridianError(
-            f"cannot detect source version: no packaged baseline for {mode}; pass --from explicitly"
-        )
-    raise MeridianError(
-        "cannot detect source version: multiple packaged baselines are available "
-        f"({', '.join(candidates)}); pass --from explicitly"
-    )

@@ -305,39 +305,7 @@ managed file conflicts; resolve that bounded conflict in a dedicated upgrade
 change and rerun the command. Do not edit `.meridian/manifest.json` or its
 baseline snapshots by hand.
 
-For a project created before framework locking was available, use the packaged
-baseline that matches its installed Meridian version. For example, a compatible
-`1.0.0` Governed SDD project can safely preview its migration with:
-
-```bash
-${MERIDIAN_ROOT}/bin/meridian adopt --project /path/to/project \
-  --mode governed-sdd --from 1.0.0 --check
-```
-
-`adopt --apply` writes the manifest only after a clean plan. It refuses to
-guess an unrecorded baseline; add an explicit snapshot before supporting a
-different legacy version.
-
-If an established project has intentionally adapted workflow documents, use
-capability-aware adoption instead of forcing template merges:
-
-```bash
-${MERIDIAN_ROOT}/bin/meridian adopt --project /path/to/project --assisted --check
-```
-
-`--mode` and `--from` are detected automatically when unambiguous. The command
-recomputes a single `NEXT_ACTION` (`IMPLEMENT_MIGRATION`, `REVIEW_MIGRATION`,
-`ADDRESS_REVIEW`, `FINALIZE`, or `BLOCKED`) from the project's detected
-capabilities and `.meridian/adoption-review.md` on every run, mapped onto the
-CLI's exit codes (`3` for agent work required, `0` when ready to finalize, `2`
-when blocked) — so an orchestrator, human, or the packaged Claude Code skill
-can drive the whole migration by repeatedly running the same command and
-acting on its `NEXT_ACTION`, dispatching the emitted implementer and reviewer
-prompts to independent sessions (Task-tool subagents in Claude Code, separate
-fresh chats otherwise) without ever copying context between them. Run
-`meridian finalize-adoption` only after the reviewer records an unconditional
-`APPROVE`; a developer who personally reviewed the migration may pass
-`--owner-accepted` instead. See [assisted adoption](../commands/meridian-adopt.md).
+Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
 
 ### Support policy
 
@@ -349,7 +317,4 @@ fresh chats otherwise) without ever copying context between them. Run
 - **Fixes land only in the newest release.** There are no backport branches; a
   correction ships as a new release.
 - **Not supported:** downgrades, manifests whose installed baseline is not
-  recorded (use `meridian adopt`), and unreleased `main`.
-- **Projects older than `v1.1.49`**, including the packaged `1.0.0` baseline,
-  are adopted with `meridian adopt` on a best-effort basis. A pristine `1.0.0`
-  project currently adopts with conflicts against the newest release.
+  recorded, and unreleased `main`.

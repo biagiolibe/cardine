@@ -943,8 +943,16 @@ class SelfHostingBaselineTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name) / "project"
-        shutil.copytree(ROOT, self.root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+        (self.root / ".meridian").mkdir(parents=True)
+        (self.root / "migrations").mkdir()
+        (self.root / "VERSION").write_text("1.4.0\n", encoding="utf-8")
+        (self.root / "migrations/001-synthetic.json").write_text(
+            json.dumps({"to": "1.4.0"}), encoding="utf-8"
+        )
         self.manifest_path = self.root / ".meridian/manifest.json"
+        self.manifest_path.write_text(
+            json.dumps({"workflowBaselineVersion": "1.4.0"}), encoding="utf-8"
+        )
 
     def tearDown(self) -> None:
         self.temporary.cleanup()

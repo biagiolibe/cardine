@@ -58,7 +58,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 031 — Record template changes without migrations until 1.0.
 - `[x]` 032 — Move the upgrade and merge tests to synthetic migration fixtures.
 - `[x]` 033 — Empty the migration chain.
-- `[ ]` 034 — Remove release baselines and adoption from historical versions.
+- `[x]` 034 — Remove release baselines and adoption from historical versions.
 - `[ ]` 035 — Remove the self-reported budget counters.
 - `[ ]` 036 — Move maintainer commands out of the user CLI and merge the generators.
 - `[x]` 037 — Scan only repository files in `check_repository.py`.

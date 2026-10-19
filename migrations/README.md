@@ -65,20 +65,16 @@ conflict instead of adding a second copy of the wrapped text.
 `.meridian/baselines/<version>/` in a generated project is a snapshot of the
 templates installed at that version — the merge base for the next upgrade's
 three-way merge. Only the snapshot matching the manifest's current
-`workflowBaselineVersion` is ever read again, so a completed `upgrade --apply` or
-generic `adopt --apply` prunes every other baseline snapshot automatically.
+`workflowBaselineVersion` is ever read again, so a completed `upgrade --apply`
+prunes every other baseline snapshot automatically.
 Do not rely on an old snapshot surviving past its upgrade; keep a Git tag or
 branch instead if a project needs to inspect a historical baseline.
 
-## Packaged legacy baselines
+## Removed packaged legacy baselines
 
-`release-baselines/1.0.0/` is the immutable Governed SDD template snapshot for
-Meridian `1.0.0`. Use it only through:
-
-```bash
-meridian adopt --mode governed-sdd --from 1.0.0 --check
-```
-
-An adoption plan is safe to apply only when it reports no conflicts. New legacy
-baselines must be copied from an immutable released revision and covered by an
-adoption test before being distributed.
+Task 034 removed `release-baselines/1.0.0/` and historical-version adoption
+from Cardine. The immutable Governed SDD snapshot remains in
+[Meridian v1.4.0](https://github.com/biagiolibe/meridian/tree/v1.4.0/release-baselines/1.0.0),
+the version from which Cardine was imported. Conversion of projects without
+Cardine and of existing Meridian projects returns with work item 10 on the
+single Cardine workflow. Until then, the CLI has no conversion command.
