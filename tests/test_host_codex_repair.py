@@ -109,7 +109,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         applied = self.run_cli("--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
         self.assertIn("ownership metadata repaired and root replaced", applied.stdout)
-        backup = self.config.with_name("config.toml.meridian-repair.bak")
+        backup = self.config.with_name("config.toml.cardine-repair.bak")
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         ready = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
@@ -167,8 +167,10 @@ class CodexProfileRepairTest(unittest.TestCase):
     def test_apply_repairs_with_exclusive_private_backup_and_preserves_unrelated_text(self) -> None:
         original = self.rewritten()
         self.config.write_text(original, encoding="utf-8")
-        stale = self.config.with_name("config.toml.meridian.bak")
+        stale = self.config.with_name("config.toml.cardine.bak")
         stale.write_text("stale first-apply backup\n", encoding="utf-8")
+        old_backup = self.config.with_name("config.toml.meridian-repair.bak")  # MERIDIAN-OLD-NAME-TEST
+        old_backup.write_text("old repair backup", encoding="utf-8")
 
         plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertTrue(owner_hosts_codex.apply_codex_configuration(plan))
@@ -179,8 +181,9 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertEqual(repaired.count(cardine_cli.CODEX_MANAGED_BEGIN), 1)
         self.assertEqual(repaired.count(cardine_cli.CODEX_MANAGED_END), 1)
         self.assertEqual(stale.read_text(encoding="utf-8"), "stale first-apply backup\n")
-        backup = self.config.with_name("config.toml.meridian-repair.bak")
+        backup = self.config.with_name("config.toml.cardine-repair.bak")
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
+        self.assertEqual(old_backup.read_text(encoding="utf-8"), "old repair backup")
         self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.config.stat().st_mode & 0o777, 0o600)
         self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees).status, "ready")
@@ -190,7 +193,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.config.write_text(later, encoding="utf-8")
         self.assertTrue(owner_hosts_codex.apply_codex_configuration(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)))
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
-        self.assertEqual(self.config.with_name("config.toml.meridian-repair.1.bak").read_text(encoding="utf-8"), later)
+        self.assertEqual(self.config.with_name("config.toml.cardine-repair.1.bak").read_text(encoding="utf-8"), later)
 
     def test_apply_refuses_when_the_file_changed_after_planning(self) -> None:
         self.config.write_text(self.rewritten(), encoding="utf-8")

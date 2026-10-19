@@ -149,7 +149,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertEqual(lifecycle.read_text(encoding="utf-8"), previous)
-        self.assertFalse(lifecycle.with_name(lifecycle.name + ".meridian-pre-adoption.bak").exists())
+        self.assertFalse(lifecycle.with_name(lifecycle.name + ".cardine-pre-adoption.bak").exists())
         template.write_text(current, encoding="utf-8")
 
     def test_upgrade_downgrades_cosmetic_conflict_to_verified(self) -> None:

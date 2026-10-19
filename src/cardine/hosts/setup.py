@@ -548,7 +548,7 @@ def codex_doctor(
     root_write = "approval-required"
     if result["permission-model"] in ("ready", "repair-required", "repair-and-replace-required") and worktree_root.is_dir():
         try:
-            descriptor, probe_name = tempfile.mkstemp(prefix=".meridian-codex-probe-", dir=worktree_root)
+            descriptor, probe_name = tempfile.mkstemp(prefix=".cardine-codex-probe-", dir=worktree_root)
             os.close(descriptor)
             Path(probe_name).unlink()
             root_write = "ready"

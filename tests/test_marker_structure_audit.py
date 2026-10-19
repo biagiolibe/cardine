@@ -204,13 +204,13 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertRegex(checked.stdout, r"RESTRUCTURE\s+docs/CODE_REVIEW_PROMPT.md")
-        self.assertIn("CODE_REVIEW_PROMPT.md.meridian-pre-restructure.bak", checked.stdout)
+        self.assertIn("CODE_REVIEW_PROMPT.md.cardine-pre-restructure.bak", checked.stdout)
         self.assertIn("task-worktree-review v4", checked.stdout)
         self.assertEqual((self.project / REVIEW_PROMPT).read_text(encoding="utf-8"), before)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        backup = self.project / (REVIEW_PROMPT + ".meridian-pre-restructure.bak")
+        backup = self.project / (REVIEW_PROMPT + ".cardine-pre-restructure.bak")
         self.assertEqual(backup.read_text(encoding="utf-8"), before)
         upgraded = (self.project / REVIEW_PROMPT).read_text(encoding="utf-8")
         self.assertTrue(upgraded.startswith(current.rstrip("\n")))
@@ -225,14 +225,14 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
 
     def test_a_second_restructure_never_overwrites_an_existing_backup(self) -> None:
         self.locked_at_legacy_prompt(self.customized_prompt())
-        first = self.project / (REVIEW_PROMPT + ".meridian-pre-restructure.bak")
+        first = self.project / (REVIEW_PROMPT + ".cardine-pre-restructure.bak")
         first.write_text("earlier backup\n", encoding="utf-8")
 
         applied = self.run_cli("upgrade", "--apply")
 
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertEqual(first.read_text(encoding="utf-8"), "earlier backup\n")
-        second = self.project / (REVIEW_PROMPT + ".meridian-pre-restructure.bak.1")
+        second = self.project / (REVIEW_PROMPT + ".cardine-pre-restructure.bak.1")
         self.assertIn("project rule", second.read_text(encoding="utf-8"))
 
     def test_an_unmodified_legacy_prompt_is_replaced_without_a_backup(self) -> None:
@@ -284,7 +284,7 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
 
         self.assertIn("edited retired marker content (task-worktree-review v4)", checked.stdout)
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        backup = self.project / (REVIEW_PROMPT + ".meridian-pre-restructure.bak")
+        backup = self.project / (REVIEW_PROMPT + ".cardine-pre-restructure.bak")
         self.assertIn("Edited retired text.", backup.read_text(encoding="utf-8"))
         self.assertNotIn("Edited retired text.", (self.project / REVIEW_PROMPT).read_text(encoding="utf-8"))
 

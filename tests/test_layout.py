@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from cardine.shared.layout import PRODUCT_NAMES, ProjectNames, names, use
 from cardine.console.snapshot import IdentityCache
 from cardine.templates import manifest, merge
+from cardine.templates.upgrade_support import _unused_adoption_backup
 from cardine.shared.models import ManagedFile
 from cardine.shared import context, flow, journal, project
 from cardine.tasks import audit, contract, identity, recording, state
@@ -54,16 +55,17 @@ class LayoutTest(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(value), encoding="utf-8")
 
-    def test_product_defaults_preserve_existing_layout(self):
+    def test_product_defaults_use_cardine_layout(self):
         self.assertIs(names(), PRODUCT_NAMES)
         self.assertEqual(names().manifest_path, Path(".cardine/manifest.json"))
-        self.assertEqual(names().worktree_root, Path(".meridian/worktrees"))
-        self.assertEqual(names().user_configuration_path, Path("meridian/config.json"))
-        self.assertEqual(names().worktree_state_directory, "meridian-worktrees")
-        self.assertEqual(names().integration_lease_name, "meridian-integration.lock")
-        self.assertEqual(names().integration_state_name, "meridian-integration.json")
-        self.assertEqual(names().journal_name, "meridian-journal.jsonl")
-        self.assertEqual(names().journal_rotated_name, "meridian-journal.1.jsonl")
+        self.assertEqual(names().worktree_root, Path(".cardine/worktrees"))
+        self.assertEqual(names().user_configuration_path, Path("cardine/config.json"))
+        self.assertEqual(names().worktree_state_directory, "cardine-worktrees")
+        self.assertEqual(names().integration_lease_name, "cardine-integration.lock")
+        self.assertEqual(names().integration_state_name, "cardine-integration.json")
+        self.assertEqual(names().journal_name, "cardine-journal.jsonl")
+        self.assertEqual(names().journal_rotated_name, "cardine-journal.1.jsonl")
+        self.assertEqual(names().shared_worktrees_context, "cardine_shared_worktrees")
         with self.assertRaises(FrozenInstanceError):
             PRODUCT_NAMES.project_directory = ".changed"
 
@@ -120,9 +122,9 @@ class LayoutTest(unittest.TestCase):
     def test_lifecycle_directory_lease_and_state_change_together(self):
         resolved = identity.resolve_task_identity(self.root, "042", "existing")
         default = storage._lifecycle_paths(self.root, resolved)
-        self.assertEqual(default, (self.root / ".git/meridian-worktrees/042.json",
-                                  self.root / ".git/meridian-integration.lock",
-                                  self.root / ".git/meridian-integration.json"))
+        self.assertEqual(default, (self.root / ".git/cardine-worktrees/042.json",
+                                  self.root / ".git/cardine-integration.lock",
+                                  self.root / ".git/cardine-integration.json"))
         with use(OTHER_NAMES):
             paths = storage._lifecycle_paths(self.root, resolved)
             self.assertEqual(paths, (self.root / ".git/other-worktrees/042.json",
@@ -138,7 +140,7 @@ class LayoutTest(unittest.TestCase):
 
     def test_journal_write_rotation_and_flow_read_use_selected_names(self):
         journal.append_journal_line(self.root, {"version": 1, "ts": "2026-10-19T12:00:00Z", "result": "ok", "command": "default"})
-        default = self.root / ".git/meridian-journal.jsonl"
+        default = self.root / ".git/cardine-journal.jsonl"
         before = default.read_bytes()
         with use(OTHER_NAMES):
             journal.append_journal_line(self.root, {"version": 1, "ts": "2026-10-19T12:00:00Z", "result": "ok", "command": "first"})
@@ -150,6 +152,36 @@ class LayoutTest(unittest.TestCase):
         self.assertEqual(default.read_bytes(), before)
         records, _ = flow._flow_read_journal(self.root)
         self.assertEqual([record["command"] for record in records], ["default"])
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_journals_are_ignored_and_never_rotated(self):
+        old_paths = [self.root / ".git" / name for name in (
+            "meridian-journal.jsonl", "meridian-journal.1.jsonl",  # MERIDIAN-OLD-NAME-TEST
+        )]
+        for path in old_paths:
+            self.write_json(path, {"version": 1, "ts": "2026-10-19T12:00:00Z",
+                                   "result": "ok", "command": "old"})
+        before = [path.read_bytes() for path in old_paths]
+        self.assertEqual(flow._flow_read_journal(self.root), ([], 0))
+        with patch.object(journal, "JOURNAL_MAX_BYTES", 0):
+            journal.append_journal_line(self.root, {"version": 1, "ts": "2026-10-19T12:00:00Z",
+                                                   "result": "ok", "command": "new"})
+        self.assertEqual([path.read_bytes() for path in old_paths], before)
+        self.assertFalse((self.root / ".git/cardine-journal.1.jsonl").exists())
+        self.assertEqual([record["command"] for record in flow._flow_read_journal(self.root)[0]], ["new"])
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_adoption_backups_do_not_reserve_product_backup_names(self):
+        target = self.root / "document.md"
+        for kind in ("pre-adoption", "pre-restructure"):
+            with self.subTest(kind=kind):
+                old = target.with_name(target.name + f".meridian-{kind}.bak")  # MERIDIAN-OLD-NAME-TEST
+                old.write_text("old backup")
+                expected = target.with_name(target.name + f".cardine-{kind}.bak")
+                self.assertEqual(_unused_adoption_backup(target, kind), expected)
+                self.assertEqual(old.read_text(), "old backup")
+                expected.write_text("current backup")
+                self.assertEqual(_unused_adoption_backup(target, kind), expected.with_name(expected.name + ".1"))
 
     def test_context_configuration_and_references_use_selected_directory(self):
         self.write_json(OTHER_NAMES.context_size_config_path, {
@@ -200,7 +232,7 @@ class LayoutTest(unittest.TestCase):
                               environment={"XDG_CONFIG_HOME": str(self.root / ".config")},
                               home=self.root, project_root=self.root, framework_root=ROOT)
         default = plan()
-        self.assertEqual(default.resolution.path, self.root / ".meridian/worktrees")
+        self.assertEqual(default.resolution.path, self.root / ".cardine/worktrees")
         with use(OTHER_NAMES):
             selected = plan()
             self.assertEqual(selected.resolution.path, self.root / ".other/worktrees")
@@ -221,8 +253,8 @@ class LayoutTest(unittest.TestCase):
 
     def test_worktree_root_and_configuration_use_selected_names(self):
         default = storage.resolve_worktree_root(environment={}, home=self.root)
-        self.assertEqual(default.path, self.root / ".meridian/worktrees")
-        self.assertEqual(default.config_path, self.root / ".config/meridian/config.json")
+        self.assertEqual(default.path, self.root / ".cardine/worktrees")
+        self.assertEqual(default.config_path, self.root / ".config/cardine/config.json")
         with use(OTHER_NAMES):
             selected = storage.resolve_worktree_root(environment={}, home=self.root)
             self.assertEqual(selected.path, self.root / ".other/worktrees")

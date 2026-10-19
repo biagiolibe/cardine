@@ -67,7 +67,7 @@ class CodexUserRulesTest(unittest.TestCase):
             self.write(text)
             with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED COMMAND_REFUSED.*damaged"):
                 owner_hosts_setup.plan_setup(None, self.home / "config.toml", home=self.home, environment={}, project_root=self.home)
-            self.assertFalse((self.home / ".meridian/worktrees").exists())
+            self.assertFalse((self.home / ".cardine/worktrees").exists())
             self.assertEqual(self.rules.read_bytes().decode(), text)
 
     def test_foreign_broad_allow_warning_names_original_line(self):
@@ -100,7 +100,7 @@ class CodexUserRulesTest(unittest.TestCase):
             return owner_hosts_setup.plan_setup(None, config, home=self.home, environment={}, framework_root=ROOT, project_root=self.home)
         def doctor():
             with mock.patch.object(cardine_cli.shutil, "which", return_value=None):
-                return owner_hosts_setup.codex_doctor(self.home, config, self.home / ".meridian/worktrees", home=self.home)["user-command-policy"]
+                return owner_hosts_setup.codex_doctor(self.home, config, self.home / ".cardine/worktrees", home=self.home)["user-command-policy"]
         self.assertEqual(doctor(), "missing")
         plan = setup()
         output = io.StringIO()

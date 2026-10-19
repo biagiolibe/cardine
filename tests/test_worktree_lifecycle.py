@@ -676,7 +676,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         return ("--accepted", "--validation-command", "check", "--validation-exit-code", "0")
 
     def _journal(self) -> list[dict[str, object]]:
-        journal = self.project / ".git/meridian-journal.jsonl"
+        journal = self.project / ".git/cardine-journal.jsonl"
         return [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
 
     def test_advance_runs_to_candidate_validation_and_reruns_without_repeating(self) -> None:

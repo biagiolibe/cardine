@@ -7,6 +7,7 @@ import builtins
 from dataclasses import FrozenInstanceError
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import unittest
@@ -33,6 +34,8 @@ class InstallationTest(RepoCase):
 
     def setUp(self):
         super().setUp()
+        self.addCleanup(os.chdir, Path.cwd())
+        os.chdir(self.project)
         self.setup_project({"001": " ", "002": " "})
         self.write(self.project, ".meridian/manifest.json", json.dumps({"workflowMode": "lean-delivery"}))
         self.write(self.project, ".meridian/task-identity.json", '{"version": 1, "mode": "opaque"}')
@@ -40,6 +43,10 @@ class InstallationTest(RepoCase):
             self.state(self.project, "001", "DONE", workflow="lean-delivery")
         self.commit(self.project, "installation")
         self.worktree("task-002")
+        self.write(self.project, ".git/meridian-worktrees/002.json", json.dumps({
+            "task_id": "002", "branch": "task-002", "worktree": str(self.root / "wt-task-002"),
+            "started_at": "2026-10-19T12:00:00Z",
+        }))
 
     def test_snapshot_equals_current_builder_on_synthetic_installation(self):
         with use(installation.MERIDIAN_INSTALLATION_NAMES):
@@ -48,6 +55,7 @@ class InstallationTest(RepoCase):
         self.assertEqual(expected.done_count, 1)
         self.assertEqual(expected.tasks[0].task_id, "002")
         self.assertIsNotNone(expected.tasks[0].worktree)
+        self.assertEqual(expected.tasks[0].started_at, "2026-10-19T12:00:00Z")
         with use(ProjectNames(project_directory=".other")):
             self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
             self.assertEqual(names().project_directory, ".other")
@@ -102,11 +110,16 @@ class InstallationTest(RepoCase):
                     self.assertTrue(relative in declared or relative.parent in directories, relative)
         self.assertIn(layout.tasks_path / "001.json", meridian_paths)
         self.assertIn(layout.task_identity_path, meridian_paths)
+        self.assertIn(Path(".git") / layout.worktree_state_directory / "002.json", meridian_paths)
         self.assertTrue(commands)
         for command in commands:
             self.assertEqual(command[0], "git")
             self.assertTrue(any(word in command for word in (
-                "worktree", "status", "rev-parse", "rev-list", "show", "diff", "check-ref-format", "log")), command)
+                "worktree", "status", "rev-parse", "rev-list", "show", "diff", "check-ref-format", "log", "config")), command)
+            if "config" in command:
+                self.assertIn("--get", command)
+                self.assertFalse(any(flag in command for flag in (
+                    "--add", "--unset", "--unset-all", "--replace-all", "--edit")), command)
             if "worktree" in command:
                 self.assertIn("list", command)
 
@@ -122,6 +135,7 @@ class InstallationTest(RepoCase):
                     if path.is_relative_to(self.root):
                         relative = path.relative_to(self.root)
                         self.assertNotIn(".meridian", relative.parts, relative)
+                        self.assertFalse(any(part.startswith("meridian-") for part in relative.parts), relative)
                         opened.append(relative)
                 return original(file, mode, *args, **kwargs)
             return observe

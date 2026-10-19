@@ -174,6 +174,8 @@ class CodexWorktreeAccessTest(unittest.TestCase):
             'network_proxy = false\n'
         )
         config.write_text(original, encoding="utf-8")
+        old_backup = config.with_name("config.toml.meridian.bak")  # MERIDIAN-OLD-NAME-TEST
+        old_backup.write_text("old backup", encoding="utf-8")
         root = self.root / "worktrees"
         plan = owner_hosts_codex.plan_codex_configuration(config, root)
         self.assertEqual(plan.status, "approval-required")
@@ -192,7 +194,8 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         )
         self.assertLess(changed.index('model = "gpt-test"'), changed.index(cardine_cli.CODEX_MANAGED_BEGIN))
         self.assertLess(changed.index(cardine_cli.CODEX_MANAGED_END), changed.index("[features]"))
-        self.assertEqual(config.with_name("config.toml.meridian.bak").read_text(encoding="utf-8"), original)
+        self.assertEqual(config.with_name("config.toml.cardine.bak").read_text(encoding="utf-8"), original)
+        self.assertEqual(old_backup.read_text(encoding="utf-8"), "old backup")
         second = owner_hosts_codex.plan_codex_configuration(config, root)
         self.assertEqual(second.status, "ready")
         self.assertFalse(owner_hosts_codex.apply_codex_configuration(second))

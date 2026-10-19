@@ -187,7 +187,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
             str(item.relative_to(worktree)): item.read_bytes()
             for item in sorted(worktree.iterdir()) if item.is_file()
         }
-        state = next((self.primary / ".git/meridian-worktrees").glob("*.json")).read_text(encoding="utf-8")
+        state = next((self.primary / ".git/cardine-worktrees").glob("*.json")).read_text(encoding="utf-8")
         return index.read_bytes(), files, state
 
 
