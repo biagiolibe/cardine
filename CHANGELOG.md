@@ -1425,5 +1425,5 @@ file changed, so no migration record or `VERSION` bump applies.
 Initial packaged Governed SDD workflow: ADRs, dependency-gated atomic tasks,
 `REQUIRED`/`NOT_REQUIRED` review policy, reviewer-integrator-led `main`
 integration, and the Lean Delivery mode for low-risk work. Snapshotted verbatim
-at [release-baselines/1.0.0/](release-baselines/1.0.0/) as the reference point
+at [release-baselines/1.0.0/](https://github.com/biagiolibe/meridian/tree/v1.4.0/release-baselines/1.0.0) as the reference point
 for adopting projects that predate `.meridian/manifest.json`.

@@ -578,20 +578,6 @@
       "resolution": "guardrail"
     },
     {
-      "code": "ADOPTION_BLOCKED",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`meridian adopt --assisted`",
-      "human_decision": true,
-      "resume": "resolve the adoption review record that the detail names manually, then restart the assisted adoption loop",
-      "kind": "stop",
-      "summary": "the assisted adoption state cannot advance without a developer decision",
-      "test": "tests.test_meridian_adoption_audit.AdoptionAuditTest.test_address_review_and_retry_limit",
-      "resolution": "guardrail"
-    },
-    {
       "code": "WORKFLOW_UNREADABLE",
       "class": "judgment",
       "workflows": [

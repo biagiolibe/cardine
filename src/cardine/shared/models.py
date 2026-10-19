@@ -280,13 +280,6 @@ class PlanItem:
 
 
 @dataclass(frozen=True)
-class Capability:
-    migration: str
-    present: bool
-    evidence: str
-
-
-@dataclass(frozen=True)
 class CapabilityMove:
     """One declared relocation of an exact protected marker block."""
 
@@ -300,21 +293,6 @@ class CapabilityMove:
     target_version: int
     target_sha256: str
     migration: str
-
-
-@dataclass(frozen=True)
-class ReviewRecord:
-    verdict: str
-    attempt: int
-    unchecked: int
-
-
-@dataclass(frozen=True)
-class AdoptionState:
-    action: str
-    missing: list[Capability]
-    review: "ReviewRecord | None"
-    reason: str
 
 
 @dataclass(frozen=True)

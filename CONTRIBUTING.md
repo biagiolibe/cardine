@@ -34,7 +34,6 @@ bin/                              Framework maintenance CLI
 capabilities/                     Machine-readable framework capability catalog
 docs/                             Architecture, workflow, and operator documentation
 migrations/                       Versioned deterministic upgrade records
-release-baselines/                Archived release baseline templates
 releases/                         Immutable release ledger records
 schemas/                          JSON schemas for Meridian records
 scripts/                          Repository validation and release tooling
@@ -274,7 +273,7 @@ together. Add no migration and do not bump `VERSION` for a template change.
 The marker catalog is separate from `catalog-v1.json`, which describes
 installation profiles. For a new marker, set `required: true`, `retired: false`,
 and use its capability ID as the `adoptionRecord` label; existing labels are
-retained for historical adoption output and do not require a new migration.
+retained for marker-catalog compatibility and do not require a new migration.
 Mark a retired capability with `retired: true` and `required: false` in the
 marker catalog. The catalog owns current requirements and retirements;
 historical migration records are not the source of current template state.
@@ -440,10 +439,10 @@ The support window is defined by Decision 6 in
   from the snapshot in `tests/fixtures/release-1.1.49-governed-sdd.tar.gz`.
 - Fixes land only in the newest release; do not add backport branches.
 - Downgrades, manifests with an unrecorded baseline, and unreleased `main` are
-  unsupported. Projects older than `v1.1.49` use `meridian adopt` best-effort.
-- Never remove a migration or packaged baseline, or change the window, without a
-  CHANGELOG-announced release and a migration or `adopt` path for affected
-  projects. A change to a template or migration must keep the proving test green.
+  unsupported.
+- A change to a template or migration must keep the proving test green.
+
+Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
 
 ## Pull requests
 

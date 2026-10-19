@@ -41,11 +41,10 @@ from cardine.tasks.preflight import execution_contract, execution_preflight, rea
 from cardine.tasks.recording import record_execution_event, record_investigation, run_validation
 from cardine.tasks.state import state_path
 from cardine.tasks.transitions import close_task, transition_task_state
-from cardine.templates.adopt_command import adopt_project
-from cardine.templates.adoption import bootstrap_capability_profile, finalize_adoption, print_assisted_adoption_plan
+from cardine.templates.adoption import bootstrap_capability_profile
 from cardine.templates.audit import profile_doctor, retired_text_advisories, run_audit
 from cardine.templates.catalog import manifest_workflow_mode
-from cardine.templates.files import detect_source_version, manifest_baseline_version
+from cardine.templates.files import manifest_baseline_version
 from cardine.templates.markers import extract_marked_block
 from cardine.templates.merge import lock_project, plan_from_baseline
 from cardine.templates.mode import detect_mode
@@ -203,49 +202,6 @@ def build_parser() -> MeridianArgumentParser:
         help="cap this upgrade to the last migration before the first one that retires a "
         "duplicated entry-point marker, so a long-lag consumer can complete an additive-only "
         "release; a no-op if no pending migration retires anything",
-    )
-
-    adopt = subparsers.add_parser("adopt", help="migrate an untracked project from a packaged baseline")
-    adopt.add_argument("--project", type=Path, default=Path.cwd())
-    adopt.add_argument(
-        "--mode",
-        choices=("lean-delivery", "governed-sdd"),
-        help="detected from the project's PROJECT_WORKFLOW.md mode lock when omitted",
-    )
-    adopt.add_argument(
-        "--from",
-        dest="source_version",
-        help="detected when exactly one packaged baseline is available for the mode",
-    )
-    adopt_group = adopt.add_mutually_exclusive_group(required=True)
-    adopt_group.add_argument("--check", action="store_true")
-    adopt_group.add_argument("--apply", action="store_true")
-    adopt.add_argument(
-        "--assisted",
-        action="store_true",
-        help="produce a capability-aware plan for an agent instead of generic template merging",
-    )
-    adopt.add_argument(
-        "--emit",
-        choices=("implementer", "reviewer", "orchestrator"),
-        help="print only the named prompt block, with --assisted --check, for a host or operator to relay directly",
-    )
-
-    finalize = subparsers.add_parser(
-        "finalize-adoption",
-        help="write a manifest after an assisted migration has been reviewed",
-    )
-    finalize.add_argument("--project", type=Path, default=Path.cwd())
-    finalize.add_argument(
-        "--mode",
-        choices=("lean-delivery", "governed-sdd"),
-        help="detected from the project's PROJECT_WORKFLOW.md mode lock when omitted",
-    )
-    finalize.add_argument(
-        "--owner-accepted",
-        action="store_true",
-        help="skip the independent-review gate after the developer personally reviewed the migration, "
-        "mirroring the `Accept <TASK-ID>` owner-acceptance path",
     )
 
     audit = subparsers.add_parser(
@@ -637,31 +593,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             ])
         if arguments.command == "lock":
             lock_project(project_root, framework_root, arguments.mode)
-        elif arguments.command == "adopt":
-            if arguments.emit and not (arguments.assisted and arguments.check):
-                raise MeridianError("--emit requires --assisted --check")
-            mode = arguments.mode or detect_mode(project_root)
-            source_version = arguments.source_version or detect_source_version(framework_root, mode)
-            if arguments.assisted:
-                if arguments.apply:
-                    raise MeridianError("assisted adoption has no --apply; implement and review the plan, then finalize-adoption")
-                return print_assisted_adoption_plan(
-                    project_root,
-                    framework_root,
-                    mode,
-                    source_version,
-                    arguments.emit,
-                )
-            return adopt_project(
-                project_root,
-                framework_root,
-                mode,
-                source_version,
-                arguments.apply,
-            )
-        elif arguments.command == "finalize-adoption":
-            mode = arguments.mode or detect_mode(project_root)
-            finalize_adoption(project_root, framework_root, mode, arguments.owner_accepted)
         elif arguments.command == "audit":
             mode = arguments.mode or detect_mode(project_root)
             return run_audit(project_root, framework_root, mode, arguments.ci_profile)

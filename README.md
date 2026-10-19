@@ -98,6 +98,10 @@ permission-profile diff, then consent with `meridian setup --apply` and
 restart. Follow the [quick start](docs/QUICKSTART.md#connect-codex) for
 initialization and effective access checks.
 
+## Project conversion
+
+Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
+
 ## Update
 
 Update the installed plugin or local framework checkout first, restart agent sessions, then preview and apply the project migration on a dedicated branch. The [upgrade guide](docs/HOW_TO_UPGRADE.md) covers both `stable` and tagged checkouts, plugin pins, version checks, [manual updates](docs/HOW_TO_UPGRADE.md#updating-meridian), and [framework upgrades](docs/HOW_TO_UPGRADE.md#framework-upgrades).

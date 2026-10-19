@@ -28,7 +28,6 @@ class MeridianCliFixtureMixin:
         self.project = root / "project"
         shutil.copytree(ROOT / "templates", self.framework / "templates")
         shutil.copytree(ROOT / "migrations", self.framework / "migrations")
-        shutil.copytree(ROOT / "release-baselines", self.framework / "release-baselines")
         shutil.copytree(ROOT / "capabilities", self.framework / "capabilities")
         (self.framework / "VERSION").write_text("1.1.0\n", encoding="utf-8")
         self.project.mkdir()
@@ -411,13 +410,3 @@ class MeridianCliFixtureMixin:
             removes=[{"capability": "reasoning-budget-contract", "capabilityVersion": 1}],
         )
         return policy, self.project / "docs/CONTEXT_BUDGET_POLICY.md"
-
-    def seed_unlocked_project_from_baseline(self) -> None:
-        shutil.rmtree(self.project)
-        self.project.mkdir()
-        source = self.framework / "release-baselines/1.0.0/templates/workflows/governed-sdd"
-        for path in source.rglob("*"):
-            if path.is_file():
-                destination = self.project / path.relative_to(source)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, destination)

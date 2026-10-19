@@ -53,6 +53,7 @@ class CardineCliTests(unittest.TestCase):
                     environment["MERIDIAN_ROOT"] = str(other_root)
                 for arguments, code in [
                     (["--version"], 0), (["--help"], 0), (["--unknown"], 2),
+                    (["adopt"], 2), (["finalize-adoption"], 2),
                     (["worktree", "--unknown"], 64),
                     (["--framework-root", str(ROOT), "--version"], 0),
                 ]:
@@ -77,14 +78,13 @@ class CardineCliTests(unittest.TestCase):
         import meridian
         from cardine import cli
         from cardine.shared import models
-        from cardine.templates import adopt_command, upgrade
+        from cardine.templates import upgrade
 
         self.assertIs(meridian.main, cli.main)
         self.assertIs(meridian.MeridianArgumentParser, cli.MeridianArgumentParser)
         self.assertIs(meridian.ManagedFile, models.ManagedFile)
         self.assertIs(meridian.PlanItem, models.PlanItem)
         self.assertIs(meridian.apply_plan, upgrade.apply_plan)
-        self.assertIs(meridian.adopt_project, adopt_command.adopt_project)
         self.assertLess(len((ROOT / "scripts/meridian.py").read_text().splitlines()), 100)
 
 

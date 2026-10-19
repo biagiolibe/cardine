@@ -295,7 +295,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         root = Path(self.temporary.name)
         framework = root / "framework"
         consumer = root / "consumer"
-        for source in ("templates", "migrations", "release-baselines", "capabilities"):
+        for source in ("templates", "migrations", "capabilities"):
             shutil.copytree(ROOT / source, framework / source)
         current = (framework / "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         previous = re.sub(

@@ -70,8 +70,8 @@ Work item 10's conversion command, and `.meridian/`.
 ## Validation
 
 - `python3 scripts/check_repository.py`
-- `python3 scripts/meridian.py --framework-root . profile doctor meridian-self-hosting --project .`
-- `python3 scripts/meridian.py --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
+- `meridian --framework-root . profile doctor meridian-self-hosting --project .`
+- `meridian --framework-root . audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`

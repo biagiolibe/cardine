@@ -63,9 +63,30 @@ class ModuleInventoryTest(unittest.TestCase):
                 if path == ROOT / "src/cardine/console/entry.py" and name == "main":
                     name = "console.main"
                 owners[name].append(str(path.relative_to(ROOT)))
+        # Task 034 retires historical adoption without rewriting the split inventory.
+        retired = {
+            'ADOPTION_RETRY_LIMIT',
+            'ADOPTION_REVIEW_PATH',
+            'ADOPTION_VERDICTS',
+            'AdoptionState',
+            'Capability',
+            'ReviewRecord',
+            'adopt_project',
+            'assisted_implementer_prompt',
+            'assisted_orchestrator_prompt',
+            'assisted_reviewer_prompt',
+            'compute_adoption_state',
+            'copy_adoption_baseline',
+            'detect_capabilities',
+            'detect_source_version',
+            'finalize_adoption',
+            'parse_adoption_review',
+            'print_assisted_adoption_plan',
+        }
         for binding in baseline["bindings"]:
             with self.subTest(name=binding["name"]):
-                self.assertEqual(len(owners[binding["name"]]), 1, owners[binding["name"]])
+                expected = 0 if binding["name"] in retired else 1
+                self.assertEqual(len(owners[binding["name"]]), expected, owners[binding["name"]])
 
     def test_package_import_graph_has_no_cycle(self):
         graph = package_graph()
