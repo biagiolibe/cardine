@@ -10,7 +10,7 @@ from cardine.shared.authority import resolve_authority_entry
 from cardine.shared.constants import CONTEXT_PHASE_READS_BLOCK
 from cardine.shared.constants import CONTEXT_PHASE_READ_LINE
 from cardine.shared.constants import CONTEXT_SIZE_ROLES
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_project_locations
 from cardine.templates.mode import detect_mode
@@ -89,10 +89,10 @@ def _context_routed_workflow(project_root: Path, mode: str, role: str, router: P
     }
     match = re.search(patterns[role], text)
     if not match:
-        raise MeridianError(f"cannot resolve the {role} route from {router}")
+        raise CardineError(f"cannot resolve the {role} route from {router}")
     path = Path(match.group(1))
     if path.is_absolute() or ".." in path.parts:
-        raise MeridianError(f"unsafe {role} route in {router}: {path}")
+        raise CardineError(f"unsafe {role} route in {router}: {path}")
     return path
 
 
@@ -120,15 +120,15 @@ def _context_configuration(project_root: Path) -> tuple[int | None, int]:
     try:
         value = json.loads(config.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise MeridianError(f"invalid context-size configuration {config}: {error}") from error
+        raise CardineError(f"invalid context-size configuration {config}: {error}") from error
     if not isinstance(value, dict) or value.get("version") != 1 or set(value) - {"version", "fileBytesThreshold", "routerFileLinesCeiling"}:
-        raise MeridianError("context-size configuration must contain version 1 and optional fileBytesThreshold and routerFileLinesCeiling")
+        raise CardineError("context-size configuration must contain version 1 and optional fileBytesThreshold and routerFileLinesCeiling")
     threshold = value.get("fileBytesThreshold")
     ceiling = value.get("routerFileLinesCeiling", 1000)
     if threshold is not None and (type(threshold) is not int or threshold < 0):
-        raise MeridianError("context-size fileBytesThreshold must be a non-negative integer")
+        raise CardineError("context-size fileBytesThreshold must be a non-negative integer")
     if type(ceiling) is not int or ceiling < 0:
-        raise MeridianError("context-size routerFileLinesCeiling must be a non-negative integer")
+        raise CardineError("context-size routerFileLinesCeiling must be a non-negative integer")
     return threshold, ceiling
 
 
@@ -155,7 +155,7 @@ def context_router_files(project_root: Path, workflow_mode: str | None = None) -
     for role in CONTEXT_SIZE_ROLES[mode]:
         try:
             files.add(_context_routed_workflow(project_root, mode, role, router))
-        except MeridianError:
+        except CardineError:
             continue
     return sorted((item for item in files if item.parts[:2] != (names().project_directory, "tasks")), key=lambda item: item.as_posix())
 
@@ -166,7 +166,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
     mode = workflow_mode or detect_mode(project_root)
     if role not in CONTEXT_SIZE_ROLES[mode]:
         allowed = ", ".join(CONTEXT_SIZE_ROLES[mode])
-        raise MeridianError(f"role {role!r} is not available for {mode}; choose: {allowed}")
+        raise CardineError(f"role {role!r} is not available for {mode}; choose: {allowed}")
     effective_threshold = _context_threshold(project_root, threshold)
     _configured_threshold, router_ceiling = _context_configuration(project_root)
     router = _context_router(project_root)

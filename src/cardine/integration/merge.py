@@ -3,7 +3,7 @@ from __future__ import annotations
 from cardine.shared.layout import names
 
 from cardine.integration.decision import IntegrationValidationOutcome
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from pathlib import Path
 from cardine.shared.models import ResolvedTaskIdentity
 from cardine.integration.projections import _apply_task_completion_rows
@@ -173,7 +173,7 @@ def stage_task_integration(
 ) -> dict[str, object]:
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
-        raise MeridianError("integration stage must run from the canonical primary checkout")
+        raise CardineError("integration stage must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
     _state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
     if integration_path.exists():
@@ -192,7 +192,7 @@ def stage_task_integration(
             and merge_matches
         ):
             return prior
-        raise MeridianError(f"staged integration state is mismatched or stale at {integration_path}")
+        raise CardineError(f"staged integration state is mismatched or stale at {integration_path}")
     if lease_path.exists():
         raise stop_error(
             "LEASE_HELD",
@@ -206,9 +206,9 @@ def stage_task_integration(
         require_effective_worktree=False,
     )
     if not ready:
-        raise MeridianError(f"task worktree is not ready: {', '.join(inspection['errors'])}")
+        raise CardineError(f"task worktree is not ready: {', '.join(inspection['errors'])}")
     if git_output(project_root, "branch", "--show-current") != "main":
-        raise MeridianError("primary checkout must be on main")
+        raise CardineError("primary checkout must be on main")
     if git_output(project_root, "status", "--porcelain"):
         raise stop_error("PRIMARY_DIRTY", "primary checkout must be clean")
     origin = _run_git(project_root, "remote", "get-url", "origin")
@@ -237,7 +237,7 @@ def stage_task_integration(
         # first-use decision cannot strand an integration transaction.
         raise undeclared_validation_commands_error(project_root, evidence)
     if not evidence["accepted"] or not evidence["validation_passed"]:
-        raise MeridianError("accepted, successful task validation evidence is required")
+        raise CardineError("accepted, successful task validation evidence is required")
     task_commit = str(inspection["task_commit"])
     task_state = _integration_task_state(project_root, identity, task_commit, Path(str(inspection["worktree"])))
     validated_task = str(evidence["validated_task_commit"])
@@ -260,7 +260,7 @@ def stage_task_integration(
             project_root, identity, validated_task, task_commit
         )
         if offending:
-            raise MeridianError(f"paths changed after validation: {', '.join(offending)}")
+            raise CardineError(f"paths changed after validation: {', '.join(offending)}")
     current_main = git_output(project_root, "rev-parse", "main")
     task_paths = tuple(filter(None, git_output(
         project_root, "diff", "--name-only", validated_base, validated_task
@@ -269,7 +269,7 @@ def stage_task_integration(
         project_root, identity, validated_base, validated_task
     )
     if disallowed_spike_paths:
-        raise MeridianError(
+        raise CardineError(
             "SPIKE task changes disallowed path(s): " + ", ".join(disallowed_spike_paths)
         )
     main_paths = tuple(
@@ -342,12 +342,12 @@ def stage_task_integration(
             *lifecycle_paths,
         )
         if staged_rows.returncode != 0:
-            raise MeridianError(staged_rows.stderr.strip() or "could not stage completion rows")
-    except (OSError, MeridianError) as error:
+            raise CardineError(staged_rows.stderr.strip() or "could not stage completion rows")
+    except (OSError, CardineError) as error:
         aborted = _run_git(project_root, "merge", "--abort")
         if aborted.returncode == 0:
             _remove_owned_file(lease_path)
-        raise MeridianError(str(error)) from error
+        raise CardineError(str(error)) from error
     candidate_tree = git_output(project_root, "write-tree")
     staged = {
         **lease,
@@ -375,17 +375,17 @@ def finalize_task_integration(
 ) -> dict[str, object]:
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
-        raise MeridianError("integration finalize must run from the canonical primary checkout")
+        raise CardineError("integration finalize must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
     _task_state, lease_path, integration_path = _lifecycle_paths(project_root, identity)
     lease = _read_json_object(lease_path, "integration lease")
     staged = _read_json_object(integration_path, "staged integration state")
     if lease.get("task_id") != identity.canonical_id or staged.get("task_id") != identity.canonical_id:
-        raise MeridianError("integration ownership does not match the requested task")
+        raise CardineError("integration ownership does not match the requested task")
     if not _merge_head_path(project_root).is_file() or git_output(
         project_root, "rev-parse", "HEAD"
     ) != staged.get("main_commit"):
-        raise MeridianError("the owned staged merge state is missing or its main commit changed")
+        raise CardineError("the owned staged merge state is missing or its main commit changed")
     if git_output(project_root, "write-tree") != staged.get("candidate_tree"):
         raise stop_error("EVIDENCE_MISMATCH", "staged candidate tree changed after integration stage", task_id=identity.canonical_id, project=project_root)
     validation = _read_json_object(validation_path.expanduser().resolve(), "candidate validation evidence")
@@ -419,7 +419,7 @@ def finalize_task_integration(
         )
     committed = _run_git(project_root, "commit", "-m", f"Integrate {identity.canonical_id}")
     if committed.returncode != 0:
-        raise MeridianError(committed.stderr.strip() or "integration commit failed; staged state was retained")
+        raise CardineError(committed.stderr.strip() or "integration commit failed; staged state was retained")
     merge_commit = git_output(project_root, "rev-parse", "HEAD")
     _remove_owned_file(integration_path)
     _remove_owned_file(lease_path)
@@ -473,7 +473,7 @@ def missing_candidate_validation_commands(
 def abort_task_integration(task_id: str, supplied_project: Path | None = None) -> dict[str, object]:
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
-        raise MeridianError("integration abort must run from the canonical primary checkout")
+        raise CardineError("integration abort must run from the canonical primary checkout")
     # Abort must stay possible when the queue link is stale, so it skips link checks.
     identity = resolve_task_identity(project_root, task_id, "existing", check_queue_links=False)
     _task_state, lease_path, integration_path = _lifecycle_paths(project_root, identity)
@@ -482,12 +482,12 @@ def abort_task_integration(task_id: str, supplied_project: Path | None = None) -
     if lease.get("task_id") != identity.canonical_id or (
         staged is not None and staged.get("task_id") != identity.canonical_id
     ):
-        raise MeridianError("integration ownership does not match the requested task")
+        raise CardineError("integration ownership does not match the requested task")
     merge_head = _merge_head_path(project_root)
     if merge_head.exists():
         aborted = _run_git(project_root, "merge", "--abort")
         if aborted.returncode != 0:
-            raise MeridianError(aborted.stderr.strip() or "cannot abort the owned staged integration")
+            raise CardineError(aborted.stderr.strip() or "cannot abort the owned staged integration")
     _remove_owned_file(integration_path)
     _remove_owned_file(lease_path)
     return {"version": 1, "task_id": identity.canonical_id, "status": "aborted", "next_action": "inspect"}
@@ -500,7 +500,7 @@ def cleanup_task_worktree(
 ) -> dict[str, object]:
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
-        raise MeridianError("worktree cleanup must run from the canonical primary checkout")
+        raise CardineError("worktree cleanup must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
     root = _effective_worktree_root(worktree_root)
     expected = _task_worktree_path_for_identity(project_root, root, identity)
@@ -545,7 +545,7 @@ def cleanup_task_worktree(
             relative = state_path(project_root, identity.canonical_id).relative_to(project_root)
             shown = _run_git(project_root, "show", f"main:{relative.as_posix()}")
             if shown.returncode != 0:
-                raise MeridianError("missing tracked task state")
+                raise CardineError("missing tracked task state")
             workflow = detect_mode(project_root)
             spike = read_task_field(identity.task_path.read_text(encoding="utf-8"), "Class") == "SPIKE"
             state = read_task_state(
@@ -554,8 +554,8 @@ def cleanup_task_worktree(
             )
             terminal = ("ANSWERED", "INCONCLUSIVE") if spike else ("ACCEPTED",) if workflow == "governed-sdd" else ("DONE",)
             if state["status"] not in terminal:
-                raise MeridianError(f"nonterminal tracked task state: {state['status']}")
-        except MeridianError as error:
+                raise CardineError(f"nonterminal tracked task state: {state['status']}")
+        except CardineError as error:
             raise stop_error("CLEANUP_BLOCKED", f"branch already deleted; tracked task state on main must be done: {error}", task_id=identity.canonical_id, project=project_root) from error
     elif _run_git(project_root, "merge-base", "--is-ancestor", task_commit, "main").returncode != 0:
         raise stop_error("CLEANUP_BLOCKED", "task commit is not integrated into main", task_id=identity.canonical_id, project=project_root)

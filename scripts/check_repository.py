@@ -514,7 +514,7 @@ def check_plugin_version(root: Path = ROOT) -> None:
 def check_capability_catalog(root: Path = ROOT) -> None:
     try:
         catalog = catalog_provider.load_capability_catalog(root)
-    except meridian.MeridianError as error:
+    except meridian.CardineError as error:
         fail(f"invalid capability catalog: {error}")
     profile = catalog.profile("meridian-self-hosting")
     if profile is None or not profile.capabilities:
@@ -623,7 +623,7 @@ def check_releases(root: Path = ROOT) -> None:
     if migration_targets:
         try:
             expected_baseline = owner_templates_files.latest_migration_to(root, latest["version"])
-        except meridian.MeridianError as error:
+        except meridian.CardineError as error:
             fail(f"cannot derive workflowBaselineVersion: {error}")
         if latest["workflowBaselineVersion"] != expected_baseline:
             fail(

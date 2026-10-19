@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 
 
 @dataclass(frozen=True)
@@ -44,7 +44,7 @@ def parse_semver(value: str) -> SemVer:
     """
     match = _SEMVER_PATTERN.fullmatch(value)
     if match is None:
-        raise MeridianError(f"invalid framework version: {value}")
+        raise CardineError(f"invalid framework version: {value}")
     major, minor, patch, prerelease, build = match.groups()
     return SemVer(int(major), int(minor), int(patch), prerelease or "", build or "")
 
@@ -52,7 +52,7 @@ def parse_semver(value: str) -> SemVer:
 def read_raw_version(framework_root: Path) -> str:
     version_file = framework_root / "VERSION"
     if not version_file.is_file():
-        raise MeridianError(f"framework VERSION file is missing: {version_file}")
+        raise CardineError(f"framework VERSION file is missing: {version_file}")
     return version_file.read_text(encoding="utf-8").strip()
 
 
@@ -60,7 +60,7 @@ def require_release_version(framework_root: Path) -> None:
     """Reject a prerelease framework VERSION before it can become durable."""
     version = parse_semver(read_raw_version(framework_root))
     if version.prerelease:
-        raise MeridianError(
+        raise CardineError(
             f"framework VERSION {version} is a prerelease; a prerelease version cannot be "
             "persisted into a manifest, migration, or release record"
         )
@@ -79,7 +79,7 @@ def version_key(value: str) -> tuple[int, ...]:
     try:
         return tuple(int(part) for part in value.split("."))
     except ValueError as error:
-        raise MeridianError(f"invalid framework version: {value}") from error
+        raise CardineError(f"invalid framework version: {value}") from error
 
 
 def semver_precedence_key(version: SemVer) -> tuple[object, ...]:

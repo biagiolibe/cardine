@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from cardine.release.version import version_key
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import CapabilityMove
 from cardine.templates.markers import extract_marked_block
 from cardine.templates.markers import marker_blocks
@@ -47,7 +47,7 @@ def capped_target_version(framework_root: Path, installed_version: str, target_v
     for path in migration_record_paths(framework_root, [retirement_id]):
         data = json.loads(path.read_text(encoding="utf-8"))
         return str(data["from"])
-    raise MeridianError(f"migration record is missing: {retirement_id}")
+    raise CardineError(f"migration record is missing: {retirement_id}")
 
 
 def migration_record_paths(framework_root: Path, migration_ids_to_find: list[str]) -> list[Path]:
@@ -58,7 +58,7 @@ def migration_record_paths(framework_root: Path, migration_ids_to_find: list[str
         if str(data["id"]) in wanted:
             records.append(path)
     if len(records) != len(wanted):
-        raise MeridianError("a requested migration record is missing from the framework source")
+        raise CardineError("a requested migration record is missing from the framework source")
     return records
 
 
@@ -103,7 +103,7 @@ def adopt_existing_paths(framework_root: Path, pending_migrations: list[str]) ->
         data = json.loads(path.read_text(encoding="utf-8"))
         errors = validate_adopt_existing_paths(data)
         if errors:
-            raise MeridianError(f"invalid adoption declaration in {path.name}: {'; '.join(errors)}")
+            raise CardineError(f"invalid adoption declaration in {path.name}: {'; '.join(errors)}")
         result.update(Path(value) for value in data.get("adoptExistingPaths", []))
     return result
 

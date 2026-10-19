@@ -1108,7 +1108,7 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
         cli.write_text('STATE = "BLOCKED"\nFORMAT = f"BLOCKED {code}: {detail}; resume: {resume}"\n'
                        'print("BLOCKED ALPHA_STOP: detail")\n', encoding="utf-8")
         cr.check_stop_code_registry(self.root)
-        cli.write_text('x = 1\nraise MeridianError("validation BLOCKED: bad id")\n', encoding="utf-8")
+        cli.write_text('x = 1\nraise CardineError("validation BLOCKED: bad id")\n', encoding="utf-8")
         self.assertIn("scripts/meridian.py:2: BLOCKED without a registered stop code", self.failure())
         cli.write_text('print(f"BLOCKED: {error}")\n', encoding="utf-8")
         self.assertIn("scripts/meridian.py:1: BLOCKED without a registered stop code", self.failure())

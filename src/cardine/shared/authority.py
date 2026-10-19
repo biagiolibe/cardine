@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.text import HEADING_LINE
 from cardine.shared.text import extract_heading_block
 from cardine.tasks.identity import find_task_file
@@ -28,11 +28,11 @@ def adr_show(project_root: Path, adr_id: str) -> str:
     """
     adr_log = find_adr_log(project_root)
     if not adr_log.is_file():
-        raise MeridianError(f"ADR log not found for {adr_id}: {adr_log}")
+        raise CardineError(f"ADR log not found for {adr_id}: {adr_log}")
     text = adr_log.read_text(encoding="utf-8")
     result = extract_heading_block(text, adr_title_matcher(adr_id))
     if result is None:
-        raise MeridianError(f"unknown ADR {adr_id}: not found in {adr_log}")
+        raise CardineError(f"unknown ADR {adr_id}: not found in {adr_log}")
     excerpt, _ = result
     return excerpt
 
@@ -86,7 +86,7 @@ def adr_list(
     """List every ADR entry as `{id, title, status}` without printing a body."""
     adr_log = find_adr_log(project_root)
     if not adr_log.is_file():
-        raise MeridianError(f"ADR log not found: {adr_log}")
+        raise CardineError(f"ADR log not found: {adr_log}")
     entries, warnings = adr_entries(adr_log.read_text(encoding="utf-8"))
     if status_filter is not None:
         wanted = status_filter.strip().casefold()
@@ -97,11 +97,11 @@ def adr_list(
 def extract_spec_heading(project_root: Path, spec_path: str, heading: str) -> str:
     full = project_root / spec_path
     if not full.is_file():
-        raise MeridianError(f"spec file not found: {spec_path}")
+        raise CardineError(f"spec file not found: {spec_path}")
     text = full.read_text(encoding="utf-8")
     result = extract_heading_block(text, lambda title: title.strip() == heading.strip())
     if result is None:
-        raise MeridianError(f"heading not found in {spec_path}: {heading}")
+        raise CardineError(f"heading not found in {spec_path}: {heading}")
     excerpt, _ = result
     return excerpt
 
@@ -143,7 +143,7 @@ def resolve_authority_entry(
         for adr_id in adr_ids:
             try:
                 excerpt = adr_show(project_root, adr_id)
-            except MeridianError:
+            except CardineError:
                 unresolved.append(f"{adr_id} (not found in {adr_log})")
                 continue
             resolved.append((str(adr_log), adr_id, excerpt))
@@ -153,7 +153,7 @@ def resolve_authority_entry(
         spec_path, heading = match.group(1), match.group(2).strip()
         try:
             excerpt = extract_spec_heading(project_root, spec_path, heading)
-        except MeridianError as error:
+        except CardineError as error:
             unresolved.append(f"{entry} ({error})")
             return resolved, unresolved
         resolved.append((spec_path, heading, excerpt))

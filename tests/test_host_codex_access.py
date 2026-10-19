@@ -138,11 +138,11 @@ class CodexWorktreeAccessTest(unittest.TestCase):
 
     def test_unsafe_identity_task_and_root_are_rejected(self) -> None:
         project = self.repository("safe", "git@example.com:../repo.git")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_worktree_paths.repository_identity(project)
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_tasks_identity.canonical_task_id("../054")
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_worktree_paths.task_worktree_path(self.repository("other"), Path.home(), "054")
 
     def test_existing_path_for_another_repository_is_a_collision(self) -> None:
@@ -150,7 +150,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         second = self.repository("two", "git@github.com:acme/shared.git")
         path = self.root / "existing"
         subprocess.run(["git", "-C", str(first), "worktree", "add", "-b", "task-054", str(path), "main"], check=True, capture_output=True)
-        with self.assertRaisesRegex(shared_errors.MeridianError, "collision"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "collision"):
             owner_worktree_paths.validate_worktree_collision(second, path, "054")
 
     def test_namespaced_symlink_escape_is_rejected(self) -> None:
@@ -160,7 +160,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         outside = self.root / "outside"
         outside.mkdir()
         (worktrees / "github.com").symlink_to(outside, target_is_directory=True)
-        with self.assertRaisesRegex(shared_errors.MeridianError, "symlink"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "symlink"):
             owner_worktree_paths.task_worktree_path(project, worktrees, "054")
 
     def test_config_apply_preserves_text_backs_up_and_is_idempotent(self) -> None:
@@ -234,17 +234,17 @@ class CodexWorktreeAccessTest(unittest.TestCase):
     def test_conflicting_and_malformed_configuration_is_blocked(self) -> None:
         config = self.root / "config.toml"
         config.write_text('sandbox_mode = "workspace-write"\n', encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "legacy"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "legacy"):
             owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
         config.write_text("broken = [\n", encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "malformed"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "malformed"):
             owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
 
     def test_managed_requirements_must_allow_the_profile(self) -> None:
         config = self.root / "config.toml"
         requirements = self.root / "requirements.toml"
         requirements.write_text('[allowed_permission_profiles]\nother = true\n', encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "managed"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "managed"):
             owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees", requirements)
         requirements.write_text('[allowed_permission_profiles]\nmeridian-worktrees = true\n', encoding="utf-8")
         self.assertEqual(

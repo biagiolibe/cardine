@@ -307,7 +307,7 @@ class FlowReportTest(unittest.TestCase):
         self.assertEqual([task["task"] for task in report["tasks"]], ["056"])  # type: ignore[index]
         self.assertEqual(report["tasks"][0]["lead_time_seconds"], 10 * 86400)  # type: ignore[index]
         self.assertEqual(report["stops_by_code"], {"PRIMARY_DIRTY": 1})
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             owner_shared_flow.flow_report(self.project, "yesterday", self.now)
 
     def test_origin_shares_with_archive_and_unknown(self) -> None:
@@ -366,7 +366,7 @@ class FlowReportTest(unittest.TestCase):
     def test_unreadable_targets_file_is_an_error(self) -> None:
         (self.project / ".meridian" / "flow-targets.json").write_text('{"version": 2}', encoding="utf-8")
         self.integrated(1)
-        with self.assertRaises(shared_errors.MeridianError):
+        with self.assertRaises(shared_errors.CardineError):
             self.report()
 
     def test_removal_candidates_are_unemitted_tool_codes(self) -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from cardine.release.version import read_version
 from cardine.release.version import version_key
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import ManagedFile
 from cardine.templates.markers import append_only_new_markers
 from cardine.templates.markers import marker_pairs
@@ -26,7 +26,7 @@ def latest_migration_to(framework_root: Path, upto: str | None = None) -> str:
         return limit
     eligible = [version for version in versions if version_key(version) <= version_key(limit)]
     if not eligible:
-        raise MeridianError(f"no migration baseline exists at or below framework version {limit}")
+        raise CardineError(f"no migration baseline exists at or below framework version {limit}")
     return max(eligible, key=version_key)
 
 
@@ -37,7 +37,7 @@ def manifest_baseline_version(manifest: dict[str, object]) -> str:
 
 def managed_files_for_workflow(workflow: Path, mode: str) -> list[ManagedFile]:
     if not workflow.is_dir():
-        raise MeridianError(f"workflow template is missing: {workflow}")
+        raise CardineError(f"workflow template is missing: {workflow}")
 
     paths = [
         Path("PROJECT_WORKFLOW.md"),
@@ -74,7 +74,7 @@ def managed_files_for_workflow(workflow: Path, mode: str) -> list[ManagedFile]:
     for target in paths:
         source = workflow / target
         if not source.is_file():
-            raise MeridianError(f"managed template is missing: {source}")
+            raise CardineError(f"managed template is missing: {source}")
         result.append(ManagedFile(source=source, target=target))
     return result
 

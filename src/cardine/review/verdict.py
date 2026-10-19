@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianStop
+from cardine.shared.errors import CardineStop
 from cardine.shared.git import _run_git
 from cardine.shared.git import current_branch
 from cardine.shared.git import git_output
@@ -61,7 +61,7 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
                                            review_required=required, stop_factory=stop_error, text=original.stdout)
                 projected = _review_verdict_projection(baseline, verdict, head, approved_by,
                                                       state["transitions"][-1]["at"])
-            except (MeridianStop, ValueError, KeyError, IndexError):
+            except (CardineStop, ValueError, KeyError, IndexError):
                 projected = None
             expected = {path: json.dumps(projected, indent=2, sort_keys=True) + "\n"}
             for target in (identity.task_path, identity.review_path):

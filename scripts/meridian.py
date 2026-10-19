@@ -58,7 +58,7 @@ from cardine.shared.context import _context_path_references, _context_relative_r
 from cardine.shared.journal import JOURNAL_NAME, JOURNAL_ROTATED_NAME, JOURNAL_MAX_BYTES, JOURNAL_VERSION, JOURNALED_WORKTREE_COMMANDS, JOURNALED_INTEGRATE_COMMANDS, LifecycleJournalEntry, append_journal_line
 from cardine.integration.decision import IntegrationValidationOutcome, IntegrationValidationDecision, _paths_interact, decide_integration_validation
 from cardine.shared.constants import MANIFEST_PATH, VALIDATION_EVIDENCE_SCHEMA_PATH, VALIDATION_EXIT_PASSED, VALIDATION_EXIT_PENDING, VALIDATION_EXIT_FAILED, CAPABILITY_CATALOG_VERSION, CAPABILITY_CATALOG_PATH, BASELINES_PATH, PROTOCOL_VERSION, LEGACY_PROTOCOL_VERSION, WORKFLOW_MODES, INSTALLATION_FORMS, STRICT_DIGEST_PROFILES, PROJECT_EDITABLE_MANAGED_PATHS, INSTALLATION_STATES, HOST_ACTIVATION_STATES, VERIFICATION_STATES, AUDIT_STATES, LATEST_RELEASE_URL, LATEST_RELEASE_TIMEOUT_SECONDS, LATEST_RELEASE_RESPONSE_LIMIT, SELF_CHECK_UPDATE_AVAILABLE, SELF_CHECK_UNKNOWN, CAPABILITY_DECLARATION_REQUIRED_PROTOCOL, CAPABILITY_MARKER, MARKED_BLOCK, ENTRY_ROUTER_PATH, ENTRY_ROUTER_MAP_PATH, ENTRY_ROUTER_OVERLAYS, ENTRY_ROUTER_BUDGET_BYTES, ENTRY_ROUTER_ROUTES, ENTRY_ROUTER_SAFEGUARDS, CONTEXT_SIZE_CONFIG_PATH, CONTEXT_SIZE_POLICY_PATH, CONTEXT_PHASE_READS_BLOCK, CONTEXT_PHASE_READ_LINE, CONTEXT_SIZE_ROLES, USAGE_HOSTS, USAGE_PRIVACY_BOUNDARY, USAGE_ADAPTER_NOTES, TASK_IDENTITY_PATH, PROJECT_DECLARATION_PATH
-from cardine.shared.errors import MeridianError, InternalStopError, MeridianStop
+from cardine.shared.errors import CardineError, InternalStopError, CardineStop
 from cardine.shared.hashing import sha256
 from cardine.shared.text import read_task_field, HEADING_LINE, extract_heading_block
 from cardine.release.version import SemVer, _SEMVER_IDENTIFIER, _SEMVER_PATTERN, parse_semver, read_raw_version, require_release_version, read_version, version_key, semver_precedence_key, release_kind_from_body
@@ -90,7 +90,7 @@ from cardine.tasks.audit import audit_task_state_projections
 from cardine.tasks.contract import profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HANDOFF_FIELDS, EXECUTION_EVIDENCE_PATH, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, verify_host_impact_completion_evidence, execution_entries, verify_validation_skips, verify_execution_evidence, check_handoff, default_handoff_path
 from cardine.tasks.importer import import_task_states
 from cardine.templates.upgrade import plan_upgrade, complete_profile_surfaces, apply_plan, apply_upgrade
-from cardine.cli import MeridianArgumentParser, ShowVersionAction, main, build_parser, _run_cli
+from cardine.cli import CardineArgumentParser, ShowVersionAction, main, build_parser, _run_cli
 
 if __name__ == "__main__":
     raise SystemExit(main())

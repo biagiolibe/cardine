@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from cardine.shared.context import _context_configuration, context_router_files
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import authority as owner_shared_authority
 
@@ -126,14 +126,14 @@ def is_exempt(path: Path, project: Path) -> bool:
             sources = re.findall(r"^### (.+?) —", authority, re.MULTILINE)
             if relative in sources:
                 return True
-    except MeridianError:
+    except CardineError:
         pass
     except OSError:
         pass
     try:
         if Path(relative) in context_router_files(project):
             return True
-    except MeridianError:
+    except CardineError:
         pass
     return False
 
@@ -149,7 +149,7 @@ def router_ceiling_reason(path: Path, project: Path) -> str | None:
             lines = sum(1 for _ in source)
         if lines > ceiling:
             return f"Blocked: router file {relative.as_posix()} ({lines} lines) exceeds its declared ceiling ({ceiling} lines). Shrink the file; do not read it in ranges."
-    except (OSError, ValueError, MeridianError):
+    except (OSError, ValueError, CardineError):
         return None
     return None
 

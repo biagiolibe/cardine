@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import statistics
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.journal import JOURNAL_VERSION
 from cardine.stops.registry import load_stop_registry
@@ -81,7 +81,7 @@ def _flow_origin(project_root: Path, task: str) -> str:
     """Read the optional `Origin` task header from the task record or its archive."""
     try:
         text = find_task_file(project_root, task).read_text(encoding="utf-8")
-    except (MeridianError, OSError, UnicodeDecodeError):
+    except (CardineError, OSError, UnicodeDecodeError):
         return "unknown"
     match = FLOW_ORIGIN_PATTERN.search(text)
     return match.group(1).lower() if match and match.group(1).lower() in FLOW_ORIGINS else "unknown"
@@ -99,22 +99,22 @@ def _flow_targets(project_root: Path, tasks: list[dict[str, object]], unbacked_t
     try:
         declared = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise MeridianError(f"{names().flow_targets_path} is unreadable: {error}") from error
+        raise CardineError(f"{names().flow_targets_path} is unreadable: {error}") from error
     if not isinstance(declared, dict) or declared.get("version") != FLOW_TARGETS_VERSION:
-        raise MeridianError(f"{names().flow_targets_path} must be a version {FLOW_TARGETS_VERSION} object")
+        raise CardineError(f"{names().flow_targets_path} must be a version {FLOW_TARGETS_VERSION} object")
     integrated = sorted((task for task in tasks if task["_integrated"] is not None), key=lambda task: task["_integrated"])
     results: list[dict[str, object]] = []
 
     def window_of(entry: object, name: str) -> int:
         window = entry.get("window") if isinstance(entry, dict) else None
         if not isinstance(window, int) or isinstance(window, bool) or window < 1:
-            raise MeridianError(f"{names().flow_targets_path}: {name}.window must be a positive integer")
+            raise CardineError(f"{names().flow_targets_path}: {name}.window must be a positive integer")
         return window
 
     def limit_of(entry: object, name: str, key: str) -> float:
         value = entry.get(key) if isinstance(entry, dict) else None
         if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
-            raise MeridianError(f"{names().flow_targets_path}: {name}.{key} must be a non-negative number")
+            raise CardineError(f"{names().flow_targets_path}: {name}.{key} must be a non-negative number")
         return value
 
     def state(measured: float | None, limit: float) -> str:
@@ -180,7 +180,7 @@ def _flow_tasks(project_root: Path, records: list[dict[str, object]], cutoff: da
         if started is None:
             try:
                 recorded = lifecycle_started_at(task, project_root)
-            except (MeridianError, OSError):
+            except (CardineError, OSError):
                 recorded = None
             started = datetime.fromisoformat(recorded.replace("Z", "+00:00")) if recorded else None
         integrated = min(finalized) if finalized else None
@@ -215,7 +215,7 @@ def flow_report(project_root: Path, since: str | None, now: datetime | None = No
         try:
             cutoff = datetime.strptime(since, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         except ValueError as error:
-            raise MeridianError("--since must be an ISO date (YYYY-MM-DD)") from error
+            raise CardineError("--since must be an ISO date (YYYY-MM-DD)") from error
     records, malformed = _flow_read_journal(project_root)
     registry = load_stop_registry()
     in_period = lambda record: cutoff is None or record["_when"] >= cutoff  # noqa: E731

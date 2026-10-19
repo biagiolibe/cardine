@@ -65,7 +65,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         return json.loads((self.worker / '.meridian/tasks/001.json').read_text())
 
     def assert_stop(self, code, action):
-        with self.assertRaises(shared_errors.MeridianStop) as caught:
+        with self.assertRaises(shared_errors.CardineStop) as caught:
             action()
         self.assertEqual(caught.exception.code, code)
 
@@ -255,7 +255,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 self.commit('Malformed handoff fixture')
                 head = self.git('rev-parse', 'HEAD')
                 for action in (owner_lifecycle_execution.delivery_readiness, owner_lifecycle_commands.execution_deliver):
-                    with self.assertRaises(shared_errors.MeridianStop) as caught:
+                    with self.assertRaises(shared_errors.CardineStop) as caught:
                         action(self.worker, '001')
                     self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
                     self.assertIn('Current task commit', str(caught.exception))
@@ -431,7 +431,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         os.chdir(self.primary)
         self.git('worktree', 'remove', str(self.worker), cwd=self.primary)
         for action in (owner_lifecycle_commands.execution_start, owner_tasks_transitions.close_task):
-            with self.assertRaises(shared_errors.MeridianStop) as caught:
+            with self.assertRaises(shared_errors.CardineStop) as caught:
                 action(self.primary, '001')
             detail = (f'cwd={self.primary.resolve()}; --project={self.primary.resolve()}; expected worktree={self.worker}; '
                       'no registered task worktree')

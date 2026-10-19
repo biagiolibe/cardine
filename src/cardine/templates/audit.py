@@ -8,7 +8,7 @@ from cardine.shared.constants import CONTEXT_SIZE_ROLES
 from cardine.shared.models import CapabilityDeclaration
 from cardine.shared.models import CatalogProfile
 from cardine.shared.models import EvidenceSnapshot
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.constants import PROJECT_EDITABLE_MANAGED_PATHS
 from cardine.shared.constants import PROTOCOL_VERSION
 from pathlib import Path
@@ -53,7 +53,7 @@ def _audit_evidence_reference(
         raw_path = reference.removeprefix("path:")
         try:
             relative_path = _repository_relative_path(raw_path, "audit evidence path")
-        except MeridianError as error:
+        except CardineError as error:
             return str(error)
         if not (project_root / relative_path).is_file():
             return f"missing evidence artifact {relative_path}"
@@ -139,7 +139,7 @@ def _audit_probe_evidence(project_root: Path, snapshot: EvidenceSnapshot) -> lis
         raw_path = reference.removeprefix("probe:")
         try:
             relative_path = _repository_relative_path(raw_path, "audit probe path")
-        except MeridianError as error:
+        except CardineError as error:
             diagnostics.append(str(error))
             continue
         if not (project_root / relative_path).is_file():
@@ -249,7 +249,7 @@ def audit_declared_capabilities(
     """Audit effective declarations without projecting migration provenance."""
     try:
         manifest = load_manifest(project_root, framework_root)
-    except MeridianError as error:
+    except CardineError as error:
         # Preserve the CLI's protocol-compatibility diagnostic: callers must
         # update the framework before this version can interpret the manifest.
         if "newer than this Meridian CLI supports" in str(error):
@@ -284,7 +284,7 @@ def audit_declared_capabilities(
     catalog = load_capability_catalog(framework_root)
     try:
         profiles = parse_capability_profiles(manifest, catalog)
-    except MeridianError as error:
+    except CardineError as error:
         return [AuditResult("FAIL", "declaration/capabilityProfiles", str(error))], workflow_mode
 
     managed_files = manifest.get("managedFiles", {})
@@ -490,7 +490,7 @@ def load_retired_text_registry(framework_root: Path) -> list[dict[str, object]]:
                     raise ValueError("retired text files must be safe project paths outside tasks")
         return entries
     except (OSError, ValueError) as error:
-        raise MeridianError(f"invalid retired-text registry: {error}") from error
+        raise CardineError(f"invalid retired-text registry: {error}") from error
 
 
 def retired_text_advisories(
@@ -534,7 +534,7 @@ def run_audit(
     results, locked_mode = audit_declared_capabilities(project_root, framework_root, mode)
     try:
         results.extend(audit_task_state_projections(project_root, locked_mode))
-    except (MeridianError, OSError, UnicodeError) as error:
+    except (CardineError, OSError, UnicodeError) as error:
         results.append(AuditResult("FAIL", "task-state", str(error)))
     legacy_checks = (
         ("marker-integrity", audit_capability_markers),
@@ -544,7 +544,7 @@ def run_audit(
     for check_name, check in legacy_checks:
         try:
             check_results = check(project_root, framework_root, locked_mode)
-        except MeridianError as error:
+        except CardineError as error:
             results.append(AuditResult("FAIL", check_name, str(error)))
             continue
         for status, detail in check_results:
@@ -561,12 +561,12 @@ def run_audit(
             results.extend(
                 audit_managed_copy_digests(project_root, recorded_digests, declared_copy_paths)
             )
-    except (MeridianError, ValueError):
+    except (CardineError, ValueError):
         # Projects without a readable manifest have no recorded digests to compare.
         pass
     try:
         detect_mode(project_root)
-    except MeridianError as error:
+    except CardineError as error:
         # Fixture and legacy projects may have a valid manifest but no local
         # workflow-mode lock, so their router read set is not available.
         results.append(AuditResult("NOT_APPLICABLE", "context-size", str(error)))
@@ -576,7 +576,7 @@ def run_audit(
                 report = context_size_report(project_root, role, workflow_mode=locked_mode)
                 for path in report["exceeded"]:
                     results.append(AuditResult("FAIL", "context-size", f"{role}: {path} exceeds its configured ceiling"))
-        except MeridianError as error:
+        except CardineError as error:
             results.append(AuditResult("FAIL", "context-size", str(error)))
     try:
         validation_state, _fragments = candidate_validation_declaration(project_root)
@@ -585,13 +585,13 @@ def run_audit(
                 "ADVISORY", "candidate-validation-commands",
                 "undeclared; choose declared fragments or none before the first integration",
             ))
-    except MeridianError as error:
+    except CardineError as error:
         results.append(AuditResult("FAIL", "candidate-validation-commands", str(error)))
     try:
         declaration = read_project_declaration(project_root)
         if declaration is not None and "project" not in declaration:
             results.append(AuditResult("ADVISORY", "project-declaration", "advisory-incomplete; missing project identity"))
-    except MeridianError as error:
+    except CardineError as error:
         results.append(AuditResult("FAIL", "project-declaration", str(error)))
 
     results.sort(key=lambda result: (result.identity, result.detail))
@@ -657,32 +657,32 @@ def _load_profile_probe(
 ) -> dict[str, object]:
     path = project_root / relative_path
     if not path.is_file():
-        raise MeridianError(f"required probe is missing: {relative_path}")
+        raise CardineError(f"required probe is missing: {relative_path}")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise MeridianError(f"required probe is invalid JSON: {relative_path}") from error
+        raise CardineError(f"required probe is invalid JSON: {relative_path}") from error
     data = _required_object(value, f"probe {relative_path}")
     if data.get("schemaVersion") != 1:
-        raise MeridianError(f"probe {relative_path} must use schemaVersion 1")
+        raise CardineError(f"probe {relative_path} must use schemaVersion 1")
     if data.get("profileId") != profile.profile_id or data.get("profileVersion") != profile.version:
-        raise MeridianError(f"probe {relative_path} targets the wrong profile version")
+        raise CardineError(f"probe {relative_path} targets the wrong profile version")
     if data.get("hostProfile") != expected_host:
-        raise MeridianError(f"probe {relative_path} must target host profile {expected_host}")
+        raise CardineError(f"probe {relative_path} must target host profile {expected_host}")
     for field in ("host", "hostVersion", "invocationMode", "configurationLayer", "fallback"):
         _required_string(data.get(field), f"probe {relative_path}.{field}")
     state = _required_string(data.get("state"), f"probe {relative_path}.state")
     if state not in {"PASS", "ADVISORY", "UNSUPPORTED", "UNVERIFIED"}:
-        raise MeridianError(f"probe {relative_path}.state is unsupported: {state}")
+        raise CardineError(f"probe {relative_path}.state is unsupported: {state}")
     for field in ("observationTime", "evidenceArtifact"):
         field_value = data.get(field)
         if field_value is not None and (not isinstance(field_value, str) or not field_value.strip()):
-            raise MeridianError(f"probe {relative_path}.{field} must be null or a non-empty string")
+            raise CardineError(f"probe {relative_path}.{field} must be null or a non-empty string")
     if state == "PASS" and (data.get("observationTime") is None or data.get("evidenceArtifact") is None):
-        raise MeridianError(f"probe {relative_path} PASS requires observationTime and evidenceArtifact")
+        raise CardineError(f"probe {relative_path} PASS requires observationTime and evidenceArtifact")
     checks = data.get("checks")
     if not isinstance(checks, list) or not checks:
-        raise MeridianError(f"probe {relative_path}.checks must be a non-empty list")
+        raise CardineError(f"probe {relative_path}.checks must be a non-empty list")
     covered: set[str] = set()
     for index, raw_check in enumerate(checks):
         check = _required_object(raw_check, f"probe {relative_path}.checks[{index}]")
@@ -690,13 +690,13 @@ def _load_profile_probe(
             check.get("capability"), f"probe {relative_path}.checks[{index}].capability"
         )
         if capability_id not in dict(profile.capabilities):
-            raise MeridianError(f"probe {relative_path} names undeclared capability {capability_id}")
+            raise CardineError(f"probe {relative_path} names undeclared capability {capability_id}")
         _required_string(check.get("behavior"), f"probe {relative_path}.checks[{index}].behavior")
         dimensions = _required_string_list(
             check.get("dimensions"), f"probe {relative_path}.checks[{index}].dimensions", non_empty=True
         )
         if len(set(dimensions)) != len(dimensions):
-            raise MeridianError(f"probe {relative_path} has duplicate check dimensions")
+            raise CardineError(f"probe {relative_path} has duplicate check dimensions")
         covered.add(capability_id)
     data["_coveredCapabilities"] = sorted(covered)
     return data
@@ -710,11 +710,11 @@ def profile_doctor(project_root: Path, framework_root: Path, profile_id: str) ->
         catalog = load_capability_catalog(framework_root)
         profile = catalog.profile(profile_id)
         if profile is None:
-            raise MeridianError(f"capability profile is not present in the catalog: {profile_id}")
+            raise CardineError(f"capability profile is not present in the catalog: {profile_id}")
         declarations = {item.profile_id: item for item in parse_capability_profiles(manifest, catalog)}
         declaration = declarations.get(profile_id)
         if declaration is None:
-            raise MeridianError(f"manifest does not declare capability profile: {profile_id}")
+            raise CardineError(f"manifest does not declare capability profile: {profile_id}")
         audit_results, _mode = audit_declared_capabilities(
             project_root, framework_root, manifest_workflow_mode(manifest)
         )
@@ -758,7 +758,7 @@ def profile_doctor(project_root: Path, framework_root: Path, profile_id: str) ->
                 f"{profile_id}/probe/{host_id}",
                 "missing capability checks: " + ", ".join(missing) if missing else f"resolved {probe_path}; host state={probe['state']}",
             ))
-    except MeridianError as error:
+    except CardineError as error:
         results.append(AuditResult("FAIL", f"{profile_id}/doctor", str(error)))
     results.sort(key=lambda result: (result.identity, result.detail))
     for result in results:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import CODEX_MANAGED_BEGIN
 from cardine.shared.models import CODEX_MANAGED_END
 from cardine.shared.models import CODEX_PERMISSION_PROFILE
@@ -103,7 +103,7 @@ def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
 def apply_codex_user_rules(plan: CodexUserRulesPlan) -> bool:
     current = plan.path.read_bytes().decode("utf-8") if plan.path.exists() else ""
     if current != plan.current_text:
-        raise MeridianError("Codex user rules changed since planning; rerun --check")
+        raise CardineError("Codex user rules changed since planning; rerun --check")
     if plan.proposed_text is None:
         return False
     plan.path.parent.mkdir(parents=True, exist_ok=True)
@@ -235,7 +235,7 @@ def _codex_markers_intact(text: str) -> bool:
 def _without_codex_profile_text(text: str) -> str:
     """Remove ownership markers, the root selection, and the managed profile tables.
 
-    Raises MeridianError unless each managed table header appears exactly once as a
+    Raises CardineError unless each managed table header appears exactly once as a
     plain table header, so unusual serializations are never edited heuristically.
     """
     profile_header, roots_header = _codex_header_patterns()
@@ -244,7 +244,7 @@ def _without_codex_profile_text(text: str) -> str:
     if sum(1 for line in lines if profile_header.match(line.rstrip("\r\n"))) != 1 or sum(
         1 for line in lines if roots_header.match(line.rstrip("\r\n"))
     ) != 1:
-        raise MeridianError(
+        raise CardineError(
             f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} is not serialized as exactly one plain "
             "profile table and one workspace_roots table; reconcile it manually"
         )
@@ -268,7 +268,7 @@ def _plan_codex_ownership_repair(
     """Plan an ownership-metadata repair, or raise unless the profile is an exact semantic match."""
     differences = _codex_profile_divergence(parsed, root)
     if differences:
-        raise MeridianError(
+        raise CardineError(
             f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} exists without intact Meridian ownership "
             f"markers and differs from the expected profile in: {', '.join(differences)}; reconcile it manually"
         )
@@ -277,9 +277,9 @@ def _plan_codex_ownership_repair(
     try:
         reparsed = tomllib.loads(proposed)
     except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"proposed Codex ownership repair would be invalid: {error}") from error
+        raise CardineError(f"proposed Codex ownership repair would be invalid: {error}") from error
     if reparsed != parsed:
-        raise MeridianError(
+        raise CardineError(
             "Codex ownership repair would change effective configuration beyond Meridian's markers; "
             "reconcile it manually"
         )
@@ -327,11 +327,11 @@ def _plan_codex_ownership_repair_and_root_replacement(
     try:
         reparsed = tomllib.loads(proposed)
     except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"proposed Codex repair and root replacement would be invalid: {error}") from error
+        raise CardineError(f"proposed Codex repair and root replacement would be invalid: {error}") from error
     expected_parsed = copy.deepcopy(parsed)
     expected_parsed["permissions"][CODEX_PERMISSION_PROFILE]["workspace_roots"] = expected["workspace_roots"]  # type: ignore[index]
     if reparsed != expected_parsed:
-        raise MeridianError(
+        raise CardineError(
             "Codex repair and root replacement would change effective configuration beyond the one root value; "
             "reconcile it manually"
         )
@@ -354,22 +354,22 @@ def plan_codex_configuration(
 ) -> CodexConfigurationPlan:
     root = worktree_root.expanduser().resolve()
     if root == Path(root.anchor) or root == Path.home().resolve():
-        raise MeridianError("worktree root must not authorize the filesystem root or the user's home")
+        raise CardineError("worktree root must not authorize the filesystem root or the user's home")
     text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
     try:
         parsed = tomllib.loads(text)
     except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"malformed Codex TOML at {config_path}: {error}") from error
+        raise CardineError(f"malformed Codex TOML at {config_path}: {error}") from error
     if "sandbox_mode" in parsed or "sandbox_workspace_write" in parsed:
-        raise MeridianError("legacy Codex sandbox settings conflict with permission profiles")
+        raise CardineError("legacy Codex sandbox settings conflict with permission profiles")
     if requirements_path is not None and requirements_path.is_file():
         try:
             requirements = tomllib.loads(requirements_path.read_text(encoding="utf-8"))
         except tomllib.TOMLDecodeError as error:
-            raise MeridianError(f"malformed managed Codex requirements at {requirements_path}: {error}") from error
+            raise CardineError(f"malformed managed Codex requirements at {requirements_path}: {error}") from error
         allowed = requirements.get("allowed_permission_profiles")
         if isinstance(allowed, dict) and allowed.get(CODEX_PERMISSION_PROFILE) is not True:
-            raise MeridianError(
+            raise CardineError(
                 f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}"
             )
     existing_profile = parsed.get("permissions", {}).get(CODEX_PERMISSION_PROFILE)
@@ -380,7 +380,7 @@ def plan_codex_configuration(
             return replacement
         return _plan_codex_ownership_repair(config_path, text, parsed, root)
     if managed_present and not _codex_markers_intact(text):
-        raise MeridianError("Codex configuration contains an incomplete or damaged Meridian-managed block")
+        raise CardineError("Codex configuration contains an incomplete or damaged Meridian-managed block")
     base_text = text
     if "default_permissions" in parsed and not managed_present:
         base_text = _without_top_level_default_permissions(text)
@@ -388,7 +388,7 @@ def plan_codex_configuration(
     try:
         tomllib.loads(proposed)
     except tomllib.TOMLDecodeError as error:
-        raise MeridianError(f"proposed Codex configuration would be invalid: {error}") from error
+        raise CardineError(f"proposed Codex configuration would be invalid: {error}") from error
     current_model = "permission-profile" if "default_permissions" in parsed or "permissions" in parsed else "unconfigured"
     if proposed == text:
         return CodexConfigurationPlan("ready", config_path, root, current_model, None, "requested profile is already effective")
@@ -452,7 +452,7 @@ def apply_codex_configuration(plan: CodexConfigurationPlan) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     if plan.status in ("repair-required", "repair-and-replace-required"):
         if not path.is_file() or path.read_text(encoding="utf-8") != plan.current_text:
-            raise MeridianError("Codex configuration changed since it was planned; rerun --check")
+            raise CardineError("Codex configuration changed since it was planned; rerun --check")
         _write_exclusive_backup(path, _unused_repair_backup(path))
     else:
         backup = path.with_name(path.name + ".meridian.bak")

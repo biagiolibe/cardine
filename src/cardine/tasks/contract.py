@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import re
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.stops.render import stop_error
 from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
@@ -172,11 +172,11 @@ def execution_entries(project_root: Path, task_id: str) -> list[dict[str, object
     try:
         state = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise MeridianError(f"invalid execution evidence state: {path}") from error
+        raise CardineError(f"invalid execution evidence state: {path}") from error
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     entries = state.get(canonical_id, [])
     if not isinstance(entries, list) or not all(isinstance(entry, dict) for entry in entries):
-        raise MeridianError(f"invalid execution evidence entries for {task_id}: {path}")
+        raise CardineError(f"invalid execution evidence entries for {task_id}: {path}")
     return entries
 
 

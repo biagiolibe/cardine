@@ -22,7 +22,7 @@ from cardine.hosts.skills import _stale_codex_skill_warnings
 from cardine.hosts.skills import codex_profile_root_mismatch
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.evidence import proposed_candidate_validation_declaration
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import primary_project_root
 from cardine.shared.jsonio import _write_json_atomic
@@ -62,7 +62,7 @@ def plan_setup(
     project_root = primary_project_root((project_root or Path.cwd()).expanduser().resolve())
     environment = environment or os.environ
     if task_identity not in (None, "opaque", "milestone"):
-        raise MeridianError(f"unsupported task identity mode: {task_identity!r}")
+        raise CardineError(f"unsupported task identity mode: {task_identity!r}")
     resolution = resolve_worktree_root(
         worktree_root,
         environment=environment,
@@ -96,7 +96,7 @@ def plan_setup(
             )
         else:
             codex_detail = codex_plan.detail
-    except MeridianError as error:
+    except CardineError as error:
         codex_state = "blocked"
         codex_detail = str(error)
 
@@ -114,7 +114,7 @@ def plan_setup(
                 candidate_validation_path.read_text(encoding="utf-8")
             ) != proposal:
                 candidate_validation_proposal = proposal
-    except MeridianError:
+    except CardineError:
         candidate_validation_state = "blocked"
 
     project_declaration_path = project_root / names().project_declaration_path
@@ -144,7 +144,7 @@ def plan_setup(
                 },
             }
             parse_project_declaration(project_declaration_proposal)
-    except MeridianError:
+    except CardineError:
         project_declaration_state = "blocked"
 
     task_identity_path = project_root / names().task_identity_path
@@ -155,7 +155,7 @@ def plan_setup(
     elif task_identity_path.exists():
         try:
             existing_identity = read_task_identity_policy(project_root)
-        except MeridianError as error:
+        except CardineError as error:
             task_identity_state = "blocked"
             task_identity_detail = str(error)
         else:
@@ -348,11 +348,11 @@ def apply_setup(plan: SetupPlan) -> bool:
             if plan.task_identity_state == "blocked"
             else _directory_setup_state(plan.resolution.path)[1]
         )
-        raise MeridianError(f"setup is blocked: {detail}")
+        raise CardineError(f"setup is blocked: {detail}")
     # Revalidate the user-owned file before any setup mutation.
     fresh_rules = plan_codex_user_rules(plan.user_rules.path)
     if fresh_rules.current_text != plan.user_rules.current_text:
-        raise MeridianError("Codex user rules changed since planning; rerun --check")
+        raise CardineError("Codex user rules changed since planning; rerun --check")
     changed = apply_codex_user_rules(plan.user_rules)
     root = plan.resolution.path
     if plan.directory_state == "missing":
@@ -380,12 +380,12 @@ def apply_setup(plan: SetupPlan) -> bool:
         if plan.project_declaration_path.exists():
             existing = read_project_declaration(plan.project_declaration_path.parent)
             if existing is None or "project" in existing:
-                raise MeridianError("project declaration appeared or changed since it was planned; rerun --check")
+                raise CardineError("project declaration appeared or changed since it was planned; rerun --check")
         _write_json_atomic(plan.project_declaration_path, plan.project_declaration_proposal)
         changed = True
     if plan.task_identity_proposal is not None:
         if plan.task_identity_path.exists():
-            raise MeridianError("task identity declaration appeared since it was planned; rerun --check")
+            raise CardineError("task identity declaration appeared since it was planned; rerun --check")
         _write_json_atomic(plan.task_identity_path, plan.task_identity_proposal)
         changed = True
     missing_links = [
@@ -481,7 +481,7 @@ def codex_doctor(
             if plan.status in ("repair-required", "repair-and-replace-required")
             else "not-applicable"
         )
-    except MeridianError:
+    except CardineError:
         result["permission-model"] = "blocked"
         result["profile-ownership"] = "blocked"
     mismatch = codex_profile_root_mismatch(config_path, worktree_root)
@@ -508,7 +508,7 @@ def codex_doctor(
         result["candidate-validation-commands"] = (
             "advisory-undeclared" if validation_state == "undeclared" else "ready"
         )
-    except MeridianError:
+    except CardineError:
         result["candidate-validation-commands"] = "blocked"
     lifecycle_policy = "approval-required"
     codex_executable = shutil.which("codex")
@@ -560,7 +560,7 @@ def codex_doctor(
     framework_root = (framework_root or SCRIPTS_ROOT.parent).expanduser().resolve()
     try:
         result["user-command-policy"] = plan_codex_user_rules(home / ".codex/rules/default.rules").status
-    except MeridianError:
+    except CardineError:
         result["user-command-policy"] = "stale"
     result["skill-links"] = _aggregate_skill_state(_framework_skill_links(framework_root, home))
     meridian_root_value = (environment or os.environ).get("MERIDIAN_ROOT")
@@ -578,6 +578,6 @@ def proposed_project_identity(project_root: Path) -> dict[str, str]:
     """Derive a stable setup proposal even before a directory is a Git repository."""
     try:
         slug = repository_identity(project_root).repository
-    except MeridianError:
+    except CardineError:
         slug = project_root.resolve().name.lower()
     return {"name": slug.replace("-", " ").title(), "slug": slug}

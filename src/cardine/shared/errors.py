@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 
-class MeridianError(RuntimeError):
+class CardineError(RuntimeError):
     """Raised when an upgrade cannot be safely planned or applied."""
 
 
@@ -13,7 +13,7 @@ class InternalStopError(Exception):
     """Raised when the CLI asks for a stop that the registry cannot format."""
 
 
-class MeridianStop(MeridianError):
+class CardineStop(CardineError):
     """A registered stop; its message is the complete `BLOCKED <CODE>: ...` line."""
 
     def __init__(self, code: str, line: str, *, render: Callable[[], str] | None = None) -> None:

@@ -72,7 +72,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_conflicting_explicit_and_environment_values_name_both_sources(self) -> None:
         with self.assertRaisesRegex(
-            shared_errors.MeridianError, r"--worktree-root supplied .*MERIDIAN_WORKTREE_ROOT supplied"
+            shared_errors.CardineError, r"--worktree-root supplied .*MERIDIAN_WORKTREE_ROOT supplied"
         ):
             self.resolve(self.home / "explicit", MERIDIAN_WORKTREE_ROOT=str(self.home / "environment"))
 
@@ -85,12 +85,12 @@ class WorktreeRootSetupTest(unittest.TestCase):
         ):
             with self.subTest(value=value):
                 self.user_config.write_text(json.dumps(value), encoding="utf-8")
-                with self.assertRaises(shared_errors.MeridianError):
+                with self.assertRaises(shared_errors.CardineError):
                     self.resolve()
         self.user_config.unlink()
-        with self.assertRaisesRegex(shared_errors.MeridianError, "filesystem root"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "filesystem root"):
             self.resolve(Path("/"))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "home"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "home"):
             self.resolve(self.home)
 
     def test_check_is_read_only_and_reports_unconfigured_state(self) -> None:
@@ -186,7 +186,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertEqual(plan.directory_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "not a directory"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "not a directory"):
             owner_hosts_setup.apply_setup(plan)
         self.assertEqual(root.read_text(encoding="utf-8"), "keep\n")
         self.assertFalse(self.user_config.exists())
@@ -258,7 +258,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertEqual(plan.skill_links_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "setup is blocked"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "setup is blocked"):
             owner_hosts_setup.apply_setup(plan)
         self.assertFalse((self.home / "root").exists())
         self.assertFalse(self.codex_config.exists())
@@ -448,7 +448,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         project = self.home / "project"
         project.mkdir()
         root = self.home / "root"
-        with self.assertRaisesRegex(shared_errors.MeridianError, "unsupported task identity mode"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "unsupported task identity mode"):
             owner_hosts_setup.plan_setup(
                 root,
                 self.codex_config,
@@ -503,7 +503,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             project_root=project,
         )
         self.assertEqual(plan.task_identity_state, "blocked")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "invalid task identity declaration"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "invalid task identity declaration"):
             owner_hosts_setup.apply_setup(plan)
         self.assertEqual(identity_path.read_text(encoding="utf-8"), "not json\n")
 
@@ -676,7 +676,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
         self.assertEqual(plan.claude_state, "blocked")
         self.assertEqual(plan.changes, ("none; setup is blocked before mutation",))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "malformed Claude settings"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "malformed Claude settings"):
             owner_hosts_setup.apply_setup(plan)
         self.assertFalse(root.exists())
         self.assertFalse(self.codex_config.exists())

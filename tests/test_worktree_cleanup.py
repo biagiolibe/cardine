@@ -128,7 +128,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         prepared = self.prepare()
         self.git("worktree", "remove", prepared["worktree"])
         self.git("branch", "-d", prepared["branch"])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "tracked task state on main must be done"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "tracked task state on main must be done"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         state = {"version": 1, "task_id": "056", "workflow": "lean-delivery",
                  "status": "QUEUED", "transitions": []}
@@ -137,12 +137,12 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         path.write_text(json.dumps(state), encoding="utf-8")
         self.git("add", ".meridian/tasks/056.json")
         self.git("commit", "-m", "track queued state")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "nonterminal tracked task state"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "nonterminal tracked task state"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         state.update(status="DONE", transitions=[{"from": "QUEUED", "to": "DONE",
                      "at": "2026-10-17T00:00:00Z", "commit": self.base}])
         path.write_text(json.dumps(state), encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "primary checkout must be clean"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "primary checkout must be clean"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.git("add", ".meridian/tasks/056.json")
         self.git("commit", "-m", "track terminal state")
@@ -157,7 +157,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             "056", self.worktree_root, self.primary, require_effective_worktree=False)
         self.assertFalse(ready)
         self.assertEqual(inspection["errors"], ["dirty-worktree"])
-        with self.assertRaisesRegex(shared_errors.MeridianError, "dirty-worktree"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "dirty-worktree"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertEqual((worktree / "README.md").read_text(), "changed")
         self.git("add", "README.md", cwd=worktree)
@@ -168,7 +168,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
                     shutil.rmtree(worktree)
                 elif partial == "unregistered":
                     self.git("worktree", "remove", str(worktree))
-                with self.assertRaisesRegex(shared_errors.MeridianError, "not integrated into main"):
+                with self.assertRaisesRegex(shared_errors.CardineError, "not integrated into main"):
                     owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
                 self.assertEqual(self.git("rev-parse", "--verify", "task-056").returncode, 0)
 
@@ -181,11 +181,11 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         for gate in (lease, integration, self.primary / ".git/MERGE_HEAD"):
             with self.subTest(gate=gate):
                 gate.write_text("{}", encoding="utf-8")
-                with self.assertRaisesRegex(shared_errors.MeridianError, "integration lease or staged merge"):
+                with self.assertRaisesRegex(shared_errors.CardineError, "integration lease or staged merge"):
                     owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
                 gate.unlink()
         self.git("remote", "add", "origin", str(self.root / "remote.git"))
-        with self.assertRaisesRegex(shared_errors.MeridianError, "not proven pushed"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "not proven pushed"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.git("update-ref", "refs/remotes/origin/main", self.base)
         self.assert_cleanup_finished(prepared, "registered-directory-missing")
@@ -203,7 +203,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             return run_git(project, *arguments)
 
         with mock.patch.object(owner_integration_merge, "_run_git", side_effect=deny_removal):
-            with self.assertRaisesRegex(shared_errors.MeridianError,
+            with self.assertRaisesRegex(shared_errors.CardineError,
                     r"CLEANUP_BLOCKED.*registered-directory-missing.*write access.*primary checkout's .git") as caught:
                 owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         resume = str(caught.exception).split("resume: ", 1)[1].strip()
@@ -278,7 +278,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             ),
             encoding="utf-8",
         )
-        with self.assertRaisesRegex(shared_errors.MeridianError, "queue link for task 056"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "queue link for task 056"):
             owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         recovered = owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertEqual(recovered["status"], "aborted")

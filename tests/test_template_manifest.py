@@ -141,7 +141,7 @@ class MarkerCatalogTest(unittest.TestCase):
                     (directory / "markers-v1.json").write_text(json.dumps({
                         "catalogVersion": 1, "capabilities": {"rule": entry},
                     }), encoding="utf-8")
-                    with self.assertRaises(shared_errors.MeridianError):
+                    with self.assertRaises(shared_errors.CardineError):
                         owner_templates_catalog.marker_requirements(framework)
 
 
@@ -379,7 +379,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def test_conflicting_mode_aliases_are_rejected(self) -> None:
         manifest = self.manifest()
         manifest["mode"] = "governed-sdd"
-        with self.assertRaisesRegex(shared_errors.MeridianError, "mode and workflowMode conflict"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "mode and workflowMode conflict"):
             owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
     def test_invalid_state_empty_surface_and_missing_positive_evidence_are_rejected(self) -> None:
@@ -394,7 +394,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         no_evidence["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["language-policy"]["installation"]["state"] = "INSTALLED"
         cases.append((no_evidence, "INSTALLED requires evidence"))
         for manifest, message in cases:
-            with self.subTest(message=message), self.assertRaisesRegex(shared_errors.MeridianError, message):
+            with self.subTest(message=message), self.assertRaisesRegex(shared_errors.CardineError, message):
                 owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
     def test_not_applicable_requires_a_catalog_backed_rationale(self) -> None:
@@ -407,7 +407,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         }
         owner_templates_manifest.validate_manifest(manifest, self.catalog)
         hosts["codex-project"]["notApplicableRationale"] = None
-        with self.assertRaisesRegex(shared_errors.MeridianError, "catalog-backed rationale"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "catalog-backed rationale"):
             owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
     def test_upgrade_check_reads_profile_without_writing_or_promoting_state(self) -> None:

@@ -10,7 +10,7 @@ import json
 from cardine.shared.constants import USAGE_ADAPTER_NOTES
 from cardine.shared.constants import USAGE_HOSTS
 from cardine.shared.constants import USAGE_PRIVACY_BOUNDARY
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 
 
 def _usage_counter(value: object) -> int:
@@ -132,7 +132,7 @@ def usage_report(host: str | None, project_root: Path | None, since: str | None,
     selected = (host,) if host else USAGE_HOSTS
     cutoff = _usage_start(f"{since}T00:00:00+00:00") if since else None
     if since and cutoff is None:
-        raise MeridianError("--since must be an ISO date (YYYY-MM-DD)")
+        raise CardineError("--since must be an ISO date (YYYY-MM-DD)")
     root = home or Path.home()
     parsers = {
         "codex": (root / ".codex" / "sessions", "rollout-*.jsonl", _codex_usage_session),

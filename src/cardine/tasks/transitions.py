@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianError
-from cardine.shared.errors import MeridianStop
+from cardine.shared.errors import CardineError
+from cardine.shared.errors import CardineStop
 from pathlib import Path
 from cardine.tasks.state import TaskStateInvalid
 from cardine.lifecycle.execution import _execution_worktree
@@ -34,7 +34,7 @@ def transition_task_state(project_root: Path, task_id: str, status: str) -> dict
         path = state_path(project_root, task_id)
         try:
             state = read_task_state(project_root, task_id, workflow, spike=spike, review_required=review_required, stop_factory=stop_error)
-        except MeridianStop as error:
+        except CardineStop as error:
             if error.code != "TASK_STATE_MISSING":
                 raise
             state = {"version": 1, "task_id": task_id, "workflow": workflow,
@@ -94,6 +94,6 @@ def close_task(project_root: Path, task_id: str) -> dict[str, object]:
     staged = _run_git(project_root, "add", "--", record_path.relative_to(project_root).as_posix(),
                       archive.relative_to(project_root).as_posix(), path.relative_to(project_root).as_posix())
     if staged.returncode:
-        raise MeridianError(f"could not stage closure records: {staged.stderr.strip()}")
+        raise CardineError(f"could not stage closure records: {staged.stderr.strip()}")
     return {"task_id": task_id, "state": state, "archive": archive.relative_to(project_root).as_posix(),
             "staged": True, "committed": False}

@@ -101,7 +101,7 @@ class TaskCloseTest(unittest.TestCase):
         (self.worker / 'PROJECT_WORKFLOW.md').write_text('GOVERNED_SDD\n')
         self.commit('Select Governed')
         self.refused('TASK_STATUS_REJECTED')
-        with self.assertRaisesRegex(shared_errors.MeridianStop, 'meridian task transition'):
+        with self.assertRaisesRegex(shared_errors.CardineStop, 'meridian task transition'):
             owner_tasks_transitions.close_task(self.worker, '001')
 
     def test_resume_archived_done_with_staged_and_committed_closure(self):

@@ -59,7 +59,7 @@ class ManifestProtocolTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertEqual((parsed.major, parsed.minor, parsed.patch), (1, 2, 3))
         self.assertEqual((parsed.prerelease, parsed.build), ("rc.1", "build.9"))
         for invalid in ("1.2", "1.2.3-", "01.2.3", "v1.2.3", "1.2.3+"):
-            with self.assertRaises(shared_errors.MeridianError):
+            with self.assertRaises(shared_errors.CardineError):
                 meridian.parse_semver(invalid)
 
     def test_cli_only_upgrade_advances_framework_without_rekeying_baseline(self) -> None:

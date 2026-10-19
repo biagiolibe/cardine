@@ -830,7 +830,7 @@ class RefreshCostTest(support.RepoCase):
     def test_failed_resolution_is_not_cached(self) -> None:
         cache = owner_console_snapshot.IdentityCache()
         self.setup_with_history(1)
-        with self.assertRaises(owner_shared_errors.MeridianError):
+        with self.assertRaises(owner_shared_errors.CardineError):
             cache.resolve(self.project, "999")
         self.write(self.project, "tasks/999-task.md", "# Task 999\n\n> **ID**: `999`\n")
         self.assertEqual(cache.resolve(self.project, "999").canonical_id, "999")
@@ -929,7 +929,7 @@ class SnapshotCostTest(support.RepoCase):
                 "TASK-001", None, self.project, identity=identity)
             self.assertEqual(report["task_id"], "TASK-001")
             # No lifecycle state was prepared, so the read ends on that, not on resolution.
-            with self.assertRaisesRegex(shared_errors.MeridianError, "worktree lifecycle state"):
+            with self.assertRaisesRegex(shared_errors.CardineError, "worktree lifecycle state"):
                 owner_worktree_storage.lifecycle_started_at("TASK-001", self.project, identity=identity)
 
     def test_snapshot_is_identical_with_and_without_caches(self) -> None:
@@ -945,7 +945,7 @@ class SnapshotCostTest(support.RepoCase):
 
     def review_ready(self) -> tuple[Path, owner_console_snapshot.DeliveryCache, mock.Mock]:
         wt = self.populate()["TASK-002"]
-        gate = mock.Mock(side_effect=owner_shared_errors.MeridianError("evidence is incomplete"))
+        gate = mock.Mock(side_effect=owner_shared_errors.CardineError("evidence is incomplete"))
         return wt, owner_console_snapshot.DeliveryCache(), gate
 
     def load_with(self, deliveries: owner_console_snapshot.DeliveryCache, gate: mock.Mock) -> owner_console_models.Task:
@@ -971,7 +971,7 @@ class SnapshotCostTest(support.RepoCase):
         self.assertIsNone(task.delivery_pending)
         self.load_with(deliveries, gate)
         self.assertEqual(gate.call_count, 1)
-        gate.side_effect = owner_shared_errors.MeridianError("handoff changed")
+        gate.side_effect = owner_shared_errors.CardineError("handoff changed")
         self.write(wt, "tasks/handoffs/TASK-002.md", "# Handoff\n")
         self.commit(wt)
         self.assertEqual(self.load_with(deliveries, gate).delivery_pending, "handoff changed")

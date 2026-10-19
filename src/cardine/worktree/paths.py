@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.git import git_output
 from cardine.shared.models import RepositoryIdentity
@@ -23,7 +23,7 @@ def _normalized_local_repository_name(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).strip().lower()
     normalized = re.sub(r"[^a-z0-9]+", "-", normalized).strip("-")
     if not normalized:
-        raise MeridianError("local repository name cannot be normalized safely")
+        raise CardineError("local repository name cannot be normalized safely")
     return normalized
 
 
@@ -51,7 +51,7 @@ def repository_identity(project_root: Path, remote_url: str | None = None) -> Re
             repository = parts[-1][:-4] if parts[-1].endswith(".git") else parts[-1]
             owner_parts = [_safe_component(part, "remote owner") for part in parts[:-1]]
             if any("--" in part for part in owner_parts):
-                raise MeridianError("remote owner contains an ambiguous namespace separator")
+                raise CardineError("remote owner contains an ambiguous namespace separator")
             owner = "--".join(owner_parts)
             return RepositoryIdentity(
                 _safe_component(host, "remote host"),
@@ -62,7 +62,7 @@ def repository_identity(project_root: Path, remote_url: str | None = None) -> Re
     common = canonical_git_common_dir(project_root)
     try:
         repository_name = git_output(project_root, "rev-parse", "--show-toplevel").split("/")[-1]
-    except MeridianError:
+    except CardineError:
         repository_name = project_root.resolve().name
     repository = _normalized_local_repository_name(repository_name)
     digest = hashlib.sha256(os.fsencode(common)).hexdigest()[:12]
@@ -76,7 +76,7 @@ def _task_worktree_path_for_identity(
 ) -> Path:
     root = worktree_root.expanduser().resolve()
     if root == Path(root.anchor) or root == Path.home().resolve():
-        raise MeridianError("worktree root must be a dedicated directory, not the filesystem root or home")
+        raise CardineError("worktree root must be a dedicated directory, not the filesystem root or home")
     repository = repository_identity(project_root)
     result = (
         root
@@ -86,10 +86,10 @@ def _task_worktree_path_for_identity(
         / identity.branch_name
     )
     if root not in result.parents:
-        raise MeridianError("derived worktree path escapes the configured root")
+        raise CardineError("derived worktree path escapes the configured root")
     resolved_result = result.resolve()
     if root not in resolved_result.parents:
-        raise MeridianError("derived worktree path escapes the configured root through a symlink")
+        raise CardineError("derived worktree path escapes the configured root through a symlink")
     return result
 
 
@@ -115,14 +115,14 @@ def validate_worktree_collision(project_root: Path, path: Path, task_id: str) ->
     try:
         actual_common = canonical_git_common_dir(path)
         branch = git_output(path, "branch", "--show-current")
-    except MeridianError as error:
-        raise MeridianError(f"worktree path collision at {path}: {error}") from error
+    except CardineError as error:
+        raise CardineError(f"worktree path collision at {path}: {error}") from error
     try:
         expected_branch = resolve_task_identity(project_root, task_id, "existing").branch_name
-    except MeridianError:
+    except CardineError:
         expected_branch = resolve_task_identity(project_root, task_id, "new").branch_name
     if actual_common != expected_common or branch != expected_branch:
-        raise MeridianError(
+        raise CardineError(
             f"worktree path collision at {path}: expected {expected_common} on {expected_branch}, "
             f"found {actual_common} on {branch or 'detached HEAD'}"
         )

@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 
 from cardine.shared.constants import MARKED_BLOCK
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.templates.markers import extract_marked_block
 from cardine.templates.router import entry_router_outputs
 
@@ -33,7 +33,7 @@ def generate_claude_md(mode: str, agents_text: str, existing_claude_text: str) -
         if agents_match is not None and claude_match is not None:
             break
     else:
-        raise MeridianError(f"AGENTS.md and CLAUDE.md ({mode}) do not share a supported anchor heading")
+        raise CardineError(f"AGENTS.md and CLAUDE.md ({mode}) do not share a supported anchor heading")
     preamble = existing_claude_text[: claude_match.start()]
     shared_body = agents_text[agents_match.start() :]
 

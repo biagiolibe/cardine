@@ -265,7 +265,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, r"source.py"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"source.py"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, staged = owner_worktree_storage._lifecycle_paths(self.primary, identity)
@@ -323,7 +323,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         original = queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "REQUIRED")
         queue.write_text(original, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+        with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
 
@@ -356,7 +356,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
                 if label == "approve":
                     result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                 else:
-                    with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+                    with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
                         owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                 row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
                 if label == "approve":
@@ -409,7 +409,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         archived = self.primary / "tasks/done/056-lifecycle.md"
         archived.parent.mkdir(exist_ok=True)
         identity.task_path.rename(archived)
-        with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+        with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
         self.assertIn("| QUEUED | REQUIRED |", row)
@@ -438,7 +438,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         original = queue.read_text(encoding="utf-8").replace("| 1 | 056 | P0 | QUEUED |", "| 1 | 056 | P0 | UNKNOWN |")
         queue.write_text(original, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "unrecognized completion row"):
             owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
 
@@ -472,7 +472,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         )
         queue.write_text(original, encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-        with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED REVIEW_NOT_APPROVED:"):
+        with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
             owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         self.assertEqual(queue.read_text(encoding="utf-8"), original)
         identity.review_path.parent.mkdir(exist_ok=True)
@@ -507,7 +507,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         for label, (contents, message) in cases.items():
             with self.subTest(label=label):
                 queue.write_text(contents, encoding="utf-8")
-                with self.assertRaisesRegex(shared_errors.MeridianError, message):
+                with self.assertRaisesRegex(shared_errors.CardineError, message):
                     owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                 self.assertEqual(queue.read_text(encoding="utf-8"), contents)
 

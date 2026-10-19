@@ -65,7 +65,7 @@ class CodexUserRulesTest(unittest.TestCase):
             "# MERIDIAN:BEGIN codex-user-rules broken\n# MERIDIAN:END codex-user-rules\n",
         ):
             self.write(text)
-            with self.assertRaisesRegex(shared_errors.MeridianStop, "BLOCKED COMMAND_REFUSED.*damaged"):
+            with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED COMMAND_REFUSED.*damaged"):
                 owner_hosts_setup.plan_setup(None, self.home / "config.toml", home=self.home, environment={}, project_root=self.home)
             self.assertFalse((self.home / ".meridian/worktrees").exists())
             self.assertEqual(self.rules.read_bytes().decode(), text)
@@ -82,7 +82,7 @@ class CodexUserRulesTest(unittest.TestCase):
     def test_apply_refuses_changed_foreign_rules(self):
         plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
         self.write("# appeared later\n")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "changed since planning"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "changed since planning"):
             owner_hosts_codex.apply_codex_user_rules(plan)
         self.assertEqual(self.rules.read_text(), "# appeared later\n")
 

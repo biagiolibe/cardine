@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from cardine.shared.errors import InternalStopError
-from cardine.shared.errors import MeridianError
-from cardine.shared.errors import MeridianStop
+from cardine.shared.errors import CardineError
+from cardine.shared.errors import CardineStop
 from cardine.shared.git import _git_worktrees
 from cardine.shared.git import canonical_project_root
 from cardine.stops.registry import load_stop_registry
@@ -21,7 +21,7 @@ def _task_state_recovery_project(project: Path, task_id: str) -> Path:
         identity = resolve_task_identity(primary, task_id, "existing", check_queue_links=False)
         return next((Path(item["worktree"]).resolve() for item in _git_worktrees(primary)
                      if item.get("branch") == f"refs/heads/{identity.branch_name}"), primary)
-    except MeridianError:
+    except CardineError:
         return project
 
 
@@ -50,10 +50,10 @@ def format_stop(code: str, detail: str, *, resume: str | None = None, **fields: 
     return f"BLOCKED {code}: {detail}; resume: {resume_text}"
 
 
-def stop_error(code: str, detail: str, **fields: object) -> MeridianStop:
+def stop_error(code: str, detail: str, **fields: object) -> CardineStop:
     """Build the error for a registered stop; the CLI prints it unchanged and exits 2."""
     if code == "TASK_STATE_MISSING":
         # Missing state is also a normal legacy probe. Resolve Git recovery paths
         # only when the stop is displayed, not when a caller catches that probe.
-        return MeridianStop(code, detail, render=lambda: format_stop(code, detail, **fields))
-    return MeridianStop(code, format_stop(code, detail, **fields))
+        return CardineStop(code, detail, render=lambda: format_stop(code, detail, **fields))
+    return CardineStop(code, format_stop(code, detail, **fields))

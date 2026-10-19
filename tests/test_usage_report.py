@@ -119,5 +119,5 @@ class UsageReportTest(unittest.TestCase):
         self.assertNotIn("PRIVATE UNKNOWN MESSAGE", rendered)
 
     def test_since_rejects_invalid_dates(self) -> None:
-        with self.assertRaisesRegex(shared_errors.MeridianError, "ISO date"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "ISO date"):
             shared_usage.usage_report("codex", None, "not-a-date", False, self.home)

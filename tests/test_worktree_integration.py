@@ -51,7 +51,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         path.unlink()
         self.assertEqual(owner_integration_evidence.candidate_validation_declaration(self.primary), ("undeclared", {}))
         path.write_text('{"version": 1, "state": "declared", "outcomes": {}}', encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "outcomes must declare"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "outcomes must declare"):
             owner_integration_evidence.candidate_validation_declaration(self.primary)
 
 
@@ -74,7 +74,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         (self.primary / ".meridian/candidate-validation.json").unlink()
         self.git("add", ".meridian/candidate-validation.json")
         self.git("commit", "-m", "remove declaration")
-        with self.assertRaisesRegex(shared_errors.MeridianError, "UNDECLARED_VALIDATION_COMMANDS"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "UNDECLARED_VALIDATION_COMMANDS"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
@@ -106,12 +106,12 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "scope": "bounded", "commands": ["python3 scripts/check_repository.py"],
         }), encoding="utf-8")
 
-        with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
             owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
         (self.primary / ".meridian/candidate-validation.json").write_text(
             json.dumps({"version": 1, "state": "none"}), encoding="utf-8"
         )
-        with self.assertRaisesRegex(shared_errors.MeridianError, r"git diff --check"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
             owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
 
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(
@@ -477,7 +477,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         original_queue = queue.read_text(encoding="utf-8")
         (self.primary / "PROJECT_PLAN.md").write_text("Task 056: TODO\n", encoding="utf-8")
 
-        with self.assertRaisesRegex(shared_errors.MeridianError, r"unrecognized completion row"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"unrecognized completion row"):
             owner_integration_projections._apply_task_completion_rows(self.primary, identity)
 
         self.assertEqual(queue.read_text(encoding="utf-8"), original_queue)
@@ -679,7 +679,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         state_path, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         references = self.git("show-ref").stdout
         worktree_state = state_path.read_text(encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.MeridianError, r"paths changed after validation: .*other.md"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"paths changed after validation: .*other.md"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)
         self.assertEqual(self.git("show-ref").stdout, references)
@@ -767,7 +767,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
                             if archived_record:
                                 active.rename(done)
                             if not plan_present:
-                                with self.assertRaisesRegex(shared_errors.MeridianError, "unrecognized completion row"):
+                                with self.assertRaisesRegex(shared_errors.CardineError, "unrecognized completion row"):
                                     owner_integration_projections._apply_task_completion_rows(self.primary, identity)
                                 continue
                             owner_integration_projections._apply_task_completion_rows(self.primary, identity)

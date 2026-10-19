@@ -33,7 +33,7 @@ from cardine.shared.console_workflow import (
     record_review,
     record_status,
 )
-from cardine.shared.errors import MeridianError, MeridianStop
+from cardine.shared.errors import CardineError, CardineStop
 from cardine.shared.git import (
     canonical_git_common_dir,
     parse_worktree_records,
@@ -264,7 +264,7 @@ class DeliveryCache:
         try:
             delivery_readiness(worktree, task_id, verify_worktree=False)
             outcome = None
-        except (MeridianError, OSError, ValueError) as error:
+        except (CardineError, OSError, ValueError) as error:
             outcome = str(error)
         if key is None:
             self._items.pop(str(worktree), None)
@@ -285,7 +285,7 @@ def _committed_update(project: Path, relative: str, ref: str = "HEAD") -> int | 
 def _select_profile(project: Path) -> Profile:
     try:
         mode = detect_mode(project)
-    except MeridianError as error:
+    except CardineError as error:
         raise ConsoleError(str(error).partition("; pass --mode")[0]) from error
     return PROFILES[mode]
 
@@ -339,7 +339,7 @@ def _read_console_state(project: Path, profile: Profile, task_id: str,
             text=text, stop_factory=stop_error,
         )
         return state, None
-    except MeridianStop as error:
+    except CardineStop as error:
         if error.code == "TASK_STATE_MISSING":
             return None, None
         return None, str(error)
@@ -364,7 +364,7 @@ def _branch_facts(project: Path, profile: Profile, task_id: str, queue: str,
             identity = resolve_task_identity(project, task_id, "existing", check_queue_links=False)
         else:
             identity = (identities or IdentityCache()).resolve(project, task_id)
-    except MeridianError as error:
+    except CardineError as error:
         raise ConsoleError(f"Cannot resolve task identity for {task_id}: {error}") from error
     branch = identity.branch_name
     worktree = worktrees.get(branch)
@@ -510,7 +510,7 @@ def _closing_task(project: Path, profile: Profile, row: QueueRow, queue: Path,
         return None
     try:
         identity = (identities or IdentityCache()).resolve(project, row.task_id)
-    except MeridianError:
+    except CardineError:
         return None
     worktree = worktrees.get(identity.branch_name)
     if worktree is None:
@@ -523,7 +523,7 @@ def _closing_task(project: Path, profile: Profile, row: QueueRow, queue: Path,
                 and (report["resume"] is None or isinstance(report["resume"], str))
                 and (report["stop_reason"] is None or isinstance(report["stop_reason"], str))):
             closure = report
-    except (MeridianError, OSError, ValueError):
+    except (CardineError, OSError, ValueError):
         # A transient lifecycle read keeps the task listed with unavailable progress.
         pass
     if closure is not None and closure["step"] == "C10" and closure["resume"] is None:
@@ -532,7 +532,7 @@ def _closing_task(project: Path, profile: Profile, row: QueueRow, queue: Path,
     started_at = None
     try:
         started_at = lifecycle_started_at(row.task_id, project, identity=identity)
-    except (MeridianError, OSError, ValueError):
+    except (CardineError, OSError, ValueError):
         pass
     progress_phase, remaining_gates = (
         _lifecycle_progress(str(closure["step"]), True) if closure else ("unavailable", ()))
@@ -564,7 +564,7 @@ def _cached_identity(project: Path, task_id: str,
     """Return the console's resolved identity, or None to let the reader resolve (and report)."""
     try:
         return (identities or IdentityCache()).resolve(project, task_id)
-    except MeridianError:
+    except CardineError:
         return None
 
 
@@ -580,14 +580,14 @@ def _delivery_pending(project: Path, worktree: str | None, task_id: str, heads: 
         try:
             delivery_readiness(Path(worktree), task_id, verify_worktree=False)
             return None
-        except (MeridianError, OSError, ValueError) as error:
+        except (CardineError, OSError, ValueError) as error:
             return str(error)
     if "main" not in shared:
         shared["main"] = (_git_optional(project, "rev-parse", "--verify", "--quiet",
                                         "refs/heads/main") or "").strip() or None
         try:
             shared["common"] = canonical_git_common_dir(project)
-        except (MeridianError, OSError):
+        except (CardineError, OSError):
             shared["common"] = None
     return cache.pending(project, Path(worktree), heads.get(worktree, ""), task_id, identity,
                          shared["main"], shared["common"])
@@ -741,7 +741,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             try:
                 started_at = lifecycle_started_at(
                     row.task_id, project, identity=_cached_identity(project, row.task_id, identities))
-            except (MeridianError, OSError, ValueError):
+            except (CardineError, OSError, ValueError):
                 pass
         if facts and facts.worktree and effective.lifecycle == "in_progress":
             known = _cached_identity(project, row.task_id, identities)
@@ -752,12 +752,12 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
                 progress_phase, remaining_gates = _lifecycle_progress(
                     str(closure.get("step", "")), bool(facts and facts.worktree),
                 )
-            except (MeridianError, OSError, ValueError):
+            except (CardineError, OSError, ValueError):
                 # A transient lifecycle read must not make the entire dashboard stale.
                 pass
             try:
                 started_at = lifecycle_started_at(row.task_id, project, identity=known)
-            except (MeridianError, OSError, ValueError):
+            except (CardineError, OSError, ValueError):
                 # Legacy or unreadable timing data is intentionally non-fatal.
                 pass
         if state and profile.name == "governed-sdd":

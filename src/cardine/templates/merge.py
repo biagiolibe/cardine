@@ -7,7 +7,7 @@ from cardine.release.version import require_release_version
 from cardine.release.version import version_key
 from cardine.shared.constants import ENTRY_ROUTER_PATH
 from cardine.shared.constants import PROTOCOL_VERSION
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.hashing import sha256
 from cardine.shared.models import ManagedFile
 from cardine.shared.models import PlanItem
@@ -89,7 +89,7 @@ def lock_project(
     files = managed_files(framework_root, mode)
     missing = [str(item.target) for item in files if not (project_root / item.target).is_file()]
     if missing:
-        raise MeridianError("project is missing managed files: " + ", ".join(missing))
+        raise CardineError("project is missing managed files: " + ", ".join(missing))
 
     copy_baseline(project_root, framework_root, mode, baseline_version)
     manifest = {
@@ -118,7 +118,7 @@ def merge_clean(local: Path, base: Path, incoming: Path) -> tuple[bool, bytes]:
         # a command failure.
         if process.returncode >= 128:
             detail = process.stderr.decode("utf-8", errors="replace").strip()
-            raise MeridianError(detail or "git merge-file failed")
+            raise CardineError(detail or "git merge-file failed")
         output.write_bytes(process.stdout)
         return process.returncode == 0, output.read_bytes()
 
@@ -232,9 +232,9 @@ def plan_from_baseline(
     target_framework_version = target_version_override or read_version(framework_root)
     target_baseline_version = latest_migration_to(framework_root, target_framework_version)
     if version_key(target_baseline_version) < version_key(installed_version):
-        raise MeridianError("framework source is older than the project lockfile")
+        raise CardineError("framework source is older than the project lockfile")
     if not baseline_root.is_dir():
-        raise MeridianError(f"baseline snapshot is missing: {baseline_root}")
+        raise CardineError(f"baseline snapshot is missing: {baseline_root}")
 
     manifest: dict[str, object] = {
         "frameworkVersion": installed_framework_version or installed_version,

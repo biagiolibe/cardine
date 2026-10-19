@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from cardine.shared.layout import names
 
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import _git_worktrees
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_git_common_dir
@@ -78,7 +78,7 @@ def prepare_task_worktree(
     resume: bool = False,
 ) -> dict[str, object]:
     if base != "main":
-        raise MeridianError("worktree prepare permits only the main base")
+        raise CardineError("worktree prepare permits only the main base")
     project_root = _verified_lifecycle_project(supplied_project)
     root = _effective_worktree_root(worktree_root)
     identity = resolve_task_identity(project_root, task_id, "existing")
@@ -88,7 +88,7 @@ def prepare_task_worktree(
     registered = next((item for item in records if Path(item["worktree"]).resolve() == path), None)
     branch_commit = _branch_commit(project_root, identity.branch_name)
     if (registered is None) != (branch_commit is None):
-        raise MeridianError(
+        raise CardineError(
             f"partial task state retained for {identity.canonical_id}; branch and canonical worktree must both exist or both be absent"
         )
     base_commit = git_output(project_root, "rev-parse", "--verify", f"{base}^{{commit}}")
@@ -98,38 +98,38 @@ def prepare_task_worktree(
     state_missing = False
     if resume:
         if registered is None:
-            raise MeridianError(
+            raise CardineError(
                 f"nothing to resume for {identity.canonical_id}: no task branch or canonical worktree exists"
             )
         for retained in (lease_path, integration_path):
             if retained.exists():
                 try:
                     holder = _read_json_object(retained, "integration state").get("task_id")
-                except MeridianError:
+                except CardineError:
                     holder = None
                 if holder in (None, identity.canonical_id):
-                    raise MeridianError(
+                    raise CardineError(
                         f"cannot resume {identity.canonical_id} while an integration lease or staged merge is active: {retained}"
                     )
     if registered is None:
         if path.exists():
-            raise MeridianError(f"worktree path collision at {path}")
+            raise CardineError(f"worktree path collision at {path}")
         path.parent.mkdir(parents=True, exist_ok=True)
         added = _run_git(project_root, "worktree", "add", "-b", identity.branch_name, str(path), base_commit)
         if added.returncode != 0:
-            raise MeridianError(added.stderr.strip() or "git worktree add failed")
+            raise CardineError(added.stderr.strip() or "git worktree add failed")
         branch_commit = base_commit
         created = True
     else:
         expected_ref = f"refs/heads/{identity.branch_name}"
         if registered.get("branch") != expected_ref or registered.get("HEAD") != branch_commit:
-            raise MeridianError(
+            raise CardineError(
                 f"canonical worktree mismatch retained at {path}: expected {expected_ref} at {branch_commit}"
             )
         if resume:
             dirty_summary = _dirty_summary(path)
         elif git_output(path, "status", "--porcelain"):
-            raise MeridianError(f"existing task worktree is dirty and was retained: {path}")
+            raise CardineError(f"existing task worktree is dirty and was retained: {path}")
         if state_path.is_file():
             prior = _read_json_object(state_path, "worktree lifecycle state")
             if prior.get("worktree") != str(path) or prior.get("branch") != identity.branch_name:
@@ -150,7 +150,7 @@ def prepare_task_worktree(
             # Missing state is never repaired by a resume; Git supplies the facts instead.
             merge_base = _run_git(project_root, "merge-base", base, identity.branch_name)
             if merge_base.returncode != 0:
-                raise MeridianError(merge_base.stderr.strip() or f"cannot derive the base commit of {identity.branch_name}")
+                raise CardineError(merge_base.stderr.strip() or f"cannot derive the base commit of {identity.branch_name}")
             base_commit = merge_base.stdout.strip()
             state_missing = True
     state = {
@@ -337,7 +337,7 @@ def active_worktree_task(directory: Path) -> dict[str, object] | None:
                 continue
             context = context or task_identity_context(primary)
             identity = resolve_task_identity(primary, task_id, "existing", context=context)
-        except MeridianError:
+        except CardineError:
             continue
         if state_path.name != f"{identity.artifact_stem}.json" or identity.branch_name != branch or state.get("task_id") != identity.canonical_id:
             continue
@@ -372,7 +372,7 @@ def registered_worktree_task_states(project_root: Path) -> list[dict[str, str]]:
             context = context or task_identity_context(primary)
             identity = resolve_task_identity(primary, task_id, "existing", context=context)
             worktree = Path(str(lifecycle["worktree"])).resolve()
-        except (KeyError, TypeError, MeridianError):
+        except (KeyError, TypeError, CardineError):
             continue
         if (state_path.name != f"{identity.artifact_stem}.json"
                 or lifecycle.get("task_id") != identity.canonical_id

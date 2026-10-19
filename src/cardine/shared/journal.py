@@ -5,7 +5,7 @@ from __future__ import annotations
 from cardine.shared.layout import PRODUCT_NAMES, names
 
 from cardine.shared.errors import InternalStopError
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.git import canonical_git_common_dir
 from cardine.stops.registry import load_stop_registry
 from cardine.tasks.identity import canonical_task_id
@@ -62,7 +62,7 @@ class LifecycleJournalEntry:
         self.command = name
         try:
             self.task = canonical_task_id(arguments.task_id).removeprefix("task-")
-        except MeridianError:
+        except CardineError:
             self.task = None
         self.resume = name == "prepare" and bool(getattr(arguments, "resume", False))
         self.project = getattr(arguments, "project", None)
@@ -106,7 +106,7 @@ class LifecycleJournalEntry:
             line["resume"] = True
         try:
             append_journal_line(_verified_lifecycle_project(self.project), line)
-        except (OSError, MeridianError, InternalStopError) as error:
+        except (OSError, CardineError, InternalStopError) as error:
             print(f"warning: lifecycle journal not written: {type(error).__name__}", file=sys.stderr)
 
 

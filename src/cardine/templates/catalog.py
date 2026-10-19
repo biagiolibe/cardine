@@ -9,7 +9,7 @@ from cardine.shared.constants import INSTALLATION_FORMS
 from cardine.shared.constants import INSTALLATION_STATES
 from cardine.shared.constants import VERIFICATION_STATES
 from cardine.shared.constants import WORKFLOW_MODES
-from cardine.shared.errors import MeridianError
+from cardine.shared.errors import CardineError
 from cardine.shared.models import CapabilityCatalog
 from cardine.shared.models import CapabilityDeclaration
 from cardine.shared.models import CapabilityProfileDeclaration
@@ -35,16 +35,16 @@ def manifest_workflow_mode(manifest: dict[str, object]) -> str:
     legacy_mode = manifest.get("mode")
     workflow_mode = manifest.get("workflowMode")
     if legacy_mode is not None and workflow_mode is not None and legacy_mode != workflow_mode:
-        raise MeridianError("manifest mode and workflowMode conflict")
+        raise CardineError("manifest mode and workflowMode conflict")
     selected = workflow_mode if workflow_mode is not None else legacy_mode
     if selected is None:
-        raise MeridianError("manifest must declare workflowMode (or legacy mode)")
+        raise CardineError("manifest must declare workflowMode (or legacy mode)")
     if not isinstance(selected, str) or selected not in WORKFLOW_MODES:
-        raise MeridianError(
+        raise CardineError(
             "manifest workflowMode must be one of: " + ", ".join(WORKFLOW_MODES)
         )
     if protocol_version >= 2 and workflow_mode is None:
-        raise MeridianError("manifest protocolVersion 2 requires workflowMode")
+        raise CardineError("manifest protocolVersion 2 requires workflowMode")
     return selected
 
 
@@ -53,7 +53,7 @@ def _parse_catalog_surface(value: object, label: str) -> CatalogSurface:
     forms = _required_string_list(data.get("forms"), f"{label}.forms", non_empty=True)
     unsupported = sorted(set(forms) - set(INSTALLATION_FORMS))
     if unsupported:
-        raise MeridianError(f"{label}.forms contains unsupported form: {unsupported[0]}")
+        raise CardineError(f"{label}.forms contains unsupported form: {unsupported[0]}")
     return CatalogSurface(
         path=_repository_relative_path(data.get("path"), f"{label}.path"),
         forms=forms,
@@ -64,7 +64,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
     data = _required_object(value, "capability catalog")
     catalog_version = _required_positive_integer(data.get("catalogVersion"), "catalogVersion")
     if catalog_version != CAPABILITY_CATALOG_VERSION:
-        raise MeridianError(
+        raise CardineError(
             f"capability catalog version {catalog_version} is unsupported; "
             f"expected {CAPABILITY_CATALOG_VERSION}"
         )
@@ -73,7 +73,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
     capabilities: list[CatalogCapability] = []
     for capability_id, raw_capability in sorted(raw_capabilities.items()):
         if not SAFE_PATH_COMPONENT.fullmatch(capability_id):
-            raise MeridianError(f"invalid capability ID: {capability_id!r}")
+            raise CardineError(f"invalid capability ID: {capability_id!r}")
         label = f"capabilities.{capability_id}"
         item = _required_object(raw_capability, label)
         workflow_modes = _required_string_list(
@@ -81,33 +81,33 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
         )
         unsupported_modes = sorted(set(workflow_modes) - set(WORKFLOW_MODES))
         if unsupported_modes:
-            raise MeridianError(
+            raise CardineError(
                 f"{label}.workflowModes contains unsupported mode: {unsupported_modes[0]}"
             )
         eligible = item.get("selfHostingEligible")
         if type(eligible) is not bool:
-            raise MeridianError(f"{label}.selfHostingEligible must be a boolean")
+            raise CardineError(f"{label}.selfHostingEligible must be a boolean")
         forms = _required_string_list(
             item.get("installationForms"), f"{label}.installationForms", non_empty=True
         )
         unsupported_forms = sorted(set(forms) - set(INSTALLATION_FORMS))
         if unsupported_forms:
-            raise MeridianError(
+            raise CardineError(
                 f"{label}.installationForms contains unsupported form: {unsupported_forms[0]}"
             )
         surfaces_value = item.get("managedSurfaces")
         if not isinstance(surfaces_value, list) or not surfaces_value:
-            raise MeridianError(f"{label}.managedSurfaces must be a non-empty list")
+            raise CardineError(f"{label}.managedSurfaces must be a non-empty list")
         surfaces = tuple(
             _parse_catalog_surface(surface, f"{label}.managedSurfaces[{index}]")
             for index, surface in enumerate(surfaces_value)
         )
         surface_paths = [surface.path for surface in surfaces]
         if len(set(surface_paths)) != len(surface_paths):
-            raise MeridianError(f"{label}.managedSurfaces contains duplicate paths")
+            raise CardineError(f"{label}.managedSurfaces contains duplicate paths")
         for surface in surfaces:
             if not set(surface.forms) <= set(forms):
-                raise MeridianError(
+                raise CardineError(
                     f"{label} surface {surface.path} uses a form absent from installationForms"
                 )
         host_profiles = _required_object(item.get("hostProfiles"), f"{label}.hostProfiles")
@@ -126,7 +126,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
         )
         required_dimensions = {"installation", "hostActivation", "verification"}
         if set(requirements) != required_dimensions:
-            raise MeridianError(
+            raise CardineError(
                 f"{label}.evidenceRequirements must declare installation, hostActivation, and verification"
             )
         evidence_requirements = tuple(
@@ -141,7 +141,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
         )
         dependencies_value = item.get("dependencies")
         if not isinstance(dependencies_value, list):
-            raise MeridianError(f"{label}.dependencies must be a list")
+            raise CardineError(f"{label}.dependencies must be a list")
         dependencies = tuple(
             (
                 _required_string(
@@ -173,14 +173,14 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
         for dependency_id, dependency_version in capability.dependencies:
             dependency = catalog.capability(dependency_id)
             if dependency is None or dependency.version != dependency_version:
-                raise MeridianError(
+                raise CardineError(
                     f"capability {capability.capability_id} has an unresolved dependency "
                     f"{dependency_id} v{dependency_version}"
                 )
     profiles: list[CatalogProfile] = []
     for profile_id, raw_profile in sorted(raw_profiles.items()):
         if not SAFE_PATH_COMPONENT.fullmatch(profile_id):
-            raise MeridianError(f"invalid profile ID: {profile_id!r}")
+            raise CardineError(f"invalid profile ID: {profile_id!r}")
         label = f"profiles.{profile_id}"
         profile = _required_object(raw_profile, label)
         raw_required = _required_object(profile.get("capabilities"), f"{label}.capabilities")
@@ -191,12 +191,12 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
         for capability_id, version in required:
             capability = catalog.capability(capability_id)
             if capability is None or capability.version != version:
-                raise MeridianError(
+                raise CardineError(
                     f"{label} requires unknown capability version {capability_id} v{version}"
                 )
             for dependency_id, dependency_version in capability.dependencies:
                 if dict(required).get(dependency_id) != dependency_version:
-                    raise MeridianError(
+                    raise CardineError(
                         f"{label} omits dependency {dependency_id} v{dependency_version} "
                         f"required by {capability_id}"
                     )
@@ -207,7 +207,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
         )
         unsupported_profile_modes = sorted(set(profile_modes) - set(WORKFLOW_MODES))
         if unsupported_profile_modes:
-            raise MeridianError(
+            raise CardineError(
                 f"{label}.workflowModes contains unsupported mode: {unsupported_profile_modes[0]}"
             )
         profiles.append(
@@ -236,7 +236,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
             for host_id, _kind in catalog.capability(capability_id).host_profiles
         }
         if set(dict(profiles[-1].host_probes)) != declared_hosts:
-            raise MeridianError(
+            raise CardineError(
                 f"{label}.hostProbes must declare exactly: {', '.join(sorted(declared_hosts))}"
             )
     return CapabilityCatalog(catalog_version, catalog.capabilities, tuple(profiles))
@@ -245,11 +245,11 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
 def load_capability_catalog(framework_root: Path) -> CapabilityCatalog:
     path = framework_root / CAPABILITY_CATALOG_PATH
     if not path.is_file():
-        raise MeridianError(f"capability catalog is missing: {path}")
+        raise CardineError(f"capability catalog is missing: {path}")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise MeridianError(f"invalid capability catalog: {path}") from error
+        raise CardineError(f"invalid capability catalog: {path}") from error
     return parse_capability_catalog(value)
 
 
@@ -265,28 +265,28 @@ def _parse_evidence_snapshot(
     data = _required_object(value, label)
     state = _required_string(data.get("state"), f"{label}.state")
     if state not in allowed_states:
-        raise MeridianError(f"{label}.state is unsupported: {state}")
+        raise CardineError(f"{label}.state is unsupported: {state}")
     evidence = _required_string_list(data.get("evidence"), f"{label}.evidence")
     rationale_value = data.get("notApplicableRationale")
     if rationale_value is not None and not isinstance(rationale_value, str):
-        raise MeridianError(f"{label}.notApplicableRationale must be null or a string")
+        raise CardineError(f"{label}.notApplicableRationale must be null or a string")
     rationale = rationale_value.strip() if isinstance(rationale_value, str) else None
     if state in positive_states and not evidence:
-        raise MeridianError(f"{label} state {state} requires evidence")
+        raise CardineError(f"{label} state {state} requires evidence")
     if state == "NOT_APPLICABLE":
         if not rationale or rationale not in allowed_not_applicable_rationales:
             expected = ", ".join(allowed_not_applicable_rationales) or "no catalog exclusion applies"
-            raise MeridianError(
+            raise CardineError(
                 f"{label} NOT_APPLICABLE requires a catalog-backed rationale ({expected})"
             )
     elif rationale:
-        raise MeridianError(f"{label}.notApplicableRationale is only valid for NOT_APPLICABLE")
+        raise CardineError(f"{label}.notApplicableRationale is only valid for NOT_APPLICABLE")
     verified_at = data.get("verifiedAt") if verification else None
     verifier_version = data.get("verifierVersion") if verification else None
     if verification:
         for field, field_value in (("verifiedAt", verified_at), ("verifierVersion", verifier_version)):
             if field_value is not None and (not isinstance(field_value, str) or not field_value.strip()):
-                raise MeridianError(f"{label}.{field} must be null or a non-empty string")
+                raise CardineError(f"{label}.{field} must be null or a non-empty string")
     return EvidenceSnapshot(
         state=state,
         evidence=evidence,
@@ -316,13 +316,13 @@ def parse_capability_profiles(
         label = f"capabilityProfiles.{profile_id}"
         catalog_profile = catalog.profile(profile_id)
         if catalog_profile is None:
-            raise MeridianError(f"{label} is absent from capability catalog v{catalog.catalog_version}")
+            raise CardineError(f"{label} is absent from capability catalog v{catalog.catalog_version}")
         profile = _required_object(raw_profile, label)
         profile_version = _required_positive_integer(
             profile.get("profileVersion"), f"{label}.profileVersion"
         )
         if profile_version != catalog_profile.version:
-            raise MeridianError(
+            raise CardineError(
                 f"{label}.profileVersion must be {catalog_profile.version}, got {profile_version}"
             )
         raw_capabilities = _required_object(profile.get("capabilities"), f"{label}.capabilities")
@@ -335,24 +335,24 @@ def parse_capability_profiles(
                 detail.append("missing " + ", ".join(missing))
             if extra:
                 detail.append("unexpected " + ", ".join(extra))
-            raise MeridianError(f"{label}.capabilities is incomplete: {'; '.join(detail)}")
+            raise CardineError(f"{label}.capabilities is incomplete: {'; '.join(detail)}")
         declarations: list[CapabilityDeclaration] = []
         for capability_id, raw_declaration in sorted(raw_capabilities.items()):
             capability_label = f"{label}.capabilities.{capability_id}"
             capability = catalog.capability(capability_id)
             if capability is None:
-                raise MeridianError(f"{capability_label} is absent from the capability catalog")
+                raise CardineError(f"{capability_label} is absent from the capability catalog")
             declaration = _required_object(raw_declaration, capability_label)
             required_version = _required_positive_integer(
                 declaration.get("requiredVersion"), f"{capability_label}.requiredVersion"
             )
             if required_version != required[capability_id] or required_version != capability.version:
-                raise MeridianError(
+                raise CardineError(
                     f"{capability_label}.requiredVersion must be {required[capability_id]}"
                 )
             raw_surfaces = declaration.get("managedSurface")
             if not isinstance(raw_surfaces, list) or not raw_surfaces:
-                raise MeridianError(f"{capability_label}.managedSurface must be a non-empty list")
+                raise CardineError(f"{capability_label}.managedSurface must be a non-empty list")
             surfaces = tuple(
                 DeclaredSurface(
                     path=_repository_relative_path(
@@ -367,7 +367,7 @@ def parse_capability_profiles(
                 for index, surface in enumerate(raw_surfaces)
             )
             if len({surface.path for surface in surfaces}) != len(surfaces):
-                raise MeridianError(f"{capability_label}.managedSurface contains duplicate paths")
+                raise CardineError(f"{capability_label}.managedSurface contains duplicate paths")
             catalog_surfaces = {surface.path: surface for surface in capability.managed_surfaces}
             declared_paths = {surface.path for surface in surfaces}
             if surface_gaps is not None and declared_paths < set(catalog_surfaces):
@@ -379,12 +379,12 @@ def parse_capability_profiles(
                     )
                 )
             elif declared_paths != set(catalog_surfaces):
-                raise MeridianError(
+                raise CardineError(
                     f"{capability_label}.managedSurface must completely match the catalog surface"
                 )
             for surface in surfaces:
                 if surface.form not in catalog_surfaces[surface.path].forms:
-                    raise MeridianError(
+                    raise CardineError(
                         f"{capability_label}.managedSurface form {surface.form} is not allowed for {surface.path}"
                     )
             exclusions: list[str] = []
@@ -406,7 +406,7 @@ def parse_capability_profiles(
             supported_hosts = dict(capability.host_profiles)
             missing_hosts = sorted(set(supported_hosts) - set(raw_hosts))
             if missing_hosts:
-                raise MeridianError(
+                raise CardineError(
                     f"{capability_label}.hostActivation is missing supported host profile: "
                     f"{missing_hosts[0]}"
                 )
@@ -460,9 +460,9 @@ def load_marker_catalog(framework_root: Path) -> dict[str, dict[str, object]]:
     try:
         data = _required_object(json.loads(path.read_text(encoding="utf-8")), "marker catalog")
     except (OSError, ValueError) as error:
-        raise MeridianError(f"cannot read marker catalog: {path}") from error
+        raise CardineError(f"cannot read marker catalog: {path}") from error
     if data.get("catalogVersion") != 1:
-        raise MeridianError("unsupported marker catalog version")
+        raise CardineError("unsupported marker catalog version")
     entries = _required_object(data.get("capabilities"), "marker capabilities")
     for capability, value in entries.items():
         label = f"marker capabilities.{capability}"
@@ -470,7 +470,7 @@ def load_marker_catalog(framework_root: Path) -> dict[str, dict[str, object]]:
         _required_positive_integer(item.get("requiredVersion"), f"{label}.requiredVersion")
         for field in ("required", "retired"):
             if type(item.get(field)) is not bool:
-                raise MeridianError(f"{label}.{field} must be a boolean")
+                raise CardineError(f"{label}.{field} must be a boolean")
         if item["required"]:
             _required_string(item.get("adoptionRecord"), f"{label}.adoptionRecord")
     return entries
