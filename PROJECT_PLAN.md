@@ -36,6 +36,8 @@ the named work item finds it on `main`.
 | Verify conflicted merge blocks against each template file's own marker version | Work item 6, row SW5 | `tasks/handoffs/038.md` |
 | Delete `MERIDIAN_ROOT`, `bin/`, `scripts/upgrade_project.sh`, and the old release scripts instead of keeping them renamed | Decision 9 and work item 12 | `docs/RENAME_PLAN.md`, choice 6 |
 | Keep the coordinator snapshot of this repository working when row SW1 replaces `detect_mode`: the Meridian workflow detection moves into `cardine.legacy` | Work item 6, row SW1 | `docs/RENAME_PLAN.md`, choice 5 |
+| Add `cardine task new`, which creates the task record and its state file together (decision 4); task 053 provides the contract resolver it calls | Work item 7 | Task 053 record |
+| Add `cardine init` (decision 8), replacing the copy steps of the init slash command that task 055 rewrites | Work item 9 | Task 055 record |
 
 ## Active Delivery
 
@@ -92,3 +94,10 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 049 — Rename the project directory and the profile id (rename plan R8).
 - `[x]` 050 — Rename Git-internal files and the worktree root (rename plan R9).
 - `[x]` 051 — Rename the product strings and guard against Meridian identifiers.
+- `[ ]` 052 — Resolve the project preset from the configuration (single workflow SW1).
+- `[ ]` 053 — Resolve one task contract and store its snapshot (single workflow SW2).
+- `[ ]` 054 — Use one task state machine with review and dependency gates (single workflow SW3).
+- `[ ]` 055 — Build the single template set (single workflow SW4).
+- `[ ]` 056 — Reconcile the capability catalog with the single template set (single workflow SW5).
+- `[ ]` 057 — Name the preset in the per-turn briefing (single workflow SW6).
+- `[ ]` 058 — Remove residual workflow branching and prove parity (single workflow SW7).
