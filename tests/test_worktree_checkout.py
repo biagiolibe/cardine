@@ -32,6 +32,44 @@ import worktree_support as support
 
 
 class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_integration_files_do_not_block_prepare_resume_or_check(self):
+        retained = [self.primary / ".git" / name for name in (
+            "meridian-integration.lock", "meridian-integration.json",  # MERIDIAN-OLD-NAME-TEST
+        )]
+        for path in retained:
+            path.write_text(json.dumps({"task_id": "056"}))
+        before = [path.read_bytes() for path in retained]
+        prepared = self.prepare()
+        worktree = Path(prepared["worktree"])
+        self.assertEqual(self.resume()["next_action"], "check")
+        os.chdir(worktree)
+        report, ready = owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)
+        self.assertTrue(ready, report)
+        self.assertFalse(report["integration_active"])
+        self.assertEqual([path.read_bytes() for path in retained], before)
+        for path in retained:
+            path.write_text("invalid old integration file")
+        self.assertTrue(owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)[1])
+        self.assertEqual([path.read_text() for path in retained], ["invalid old integration file"] * 2)
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_worktree_registration_is_not_a_product_alias(self):
+        prepared = self.prepare()
+        worktree = Path(prepared["worktree"])
+        state_path = next((self.primary / ".git/cardine-worktrees").glob("*.json"))
+        old_state = self.primary / ".git/meridian-worktrees" / state_path.name  # MERIDIAN-OLD-NAME-TEST
+        old_state.parent.mkdir()
+        state_path.rename(old_state)
+        before = old_state.read_bytes()
+        os.chdir(worktree)
+        report, ready = owner_worktree_checkout.inspect_task_worktree("056", self.worktree_root, self.primary)
+        self.assertFalse(ready)
+        self.assertIn("missing-state", report["errors"])
+        self.assertEqual(owner_worktree_checkout.registered_worktree_task_states(self.primary), [])
+        self.assertEqual(old_state.read_bytes(), before)
+        self.assertFalse(state_path.exists())
+
     def test_prepare_does_not_read_or_write_the_retired_ledger(self):
         ledger = cardine_cli.canonical_git_common_dir(self.primary) / "meridian-budget.json"
         ledger.write_text("invalid retired ledger\n", encoding="utf-8")
@@ -219,7 +257,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_resume_never_attempts_a_lifecycle_state_write(self) -> None:
         prepared, worktree = self.dirty_worktree()
-        state_directory = self.primary / ".git/meridian-worktrees"
+        state_directory = self.primary / ".git/cardine-worktrees"
         before = sorted(item.name for item in state_directory.iterdir())
         state_path = next(state_directory.glob("*.json"))
         original = state_path.read_bytes()
@@ -237,7 +275,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_resume_stops_with_a_registered_code_on_mismatched_state(self) -> None:
         self.dirty_worktree()
-        state_path = next((self.primary / ".git/meridian-worktrees").glob("*.json"))
+        state_path = next((self.primary / ".git/cardine-worktrees").glob("*.json"))
         original = state_path.read_text(encoding="utf-8")
         state_path.write_text(original.replace('"branch": "task-056"', '"branch": "other"'), encoding="utf-8")
         with self.assertRaises(shared_errors.CardineStop) as raised:
@@ -252,7 +290,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_resume_with_missing_state_derives_from_git_and_repairs_later(self) -> None:
         prepared, worktree = self.dirty_worktree()
-        state_directory = self.primary / ".git/meridian-worktrees"
+        state_directory = self.primary / ".git/cardine-worktrees"
         next(state_directory.glob("*.json")).unlink()
         with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")):
             resumed = self.resume()
@@ -297,18 +335,18 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
             self.resume()
         self.assertEqual(self.git("branch", "--list", "task-056").stdout, "")
         self.assertEqual(list(self.worktree_root.rglob("task-056")), [])
-        self.assertFalse((self.primary / ".git/meridian-worktrees").exists())
+        self.assertFalse((self.primary / ".git/cardine-worktrees").exists())
 
 
     def test_resume_keeps_every_other_prepare_block(self) -> None:
         prepared, worktree = self.dirty_worktree()
-        state_path = next((self.primary / ".git/meridian-worktrees").glob("*.json"))
+        state_path = next((self.primary / ".git/cardine-worktrees").glob("*.json"))
         original = state_path.read_text(encoding="utf-8")
         state_path.write_text(original.replace('"branch": "task-056"', '"branch": "other"'), encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.CardineError, "lifecycle state mismatch"):
             self.resume()
         state_path.write_text(original, encoding="utf-8")
-        for name in ("meridian-integration.lock", "meridian-integration.json"):
+        for name in ("cardine-integration.lock", "cardine-integration.json"):
             with self.subTest(retained=name):
                 retained = self.primary / ".git" / name
                 retained.write_text(json.dumps({"task_id": "056"}), encoding="utf-8")

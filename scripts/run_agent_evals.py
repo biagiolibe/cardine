@@ -38,7 +38,7 @@ EXIT_FAIL = 1
 EXIT_USAGE = 2
 # The host CLI or its credentials are missing: no run happened, so nothing passed.
 EXIT_UNAVAILABLE = 3
-JOURNAL_NAMES = ("meridian-journal.1.jsonl", "meridian-journal.jsonl")
+JOURNAL_NAMES = ("cardine-journal.1.jsonl", "cardine-journal.jsonl")
 AUTH_FAILURE = re.compile(r"not logged in|please run .*login|invalid api key|authentication", re.IGNORECASE)
 GIT_ENV_ISOLATION = {"GIT_CONFIG_NOSYSTEM": "1"}
 EXPECT_KEYS = {"kind", "journal_must_contain", "git", "must_not"}
@@ -409,7 +409,7 @@ def load_scenarios(names: Sequence[str] | None, base: Path = SCENARIOS) -> list[
 
 def run_once(scenario: Scenario, host: str, timeout: int, max_budget_usd: str, keep: bool) -> tuple[bool, list[str], Path | None]:
     """Run one scenario in a fresh fixture; return (passed, reasons, kept directory)."""
-    temporary_root = Path(tempfile.mkdtemp(prefix="meridian-eval-")).resolve()
+    temporary_root = Path(tempfile.mkdtemp(prefix="cardine-eval-")).resolve()
     keep_path: Path | None = temporary_root if keep else None
     try:
         probe = subprocess.run(

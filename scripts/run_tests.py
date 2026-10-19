@@ -256,7 +256,7 @@ def run_parallel(
     total, digest = coverage(tests)
     workers = max(1, min(requested or default_workers(), MAX_WORKERS, total))
     started = time.monotonic()
-    scratch = Path(tempfile.mkdtemp(prefix="meridian-tests-"))
+    scratch = Path(tempfile.mkdtemp(prefix="cardine-tests-"))
     try:
         results = run_shards([command_for(i, workers, tests_directory) for i in range(1, workers + 1)], scratch, environment)
     finally:
@@ -312,7 +312,7 @@ def run_clean_clone(requested: int, source: Path = ROOT) -> int:
         print("clean-clone refused: the working tree has uncommitted changes; commit them first")
         return 2
     commit = git(source, "rev-parse", "HEAD").stdout.strip()
-    scratch = Path(tempfile.mkdtemp(prefix="meridian-clean-clone-"))
+    scratch = Path(tempfile.mkdtemp(prefix="cardine-clean-clone-"))
     clone = scratch / "clone"
     environment = isolated_environment(os.environ)
     environment["TMPDIR"] = str(scratch)

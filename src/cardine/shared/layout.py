@@ -17,13 +17,13 @@ from typing import Iterator
 class ProjectNames:
     project_directory: str = ".cardine"
     worktree_root_directory: str | None = None
-    worktree_state_directory: str = "meridian-worktrees"
-    integration_lease_name: str = "meridian-integration.lock"
-    integration_state_name: str = "meridian-integration.json"
-    journal_name: str = "meridian-journal.jsonl"
-    journal_rotated_name: str = "meridian-journal.1.jsonl"
-    user_configuration_directory: str = "meridian"
-    shared_worktrees_context: str = "meridian_shared_worktrees"
+    worktree_state_directory: str = "cardine-worktrees"
+    integration_lease_name: str = "cardine-integration.lock"
+    integration_state_name: str = "cardine-integration.json"
+    journal_name: str = "cardine-journal.jsonl"
+    journal_rotated_name: str = "cardine-journal.1.jsonl"
+    user_configuration_directory: str = "cardine"
+    shared_worktrees_context: str = "cardine_shared_worktrees"
 
     @property
     def manifest_path(self) -> Path:
@@ -72,8 +72,7 @@ class ProjectNames:
         return Path(self.user_configuration_directory) / "config.json"
 
 
-# The machine-level root moves separately from project state (rename plan R9).
-PRODUCT_NAMES = ProjectNames(worktree_root_directory=".meridian")
+PRODUCT_NAMES = ProjectNames()
 _NAMES: ContextVar[ProjectNames] = ContextVar("project_names", default=PRODUCT_NAMES)
 
 

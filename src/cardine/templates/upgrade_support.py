@@ -103,7 +103,7 @@ def prepare_upgrade_targets(
     full_pending = set(migration_ids(framework_root, installed_version, full_target)) - applied
     capped_pending = set(migration_ids(framework_root, installed_version, capped_target)) - applied
     excluded = full_pending - capped_pending
-    scratch_dir = Path(tempfile.mkdtemp(prefix="meridian-capped-"))
+    scratch_dir = Path(tempfile.mkdtemp(prefix="cardine-capped-"))
     baseline_root = project_root / names().baselines_path / installed_version
     managed_override = capped_managed_files(
         framework_root, manifest_workflow_mode(manifest), baseline_root, excluded, scratch_dir
@@ -170,7 +170,7 @@ def plan_has_blockers(plan: list[PlanItem], owner_reconciled: bool = False) -> b
 
 def _unused_adoption_backup(path: Path, kind: str = "pre-adoption") -> Path:
     """Choose a deterministic adjacent backup path without reusing an existing name."""
-    first = path.with_name(path.name + f".meridian-{kind}.bak")
+    first = path.with_name(path.name + f".cardine-{kind}.bak")
     if not first.exists():
         return first
     suffix = 1

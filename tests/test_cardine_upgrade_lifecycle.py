@@ -915,7 +915,7 @@ worktree before the branch only after validated integration succeeds.
                         lifecycle.write_text(previous + "\nPre-adoption project copy.\n", encoding="utf-8")
                         if state == "adopt-collision":
                             lifecycle.with_name(
-                                lifecycle.name + ".meridian-pre-adoption.bak"
+                                lifecycle.name + ".cardine-pre-adoption.bak"
                             ).write_text("earlier backup\n", encoding="utf-8")
                         elif state == "adopt-blocked":
                             agents = self.project / "AGENTS.md"
@@ -950,12 +950,12 @@ worktree before the branch only after validated integration succeeds.
                 self.assertEqual(lifecycle_plan.split()[0], expected_action)
                 if state == "adopt-different":
                     self.assertIn(
-                        "docs/WORKTREE_LIFECYCLE.md.meridian-pre-adoption.bak",
+                        "docs/WORKTREE_LIFECYCLE.md.cardine-pre-adoption.bak",
                         lifecycle_plan,
                     )
                 elif state == "adopt-collision":
                     self.assertIn(
-                        "docs/WORKTREE_LIFECYCLE.md.meridian-pre-adoption.bak.1",
+                        "docs/WORKTREE_LIFECYCLE.md.cardine-pre-adoption.bak.1",
                         lifecycle_plan,
                     )
 
@@ -966,7 +966,7 @@ worktree before the branch only after validated integration succeeds.
                     self.assertEqual(lifecycle.read_text(encoding="utf-8"), before)
                     self.assertFalse(
                         lifecycle.with_name(
-                            lifecycle.name + ".meridian-pre-adoption.bak"
+                            lifecycle.name + ".cardine-pre-adoption.bak"
                         ).exists()
                     )
                     continue
@@ -981,7 +981,7 @@ worktree before the branch only after validated integration succeeds.
                 else:
                     self.assertEqual(upgraded, current)
                 if state in ("adopt-different", "adopt-collision"):
-                    suffix = ".meridian-pre-adoption.bak.1" if state == "adopt-collision" else ".meridian-pre-adoption.bak"
+                    suffix = ".cardine-pre-adoption.bak.1" if state == "adopt-collision" else ".cardine-pre-adoption.bak"
                     backup = lifecycle.with_name(lifecycle.name + suffix)
                     self.assertEqual(
                         backup.read_text(encoding="utf-8"),

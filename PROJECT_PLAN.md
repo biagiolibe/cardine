@@ -90,5 +90,5 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 047 — Rename the command word in output and data (rename plan R6).
 - `[x]` 048 — Rename the environment names and options (rename plan R7).
 - `[x]` 049 — Rename the project directory and the profile id (rename plan R8).
-- `[ ]` 050 — Rename Git-internal files and the worktree root (rename plan R9).
+- `[x]` 050 — Rename Git-internal files and the worktree root (rename plan R9).
 - `[ ]` 051 — Rename the product strings and guard against Meridian identifiers.

@@ -72,7 +72,7 @@ fi
 M="$CARDINE_ROOT/bin/cardine"
 [ -x "$M" ] || die "no executable $M"
 TARGET="$(tr -d '[:space:]' < "$CARDINE_ROOT/VERSION")"
-BRANCH="${BRANCH:-meridian-upgrade-$TARGET}"
+BRANCH="${BRANCH:-cardine-upgrade-$TARGET}"
 
 manifest_field() {
   python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))' \

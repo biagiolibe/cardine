@@ -106,7 +106,7 @@ def lock_project(
 
 
 def merge_clean(local: Path, base: Path, incoming: Path) -> tuple[bool, bytes]:
-    with tempfile.TemporaryDirectory(prefix="meridian-merge-") as directory:
+    with tempfile.TemporaryDirectory(prefix="cardine-merge-") as directory:
         output = Path(directory) / "merged"
         process = subprocess.run(
             ["git", "merge-file", "-p", str(local), str(base), str(incoming)],

@@ -34,7 +34,7 @@ class LifecycleJournalTest(unittest.TestCase):
         subprocess.run(["git", "commit", "-m", "initial"], cwd=self.project, check=True, capture_output=True)
         self.worktree_root = self.root / "worktrees"
         self.worktree_root.mkdir()
-        self.journal = self.project / ".git" / "meridian-journal.jsonl"
+        self.journal = self.project / ".git" / "cardine-journal.jsonl"
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -143,19 +143,19 @@ class LifecycleJournalTest(unittest.TestCase):
             ["git", "status", "--short"], cwd=self.project, text=True, capture_output=True, check=True
         )
         self.assertEqual(status.stdout.strip(), "")
-        self.assertFalse((worktree / "meridian-journal.jsonl").exists())
+        self.assertFalse((worktree / "cardine-journal.jsonl").exists())
 
     def test_rotation_keeps_one_previous_file(self) -> None:
         directory = self.project / ".git"
         self.journal.write_text("x" * (owner_shared_journal.JOURNAL_MAX_BYTES + 1), encoding="utf-8")
-        (directory / "meridian-journal.1.jsonl").write_text("older\n", encoding="utf-8")
+        (directory / "cardine-journal.1.jsonl").write_text("older\n", encoding="utf-8")
         owner_shared_journal.append_journal_line(self.project, {"version": 1, "command": "check"})
-        rotated = directory / "meridian-journal.1.jsonl"
+        rotated = directory / "cardine-journal.1.jsonl"
         self.assertEqual(rotated.stat().st_size, owner_shared_journal.JOURNAL_MAX_BYTES + 1)
         self.assertEqual(self.lines(), [{"command": "check", "version": 1}])
         self.assertEqual(
-            sorted(path.name for path in directory.glob("meridian-journal*")),
-            ["meridian-journal.1.jsonl", "meridian-journal.jsonl"],
+            sorted(path.name for path in directory.glob("cardine-journal*")),
+            ["cardine-journal.1.jsonl", "cardine-journal.jsonl"],
         )
 
     def test_write_failure_warns_once_and_keeps_the_result(self) -> None:
@@ -196,7 +196,7 @@ class FlowReportTest(unittest.TestCase):
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
         (self.project / "tasks" / "done").mkdir(parents=True)
         (self.project / ".cardine").mkdir()
-        self.journal = self.project / ".git" / "meridian-journal.jsonl"
+        self.journal = self.project / ".git" / "cardine-journal.jsonl"
         self.records: list[str] = []
         self.now = datetime(2026, 10, 5, tzinfo=timezone.utc)
 
@@ -390,7 +390,7 @@ class FlowReportTest(unittest.TestCase):
 
     def test_rotated_journal_is_read_before_the_current_one(self) -> None:
         self.add(0, "prepare", "056")
-        (self.project / ".git" / "meridian-journal.1.jsonl").write_text(self.records.pop() + "\n", encoding="utf-8")
+        (self.project / ".git" / "cardine-journal.1.jsonl").write_text(self.records.pop() + "\n", encoding="utf-8")
         self.add(1, "integrate finalize", "056")
         self.assertEqual(self.report()["tasks"][0]["lead_time_seconds"], 86400)  # type: ignore[index]
 

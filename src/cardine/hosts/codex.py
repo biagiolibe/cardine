@@ -107,7 +107,7 @@ def apply_codex_user_rules(plan: CodexUserRulesPlan) -> bool:
     if plan.proposed_text is None:
         return False
     plan.path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, name = tempfile.mkstemp(prefix=".meridian-rules-", dir=plan.path.parent)
+    descriptor, name = tempfile.mkstemp(prefix=".cardine-rules-", dir=plan.path.parent)
     try:
         with os.fdopen(descriptor, "wb") as stream:
             stream.write(plan.proposed_text.encode("utf-8"))
@@ -437,11 +437,11 @@ def _write_exclusive_backup(path: Path, backup: Path) -> None:
 
 
 def _unused_repair_backup(path: Path) -> Path:
-    candidate = path.with_name(path.name + ".meridian-repair.bak")
+    candidate = path.with_name(path.name + ".cardine-repair.bak")
     index = 0
     while candidate.exists() or candidate.is_symlink():
         index += 1
-        candidate = path.with_name(f"{path.name}.meridian-repair.{index}.bak")
+        candidate = path.with_name(f"{path.name}.cardine-repair.{index}.bak")
     return candidate
 
 
@@ -455,7 +455,7 @@ def apply_codex_configuration(plan: CodexConfigurationPlan) -> bool:
             raise CardineError("Codex configuration changed since it was planned; rerun --check")
         _write_exclusive_backup(path, _unused_repair_backup(path))
     else:
-        backup = path.with_name(path.name + ".meridian.bak")
+        backup = path.with_name(path.name + ".cardine.bak")
         if path.exists() and not backup.exists():
             _write_exclusive_backup(path, backup)
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)

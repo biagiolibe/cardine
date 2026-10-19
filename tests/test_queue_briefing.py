@@ -91,7 +91,7 @@ class QueueBriefingTest(unittest.TestCase):
         self.assertEqual(len(mismatch), 1, result.stdout)
         self.assertIn(str(other), mismatch[0])
         # MERIDIAN-INSTALLATION-CHECK
-        self.assertIn(str(home / ".meridian/worktrees"), mismatch[0])
+        self.assertIn(str(home / ".cardine/worktrees"), mismatch[0])
 
     def test_reports_combined_codex_repair_and_root_replacement_on_one_line(self) -> None:
         self.write_queue("| 1 | TASK-001 | P0 | QUEUED | REQUIRED | — | [TASK-001](TASK-001.md) |\n")

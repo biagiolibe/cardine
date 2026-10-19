@@ -61,7 +61,7 @@ VERIFICATION_STATES = ("PASS", "ADVISORY", "UNVERIFIED", "NOT_APPLICABLE", "FAIL
 
 AUDIT_STATES = VERIFICATION_STATES
 
-LATEST_RELEASE_URL = "https://api.github.com/repos/biagiolibe/meridian/releases/latest"
+LATEST_RELEASE_URL = "https://api.github.com/repos/biagiolibe/cardine/releases/latest"
 
 LATEST_RELEASE_TIMEOUT_SECONDS = 3.0
 

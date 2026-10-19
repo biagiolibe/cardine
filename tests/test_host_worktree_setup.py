@@ -36,7 +36,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.cwd_patch = mock.patch.object(cardine_cli.Path, "cwd", return_value=self.home)
         self.cwd_patch.start()
         self.xdg = self.home / "xdg"
-        self.user_config = self.xdg / "meridian/config.json"
+        self.user_config = self.xdg / "cardine/config.json"
         self.codex_config = self.home / "codex/config.toml"
         self.environment = {"HOME": str(self.home), "XDG_CONFIG_HOME": str(self.xdg)}
 
@@ -53,7 +53,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_resolution_precedence_and_source_reporting(self) -> None:
         default = self.resolve()
-        self.assertEqual(default.path, self.home / ".meridian/worktrees")
+        self.assertEqual(default.path, self.home / ".cardine/worktrees")
         self.assertEqual(default.source, "default")
 
         configured = self.home / "configured"
@@ -73,7 +73,24 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_old_worktree_root_environment_is_ignored(self) -> None:
         resolved = self.resolve(MERIDIAN_WORKTREE_ROOT=str(self.home / "old"))  # MERIDIAN-OLD-NAME-TEST
-        self.assertEqual((resolved.path, resolved.source), (self.home / ".meridian/worktrees", "default"))
+        self.assertEqual((resolved.path, resolved.source), (self.home / ".cardine/worktrees", "default"))
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_user_configuration_and_worktree_root_are_ignored(self) -> None:
+        old_root = self.home / ".meridian/worktrees"  # MERIDIAN-OLD-NAME-TEST
+        old_root.mkdir(parents=True)
+        for base, environment in ((self.xdg, self.environment), (self.home / ".config", {})):
+            with self.subTest(base=base):
+                old_config = base / "meridian/config.json"  # MERIDIAN-OLD-NAME-TEST
+                old_config.parent.mkdir(parents=True)
+                old_config.write_text(json.dumps({"version": 1, "worktreeRoot": str(old_root)}))
+                resolved = owner_worktree_storage.resolve_worktree_root(environment=environment, home=self.home)
+                self.assertEqual((resolved.path, resolved.source), (self.home / ".cardine/worktrees", "default"))
+                self.assertEqual(resolved.config_path, base / "cardine/config.json")
+                self.assertFalse(resolved.path.exists())
+                old_config.write_text("invalid old configuration")
+                self.assertEqual(owner_worktree_storage.resolve_worktree_root(
+                    environment=environment, home=self.home), resolved)
 
     def test_old_framework_root_is_unset_in_setup_check(self) -> None:
         environment = {**self.environment, "MERIDIAN_ROOT": str(ROOT)}  # MERIDIAN-OLD-NAME-TEST
@@ -173,7 +190,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             None, self.codex_config, environment=self.environment, home=self.home
         )
         self.assertTrue(owner_hosts_setup.apply_setup(first))
-        root = self.home / ".meridian/worktrees"
+        root = self.home / ".cardine/worktrees"
         self.assertTrue(root.is_dir())
         self.assertEqual(stat.S_IMODE(root.stat().st_mode), 0o700)
         self.assertFalse(self.user_config.exists())

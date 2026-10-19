@@ -40,7 +40,7 @@ def fetch_latest_release(
         LATEST_RELEASE_URL.rsplit("/", 1)[0] + "/tags/" + target_tag,
         headers={
             "Accept": "application/vnd.github+json",
-            "User-Agent": f"meridian/{installed_version}",
+            "User-Agent": f"cardine/{installed_version}",
         },
     )
     opener = urlopen if urlopen_fn is None else urlopen_fn
@@ -111,10 +111,10 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         kind = "patch" if release.patch else ("minor" if release.minor else "major")
         print(f"Target: {version}")
         print(f"Release kind: {kind}; templates: {templates} (release notes)")
-        print(f"Release notes: https://github.com/biagiolibe/meridian/releases/tag/{tag}")
+        print(f"Release notes: https://github.com/biagiolibe/cardine/releases/tag/{tag}")
         remote = git_output(root, "remote", "get-url", "origin")
         head = git_output(root, "rev-parse", "HEAD")
-        with tempfile.TemporaryDirectory(prefix="meridian-self-update-") as directory:
+        with tempfile.TemporaryDirectory(prefix="cardine-self-update-") as directory:
             probe = Path(directory)
             git_output(probe, "init", "--bare", "--quiet")
             git_output(probe, "fetch", "--quiet", "--no-tags", str(root), head)

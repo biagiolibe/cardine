@@ -1005,7 +1005,7 @@ class SnapshotCostTest(support.RepoCase):
         self.write(self.project, "main.txt", "main moved\n")
         self.commit(self.project)
         assert_rechecked("main commit")
-        self.write(self.project, ".git/meridian-integration.lock", "held\n")
+        self.write(self.project, ".git/cardine-integration.lock", "held\n")
         assert_rechecked("lifecycle file")
 
     def test_dirty_worktree_is_checked_every_refresh(self) -> None:

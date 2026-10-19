@@ -334,7 +334,7 @@ def restore(root: Path, paths: list[Path]) -> None:
 
 
 def validate(root: Path, version: str) -> tuple[int, list[str]]:
-    notes = tempfile.NamedTemporaryFile(prefix="meridian-release-", suffix=".md", delete=False)
+    notes = tempfile.NamedTemporaryFile(prefix="cardine-release-", suffix=".md", delete=False)
     notes.close()
     commands = [
         [sys.executable, "scripts/check_repository.py"],

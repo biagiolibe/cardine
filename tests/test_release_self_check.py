@@ -110,6 +110,9 @@ class SelfCheckLatestTest(unittest.TestCase):
         request = opener.call_args.args[0]
         self.assertEqual(opener.call_args.kwargs["timeout"], 3.0)
         self.assertEqual(request.full_url, shared_constants.LATEST_RELEASE_URL)
+        self.assertEqual(request.full_url, "https://api.github.com/repos/biagiolibe/cardine/releases/latest")
+        self.assertEqual(request.get_header("User-agent"), f"cardine/{installed}")
+        self.assertNotIn("meridian", request.full_url + request.get_header("User-agent"))  # MERIDIAN-OLD-NAME-TEST
         self.assertIsNone(request.get_header("Authorization"))
 
     def test_update_available_release(self) -> None:
