@@ -106,6 +106,7 @@ ALLOWLIST = (
     Allowance(
         2, "5b",
         r"tests/program_word_support\.py",
+        re.escape(TEMPLATE_TAG) + r"\b|(?<![\w./-])" + OLD + r"(?![\w./-])",
         tag=TEMPLATE_TAG,
     ),
     Allowance(
@@ -175,6 +176,9 @@ def scan_repository(root: Path, allowlist=ALLOWLIST) -> tuple[list[str], Counter
                     continue
                 if entry.tag is not None:
                     matches = entry.tag in line or entry.tag in previous
+                    if matches and pattern is not None:
+                        matches = any(match.start() <= occurrence.start() and match.end() >= occurrence.end()
+                                      for match in pattern.finditer(line))
                 elif pattern is None:
                     matches = True
                 elif line_number == 0:
@@ -226,6 +230,13 @@ class IdentifierGuardTest(unittest.TestCase):
                 tracked.write_text(text + "\n")
                 failures, _ = scan_repository(root, (marker_allowance,))
                 self.assertTrue(any(str(tracked.relative_to(root)) + ":1:" in f for f in failures))
+            helper = root / "tests/program_word_support.py"
+            helper.parent.mkdir()
+            helper_allowance = next(e for e in ALLOWLIST if e.tag == TEMPLATE_TAG)
+            helper.write_text("# " + TEMPLATE_TAG + "\n" + OLD + " ." + OLD + "/tasks\n")
+            failures, _ = scan_repository(root, (helper_allowance,))
+            self.assertTrue(any(helper.name + ":2:" in f for f in failures))
+            helper.unlink()
             tracked.write_text("Cardine\n")
             untracked = root / (OLD + ".txt")
             untracked.write_text(OLD)
