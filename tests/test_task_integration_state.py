@@ -69,7 +69,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         if self.workflow != "lean-delivery":
             state["review"] = {"required": required, "verdict": verdict, "attempt": 1,
                                "reviewed_commit": reviewed or self.reviewed, "approved_by": "reviewer"}
-        self.state_file = self.worker / ".meridian/tasks/056.json"
+        self.state_file = self.worker / ".cardine/tasks/056.json"
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state_file.write_text(json.dumps(state))
         self.commit()
@@ -152,15 +152,15 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_missing_state_stop(self):
         self.start()
-        (self.worker / ".meridian/tasks").mkdir()
-        self.assert_stop("TASK_STATE_MISSING", ".meridian/tasks/056.json")
+        (self.worker / ".cardine/tasks").mkdir()
+        self.assert_stop("TASK_STATE_MISSING", ".cardine/tasks/056.json")
 
     def test_invalid_state_stop(self):
         self.start()
         self.write_state()
         self.state_file.write_text("{invalid")
         self.commit()
-        self.assert_stop("TASK_STATE_INVALID", ".meridian/tasks/056.json")
+        self.assert_stop("TASK_STATE_INVALID", ".cardine/tasks/056.json")
 
     def test_non_utf8_state_stop(self):
         self.start()
@@ -190,7 +190,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         handoff = self.worker / "tasks/handoffs/056.md"
         handoff.parent.mkdir()
         handoff.write_text("Completion evidence.\n")
-        (self.worker / ".meridian/execution-evidence.json").write_text("{}\n")
+        (self.worker / ".cardine/execution-evidence.json").write_text("{}\n")
         self.commit()
         staged = self.stage()
         self.assertEqual(staged["completion"]["status"], "COMPLETED")
@@ -199,9 +199,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_other_task_state_invalidates_approval(self):
         self.start()
         self.write_state()
-        (self.worker / ".meridian/tasks/057.json").write_text("{}\n")
+        (self.worker / ".cardine/tasks/057.json").write_text("{}\n")
         self.commit()
-        self.assert_stop("REVIEW_STALE", ".meridian/tasks/057.json")
+        self.assert_stop("REVIEW_STALE", ".cardine/tasks/057.json")
 
     def test_schema_valid_but_impossible_history_stops(self):
         self.start()
@@ -293,7 +293,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_advance_requires_state_even_before_machine_state_adoption(self):
         self.start(workflow="lean-delivery")
-        self.assertFalse((self.worker / ".meridian/tasks").exists())
+        self.assertFalse((self.worker / ".cardine/tasks").exists())
         with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
             result, blocked = owner_lifecycle_closure.advance_task_closure(
                 "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
@@ -306,7 +306,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
             with self.subTest(archived=archived):
                 if archived:
                     # The first recovery was aborted after proving the next step.
-                    (self.worker / ".meridian/tasks/056.json").unlink()
+                    (self.worker / ".cardine/tasks/056.json").unlink()
                     self.commit()
                 else:
                     self.start(workflow="lean-delivery")
@@ -339,7 +339,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.assertEqual(advanced["step"], "C7")
                 self.assertFalse((self.worker / "tasks/056-lifecycle.md").exists())
                 self.git("cat-file", "-e", "HEAD:tasks/done/056-lifecycle.md", cwd=self.worker)
-                state = json.loads(self.git("show", "HEAD:.meridian/tasks/056.json", cwd=self.worker).stdout)
+                state = json.loads(self.git("show", "HEAD:.cardine/tasks/056.json", cwd=self.worker).stdout)
                 self.assertEqual(state["status"], "DONE")
                 owner_integration_merge.abort_task_integration("056", self.primary)
 
@@ -368,8 +368,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start()
         resume = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
         self.assertEqual(shlex.split(resume)[shlex.split(resume).index("--project") + 1], str(self.worker))
-        (self.worker / ".meridian/tasks").mkdir()
-        error = self.assert_stop("TASK_STATE_MISSING", ".meridian/tasks/056.json")
+        (self.worker / ".cardine/tasks").mkdir()
+        error = self.assert_stop("TASK_STATE_MISSING", ".cardine/tasks/056.json")
         self.assertIn(resume, str(error))
 
     def test_legacy_stage_is_labeled_and_missing_approval_blocks(self):

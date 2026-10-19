@@ -120,7 +120,7 @@ prompt, because a host allowlist cannot match a composed string.
 Run source/build validation only through `meridian execution validate <TASK-ID>
 <validation-id> --project .`. The command is deliberately stored in this task:
 the runner executes no agent-supplied shell text and records its exit status in
-`.meridian/execution-evidence.json` for the completion handoff.
+`.cardine/execution-evidence.json` for the completion handoff.
 
 Before a budgeted diagnostic, capture, or context expansion, record its
 specific evidence gap with `meridian execution evidence <TASK-ID>

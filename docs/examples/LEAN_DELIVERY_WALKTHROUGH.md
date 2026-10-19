@@ -51,7 +51,7 @@ cardine lock --project . --mode lean-delivery
 The initialized files include `PROJECT_WORKFLOW.md` (the `LEAN_DELIVERY`
 lock), `AGENTS.md`, `CLAUDE.md`, `LANGUAGE_POLICY.md`, `TECH_DESIGN.md`,
 `PROJECT_PLAN.md`, `tasks/QUEUE.md`, the task blueprint, mode-specific `docs/`
-and `.codex/` files, and the generated `.meridian/manifest.json` and baseline.
+and `.codex/` files, and the generated `.cardine/manifest.json` and baseline.
 Fill in the real project's design, commands, conventions and toolchain before
 implementation. Here the stack is Markdown and Git, and the only gate is
 whitespace validation plus inspection of the requested sentence.
@@ -68,8 +68,8 @@ python3 - <<'PY'
 import json
 from pathlib import Path
 Path("TECH_DESIGN.md").write_text("# Technical design\n\nMarkdown documentation; Git for version control.\n")
-Path(".meridian/task-identity.json").write_text(json.dumps({"version": 1, "mode": "opaque"}) + "\n")
-Path(".meridian/candidate-validation.json").write_text(json.dumps({
+Path(".cardine/task-identity.json").write_text(json.dumps({"version": 1, "mode": "opaque"}) + "\n")
+Path(".cardine/candidate-validation.json").write_text(json.dumps({
     "version": 1, "state": "declared", "outcomes": {
         name: ["git diff --check"] for name in ("REUSE", "BOUNDED", "FULL")
     }

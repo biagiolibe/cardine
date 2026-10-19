@@ -172,11 +172,11 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         self.assertIn("shared-source", read_guard.installation_forms)
         self.assertTrue(read_guard.managed_surfaces)
         self.assertEqual(read_guard.dependencies, (("context-budgeting", 1),))
-        profile = self.catalog.profile("meridian-self-hosting")
+        profile = self.catalog.profile("cardine-self-hosting")
         self.assertEqual(
             profile.verification_probe,
             # MERIDIAN-INSTALLATION-CHECK
-            ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",
+            ".cardine/probes/cardine-self-hosting/host-neutral-ci-v1.json",
         )
         self.assertEqual(
             set(dict(profile.host_probes)), {"claude-project", "codex-project"}
@@ -195,7 +195,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.profile_doctor(
-                    project, ROOT, "meridian-self-hosting"
+                    project, ROOT, "cardine-self-hosting"
                 )
             after = {
                 path.relative_to(project): path.read_bytes()
@@ -214,7 +214,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 project = Path(directory)
                 InstallationFixture().write_probes(project)
                 self.installed_project(project)
-                probe = project / dict(self.catalog.profile("meridian-self-hosting").host_probes)["codex-project"]
+                probe = project / dict(self.catalog.profile("cardine-self-hosting").host_probes)["codex-project"]
                 if mutation == "missing":
                     probe.unlink()
                 else:
@@ -224,7 +224,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 output = io.StringIO()
                 with redirect_stdout(output):
                     return_code = owner_templates_audit.profile_doctor(
-                        project, ROOT, "meridian-self-hosting"
+                        project, ROOT, "cardine-self-hosting"
                     )
                 self.assertEqual(return_code, 2, output.getvalue())
                 self.assertIn(diagnostic, output.getvalue())
@@ -233,7 +233,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             manifest = self.installed_project(project)
-            capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]
+            capabilities = manifest["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]
             for declaration in capabilities.values():
                 for activation in declaration["hostActivation"].values():
                     activation.update(state="UNVERIFIED", evidence=[])
@@ -248,18 +248,18 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "meridian-self-hosting"
+                    project, ROOT, "lean-delivery", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 0, output.getvalue())
             self.assertIn("SUMMARY worst=UNVERIFIED", output.getvalue())
-            self.assertIn("CI_GATE profile=meridian-self-hosting worst=PASS", output.getvalue())
+            self.assertIn("CI_GATE profile=cardine-self-hosting worst=PASS", output.getvalue())
 
             # MERIDIAN-INSTALLATION-CHECK
             (project / ".codex/hooks.json").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "meridian-self-hosting"
+                    project, ROOT, "lean-delivery", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             # MERIDIAN-INSTALLATION-CHECK
@@ -274,7 +274,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "meridian-self-hosting"
+                    project, ROOT, "lean-delivery", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
@@ -292,7 +292,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "meridian-self-hosting"
+                    project, ROOT, "lean-delivery", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
@@ -385,13 +385,13 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def test_invalid_state_empty_surface_and_missing_positive_evidence_are_rejected(self) -> None:
         cases = []
         unsupported = self.manifest()
-        unsupported["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["language-policy"]["installation"]["state"] = "UNKNOWN"
+        unsupported["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]["language-policy"]["installation"]["state"] = "UNKNOWN"
         cases.append((unsupported, "state is unsupported"))
         empty_surface = self.manifest()
-        empty_surface["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["language-policy"]["managedSurface"] = []
+        empty_surface["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]["language-policy"]["managedSurface"] = []
         cases.append((empty_surface, "managedSurface must be a non-empty list"))
         no_evidence = self.manifest()
-        no_evidence["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["language-policy"]["installation"]["state"] = "INSTALLED"
+        no_evidence["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]["language-policy"]["installation"]["state"] = "INSTALLED"
         cases.append((no_evidence, "INSTALLED requires evidence"))
         for manifest, message in cases:
             with self.subTest(message=message), self.assertRaisesRegex(shared_errors.CardineError, message):
@@ -399,7 +399,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
 
     def test_not_applicable_requires_a_catalog_backed_rationale(self) -> None:
         manifest = self.manifest()
-        hosts = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["queue-briefing"]["hostActivation"]
+        hosts = manifest["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]["queue-briefing"]["hostActivation"]
         hosts["codex-project"] = {
             "state": "NOT_APPLICABLE",
             "evidence": [],
@@ -469,7 +469,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             }
             self.assertEqual(after, before)
             persisted = json.loads(manifest_path.read_text(encoding="utf-8"))
-            installation = persisted["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]["language-policy"]["installation"]
+            installation = persisted["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]["language-policy"]["installation"]
             self.assertEqual(installation["state"], "MISSING")
 
     def test_retired_text_audit_advisories_preserve_exit_status_and_files(self) -> None:
@@ -477,7 +477,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             project = Path(directory)
             self.installed_project(project)
             # MERIDIAN-INSTALLATION-CHECK
-            (project / ".meridian/candidate-validation.json").write_text('{"version": 1, "state": "none"}\n', encoding="utf-8")
+            (project / ".cardine/candidate-validation.json").write_text('{"version": 1, "state": "none"}\n', encoding="utf-8")
             baseline_code, _ = self.audit(project)
             self.assertEqual(baseline_code, 0)
             for relative_path in owner_templates_audit.load_retired_text_registry(ROOT)[0]["files"]:
@@ -506,7 +506,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 project = Path(directory)
                 self.installed_project(project, mode)
                 # MERIDIAN-INSTALLATION-CHECK
-                (project / ".meridian/candidate-validation.json").write_text(
+                (project / ".cardine/candidate-validation.json").write_text(
                     '{"version": 1, "state": "none"}\n', encoding="utf-8"
                 )
 
@@ -558,7 +558,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             manifest = self.installed_project(project)
-            declaration = manifest["capabilityProfiles"]["meridian-self-hosting"][
+            declaration = manifest["capabilityProfiles"]["cardine-self-hosting"][
                 "capabilities"
             ]["language-policy"]
             declaration["managedSurface"] = []
@@ -574,7 +574,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             manifest = self.installed_project(project)
-            activation = manifest["capabilityProfiles"]["meridian-self-hosting"][
+            activation = manifest["capabilityProfiles"]["cardine-self-hosting"][
                 "capabilities"
             ]["language-policy"]["hostActivation"]["codex-project"]
             activation["evidence"] = ["positive-claim-without-an-artifact"]
@@ -592,7 +592,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             manifest = self.installed_project(project)
-            capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"][
+            capabilities = manifest["capabilityProfiles"]["cardine-self-hosting"][
                 "capabilities"
             ]
             capabilities["language-policy"]["hostActivation"]["codex-project"] = {
@@ -615,7 +615,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             manifest = self.installed_project(project)
-            capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"][
+            capabilities = manifest["capabilityProfiles"]["cardine-self-hosting"][
                 "capabilities"
             ]
             advisory = capabilities["language-policy"]["hostActivation"]["codex-project"]
@@ -651,7 +651,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             custom_catalog = owner_templates_catalog.load_capability_catalog(framework)
             self.catalog = custom_catalog
             manifest = self.installed_project(project)
-            declaration = manifest["capabilityProfiles"]["meridian-self-hosting"][
+            declaration = manifest["capabilityProfiles"]["cardine-self-hosting"][
                 "capabilities"
             ]["language-policy"]
             declaration["installation"] = {
@@ -672,7 +672,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "verifierVersion": None,
                 "notApplicableRationale": "workflow-mode-excluded",
             }
-            manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"][
+            manifest["capabilityProfiles"]["cardine-self-hosting"]["capabilities"][
                 "queue-briefing"
             ]["hostActivation"]["codex-project"] = {
                 "state": "NOT_APPLICABLE",
@@ -681,7 +681,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             }
             owner_templates_manifest.write_manifest(project, manifest, framework)
             # MERIDIAN-INSTALLATION-CHECK
-            (project / ".meridian/candidate-validation.json").write_text(
+            (project / ".cardine/candidate-validation.json").write_text(
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
             output = io.StringIO()
@@ -693,7 +693,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("NOT_APPLICABLE", output.getvalue())
             self.assertIn("catalog exclusion: workflow-mode-excluded", output.getvalue())
             self.assertIn(
-                "meridian-self-hosting/queue-briefing/host/codex-project",
+                "cardine-self-hosting/queue-briefing/host/codex-project",
                 output.getvalue(),
             )
             self.assertIn("catalog exclusion: host-profile-unsupported", output.getvalue())
@@ -763,7 +763,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 "appliedMigrations": [],
             }
             owner_templates_manifest.write_manifest(project, manifest, ROOT)
-            profile = self.catalog.profile("meridian-self-hosting")
+            profile = self.catalog.profile("cardine-self-hosting")
             self.assertIsNotNone(profile)
             for capability_id, _version in profile.capabilities:
                 capability = self.catalog.capability(capability_id)
@@ -775,9 +775,9 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                     shutil.copyfile(source, destination)
 
             observed = owner_templates_adoption.bootstrap_capability_profile(
-                project, ROOT, "meridian-self-hosting", apply=True
+                project, ROOT, "cardine-self-hosting", apply=True
             )
-            declarations = observed["capabilityProfiles"]["meridian-self-hosting"][
+            declarations = observed["capabilityProfiles"]["cardine-self-hosting"][
                 "capabilities"
             ]
             self.assertTrue(declarations)

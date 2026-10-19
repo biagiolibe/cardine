@@ -295,12 +295,12 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         status("C5", "EVIDENCE_INCOMPLETE")
         evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
         status("C6", None)
-        legacy = self.project / ".meridian/budget.json"
+        legacy = self.project / ".cardine/budget.json"
         legacy.parent.mkdir(exist_ok=True)
         legacy.write_text("{}\n", encoding="utf-8")
-        subprocess.run(["git", "add", ".meridian/budget.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "add", ".cardine/budget.json"], cwd=self.project, check=True)
         status("C6", "PRIMARY_DIRTY", resume_contains="primary checkout is dirty")
-        subprocess.run(["git", "reset", "HEAD", "--", ".meridian/budget.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "reset", "HEAD", "--", ".cardine/budget.json"], cwd=self.project, check=True)
         legacy.unlink()
         evidence_path.unlink()
         lease.write_text(json.dumps({"task_id": identity.canonical_id}), encoding="utf-8")
@@ -328,8 +328,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "push", "-u", "origin", "main"], cwd=self.project, check=True, capture_output=True)
         if local_ahead:
             (self.project / "unpushed.txt").write_text("unpushed\n", encoding="utf-8")
-            (self.project / ".meridian").mkdir(exist_ok=True)
-            (self.project / ".meridian/candidate-validation.json").write_text(
+            (self.project / ".cardine").mkdir(exist_ok=True)
+            (self.project / ".cardine/candidate-validation.json").write_text(
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
             (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
@@ -342,7 +342,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             )
             (self.project / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Fixture task.\n", encoding="utf-8")
             subprocess.run(
-                ["git", "add", "unpushed.txt", ".meridian/candidate-validation.json", "PROJECT_WORKFLOW.md",
+                ["git", "add", "unpushed.txt", ".cardine/candidate-validation.json", "PROJECT_WORKFLOW.md",
                  "tasks/QUEUE.md", "PROJECT_PLAN.md"],
                 cwd=self.project, check=True,
             )
@@ -557,19 +557,19 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def test_integrate_stage_reports_undeclared_validation_commands_through_the_registry(self) -> None:
         evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
-        (self.project / ".meridian/candidate-validation.json").write_text(
+        (self.project / ".cardine/candidate-validation.json").write_text(
             '{"version": 1, "state": "undeclared"}\n', encoding="utf-8"
         )
-        subprocess.run(["git", "add", ".meridian/candidate-validation.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "add", ".cardine/candidate-validation.json"], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "undeclare"], cwd=self.project, check=True, capture_output=True)
         result = self.run_cli(*self._stage_args(evidence_path))
         self.assertEqual(result.returncode, 2)
         self.assertEqual(
             result.stderr.strip(),
             "BLOCKED UNDECLARED_VALIDATION_COMMANDS: no project choice is recorded at "
-            ".meridian/candidate-validation.json. Task validation commands: none recorded. Proposed declaration: "
+            ".cardine/candidate-validation.json. Task validation commands: none recorded. Proposed declaration: "
             '{"state": "undeclared", "version": 1}; resume: write declared candidate validation fragments or '
-            "state none in .meridian/candidate-validation.json, then rerun the interrupted cardine worktree "
+            "state none in .cardine/candidate-validation.json, then rerun the interrupted cardine worktree "
             "integrate step",
         )
 
@@ -655,14 +655,14 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         owner_tasks_transitions.transition_task_state(worktree, "056", "DONE")
         subprocess.run(["git", "add", "."], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "record terminal state"], cwd=worktree, check=True, capture_output=True)
-        (self.project / ".meridian/candidate-validation.json").write_text(
+        (self.project / ".cardine/candidate-validation.json").write_text(
             json.dumps({"version": 1, "state": "declared", "outcomes": {
                 "REUSE": ["scripts/check_repository.py"],
                 "BOUNDED": ["scripts/check_repository.py"],
                 "FULL": ["scripts/check_repository.py", "unittest discover"],
             }}), encoding="utf-8",
         )
-        subprocess.run(["git", "add", ".meridian/candidate-validation.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "add", ".cardine/candidate-validation.json"], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "declare"], cwd=self.project, check=True, capture_output=True)
         return evidence_path
 

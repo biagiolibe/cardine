@@ -56,7 +56,7 @@ class LayoutTest(unittest.TestCase):
 
     def test_product_defaults_preserve_existing_layout(self):
         self.assertIs(names(), PRODUCT_NAMES)
-        self.assertEqual(names().manifest_path, Path(".meridian/manifest.json"))
+        self.assertEqual(names().manifest_path, Path(".cardine/manifest.json"))
         self.assertEqual(names().worktree_root, Path(".meridian/worktrees"))
         self.assertEqual(names().user_configuration_path, Path("meridian/config.json"))
         self.assertEqual(names().worktree_state_directory, "meridian-worktrees")
@@ -79,7 +79,7 @@ class LayoutTest(unittest.TestCase):
         self.assertIs(names(), PRODUCT_NAMES)
 
     def test_task_state_path_changes_only_inside_context(self):
-        default = self.root / ".meridian/tasks/042.json"
+        default = self.root / ".cardine/tasks/042.json"
         self.assertEqual(state.state_path(self.root, "042"), default)
         with use(OTHER_NAMES):
             self.assertEqual(state.state_path(self.root, "042"), self.root / ".other/tasks/042.json")

@@ -299,7 +299,7 @@ def audit_declared_capabilities(
             exclusions: list[str] = []
             if workflow_mode not in capability.workflow_modes:
                 exclusions.append("workflow-mode-excluded")
-            if profile.profile_id == "meridian-self-hosting" and not capability.self_hosting_eligible:
+            if profile.profile_id == "cardine-self-hosting" and not capability.self_hosting_eligible:
                 exclusions.append("self-hosting-ineligible")
             if exclusions:
                 rationale = ", ".join(exclusions)

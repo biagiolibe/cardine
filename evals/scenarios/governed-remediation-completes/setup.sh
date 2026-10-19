@@ -86,8 +86,8 @@ Any other file or behavior.
 
 - `greeting-check`: `test "$(head -n 1 GREETING.md)" = "# Hello" && test "$(sed -n 2p GREETING.md)" = "Welcome."`
 MD
-mkdir -p .meridian
-printf '{"version": 1, "state": "none"}\n' > .meridian/candidate-validation.json
+mkdir -p .cardine
+printf '{"version": 1, "state": "none"}\n' > .cardine/candidate-validation.json
 cardine execution contract TASK-001 --project "$fixture" > contract.txt
 printf '\n' >> tasks/TASK-001.md
 cat contract.txt >> tasks/TASK-001.md

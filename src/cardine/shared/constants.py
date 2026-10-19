@@ -39,7 +39,7 @@ INSTALLATION_FORMS = ("managed-copy", "shared-source", "declaration-only")
 # Profiles whose managed copies are verified byte-for-byte even when a file
 # carries capability markers. A consumer profile verifies marker-bearing files by
 # their marker regions, so project text outside the blocks never fails it.
-STRICT_DIGEST_PROFILES = frozenset({"meridian-self-hosting"})
+STRICT_DIGEST_PROFILES = frozenset({"cardine-self-hosting"})
 
 # Managed paths whose body a project owns or extends by design. A digest check
 # never applies to them.

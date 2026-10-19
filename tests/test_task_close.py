@@ -59,7 +59,7 @@ class TaskCloseTest(unittest.TestCase):
         self.assertFalse((self.worker / self.record).exists())
         self.assertTrue((self.worker / 'tasks/done/001.md').is_file())
         self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
-                         {'.meridian/tasks/001.json', 'tasks/001.md', 'tasks/done/001.md'})
+                         {'.cardine/tasks/001.json', 'tasks/001.md', 'tasks/done/001.md'})
         self.assertEqual(self.git('diff', '--name-only'), '')
         self.assertIn('Status: DONE', (self.worker / result['archive']).read_text())
 
@@ -126,7 +126,7 @@ class TaskCloseTest(unittest.TestCase):
         self.assertEqual(result['state']['transitions'][-1]['commit'], before)
         self.assertEqual(self.git('rev-parse', 'HEAD'), before)
         self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
-                         {'.meridian/tasks/001.json', 'tasks/001.md', 'tasks/done/001.md'})
+                         {'.cardine/tasks/001.json', 'tasks/001.md', 'tasks/done/001.md'})
         self.assertEqual(self.git('diff', '--name-only'), '')
         self.assertEqual(Path.cwd(), directory.resolve())
 

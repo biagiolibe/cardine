@@ -76,7 +76,7 @@ BRANCH="${BRANCH:-meridian-upgrade-$TARGET}"
 
 manifest_field() {
   python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2], ""))' \
-    "$PROJECT/.meridian/manifest.json" "$1"
+    "$PROJECT/.cardine/manifest.json" "$1"
 }
 
 step "Framework"
@@ -107,7 +107,7 @@ esac
 
 # --- Project preflight -----------------------------------------------------
 step "Project preflight: $PROJECT"
-[ -f "$PROJECT/.meridian/manifest.json" ] || die "no .meridian/manifest.json; project conversion returns with Cardine work item 10"
+[ -f "$PROJECT/.cardine/manifest.json" ] || die "no .cardine/manifest.json; project conversion returns with Cardine work item 10"
 git -C "$PROJECT" rev-parse --git-dir >/dev/null 2>&1 || die "not a Git repository"
 
 PRIMARY="$(git -C "$PROJECT" worktree list --porcelain | awk '/^worktree /{print substr($0,10); exit}')"

@@ -49,7 +49,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
             "# Workflow\n\nThis file selects `LEAN_DELIVERY` exclusively.\n", encoding="utf-8"
         )
         (self.primary / "README.md").write_text("base\n", encoding="utf-8")
-        declaration = self.primary / ".meridian/candidate-validation.json"
+        declaration = self.primary / ".cardine/candidate-validation.json"
         declaration.parent.mkdir()
         declaration.write_text(json.dumps({
             "version": 1, "state": "declared", "outcomes": {

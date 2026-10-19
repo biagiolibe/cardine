@@ -913,6 +913,9 @@ class ManagedDigestTest(unittest.TestCase):
             project = Path(directory)
             InstallationFixture().installed_project(project)
             InstallationFixture().write_probes(project)
+            # MERIDIAN-INSTALLATION-CHECK: the repository checker reads its frozen layout.
+            (project / ".meridian").mkdir()
+            shutil.copyfile(project / ".cardine/manifest.json", project / ".meridian/manifest.json")
             # MERIDIAN-INSTALLATION-CHECK
             target = project / "docs/CONTEXT_BUDGET_POLICY.md"
             target.write_text(target.read_text(encoding="utf-8") + "\nDrift.\n", encoding="utf-8")
@@ -923,7 +926,7 @@ class ManagedDigestTest(unittest.TestCase):
             with contextlib.redirect_stdout(doctor_output):
                 doctor_status = owner_templates_audit.profile_doctor(
                     # MERIDIAN-INSTALLATION-CHECK
-                    project, ROOT, "meridian-self-hosting"
+                    project, ROOT, "cardine-self-hosting"
                 )
 
             self.assertEqual(2, doctor_status, doctor_output.getvalue())

@@ -99,7 +99,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
         self.assertIn("Upgrade marker.", (self.project / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8"))
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.1")
         self.assertEqual(
             manifest["appliedMigrations"],
@@ -108,7 +108,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
                 "002-synthetic-merge",
             ],
         )
-        baselines = sorted(path.name for path in (self.project / ".meridian/baselines").iterdir())
+        baselines = sorted(path.name for path in (self.project / ".cardine/baselines").iterdir())
         self.assertEqual(baselines, ["1.1.1"], "stale 1.1.0 baseline should be pruned after upgrade")
 
         workflow.write_text(workflow.read_text(encoding="utf-8") + "\nSecond upgrade marker.\n", encoding="utf-8")
@@ -116,7 +116,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         second_apply = self.run_cli("upgrade", "--apply")
         self.assertEqual(second_apply.returncode, 0, second_apply.stderr)
         baselines_after_second = sorted(
-            path.name for path in (self.project / ".meridian/baselines").iterdir()
+            path.name for path in (self.project / ".cardine/baselines").iterdir()
         )
         self.assertEqual(
             baselines_after_second,
@@ -141,7 +141,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         (self.framework / "VERSION").write_text("1.2.5\n", encoding="utf-8")
         self.assertEqual(self.run_cli("lock", "--mode", "lean-delivery").returncode, 0)
         lifecycle = self.project / "docs/WORKTREE_LIFECYCLE.md"
-        (self.project / ".meridian/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md").unlink()
+        (self.project / ".cardine/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md").unlink()
         template.write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
 
@@ -230,7 +230,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
         appended = templates_markers.append_only_new_markers(
             local_policy.read_text(encoding="utf-8"),
-            (self.project / ".meridian/baselines/1.1.14/docs/CONTEXT_BUDGET_POLICY.md").read_text(
+            (self.project / ".cardine/baselines/1.1.14/docs/CONTEXT_BUDGET_POLICY.md").read_text(
                 encoding="utf-8"
             ),
             incoming_policy,
@@ -358,7 +358,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], current)
         expected = [
             path.stem
@@ -388,11 +388,11 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stderr)
         self.assertIn("Owner-reconciled upgrade", applied.stdout)
         self.assertIn("## Local Roles", local.read_text(encoding="utf-8"))
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.1")
-        baselines = sorted(path.name for path in (self.project / ".meridian/baselines").iterdir())
+        baselines = sorted(path.name for path in (self.project / ".cardine/baselines").iterdir())
         self.assertEqual(baselines, ["1.1.1"])
-        baseline_workflow = self.project / ".meridian/baselines/1.1.1/PROJECT_WORKFLOW.md"
+        baseline_workflow = self.project / ".cardine/baselines/1.1.1/PROJECT_WORKFLOW.md"
         self.assertIn("## Updated Roles", baseline_workflow.read_text(encoding="utf-8"))
 
     def test_check_reports_multiple_merge_conflicts(self) -> None:

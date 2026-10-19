@@ -34,7 +34,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         self.git("add", "QUEUE.md")
         self.git("commit", "-m", "initial")
         self.base = self.git("rev-parse", "main").stdout.strip()
-        declaration = self.primary / ".meridian/candidate-validation.json"
+        declaration = self.primary / ".cardine/candidate-validation.json"
         declaration.parent.mkdir()
         declaration.write_text(json.dumps({
             "version": 1, "state": "declared", "outcomes": {
@@ -42,7 +42,7 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
                 "FULL": ["scripts/check_repository.py", "unittest discover"],
             },
         }), encoding="utf-8")
-        self.git("add", ".meridian/candidate-validation.json")
+        self.git("add", ".cardine/candidate-validation.json")
         self.git("commit", "-m", "declare candidate validation")
         self.base = self.git("rev-parse", "main").stdout.strip()
 

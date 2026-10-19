@@ -96,7 +96,7 @@ class FrameworkFixture(unittest.TestCase):
         return code, output.getvalue()
 
     def manifest(self) -> dict[str, object]:
-        return json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        return json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
 
 
 class StandaloneBlockTemplateTest(unittest.TestCase):
@@ -523,7 +523,7 @@ class ConsumerProfileTest(unittest.TestCase):
                     text=True, capture_output=True, check=False,
                 )
                 self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-                manifest_path = project / ".meridian/manifest.json"
+                manifest_path = project / ".cardine/manifest.json"
                 self.assertNotIn("capabilityProfiles", json.loads(manifest_path.read_text(encoding="utf-8")))
 
                 applied = subprocess.run(
@@ -571,7 +571,7 @@ class ConsumerProfileTest(unittest.TestCase):
 
         self.assertNotRegex(output, r"(?m)^FAIL\s")
         self.assertNotIn("EXECUTION_EVIDENCE_PROFILE.md: differs", output)
-        evidence = json.loads((project / ".meridian/manifest.json").read_text(encoding="utf-8"))[
+        evidence = json.loads((project / ".cardine/manifest.json").read_text(encoding="utf-8"))[
             "capabilityProfiles"
         ]["lean-delivery-consumer"]["capabilities"]["execution-evidence"]["installation"]["evidence"]
         self.assertIn("path:docs/EXECUTION_EVIDENCE_PROFILE.md", evidence)
@@ -580,20 +580,20 @@ class ConsumerProfileTest(unittest.TestCase):
     def test_bootstrap_does_not_launder_a_drifted_copy_under_the_strict_profile(self) -> None:
         project = self.legacy_project("lean-delivery")
         catalog = owner_templates_catalog.load_capability_catalog(ROOT)
-        for capability_id, _version in catalog.profile("meridian-self-hosting").capabilities:
+        for capability_id, _version in catalog.profile("cardine-self-hosting").capabilities:
             for surface in catalog.capability(capability_id).managed_surfaces:
                 destination = project / surface.path
                 if not destination.exists():
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(ROOT / surface.path, destination)
-        manifest_path = project / ".meridian/manifest.json"
+        manifest_path = project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["managedFiles"]["docs/CONTEXT_BUDGET_POLICY.md"] = "0" * 64
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         before = manifest_path.read_text(encoding="utf-8")
 
         with self.assertRaises(shared_errors.CardineError) as error:
-            owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "meridian-self-hosting", apply=True)
+            owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "cardine-self-hosting", apply=True)
 
         self.assertIn("docs/CONTEXT_BUDGET_POLICY.md", str(error.exception))
         self.assertEqual(manifest_path.read_text(encoding="utf-8"), before)

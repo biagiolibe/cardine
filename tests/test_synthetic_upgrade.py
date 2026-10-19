@@ -81,7 +81,7 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
         self.assertNotIn("capability=rule v1", text)
         self.assertNotIn("capability=old-rule", text)
         self.assertIn("## Consumer notes\n\nKeep this text.\n", text)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text())
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text())
         self.assertEqual(manifest["workflowBaselineVersion"], "2.5.0")
         self.assertEqual(manifest["appliedMigrations"], [
             "001-synthetic-rule", "002-synthetic-old", "003-synthetic-new",

@@ -45,7 +45,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
 
     def test_candidate_validation_declaration_states_and_malformed_input(self) -> None:
-        path = self.primary / ".meridian/candidate-validation.json"
+        path = self.primary / ".cardine/candidate-validation.json"
         path.write_text(json.dumps({"version": 1, "state": "none"}), encoding="utf-8")
         self.assertEqual(owner_integration_evidence.candidate_validation_declaration(self.primary), ("none", {}))
         path.unlink()
@@ -71,8 +71,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
             "main_advanced_behavioral_surfaces": [], "validation_commands": ["pytest -q"],
         }), encoding="utf-8")
-        (self.primary / ".meridian/candidate-validation.json").unlink()
-        self.git("add", ".meridian/candidate-validation.json")
+        (self.primary / ".cardine/candidate-validation.json").unlink()
+        self.git("add", ".cardine/candidate-validation.json")
         self.git("commit", "-m", "remove declaration")
         with self.assertRaisesRegex(shared_errors.CardineError, "UNDECLARED_VALIDATION_COMMANDS"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
@@ -108,7 +108,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
         with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
             owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
-        (self.primary / ".meridian/candidate-validation.json").write_text(
+        (self.primary / ".cardine/candidate-validation.json").write_text(
             json.dumps({"version": 1, "state": "none"}), encoding="utf-8"
         )
         with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
@@ -333,7 +333,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         plan = self.primary / "docs/PLAN.md"
         plan.parent.mkdir()
         (self.primary / "PROJECT_PLAN.md").rename(plan)
-        declaration = self.primary / ".meridian/project.json"
+        declaration = self.primary / ".cardine/project.json"
         declaration.write_text(json.dumps({"version": 1, "locations": {"plan": "docs/PLAN.md"}}), encoding="utf-8")
         self.git("add", "-A")
         self.git("commit", "-m", "declare custom project plan")

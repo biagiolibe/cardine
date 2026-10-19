@@ -57,11 +57,11 @@ class TaskStateImportTest(unittest.TestCase):
         result = self.cli("task-001")
         self.assertEqual(result.returncode, 0, result.stderr)
         proposal = json.loads(result.stdout)["tasks"][0]
-        self.assertEqual(proposal["path"], ".meridian/tasks/001.json")
+        self.assertEqual(proposal["path"], ".cardine/tasks/001.json")
         self.assertEqual(proposal["evidence"]["queue"]["status"], "IN_PROGRESS")
         self.assertEqual(proposal["evidence"]["record"]["path"], "tasks/001.md")
         self.assertFalse(proposal["evidence"]["review"]["exists"])
-        self.assertFalse((self.root / ".meridian/tasks").exists())
+        self.assertFalse((self.root / ".cardine/tasks").exists())
         self.assertEqual(self.cli("001", "--apply").returncode, 0)
         path = self.root / proposal["path"]
         state = task_state.read_task_state(self.root, "001", "governed-sdd", stop_factory=owner_stops_render.stop_error)
@@ -72,7 +72,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertEqual(json.loads(again.stdout)["tasks"][0]["action"], "skip-existing")
         self.assertEqual(path.read_bytes(), original)
         self.assertEqual((record.read_bytes(), self.queue.read_bytes()), before)
-        self.assertFalse((self.root / ".meridian/tasks/002.json").exists())
+        self.assertFalse((self.root / ".cardine/tasks/002.json").exists())
 
     def test_archived_record_import_preserves_record_and_stale_queue_link(self):
         record = self.add_task("001", "IN_PROGRESS")
@@ -96,7 +96,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.queue.write_text(self.queue.read_text().replace("(001.md)", "(different.md)"))
         result = self.cli("001", "--apply")
         self.assertEqual(result.returncode, 2)
-        self.assertFalse((self.root / ".meridian/tasks/001.json").exists())
+        self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
 
     def test_terminal_tasks_need_no_record_or_state(self):
         for task_id, status in (("001", "ACCEPTED"), ("002", "ANSWERED"), ("003", "INCONCLUSIVE")):
@@ -104,7 +104,7 @@ class TaskStateImportTest(unittest.TestCase):
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual({item["action"] for item in json.loads(result.stdout)["tasks"]}, {"skip-terminal"})
-        self.assertFalse((self.root / ".meridian/tasks").exists())
+        self.assertFalse((self.root / ".cardine/tasks").exists())
 
     def test_all_proposals_validated_before_any_write(self):
         self.add_task("001")
@@ -113,13 +113,13 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("BLOCKED TASK_STATE_INVALID:", result.stderr)
         self.assertIn("queue Status='IN_PROGRESS'; record Status='READY_FOR_REVIEW'", result.stderr)
-        self.assertFalse((self.root / ".meridian/tasks").exists())
+        self.assertFalse((self.root / ".cardine/tasks").exists())
 
     def test_dated_review_headings_preserved_and_imported(self):
         self.add_task("001", "CHANGES_REQUESTED", review="## Attempt 2 — 2026-10-11 — CHANGES_REQUESTED\nFindings\n")
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
-        state = json.loads((self.root / ".meridian/tasks/001.json").read_text())
+        state = json.loads((self.root / ".cardine/tasks/001.json").read_text())
         self.assertEqual(state["review"]["verdict"], "CHANGES_REQUESTED")
         self.assertEqual(state["review"]["attempt"], 2)
         task_state.validate_task_state(state, "001", "governed-sdd")
@@ -133,7 +133,7 @@ class TaskStateImportTest(unittest.TestCase):
                 result = self.cli("--apply")
                 self.assertEqual(result.returncode, 2)
                 self.assertIn("TASK_STATE_INVALID", result.stderr)
-                self.assertFalse((self.root / ".meridian/tasks/001.json").exists())
+                self.assertFalse((self.root / ".cardine/tasks/001.json").exists())
 
     def test_lean_missing_status_and_derived_progress(self):
         (self.root / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n")
@@ -170,7 +170,7 @@ class TaskStateImportTest(unittest.TestCase):
         record.write_text(record.read_text().replace("Review: REQUIRED", "Review: NOT_REQUIRED"))
         result = self.cli("--apply")
         self.assertIn("queue Review='REQUIRED'; record Review='NOT_REQUIRED'", result.stderr)
-        self.assertFalse((self.root / ".meridian/tasks").exists())
+        self.assertFalse((self.root / ".cardine/tasks").exists())
 
 
 if __name__ == "__main__":

@@ -20,6 +20,9 @@ from cardine.legacy import meridian_installation as installation
 from cardine.console.snapshot import load_snapshot
 from cardine.shared.constants import CAPABILITY_MARKER, MARKED_BLOCK
 from cardine.shared.layout import ProjectNames, names, use
+from cardine.tasks.state import read_task_state
+from cardine.templates.catalog import load_capability_catalog
+from cardine.templates.audit import profile_doctor
 from console_support import LeanEffectiveStateFixture, MachineStateConsoleFixture, RepoCase
 
 
@@ -33,12 +36,14 @@ class InstallationTest(RepoCase):
         self.setup_project({"001": " ", "002": " "})
         self.write(self.project, ".meridian/manifest.json", json.dumps({"workflowMode": "lean-delivery"}))
         self.write(self.project, ".meridian/task-identity.json", '{"version": 1, "mode": "opaque"}')
-        self.state(self.project, "001", "DONE", workflow="lean-delivery")
+        with use(installation.MERIDIAN_INSTALLATION_NAMES):
+            self.state(self.project, "001", "DONE", workflow="lean-delivery")
         self.commit(self.project, "installation")
         self.worktree("task-002")
 
     def test_snapshot_equals_current_builder_on_synthetic_installation(self):
-        expected = load_snapshot(self.project)
+        with use(installation.MERIDIAN_INSTALLATION_NAMES):
+            expected = load_snapshot(self.project)
         self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
         self.assertEqual(expected.done_count, 1)
         self.assertEqual(expected.tasks[0].task_id, "002")
@@ -104,6 +109,61 @@ class InstallationTest(RepoCase):
                 "worktree", "status", "rev-parse", "rev-list", "show", "diff", "check-ref-format", "log")), command)
             if "worktree" in command:
                 self.assertIn("list", command)
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_product_snapshot_never_opens_meridian_project_paths(self):
+        opened = []
+        real_io_open, real_open = io.open, builtins.open
+
+        def observing_open(original):
+            def observe(file, mode="r", *args, **kwargs):
+                if not isinstance(file, int):
+                    path = Path(file).resolve()
+                    if path.is_relative_to(self.root):
+                        relative = path.relative_to(self.root)
+                        self.assertNotIn(".meridian", relative.parts, relative)
+                        opened.append(relative)
+                return original(file, mode, *args, **kwargs)
+            return observe
+
+        with patch.object(io, "open", side_effect=observing_open(real_io_open)), \
+             patch.object(builtins, "open", side_effect=observing_open(real_open)):
+            snapshot = load_snapshot(self.project)
+        self.assertTrue(opened)
+        self.assertEqual(snapshot.done_count, 0)
+        self.assertEqual({task.task_id for task in snapshot.tasks}, {"001", "002"})
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_task_state_is_missing_to_product(self):
+        self.assertTrue((self.project / ".meridian/tasks/001.json").is_file())
+
+        class Stopped(Exception):
+            pass
+
+        def stop(code, detail, **kwargs):
+            return Stopped(f"{code}: {detail}")
+
+        with self.assertRaisesRegex(Stopped, "TASK_STATE_MISSING.*cardine/tasks/001.json"):
+            read_task_state(self.project, "001", "lean-delivery", stop_factory=stop)
+
+    # MERIDIAN-OLD-NAME-TEST
+    def test_old_profile_id_is_not_a_product_alias(self):
+        catalog = load_capability_catalog(ROOT)
+        self.assertIsNone(catalog.profile("meridian-self-hosting"))
+        self.assertIsNotNone(catalog.profile("cardine-self-hosting"))
+        from installation_fixture import InstallationFixture
+        InstallationFixture().installed_project(self.project)
+        import contextlib
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            result = profile_doctor(self.project, ROOT, "meridian-self-hosting")
+        self.assertEqual(result, 2)
+        self.assertIn("capability profile is not present in the catalog", output.getvalue())
+
+    def test_explicit_reader_still_reads_checkout_installation(self):
+        snapshot = installation.load_meridian_snapshot(ROOT)
+        self.assertGreater(snapshot.done_count, 0)
+        self.assertTrue(installation.is_meridian_installation(ROOT))
+        self.assertEqual(installation.read_task_state_file(ROOT, "048")["status"], "DONE")
 
     def test_literal_names_and_json_readers_ignore_product_context(self):
         layout = installation.MERIDIAN_INSTALLATION_NAMES

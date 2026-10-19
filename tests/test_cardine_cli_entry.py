@@ -111,7 +111,7 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
         for target, expected in outputs.items():
             self.assertEqual((self.project / target).read_text(encoding="utf-8"), expected)
         self.assertEqual(owner_templates_router.audit_entry_router(self.project), [])
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["managedFiles"]["AGENTS.md"], shared_hashing.sha256(self.project / "AGENTS.md"))
         self.assertEqual(manifest["managedFiles"]["CLAUDE.md"], shared_hashing.sha256(self.project / "CLAUDE.md"))
 

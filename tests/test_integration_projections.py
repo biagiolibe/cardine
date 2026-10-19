@@ -221,8 +221,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         task = worktree / "tasks/056-lifecycle.md"
         task.write_text(task.read_text(encoding="utf-8") +
                         "\nClass: SPIKE\nDeliverable: `docs/answer.md`\n", encoding="utf-8")
-        paths = [".meridian/execution-evidence.json", ".meridian/execution-evidence-extra.json",
-                 ".meridian/other.json", "docs/answer.md", "docs/undeclared.md", "source.py"]
+        paths = [".cardine/execution-evidence.json", ".cardine/execution-evidence-extra.json",
+                 ".cardine/other.json", "docs/answer.md", "docs/undeclared.md", "source.py"]
         for path in paths:
             target = worktree / path
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -232,7 +232,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
         self.assertEqual(set(owner_integration_merge._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit)), {
-            ".meridian/execution-evidence-extra.json", ".meridian/other.json", "docs/undeclared.md", "source.py",
+            ".cardine/execution-evidence-extra.json", ".cardine/other.json", "docs/undeclared.md", "source.py",
         })
         task.write_text(task.read_text(encoding="utf-8").replace("Class: SPIKE", "Class: NORMAL"), encoding="utf-8")
         self.git("add", "tasks/056-lifecycle.md", cwd=worktree)

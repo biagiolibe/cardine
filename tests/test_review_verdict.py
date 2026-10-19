@@ -26,7 +26,7 @@ class ReviewVerdictTest(unittest.TestCase):
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.record = self.root / "tasks/001.md"
         self.record.write_text("# Task\n\n> **ID**: `001`\n\nStatus: QUEUED\n")
-        self.path = self.root / ".meridian/tasks/001.json"
+        self.path = self.root / ".cardine/tasks/001.json"
         self.review = self.root / "tasks/reviews/001.md"
         self.git("init", "-q", "-b", "main")
         self.commit()

@@ -263,7 +263,7 @@
       "step": "C6",
       "emitter": "`meridian worktree integrate stage`; `meridian worktree integrate finalize`",
       "human_decision": true,
-      "resume": "write declared candidate validation fragments or state none in .meridian/candidate-validation.json, then rerun the interrupted cardine worktree integrate step",
+      "resume": "write declared candidate validation fragments or state none in .cardine/candidate-validation.json, then rerun the interrupted cardine worktree integrate step",
       "kind": "stop",
       "summary": "the project has not declared its candidate validation commands",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_undeclared_validation_commands_through_the_registry",

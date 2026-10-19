@@ -212,7 +212,7 @@ class SyntheticUpgradeFixtureMixin(CardineCliFixtureMixin):
         self.assertIn('["meridian", "worktree", ["evidence", "closure-status", "advance"]]', upgraded)
         self.assertIn('prefix_rule(pattern=["git", "mv"], decision="allow")', upgraded)
         self.assertIn(local, upgraded)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.6")
         self.assertEqual(manifest["appliedMigrations"][-1], "022-synthetic-adoption")
 

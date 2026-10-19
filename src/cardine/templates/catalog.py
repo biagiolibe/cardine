@@ -390,7 +390,7 @@ def parse_capability_profiles(
             exclusions: list[str] = []
             if workflow_mode not in capability.workflow_modes:
                 exclusions.append("workflow-mode-excluded")
-            if profile_id == "meridian-self-hosting" and not capability.self_hosting_eligible:
+            if profile_id == "cardine-self-hosting" and not capability.self_hosting_eligible:
                 exclusions.append("self-hosting-ineligible")
             installation = _parse_evidence_snapshot(
                 declaration.get("installation"),

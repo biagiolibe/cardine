@@ -195,7 +195,7 @@ class FlowReportTest(unittest.TestCase):
         self.project.mkdir()
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
         (self.project / "tasks" / "done").mkdir(parents=True)
-        (self.project / ".meridian").mkdir()
+        (self.project / ".cardine").mkdir()
         self.journal = self.project / ".git" / "meridian-journal.jsonl"
         self.records: list[str] = []
         self.now = datetime(2026, 10, 5, tzinfo=timezone.utc)
@@ -221,7 +221,7 @@ class FlowReportTest(unittest.TestCase):
         (folder / f"{task}-work.md").write_text(f"# Task {task}\n\n> **ID**: `{task}`\n{header}", encoding="utf-8")
 
     def targets(self) -> None:
-        (self.project / ".meridian" / "flow-targets.json").write_text(json.dumps({
+        (self.project / ".cardine" / "flow-targets.json").write_text(json.dumps({
             "version": 1,
             "unbacked_blocks": {"window": 20, "max": 0},
             "lead_time_regression": {"window": 20, "max_percent": 10},
@@ -364,7 +364,7 @@ class FlowReportTest(unittest.TestCase):
         self.assertEqual(self.report()["targets"], [])
 
     def test_unreadable_targets_file_is_an_error(self) -> None:
-        (self.project / ".meridian" / "flow-targets.json").write_text('{"version": 2}', encoding="utf-8")
+        (self.project / ".cardine" / "flow-targets.json").write_text('{"version": 2}', encoding="utf-8")
         self.integrated(1)
         with self.assertRaises(shared_errors.CardineError):
             self.report()

@@ -106,8 +106,8 @@
   "origin_main_files": [
     ".claudeignore",
     ".gitignore",
-    ".meridian/candidate-validation.json",
-    ".meridian/manifest.json",
+    ".cardine/candidate-validation.json",
+    ".cardine/manifest.json",
     "AGENTS.md",
     "CLAUDE.md",
     "GREETING.md",

@@ -199,13 +199,13 @@ class CardineCliFixtureMixin:
 
     def reset_project_to_installed_baseline(self) -> None:
         """Overwrite every managed project file with the exact content
-        `.meridian/baselines/<installed version>` recorded at `lock` time,
+        `.cardine/baselines/<installed version>` recorded at `lock` time,
         simulating a vanilla consumer that never diverged from its installed
         release — the premise `--stop-before-retirement`'s content-cap tests
         need, since `setUp()` otherwise leaves the real repository's own
         current AGENTS.md/CLAUDE.md in the project directory."""
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
-        baseline_root = self.project / ".meridian/baselines" / str(
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
+        baseline_root = self.project / ".cardine/baselines" / str(
             manifest.get("workflowBaselineVersion", manifest["frameworkVersion"])
         )
         for path in baseline_root.rglob("*"):
@@ -230,8 +230,8 @@ class CardineCliFixtureMixin:
         prior, already-applied capped run already consumed — a composition
         gap in task 036 itself, out of scope here, and irrelevant to consumer project B's
         real content."""
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
-        baseline_root = self.project / ".meridian/baselines" / str(
+        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
+        baseline_root = self.project / ".cardine/baselines" / str(
             manifest.get("workflowBaselineVersion", manifest["frameworkVersion"])
         )
         for relative in (Path("AGENTS.md"), Path("CLAUDE.md")):

@@ -130,7 +130,7 @@ def resolve_project_locations(project_root: Path) -> ProjectLocations:
             raise CardineError(f"canonical {label} must be a safe project-relative path: {path}")
     project_root = project_root.resolve()
     if legacy_used and project_root not in shared_project._LEGACY_LOCATION_WARNING_PROJECTS:
-        print("DEPRECATED: resolve canonical locations with .meridian/project.json", file=sys.stderr)
+        print("DEPRECATED: resolve canonical locations with .cardine/project.json", file=sys.stderr)
         shared_project._LEGACY_LOCATION_WARNING_PROJECTS.add(project_root)
     return ProjectLocations(
         queue=queue,
