@@ -95,7 +95,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 050 — Rename Git-internal files and the worktree root (rename plan R9).
 - `[x]` 051 — Rename the product strings and guard against Meridian identifiers.
 - `[x]` 052 — Resolve the project preset from the configuration (single workflow SW1).
-- `[ ]` 053 — Resolve one task contract and store its snapshot (single workflow SW2).
+- `[x]` 053 — Resolve one task contract and store its snapshot (single workflow SW2).
 - `[ ]` 054 — Use one task state machine with review and dependency gates (single workflow SW3).
 - `[ ]` 055 — Build the single template set (single workflow SW4).
 - `[ ]` 056 — Reconcile the capability catalog with the single template set (single workflow SW5).

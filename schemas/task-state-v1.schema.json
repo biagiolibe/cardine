@@ -142,6 +142,202 @@
           ]
         }
       }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preset",
+        "class",
+        "projectDigest",
+        "options",
+        "validation",
+        "ci",
+        "validationScoping"
+      ],
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": [
+            "lean",
+            "governed"
+          ]
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "spike"
+          ]
+        },
+        "projectDigest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "review": {
+              "enum": [
+                "required",
+                "not_required"
+              ]
+            },
+            "authorityRequired": {
+              "type": "boolean"
+            },
+            "expectedCodeSurfaceRequired": {
+              "type": "boolean"
+            },
+            "validationRetryLimit": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "landingMode": {
+              "enum": [
+                "direct"
+              ]
+            },
+            "ciBeforeLanding": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "review",
+            "authorityRequired",
+            "expectedCodeSurfaceRequired",
+            "validationRetryLimit",
+            "landingMode",
+            "ciBeforeLanding"
+          ]
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "commands",
+            "baseline",
+            "candidate"
+          ],
+          "properties": {
+            "commands": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "\\S"
+              }
+            },
+            "baseline": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "candidate": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "REUSE",
+                "BOUNDED",
+                "FULL"
+              ],
+              "properties": {
+                "REUSE": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "BOUNDED": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "FULL": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ci": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "none"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "provider",
+                "requiredChecks"
+              ],
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requiredChecks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "validationScoping": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "paths",
+              "commands"
+            ],
+            "properties": {
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

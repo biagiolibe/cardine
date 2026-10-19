@@ -574,6 +574,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
         )
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertEqual(json.loads(checked.stdout)["mode"], "milestone")
+        self.assertEqual(json.loads((project / ".cardine/project.json").read_text())["taskIdentity"],
+                         {"mode": "milestone"})
 
     def test_setup_adds_the_project_claude_allowlist_only_after_apply(self) -> None:
         project = self.home / "project"

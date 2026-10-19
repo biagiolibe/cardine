@@ -164,6 +164,9 @@ def parse_task_identity_policy(declaration: object) -> TaskIdentityPolicy:
 
 
 def read_task_identity_policy(project_root: Path) -> TaskIdentityPolicy:
+    declaration = read_project_declaration(project_root)
+    if declaration is not None:
+        return TaskIdentityPolicy(version=1, mode=declaration.get("taskIdentity", {}).get("mode", "opaque"))
     path = project_root / names().task_identity_path
     if not path.exists():
         return TaskIdentityPolicy(version=1, mode="opaque")

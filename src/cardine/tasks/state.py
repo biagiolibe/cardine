@@ -63,10 +63,18 @@ def _validate_schema(value, schema, field="state"):
                 _invalid(f"{field}.{name}", "required field", "missing")
         properties = schema.get("properties", {})
         for name, item in value.items():
+            if "propertyNames" in schema:
+                _validate_schema(name, schema["propertyNames"], f"{field} key")
             if name not in properties:
-                _invalid(f"{field}.{name}", sorted(properties), item)
-            _validate_schema(item, properties[name], f"{field}.{name}")
+                additional = schema.get("additionalProperties", False)
+                if not isinstance(additional, dict):
+                    _invalid(f"{field}.{name}", sorted(properties), item)
+                _validate_schema(item, additional, f"{field}.{name}")
+            else:
+                _validate_schema(item, properties[name], f"{field}.{name}")
     elif kind == "array":
+        if schema.get("uniqueItems") and any(item in value[:index] for index, item in enumerate(value)):
+            _invalid(field, "unique items", value)
         for index, item in enumerate(value):
             _validate_schema(item, schema["items"], f"{field}[{index}]")
     elif kind == "string":
@@ -99,6 +107,18 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
     """Validate history; review_required=None selects the snapshot's review policy."""
     schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
     _validate_schema(state, schema)
+    if "contract" in state:
+        # Cross-reference checks cannot be expressed by the local JSON Schema.
+        from cardine.shared.project import parse_project_declaration
+        from cardine.shared.errors import CardineError
+        contract = state["contract"]
+        try:
+            parse_project_declaration({"version": 1, "preset": contract["preset"],
+                                       "taskDefaults": contract["options"], "ci": contract["ci"],
+                                       "validation": contract["validation"],
+                                       "validationScoping": contract["validationScoping"]})
+        except CardineError as error:
+            raise TaskStateInvalid(f"contract: {error}") from error
     # Integration reads policy from the snapshot, without consulting prose.
     if review_required is None:
         review_required = state.get("review", {}).get("required", workflow == "governed-sdd")

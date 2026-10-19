@@ -20,6 +20,7 @@ from cardine.tasks.state import machine
 from cardine.tasks.state import state_path
 from cardine.tasks.state import validate_task_state
 from cardine.templates.mode import detect_mode
+from cardine.tasks.contract import resolve_task_contract
 
 
 def import_task_states(
@@ -94,12 +95,17 @@ def import_task_states(
         # Lean records may have no Status field; progress is derived from worktrees.
         if (record_status is None and workflow == "governed-sdd") or (record_status is not None and normalize(record_status) != status):
             invalid(f"queue Status={queue['status']!r}; record Status={record_status!r}")
-        spike = read_task_field(record, "Class") == "SPIKE"
+        try:
+            contract = resolve_task_contract(project_root, task_id, text=record)
+        except CardineError as error:
+            invalid(str(error))
+        spike = contract["class"] == "spike"
         review_policy = read_task_field(record, "Review")
         review_policy = review_policy.strip("`") if review_policy else None
-        required = workflow == "governed-sdd" and not spike and review_policy != "NOT_REQUIRED"
+        required = contract["options"]["review"] == "required"
         spike_column = spike and queue["review"] == "SPIKE"  # the queue's own spelling of Class: SPIKE
-        if workflow == "governed-sdd" and queue["review"] and queue["review"] != review_policy and not spike_column:
+        if (queue["review"] and not spike_column
+                and queue["review"].lower() != contract["options"]["review"]):
             invalid(f"queue Review={queue['review']!r}; record Review={review_policy!r}")
         review_path = identity.review_path
         review_text = review_path.read_text(encoding="utf-8") if review_path.is_file() else ""
@@ -144,7 +150,8 @@ def import_task_states(
             routes.extend((target, steps + [target]) for target in states[current])
         if route is None:
             invalid(f"queue Status: allowed {list(states)}; found {status!r}")
-        state = {"version": 1, "task_id": task_id, "workflow": workflow, "status": status, "transitions": []}
+        state = {"version": 1, "task_id": task_id, "workflow": workflow, "status": status,
+                 "transitions": [], "contract": contract}
         current = "QUEUED"
         for target in route:
             head = head or git_output(project_root, "rev-parse", "HEAD")

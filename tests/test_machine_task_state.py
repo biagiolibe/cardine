@@ -10,6 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import contract_record, VALIDATION
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -174,6 +175,8 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(calls, [self.path])
 
     def test_missing_stop(self):
+        write_project_config(self.root, "lean", validation=VALIDATION)
+        self.record.write_text(contract_record(extra="Status: QUEUED\n"))
         (self.root / "tasks/QUEUE.md").write_text(
             "| ID | Status | Task file |\n|---|---|---|\n| 001 | QUEUED | [001](001.md) |\n")
         with self.assertRaises(shared_errors.CardineStop) as caught:
