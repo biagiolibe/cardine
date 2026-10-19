@@ -38,7 +38,7 @@ showed two things:
 
 ## Acceptance Criteria
 
-- [ ] The managed `git-workflow` text in
+- [x] The managed `git-workflow` text in
   `templates/workflows/lean-delivery/CLAUDE.md` and `AGENTS.md`, and the
   Governed SDD text that carries the same stop rules, state the three classes
   of decision 12:
@@ -53,34 +53,34 @@ showed two things:
     rerun passes, record the test as intermittent in the handoff, and the
     attempt does not count. After 3 consecutive counted failures, stop with
     `BLOCKED VALIDATION_RETRY_LIMIT` and a summary of the failures.
-- [ ] The text keeps the deny list, the ban on writing false state to pass a
+- [x] The text keeps the deny list, the ban on writing false state to pass a
   gate, `RULE_CONFLICT`, and the rule that guidance no command backs is
   advice, word for word where they do not conflict with decision 12.
-- [ ] The managed `bounded-worktree-lifecycle` text in both
+- [x] The managed `bounded-worktree-lifecycle` text in both
   `templates/workflows/*/PROJECT_WORKFLOW.md` describes the Resume that task
   028 implemented: run `meridian worktree check <task-id> --resume`, accept
   `status: ready-dirty`, read the status and the diff, then run `execution
   start --resume`. It never writes a bare `BLOCKED` without a registered
   code, so the repository check passes.
-- [ ] The text tells the agent where to read a code's class. No CLI command
+- [x] The text tells the agent where to read a code's class. No CLI command
   shows a registry entry today, so the text names
   `capabilities/stop-codes-v1.json` in the framework, or a new read-only
   command if the task adds one. The handoff names the choice.
-- [ ] The registry gains `VALIDATION_RETRY_LIMIT` with `human_decision:
+- [x] The registry gains `VALIDATION_RETRY_LIMIT` with `human_decision:
   true`. `VALIDATION_FAILED` keeps `human_decision: false`: a single failed
   validation is failing work, not a stop. Every code that the new text names
   exists in the registry.
-- [ ] Template changes follow the pre-1.0 rule of task 031: the capability
+- [x] Template changes follow the pre-1.0 rule of task 031: the capability
   version is bumped and the marker baseline is rewritten. The task adds no
   migration and does not change `VERSION`, `.claude-plugin/plugin.json`, or
   `releases/`.
-- [ ] This repository's own `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
+- [x] This repository's own `CLAUDE.md`, `AGENTS.md`, `PROJECT_WORKFLOW.md`,
   and `.meridian/` are unchanged, and the checkout's `upgrade` is not run on
   this repository.
-- [ ] A test proves that every code the new text names as a guardrail has
+- [x] A test proves that every code the new text names as a guardrail has
   `human_decision: true`, and that the text names no code missing from the
   registry.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -153,3 +153,13 @@ failure. An unchanged rerun of that test reproduced the failure. The same
 baseline-version substitution was applied there, preserving every behavioral
 assertion. Thus six version assertions were updated rather than the five
 identified in the amendment; no tests were deleted.
+
+## Completion evidence
+
+All amended acceptance criteria are met. The final implementation commit is
+`76e5b64d8107a47ed688da04867d8a965155b9fc`, validated against base main
+`966335aea2bc2258d88eda66bb5fa32b04d797b0`. All six required validation
+commands passed, including both 1,141-test suites with zero failures, errors,
+or skips and clean-clone outcome OK on that implementation commit. See
+`tasks/handoffs/029.md` for exact commands, retry history, and the registry
+lookup decision. Only installed Meridian performs closure and integration.
