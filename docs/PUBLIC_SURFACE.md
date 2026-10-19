@@ -38,9 +38,6 @@ including command containers and nested subcommands.
 | `meridian lock` | Stable |
 | `meridian upgrade` | Stable |
 | `meridian audit` | Stable |
-| `meridian profile` | Internal |
-| `meridian profile doctor` | Internal |
-| `meridian profile bootstrap` | Internal |
 | `meridian locations` | Stable |
 | `meridian project` | Stable |
 | `meridian setup` | Stable |
@@ -83,8 +80,6 @@ including command containers and nested subcommands.
 | `meridian context size` | Stable |
 | `meridian usage` | Experimental |
 | `meridian usage report` | Experimental |
-| `meridian report` | Internal |
-| `meridian report flow` | Internal |
 | `meridian execution` | Stable |
 | `meridian execution start` | Stable |
 | `meridian execution deliver` | Stable |
@@ -96,8 +91,6 @@ including command containers and nested subcommands.
 | `meridian execution validate` | Stable |
 | `meridian execution evidence` | Stable |
 | `meridian execution investigate` | Stable |
-| `meridian generate-claude-md` | Internal |
-| `meridian generate-entry-routers` | Internal |
 | `meridian hook` | Host-facing |
 | `meridian hook read-guard` | Host-facing |
 | `meridian hook stop-audit` | Host-facing |
@@ -125,3 +118,8 @@ list of entries. Changes follow the versioning and deprecation rules above.
 ## Project conversion
 
 Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
+
+Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow`,
+`generate-entry-routers`, and `agent-evals`. They are internal development
+interfaces and have no compatibility promise. The generator's `--mode` option
+selects a workflow shared body; without it, `--project` selects consumer routers.

@@ -99,7 +99,7 @@ evidence that an unrelated procedure was loaded.
 Only after Release A is accepted and the route fixtures pass:
 
 1. Create `docs/workflows/ENTRY_ROUTER.md` and the consumer's route map.
-2. Generate both entry points with `meridian generate-entry-routers --project
+2. Generate both entry points with `python3 scripts/dev.py generate-entry-routers --project
    <consumer> --write`.
 3. Retire only copies whose accepted additive evidence and ADR-map destinations
    are recorded.
@@ -126,7 +126,7 @@ following:
 
 - `wc -c docs/workflows/ENTRY_ROUTER.md AGENTS.md CLAUDE.md` shows each file
   at or below 2,048 bytes;
-- `meridian generate-entry-routers --project <consumer> --check` passes;
+- `python3 scripts/dev.py generate-entry-routers --project <consumer> --check` passes;
 - `meridian audit --project <consumer> --mode governed-sdd` passes with no
   generated-router drift or retained retired marker;
 - `meridian upgrade --project <consumer> --check` is clean, and `git -C

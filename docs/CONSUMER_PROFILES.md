@@ -30,8 +30,8 @@ A protocol v2 manifest without `capabilityProfiles` audits as `UNVERIFIED`
 and `lean-delivery-consumer` so a consumer can declare what is installed:
 
 ```bash
-meridian profile bootstrap governed-sdd-consumer --check   # print the manifest it would write
-meridian profile bootstrap governed-sdd-consumer --apply   # write it
+python3 scripts/dev.py profile bootstrap governed-sdd-consumer --check   # print the manifest it would write
+python3 scripts/dev.py profile bootstrap governed-sdd-consumer --apply   # write it
 meridian audit
 ```
 
@@ -42,7 +42,7 @@ until a probe records stronger evidence, so the audit still exits `1`, not `2`.
 Bootstrap refuses a markerless managed copy that differs from its recorded
 digest, because recording the edited file would hide the drift. Restore the
 file, then bootstrap again. A file with capability blocks may carry project
-sections; it is verified by its block rows. `meridian profile doctor <id>`
+sections; it is verified by its block rows. `python3 scripts/dev.py profile doctor <id>`
 also expects the probe files named in the catalog under
 `.meridian/probes/<profile>/`, which a consumer adds when it records host
 evidence.

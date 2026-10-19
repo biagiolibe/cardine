@@ -21,6 +21,7 @@ from cardine.shared import context as owner_shared_context
 from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
+from cardine.templates import generator
 from cardine.templates import files as owner_templates_files
 from cardine.templates.markers import find_capability_marker_version
 from cardine.templates import migration_audit as owner_templates_migration_audit
@@ -695,7 +696,7 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
         re.DOTALL,
     )
     baselines: dict[str, dict[str, dict[str, object]]] = {}
-    for mode in meridian.CLAUDE_MD_SHARED_ANCHOR:
+    for mode in generator.CLAUDE_MD_SHARED_ANCHOR:
         for item in owner_templates_files.managed_files(root, mode):
             relative = str(item.source.relative_to(root))
             if relative in baselines:
@@ -908,6 +909,13 @@ def check_no_private_names(
                     fail(f"private consumer name in {name}:{number}")
 
 
+def check_generated_templates() -> None:
+    for mode in generator.CLAUDE_MD_SHARED_ANCHOR:
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/dev.py"), "generate-entry-routers", "--mode", mode, "--check"], capture_output=True, text=True)
+        if result.returncode:
+            fail(result.stderr or result.stdout)
+
+
 def main() -> None:
     if any(argument != "--write-marker-baselines" for argument in sys.argv[1:]):
         fail("unsupported repository-check option")
@@ -917,6 +925,7 @@ def main() -> None:
         return
     check_required_files()
     check_changelog_fragments()
+    check_generated_templates()
     check_template_context_sizes()
     check_language_policy()
     check_governed_review_worktree_contract()

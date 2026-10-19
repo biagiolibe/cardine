@@ -1,6 +1,8 @@
 """Keep the published CLI inventory and compatibility labels in sync."""
 
 import argparse
+from contextlib import redirect_stderr
+import io
 import re
 import sys
 import unittest
@@ -42,3 +44,13 @@ class PublicSurfaceTest(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
         self.assertRegex(readme, r"console[^\n]*experimental")
         self.assertRegex(readme, r"`meridian usage`[^\n]*experimental")
+
+    def test_maintainer_commands_are_absent_from_user_cli(self):
+        parser = owner_cli.build_parser()
+        commands = command_parsers(parser)
+        for name in ("profile", "report", "generate-claude-md", "generate-entry-routers", "agent-evals"):
+            with self.subTest(command=name):
+                self.assertNotIn(f"meridian {name}", commands)
+                self.assertNotRegex(parser.format_help(), rf"(?m)^    {re.escape(name)}\s")
+                with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                    parser.parse_args([name])

@@ -60,7 +60,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 033 — Empty the migration chain.
 - `[x]` 034 — Remove release baselines and adoption from historical versions.
 - `[x]` 035 — Remove the self-reported budget counters.
-- `[ ]` 036 — Move maintainer commands out of the user CLI and merge the generators.
+- `[x]` 036 — Move maintainer commands out of the user CLI and merge the generators.
 - `[x]` 037 — Scan only repository files in `check_repository.py`.
 - `[x]` 038 — Reject a stale `requiredVersion` in the marker catalog.
 - `[x]` 039 — Check the self-hosting installation only with the installed Meridian.

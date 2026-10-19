@@ -149,7 +149,7 @@ def audit_entry_router(project_root: Path) -> list[tuple[str, str]]:
     for target, expected in outputs.items():
         actual = project_root / target
         if not actual.is_file() or actual.read_text(encoding="utf-8") != expected:
-            results.append(("FAIL", f"generated entry router drift: {target}; rerun `meridian generate-entry-routers --write`"))
+            results.append(("FAIL", f"generated entry router drift: {target}; rerun `python3 scripts/dev.py generate-entry-routers --write`"))
     mapping_path = project_root / ENTRY_ROUTER_MAP_PATH
     try:
         mapping = json.loads(mapping_path.read_text(encoding="utf-8"))

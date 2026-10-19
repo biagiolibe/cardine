@@ -396,7 +396,7 @@ class FlowReportTest(unittest.TestCase):
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [sys.executable, str(CLI), "--framework-root", str(ROOT), "report", "flow", "--project", str(self.project), *arguments],
+            [sys.executable, str(ROOT / "scripts/dev.py"), "--framework-root", str(ROOT), "report", "flow", "--project", str(self.project), *arguments],
             cwd=self.project, text=True, capture_output=True, check=False,
         )
 

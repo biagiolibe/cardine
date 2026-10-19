@@ -6,7 +6,6 @@ from pathlib import Path
 import argparse
 import json
 import os
-import re
 import shlex
 import sys
 
@@ -21,10 +20,9 @@ from cardine.release.update import run_self_check, run_self_update
 from cardine.release.version import parse_semver, read_raw_version
 from cardine.review.verdict import record_review_verdict
 from cardine.shared.authority import adr_list, adr_show, context_authority
-from cardine.shared.constants import BASELINES_PATH, MARKED_BLOCK, USAGE_HOSTS
+from cardine.shared.constants import BASELINES_PATH, USAGE_HOSTS
 from cardine.shared.context import context_size_report, format_context_size_report
 from cardine.shared.errors import MeridianError, MeridianStop
-from cardine.shared.flow import flow_report, format_flow_report
 from cardine.shared.git import canonical_project_root
 from cardine.shared.journal import LifecycleJournalEntry
 from cardine.shared.paths import SCRIPTS_ROOT
@@ -39,14 +37,11 @@ from cardine.tasks.preflight import execution_contract, execution_preflight, rea
 from cardine.tasks.recording import EVIDENCE_EVENT_KINDS, record_execution_event, record_investigation, run_validation
 from cardine.tasks.state import state_path
 from cardine.tasks.transitions import close_task, transition_task_state
-from cardine.templates.adoption import bootstrap_capability_profile
-from cardine.templates.audit import profile_doctor, retired_text_advisories, run_audit
+from cardine.templates.audit import retired_text_advisories, run_audit
 from cardine.templates.catalog import manifest_workflow_mode
 from cardine.templates.files import manifest_baseline_version
-from cardine.templates.markers import extract_marked_block
 from cardine.templates.merge import lock_project, plan_from_baseline
 from cardine.templates.mode import detect_mode
-from cardine.templates.router import entry_router_outputs
 from cardine.templates.upgrade import apply_upgrade
 from cardine.templates.upgrade_support import plan_has_blockers, prepare_upgrade_targets, print_plan
 from cardine.worktree.checkout import active_worktree_task, inspect_task_worktree, prepare_task_worktree, registered_worktree_task_states, repair_task_worktree_base
@@ -57,21 +52,6 @@ from cardine.worktree.storage import _effective_worktree_root, _verified_lifecyc
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
-# `CLAUDE.md` is Claude Code's own instructions file; it cannot be reduced to a
-# bare pointer, since a Claude Code session never reads `AGENTS.md` itself. So
-# each workflow's `CLAUDE.md` keeps a hand-authored preamble (title, pointer
-# paragraph, any Claude-Code-specific sections) up to this anchor heading, and
-# everything from the anchor onward — the actual shared rule content, capability
-# markers included — is generated verbatim from `AGENTS.md`, which stays the
-# single source of truth for that text. The anchor is matched by heading text,
-# not position, per this repo's own role-scoped-agent-rules precedent: it must
-# be a heading that both files currently carry.
-CLAUDE_MD_SHARED_ANCHOR = {
-    "governed-sdd": "## Command triggers",
-    "lean-delivery": "## Command triggers",
-}
-
-
 class MeridianArgumentParser(argparse.ArgumentParser):
     """Use sysexits-style usage status for machine-oriented namespaces."""
 
@@ -80,36 +60,6 @@ class MeridianArgumentParser(argparse.ArgumentParser):
             self.print_usage(sys.stderr)
             self.exit(64, f"{self.prog}: error: {message}\n")
         super().error(message)
-
-
-def generate_claude_md(mode: str, agents_text: str, existing_claude_text: str) -> str:
-    anchors = (CLAUDE_MD_SHARED_ANCHOR[mode], "## Code organization") if mode == "governed-sdd" else (CLAUDE_MD_SHARED_ANCHOR[mode],)
-    for anchor in anchors:
-        pattern = re.compile(rf"^{re.escape(anchor)}$", re.MULTILINE)
-        agents_match = pattern.search(agents_text)
-        claude_match = pattern.search(existing_claude_text)
-        if agents_match is not None and claude_match is not None:
-            break
-    else:
-        raise MeridianError(f"AGENTS.md and CLAUDE.md ({mode}) do not share a supported anchor heading")
-    preamble = existing_claude_text[: claude_match.start()]
-    shared_body = agents_text[agents_match.start() :]
-
-    # A capability marker's content is versioned; changing it without bumping
-    # the version is exactly the defect this generator must never reproduce
-    # (see tasks/014-generator-altered-protected-blocks.md). So the shared
-    # body is copied from AGENTS.md everywhere *except* inside a marker: there,
-    # CLAUDE.md's own existing block for that same capability+version wins
-    # verbatim, byte for byte, if one is already present. A capability with no
-    # prior block in CLAUDE.md (a brand-new marker) has nothing to preserve,
-    # so it is copied from AGENTS.md like the rest of the shared body.
-    def preserve_existing_marker(match: re.Match[str]) -> str:
-        capability, version = match.group(1), int(match.group(2))
-        existing_block = extract_marked_block(existing_claude_text, capability, version)
-        return existing_block if existing_block is not None else match.group(0)
-
-    shared_body = MARKED_BLOCK.sub(preserve_existing_marker, shared_body)
-    return preamble + shared_body
 
 
 class ShowVersionAction(argparse.Action):
@@ -216,24 +166,6 @@ def build_parser() -> MeridianArgumentParser:
         "--ci-profile",
         help="gate catalog-required static installation while retaining visible host UNVERIFIED rows",
     )
-
-    profile_parser = subparsers.add_parser(
-        "profile", description="Framework-internal: no compatibility promise.", help="inspect or bootstrap an effective capability profile (framework-internal)"
-    )
-    profile_sub = profile_parser.add_subparsers(dest="profile_command", required=True)
-    profile_doctor_parser = profile_sub.add_parser(
-        "doctor", description="Framework-internal: no compatibility promise.", help="resolve a declared profile, its evidence, and required probes (framework-internal)"
-    )
-    profile_doctor_parser.add_argument("profile_id")
-    profile_doctor_parser.add_argument("--project", type=Path, default=Path.cwd())
-    profile_bootstrap = profile_sub.add_parser(
-        "bootstrap", description="Framework-internal: no compatibility promise.", help="observe installation surfaces without claiming host activation (framework-internal)"
-    )
-    profile_bootstrap.add_argument("profile_id")
-    profile_bootstrap.add_argument("--project", type=Path, default=Path.cwd())
-    profile_action = profile_bootstrap.add_mutually_exclusive_group(required=True)
-    profile_action.add_argument("--check", action="store_true")
-    profile_action.add_argument("--apply", action="store_true")
 
     locations = subparsers.add_parser("locations", help="print resolved project locations")
     locations.add_argument("--project", type=Path, default=Path.cwd())
@@ -453,13 +385,6 @@ def build_parser() -> MeridianArgumentParser:
     usage_report_parser.add_argument("--breakdown", action="store_true", help="report the call with the greatest input growth")
     usage_report_parser.add_argument("--format", choices=("json", "text"), default="text")
 
-    report = subparsers.add_parser("report", description="Framework-internal: no compatibility promise.", help="read-only reports over the lifecycle journal (framework-internal)")
-    report_sub = report.add_subparsers(dest="report_command", required=True)
-    report_flow_parser = report_sub.add_parser("flow", description="Framework-internal: no compatibility promise.", help="lead time, stops, and origin shares from the lifecycle journal (framework-internal)")
-    report_flow_parser.add_argument("--project", type=Path)
-    report_flow_parser.add_argument("--since", help="include journal records on or after YYYY-MM-DD")
-    report_flow_parser.add_argument("--format", choices=("json", "text"), default="text")
-
     execution = subparsers.add_parser("execution", help="validate a governed task's durable execution evidence")
     execution_sub = execution.add_subparsers(dest="execution_command", required=True)
     for operation in ("start", "deliver"):
@@ -510,25 +435,6 @@ def build_parser() -> MeridianArgumentParser:
     investigate.add_argument("--finding", required=True)
     investigate.add_argument("--project", type=Path, default=Path.cwd())
 
-    generate_claude = subparsers.add_parser(
-        "generate-claude-md",
-        help="regenerate a workflow template's CLAUDE.md shared body from its AGENTS.md (framework-internal)",
-        description="Framework-internal: regenerate CLAUDE.md shared bodies from AGENTS.md.",
-    )
-    generate_claude.add_argument("--mode", choices=tuple(CLAUDE_MD_SHARED_ANCHOR), required=True)
-    generate_group = generate_claude.add_mutually_exclusive_group(required=True)
-    generate_group.add_argument("--check", action="store_true", help="exit non-zero if CLAUDE.md is stale")
-    generate_group.add_argument("--write", action="store_true", help="regenerate CLAUDE.md in place")
-
-    generate_router = subparsers.add_parser(
-        "generate-entry-routers", description="Framework-internal: no compatibility promise.",
-        help="generate a consumer's AGENTS.md and CLAUDE.md from docs/workflows/ENTRY_ROUTER.md (framework-internal)",
-    )
-    generate_router.add_argument("--project", type=Path, default=Path.cwd())
-    generate_router_group = generate_router.add_mutually_exclusive_group(required=True)
-    generate_router_group.add_argument("--check", action="store_true", help="exit non-zero if either generated entry point drifts")
-    generate_router_group.add_argument("--write", action="store_true", help="write both generated entry points")
-
     hook = subparsers.add_parser("hook", help="run a Meridian host hook entry point")
     hook_sub = hook.add_subparsers(dest="hook_command", required=True)
     read_guard = hook_sub.add_parser("read-guard", help="apply the advisory-safe read guard")
@@ -575,16 +481,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
         elif arguments.command == "audit":
             mode = arguments.mode or detect_mode(project_root)
             return run_audit(project_root, framework_root, mode, arguments.ci_profile)
-        elif arguments.command == "profile":
-            if arguments.profile_command == "doctor":
-                return profile_doctor(project_root, framework_root, arguments.profile_id)
-            manifest = bootstrap_capability_profile(
-                project_root,
-                framework_root,
-                arguments.profile_id,
-                apply=arguments.apply,
-            )
-            print(json.dumps(manifest["capabilityProfiles"][arguments.profile_id], indent=2, sort_keys=True))
         elif arguments.command == "locations":
             locations = resolve_project_locations(project_root)
             if arguments.field == "queue":
@@ -871,10 +767,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             report = usage_report(arguments.host, arguments.project, arguments.since, arguments.breakdown)
             print(json.dumps(report, sort_keys=True) if arguments.format == "json" else format_usage_report(report))
             return 0 if report["status"] == "ok" else 2
-        elif arguments.command == "report":
-            report = flow_report(_verified_lifecycle_project(arguments.project), arguments.since)
-            print(json.dumps(report, sort_keys=True) if arguments.format == "json" else format_flow_report(report))
-            return 0
         elif arguments.command == "execution":
             if arguments.execution_command == "start":
                 print(json.dumps(execution_start(project_root, arguments.task_id, resume=arguments.resume), sort_keys=True))
@@ -906,34 +798,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     print(readiness_check(project_root, arguments.task_id, (project_root / arguments.report if arguments.report else default_handoff_path(project_root, arguments.task_id))))
             else:
                 print(check_handoff(project_root, arguments.task_id, (project_root / arguments.report if arguments.report else default_handoff_path(project_root, arguments.task_id))))
-        elif arguments.command == "generate-claude-md":
-            workflow = framework_root / "templates" / "workflows" / arguments.mode
-            agents_path = workflow / "AGENTS.md"
-            claude_path = workflow / "CLAUDE.md"
-            agents_text = agents_path.read_text(encoding="utf-8")
-            claude_text = claude_path.read_text(encoding="utf-8")
-            generated = generate_claude_md(arguments.mode, agents_text, claude_text)
-            if arguments.check:
-                if generated == claude_text:
-                    print(f"CLAUDE.md ({arguments.mode}) matches the generator's output.")
-                else:
-                    print(f"STALE {claude_path}: does not match AGENTS.md-generated output.", file=sys.stderr)
-                    return 2
-            else:
-                claude_path.write_text(generated, encoding="utf-8")
-                print(f"Regenerated {claude_path}.")
-        elif arguments.command == "generate-entry-routers":
-            outputs = entry_router_outputs(project_root)
-            drifted = [target for target, expected in outputs.items() if not (project_root / target).is_file() or (project_root / target).read_text(encoding="utf-8") != expected]
-            if arguments.check:
-                if drifted:
-                    print("STALE generated entry router(s): " + ", ".join(str(path) for path in drifted), file=sys.stderr)
-                    return 2
-                print("Generated entry routers match their canonical source.")
-            else:
-                for target, output in outputs.items():
-                    (project_root / target).write_text(output, encoding="utf-8")
-                print("Generated AGENTS.md and CLAUDE.md from ENTRY_ROUTER.md.")
         elif arguments.command == "hook":
             if arguments.hook_command == "read-guard" and arguments.host == "codex":
                 from codex_read_guard import main as codex_read_guard_main
