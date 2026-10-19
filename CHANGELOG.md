@@ -1127,7 +1127,7 @@ migration for each version and remains the authoritative detail.
 - `meridian audit --project <path> [--mode ...]`
   ([commands/meridian-audit.md](commands/meridian-audit.md)): a new,
   read-only command. Phase 4 of
-  [migrations/CAPABILITY_MARKERS.md](migrations/CAPABILITY_MARKERS.md) —
+  `migrations/CAPABILITY_MARKERS.md` —
   verifies every `MERIDIAN:BEGIN`/`END` protected region in a project's
   managed files still matches the framework's released text for that exact
   capability version, in that exact file (`PASS`/`FAIL`), and reports a
@@ -1137,7 +1137,7 @@ migration for each version and remains the authoritative detail.
   originally-proposed `ACCEPTED`-task/review-record consistency check from
   `QUALITY_COMPLIANCE_ROADMAP.md` Tier 2 — that remains a separate addition
   to this same command.
-- Phase 3 of [migrations/CAPABILITY_MARKERS.md](migrations/CAPABILITY_MARKERS.md):
+- Phase 3 of `migrations/CAPABILITY_MARKERS.md`:
   `meridian upgrade`/`adopt` now tell a cosmetic merge conflict from a real
   one. When a file's three-way merge conflicts, and that file's *own*
   content already carries a satisfied capability marker for every migration
@@ -1149,7 +1149,7 @@ migration for each version and remains the authoritative detail.
   wrongly downgraded because an unrelated capability happened to be
   satisfied elsewhere in the project), caught by the existing conflict
   regression tests before it shipped.
-- Phase 2 of [migrations/CAPABILITY_MARKERS.md](migrations/CAPABILITY_MARKERS.md):
+- Phase 2 of `migrations/CAPABILITY_MARKERS.md`:
   `detect_capabilities()` is now version-aware — it reads each migration's
   `capability`/`capabilityVersion` fields and compares against the
   project's `MERIDIAN:BEGIN` marker version, so a future migration that
@@ -1185,7 +1185,7 @@ file changed, so no migration record or `VERSION` bump applies.
   machine-readable `.meridian/adoption-review.md` header
   (`Verdict:`/`Attempt:`), mapped onto the CLI's existing exit codes so a
   coordinator can drive the whole migration with no memory of its own — see
-  [migrations/ASSISTED_ADOPTION.md](migrations/ASSISTED_ADOPTION.md).
+  `migrations/ASSISTED_ADOPTION.md`.
 - `--mode` and `--from` are auto-detected on `adopt` and `finalize-adoption`
   when unambiguous (mode from the project's `PROJECT_WORKFLOW.md` lock,
   version from the sole packaged baseline), falling back to an explicit
@@ -1325,7 +1325,7 @@ file changed, so no migration record or `VERSION` bump applies.
 ### Added
 
 - Versioned capability markers (Phase 1 of
-  [migrations/CAPABILITY_MARKERS.md](migrations/CAPABILITY_MARKERS.md)):
+  `migrations/CAPABILITY_MARKERS.md`):
   the review-remediation-record (001) and lifecycle-orchestration (002)
   capability text in `AGENTS.md`, `CLAUDE.md`,
   `docs/REVIEW_RECORD_TEMPLATE.md`, and `docs/LIFECYCLE_ORCHESTRATION.md` is

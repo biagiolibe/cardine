@@ -153,7 +153,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         template.write_text(current, encoding="utf-8")
 
     def test_upgrade_downgrades_cosmetic_conflict_to_verified(self) -> None:
-        """Phase 3 of migrations/CAPABILITY_MARKERS.md: a conflict outside a
+        """A conflict outside a
         satisfied capability marker is cosmetic and should be left untouched,
         not treated the same as a real, unverifiable conflict."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)

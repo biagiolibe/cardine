@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from cardine.shared.constants import CAPABILITY_MARKER
 from cardine.templates.files import managed_files
 from cardine.templates.marker_history import declared_capability_moves
 from cardine.templates.markers import exact_marker_matches
 from cardine.templates.markers import marker_blocks
-from cardine.templates.migrations import capability_requirements
 from cardine.templates.migrations import pending_capability_removals
 from pathlib import Path
 import json
@@ -17,7 +15,6 @@ import re
 def validate_capability_moves(framework_root: Path, mode: str) -> list[str]:
     """Validate move declarations against the exact current release templates."""
     managed = {item.target: item.source for item in managed_files(framework_root, mode)}
-    requirements = capability_requirements(framework_root)
     errors = []
     seen_sources: set[tuple[Path, str, int]] = set()
     for path in sorted((framework_root / "migrations").glob("*.json")):
@@ -60,21 +57,7 @@ def validate_capability_moves(framework_root: Path, mode: str) -> list[str]:
                     errors.append(f"{label}.{side}.path is not a managed path")
                     break
                 template_text = managed[location[0]].read_text(encoding="utf-8")
-                superseding_version = max(
-                    (
-                        int(version)
-                        for capability, version in CAPABILITY_MARKER.findall(template_text)
-                        if capability == location[1] and int(version) > location[2]
-                    ),
-                    default=None,
-                )
-                superseded_target = (
-                    side == "target"
-                    and superseding_version is not None
-                    and requirements.get(location[1], (0, ""))[0] == superseding_version
-                    and len(marker_blocks(template_text, location[1], superseding_version)) == 1
-                )
-                if not (side == "source" and not marker_blocks(template_text, location[1], location[2])) and not (raw["stage"] == "retirement" and side == "source") and not exact_marker_matches(template_text, location[1], location[2], location[3]) and not superseded_target:
+                if not (side == "source" and not marker_blocks(template_text, location[1], location[2])) and not (raw["stage"] == "retirement" and side == "source") and not exact_marker_matches(template_text, location[1], location[2], location[3]):
                     errors.append(f"{label}.{side} does not name one exact marker in the release template")
                     break
                 locations.append(location)

@@ -17,7 +17,7 @@ from cardine.templates.adoption import _capability_declaration
 from cardine.templates.catalog import load_capability_catalog, manifest_workflow_mode
 from cardine.templates.files import latest_migration_to, managed_files, manifest_baseline_version
 from cardine.templates.manifest import write_manifest
-from cardine.templates.markers import CLAUDE_AGENTS_POINTER_MARKER, agents_pointer_satisfies_claude, append_only_new_markers, deduplicate_identical_template_markers, reflowed_marker_normalization, remove_retired_markers
+from cardine.templates.markers import append_only_new_markers, deduplicate_identical_template_markers, reflowed_marker_normalization, remove_retired_markers
 from cardine.templates.merge import copy_baseline, merge_clean, plan_from_baseline, prune_stale_baselines
 from cardine.templates.migration_audit import removals_for_managed_file
 from cardine.templates.migrations import migration_ids, pending_restructured_markers, restructured_text
@@ -155,27 +155,6 @@ def apply_plan(
                         f"marker deduplication is no longer safe for {item.file.target}; rerun upgrade --check"
                     )
                 local.write_text(normalized, encoding="utf-8")
-            elif item.action == "pointer-upgrade":
-                local_text = local.read_text(encoding="utf-8")
-                if not agents_pointer_satisfies_claude(
-                    project_root,
-                    framework_root,
-                    manifest_workflow_mode(manifest),
-                    item.file.source.read_text(encoding="utf-8"),
-                    local_text,
-                ):
-                    raise MeridianError(
-                        f"AGENTS.md no longer satisfies the Claude pointer for {item.file.target}; rerun upgrade --check"
-                    )
-                if CLAUDE_AGENTS_POINTER_MARKER not in local_text:
-                    first_newline = local_text.find("\n")
-                    insertion = CLAUDE_AGENTS_POINTER_MARKER + "\n"
-                    updated = (
-                        insertion + "\n" + local_text
-                        if first_newline < 0
-                        else local_text[: first_newline + 1] + "\n" + insertion + local_text[first_newline + 1 :]
-                    )
-                    local.write_text(updated, encoding="utf-8")
             elif item.action == "append-markers":
                 base = baseline_root / item.file.target
                 appended = append_only_new_markers(

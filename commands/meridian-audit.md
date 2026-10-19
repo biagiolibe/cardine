@@ -3,8 +3,8 @@ description: "Verify protected capability-marker regions were not edited outside
 ---
 
 Run a deterministic, read-only integrity check on a governed-SDD project's
-`MERIDIAN:BEGIN`/`MERIDIAN:END` capability markers — see
-[migrations/CAPABILITY_MARKERS.md](../migrations/CAPABILITY_MARKERS.md).
+`MERIDIAN:BEGIN`/`MERIDIAN:END` capability markers recorded in
+[the capability catalog](../capabilities/catalog-v1.json).
 
 ```bash
 ${CLAUDE_PLUGIN_ROOT}/bin/meridian audit --project . --mode governed-sdd
@@ -24,7 +24,7 @@ marker found:
   behind — run `meridian upgrade --check` first). This is a staleness
   question for `upgrade`, not an integrity failure for this command.
 
-This audits only the capability-marker mechanism from `CAPABILITY_MARKERS.md`.
+This audits only the capability-marker mechanism from the capability catalog.
 It does not (yet) perform the broader deterministic conformance checks
 described in `QUALITY_COMPLIANCE_ROADMAP.md` (for example, verifying that
 every `ACCEPTED` task has a matching `APPROVE` verdict in its review record)

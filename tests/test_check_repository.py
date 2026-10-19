@@ -439,6 +439,11 @@ class CheckMigrationsVersionGateTest(unittest.TestCase):
             cr.check_migrations(self.root)
         return output.getvalue()
 
+    def test_empty_chain_passes(self) -> None:
+        (self.root / "VERSION").write_text("1.0.0\n", encoding="utf-8")
+
+        self.run_check()
+
     def test_version_equal_to_last_migration_passes(self) -> None:
         self.write_chain(("1.0.0", "1.0.1"), ("1.0.1", "1.0.2"), version="1.0.2")
 
@@ -590,6 +595,13 @@ class CheckReleasesTest(unittest.TestCase):
         self.write_release("1.0.02")
 
         self.assert_fails("monotonically increasing")
+
+    def test_release_ledger_may_name_a_migration_the_empty_chain_no_longer_carries(self) -> None:
+        (self.root / "migrations/001-step.json").unlink()
+        self.write_release("1.0.1", baselineChanged=True, migrations=["001-step"])
+        self.write_release("1.0.2", workflowBaselineVersion="1.0.1")
+
+        cr.check_releases(self.root)
 
     def test_baseline_changed_inconsistent_with_migrations_fails(self) -> None:
         self.write_release("1.0.1", baselineChanged=False, migrations=["001-step"])
@@ -864,11 +876,14 @@ class SelfHostingBaselineTest(unittest.TestCase):
         self.assertIn("--apply", message)
 
     def test_migration_ahead_of_version_is_not_required_yet(self) -> None:
-        source = sorted((self.root / "migrations").glob("*.json"))[-1]
-        data = json.loads(source.read_text(encoding="utf-8"))
-        data["id"] = "999-ahead-of-version"
-        data["from"] = data["to"]
-        data["to"] = "99.0.0"
+        data = {
+            "id": "999-ahead-of-version",
+            "from": "98.0.0",
+            "to": "99.0.0",
+            "description": "Synthetic record ahead of VERSION.",
+            "managedPaths": [],
+            "verification": [],
+        }
         (self.root / "migrations/999-ahead-of-version.json").write_text(json.dumps(data), encoding="utf-8")
 
         cr.check_self_hosting_baseline(self.root)

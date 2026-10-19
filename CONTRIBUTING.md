@@ -63,7 +63,8 @@ When changing this behavior, keep the base and governed-SDD language-policy temp
 
 Until Cardine 1.0, use the no-migration template rule under
 [Managed copies of this repository](#managed-copies-of-this-repository).
-The following describes historical migration records.
+The migration chain in `migrations/` starts empty at Cardine 1.0; see
+[migrations/README.md](migrations/README.md) for the record format.
 
 A migration that modifies framework-mandated prose already tracked as a
 capability — not just adds a new managed file — must declare `capability`
@@ -71,19 +72,13 @@ and `capabilityVersion` in its migration record, wrap the affected text in
 `<!-- MERIDIAN:BEGIN capability=<id> vN --> ... <!-- MERIDIAN:END -->`
 markers if it doesn't already carry them, and describe the change in a
 `delta` field scoped to what actually changed, not a from-scratch rewrite.
-See [migrations/CAPABILITY_MARKERS.md](migrations/CAPABILITY_MARKERS.md) for
-why: presence-only, phrase-based detection cannot tell a modified capability
-from an unmodified one, and breaks on a project whose wording predates the
-exact phrase or has diverged from the template. A migration that never
-introduces or changes a capability (framework-CLI-only changes, for example)
-does not need these fields. Do not add a migration merely to justify a version
-bump: a release that changes only the CLI is a CLI-only release (see
-[Release procedure](#release-procedure)) and ships no migration.
-
-Retrofit markers into an older migration's content opportunistically, on its
-next real change, rather than as a dedicated migration with no other
-purpose — migrations 003, 004, and 005 do not carry markers yet for exactly
-this reason.
+Presence-only, phrase-based detection cannot tell a modified capability
+from an unmodified one, and breaks on a project whose wording has diverged
+from the template. A migration that never introduces or changes a capability
+(framework-CLI-only changes, for example) does not need these fields. Do not
+add a migration merely to justify a version bump: a release that changes only
+the CLI is a CLI-only release (see [Release procedure](#release-procedure))
+and ships no migration.
 
 ## Before opening a change
 

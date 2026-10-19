@@ -17,7 +17,7 @@ MARKER_END = "<!-- MERIDIAN:END -->"
 
 
 class CapabilityMarkerTest(unittest.TestCase):
-    """Phase 1 of migrations/CAPABILITY_MARKERS.md: markers exist and are well-formed.
+    """Markers exist and are well-formed.
 
     No detection or verification code reads these yet (that's phase 2+); this
     only guards the markers themselves against silent drift or malformed
@@ -42,12 +42,6 @@ class CapabilityMarkerTest(unittest.TestCase):
         implementation = self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"))
         for pair in (("execution-command-gate", "4"), ("validation-scoping", "2"), ("spike-routing", "2"), ("host-impact-routing", "2")):
             self.assertIn(pair, implementation)
-
-    def test_manual_proceed_migration_does_not_declare_remediation_changes(self) -> None:
-        migration = json.loads((ROOT / "migrations/056-manual-governed-proceed-worktree.json").read_text())
-        self.assertNotIn("docs/workflows/REMEDIATION.md", migration["managedPaths"])
-        adoption = json.loads((ROOT / "migrations/066-machine-task-state-adoption.json").read_text())
-        self.assertIn("docs/workflows/REMEDIATION.md", adoption["managedPaths"])
 
     def test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing(self) -> None:
         blueprint = (self.WORKFLOW / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
@@ -134,26 +128,8 @@ class CapabilityMarkerTest(unittest.TestCase):
             self.assertNotIn("Reasoning justification", text, path)
             self.assertNotIn("reasoning level", text, path)
             self.assertNotIn("reasoning cap", text, path)
-        migration = json.loads(
-            (ROOT / "migrations/063-retire-reasoning-budget-contract.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(
-            migration["removes"], [{"capability": "reasoning-budget-contract", "capabilityVersion": 1}]
-        )
         self.assertIn("reasoning-budget-contract", owner_templates_migrations.retired_capability_ids(ROOT))
         self.assertNotIn("reasoning-budget-contract", owner_templates_migrations.capability_requirements(ROOT))
-
-    def test_role_scoped_agent_rules_was_retired_not_merely_deleted_by_hand(self) -> None:
-        """Task 008 retired `role-scoped-agent-rules` (docs/AUDIT_TOKEN_EFFICIENCY.md
-        F5) through migration 025's `removes` field, task 007's retirement
-        path — not a direct template edit. This is the regression guard for
-        that decision: the capability, and the section it named, must stay
-        gone, and `capability_requirements()` must no longer require it."""
-        policy = (self.WORKFLOW / "docs/CONTEXT_BUDGET_POLICY.md").read_text(encoding="utf-8")
-        self.assertNotIn("role-scoped-agent-rules", policy)
-        self.assertNotIn("Role-scoped agent-rules reading", policy)
-        self.assertIn("role-scoped-agent-rules", owner_templates_migrations.retired_capability_ids(ROOT))
-        self.assertNotIn("role-scoped-agent-rules", owner_templates_migrations.capability_requirements(ROOT))
 
     def test_minimal_read_only_status_profile_limits_context_expansion(self) -> None:
         policy = (self.WORKFLOW / "docs/CONTEXT_BUDGET_POLICY.md").read_text(encoding="utf-8")

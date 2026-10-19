@@ -137,18 +137,6 @@ class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
             ["1.1.1"],
         )
 
-    def test_upgrade_from_1_2_7_reports_migration_062(self) -> None:
-        (self.framework / "VERSION").write_text("1.2.7\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
-        self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
-
-        (self.framework / "VERSION").write_text("1.2.8\n", encoding="utf-8")
-        checked = self.run_cli("upgrade", "--check")
-
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("Meridian 1.2.7 -> 1.2.8", checked.stdout)
-        self.assertIn("MIGRATION 062-primary-project-declaration-and-review-authority", checked.stdout)
-
     def test_upgrade_migrates_a_tracked_legacy_budget_file_only_on_apply(self) -> None:
         (self.framework / "VERSION").write_text("1.2.8\n", encoding="utf-8")
         subprocess.run(("git", "init", str(self.project)), check=True, capture_output=True, text=True)
@@ -395,48 +383,8 @@ class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 1, audited.stdout + audited.stderr)
         self.assertIn("declaration/legacy-compatibility", audited.stdout)
 
-    def test_upgrade_removes_role_scoped_agent_rules_via_the_real_migration(self) -> None:
-        """Task 008, using migration 025 itself (not a synthetic fixture): a
-        project locked before the retirement has the block cleanly removed by
-        `meridian upgrade` to 1.1.22."""
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
-        policy.write_text(
-            self._reinsert_role_scoped_agent_rules_block(policy.read_text(encoding="utf-8")),
-            encoding="utf-8",
-        )
-        (self.framework / "VERSION").write_text("1.1.21\n", encoding="utf-8")
-        shutil.rmtree(self.project)
-        self.project.mkdir()
-        self.copy_governed_templates()
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        local_policy = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
-        self.assertIn("capability=role-scoped-agent-rules v1", local_policy.read_text(encoding="utf-8"))
-
-        # Restore the framework to its real, current (post-025) state.
-        policy.write_text(
-            (ROOT / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md").read_text(
-                encoding="utf-8"
-            ),
-            encoding="utf-8",
-        )
-        (self.framework / "VERSION").write_text("1.1.22\n", encoding="utf-8")
-
-        checked = self.run_cli("upgrade", "--check")
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-
-        applied = self.run_cli("upgrade", "--apply")
-        self.assertEqual(applied.returncode, 0, applied.stderr)
-        upgraded = local_policy.read_text(encoding="utf-8")
-        self.assertNotIn("role-scoped-agent-rules", upgraded)
-        self.assertNotIn("Role-scoped agent-rules reading", upgraded)
-        self.assertIn("capability=validation-scoping v2", upgraded)
-
-        audited = self.run_cli("audit", "--mode", "governed-sdd")
-        self.assertEqual(audited.returncode, 1, audited.stdout + audited.stderr)
-        self.assertIn("declaration/legacy-compatibility", audited.stdout)
-
     def test_upgrade_retires_reasoning_contract_alongside_a_marker_supersession(self) -> None:
-        """Migration 063 both supersedes execution-evidence-profile v3 and
+        """A migration that both supersedes execution-evidence-profile v3 and
         retires reasoning-budget-contract in one file; when the three-way merge
         conflicts, the retirement must still apply, not be skipped."""
         policy, local_policy = self._lock_project_with_reasoning_contract()
@@ -484,47 +432,3 @@ class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertIn("CONFLICT docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
         self.assertIn("locally customized.", local_policy.read_text(encoding="utf-8"))
 
-    def test_upgrade_refuses_role_scoped_agent_rules_removal_when_locally_modified(self) -> None:
-        """Task 008's other half of AC3: the real migration 025 must refuse
-        to discard a local edit inside the block it is retiring."""
-        policy = self.framework / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md"
-        policy.write_text(
-            self._reinsert_role_scoped_agent_rules_block(policy.read_text(encoding="utf-8")),
-            encoding="utf-8",
-        )
-        (self.framework / "VERSION").write_text("1.1.21\n", encoding="utf-8")
-        shutil.rmtree(self.project)
-        self.project.mkdir()
-        self.copy_governed_templates()
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-
-        local_policy = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
-        local_text = local_policy.read_text(encoding="utf-8")
-        local_text = local_text.replace(
-            "reading all\nof it in every session is more than a given role needs.",
-            "reading all\nof it in every session is more than a given role needs, locally customized.",
-        )
-        # Also force a genuine three-way-merge conflict on an unrelated line
-        # (both sides rename the same heading differently): migration 025's
-        # real diff only deletes the retired block, so nothing else in it
-        # would otherwise make `merge_clean` fail on its own, and this test's
-        # actual target is `remove_retired_markers`'s own refusal once the
-        # merge does fail for any reason.
-        local_text = local_text.replace("## Task-first loading", "## Task-First Loading (project wording)")
-        local_policy.write_text(local_text, encoding="utf-8")
-
-        incoming_policy = (ROOT / "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md").read_text(
-            encoding="utf-8"
-        )
-        incoming_policy = incoming_policy.replace(
-            "## Task-first loading", "## Task-First Loading (framework wording)"
-        )
-        policy.write_text(incoming_policy, encoding="utf-8")
-        (self.framework / "VERSION").write_text("1.1.22\n", encoding="utf-8")
-
-        checked = self.run_cli("upgrade", "--check")
-        self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
-        self.assertIn("CONFLICT docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
-        self.assertIn("BLOCKED", checked.stdout)
-        # The local customization must still be on disk, untouched.
-        self.assertIn("locally customized.", local_policy.read_text(encoding="utf-8"))

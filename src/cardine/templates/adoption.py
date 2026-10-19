@@ -237,7 +237,6 @@ def assisted_implementer_prompt(
             "and docs/CONTEXT_BUDGET_POLICY.md before editing.",
             "Read these framework migration records before planning the change:",
             *[f"- {path}" for path in records],
-            f"- {framework_root / 'migrations/ASSISTED_ADOPTION.md'}",
             f"The project is adopting from Meridian {source_version} in {mode} mode.",
             f"Implement only these missing framework capabilities: {migration_ids}.",
             *(
@@ -296,7 +295,6 @@ def assisted_reviewer_prompt(
             "Read the local LANGUAGE_POLICY.md, PROJECT_WORKFLOW.md, AGENTS.md,",
             "docs/CONTEXT_BUDGET_POLICY.md, the exact migration diff, and these records:",
             *[f"- {path}" for path in records],
-            f"- {framework_root / 'migrations/ASSISTED_ADOPTION.md'}",
             f"The project is adopting from Meridian {source_version} in {mode} mode.",
             "",
             scope_line,

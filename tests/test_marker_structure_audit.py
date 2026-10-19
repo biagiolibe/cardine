@@ -154,18 +154,38 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
 
 
 class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
+    def write_migration(self, identifier: str, source: str, target: str, paths: list[str], **declared: object) -> None:
+        record = {
+            "id": identifier, "from": source, "to": target, "description": "Synthetic " + identifier,
+            "managedPaths": paths, "verification": ["fixture assertions"], **declared,
+        }
+        (self.framework / "migrations" / f"{identifier}.json").write_text(json.dumps(record), encoding="utf-8")
+
     def locked_at_legacy_prompt(self, local_prompt: str | None = None) -> str:
         """Lock a project at 1.2.6 with the legacy prompt, then return the target template."""
         template = self.framework / "templates/workflows/governed-sdd" / REVIEW_PROMPT
         current = template.read_text(encoding="utf-8")
         template.write_text(LEGACY_REVIEW_PROMPT, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
+        self.write_migration("001-synthetic-legacy", "1.2.5", "1.2.6", [])
         shutil.rmtree(self.project)
         self.project.mkdir()
         copy_tree(self.framework / "templates/workflows/governed-sdd", self.project)
         self.lock()
         template.write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.7\n", encoding="utf-8")
+        self.write_migration(
+            "002-synthetic-restructure", "1.2.6", "1.2.7", [REVIEW_PROMPT],
+            restructures=[{
+                "path": REVIEW_PROMPT,
+                "replacedBy": {"capability": "code-review-prompt", "capabilityVersion": 3},
+                "retiredMarkers": [
+                    {"capability": "task-worktree-review", "capabilityVersion": 4},
+                    {"capability": "manual-verification-review-check", "capabilityVersion": 1},
+                    {"capability": "ci-verified-validation", "capabilityVersion": 1},
+                ],
+            }],
+        )
         if local_prompt is not None:
             (self.project / REVIEW_PROMPT).write_text(local_prompt, encoding="utf-8")
         return current

@@ -81,27 +81,6 @@ class CliEntryTest(MeridianCliFixtureMixin, unittest.TestCase):
             "# Project instructions\n\nRead AGENTS.md before task work.\n",
         )
 
-    def test_upgrade_converts_a_legacy_pointer_when_pointer_migration_is_pending(self) -> None:
-        (self.framework / "VERSION").write_text("1.1.32\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        pointer = self.project / "CLAUDE.md"
-        pointer.write_text(
-            "# Project instructions\n\nThis repository is governed by `AGENTS.md`, which is authoritative.\n\n"
-            "Every Meridian capability marker lives in `AGENTS.md`, once.\n\nKeep this file a pointer.\n",
-            encoding="utf-8",
-        )
-        (self.framework / "VERSION").write_text("1.1.33\n", encoding="utf-8")
-
-        checked = self.run_cli("upgrade", "--check")
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("POINTER-UPGRADE CLAUDE.md", checked.stdout)
-
-        applied = self.run_cli("upgrade", "--apply")
-        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        upgraded = pointer.read_text(encoding="utf-8")
-        self.assertEqual(upgraded.count("<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->"), 1)
-        self.assertEqual(templates_markers.marker_pairs(upgraded), [])
-
     def test_explicit_agents_pointer_rejects_duplicate_or_capability_markers(self) -> None:
         self.assertFalse(
             templates_markers.is_agents_pointer(

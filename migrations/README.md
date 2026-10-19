@@ -1,6 +1,15 @@
-# Meridian Framework Migrations
+# Framework Migrations
 
-Each JSON record describes one released workflow transition. The framework
+The chain is empty. Cardine 1.0 starts with no migration records; the records
+Meridian accumulated before 1.0 were deleted with the history they described.
+Until 1.0, template changes follow the no-migration rule in
+[CONTRIBUTING.md](../CONTRIBUTING.md#managed-copies-of-this-repository). An
+empty chain is valid: the upgrade CLI applies nothing, and a release that
+changes no template is a CLI-only release.
+
+A record is added only when a published release changes managed templates.
+Records are named `NNN-slug.json`, numbered contiguously from `001`. Each
+JSON record describes one released workflow transition. The framework
 upgrade CLI uses the records to determine which migrations a project has
 received and uses the installed baseline plus the target templates to perform
 their managed-file transformation deterministically.
@@ -12,9 +21,7 @@ to rewrite historical behavior; add a corrective migration instead.
 
 The records do not authorize an overwrite. `meridian upgrade --apply` first
 plans a three-way merge for every managed file and applies nothing if any file
-conflicts. Projects created before `.meridian/manifest.json` existed must use
-`meridian lock` to start tracking future migrations; absent historical
-baselines cannot be inferred safely.
+conflicts.
 
 A migration may declare `adoptExistingPaths` as a list containing a subset of
 its normalized relative `managedPaths`. This is an explicit exception for a
@@ -32,10 +39,10 @@ A migration record declares `capability` and `capabilityVersion` when it
 introduces or changes a rule the framework tracks and verifies by behavior
 rather than by file hash — required whenever the migration modifies
 already-tracked capability text, not just when adding one; a migration with
-neither field is never checked for that capability's presence. See
-[CAPABILITY_MARKERS.md](CAPABILITY_MARKERS.md) for the full design (phases
-1-4 shipped) and why presence-only, phrase-based detection stops working
-once a project's wording diverges from the template. A version-bump
+neither field is never checked for that capability's presence.
+Presence-only, phrase-based detection stops working once a project's wording
+diverges from the template, so the marker catalog in
+[capabilities/](../capabilities/) is the source of truth. A version-bump
 migration also declares a `delta` describing only what changed, so an
 implementer's job stays scoped instead of implying a from-scratch rewrite.
 `meridian audit` mechanically verifies a project's protected capability

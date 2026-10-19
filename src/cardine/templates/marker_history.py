@@ -66,8 +66,8 @@ def capability_presence_map(
     marker is found, a capability with a pre-marker legacy check
     (`LEGACY_CAPABILITY_EVIDENCE`) still counts as present at v1 — never
     higher, since that check cannot distinguish v1 from any later version.
-    See migrations/CAPABILITY_MARKERS.md for why this replaced pure phrase
-    matching without breaking every project adopted before markers existed.
+    Pure phrase matching is the fallback only for projects adopted before
+    markers existed.
     """
     if mode != "governed-sdd":
         return {}
@@ -112,8 +112,9 @@ def capability_presence_map(
 
 
 def retired_capability_versions(framework_root: Path) -> set[tuple[str, int]]:
-    """Every exact (capability, version) pair ever declared `removes` by a
-    migration, regardless of which files its `managedPaths` named. Used by
+    """Every exact (capability, version) pair retired by the marker catalog or
+    declared `removes` by a migration, regardless of which files its
+    `managedPaths` named. Used by
     `audit_capability_markers` to tell "stale, upgrade hasn't run yet" apart
     from "retired, and this marker should already be gone" — the latter
     reported `FAIL` rather than `SKIP`, since `meridian upgrade`'s own
@@ -121,7 +122,13 @@ def retired_capability_versions(framework_root: Path) -> set[tuple[str, int]]:
     so a marker in a file that migration's `managedPaths` omitted would
     otherwise sit as an invisible `SKIP` forever.
     """
-    pairs: set[tuple[str, int]] = set()
+    from cardine.templates.catalog import load_marker_catalog
+
+    pairs: set[tuple[str, int]] = {
+        (capability, int(item["requiredVersion"]))
+        for capability, item in load_marker_catalog(framework_root).items()
+        if item["retired"]
+    }
     for path in sorted((framework_root / "migrations").glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
         for capability, version, _superseded_by in migration_capability_removals(data):
