@@ -13,7 +13,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian
+import cardine_cli
 from stop_recovery_support import run_recovery, resume_from
 from cardine.tasks import transitions as owner_tasks_transitions
 from cardine.shared import context as owner_shared_context
@@ -46,7 +46,7 @@ class MachineTaskStateTest(unittest.TestCase):
         return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True, text=True).stdout.strip()
 
     def cli(self, status):
-        return subprocess.run([sys.executable, str(ROOT / "scripts/meridian.py"), "task", "transition", "001", status,
+        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "task", "transition", "001", status,
                                "--project", str(self.root), "--format", "json"], capture_output=True, text=True)
 
     def state(self, workflow="lean-delivery", steps=()):
@@ -153,7 +153,7 @@ class MachineTaskStateTest(unittest.TestCase):
     def test_atomic_replace_and_write_failure_preserves_files(self):
         self.write(self.state())
         before = self.path.read_bytes(), self.record.read_bytes()
-        real_replace = meridian.os.replace
+        real_replace = cardine_cli.os.replace
         calls = []
 
         def replace(source, destination):
@@ -163,12 +163,12 @@ class MachineTaskStateTest(unittest.TestCase):
             calls.append(destination)
             real_replace(source, destination)
 
-        with mock.patch.object(meridian.os, "replace", side_effect=OSError("replacement failed")):
+        with mock.patch.object(cardine_cli.os, "replace", side_effect=OSError("replacement failed")):
             with self.assertRaises(OSError):
                 owner_tasks_transitions.transition_task_state(self.root, "001", "DONE")
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.assertEqual(list(self.path.parent.iterdir()), [self.path])
-        with mock.patch.object(meridian.os, "replace", side_effect=replace):
+        with mock.patch.object(cardine_cli.os, "replace", side_effect=replace):
             owner_tasks_transitions.transition_task_state(self.root, "001", "DONE")
         self.assertEqual(calls, [self.path])
 

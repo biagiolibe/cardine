@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 import json
 import subprocess
 import sys

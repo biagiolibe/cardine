@@ -783,7 +783,7 @@ def wait_for_publication(root: Path, version: str, repository: str | None, tag_h
         raise ReleaseError("release verification failed: release must be published, stable, and latest")
     print(f"Workflow succeeded: {run_url}")
     print(f"Release verified: {details['url']}")
-    self_check = run_command(root, ["bin/meridian", "self-check", "--check-latest"])
+    self_check = run_command(root, ["bin/cardine", "self-check", "--check-latest"])
     output = (self_check.stdout.strip() or self_check.stderr.strip() or f"exit {self_check.returncode}")
     print(f"Self-check: {output}")
 

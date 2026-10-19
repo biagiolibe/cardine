@@ -20,7 +20,7 @@ PREFIX_RULE = re.compile(
     r'^prefix_rule\(pattern=\[[^\n]+\], decision="(allow|prompt|forbidden)"\)$'
 )
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import files as owner_templates_files
 
 

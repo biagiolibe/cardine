@@ -11,7 +11,7 @@ from unittest.mock import patch
 from urllib.error import URLError, HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-import meridian
+import cardine_cli
 from cardine import cli as owner_cli
 from cardine.release import update as owner_release_update
 from cardine.shared import journal as owner_shared_journal
@@ -145,7 +145,7 @@ class SelfUpdateTest(unittest.TestCase):
         self.assertIn('/plugin marketplace update meridian', str(error.exception))
 
     def test_post_apply_verification(self):
-        original = meridian.read_raw_version
+        original = cardine_cli.read_raw_version
         calls = []
         def read(root):
             calls.append(root)
@@ -177,7 +177,7 @@ class SelfUpdateTest(unittest.TestCase):
                                       'self-update', '--check']), patch.object(
                 owner_cli, 'run_self_update', return_value=0) as update:
             self.assertEqual(owner_cli._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
-        update.assert_called_once_with(Path(meridian.__file__).resolve().parents[1],
+        update.assert_called_once_with(Path(cardine_cli.__file__).resolve().parents[1],
                                        apply=False, target_tag=None)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             owner_cli.build_parser().parse_args(['self-update'])

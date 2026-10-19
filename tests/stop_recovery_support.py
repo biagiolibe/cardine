@@ -15,7 +15,7 @@ def run_recovery(command: str, cwd: Path, worktree_root: Path | None = None) -> 
         launcher = Path(directory) / "meridian"
         launcher.write_text(
             f"#!{sys.executable}\nimport os, sys\n"
-            f"os.execv({sys.executable!r}, [{sys.executable!r}, {str(ROOT / 'scripts/meridian.py')!r}, *sys.argv[1:]])\n",
+            f"os.execv({sys.executable!r}, [{sys.executable!r}, {str(ROOT / 'scripts/cardine_cli.py')!r}, *sys.argv[1:]])\n",
             encoding="utf-8",
         )
         launcher.chmod(0o755)

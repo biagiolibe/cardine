@@ -6,10 +6,10 @@ import json
 import re
 import unittest
 
-from meridian_cli_support import MeridianCliFixtureMixin
+from cardine_cli_support import CardineCliFixtureMixin
 
 
-class CapabilityAuditTest(MeridianCliFixtureMixin, unittest.TestCase):
+class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
 
 
     def test_audit_passes_on_unmodified_markers(self) -> None:

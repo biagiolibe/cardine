@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import audit as owner_templates_audit
 from cardine.shared import context as owner_shared_context
 from cardine.shared import constants
@@ -39,8 +39,8 @@ REQUIRED_FILES = (
     ".claude-plugin/plugin.json",
     ".claude-plugin/marketplace.json",
     "hooks/stop-audit.sh",
-    "bin/meridian",
-    "scripts/meridian.py",
+    "bin/cardine",
+    "scripts/cardine_cli.py",
     "capabilities/catalog-v1.json",
     "capabilities/stop-codes-v1.json",
     "capabilities/retired-text-v1.json",
@@ -111,7 +111,7 @@ def check_template_context_sizes() -> None:
     labels = {"lean-delivery": "Lean Delivery", "governed-sdd": "Governed SDD"}
     for mode, workflow_label in labels.items():
         project = ROOT / "templates" / "workflows" / mode
-        policy = project / meridian.CONTEXT_SIZE_POLICY_PATH
+        policy = project / cardine_cli.CONTEXT_SIZE_POLICY_PATH
         if not policy.is_file():
             fail(f"context-size policy is missing: {policy.relative_to(ROOT)}")
         rows = {
@@ -121,7 +121,7 @@ def check_template_context_sizes() -> None:
             )
             if found_workflow == workflow_label
         }
-        for role in meridian.CONTEXT_SIZE_ROLES[mode]:
+        for role in cardine_cli.CONTEXT_SIZE_ROLES[mode]:
             if role not in rows:
                 fail(f"context-size ceiling is missing for {mode}/{role}")
             report = owner_shared_context.context_size_report(project, role)
@@ -402,7 +402,7 @@ def cli_source_files(root: Path) -> list[Path]:
     """
     package = {path for path in (root / "src/cardine").rglob("*.py")
                if (root / "src/cardine/console") not in path.parents}
-    return sorted({root / "scripts" / name for name in ("meridian.py", "task_state.py", "console_workflow.py")
+    return sorted({root / "scripts" / name for name in ("cardine_cli.py", "task_state.py", "console_workflow.py")
                    if (root / "scripts" / name).is_file()} | package)
 
 
@@ -514,7 +514,7 @@ def check_plugin_version(root: Path = ROOT) -> None:
 def check_capability_catalog(root: Path = ROOT) -> None:
     try:
         catalog = catalog_provider.load_capability_catalog(root)
-    except meridian.CardineError as error:
+    except cardine_cli.CardineError as error:
         fail(f"invalid capability catalog: {error}")
     profile = catalog.profile("meridian-self-hosting")
     if profile is None or not profile.capabilities:
@@ -562,7 +562,7 @@ def check_migrations(root: Path = ROOT) -> None:
     # A CLI-only release bumps VERSION without a migration, so the last
     # migration may lag behind VERSION but must never be ahead of it. An empty
     # chain has no last migration.
-    if previous_to is not None and meridian.version_key(previous_to) > meridian.version_key(current_version):
+    if previous_to is not None and cardine_cli.version_key(previous_to) > cardine_cli.version_key(current_version):
         fail("a migration must never target a version ahead of the current release")
     for error in owner_templates_migration_audit.validate_capability_moves(root, "governed-sdd"):
         fail(f"invalid capability move: {error}")
@@ -584,7 +584,7 @@ def check_releases(root: Path = ROOT) -> None:
     release_dir = root / "releases"
     paths = list(release_dir.glob("*.json")) if release_dir.is_dir() else []
     # Numeric order, so 1.1.10 follows 1.1.9; duplicates cannot occur per filename.
-    paths.sort(key=lambda path: meridian.version_key(re.split(r"[-+]", path.stem)[0]))
+    paths.sort(key=lambda path: cardine_cli.version_key(re.split(r"[-+]", path.stem)[0]))
     if not any(path.stem == current_version for path in paths):
         fail(f"releases/{current_version}.json is missing for the current VERSION")
     migration_targets = {}
@@ -616,21 +616,21 @@ def check_releases(root: Path = ROOT) -> None:
                     "workflowBaselineVersion"
                 )
         records.append(data)
-    versions = [meridian.version_key(record["version"]) for record in records]
+    versions = [cardine_cli.version_key(record["version"]) for record in records]
     if any(a >= b for a, b in zip(versions, versions[1:])):
         fail("release versions are not monotonically increasing across files")
-    latest = max(records, key=lambda record: meridian.version_key(record["version"]))
+    latest = max(records, key=lambda record: cardine_cli.version_key(record["version"]))
     if migration_targets:
         try:
             expected_baseline = owner_templates_files.latest_migration_to(root, latest["version"])
-        except meridian.CardineError as error:
+        except cardine_cli.CardineError as error:
             fail(f"cannot derive workflowBaselineVersion: {error}")
         if latest["workflowBaselineVersion"] != expected_baseline:
             fail(
                 f"releases/{latest['version']}.json workflowBaselineVersion does not match "
                 f"the migration-derived baseline {expected_baseline}"
             )
-    elif meridian.version_key(latest["workflowBaselineVersion"]) > meridian.version_key(latest["version"]):
+    elif cardine_cli.version_key(latest["workflowBaselineVersion"]) > cardine_cli.version_key(latest["version"]):
         fail(f"releases/{latest['version']}.json workflowBaselineVersion is ahead of its version")
 
 
@@ -824,7 +824,7 @@ def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
                     if form == "managed-copy" and relative not in managed_files:
                         diagnostics.append(f"missing managed-copy surface {relative}")
                     continue
-                digest = meridian.sha256(path)
+                digest = cardine_cli.sha256(path)
                 surface_digests.add(f"sha256:{digest}")
                 if form == "managed-copy":
                     if relative not in managed_files:
@@ -936,7 +936,7 @@ def main() -> None:
     check_json()
     check_stop_code_registry()
     check_plugin_version()
-    meridian.load_retired_text_registry(ROOT)
+    cardine_cli.load_retired_text_registry(ROOT)
     check_capability_catalog()
     check_migrations()
     check_releases()

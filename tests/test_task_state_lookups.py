@@ -13,7 +13,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.shared import git as shared_git  # noqa: E402
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import checkout as owner_worktree_checkout
@@ -33,7 +33,7 @@ class TaskStateLookupTest(unittest.TestCase):
             (self.root / "tasks" / f"{task_id}.md").write_text(
                 f"> **ID**: `{task_id}`\n\nStatus: IN_PROGRESS\n", encoding="utf-8"
             )
-        state_dir = self.root / ".git" / meridian.WORKTREE_STATE_DIRECTORY
+        state_dir = self.root / ".git" / cardine_cli.WORKTREE_STATE_DIRECTORY
         state_dir.mkdir()
         (state_dir / "001.json").write_text(json.dumps({
             "task_id": "001", "branch": "task-001", "worktree": str(self.worker),

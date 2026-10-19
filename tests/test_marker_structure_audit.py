@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import audit as owner_templates_audit
 from cardine.templates import catalog as owner_templates_catalog
 
@@ -26,7 +26,7 @@ import cardine.shared.errors as shared_errors
 from cardine.templates import marker_audit as owner_templates_marker_audit
 from cardine.templates import migrations as owner_templates_migrations
 
-CLI = ROOT / "scripts" / "meridian.py"
+CLI = ROOT / "scripts" / "cardine_cli.py"
 REVIEW_PROMPT = "docs/CODE_REVIEW_PROMPT.md"
 
 # A compact stand-in for the 1.2.6 prompt: three inline markers inside prose.

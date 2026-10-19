@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian
+import cardine_cli
 
 from cardine.shared import constants as shared_constants
 from cardine.shared import hashing as shared_hashing
@@ -116,7 +116,7 @@ class InstallationFixture:
                 "state": "PASS",
                 "evidence": [f"probe:{verification_path}"],
                 "verifiedAt": "2026-09-28T00:00:00Z",
-                "verifierVersion": meridian.read_version(self.framework),
+                "verifierVersion": cardine_cli.read_version(self.framework),
                 "notApplicableRationale": None,
             }
         manifest["managedFiles"] = managed_files
@@ -163,7 +163,7 @@ def copy_hook(root: Path, filename: str) -> Path:
     runner = root / "bin/meridian"
     runner.parent.mkdir(parents=True, exist_ok=True)
     runner.write_text(
-        "#!/bin/sh\nexec " + shlex.quote(str(ROOT / "bin/meridian")) + ' "$@"\n',
+        "#!/bin/sh\nexec " + shlex.quote(str(ROOT / "bin/cardine")) + ' "$@"\n',
         encoding="utf-8",
     )
     runner.chmod(0o755)

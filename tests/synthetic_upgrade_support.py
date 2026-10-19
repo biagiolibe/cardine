@@ -13,7 +13,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from meridian_cli_support import MeridianCliFixtureMixin, ROOT
+from cardine_cli_support import CardineCliFixtureMixin, ROOT
 from cardine.templates import markers
 
 
@@ -164,7 +164,7 @@ def rich_upgrade_framework(root: Path) -> SyntheticFramework:
     return fixture
 
 
-class SyntheticUpgradeFixtureMixin(MeridianCliFixtureMixin):
+class SyntheticUpgradeFixtureMixin(CardineCliFixtureMixin):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         root = Path(self.temporary.name)

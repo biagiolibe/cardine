@@ -12,13 +12,13 @@ import subprocess
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.templates import markers as templates_markers
 
-from meridian_cli_support import MeridianCliFixtureMixin, ROOT
+from cardine_cli_support import CardineCliFixtureMixin, ROOT
 
 
-class MigrationRetirementTest(MeridianCliFixtureMixin, unittest.TestCase):
+class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_stop_before_retirement_caps_the_plan_before_the_retirement_migration(self) -> None:
         self.configure_long_lag_move_fixture()
         self.reset_project_to_installed_baseline()

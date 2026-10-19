@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI, ROOT
+from cardine_cli_support import CLI, ROOT
 import subprocess
 import sys
 import tempfile
@@ -12,7 +12,7 @@ from pathlib import Path
 import cardine.shared.errors as shared_errors
 from cardine.hosts import codex as owner_hosts_codex
 from cardine.hosts import setup as owner_hosts_setup
-import meridian
+import cardine_cli
 
 
 class CodexProfileRepairTest(unittest.TestCase):
@@ -50,7 +50,7 @@ class CodexProfileRepairTest(unittest.TestCase):
             'notify = ["/usr/bin/example", "turn-ended"]\n\n'
             "[plugins.example]\nenabled = true\n\n"
             "[features]\nnetwork_proxy = false\n\n"
-            f"{meridian.CODEX_MANAGED_BEGIN}\n"
+            f"{cardine_cli.CODEX_MANAGED_BEGIN}\n"
             + (tables if tables is not None else self.profile_tables())
             + "\n[projects.example]\ntrust_level = \"trusted\"\n"
         )
@@ -120,7 +120,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         old_root = self.root / "old-worktrees"
         base = self.rewritten(tables=self.profile_tables(old_root))
         shapes = {
-            "moved": meridian.CODEX_MANAGED_END + "\n" + base,
+            "moved": cardine_cli.CODEX_MANAGED_END + "\n" + base,
             "normalized": base.replace("# MERIDIAN:BEGIN", "# MERIDIAN:BEGIN  "),
         }
         for name, text in shapes.items():
@@ -134,7 +134,7 @@ class CodexProfileRepairTest(unittest.TestCase):
                 )
 
     def test_every_damaged_marker_shape_is_repaired_to_a_fixed_point(self) -> None:
-        begin, end = meridian.CODEX_MANAGED_BEGIN, meridian.CODEX_MANAGED_END
+        begin, end = cardine_cli.CODEX_MANAGED_BEGIN, cardine_cli.CODEX_MANAGED_END
         tables = self.profile_tables()
         shapes = {
             "end-missing": self.rewritten(),
@@ -176,8 +176,8 @@ class CodexProfileRepairTest(unittest.TestCase):
         repaired = self.config.read_text(encoding="utf-8")
         self.assertIn("# app-managed header", repaired)
         self.assertIn("[plugins.example]", repaired)
-        self.assertEqual(repaired.count(meridian.CODEX_MANAGED_BEGIN), 1)
-        self.assertEqual(repaired.count(meridian.CODEX_MANAGED_END), 1)
+        self.assertEqual(repaired.count(cardine_cli.CODEX_MANAGED_BEGIN), 1)
+        self.assertEqual(repaired.count(cardine_cli.CODEX_MANAGED_END), 1)
         self.assertEqual(stale.read_text(encoding="utf-8"), "stale first-apply backup\n")
         backup = self.config.with_name("config.toml.meridian-repair.bak")
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
@@ -186,7 +186,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees).status, "ready")
 
         # A later app rewrite gets its own backup instead of overwriting the earlier one.
-        later = repaired.replace(meridian.CODEX_MANAGED_END + "\n", "")
+        later = repaired.replace(cardine_cli.CODEX_MANAGED_END + "\n", "")
         self.config.write_text(later, encoding="utf-8")
         self.assertTrue(owner_hosts_codex.apply_codex_configuration(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)))
         self.assertEqual(backup.read_text(encoding="utf-8"), original)
@@ -219,7 +219,7 @@ class CodexProfileRepairTest(unittest.TestCase):
             ),
             "foreign-unmarked": (
                 self.rewritten(tables=self.profile_tables(extends='":read-only"')).replace(
-                    meridian.CODEX_MANAGED_BEGIN + "\n", ""
+                    cardine_cli.CODEX_MANAGED_BEGIN + "\n", ""
                 ),
                 "extends",
             ),
@@ -250,9 +250,9 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def test_stray_markers_without_a_profile_remain_blocked(self) -> None:
         for text in (
-            f"{meridian.CODEX_MANAGED_BEGIN}\nmodel = \"x\"\n",
-            f"model = \"x\"\n{meridian.CODEX_MANAGED_END}\n",
-            f"{meridian.CODEX_MANAGED_END}\n{meridian.CODEX_MANAGED_BEGIN}\n",
+            f"{cardine_cli.CODEX_MANAGED_BEGIN}\nmodel = \"x\"\n",
+            f"model = \"x\"\n{cardine_cli.CODEX_MANAGED_END}\n",
+            f"{cardine_cli.CODEX_MANAGED_END}\n{cardine_cli.CODEX_MANAGED_BEGIN}\n",
         ):
             with self.subTest(text=text):
                 self.assert_blocked_unchanged(text, "incomplete or damaged")
@@ -275,14 +275,14 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertEqual(checked.returncode, 0, checked.stderr)
         self.assertIn("status: repair-required", checked.stdout)
         self.assertIn("ownership-metadata-repair", checked.stdout)
-        self.assertIn(f"+{meridian.CODEX_MANAGED_END}", checked.stdout)
+        self.assertIn(f"+{cardine_cli.CODEX_MANAGED_END}", checked.stdout)
         self.assertEqual(self.config.read_text(encoding="utf-8"), text)
         self.assertFalse(list(self.root.glob("*.bak")))
 
         applied = self.run_cli("--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
         self.assertIn("does not prove", applied.stdout)
-        self.assertIn(meridian.CODEX_MANAGED_END, self.config.read_text(encoding="utf-8"))
+        self.assertIn(cardine_cli.CODEX_MANAGED_END, self.config.read_text(encoding="utf-8"))
         repeated = self.run_cli("--apply")
         self.assertEqual(repeated.returncode, 0, repeated.stderr)
         self.assertIn("status: ready", repeated.stdout)

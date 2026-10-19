@@ -9,14 +9,14 @@ import json
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
 
-from meridian_cli_support import MeridianCliFixtureMixin
+from cardine_cli_support import CardineCliFixtureMixin
 
 
-class ManifestProtocolTest(MeridianCliFixtureMixin, unittest.TestCase):
+class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_lock_rejects_a_prerelease_framework_version_without_writing(self) -> None:
         (self.framework / "VERSION").write_text("1.2.0-rc.1\n", encoding="utf-8")
 
@@ -55,12 +55,12 @@ class ManifestProtocolTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertNotIn("+dev", manifest_text)
 
     def test_parse_semver_separates_prerelease_and_build(self) -> None:
-        parsed = meridian.parse_semver("1.2.3-rc.1+build.9")
+        parsed = cardine_cli.parse_semver("1.2.3-rc.1+build.9")
         self.assertEqual((parsed.major, parsed.minor, parsed.patch), (1, 2, 3))
         self.assertEqual((parsed.prerelease, parsed.build), ("rc.1", "build.9"))
         for invalid in ("1.2", "1.2.3-", "01.2.3", "v1.2.3", "1.2.3+"):
             with self.assertRaises(shared_errors.CardineError):
-                meridian.parse_semver(invalid)
+                cardine_cli.parse_semver(invalid)
 
     def test_cli_only_upgrade_advances_framework_without_rekeying_baseline(self) -> None:
         self.configure_version_split_fixture()

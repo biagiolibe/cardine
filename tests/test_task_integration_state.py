@@ -11,7 +11,7 @@ from pathlib import Path
 
 from tests import worktree_support as fixtures
 
-import meridian
+import cardine_cli
 from cardine.lifecycle import closure as owner_lifecycle_closure
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
@@ -327,7 +327,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 bin_dir.mkdir(exist_ok=True)
                 cli = bin_dir / "meridian"
                 cli.write_text("#!/bin/sh\nexec " + shlex.join([
-                    sys.executable, str(fixtures.ROOT / "scripts/meridian.py")]) + ' "$@"\n')
+                    sys.executable, str(fixtures.ROOT / "scripts/cardine_cli.py")]) + ' "$@"\n')
                 cli.chmod(0o755)
                 env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"])
                 for command in result["commands"]:

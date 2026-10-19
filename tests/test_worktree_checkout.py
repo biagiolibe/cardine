@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-import meridian
+import cardine_cli
 from cardine.integration import merge as owner_integration_merge
 from cardine.worktree import closure_status as owner_worktree_closure_status
 from cardine.integration import evidence as owner_integration_evidence
@@ -33,7 +33,7 @@ import worktree_support as support
 
 class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
     def test_prepare_does_not_read_or_write_the_retired_ledger(self):
-        ledger = meridian.canonical_git_common_dir(self.primary) / "meridian-budget.json"
+        ledger = cardine_cli.canonical_git_common_dir(self.primary) / "meridian-budget.json"
         ledger.write_text("invalid retired ledger\n", encoding="utf-8")
         self.assertTrue(self.prepare()["created"])
         self.assertEqual(ledger.read_text(encoding="utf-8"), "invalid retired ledger\n")
@@ -53,7 +53,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(report["errors"], ["stale-base-record"])
         self.assertEqual(report["stop_reason"], "STALE_WORKTREE_BASE")
         self.assertEqual(before, self.snapshot(worktree))
-        command = [sys.executable, str(ROOT / "scripts/meridian.py"), "worktree", "check",
+        command = [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "worktree", "check",
                    "056", "--project", str(self.primary), "--worktree-root", str(self.worktree_root),
                    "--format", "json"]
         checked = subprocess.run(command, cwd=worktree, text=True, capture_output=True, check=False)
@@ -224,7 +224,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         state_path = next(state_directory.glob("*.json"))
         original = state_path.read_bytes()
         with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")), \
-                mock.patch.object(meridian.tempfile, "mkstemp", side_effect=AssertionError("temporary file")):
+                mock.patch.object(cardine_cli.tempfile, "mkstemp", side_effect=AssertionError("temporary file")):
             resumed = self.resume()
         self.assertEqual(sorted(item.name for item in state_directory.iterdir()), before)
         self.assertEqual(state_path.read_bytes(), original)
@@ -347,7 +347,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertIn("--resume", arguments)
         clean = project_console.Task(**{**task.__dict__, "active_writer": False})
         self.assertEqual(clean.launch_command, "Proceed with 056")
-        command = [sys.executable, str(ROOT / "scripts/meridian.py"), *arguments,
+        command = [sys.executable, str(ROOT / "scripts/cardine_cli.py"), *arguments,
                    "--project", str(self.primary), "--worktree-root", str(self.worktree_root)]
         ordinary = [part for part in command if part != "--resume"]
         refused = subprocess.run(ordinary, cwd=self.primary, text=True, capture_output=True, check=False)

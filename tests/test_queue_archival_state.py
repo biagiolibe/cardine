@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian
+import cardine_cli
 from cardine.integration import projections as owner_integration_projections
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity

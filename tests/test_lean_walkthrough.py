@@ -29,7 +29,7 @@ class LeanWalkthroughTest(unittest.TestCase):
             if kind == "bash":
                 # Replay the published commands against this checkout's explicit entry point.
                 # The document's PATH setup must not select an installed command in tests.
-                script.append(re.sub(r"(?m)^meridian(?=\s)", shlex.quote(str(ROOT / "bin/meridian")), body))
+                script.append(re.sub(r"(?m)^meridian(?=\s)", shlex.quote(str(ROOT / "bin/cardine")), body))
             else:
                 self.assertTrue(kind.startswith("text checked="), kind)
                 path = kind.removeprefix("text checked=")

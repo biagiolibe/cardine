@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "meridian.py"
+CLI = ROOT / "scripts" / "cardine_cli.py"
 
 
 class ContextSizeTest(unittest.TestCase):

@@ -18,7 +18,7 @@ and deprecation rules are in [CONTRIBUTING.md](../CONTRIBUTING.md#versioning-and
   may change in any minor release; the changelog names each change.
 - **Internal**: framework implementation and maintenance helpers labelled
   framework-internal in CLI help, plus everything under `scripts/` (the public
-  CLI entry point is `bin/meridian`), `evals/`, and this repository's own task
+  CLI entry point is `bin/cardine`), `evals/`, and this repository's own task
   and documentation records. There is no compatibility promise.
 
 A surface named by managed workflow text becomes stable when it ships. The

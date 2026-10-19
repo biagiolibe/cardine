@@ -13,10 +13,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.shared import journal as owner_shared_journal
 
-CLI = ROOT / "scripts/meridian.py"
+CLI = ROOT / "scripts/cardine_cli.py"
 
 
 class CodexWorktreeHooksTest(unittest.TestCase):

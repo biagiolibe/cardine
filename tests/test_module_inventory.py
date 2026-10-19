@@ -55,7 +55,7 @@ class ModuleInventoryTest(unittest.TestCase):
         self.assertEqual(baseline["commit"], "ceb84fdd88d2e0819ab42f6b1d6e5266fffff8fd")
         self.assertEqual(len(baseline["bindings"]), 506)
         owners = defaultdict(list)
-        paths = [ROOT / "scripts/meridian.py", *sorted((ROOT / "src/cardine").rglob("*.py"))]
+        paths = [ROOT / "scripts/cardine_cli.py", *sorted((ROOT / "src/cardine").rglob("*.py"))]
         for path in paths:
             for name in definitions(ast.parse(path.read_text(encoding="utf-8"))):
                 # The console already had its own main before extraction; the
@@ -132,7 +132,7 @@ class ModuleInventoryTest(unittest.TestCase):
                     self.assertLessEqual(len((ROOT / name).read_text().splitlines()), 1500)
 
     def test_compatibility_adapters_have_no_implementation(self):
-        for name in ("meridian.py", "project_console.py", "task_state.py", "console_workflow.py"):
+        for name in ("cardine_cli.py", "project_console.py", "task_state.py", "console_workflow.py"):
             with self.subTest(adapter=name):
                 tree = ast.parse((ROOT / "scripts" / name).read_text(encoding="utf-8"))
                 self.assertEqual(list(definitions(tree)), [])

@@ -10,7 +10,7 @@ from unittest import mock
 import test_execution_boundaries as boundaries
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-import meridian
+import cardine_cli
 from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.shared.errors as shared_errors
@@ -49,7 +49,7 @@ class TaskCloseTest(unittest.TestCase):
         with mock.patch.object(owner_tasks_transitions, 'datetime', clock):
             expected = owner_tasks_transitions.transition_task_state(self.worker, '001', 'DONE')
             # Restore only the output of the comparison transition in this fixture.
-            meridian.state_path(self.worker, '001').unlink()
+            cardine_cli.state_path(self.worker, '001').unlink()
             (self.worker / self.record).write_bytes(self.git('show', 'HEAD:tasks/001.md').encode() + b'\n')
             before = self.git('rev-parse', 'HEAD')
             result = owner_tasks_transitions.close_task(self.worker, '001')
@@ -86,13 +86,13 @@ class TaskCloseTest(unittest.TestCase):
         self.identity.task_path.rename(archive)
         self.commit('Archive without state')
         self.refused('TASK_STATUS_REJECTED')
-        self.assertFalse(meridian.state_path(self.worker, '001').exists())
+        self.assertFalse(cardine_cli.state_path(self.worker, '001').exists())
 
     def test_done_and_invalid_state_refuse_without_archive(self):
         owner_tasks_transitions.transition_task_state(self.worker, '001', 'DONE')
         self.commit('Already done')
         self.refused('TASK_STATUS_REJECTED')
-        path = meridian.state_path(self.worker, '001')
+        path = cardine_cli.state_path(self.worker, '001')
         path.write_text('{}\n')
         self.commit('Invalid state')
         self.refused('TASK_STATE_INVALID')

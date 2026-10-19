@@ -13,7 +13,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian
+import cardine_cli
 from cardine.hosts import setup as owner_hosts_setup
 import cardine.shared.errors as shared_errors
 from cardine.hosts import codex as owner_hosts_codex
@@ -99,7 +99,7 @@ class CodexUserRulesTest(unittest.TestCase):
         def setup():
             return owner_hosts_setup.plan_setup(None, config, home=self.home, environment={}, framework_root=ROOT, project_root=self.home)
         def doctor():
-            with mock.patch.object(meridian.shutil, "which", return_value=None):
+            with mock.patch.object(cardine_cli.shutil, "which", return_value=None):
                 return owner_hosts_setup.codex_doctor(self.home, config, self.home / ".meridian/worktrees", home=self.home)["user-command-policy"]
         self.assertEqual(doctor(), "missing")
         plan = setup()

@@ -13,7 +13,7 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 from cardine.integration import evidence as owner_integration_evidence
 import cardine.shared.constants as shared_constants
 
@@ -97,7 +97,7 @@ class ValidationEvidenceTest(unittest.TestCase):
         record = self.record()
         record.pop("exit_code")
         record.update({"status": "running", "started_at": "2026-10-02T10:00:00Z", "log": "logs/113.txt"})
-        with mock.patch.object(meridian.subprocess, "run") as run:
+        with mock.patch.object(cardine_cli.subprocess, "run") as run:
             report, code = owner_integration_evidence.check_validation_evidence(self.write(record), self.project, None)
         self.assertEqual(code, shared_constants.VALIDATION_EXIT_PENDING)
         self.assertEqual(report["status"], "VALIDATION_RUNNING")

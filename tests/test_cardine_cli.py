@@ -15,36 +15,36 @@ ROOT = Path(__file__).resolve().parents[1]
 class CardineCliTests(unittest.TestCase):
     def test_error_class_has_no_old_name_alias(self):
         sys.path.insert(0, str(ROOT / "scripts"))
-        import meridian
+        import cardine_cli
         from cardine import cli
         from cardine.shared import errors
 
-        self.assertIs(meridian.CardineError, errors.CardineError)
+        self.assertIs(cardine_cli.CardineError, errors.CardineError)
         self.assertTrue(issubclass(errors.CardineError, RuntimeError))
-        for module in (errors, cli, meridian):
+        for module in (errors, cli, cardine_cli):
             with self.subTest(module=module.__name__):
                 self.assertFalse(hasattr(module, "MeridianError"))  # MERIDIAN-OLD-NAME-TEST
 
     def test_stop_class_has_no_old_name_alias(self):
         sys.path.insert(0, str(ROOT / "scripts"))
-        import meridian
+        import cardine_cli
         from cardine import cli
         from cardine.shared import errors
 
-        self.assertIs(meridian.CardineStop, errors.CardineStop)
+        self.assertIs(cardine_cli.CardineStop, errors.CardineStop)
         self.assertTrue(issubclass(errors.CardineStop, errors.CardineError))
-        for module in (errors, cli, meridian):
+        for module in (errors, cli, cardine_cli):
             with self.subTest(module=module.__name__):
                 self.assertFalse(hasattr(module, "MeridianStop"))  # MERIDIAN-OLD-NAME-TEST
 
     def test_parser_class_has_no_old_name_alias(self):
         sys.path.insert(0, str(ROOT / "scripts"))
-        import meridian
+        import cardine_cli
         from cardine import cli
 
-        self.assertIs(meridian.CardineArgumentParser, cli.CardineArgumentParser)
+        self.assertIs(cardine_cli.CardineArgumentParser, cli.CardineArgumentParser)
         self.assertIs(type(cli.build_parser()), cli.CardineArgumentParser)
-        for module in (cli, meridian):
+        for module in (cli, cardine_cli):
             with self.subTest(module=module.__name__):
                 self.assertFalse(hasattr(module, "MeridianArgumentParser"))  # MERIDIAN-OLD-NAME-TEST
 
@@ -72,11 +72,11 @@ class CardineCliTests(unittest.TestCase):
             imported = (
                 "import sys; "
                 f"sys.path.insert(0, {str(ROOT / 'scripts')!r}); "
-                "import meridian; raise SystemExit(meridian.main())"
+                "import cardine_cli; raise SystemExit(cardine_cli.main())"
             )
             entries = [
-                [sys.executable, str(ROOT / "bin/meridian")],
-                [sys.executable, str(ROOT / "scripts/meridian.py")],
+                [sys.executable, str(ROOT / "bin/cardine")],
+                [sys.executable, str(ROOT / "scripts/cardine_cli.py")],
                 [sys.executable, "-c", imported],
                 [sys.executable, str(command)],
                 [sys.executable, "-m", "cardine.cli"],
@@ -110,17 +110,17 @@ class CardineCliTests(unittest.TestCase):
 
     def test_legacy_imports_preserve_owner_and_class_identities(self):
         sys.path.insert(0, str(ROOT / "scripts"))
-        import meridian
+        import cardine_cli
         from cardine import cli
         from cardine.shared import models
         from cardine.templates import upgrade
 
-        self.assertIs(meridian.main, cli.main)
-        self.assertIs(meridian.CardineArgumentParser, cli.CardineArgumentParser)
-        self.assertIs(meridian.ManagedFile, models.ManagedFile)
-        self.assertIs(meridian.PlanItem, models.PlanItem)
-        self.assertIs(meridian.apply_plan, upgrade.apply_plan)
-        self.assertLess(len((ROOT / "scripts/meridian.py").read_text().splitlines()), 100)
+        self.assertIs(cardine_cli.main, cli.main)
+        self.assertIs(cardine_cli.CardineArgumentParser, cli.CardineArgumentParser)
+        self.assertIs(cardine_cli.ManagedFile, models.ManagedFile)
+        self.assertIs(cardine_cli.PlanItem, models.PlanItem)
+        self.assertIs(cardine_cli.apply_plan, upgrade.apply_plan)
+        self.assertLess(len((ROOT / "scripts/cardine_cli.py").read_text().splitlines()), 100)
 
 
 if __name__ == "__main__":

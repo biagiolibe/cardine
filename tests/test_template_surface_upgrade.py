@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meridian_cli_support import CLI
+from cardine_cli_support import CLI
 from synthetic_upgrade_support import SyntheticFramework
 import hashlib
 import json

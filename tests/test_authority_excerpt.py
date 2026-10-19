@@ -10,10 +10,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CLI = ROOT / "scripts" / "meridian.py"
+CLI = ROOT / "scripts" / "cardine_cli.py"
 
 sys.path.insert(0, str(ROOT / "scripts"))
-import meridian  # noqa: E402
+import cardine_cli  # noqa: E402
 
 ADR_LOG = (
     "# Architecture Decision Log\n\n"
@@ -245,7 +245,7 @@ class AuthorityExcerptTest(unittest.TestCase):
     # -- shared heading extractor ---------------------------------------
 
     def test_extract_heading_block_direct(self) -> None:
-        result = meridian.extract_heading_block(ADR_LOG, lambda title: title.startswith("ADR-0060"))
+        result = cardine_cli.extract_heading_block(ADR_LOG, lambda title: title.startswith("ADR-0060"))
         self.assertIsNotNone(result)
         excerpt, title = result
         self.assertEqual(title, "ADR-0060 — Adjacent one")
