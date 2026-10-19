@@ -95,7 +95,7 @@ class LayoutTest(unittest.TestCase):
         self.assertEqual(identity.read_task_identity_policy(self.root).mode, "opaque")
 
     def test_project_declaration_reads_selected_directory(self):
-        declaration = {"version": 1, "ci": "none"}
+        declaration = {"version": 1, "preset": "lean", "ci": "none"}
         self.write_json(OTHER_NAMES.project_declaration_path, declaration)
         self.assertIsNone(project.read_project_declaration(self.root))
         with use(OTHER_NAMES):

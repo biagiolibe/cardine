@@ -334,7 +334,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         plan.parent.mkdir()
         (self.primary / "PROJECT_PLAN.md").rename(plan)
         declaration = self.primary / ".cardine/project.json"
-        declaration.write_text(json.dumps({"version": 1, "locations": {"plan": "docs/PLAN.md"}}), encoding="utf-8")
+        declaration.write_text(json.dumps({"version": 1, "preset": "lean", "locations": {"plan": "docs/PLAN.md"}}), encoding="utf-8")
         self.git("add", "-A")
         self.git("commit", "-m", "declare custom project plan")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()

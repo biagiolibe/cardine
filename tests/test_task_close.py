@@ -5,6 +5,7 @@ import sys
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from project_config_support import write_project_config
 from unittest import mock
 
 import test_execution_boundaries as boundaries
@@ -26,7 +27,8 @@ class TaskCloseTest(unittest.TestCase):
 
     def setUp(self):
         boundaries.ExecutionBoundariesTest.setUp(self)
-        (self.worker / 'PROJECT_WORKFLOW.md').write_text('LEAN_DELIVERY\n')
+        write_project_config(self.primary, "lean")
+        write_project_config(self.worker, "lean")
         identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
         identity.handoff_path.parent.mkdir(parents=True)
         identity.handoff_path.write_text('## Completion Report — 001\n')
@@ -98,7 +100,8 @@ class TaskCloseTest(unittest.TestCase):
         self.refused('TASK_STATE_INVALID')
 
     def test_governed_refusal_names_transition_command(self):
-        (self.worker / 'PROJECT_WORKFLOW.md').write_text('GOVERNED_SDD\n')
+        write_project_config(self.primary, "governed")
+        write_project_config(self.worker, "governed")
         self.commit('Select Governed')
         self.refused('TASK_STATUS_REJECTED')
         with self.assertRaisesRegex(shared_errors.CardineStop, 'cardine task transition'):

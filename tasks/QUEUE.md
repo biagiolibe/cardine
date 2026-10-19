@@ -39,7 +39,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 6 and decisions 3 and 4, and `do
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 052 | Resolve the project preset from the configuration (single workflow SW1) | 🔴 P1 | 051 | [052](052-project-presets-and-resolution.md) |
+| `[x]` | 052 | Resolve the project preset from the configuration (single workflow SW1) | 🔴 P1 | 051 | [052](done/052-project-presets-and-resolution.md) |
 | `[ ]` | 053 | Resolve one task contract and store its snapshot (single workflow SW2) | 🔴 P1 | 052 | [053](053-single-task-contract.md) |
 | `[ ]` | 054 | Use one task state machine with review and dependency gates (single workflow SW3) | 🔴 P1 | 053 | [054](054-single-state-machine.md) |
 | `[ ]` | 055 | Build the single template set (single workflow SW4) | 🔴 P1 | 054 | [055](055-single-template-set.md) |

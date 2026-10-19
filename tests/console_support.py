@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from project_config_support import write_project_config
 from cardine.shared.layout import names
 from cardine.console import models as owner_console_models
 from cardine.console import snapshot as owner_console_snapshot
@@ -31,7 +32,7 @@ class RepoCase(unittest.TestCase):
         self.project = self.root / "project"
         self.project.mkdir()
         self.git(self.project, "init", "-q", "-b", "main")
-        self.write(self.project, "PROJECT_WORKFLOW.md", f"# {self.lock}\n")
+        write_project_config(self.project, "lean" if self.lock == "LEAN_DELIVERY" else "governed")
 
     def git(self, cwd: Path, *args: str) -> str:
         return subprocess.run(

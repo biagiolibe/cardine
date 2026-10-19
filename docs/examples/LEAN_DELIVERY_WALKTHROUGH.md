@@ -67,6 +67,12 @@ policy is deliberately limited to this documentation exercise.
 python3 - <<'PY'
 import json
 from pathlib import Path
+Path(".cardine/project.json").write_text(json.dumps({
+    "version": 1, "preset": "lean", "taskIdentity": {"mode": "opaque"},
+    "validation": {"commands": {"whitespace": "git diff --check"},
+                   "baseline": ["whitespace"],
+                   "candidate": {name: [] for name in ("REUSE", "BOUNDED", "FULL")}}
+}) + "\n")
 Path("TECH_DESIGN.md").write_text("# Technical design\n\nMarkdown documentation; Git for version control.\n")
 Path(".cardine/task-identity.json").write_text(json.dumps({"version": 1, "mode": "opaque"}) + "\n")
 Path(".cardine/candidate-validation.json").write_text(json.dumps({

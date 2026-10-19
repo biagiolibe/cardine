@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -32,7 +33,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.git('init', '-q', '-b', 'main', cwd=self.primary)
         self.git('config', 'user.name', 'Test', cwd=self.primary)
         self.git('config', 'user.email', 'test@example.invalid', cwd=self.primary)
-        (self.primary / 'PROJECT_WORKFLOW.md').write_text('GOVERNED_SDD\n')
+        write_project_config(self.primary, "governed")
         (self.primary / 'tasks').mkdir()
         (self.primary / 'docs').mkdir()
         (self.primary / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
@@ -166,7 +167,8 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertFalse((self.primary / '.cardine/tasks/001.json').exists())
 
     def test_lean_start_is_read_only_and_preserves_machine(self):
-        (self.worker / 'PROJECT_WORKFLOW.md').write_text('LEAN_DELIVERY\n')
+        write_project_config(self.primary, "lean")
+        write_project_config(self.worker, "lean")
         self.commit('Select Lean')
         before = self.git('status', '--porcelain')
         result = owner_lifecycle_commands.execution_start(self.worker, '001')

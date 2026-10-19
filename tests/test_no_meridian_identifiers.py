@@ -129,7 +129,7 @@ ALLOWLIST = (
     ),
     Allowance(
         4, "kept: historical records",
-        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
+        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard|052-project-presets-and-resolution|053-single-task-contract|054-single-state-machine|055-single-template-set|056-reconcile-capabilities|057-preset-briefing-adapter|058-remove-workflow-branching)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
     ),
     Allowance(
         4, "kept: historical design and guides; guides replaced by 11",

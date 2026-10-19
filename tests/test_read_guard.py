@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 from installation_fixture import copy_hook, hook_environment
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -135,8 +136,9 @@ class ReadGuardTest(unittest.TestCase):
         # MERIDIAN-INSTALLATION-CHECK
         target = self.write_file("PROJECT_WORKFLOW.md", 500)
         target.write_text("LEAN_DELIVERY\n" * 500, encoding="utf-8")
+        write_project_config(self.project)
         # MERIDIAN-INSTALLATION-CHECK
-        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine").mkdir(exist_ok=True)
         # MERIDIAN-INSTALLATION-CHECK
         (self.project / ".cardine/context-size.json").write_text(
             '{"version": 1, "routerFileLinesCeiling": 100}\n', encoding="utf-8"

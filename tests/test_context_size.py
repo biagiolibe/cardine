@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,7 @@ class ContextSizeTest(unittest.TestCase):
         (self.project / "docs/workflows").mkdir(parents=True)
         (self.project / "tasks").mkdir()
         (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
+        write_project_config(self.project, "lean")
         (self.project / "LANGUAGE_POLICY.md").write_text("English\n", encoding="utf-8")
         (self.project / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md`.\n", encoding="utf-8")
 
@@ -32,6 +34,7 @@ class ContextSizeTest(unittest.TestCase):
 
     def governed(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text("GOVERNED_SDD\n", encoding="utf-8")
+        write_project_config(self.project, "governed")
         (self.project / "AGENTS.md").write_text(
             "\n".join((
                 "Status, project question, or tech-design alignment — use `docs/workflows/STATUS.md`.",
@@ -66,7 +69,7 @@ class ContextSizeTest(unittest.TestCase):
 
     def test_task_authority_milestone_threshold_and_no_writes(self) -> None:
         self.governed()
-        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine").mkdir(exist_ok=True)
         (self.project / ".cardine/task-identity.json").write_text('{"version": 1, "mode": "milestone"}\n', encoding="utf-8")
         (self.project / "docs/ARCHITECTURE_DECISIONS.md").write_text("## ADR-0001 — Test\n\nBody.\n", encoding="utf-8")
         task = self.project / "tasks/M1-CORE-001.md"
@@ -81,7 +84,7 @@ class ContextSizeTest(unittest.TestCase):
 
     def test_router_file_ceiling_is_reported_and_fails(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n" * 3, encoding="utf-8")
-        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine").mkdir(exist_ok=True)
         (self.project / ".cardine/context-size.json").write_text(
             '{"version": 1, "routerFileLinesCeiling": 1}\n', encoding="utf-8"
         )

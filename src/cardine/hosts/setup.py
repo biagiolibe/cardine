@@ -136,6 +136,7 @@ def plan_setup(
             project_declaration_state = "advisory-missing"
             project_declaration_proposal = {
                 "version": 1,
+                "preset": "lean",
                 "project": proposed_project_identity(project_root),
                 "locations": {
                     "queue": str(locations.queue), "taskRoots": [str(root) for root in locations.task_roots],

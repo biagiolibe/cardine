@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from project_config_support import write_project_config
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -67,7 +68,8 @@ class CodexWorktreeHooksTest(unittest.TestCase):
             git("config", "user.name", "Cardine Test")
             git("config", "user.email", "cardine@example.invalid")
             # MERIDIAN-INSTALLATION-CHECK
-            (primary / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n")
+            write_project_config(primary, "lean")
+            (primary / "PROJECT_WORKFLOW.md").write_text("# Workflow\n")
             (primary / ".codex").mkdir()
             # MERIDIAN-INSTALLATION-CHECK
             (primary / ".codex/hooks.json").write_bytes((ROOT / ".codex/hooks.json").read_bytes())

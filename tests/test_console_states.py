@@ -351,18 +351,17 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
 
 
 class WorkflowModeLockTest(support.RepoCase):
-    def test_missing_unknown_and_double_locks_are_explicit_errors(self) -> None:
-        (self.project / "PROJECT_WORKFLOW.md").unlink()
-        with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "PROJECT_WORKFLOW.md is missing") as raised:
+    def test_missing_unknown_and_malformed_configurations_are_explicit_errors(self) -> None:
+        (self.project / ".cardine/project.json").unlink()
+        with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "missing project configuration") as raised:
             owner_console_snapshot.load_snapshot(self.project)
         self.assertNotIn("--mode", str(raised.exception))
-        self.write(self.project, "PROJECT_WORKFLOW.md", "# nothing\n")
-        with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "no recognized mode lock"):
+        self.write(self.project, ".cardine/project.json", '{"version": 1, "preset": "unknown"}')
+        with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "preset"):
             owner_console_snapshot.load_snapshot(self.project)
-        self.write(self.project, "PROJECT_WORKFLOW.md", "LEAN_DELIVERY GOVERNED_SDD\n")
-        with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "both mode locks"):
+        self.write(self.project, ".cardine/project.json", "{")
+        with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "invalid project declaration"):
             owner_console_snapshot.load_snapshot(self.project)
-
 
 
 class MachineStateConsoleTest(support.MachineStateConsoleFixture):
@@ -472,7 +471,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
         self.assertEqual(snapshot.tasks, ())
 
     def test_lean_machine_state_keeps_worktree_derived_progress(self) -> None:
-        self.write(self.project, "PROJECT_WORKFLOW.md", "# LEAN_DELIVERY\n")
+        support.write_project_config(self.project, "lean")
         support.LeanEffectiveStateFixture.setup_project(self, {"001": " "})
         self.state(self.project, "001", "QUEUED", workflow="lean-delivery")
         self.commit(self.project)
