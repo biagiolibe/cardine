@@ -362,48 +362,6 @@ class MeridianCliFixtureMixin:
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-    def _assert_upgrade_installs_closure_command_policy(self, mode: str) -> None:
-        workflow = self.framework / f"templates/workflows/{mode}"
-        relative = ".codex/rules/meridian.rules"
-        current = (workflow / relative).read_text(encoding="utf-8")
-        previous = re.sub(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", "\n", current, flags=re.DOTALL)
-        self.assertNotEqual(previous, current)
-        (workflow / relative).write_text(previous, encoding="utf-8")
-        for path in workflow.rglob("*"):
-            if path.is_file():
-                destination = self.project / path.relative_to(workflow)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, destination)
-        (self.framework / "VERSION").write_text("1.2.5\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", mode).returncode, 0)
-        local = 'prefix_rule(pattern=["project-tool", "run"], decision="allow")\n'
-        rules = self.project / relative
-        rules.write_text(rules.read_text(encoding="utf-8") + "\n# Local rule\n" + local, encoding="utf-8")
-
-        (workflow / relative).write_text(current, encoding="utf-8")
-        (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
-        checked = self.run_cli("upgrade", "--check")
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 060-unattended-closure-command-policy", checked.stdout)
-        if mode == "governed-sdd":
-            lifecycle_plan = next(
-                line
-                for line in checked.stdout.splitlines()
-                if "docs/WORKTREE_LIFECYCLE.md" in line
-            )
-            self.assertEqual(lifecycle_plan.split()[0], "KEEP")
-            self.assertNotIn("ADOPT", lifecycle_plan)
-        applied = self.run_cli("upgrade", "--apply")
-        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-
-        upgraded = rules.read_text(encoding="utf-8")
-        self.assertIn('["meridian", "worktree", ["evidence", "closure-status", "advance"]]', upgraded)
-        self.assertIn('prefix_rule(pattern=["git", "mv"], decision="allow")', upgraded)
-        self.assertIn(local, upgraded)
-        manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["workflowBaselineVersion"], "1.2.6")
-        self.assertEqual(manifest["appliedMigrations"][-1], "060-unattended-closure-command-policy")
-
     def _reinsert_role_scoped_agent_rules_block(self, text: str) -> str:
         block = (
             "<!-- MERIDIAN:BEGIN capability=role-scoped-agent-rules v1 -->\n"

@@ -15,10 +15,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import meridian  # noqa: E402
 from cardine.templates import migrations as owner_templates_migrations
 
-from meridian_cli_support import MeridianCliFixtureMixin, CLI, ROOT
+from meridian_cli_support import CLI, ROOT
+from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin, SyntheticFramework
 
 
-class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
+class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_spike_blueprint_upgrade_preserves_consumer_text_and_task_records(self) -> None:
         blueprint = self.framework / "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
@@ -39,7 +40,7 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
         (self.framework / "VERSION").write_text("1.2.12\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 065-spike-blueprint-worktree-closure", checked.stdout)
+        self.assertIn("MIGRATION 027-synthetic-blueprint", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded = installed.read_text(encoding="utf-8")
@@ -97,7 +98,7 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
         (self.framework / "VERSION").write_text("1.1.40\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 043-host-impact-task-declaration", checked.stdout)
+        self.assertIn("MIGRATION 007-synthetic-host", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
@@ -111,7 +112,7 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertIn("return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`", upgraded_routing)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.40")
-        self.assertEqual(manifest["appliedMigrations"][-1], "043-host-impact-task-declaration")
+        self.assertEqual(manifest["appliedMigrations"][-1], "007-synthetic-host")
 
     def test_clean_upgrade_installs_isolated_task_worktree_contract(self) -> None:
         """Migration 045 delivers the worktree contract to an existing adopter."""
@@ -182,9 +183,9 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 045-isolated-task-worktrees", checked.stdout)
-        self.assertIn("MIGRATION 046-integration-validation-evidence-reuse", checked.stdout)
-        self.assertIn("MIGRATION 047-codex-worktree-access", checked.stdout)
+        self.assertIn("MIGRATION 009-synthetic-worktree", checked.stdout)
+        self.assertIn("MIGRATION 010-synthetic-evidence", checked.stdout)
+        self.assertIn("MIGRATION 011-synthetic-access", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertIn("capability=git-workflow v14", project_workflow.read_text(encoding="utf-8"))
@@ -197,7 +198,7 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
         self.assertIn("never an absolute path", report)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.48")
-        self.assertEqual(manifest["appliedMigrations"][-1], "051-bounded-worktree-lifecycle")
+        self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
         audited = self.run_cli("audit", "--mode", "governed-sdd")
         self.assertEqual(audited.returncode, 1, audited.stdout + audited.stderr)
         self.assertIn("declaration/legacy-compatibility", audited.stdout)
@@ -255,8 +256,8 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 046-integration-validation-evidence-reuse", checked.stdout)
-        self.assertIn("MIGRATION 047-codex-worktree-access", checked.stdout)
+        self.assertIn("MIGRATION 010-synthetic-evidence", checked.stdout)
+        self.assertIn("MIGRATION 011-synthetic-access", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertIn("capability=git-workflow v14", project_workflow.read_text(encoding="utf-8"))
@@ -267,7 +268,7 @@ class UpgradeLifecycleTest(MeridianCliFixtureMixin, unittest.TestCase):
         )
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.48")
-        self.assertEqual(manifest["appliedMigrations"][-1], "051-bounded-worktree-lifecycle")
+        self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
 
     def test_upgrade_replaces_conflicting_review_blocks_and_preserves_consumer_text(self) -> None:
         """Migration 050 replaces the distributed checkout conflict in place."""
@@ -365,7 +366,7 @@ worktree before the branch only after validated integration succeeds.
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 050-review-worktree-preflight", checked.stdout)
+        self.assertIn("MIGRATION 012-synthetic-review", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
@@ -377,7 +378,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertNotIn("git switch <task-branch>", upgraded)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.48")
-        self.assertEqual(manifest["appliedMigrations"][-1], "051-bounded-worktree-lifecycle")
+        self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
 
     def test_upgrade_installs_codex_profile_recovery_across_a_cli_only_release(self) -> None:
         """Migration 053 reaches a baseline-1.1.49 project locked under CLI-only release 1.1.50."""
@@ -419,7 +420,7 @@ worktree before the branch only after validated integration succeeds.
                 (self.framework / "VERSION").write_text("1.1.51\n", encoding="utf-8")
                 checked = self.run_cli("upgrade", "--check")
                 self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-                self.assertIn("MIGRATION 053-codex-profile-repair-guidance", checked.stdout)
+                self.assertIn("MIGRATION 015-synthetic-repair", checked.stdout)
                 applied = self.run_cli("upgrade", "--apply")
                 self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
                 upgraded = project_workflow.read_text(encoding="utf-8")
@@ -429,7 +430,7 @@ worktree before the branch only after validated integration succeeds.
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
                 self.assertEqual(manifest["frameworkVersion"], "1.1.51")
                 self.assertEqual(manifest["workflowBaselineVersion"], "1.1.51")
-                self.assertEqual(manifest["appliedMigrations"][-1], "053-codex-profile-repair-guidance")
+                self.assertEqual(manifest["appliedMigrations"][-1], "015-synthetic-repair")
 
     def test_upgrade_installs_manual_proceed_worktree_rule_and_preserves_consumer_text(self) -> None:
         implementation, project_workflow = self.configure_1_1_53_to_1_1_54_manual_proceed_upgrade()
@@ -440,7 +441,7 @@ worktree before the branch only after validated integration succeeds.
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 056-manual-governed-proceed-worktree", checked.stdout)
+        self.assertIn("MIGRATION 017-synthetic-manual", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
@@ -451,7 +452,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Consumer-owned worktree note.", upgraded_workflow)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.54")
-        self.assertEqual(manifest["appliedMigrations"][-1], "056-manual-governed-proceed-worktree")
+        self.assertEqual(manifest["appliedMigrations"][-1], "017-synthetic-manual")
 
     def test_upgrade_reports_bounded_conflict_for_custom_implementation_procedure(self) -> None:
         implementation, _ = self.configure_1_1_53_to_1_1_54_manual_proceed_upgrade()
@@ -495,7 +496,7 @@ worktree before the branch only after validated integration succeeds.
         (self.framework / "VERSION").write_text("1.2.3\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 057-self-referential-handoff-commits", checked.stdout)
+        self.assertIn("MIGRATION 018-synthetic-handoff", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
@@ -508,18 +509,18 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("resolve it to the registered task branch `HEAD`", upgraded_review)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.55")
-        self.assertEqual(manifest["appliedMigrations"][-1], "057-self-referential-handoff-commits")
+        self.assertEqual(manifest["appliedMigrations"][-1], "018-synthetic-handoff")
 
     def test_1_4_0_template_capabilities_are_required(self) -> None:
-        requirements = owner_templates_migrations.capability_requirements(ROOT)
+        requirements = owner_templates_migrations.capability_requirements(self.framework)
         for capability in ("worktree-command-locations", "worktree-budget-retirement", "handoff-correction-redelivery"):
             with self.subTest(capability=capability):
-                self.assertEqual(requirements[capability], (1, "070-worktree-template-delivery"))
+                self.assertEqual(requirements[capability], (1, "030-synthetic-delivery"))
 
     def test_pristine_1_3_0_upgrades_all_1_4_0_managed_text(self) -> None:
-        # Frozen git archive of v1.3.0; works in shallow CI checkouts too.
+        # Only template text comes from this archive; both ledgers are synthetic.
         archive = ROOT / "tests/fixtures/release-1.3.0-upgrade.tar.gz"
-        self.assertEqual(meridian.read_version(ROOT), "1.4.0")
+        (self.framework / "VERSION").write_text("1.4.0\n", encoding="utf-8")
         with tarfile.open(archive) as source:
             for mode in ("lean-delivery", "governed-sdd"):
                 with self.subTest(mode=mode):
@@ -532,11 +533,12 @@ worktree before the branch only after validated integration succeeds.
                             target = self.project / relative
                             target.parent.mkdir(parents=True, exist_ok=True)
                             target.write_bytes(source.extractfile(member).read())
-                    # Lock against the actual 1.3.0 release, then upgrade with
-                    # this checkout's real VERSION, templates, and migrations.
+                    # Fix source and target releases independently of VERSION.
                     old_framework = self.framework.parent / f"release-{mode}"
-                    with tarfile.open(archive) as old:
-                        old.extractall(old_framework, filter="data")
+                    old_fixture = SyntheticFramework(old_framework, "1.3.0")
+                    shutil.rmtree(old_framework / "templates")
+                    shutil.copytree(self.project, old_framework / "templates/workflows" / mode)
+                    old_fixture.refresh_markers()
                     def cli(framework, *arguments):
                         return subprocess.run(
                             [sys.executable, str(CLI), "--framework-root", str(framework),
@@ -545,10 +547,10 @@ worktree before the branch only after validated integration succeeds.
                         )
                     locked = cli(old_framework, "lock", "--mode", mode)
                     self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
-                    checked = cli(ROOT, "upgrade", "--check")
+                    checked = cli(self.framework, "upgrade", "--check")
                     self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-                    self.assertIn("MIGRATION 070-worktree-template-delivery", checked.stdout)
-                    applied = cli(ROOT, "upgrade", "--apply")
+                    self.assertIn("MIGRATION 030-synthetic-delivery", checked.stdout)
+                    applied = cli(self.framework, "upgrade", "--apply")
                     self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
                     self.assertNotIn("CONFLICT", applied.stdout)
                     paths = ["PROJECT_WORKFLOW.md", "docs/WORKTREE_LIFECYCLE.md"]
@@ -559,7 +561,7 @@ worktree before the branch only after validated integration succeeds.
                         self.assertEqual((self.project / relative).read_bytes(), expected.read_bytes())
                     manifest = json.loads((self.project / ".meridian/manifest.json").read_text())
                     self.assertEqual(manifest["workflowBaselineVersion"], "1.4.0")
-                    self.assertEqual(manifest["appliedMigrations"][-1], "070-worktree-template-delivery")
+                    self.assertEqual(manifest["appliedMigrations"][-1], "030-synthetic-delivery")
 
     def test_pristine_1_2_15_lean_upgrade_installs_task_close(self) -> None:
         workflow = self.framework / "templates/workflows/lean-delivery"
@@ -586,7 +588,7 @@ worktree before the branch only after validated integration succeeds.
         (self.framework / "VERSION").write_text("1.3.0\n")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 069-lean-task-close", checked.stdout)
+        self.assertIn("MIGRATION 029-synthetic-close", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         for name, text in current.items():
@@ -594,7 +596,7 @@ worktree before the branch only after validated integration succeeds.
             self.assertIn("meridian task close <TASK-ID>", text)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text())
         self.assertEqual(manifest["workflowBaselineVersion"], "1.3.0")
-        self.assertEqual(manifest["appliedMigrations"][-1], "069-lean-task-close")
+        self.assertEqual(manifest["appliedMigrations"][-1], "029-synthetic-close")
 
     def test_upgrade_installs_lean_closure_procedure_and_preserves_consumer_text(self) -> None:
         workflow = self.framework / "templates/workflows/lean-delivery"
@@ -629,7 +631,7 @@ worktree before the branch only after validated integration succeeds.
         (self.framework / "VERSION").write_text("1.2.4\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 058-lean-closure-procedure", checked.stdout)
+        self.assertIn("MIGRATION 020-synthetic-lean-closure", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
@@ -640,7 +642,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Consumer-owned closure note.", agents.read_text(encoding="utf-8"))
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.4")
-        self.assertEqual(manifest["appliedMigrations"][-1], "058-lean-closure-procedure")
+        self.assertEqual(manifest["appliedMigrations"][-1], "020-synthetic-lean-closure")
 
     def test_upgrade_installs_governed_closure_procedure_and_preserves_consumer_text(self) -> None:
         workflow = self.framework / "templates/workflows/governed-sdd"
@@ -691,7 +693,7 @@ worktree before the branch only after validated integration succeeds.
         (self.framework / "VERSION").write_text("1.2.5\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 059-governed-closure-procedure", checked.stdout)
+        self.assertIn("MIGRATION 021-synthetic-governed-closure", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
@@ -707,7 +709,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Consumer-owned closure note.", upgraded_implementation)
         manifest = json.loads((self.project / ".meridian/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.5")
-        self.assertEqual(manifest["appliedMigrations"][-1], "059-governed-closure-procedure")
+        self.assertEqual(manifest["appliedMigrations"][-1], "021-synthetic-governed-closure")
 
     def test_upgrade_installs_code_organization_v2_and_preserves_the_project_module_map(self) -> None:
         workflow = self.framework / "templates/workflows/governed-sdd"
@@ -830,7 +832,7 @@ worktree before the branch only after validated integration succeeds.
         (self.framework / "VERSION").write_text("1.2.7\n", encoding="utf-8")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MIGRATION 061-governed-phase-reads", checked.stdout)
+        self.assertIn("MIGRATION 023-synthetic-wrapping", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 

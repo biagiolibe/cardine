@@ -18,12 +18,12 @@ and deletes the chain.
 
 ## Acceptance Criteria
 
-- [ ] A test fixture builder creates a temporary framework root with a
+- [x] A test fixture builder creates a temporary framework root with a
   synthetic migration chain, templates, catalog, and marker baseline. Tests
   can declare each migration in a few lines: capability, version, operation,
   and content. It lives in a support module under `tests/`, and that module
   defines no `TestCase` classes.
-- [ ] The upgrade and merge tests no longer read any file under
+- [x] The upgrade and merge tests no longer read any file under
   `migrations/`. These are the upgrade/merge test file that task 023 created
   from `MeridianCliTest`, and `ProfileSurfaceUpgradeTest` and
   `WrappedTextUpgradeTest` wherever task 024 placed them. They run against
@@ -33,12 +33,12 @@ and deletes the chain.
   - conflict reporting;
   - consumer-text preservation;
   - retirement alongside supersession.
-- [ ] Each moved test keeps its assertions. Where a test asserted the identity
+- [x] Each moved test keeps its assertions. Where a test asserted the identity
   of a real migration, for example a migration number in a message, it
   asserts the synthetic one instead. The handoff lists these tests.
-- [ ] A test proves that upgrade with an empty chain is a no-op that reports
+- [x] A test proves that upgrade with an empty chain is a no-op that reports
   the project as current.
-- [ ] No test compares the framework's own `VERSION` with a literal. A test
+- [x] No test compares the framework's own `VERSION` with a literal. A test
   of a historical upgrade fixes both its source and its target version in
   the fixture; a test of the current release reads the expected values from
   the release ledger and the migration chain. In particular,
@@ -46,11 +46,11 @@ and deletes the chain.
   `read_version(ROOT) == "1.4.0"` guard: it moves to a synthetic chain like
   the other upgrade tests, or task 033 deletes it with the real chain, and
   the handoff says which.
-- [ ] Production code changes only where a test needs to point the framework
+- [x] Production code changes only where a test needs to point the framework
   root at a fixture. The handoff names each such change.
-- [ ] The parallel suite reports the same coverage `total` before and after
+- [x] The parallel suite reports the same coverage `total` before and after
   the task, except for new tests.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

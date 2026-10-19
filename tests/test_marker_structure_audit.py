@@ -21,6 +21,7 @@ from cardine.templates import audit as owner_templates_audit
 from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.templates import markers as templates_markers
+from synthetic_upgrade_support import SyntheticFramework
 import cardine.shared.errors as shared_errors
 from cardine.templates import marker_audit as owner_templates_marker_audit
 from cardine.templates import migrations as owner_templates_migrations
@@ -275,8 +276,7 @@ class WrappedTextUpgradeTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             framework, project = base / "framework", base / "project"
-            for name in ("templates", "migrations", "release-baselines", "capabilities"):
-                shutil.copytree(ROOT / name, framework / name)
+            fixture = SyntheticFramework(framework, "1.2.6")
             template = framework / "templates/workflows" / mode / relative
             current = template.read_text(encoding="utf-8")
             version = re.search(rf"capability={capability} v(\d+) -->", current).group(1)
@@ -296,7 +296,8 @@ class WrappedTextUpgradeTest(unittest.TestCase):
 
             self.assertEqual(run("lock", "--mode", mode).returncode, 0)
             template.write_text(current, encoding="utf-8")
-            (framework / "VERSION").write_text("1.2.7\n", encoding="utf-8")
+            fixture.migration("001-synthetic-wrap", "1.2.7", capability=capability,
+                              version=int(version), operation="wrap", paths=(relative,))
             local = project / relative
             edited = local.read_text(encoding="utf-8")
             self.assertIn(edit[0], edited)
