@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import PRODUCT_NAMES, names
+
 import hashlib
 import json
 from pathlib import Path
@@ -54,7 +56,7 @@ HANDOFF_FIELDS = (
 )
 
 
-EXECUTION_EVIDENCE_PATH = Path(".meridian/execution-evidence.json")
+EXECUTION_EVIDENCE_PATH = PRODUCT_NAMES.execution_evidence_path
 
 
 HOST_IMPACT_STATES = ("enforced", "advisory", "unsupported", "unverified")
@@ -164,7 +166,7 @@ def verify_host_impact_completion_evidence(text: str) -> None:
 
 
 def execution_entries(project_root: Path, task_id: str) -> list[dict[str, object]]:
-    path = project_root / EXECUTION_EVIDENCE_PATH
+    path = project_root / names().execution_evidence_path
     if not path.is_file():
         return []
     try:
@@ -224,7 +226,7 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
         raise stop_error(
             "HANDOFF_VALIDATION_EVIDENCE_MISSING",
             f"rule: every declared validation needs a successful durable record; source checked: "
-            f"{EXECUTION_EVIDENCE_PATH.as_posix()} for {task_id}; accepted: an entry with the declared id and "
+            f"{names().execution_evidence_path.as_posix()} for {task_id}; accepted: an entry with the declared id and "
             f"command and exitStatus 0; missing for: " + ", ".join(missing_validations),
             task_id=task_id,
         )
@@ -238,7 +240,7 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
             raise stop_error(
                 "HANDOFF_EXPLORATION_MISMATCH",
                 f"rule: with no recorded investigation the report must say there was none; field checked: "
-                f"Isolated exploration against {EXECUTION_EVIDENCE_PATH.as_posix()}; accepted: `none`, or text "
+                f"Isolated exploration against {names().execution_evidence_path.as_posix()}; accepted: `none`, or text "
                 f"starting with `none` or `no`; found: {value!r}; expected `none` (or record the investigation)",
                 task_id=task_id,
             )
@@ -247,7 +249,7 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
         raise stop_error(
             "HANDOFF_EXPLORATION_MISMATCH",
             f"rule: recorded investigations must be reported; field checked: Isolated exploration against "
-            f"{EXECUTION_EVIDENCE_PATH.as_posix()}; accepted: a summary of each recorded investigation; "
+            f"{names().execution_evidence_path.as_posix()}; accepted: a summary of each recorded investigation; "
             f"found: `none` with {len(investigations)} recorded",
             task_id=task_id,
         )
@@ -261,7 +263,7 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
         raise stop_error(
             "HANDOFF_EXPLORATION_SUMMARY_MISSING",
             f"rule: the report must contain each recorded question and finding; source checked: "
-            f"{EXECUTION_EVIDENCE_PATH.as_posix()}; accepted: the exact question and finding text; "
+            f"{names().execution_evidence_path.as_posix()}; accepted: the exact question and finding text; "
             f"missing the question or finding of: " + "; ".join(missing_summaries),
             task_id=task_id,
         )

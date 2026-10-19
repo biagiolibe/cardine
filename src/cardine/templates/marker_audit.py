@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.shared.constants import CAPABILITY_MARKER
-from cardine.shared.constants import MANIFEST_PATH
 from cardine.shared.errors import MeridianError
 from cardine.templates.files import managed_files
 from cardine.templates.manifest import load_manifest
@@ -174,7 +175,7 @@ def audit_capability_moves(project_root: Path, framework_root: Path, mode: str) 
             ).get("appliedMigrations", [])
         }
     except MeridianError:
-        if (project_root / MANIFEST_PATH).is_file():
+        if (project_root / names().manifest_path).is_file():
             raise
         return []
     results = []

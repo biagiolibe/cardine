@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from pathlib import Path
 import shutil
 import sys
 
 from cardine.hosts.codex import _write_exclusive_backup
 from cardine.release.version import read_version, require_release_version
-from cardine.shared.constants import BASELINES_PATH, PROTOCOL_VERSION, STRICT_DIGEST_PROFILES
+from cardine.shared.constants import PROTOCOL_VERSION, STRICT_DIGEST_PROFILES
 from cardine.shared.errors import MeridianError
 from cardine.shared.hashing import sha256
 from cardine.shared.models import ManagedFile, PlanItem
@@ -35,7 +37,7 @@ def plan_upgrade(
         framework_root,
         manifest_workflow_mode(manifest),
         installed_version,
-        project_root / BASELINES_PATH / installed_version,
+        project_root / names().baselines_path / installed_version,
         list(manifest.get("appliedMigrations", [])),
         target_version_override=target_override,
         managed_files_override=managed_override,
@@ -258,7 +260,7 @@ def apply_upgrade(
         framework_root,
         manifest_workflow_mode(manifest),
         installed_version,
-        project_root / BASELINES_PATH / installed_version,
+        project_root / names().baselines_path / installed_version,
         list(manifest.get("appliedMigrations", [])),
         target_version_override=target_override,
         managed_files_override=managed_override,
@@ -270,7 +272,7 @@ def apply_upgrade(
         framework_root,
         manifest,
         plan,
-        project_root / BASELINES_PATH / manifest_baseline_version(manifest),
+        project_root / names().baselines_path / manifest_baseline_version(manifest),
         owner_reconciled=owner_reconciled,
         target_version_override=target_override,
         managed_files_override=managed_override,

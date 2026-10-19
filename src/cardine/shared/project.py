@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from cardine.shared.constants import PROJECT_DECLARATION_PATH
+from cardine.shared.layout import names
+
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import primary_project_root
 from pathlib import Path
@@ -69,7 +70,7 @@ def parse_project_declaration(declaration: object) -> dict[str, object]:
 
 
 def read_project_declaration(project_root: Path) -> dict[str, object] | None:
-    path = primary_project_root(project_root) / PROJECT_DECLARATION_PATH
+    path = primary_project_root(project_root) / names().project_declaration_path
     if not path.exists():
         return None
     if not path.is_file():

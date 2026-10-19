@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from pathlib import Path
 
 from cardine.integration.projections import _queue_task_rows
@@ -17,7 +19,7 @@ from cardine.tasks.state import read_task_state
 def audit_task_state_projections(project_root: Path, workflow: str) -> list[AuditResult]:
     """Explicit full check: enumerate state files and report prose drift without repairs."""
     project_root = project_root.resolve()
-    directory = project_root / ".meridian/tasks"
+    directory = project_root / names().tasks_path
     paths = sorted(directory.glob("*.json"))
     if not paths:
         return []

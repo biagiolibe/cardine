@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.shared.authority import SPEC_HEADING_CITATION
 from cardine.shared.authority import authority_entries
 from cardine.shared.authority import resolve_authority_entry
 from cardine.shared.constants import CONTEXT_PHASE_READS_BLOCK
 from cardine.shared.constants import CONTEXT_PHASE_READ_LINE
-from cardine.shared.constants import CONTEXT_SIZE_CONFIG_PATH
 from cardine.shared.constants import CONTEXT_SIZE_ROLES
 from cardine.shared.errors import MeridianError
 from cardine.tasks.identity import find_task_file
@@ -42,10 +43,10 @@ def _context_relative_references(path: Path, text: str) -> list[Path]:
         # Workflow prose conventionally names canonical project locations
         # (`docs/...`, `tasks/...`) from project root, while Markdown links
         # such as `README.md` remain document-relative.
-        resolved = candidate if candidate.parts and candidate.parts[0] in {"docs", "tasks", ".meridian"} else path.parent / candidate
+        resolved = candidate if candidate.parts and candidate.parts[0] in {"docs", "tasks", names().project_directory} else path.parent / candidate
         if resolved not in references:
             references.append(resolved)
-    return [item for item in references if item.parts[:2] != (".meridian", "tasks")]
+    return [item for item in references if item.parts[:2] != (names().project_directory, "tasks")]
 
 
 def _context_phase_reads(path: Path, text: str) -> dict[Path, str]:
@@ -113,7 +114,7 @@ def _context_file_record(project_root: Path, path: Path, category: str, label: s
 
 def _context_configuration(project_root: Path) -> tuple[int | None, int]:
     """Read the shared context-size limits (bytes and router-file lines)."""
-    config = project_root / CONTEXT_SIZE_CONFIG_PATH
+    config = project_root / names().context_size_config_path
     if not config.is_file():
         return None, 1000
     try:
@@ -156,7 +157,7 @@ def context_router_files(project_root: Path, workflow_mode: str | None = None) -
             files.add(_context_routed_workflow(project_root, mode, role, router))
         except MeridianError:
             continue
-    return sorted((item for item in files if item.parts[:2] != (".meridian", "tasks")), key=lambda item: item.as_posix())
+    return sorted((item for item in files if item.parts[:2] != (names().project_directory, "tasks")), key=lambda item: item.as_posix())
 
 
 def context_size_report(project_root: Path, role: str, task_id: str | None = None, threshold: int | None = None,
@@ -182,7 +183,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
     pending = roots[:]
     while pending:
         path, category = pending.pop(0)
-        if path in seen or path.parts[:2] == (".meridian", "tasks"):
+        if path in seen or path.parts[:2] == (names().project_directory, "tasks"):
             continue
         seen.add(path)
         record = _context_file_record(project_root, path, category)
@@ -206,7 +207,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
         records.append(_context_file_record(project_root, task.relative_to(project_root), "task-record"))
         for entry in authority_entries(task.read_text(encoding="utf-8")):
             citation = SPEC_HEADING_CITATION.match(entry.strip())
-            if citation and Path(citation.group(1)).parts[:2] == (".meridian", "tasks"):
+            if citation and Path(citation.group(1)).parts[:2] == (names().project_directory, "tasks"):
                 continue
             resolved, unresolved = resolve_authority_entry(project_root, entry)
             for source, heading, excerpt in resolved:

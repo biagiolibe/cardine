@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import PRODUCT_NAMES
+
 import contextlib
 import contextvars
 import subprocess
@@ -40,7 +42,7 @@ def _run_git(project_root: Path, *arguments: str) -> subprocess.CompletedProcess
 
 
 _SHARED_WORKTREES: contextvars.ContextVar[dict[Path, list[dict[str, str]]] | None] = (
-    contextvars.ContextVar("meridian_shared_worktrees", default=None))
+    contextvars.ContextVar(PRODUCT_NAMES.shared_worktrees_context, default=None))
 
 
 def parse_worktree_records(output: str) -> list[dict[str, str]]:

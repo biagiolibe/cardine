@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.release.version import read_version
-from cardine.shared.constants import BASELINES_PATH
-from cardine.shared.constants import MANIFEST_PATH
 from cardine.shared.constants import STRICT_DIGEST_PROFILES
 from cardine.shared.hashing import sha256
 from cardine.shared.models import ManagedFile
@@ -25,7 +25,7 @@ import tempfile
 
 def recorded_managed_digests(project_root: Path) -> dict[str, object]:
     try:
-        recorded = json.loads((project_root / MANIFEST_PATH).read_text(encoding="utf-8"))
+        recorded = json.loads((project_root / names().manifest_path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {}
     digests = recorded.get("managedFiles") if isinstance(recorded, dict) else None
@@ -104,7 +104,7 @@ def prepare_upgrade_targets(
     capped_pending = set(migration_ids(framework_root, installed_version, capped_target)) - applied
     excluded = full_pending - capped_pending
     scratch_dir = Path(tempfile.mkdtemp(prefix="meridian-capped-"))
-    baseline_root = project_root / BASELINES_PATH / installed_version
+    baseline_root = project_root / names().baselines_path / installed_version
     managed_override = capped_managed_files(
         framework_root, manifest_workflow_mode(manifest), baseline_root, excluded, scratch_dir
     )

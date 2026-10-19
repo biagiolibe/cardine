@@ -6,6 +6,8 @@ This module has no dependency on the CLI; the CLI supplies its registered stop f
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 import json
 import re
 from datetime import datetime
@@ -121,7 +123,7 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
 def state_path(project_root, task_id):
     if not isinstance(task_id, str) or not task_id or re.search(r"[/\\\s]", task_id) or task_id in {".", ".."}:
         _invalid("task_id", "one safe task ID", task_id)
-    return Path(project_root) / ".meridian" / "tasks" / f"{task_id}.json"
+    return Path(project_root) / names().tasks_path / f"{task_id}.json"
 
 
 def read_task_state(project_root, task_id, workflow, *, spike=False, review_required=True, stop_factory,

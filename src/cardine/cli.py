@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from pathlib import Path
 import argparse
 import json
@@ -20,7 +22,7 @@ from cardine.release.update import run_self_check, run_self_update
 from cardine.release.version import parse_semver, read_raw_version
 from cardine.review.verdict import record_review_verdict
 from cardine.shared.authority import adr_list, adr_show, context_authority
-from cardine.shared.constants import BASELINES_PATH, USAGE_HOSTS
+from cardine.shared.constants import USAGE_HOSTS
 from cardine.shared.context import context_size_report, format_context_size_report
 from cardine.shared.errors import MeridianError, MeridianStop
 from cardine.shared.git import canonical_project_root
@@ -819,7 +821,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 framework_root,
                 manifest_workflow_mode(base_manifest),
                 installed_version,
-                project_root / BASELINES_PATH / installed_version,
+                project_root / names().baselines_path / installed_version,
                 list(base_manifest.get("appliedMigrations", [])),
                 target_version_override=target_override,
                 managed_files_override=managed_override,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import PRODUCT_NAMES, names
+
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -10,15 +12,13 @@ import statistics
 
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import canonical_git_common_dir
-from cardine.shared.journal import JOURNAL_NAME
-from cardine.shared.journal import JOURNAL_ROTATED_NAME
 from cardine.shared.journal import JOURNAL_VERSION
 from cardine.stops.registry import load_stop_registry
 from cardine.tasks.identity import find_task_file
 from cardine.worktree.storage import lifecycle_started_at
 
 
-FLOW_TARGETS_PATH = Path(".meridian/flow-targets.json")
+FLOW_TARGETS_PATH = PRODUCT_NAMES.flow_targets_path
 
 
 FLOW_TARGETS_VERSION = 1
@@ -50,7 +50,7 @@ def _flow_read_journal(project_root: Path) -> tuple[list[dict[str, object]], int
     directory = canonical_git_common_dir(project_root)
     records: list[dict[str, object]] = []
     malformed = 0
-    for name in (JOURNAL_ROTATED_NAME, JOURNAL_NAME):
+    for name in (names().journal_rotated_name, names().journal_name):
         try:
             text = (directory / name).read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -93,28 +93,28 @@ def _flow_median(values: list[float]) -> float | None:
 
 def _flow_targets(project_root: Path, tasks: list[dict[str, object]], unbacked_times: list[datetime]) -> list[dict[str, object]]:
     """Evaluate the declared targets over count windows of integrated tasks; a missing file declares none."""
-    path = project_root / FLOW_TARGETS_PATH
+    path = project_root / names().flow_targets_path
     if not path.is_file():
         return []
     try:
         declared = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise MeridianError(f"{FLOW_TARGETS_PATH} is unreadable: {error}") from error
+        raise MeridianError(f"{names().flow_targets_path} is unreadable: {error}") from error
     if not isinstance(declared, dict) or declared.get("version") != FLOW_TARGETS_VERSION:
-        raise MeridianError(f"{FLOW_TARGETS_PATH} must be a version {FLOW_TARGETS_VERSION} object")
+        raise MeridianError(f"{names().flow_targets_path} must be a version {FLOW_TARGETS_VERSION} object")
     integrated = sorted((task for task in tasks if task["_integrated"] is not None), key=lambda task: task["_integrated"])
     results: list[dict[str, object]] = []
 
     def window_of(entry: object, name: str) -> int:
         window = entry.get("window") if isinstance(entry, dict) else None
         if not isinstance(window, int) or isinstance(window, bool) or window < 1:
-            raise MeridianError(f"{FLOW_TARGETS_PATH}: {name}.window must be a positive integer")
+            raise MeridianError(f"{names().flow_targets_path}: {name}.window must be a positive integer")
         return window
 
     def limit_of(entry: object, name: str, key: str) -> float:
         value = entry.get(key) if isinstance(entry, dict) else None
         if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
-            raise MeridianError(f"{FLOW_TARGETS_PATH}: {name}.{key} must be a non-negative number")
+            raise MeridianError(f"{names().flow_targets_path}: {name}.{key} must be a non-negative number")
         return value
 
     def state(measured: float | None, limit: float) -> str:

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from cardine.shared.constants import TASK_IDENTITY_PATH
+from cardine.shared.layout import names
+
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import primary_project_root
 from cardine.shared.models import NUMERIC_TASK_ALIAS
@@ -163,7 +164,7 @@ def parse_task_identity_policy(declaration: object) -> TaskIdentityPolicy:
 
 
 def read_task_identity_policy(project_root: Path) -> TaskIdentityPolicy:
-    path = project_root / TASK_IDENTITY_PATH
+    path = project_root / names().task_identity_path
     if not path.exists():
         return TaskIdentityPolicy(version=1, mode="opaque")
     if not path.is_file():

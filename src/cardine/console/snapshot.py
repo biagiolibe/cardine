@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import ProjectNames, names
+
 import contextlib
 import os
 import re
@@ -31,7 +33,6 @@ from cardine.shared.console_workflow import (
     record_review,
     record_status,
 )
-from cardine.shared.constants import TASK_IDENTITY_PATH
 from cardine.shared.errors import MeridianError, MeridianStop
 from cardine.shared.git import (
     canonical_git_common_dir,
@@ -39,14 +40,10 @@ from cardine.shared.git import (
     shared_worktree_records,
 )
 from cardine.shared.models import (
-    INTEGRATION_LEASE_NAME,
-    INTEGRATION_STATE_NAME,
     ResolvedTaskIdentity,
-    WORKTREE_STATE_DIRECTORY,
 )
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
-from cardine.tasks.contract import EXECUTION_EVIDENCE_PATH
 from cardine.tasks.identity import resolve_project_locations, resolve_task_identity
 from cardine.tasks.state import read_task_state, state_path
 from cardine.templates.mode import detect_mode
@@ -249,17 +246,17 @@ class DeliveryCache:
         key = None
         status = _git_result(worktree, "status", "--porcelain")
         if not status.returncode and not status.stdout and head and common_dir is not None:
-            lifecycle = common_dir / WORKTREE_STATE_DIRECTORY / f"{identity.artifact_stem}.json"
+            lifecycle = common_dir / names().worktree_state_directory / f"{identity.artifact_stem}.json"
             try:
                 handoff = worktree / _relative(project, identity.handoff_path)
             except ConsoleError:
                 handoff = None
             if handoff is not None:
-                key = (head, main_commit,
+                key = (names(), head, main_commit,
                        *(_stat_identity(path) for path in (
-                           handoff, state_path(worktree, task_id), worktree / EXECUTION_EVIDENCE_PATH,
-                           lifecycle, common_dir / INTEGRATION_LEASE_NAME,
-                           common_dir / INTEGRATION_STATE_NAME)))
+                           handoff, state_path(worktree, task_id), worktree / names().execution_evidence_path,
+                           lifecycle, common_dir / names().integration_lease_name,
+                           common_dir / names().integration_state_name)))
         if key is not None:
             cached = self._items.get(str(worktree))
             if cached is not None and cached[0] == key:
@@ -309,17 +306,19 @@ class IdentityCache:
     """
 
     def __init__(self) -> None:
+        self._layout: ProjectNames | None = None
         self._declaration: bytes | None = None
         self._loaded = False
         self._items: dict[str, ResolvedTaskIdentity] = {}
 
     def resolve(self, project: Path, task_id: str) -> ResolvedTaskIdentity:
         try:
-            declaration = (project / TASK_IDENTITY_PATH).read_bytes()
+            declaration = (project / names().task_identity_path).read_bytes()
         except OSError:
             declaration = None
-        if not self._loaded or declaration != self._declaration:
+        if not self._loaded or names() != self._layout or declaration != self._declaration:
             self._items.clear()
+            self._layout = names()
             self._declaration, self._loaded = declaration, True
         identity = self._items.get(task_id)
         if identity is None:

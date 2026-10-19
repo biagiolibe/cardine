@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from cardine.shared.constants import MANIFEST_PATH
+from cardine.shared.layout import names
+
 from cardine.shared.constants import PROTOCOL_VERSION
 from cardine.shared.errors import MeridianError
 from cardine.shared.models import CapabilityCatalog
@@ -44,7 +45,7 @@ def load_manifest(
     *,
     defer_surface_gaps: bool = False,
 ) -> dict[str, object]:
-    manifest_path = project_root / MANIFEST_PATH
+    manifest_path = project_root / names().manifest_path
     if not manifest_path.is_file():
         raise MeridianError(
             "project is not locked; run `meridian lock --project <path> --mode <mode>` first"
@@ -77,6 +78,6 @@ def write_manifest(
     manifest = canonical_manifest(manifest)
     catalog = load_capability_catalog(framework_root) if framework_root is not None else None
     validate_manifest(manifest, catalog)
-    destination = project_root / MANIFEST_PATH
+    destination = project_root / names().manifest_path
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")

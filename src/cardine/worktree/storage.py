@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import names
+
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
 from cardine.shared.jsonio import _read_json_object
-from cardine.shared.models import INTEGRATION_LEASE_NAME
-from cardine.shared.models import INTEGRATION_STATE_NAME
 from cardine.shared.models import ResolvedTaskIdentity
 from cardine.shared.models import ResolvedWorktreeRoot
-from cardine.shared.models import WORKTREE_STATE_DIRECTORY
 from cardine.tasks.identity import resolve_task_identity
 from collections.abc import Mapping
 from datetime import datetime
@@ -40,7 +39,7 @@ def user_configuration_path(
     user_home = (home or Path.home()).expanduser().resolve()
     configured = values.get("XDG_CONFIG_HOME")
     base = Path(configured).expanduser().resolve() if configured else user_home / ".config"
-    return base / "meridian/config.json"
+    return base / names().user_configuration_path
 
 
 def _read_user_configuration(path: Path) -> dict[str, object] | None:
@@ -89,7 +88,7 @@ def resolve_worktree_root(
             root = Path(str(configuration["worktreeRoot"])).expanduser().resolve()
             source = "user-config"
         else:
-            root = user_home / ".meridian/worktrees"
+            root = user_home / names().worktree_root
             source = "default"
     if root in {Path(root.anchor), user_home}:
         raise MeridianError(
@@ -104,8 +103,8 @@ def _effective_worktree_root(worktree_root: Path | None = None) -> Path:
 
 def _lifecycle_paths(project_root: Path, identity: ResolvedTaskIdentity) -> tuple[Path, Path, Path]:
     common = canonical_git_common_dir(project_root)
-    state = common / WORKTREE_STATE_DIRECTORY / f"{identity.artifact_stem}.json"
-    return state, common / INTEGRATION_LEASE_NAME, common / INTEGRATION_STATE_NAME
+    state = common / names().worktree_state_directory / f"{identity.artifact_stem}.json"
+    return state, common / names().integration_lease_name, common / names().integration_state_name
 
 
 def _merge_head_path(project_root: Path) -> Path:

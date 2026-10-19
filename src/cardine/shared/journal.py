@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.layout import PRODUCT_NAMES, names
+
 from cardine.shared.errors import InternalStopError
 from cardine.shared.errors import MeridianError
 from cardine.shared.git import canonical_git_common_dir
@@ -17,10 +19,10 @@ import json
 import os
 import sys
 
-JOURNAL_NAME = "meridian-journal.jsonl"
+JOURNAL_NAME = PRODUCT_NAMES.journal_name
 
 
-JOURNAL_ROTATED_NAME = "meridian-journal.1.jsonl"
+JOURNAL_ROTATED_NAME = PRODUCT_NAMES.journal_rotated_name
 
 
 JOURNAL_MAX_BYTES = 5 * 1024 * 1024
@@ -111,10 +113,10 @@ class LifecycleJournalEntry:
 def append_journal_line(project_root: Path, line: Mapping[str, object]) -> None:
     """Append one whole JSON line to the shared journal, rotating it past the size cap."""
     directory = canonical_git_common_dir(project_root)
-    journal = directory / JOURNAL_NAME
+    journal = directory / names().journal_name
     try:
         if journal.stat().st_size > JOURNAL_MAX_BYTES:
-            os.replace(journal, directory / JOURNAL_ROTATED_NAME)
+            os.replace(journal, directory / names().journal_rotated_name)
     except FileNotFoundError:
         pass
     data = (json.dumps(line, sort_keys=True) + "\n").encode("utf-8")
