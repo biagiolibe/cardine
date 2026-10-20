@@ -20,22 +20,22 @@ old template roots.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SW5 is implemented as the plan describes it, with the
+- [x] The scope of row SW5 is implemented as the plan describes it, with the
   design of the plan's sections 1 to 6. A file the plan missed but that
   the same change needs is in scope; the handoff lists it.
-- [ ] Every test that row SW5 lists under "Tests that prove it" exists and
+- [x] Every test that row SW5 lists under "Tests that prove it" exists and
   passes.
-- [ ] `check_capability_required_versions` (task 038) reads the single
+- [x] `check_capability_required_versions` (task 038) reads the single
   template set instead of the Governed SDD files, and `requiredVersion`
   equals the one version each capability ships. Its tests follow.
-- [ ] `templates/base/`, `templates/workflows/lean-delivery/`, and
+- [x] `templates/base/`, `templates/workflows/lean-delivery/`, and
   `templates/workflows/governed-sdd/` are deleted, and no product code or
   test reads them.
-- [ ] Markers keep the `MERIDIAN:BEGIN` syntax and their selected version
+- [x] Markers keep the `MERIDIAN:BEGIN` syntax and their selected version
   numbers; work item 5b restarts them at `v1`.
-- [ ] This repository's managed copy `docs/CONTEXT_BUDGET_POLICY.md` and its
+- [x] This repository's managed copy `docs/CONTEXT_BUDGET_POLICY.md` and its
   manifest are unchanged (work item 10).
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -44,16 +44,16 @@ old template roots.
   worktree` line of `.codex/rules/local.rules`. No task of this work item
   runs the checkout's `setup --apply` against the real home directory or
   creates `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/056.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/056.json`, which only
   the installed `meridian task close 056` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
