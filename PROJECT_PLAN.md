@@ -98,5 +98,5 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 054 — Use one task state machine with review and dependency gates (single workflow SW3).
 - `[x]` 055 — Build the single template set (single workflow SW4).
 - `[x]` 056 — Reconcile the capability catalog with the single template set (single workflow SW5).
-- `[ ]` 057 — Name the preset in the per-turn briefing (single workflow SW6).
+- `[x]` 057 — Name the preset in the per-turn briefing (single workflow SW6).
 - `[ ]` 058 — Remove residual workflow branching and prove parity (single workflow SW7).
