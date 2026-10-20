@@ -23,7 +23,7 @@ Use this before deciding what to do next.
 ```text
 Report the current workflow status without modifying files.
 
-Use the minimal read-only status profile in docs/CONTEXT_BUDGET_POLICY.md.
+Use the minimal read-only status profile in docs/CONTEXT_READING_POLICY.md.
 Confirm only the active workflow mode and local status rules, non-terminal
 queue entries, their direct dependency readiness, the current Git state, the
 next permitted governance action, and blockers.
@@ -45,7 +45,7 @@ Act as the project tech designer. Align to the current project state and
 prepare to answer design, scope, architecture, and roadmap questions.
 
 Read LANGUAGE_POLICY.md, AGENTS.md or CLAUDE.md, PROJECT_WORKFLOW.md, and
-docs/CONTEXT_BUDGET_POLICY.md. Resolve the canonical queue and inspect only
+docs/CONTEXT_READING_POLICY.md. Resolve the canonical queue and inspect only
 its non-terminal entries, their direct dependencies, the current Git state,
 and the active milestone's governing ADRs and specification. Load additional
 reports, task records, source, or history only when a specific question
@@ -71,7 +71,7 @@ Act as the project tech designer. Design <NAMED MILESTONE OR CHANGE>, or, if
 none is named, determine the next appropriate phase from accepted evidence.
 
 Read LANGUAGE_POLICY.md, AGENTS.md or CLAUDE.md, PROJECT_WORKFLOW.md,
-docs/CONTEXT_BUDGET_POLICY.md, the canonical queue,
+docs/CONTEXT_READING_POLICY.md, the canonical queue,
 docs/INTEGRATION_POLICY.md, and docs/CODE_ORGANIZATION.md. Load only the
 ADRs, specifications, accepted verification evidence, and tasks needed for
 this design. Use repository files as the source of truth.
@@ -154,7 +154,7 @@ The trigger delegates the detailed review and integration procedure to `AGENTS.m
 
 ## 6. Record owner acceptance after personal review
 
-Use this only after personally reviewing a `Review: REQUIRED` task whose task record is `READY_FOR_REVIEW`.
+Use this only after personally reviewing a `Review: required` task whose task record is `in_review`.
 
 ```text
 Accept <TASK-ID>.
@@ -173,7 +173,7 @@ Address review <TASK-ID>.
 ```
 
 The trigger limits implementation to the unchecked findings in the durable
-review record, validates them, runs `meridian task transition <TASK-ID> IN_PROGRESS` before remediation and any authorized T1_CI-only push before finalizing delivery. It commits remediation,
+review record, validates them, confirms `in_progress` with the retained verdict before remediation and makes any authorized T1_CI-only push before finalizing delivery. It commits remediation,
 validation evidence, and the final handoff, then runs `meridian execution deliver
 <TASK-ID> --project .` last and stops writing. It does not authorize unrelated work or a
 reinterpretation of a finding.
@@ -209,7 +209,7 @@ Correct this documentation inconsistency only:
 <EXACT INCONSISTENCY AND TARGET FILES>.
 
 Read LANGUAGE_POLICY.md, AGENTS.md or CLAUDE.md, PROJECT_WORKFLOW.md,
-docs/CONTEXT_BUDGET_POLICY.md, the canonical source that establishes the
+docs/CONTEXT_READING_POLICY.md, the canonical source that establishes the
 correct statement, and the target files. Do not change source code, task
 acceptance states, queue ordering, ADR intent, or unrelated documentation.
 Verify the resulting documentation diff. Create a commit only if the governing
@@ -244,7 +244,7 @@ Report the current SDD handoff state; do not modify files.
 
 ## What a prompt cannot authorize
 
-- A task may start only when its dependencies are `ACCEPTED` and the developer explicitly assigns it.
+- A task may start only when its dependencies are `done` and the developer explicitly assigns it.
 - A required-review task needs a separate reviewer-integrator chat unless the owner uses the explicit `Accept <TASK-ID>` path.
 - `Run lifecycle <TASK-ID>` may coordinate the required-review loop only through distinct implementer and reviewer sessions, as defined by `docs/LIFECYCLE_ORCHESTRATION.md`.
 - A task, review, audit, or analysis does not authorize unrelated code, future milestones, destructive Git recovery, or external publication.

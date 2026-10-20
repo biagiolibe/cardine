@@ -186,7 +186,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_upgrade_appends_new_marker_when_existing_marker_was_moved(self) -> None:
         """A new protected capability must not conflict solely because a project
         relocated an unchanged older protected block."""
-        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         profile = self.framework / "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
@@ -204,7 +204,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.copy_governed_templates()
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        local_policy = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
         validation = re.search(
             r"<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->\n?.*?"
@@ -230,7 +230,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
         appended = templates_markers.append_only_new_markers(
             local_policy.read_text(encoding="utf-8"),
-            (self.project / ".cardine/baselines/1.1.14/docs/CONTEXT_BUDGET_POLICY.md").read_text(
+            (self.project / ".cardine/baselines/1.1.14/docs/CONTEXT_READING_POLICY.md").read_text(
                 encoding="utf-8"
             ),
             incoming_policy,
@@ -241,7 +241,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MERGE    docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("MERGE    docs/CONTEXT_READING_POLICY.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
@@ -297,18 +297,18 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_upgrade_does_not_require_a_capability_not_marked_in_this_file(self) -> None:
         """A migration's `managedPaths` lists every file its diff touches, which
         is not the same as every file that must carry its capability marker:
-        migration 002 lists `docs/CONTEXT_BUDGET_POLICY.md` because it mentions
+        migration 002 lists `docs/CONTEXT_READING_POLICY.md` because it mentions
         lifecycle orchestration in prose, but only `validation-scoping` is
         actually marked in that file's template. The per-file cosmetic-conflict
         check must derive required capabilities from the template's own marker
         set, not from `managedPaths`, or this file can never be verified."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
-        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         policy.write_text(
             policy.read_text(encoding="utf-8").replace("## Task-first loading", "## Task-First Loading Rules"),
             encoding="utf-8",
         )
-        local = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        local = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local.read_text(encoding="utf-8")
         self.assertIn("MERIDIAN:BEGIN capability=validation-scoping", local_text)
         local.write_text(
@@ -318,7 +318,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("VERIFIED docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("VERIFIED docs/CONTEXT_READING_POLICY.md", checked.stdout)
 
     def test_apply_refuses_conflicting_local_change(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)

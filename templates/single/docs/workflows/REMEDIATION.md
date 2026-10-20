@@ -18,9 +18,9 @@ with a reviewer. A mismatch is `BLOCKED WRONG_WORKTREE` and preserves the existi
 For `Address review <TASK-ID>`, read the assigned task, its cited authority,
 the current review record at the location `PROJECT_WORKFLOW.md` declares for
 it, and `git status --short`. Confirm the
-machine status is `CHANGES_REQUESTED` (consult command results, never read or edit the state file directly), that the review record has unchecked
+machine status is `in_progress` with verdict `CHANGES_REQUESTED` (consult command results, never read or edit the state file directly), that the review record has unchecked
 findings, and that its local review-handoff commit is present. Do not implement
-new work, reinterpret a finding, or erase prior reviewer evidence. Run `meridian task transition <TASK-ID> IN_PROGRESS` before remediation. Never edit a status or verdict by hand. Resolve
+new work, reinterpret a finding, or erase prior reviewer evidence. The changes-requested verdict already returns the task to `in_progress`; retain its attempt and findings before remediation. Never edit a status or verdict by hand. Resolve
 every unchecked finding, mark each with implementation evidence in a new
 resolution section in the review record without editing verdict headings, rerun the task and baseline validation, and run
 the read-only `meridian execution ready-check <TASK-ID> --project .` after
@@ -28,8 +28,8 @@ committing remediation, updated review record, validation evidence, and the
 final handoff. Obtain any required T1_CI evidence with the one authorized
 task-branch push before finalizing the handoff. Run
 `meridian execution deliver <TASK-ID> --project .` as the last delivery step
-and stop writing. Start never resets CHANGES_REQUESTED; retain the explicit
-remediation transition above. Report the review-record path, resolved findings, commit, and
+and stop writing. Execution start never erases the prior verdict; retain the review
+attempt and findings during remediation. Report the review-record path, resolved findings, commit, and
 validation. If a finding needs an authority or scope change, leave it
 unchecked and return `BLOCKED SCOPE_CHANGE_REQUIRED`.
 <!-- MERIDIAN:END -->

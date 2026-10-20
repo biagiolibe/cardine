@@ -90,7 +90,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_audit_fails_a_catalog_retired_marker_without_migration_records(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
         self.assertEqual(list((self.framework / "migrations").glob("*.json")), [])
-        policy = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         policy.write_text(
             policy.read_text(encoding="utf-8")
             + "\n<!-- MERIDIAN:BEGIN capability=reasoning-budget-contract v1 -->\nRetired.\n<!-- MERIDIAN:END -->\n",
@@ -116,13 +116,13 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
                     "to": "1.1.1",
                     "description": "test-only retirement",
                     "removes": [{"capability": "validation-scoping", "capabilityVersion": 2}],
-                    "managedPaths": ["docs/CONTEXT_BUDGET_POLICY.md"],
+                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
                     "verification": ["test-only"],
                 }
             ),
             encoding="utf-8",
         )
-        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         policy_text = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->\n?.*?"

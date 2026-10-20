@@ -197,7 +197,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         cr.check_capability_marker_baselines(self.root)
 
     def test_a_hand_edit_that_changes_marker_content_without_a_version_bump_fails(self) -> None:
-        target = self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md"
+        target = self.root / "templates/single/docs/workflows/IMPLEMENTATION.md"
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
@@ -215,7 +215,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         (task 004); an edit there is exactly as unauthorized as one in
         CLAUDE.md, and must not silently become the new v1 just because the
         generator will faithfully propagate it."""
-        target = self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md"
+        target = self.root / "templates/single/docs/workflows/IMPLEMENTATION.md"
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
@@ -229,7 +229,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
             cr.check_capability_marker_baselines(self.root)
 
     def test_write_marker_baselines_makes_a_deliberate_change_pass_again(self) -> None:
-        target = self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md"
+        target = self.root / "templates/single/docs/workflows/IMPLEMENTATION.md"
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
@@ -248,7 +248,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         """Bumping the version *and* changing the content is the legitimate
         path, but it still requires the explicit `--write-marker-baselines`
         step; skipping that must not silently pass."""
-        target = self.root / "templates/workflows/governed-sdd/AGENTS.md"
+        target = self.root / "templates/single/AGENTS.md"
         text = target.read_text(encoding="utf-8")
         text = text.replace(
             "<!-- MERIDIAN:BEGIN capability=command-triggers v3 -->",
@@ -291,12 +291,12 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         """The baseline guard's original task-014 behavior: an absence with
         no accounting migration is still an unauthorized change, retirement
         infrastructure or not."""
-        self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
+        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
         with self.assertRaises(SystemExit):
             cr.check_capability_marker_baselines(self.root)
 
     def test_a_capability_retired_in_the_catalog_passes_without_a_migration(self) -> None:
-        self._remove_marker_block(self.root / "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
+        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
         path = self.root / "capabilities/markers-v1.json"
         catalog = json.loads(path.read_text(encoding="utf-8"))
         catalog["capabilities"]["spike-routing"].update(retired=True, required=False)
@@ -329,7 +329,7 @@ class CapabilityRequiredVersionsTest(unittest.TestCase):
 
     def test_bumped_marker_with_unchanged_requirement_fails(self) -> None:
         required = self.catalog["capabilities"]["git-workflow"]["requiredVersion"]
-        relative = "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+        relative = "templates/single/PROJECT_WORKFLOW.md"
         target = self.root / relative
         text = target.read_text(encoding="utf-8")
         marker = f"capability=git-workflow v{required} -->"
@@ -347,7 +347,7 @@ class CapabilityRequiredVersionsTest(unittest.TestCase):
         self.save_catalog()
         message = self.failure()
         for expected in ("git-workflow", f"requiredVersion={shipped + 1}", f"ships v{shipped}",
-                         "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"):
+                         "templates/single/PROJECT_WORKFLOW.md"):
             self.assertIn(expected, message)
 
     def test_retired_capability_is_ignored_even_if_required(self) -> None:
@@ -371,32 +371,23 @@ class CapabilityRequiredVersionsTest(unittest.TestCase):
         self.save_catalog()
         message = self.failure()
         self.assertIn("missing-test-capability", message)
-        self.assertIn("no marker ships in the Governed SDD managed templates", message)
+        self.assertIn("no marker ships in the single managed templates", message)
 
-    def test_first_managed_file_wins_over_later_higher_or_lower_versions(self) -> None:
-        first = self.root / "templates/workflows/governed-sdd/docs/LIFECYCLE_ORCHESTRATION.md"
-        later = self.root / "templates/workflows/governed-sdd/docs/workflows/LIFECYCLE.md"
-        self.assertIn("capability=lifecycle-orchestration v12 -->", first.read_text(encoding="utf-8"))
+    def test_every_managed_file_must_use_the_same_version(self) -> None:
+        later = self.root / "templates/single/docs/workflows/IMPLEMENTATION.md"
         original = later.read_text(encoding="utf-8")
-        self.assertIn("capability=lifecycle-orchestration v3 -->", original)
         for version in (3, 99):
             with self.subTest(later_version=version):
-                later.write_text(original.replace("capability=lifecycle-orchestration v3 -->",
-                                                 f"capability=lifecycle-orchestration v{version} -->"), encoding="utf-8")
-                cr.check_capability_required_versions(self.root)
-        self.catalog["capabilities"]["lifecycle-orchestration"]["requiredVersion"] = 99
-        self.save_catalog()
-        message = self.failure()
-        self.assertIn("ships v12", message)
-        self.assertIn(str(first.relative_to(self.root)), message)
+                later.write_text(original + f"\n<!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v{version} -->\n<!-- MERIDIAN:END -->\n", encoding="utf-8")
+                message = self.failure()
+                self.assertIn(f"ships v{version}", message)
+                self.assertIn(str(later.relative_to(self.root)), message)
 
-    def test_first_marker_in_a_file_wins(self) -> None:
-        target = self.root / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+    def test_every_marker_in_a_file_must_match(self) -> None:
+        target = self.root / "templates/single/PROJECT_WORKFLOW.md"
         target.write_text("<!-- MERIDIAN:BEGIN capability=git-workflow v999 -->\n<!-- MERIDIAN:END -->\n"
                           + target.read_text(encoding="utf-8"), encoding="utf-8")
-        self.catalog["capabilities"]["git-workflow"]["requiredVersion"] = 999
-        self.save_catalog()
-        cr.check_capability_required_versions(self.root)
+        self.assertIn("ships v999", self.failure())
 
 
 class GovernedReviewWorktreeContractTest(unittest.TestCase):
@@ -889,7 +880,7 @@ class ManagedDigestTest(unittest.TestCase):
     def test_repository_check_ignores_checkout_profile_surface_changes(self) -> None:
         catalog_path = self.root / "capabilities/catalog-v1.json"
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-        catalog["capabilities"]["context-budgeting"]["managedSurfaces"][0]["path"] = (
+        catalog["capabilities"]["context-reading"]["managedSurfaces"][0]["path"] = (
             "docs/FUTURE_CONTEXT_POLICY.md"
         )
         catalog_path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
@@ -917,7 +908,7 @@ class ManagedDigestTest(unittest.TestCase):
             (project / ".meridian").mkdir()
             shutil.copyfile(project / ".cardine/manifest.json", project / ".meridian/manifest.json")  # MERIDIAN-INSTALLATION-CHECK
             # MERIDIAN-INSTALLATION-CHECK
-            target = project / "docs/CONTEXT_BUDGET_POLICY.md"
+            target = project / "docs/CONTEXT_READING_POLICY.md"
             target.write_text(target.read_text(encoding="utf-8") + "\nDrift.\n", encoding="utf-8")
             check_output = io.StringIO()
             doctor_output = io.StringIO()
@@ -931,7 +922,7 @@ class ManagedDigestTest(unittest.TestCase):
 
             self.assertEqual(2, doctor_status, doctor_output.getvalue())
             # MERIDIAN-INSTALLATION-CHECK
-            expected = "drifted managed-copy surface docs/CONTEXT_BUDGET_POLICY.md"
+            expected = "drifted managed-copy surface docs/CONTEXT_READING_POLICY.md"
             self.assertIn(expected, check_output.getvalue())
             self.assertIn(expected, doctor_output.getvalue())
 

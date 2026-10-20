@@ -297,8 +297,6 @@ def audit_declared_capabilities(
             assert capability is not None
             prefix = f"{profile.profile_id}/{declaration.capability_id}"
             exclusions: list[str] = []
-            if workflow_mode not in capability.workflow_modes:
-                exclusions.append("workflow-mode-excluded")
             if profile.profile_id == "cardine-self-hosting" and not capability.self_hosting_eligible:
                 exclusions.append("self-hosting-ineligible")
             if exclusions:

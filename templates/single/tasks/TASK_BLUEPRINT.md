@@ -14,7 +14,7 @@ Class: [omit for a standard task / SPIKE]
 Review: [omit to inherit the project default / required / not_required]
 Options: [omit, or a JSON object with any `taskDefaults` key, for example `{"authorityRequired": true}`]
 Manual verification: [none / required]
-Manual verification rationale: [mandatory when Manual verification: required, omitted otherwise; name the tier-3 (perceptual) property that no tier-1 (structural) or tier-2 (derived-value) check can express — see docs/CONTEXT_BUDGET_POLICY.md's evidence tiers]
+Manual verification rationale: [mandatory when Manual verification: required, omitted otherwise; name the tier-3 (perceptual) property that no tier-1 (structural) or tier-2 (derived-value) check can express — see docs/CONTEXT_READING_POLICY.md's evidence tiers]
 
 Every omitted option inherits from the project configuration and its preset;
 `false` and `not_required` are explicit overrides, valid in either direction.

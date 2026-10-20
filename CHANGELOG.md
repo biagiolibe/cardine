@@ -1344,7 +1344,7 @@ file changed, so no migration record or `VERSION` bump applies.
 ### Added
 
 - CI-first validation-evidence rule
-  ([docs/PULL_REQUEST_POLICY.md](templates/workflows/governed-sdd/docs/PULL_REQUEST_POLICY.md)):
+  ([docs/PULL_REQUEST_POLICY.md](templates/single/docs/INTEGRATION_POLICY.md)):
   a reviewer with a completed CI run for the exact task-branch commit that
   covers the task's validation surface uses that run as evidence instead of
   re-running the same checks locally — a real independent, tamper-evident
@@ -1362,7 +1362,7 @@ file changed, so no migration record or `VERSION` bump applies.
 ### Added
 
 - Validation-scope rule
-  ([docs/CONTEXT_BUDGET_POLICY.md](templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md)):
+  ([docs/CONTEXT_BUDGET_POLICY.md](templates/single/docs/CONTEXT_READING_POLICY.md)):
   before running validation, classify the diff by surface
   (documentation/policy text vs. source/build) and run only the commands
   whose surface the diff actually touches. A documentation/policy-only change
@@ -1401,7 +1401,7 @@ file changed, so no migration record or `VERSION` bump applies.
 ### Added
 
 - `Run lifecycle <TASK-ID>` autonomous orchestration
-  ([docs/LIFECYCLE_ORCHESTRATION.md](templates/workflows/governed-sdd/docs/LIFECYCLE_ORCHESTRATION.md)):
+  ([docs/LIFECYCLE_ORCHESTRATION.md](templates/single/docs/LIFECYCLE_ORCHESTRATION.md)):
   a coordination-only role that starts distinct implementer and
   reviewer-integrator sessions, loops through requested-change remediation via
   the durable review record, and integrates only after approval and all

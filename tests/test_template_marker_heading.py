@@ -79,7 +79,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         )
 
     def test_context_budget_policy_carries_its_capability_markers(self) -> None:
-        text = (self.WORKFLOW / "docs/CONTEXT_BUDGET_POLICY.md").read_text(encoding="utf-8")
+        text = (self.WORKFLOW / "docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(text),
             [
@@ -96,7 +96,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         )
 
     def test_execution_evidence_profile_is_stack_agnostic_and_configurable(self) -> None:
-        policy = (self.WORKFLOW / "docs/CONTEXT_BUDGET_POLICY.md").read_text(encoding="utf-8")
+        policy = (self.WORKFLOW / "docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
         profile = (self.WORKFLOW / "docs/EXECUTION_EVIDENCE_PROFILE.md").read_text(
             encoding="utf-8"
         )
@@ -112,7 +112,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         confirming, or escalating a reasoning level."""
         paths = [
             "tasks/TASK_BLUEPRINT.md",
-            "docs/CONTEXT_BUDGET_POLICY.md",
+            "docs/CONTEXT_READING_POLICY.md",
             "docs/LIFECYCLE_ORCHESTRATION.md",
             "docs/OPERATOR_PROMPTS.md",
             "docs/INTEGRATION_POLICY.md",
@@ -125,7 +125,7 @@ class CapabilityMarkerTest(unittest.TestCase):
             ("lifecycle-orchestration", "12"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
         )
         self.assertNotIn(
-            "reasoning-budget-contract", dict(self.marker_pairs(texts["docs/CONTEXT_BUDGET_POLICY.md"]))
+            "reasoning-budget-contract", dict(self.marker_pairs(texts["docs/CONTEXT_READING_POLICY.md"]))
         )
         for path, text in texts.items():
             self.assertNotIn("reasoning-budget-contract", text, path)
@@ -137,7 +137,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertNotIn("reasoning-budget-contract", owner_templates_migrations.capability_requirements(ROOT))
 
     def test_minimal_read_only_status_profile_limits_context_expansion(self) -> None:
-        policy = (self.WORKFLOW / "docs/CONTEXT_BUDGET_POLICY.md").read_text(encoding="utf-8")
+        policy = (self.WORKFLOW / "docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
         prompts = (self.WORKFLOW / "docs/OPERATOR_PROMPTS.md").read_text(encoding="utf-8")
         self.assertIn("A status report is not a conformance audit.", policy)
         self.assertIn("Before every expanded read", policy)
@@ -213,15 +213,13 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("independently confirms", review_record)
 
     def test_project_workflow_carries_all_declared_baseline_capabilities(self) -> None:
-        # The recorded baselines still key on the old governed root until row SW5
-        # of docs/SINGLE_WORKFLOW_PLAN.md rewrites them for the single set.
-        text = (ROOT / "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+        text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         pairs = self.marker_pairs(text)
         baselines = json.loads((ROOT / "capabilities/marker-baselines.json").read_text(encoding="utf-8"))
         expected = {
             capability: str(entry["version"])
             for capability, entry in baselines[
-                "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md"
+                "templates/single/PROJECT_WORKFLOW.md"
             ].items()
         }
         self.assertEqual(sorted(pairs), sorted(expected.items()))

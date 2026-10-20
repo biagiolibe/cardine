@@ -40,10 +40,10 @@ worktree check <TASK-ID> --project <primary-checkout> --format json` there.
 
 After successful worktree verification, resolve only the task metadata and
 execution contract needed for `meridian execution start <TASK-ID> --project .`.
-For a nonterminal legacy Governed task, reconcile its contract first with
+For a nonterminal legacy task, reconcile its contract first with
 `meridian execution reconcile <TASK-ID> --apply --project .`; commit that
 reconciliation before start. Run start before substantive authority/source
-analysis, advisor consultation, or implementation. A repeated IN_PROGRESS
+analysis, advisor consultation, or implementation. A repeated in_progress
 start preserves the first transition and its UTC timestamp. Only an explicitly
 authorized Resume may pass `--resume`, after inspecting status and diff and
 confirming the assigned task's changes and sole writer. Review/status requests
@@ -70,13 +70,13 @@ required independent review; textual conflict resolution; or another task.
 Do not ask for confirmation within that boundary.
 
 After acceptance criteria and required validation pass, commit implementation,
-then finalize and commit the completion handoff. For Review: REQUIRED, run
+then finalize and commit the completion handoff. For Review: required, run
 `meridian execution deliver <TASK-ID> --project .` as the final delivery step.
 It commits only state and owned projections and reports the clean committed
-HEAD. Stop writing immediately after successful delivery. `Review: REQUIRED` then stops at
+HEAD. Stop writing immediately after successful delivery. `Review: required` then stops at
 `REVIEW_REQUIRED`; it is a gate, not a request for authorization. Leave the
 clean worktree for the fresh reviewer-integrator, who resumes C4 through C10
-after approval. `Review: NOT_REQUIRED` proceeds through C10. The remaining
+after approval. `Review: not_required` proceeds through C10. The remaining
 stops are `ACCEPTANCE_UNMET`, `VALIDATION_FAILED`, `WRONG_WORKTREE`,
 `EVIDENCE_INCOMPLETE`, `PRIMARY_DIRTY`, `MAIN_BEHIND_ORIGIN`, `LEASE_HELD`,
 `INTEGRATION_CONFLICT`, `CANDIDATE_VALIDATION_FAILED`, `EVIDENCE_MISMATCH`,
@@ -86,28 +86,28 @@ acceptance criterion depends solely on it; record it as `Validation skips:` in
 the handoff.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=manual-verification-precondition v4 -->If the task declares `Manual verification: required`, check its `Manual verification rationale` first, before any probe: if it is missing, or names a property readable as a value anywhere in the program (a tier-1 structural or tier-2 derived-value property per `docs/CONTEXT_BUDGET_POLICY.md`'s evidence tiers), return `BLOCKED SCOPE_CHANGE_REQUIRED` asking for the task to be re-scoped as a deterministic check instead — do not run the probe. Only once the rationale names a genuine tier-3 perceptual property, confirm evidence availability before any implementation, not after: run an end-to-end probe that actually succeeds and produces the exact evidence channel the task will record, confirmed readable by the responsible agent or reviewer. A visible terminal entry, a launched process, or a presumed ability to automate an application window is not evidence availability; the probe must actually locate the application window and acquire its image, or otherwise produce and open the real artifact. If no such probe succeeds before implementation, return `BLOCKED SCOPE_CHANGE_REQUIRED` immediately; do not implement in the hope the channel will become available later. A probe that has been attempted and failed is positive evidence about the environment: report it and request the evidence channel from the developer before continuing, whatever the evidence tier — never respond to a failed probe by exploring the local environment for an alternative. When a deterministic test can serve as the change's primary acceptance evidence (for example, a geometry or layout assertion), it suspends only the requirement to *capture* manual or visual confirmation as the sole gate; it never suspends the requirement to stop on a probe that has already been attempted and failed.<!-- MERIDIAN:END -->
+<!-- MERIDIAN:BEGIN capability=manual-verification-precondition v4 -->If the task declares `Manual verification: required`, check its `Manual verification rationale` first, before any probe: if it is missing, or names a property readable as a value anywhere in the program (a tier-1 structural or tier-2 derived-value property per `docs/CONTEXT_READING_POLICY.md`'s evidence tiers), return `BLOCKED SCOPE_CHANGE_REQUIRED` asking for the task to be re-scoped as a deterministic check instead — do not run the probe. Only once the rationale names a genuine tier-3 perceptual property, confirm evidence availability before any implementation, not after: run an end-to-end probe that actually succeeds and produces the exact evidence channel the task will record, confirmed readable by the responsible agent or reviewer. A visible terminal entry, a launched process, or a presumed ability to automate an application window is not evidence availability; the probe must actually locate the application window and acquire its image, or otherwise produce and open the real artifact. If no such probe succeeds before implementation, return `BLOCKED SCOPE_CHANGE_REQUIRED` immediately; do not implement in the hope the channel will become available later. A probe that has been attempted and failed is positive evidence about the environment: report it and request the evidence channel from the developer before continuing, whatever the evidence tier — never respond to a failed probe by exploring the local environment for an alternative. When a deterministic test can serve as the change's primary acceptance evidence (for example, a geometry or layout assertion), it suspends only the requirement to *capture* manual or visual confirmation as the sole gate; it never suspends the requirement to stop on a probe that has already been attempted and failed.<!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=host-impact-routing v2 -->Before implementation, read the task's `Host impact` declaration. `NOT_APPLICABLE` needs a non-empty rationale explaining why no host-facing contract can change. `REQUIRED` needs a host-independent policy outcome, one profile row with every declared column, all three evidence-plan categories, and a fallback for every profile. For a host-sensitive task, if the required static, host-execution, or manual-activation evidence cannot be obtained for a profile, stop and return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`; retain that profile as `unverified`, `advisory`, or `unsupported` with its fallback rather than claiming `enforced`. A template declaration is not host enforcement, and no automatic host probe is required by this routing rule.<!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=spike-routing v3 -->If any acceptance criterion cannot be evaluated without first discovering an unknown, do not implement past that point: return `BLOCKED SCOPE_CHANGE_REQUIRED`, naming the exact `Class: SPIKE` task (see `tasks/TASK_BLUEPRINT.md`'s spike shape) needed to resolve the unknown, proposing it if it does not exist yet. Do not investigate the unknown inside this task's own branch, commit, or timebox — that is what turns a spike into an unbounded side-channel for work that should have gone through its own `Question`/`Timebox` gate.<!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->
-Scope validation to the diff's actual surface, following the validation-scope rule in `docs/CONTEXT_BUDGET_POLICY.md`. Skip a full build, test, or lint suite for a documentation or policy-only change, and state the skip explicitly in the completion report.
+Scope validation to the diff's actual surface, following the validation-scope rule in `docs/CONTEXT_READING_POLICY.md`. Skip a full build, test, or lint suite for a documentation or policy-only change, and state the skip explicitly in the completion report.
 <!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=execution-command-gate v5 -->
 For a normal task, execute every named `Validation` entry only through
 `meridian execution validate <TASK-ID> <validation-id> --project .`; running
-the literal command directly is not completion evidence. Before a
-diagnostic, capture, or context expansion, use `meridian execution evidence`.
+the literal command directly is not completion evidence. Record the command, exit status, and bounded evidence without self-reported
+spend counters.
 Before broad or uncertain-yield research outside the initial task authority,
-use `meridian execution investigate`. For `Review: REQUIRED`, commit implementation, finalize and commit the
+use `meridian execution investigate`. For `Review: required`, commit implementation, finalize and commit the
 handoff, use read-only `meridian execution ready-check <TASK-ID> --project .`,
 then run `meridian execution deliver <TASK-ID> --project .` last and stop
-writing. Direct READY_FOR_REVIEW transitions enforce the same prerequisites
+writing. Direct in_review transitions enforce the same prerequisites
 but remain pending until committed. Never edit a status or verdict by hand.
-Use `meridian execution start <TASK-ID> --project .` at implementation start and `meridian task transition <TASK-ID> ACCEPTED` after validation for `Review: NOT_REQUIRED`. If a nonterminal
+Use `meridian execution start <TASK-ID> --project .` at implementation start and follow validated closure and integration for `Review: not_required`. If a nonterminal
 legacy task lacks the current generated execution contract, run `meridian
 execution reconcile <TASK-ID> --apply --project .` before substantive work.
 <!-- MERIDIAN:END -->
@@ -119,7 +119,7 @@ Read each document when its phase begins, in the order listed. This changes
 only when a document is read; no gate, acceptance criterion, or review rule is
 waived by reading a document later.
 
-- At start: this procedure, the entry-point router, the workflow document, the language policy, and `docs/CONTEXT_BUDGET_POLICY.md`.
+- At start: this procedure, the entry-point router, the workflow document, the language policy, and `docs/CONTEXT_READING_POLICY.md`.
 - At first production-source plan: `docs/CODE_ORGANIZATION.md`.
 - At proposing a spike: `tasks/TASK_BLUEPRINT.md`.
 - At first validation: `docs/EXECUTION_EVIDENCE_PROFILE.md`.

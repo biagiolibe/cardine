@@ -20,7 +20,7 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
         self.project = root / "project"
         self.project.mkdir()
         files = ("PROJECT_WORKFLOW.md", "AGENTS.md", "CLAUDE.md", "LANGUAGE_POLICY.md",
-                 "tasks/TASK_BLUEPRINT.md", "docs/CONTEXT_BUDGET_POLICY.md",
+                 "tasks/TASK_BLUEPRINT.md", "docs/CONTEXT_READING_POLICY.md",
                  "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules",
                  ".codex/hooks.json")
         self.fixture = SyntheticFramework(root / "framework", "2.0.0", templates={

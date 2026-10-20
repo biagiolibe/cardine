@@ -96,21 +96,13 @@ def bootstrap_capability_profile(
     profile = catalog.profile(profile_id)
     if profile is None:
         raise CardineError(f"capability profile is not present in the catalog: {profile_id}")
-    workflow_mode = manifest_workflow_mode(manifest)
-    if profile.workflow_modes and workflow_mode not in profile.workflow_modes:
-        raise CardineError(
-            f"profile {profile_id} applies to {', '.join(profile.workflow_modes)}, not {workflow_mode}"
-        )
+    manifest_workflow_mode(manifest)
     strict = profile_id in STRICT_DIGEST_PROFILES
     declarations: dict[str, object] = {}
     managed_files = dict(manifest.get("managedFiles", {}))
     for capability_id, required_version in profile.capabilities:
         capability = catalog.capability(capability_id)
         assert capability is not None
-        if workflow_mode not in capability.workflow_modes:
-            raise CardineError(
-                f"profile {profile_id} capability {capability_id} excludes workflow {workflow_mode}"
-            )
         declarations[capability_id] = _capability_declaration(
             project_root, capability, required_version, managed_files, strict
         )

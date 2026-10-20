@@ -46,16 +46,15 @@ configuration, or `~/.meridian/worktrees`, in that order.
 - After check and minimal contract resolution, run `meridian execution start
   <TASK-ID> --project <task-worktree>` before substantive analysis, advisor
   consultation, or implementation. Only explicit Resume adds `--resume` after
-  status/diff inspection. Governed start records IN_PROGRESS once; Lean start
-  verifies the worktree without adding a machine state or requiring a Governed
-  contract. Preparation/launch alone is not execution start.
-- Review-required Governed workers commit implementation and final handoff,
+  status/diff inspection. Start records `queued -> in_progress` once for
+  either preset, using the task's resolved contract. Preparation/launch alone is not execution start.
+- Workers whose resolved review option is `required` commit implementation and final handoff,
   check readiness, then run `meridian execution deliver <TASK-ID> --project
   <task-worktree>` last. The command commits only state/projection and reports
   clean HEAD. Stop implementer writes; review requires committed valid delivery.
   An uncommitted ready state or later dirt is pending delivery/changes; status
-  remains authoritative. Review/status requests never start work. SPIKE and
-  review-not-required closure keep their existing terminal transitions.
+  remains authoritative. Review/status requests never start work. Spikes
+  follow the same review option; no-review tasks proceed to validated landing.
 - `integrate stage <TASK-ID> --project <primary>
   --evidence <handoff.json> --format json` owns the lease and no-commit merge
   and returns `REUSE`, `BOUNDED`, or `FULL` plus the candidate tree.
@@ -102,10 +101,10 @@ is a read-only no-op. Unproven transitions report `BLOCKED WRONG_WORKTREE`.
 A section ends at the next heading of the same or a higher level and includes
 its nested headings; its heading level does not restrict archival. A section
 that itself lists task rows is archived when every task row in it has a state
-file, read by task ID, whose status is terminal (`ACCEPTED`, `ANSWERED`, or `INCONCLUSIVE` in Governed SDD). Table
+file, read by task ID, whose status is terminal (`done` or `cancelled`). Table
 shape, column order, and status-cell wording are not read. `INCONCLUSIVE` closes its section but still does not satisfy a dependency. A row without
 a state file keeps the conservative table rule: only a `###` section whose task
-tables and rows are all recognized and terminal (`ACCEPTED` or `ANSWERED`) is archived, and a
+tables and rows are all recognized and terminal (`done` or `cancelled`) is archived, and a
 section that mixes both kinds of row archives only when both rules agree. An
 open, invalid-state, or ambiguous row retains the entire section, and so does a
 section that lists no task row of its own. `integrate stage` reports every
@@ -115,21 +114,21 @@ legacy tasks so that their sections archive by state.
 
 ## Machine task state adoption
 
-Run `meridian task state import [<TASK-ID>...] --project <path> --format json` to preview state files for open legacy tasks and inspect the queue, record, and review evidence. Repeat with `--apply` only after resolving reported disagreements. Existing state files are never overwritten, and terminal legacy tasks are skipped unless `--include-terminal` is given; it previews and, with `--apply`, writes their state from the current texts, stops with `TASK_STATE_INVALID` when the queue, record, or review texts disagree, and never creates an approval. Imported transition history describes the bootstrap at the current HEAD and timestamp, not past implementation or review events; it never manufactures an approval. For Lean Delivery, progress remains derived from the worktree and imports as `QUEUED`. Use `meridian task transition` and `meridian review verdict` for subsequent changes; never edit statuses or verdicts by hand. Machine state files stay tracked at their original path when task records are archived.
+Run `meridian task state import [<TASK-ID>...] --project <path> --format json` to preview state files for open legacy tasks and inspect the queue, record, and review evidence. Repeat with `--apply` only after resolving reported disagreements. Existing state files are never overwritten, and terminal legacy tasks are skipped unless `--include-terminal` is given; it previews and, with `--apply`, writes their state from the current texts, stops with `TASK_STATE_INVALID` when the queue, record, or review texts disagree, and never creates an approval. Imported transition history describes the bootstrap at the current HEAD and timestamp, not past implementation or review events; it never manufactures an approval. Both presets use the same state vocabulary and retain the resolved contract snapshot. Conversion of existing installations is explicit, never inferred from table shape. Use `meridian task transition` and `meridian review verdict` for subsequent changes; never edit statuses or verdicts by hand. Machine state files stay tracked at their original path when task records are archived.
 
 ## Candidate validation by integration outcome
 
-`.meridian/candidate-validation.json` is a consumer-owned, versioned declaration.
-It supplies non-empty command fragments for each `REUSE`, `BOUNDED`, and `FULL`
-outcome (`declared`), or explicitly selects `none`. A missing file or
-`undeclared` state stops `integrate stage` before any lease, merge, or staged
-state with `BLOCKED UNDECLARED_VALIDATION_COMMANDS`; its evidence names the
-task's validation commands and a proposal. Review the proposal and explicitly
-write declared fragments or `none`, or run `meridian setup --apply` after its
-proposal is reviewed. `upgrade --apply` never writes this project file.
+The consumer-owned `.cardine/project.json` declares validation command IDs,
+baseline commands, and candidate commands for `REUSE`, `BOUNDED`, and `FULL`.
+Task commands supplement the baseline. Empty lists must be explicit; unknown
+IDs and missing candidate outcomes are configuration errors. Every candidate
+also runs `git diff --check`. The task's CLI-written contract snapshot freezes
+the resolved commands; changing project defaults does not alter an open task.
 
-A task record with `Class: SPIKE` completes at stage to its terminal `ANSWERED`
-or `INCONCLUSIVE` status without a review record. Its task diff may contain
+A task record with `Class: SPIKE` records `ANSWERED` or `INCONCLUSIVE` as
+its outcome while status remains `in_progress`. It follows its resolved
+review option, including commit-bound approval when required, and becomes
+`done` only after validated landing. Its task diff may contain
 only its record or exact archive rename, handoff, ADR log, documentation paths
 named in its deliverable, changelog fragments, and the canonical
 `.meridian/execution-evidence.json` ledger produced by `meridian execution

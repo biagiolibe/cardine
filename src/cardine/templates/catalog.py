@@ -76,14 +76,8 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
             raise CardineError(f"invalid capability ID: {capability_id!r}")
         label = f"capabilities.{capability_id}"
         item = _required_object(raw_capability, label)
-        workflow_modes = _required_string_list(
-            item.get("workflowModes"), f"{label}.workflowModes", non_empty=True
-        )
-        unsupported_modes = sorted(set(workflow_modes) - set(WORKFLOW_MODES))
-        if unsupported_modes:
-            raise CardineError(
-                f"{label}.workflowModes contains unsupported mode: {unsupported_modes[0]}"
-            )
+        if item.get("distribution") != "single" or "workflowModes" in item:
+            raise CardineError(f"{label}.distribution must be single; workflowModes is unsupported")
         eligible = item.get("selfHostingEligible")
         if type(eligible) is not bool:
             raise CardineError(f"{label}.selfHostingEligible must be a boolean")
@@ -159,7 +153,7 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
             CatalogCapability(
                 capability_id=capability_id,
                 version=_required_positive_integer(item.get("version"), f"{label}.version"),
-                workflow_modes=workflow_modes,
+                distribution="single",
                 self_hosting_eligible=eligible,
                 host_profiles=parsed_hosts,
                 installation_forms=forms,
@@ -200,19 +194,11 @@ def parse_capability_catalog(value: object) -> CapabilityCatalog:
                         f"{label} omits dependency {dependency_id} v{dependency_version} "
                         f"required by {capability_id}"
                     )
-        profile_modes = (
-            _required_string_list(profile["workflowModes"], f"{label}.workflowModes", non_empty=True)
-            if "workflowModes" in profile
-            else ()
-        )
-        unsupported_profile_modes = sorted(set(profile_modes) - set(WORKFLOW_MODES))
-        if unsupported_profile_modes:
-            raise CardineError(
-                f"{label}.workflowModes contains unsupported mode: {unsupported_profile_modes[0]}"
-            )
+        if profile.get("distribution") != "single" or "workflowModes" in profile:
+            raise CardineError(f"{label}.distribution must be single; workflowModes is unsupported")
         profiles.append(
             CatalogProfile(
-                workflow_modes=profile_modes,
+                distribution="single",
                 profile_id=profile_id,
                 version=_required_positive_integer(profile.get("version"), f"{label}.version"),
                 capabilities=required,
@@ -388,8 +374,6 @@ def parse_capability_profiles(
                         f"{capability_label}.managedSurface form {surface.form} is not allowed for {surface.path}"
                     )
             exclusions: list[str] = []
-            if workflow_mode not in capability.workflow_modes:
-                exclusions.append("workflow-mode-excluded")
             if profile_id == "cardine-self-hosting" and not capability.self_hosting_eligible:
                 exclusions.append("self-hosting-ineligible")
             installation = _parse_evidence_snapshot(

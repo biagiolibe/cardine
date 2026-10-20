@@ -23,14 +23,10 @@ from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
 from cardine.templates import generator
 from cardine.templates import files as owner_templates_files
-from cardine.templates.markers import find_capability_marker_version
 from cardine.templates import migration_audit as owner_templates_migration_audit
 from cardine.templates import migrations as owner_templates_migrations
 from cardine.templates.roots import single_template_root
 
-# The marker baselines and the catalog's required versions still key on the old
-# per-workflow roots until row SW5 of docs/SINGLE_WORKFLOW_PLAN.md moves them.
-LEGACY_WORKFLOW_MODES = ("lean-delivery", "governed-sdd")
 SINGLE_POLICY_LABEL = "All presets"
 MARKER_BASELINE_PATH = ROOT / "capabilities" / "marker-baselines.json"
 REQUIRED_FILES = (
@@ -64,7 +60,7 @@ REQUIRED_FILES = (
     "templates/single/LANGUAGE_POLICY.md",
     "templates/single/tasks/TASK_BLUEPRINT.md",
     "templates/single/tasks/QUEUE.md",
-    "templates/single/docs/CONTEXT_BUDGET_POLICY.md",
+    "templates/single/docs/CONTEXT_READING_POLICY.md",
     "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md",
     "templates/single/.codex/hooks.json",
     "skills/meridian-lean-delivery/SKILL.md",
@@ -682,7 +678,7 @@ def check_local_markdown_links() -> None:
 
 
 def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str, object]]]:
-    """capability marker content, by managed template file, for every mode.
+    """capability marker content, by managed template file, for every preset.
 
     Every managed template (`owner_templates_files.managed_files`, the same set a project
     actually receives and `cardine audit` checks) is scanned for its capability
@@ -697,20 +693,19 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
         re.DOTALL,
     )
     baselines: dict[str, dict[str, dict[str, object]]] = {}
-    for mode in LEGACY_WORKFLOW_MODES:
-        for item in owner_templates_files.legacy_managed_files(root, mode):
-            relative = str(item.source.relative_to(root))
-            if relative in baselines:
-                continue
-            text = item.source.read_text(encoding="utf-8")
-            markers: dict[str, dict[str, object]] = {}
-            for capability, version, content in marked_content.findall(text):
-                markers[capability] = {
-                    "version": int(version),
-                    "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
-                }
-            if markers:
-                baselines[relative] = markers
+    for item in owner_templates_files.managed_files(root):
+        relative = str(item.source.relative_to(root))
+        if relative in baselines:
+            continue
+        text = item.source.read_text(encoding="utf-8")
+        markers: dict[str, dict[str, object]] = {}
+        for capability, version, content in marked_content.findall(text):
+            markers[capability] = {
+                "version": int(version),
+                "sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+            }
+        if markers:
+            baselines[relative] = markers
     return baselines
 
 
@@ -770,34 +765,37 @@ def check_capability_marker_baselines(root: Path = ROOT) -> None:
 
 
 def check_capability_required_versions(root: Path = ROOT) -> None:
-    """Match catalog requirements to the first shipped Governed SDD marker."""
+    """Every live capability ships exactly its required version in the single set."""
     catalog_path = "capabilities/markers-v1.json"
     catalog = json.loads((root / catalog_path).read_text(encoding="utf-8"))
-    templates = [
-        (item.source, item.source.read_text(encoding="utf-8"))
-        for item in owner_templates_files.legacy_managed_files(root, "governed-sdd")
-    ]
+    occurrences: dict[str, list[tuple[Path, int]]] = {}
+    for item in owner_templates_files.managed_files(root):
+        for capability, version in re.findall(
+            r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->",
+            item.source.read_text(encoding="utf-8"),
+        ):
+            occurrences.setdefault(capability, []).append((item.source, int(version)))
     for capability, entry in catalog["capabilities"].items():
-        if not entry["required"] or entry["retired"]:
+        if entry["retired"]:
             continue
         required = entry["requiredVersion"]
-        for source, text in templates:
-            shipped = find_capability_marker_version(text, capability)
-            if shipped is None:
-                continue
-            if required != shipped:
-                fail(
-                    f"capability={capability}: catalog requiredVersion={required}, "
-                    f"but {source.relative_to(root)} ships v{shipped}; "
-                    f"update requiredVersion in {catalog_path} to {shipped}"
-                )
-            break
-        else:
+        shipped = occurrences.get(capability, [])
+        if not shipped and entry["required"]:
             fail(
                 f"capability={capability}: catalog requiredVersion={required}, "
-                "but no marker ships in the Governed SDD managed templates; "
+                "but no marker ships in the single managed templates; "
                 f"restore its marker and update requiredVersion in {catalog_path}"
             )
+        for source, version in shipped:
+            if version != required:
+                fail(
+                    f"capability={capability}: catalog requiredVersion={required}, "
+                    f"but {source.relative_to(root)} ships v{version}; "
+                    f"update requiredVersion in {catalog_path} to {version}"
+                )
+    unknown = sorted(set(occurrences) - set(catalog["capabilities"]))
+    if unknown:
+        fail(f"shipped capability is missing from {catalog_path}: {unknown[0]}")
 
 
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:

@@ -40,8 +40,6 @@ scripts/                          Repository validation and release tooling
 skills/                           Codex and Claude Code workflow skills
 tasks/                            Active task records, queue, and handoffs
 templates/single/                 The one template set both presets install
-templates/base/                   Legacy root, removed by single workflow row SW5
-templates/workflows/              Legacy roots, removed by single workflow row SW5
 tests/                            Unit tests
 .github/workflows/                GitHub Actions workflows
 WORKFLOW_GUIDE.md                 Lean Delivery workflow reference

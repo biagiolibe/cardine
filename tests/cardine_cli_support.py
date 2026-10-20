@@ -389,8 +389,8 @@ class CardineCliFixtureMixin:
     def _lock_project_with_reasoning_contract(self) -> tuple[Path, Path]:
         """Lock a governed project from templates that still carry the retired
         block and the superseded `execution-evidence-profile` v3 marker."""
-        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
-        current = (ROOT / "templates/single/docs/CONTEXT_BUDGET_POLICY.md").read_text(
+        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
+        current = (ROOT / "templates/single/docs/CONTEXT_READING_POLICY.md").read_text(
             encoding="utf-8"
         )
         previous = current.replace(
@@ -409,8 +409,8 @@ class CardineCliFixtureMixin:
         policy.write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.9\n", encoding="utf-8")
         self.write_synthetic_migration(
-            "002-synthetic-retire-contract", "1.2.8", "1.2.9", ["docs/CONTEXT_BUDGET_POLICY.md"],
+            "002-synthetic-retire-contract", "1.2.8", "1.2.9", ["docs/CONTEXT_READING_POLICY.md"],
             capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 6}],
             removes=[{"capability": "reasoning-budget-contract", "capabilityVersion": 1}],
         )
-        return policy, self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        return policy, self.project / "docs/CONTEXT_READING_POLICY.md"

@@ -1,26 +1,26 @@
 {
-  "templates/workflows/governed-sdd/AGENTS.md": {
+  "templates/single/AGENTS.md": {
     "command-triggers": {
-      "sha256": "0ef255f0dd5f1a377cd7e56aa2926f9cb67eaf190974c57acb7cd785c6263dd5",
+      "sha256": "ff1994a7de7a09388ea92b29203854c5794d817cfb7f912e5a6cd3718a429311",
       "version": 3
     }
   },
-  "templates/workflows/governed-sdd/CLAUDE.md": {
+  "templates/single/CLAUDE.md": {
     "command-triggers": {
-      "sha256": "0ef255f0dd5f1a377cd7e56aa2926f9cb67eaf190974c57acb7cd785c6263dd5",
+      "sha256": "ff1994a7de7a09388ea92b29203854c5794d817cfb7f912e5a6cd3718a429311",
       "version": 3
     }
   },
-  "templates/workflows/governed-sdd/LANGUAGE_POLICY.md": {
+  "templates/single/LANGUAGE_POLICY.md": {
     "language-policy": {
       "sha256": "71a8ada0767ac92c3b6a4030b8b911fc58b23f7473fd1a96af1fe85f84645985",
       "version": 2
     }
   },
-  "templates/workflows/governed-sdd/PROJECT_WORKFLOW.md": {
+  "templates/single/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
-      "sha256": "b9863a83cf996da21976d7c401f8d43c99cd2f60a31ac57839ccf261481f1b75",
-      "version": 6
+      "sha256": "fbf65d6b2ec3b4555726738adac0059012a1b1d2cc73255f50f75aa58b977b7f",
+      "version": 8
     },
     "codex-worktree-access": {
       "sha256": "1f5397dce445667ab7d6621065f3df138e3f8ca559f338c58157e994c2cbc0c3",
@@ -31,35 +31,39 @@
       "version": 2
     },
     "execution-assets": {
-      "sha256": "c0f4a62b5a7bc676c9232f516485ab3cde5e4d44271fd2fa3866c4b012db1b58",
+      "sha256": "9fd3392e7ff46100cd852b3b450b1ab29e266976dd6733cf65015f255672bca2",
       "version": 4
     },
     "execution-discipline": {
-      "sha256": "c37e3c5244a73a9e8546c4cfb0b887dea1c6c8990eb1e9f8603b4dc4c105c608",
+      "sha256": "0b84e693518e8a3cde74c714d205516677d76d11327ce57ed297b56efaec0227",
       "version": 1
     },
     "git-workflow": {
-      "sha256": "bfc4bdb8ceb936c1de390cd22bf64849c81ce69ec6ce68b6a398fa6f38d1aa62",
+      "sha256": "1234896eb9368011dbcd32d6264495d926cc4cd62a9ddda8b022c5ebf2704002",
       "version": 15
     },
     "review-policy": {
-      "sha256": "fc26ac0304cb31964c49ee1434667c846dc875122d0c9016b4c9dd084cce6833",
+      "sha256": "fd1e33245126c97f148085442a69bd3a44dc8329c0f18b6993a6b114a794d499",
       "version": 4
     },
     "roles": {
-      "sha256": "a6c91a961457c42e312aa51a0ecd9b69804b7dea6e9cdea40e1be18ed1016973",
+      "sha256": "ddf284b2bf27869bed0eeca607e21ab6d5560c3230dff658e277f8e5539a15f8",
       "version": 4
     },
     "task-identity-policy": {
-      "sha256": "78df2cd565b113a06771de7572bd260667aa8a687aa3b6066d12b4578d510221",
+      "sha256": "619ed3525fb7495a1efb07b69bf7f0b6f280e3dd80eb9b4a98bbfce8e5a1d935",
       "version": 1
     },
     "task-lifecycle": {
-      "sha256": "dc3c299c718df2b17b0413d054b886ca4e3f72ff8a67d633792a9ab25ac923d0",
+      "sha256": "db96ebad571cb81ee4e558c9b1d8db4ff093ee05f924c1d1e4ca867c03a1124d",
       "version": 5
     },
+    "validation-scoping": {
+      "sha256": "e96c1d406eb517daa36e43819dedddc16bb9574b080115d3961fa1c4edac8f2c",
+      "version": 2
+    },
     "workflow-mode-lock": {
-      "sha256": "c78393564487d9bcb41f08180e91c220ad7033e2408c8c2924bd1d574c71e0f5",
+      "sha256": "750a035d681e67321c85c2c7a3baf1a115b039b9d64cc55069f6b48c45f1984a",
       "version": 2
     },
     "worktree-command-locations": {
@@ -67,31 +71,31 @@
       "version": 1
     }
   },
-  "templates/workflows/governed-sdd/docs/AUDIT_PROMPT_READ_ONLY.md": {
+  "templates/single/docs/AUDIT_PROMPT_READ_ONLY.md": {
     "audit-prompt": {
-      "sha256": "68a42593d42a2d3a38d4eb05a0f969677ab8e3d0370e70f72e1757dc4bb0fee1",
+      "sha256": "5924c626503a4563c4cef7886d1f01e6503697a9a30b4d672002dc1c390ac4fd",
       "version": 4
     }
   },
-  "templates/workflows/governed-sdd/docs/CODE_ORGANIZATION.md": {
+  "templates/single/docs/CODE_ORGANIZATION.md": {
     "code-organization": {
       "sha256": "3ca6dbeec328d402b15b0bdcfc506be11f3e33783398b20efa50278a6ad0c94b",
       "version": 2
     }
   },
-  "templates/workflows/governed-sdd/docs/CODE_REVIEW_PROMPT.md": {
+  "templates/single/docs/CODE_REVIEW_PROMPT.md": {
     "code-review-prompt": {
-      "sha256": "b62c23f51d74399704816fbe74dd3a81645af80403db694e61bb030485b1a9c1",
+      "sha256": "3b66ab2d86e87f8c34ca4363a510c7915ff925875c343bf9024a8ccc2ee66141",
       "version": 3
     }
   },
-  "templates/workflows/governed-sdd/docs/COMPLETION_REPORT_TEMPLATE.md": {
+  "templates/single/docs/COMPLETION_REPORT_TEMPLATE.md": {
     "ci-verified-validation": {
-      "sha256": "40d039a84e8d55de351b190ddefeee70c678212107931ecfe7186123cf1489c9",
+      "sha256": "0ee8b7f45a24a0c10737c599f32aa606fb9e620573349e211c223262b0bd5f77",
       "version": 1
     },
     "handoff-correction-redelivery": {
-      "sha256": "3e71dc960d03d576315aa746a9436a263a2fefd8bd5eccda00551573c1fe01e0",
+      "sha256": "bdcc0685538ccb5e75484f1659c73e45d65cca023edb5410fe49f475cd73159f",
       "version": 1
     },
     "manual-verification-record": {
@@ -103,7 +107,7 @@
       "version": 5
     }
   },
-  "templates/workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md": {
+  "templates/single/docs/CONTEXT_READING_POLICY.md": {
     "authority-excerpt": {
       "sha256": "454df50f26fbab6c7aa7c2c8bbec375254d8a4893bdee68c27b69e4e6d7251a8",
       "version": 1
@@ -121,7 +125,7 @@
       "version": 2
     },
     "minimal-read-only-status": {
-      "sha256": "7f14cb011aad3e4020b32f6f459f7c0cf385e7980ae506d1c417902c42d07a6d",
+      "sha256": "8cb4e80fa7400e8e001b786e2c5fac2b78d141c72abcd3876eaf3bb52ed4c732",
       "version": 3
     },
     "phase-reads": {
@@ -141,7 +145,7 @@
       "version": 2
     }
   },
-  "templates/workflows/governed-sdd/docs/EXECUTION_EVIDENCE_PROFILE.md": {
+  "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md": {
     "investigation-scope": {
       "sha256": "b98e831946177759a9af9292efa26110986c3d4b020fa389ea7958822461a483",
       "version": 3
@@ -151,31 +155,39 @@
       "version": 1
     }
   },
-  "templates/workflows/governed-sdd/docs/LIFECYCLE_ORCHESTRATION.md": {
+  "templates/single/docs/INTEGRATION_POLICY.md": {
+    "ci-verified-validation": {
+      "sha256": "08f730590a7e11801a44d3742771b597c5b8b402cd36f8666f71dd5b43d3fe5c",
+      "version": 1
+    },
+    "remote-branch-cleanup": {
+      "sha256": "c9a91f3d83cea7509b7432e1e0d8e376d702bc6309be3d0307cbb7a1f7372d43",
+      "version": 1
+    },
+    "task-worktree-integration": {
+      "sha256": "95c2c9270a06e40ffb0945b901e0898b33ecaba9ca4a2eb66c3049fdabab807d",
+      "version": 7
+    }
+  },
+  "templates/single/docs/LIFECYCLE_ORCHESTRATION.md": {
     "lifecycle-orchestration": {
       "sha256": "d3e9e6d5e1d882f9ee63bd916b3280790fae7355ecad8348401543821e4604b6",
       "version": 12
     },
+    "owner-acceptance-workflow": {
+      "sha256": "aa0913f602f1d63a8b30c8bd7f6106e5d0e01a02eec7b938bcd838199df75c34",
+      "version": 4
+    },
     "rejected-attempt-restart": {
-      "sha256": "ba82461f5a67057585d8b2bd57a9486d7b3a739d99f7b43a40ad665a0984c9e4",
+      "sha256": "8dc076a26ea5c567565ee02c3d84bc6f8c227a62b405d080a17b652e10e92b7a",
       "version": 5
+    },
+    "task-worktree-lifecycle": {
+      "sha256": "941614a187dcf4f5e4124c78dfca618076bf5b025aa3d23ae26abc389c1ba429",
+      "version": 1
     }
   },
-  "templates/workflows/governed-sdd/docs/PULL_REQUEST_POLICY.md": {
-    "ci-verified-validation": {
-      "sha256": "17e153168949bf116474e1503f037010f0010ca51e6e1ef717de31877580ef8b",
-      "version": 1
-    },
-    "remote-branch-cleanup": {
-      "sha256": "d555c877df687a5598bcf34534c563d26ca14d1df162200ca49925ee13e728cc",
-      "version": 1
-    },
-    "task-worktree-integration": {
-      "sha256": "c23d3e61027e4ee15f18039d1fbeefe55c2d7f71ebed5be7549b2c8ef344c1fd",
-      "version": 7
-    }
-  },
-  "templates/workflows/governed-sdd/docs/REVIEW_RECORD_TEMPLATE.md": {
+  "templates/single/docs/REVIEW_RECORD_TEMPLATE.md": {
     "manual-verification-record": {
       "sha256": "18e0b552736c60cf66dbacbbdb06b3bb4fd5eebe838dd6a9a153b6bb1f00938e",
       "version": 1
@@ -185,23 +197,23 @@
       "version": 6
     }
   },
-  "templates/workflows/governed-sdd/docs/WORKTREE_LIFECYCLE.md": {
+  "templates/single/docs/WORKTREE_LIFECYCLE.md": {
     "worktree-command-locations": {
       "sha256": "1237b6520279657674050f09a0fc6eb22982ec1059831e57431b2cc6953c2689",
       "version": 1
     },
     "worktree-lifecycle": {
-      "sha256": "0ba4ebf470a99249607c9498c7ea23e76cd08d51ba73af363bccc4cbc55b5ab2",
+      "sha256": "507c056323ec62a443eac41149d101ba63b01e04056bca75c1ca86e53ea379c3",
       "version": 6
     }
   },
-  "templates/workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md": {
+  "templates/single/docs/workflows/IMPLEMENTATION.md": {
     "bounded-context-readers": {
       "sha256": "385d7e97162088eb0055231bf31da0e0c9326888c7ebd8c5c55e5036b8d7124e",
       "version": 2
     },
     "execution-command-gate": {
-      "sha256": "a8371d53849703f7e3f97503dd153b4cd6eaddaa4992b2f47841cb470ec5d2af",
+      "sha256": "d1767062f21b5b400c34e9cf7e6505a114862e40fba8f499bfe92452d01b4269",
       "version": 5
     },
     "host-impact-routing": {
@@ -209,11 +221,11 @@
       "version": 2
     },
     "manual-verification-precondition": {
-      "sha256": "e5ea454aab09443cca97d4995f3bceabc688e9e7e0cc3ddff08f929dc6b46470",
+      "sha256": "2356db371a5f1ab9ea931eae170de220b21f0ce3d891643a514e82c9cde27458",
       "version": 4
     },
     "phase-reads": {
-      "sha256": "5b98ca24de11232fc936e050a1e7a8718d2c94ca8bdf84c7ab251cde8f86331d",
+      "sha256": "abca6bce9d39064ab5546cfc169283dfd4e0d2339accc6931fe12de4e56d80f7",
       "version": 1
     },
     "spike-routing": {
@@ -221,33 +233,15 @@
       "version": 3
     },
     "task-worktree-boundary": {
-      "sha256": "787346ab1eebcd31d4018589900ce94421df9513fb61c26f634964b029188318",
+      "sha256": "dc644f363087b98b1dd76fdd997840b7819d69a1d56393142910d54a152cda9a",
       "version": 10
     },
     "validation-scoping": {
-      "sha256": "100a0d27e15610af351b9446cb66a3afa1e270f8498fd26181995cccf42918ab",
+      "sha256": "d7e8db61f47099a632f3afe1e8728ee3303443b7ef0ac9f3077b0295386545c8",
       "version": 2
     }
   },
-  "templates/workflows/governed-sdd/docs/workflows/LIFECYCLE.md": {
-    "lifecycle-orchestration": {
-      "sha256": "55d1c0775dd4f51b3296011f7dc59c5f6747f2c9d96cb9c00551a6d8311b4ab7",
-      "version": 3
-    },
-    "owner-acceptance-workflow": {
-      "sha256": "3111c8a0301a3aae43dcaed417ec243bb9a7438341fec85b40af2458bd7e252d",
-      "version": 4
-    },
-    "rejected-attempt-restart": {
-      "sha256": "e7de82953fbef854985500c5a3c1d70dbb5513707afbad19396e27662ba75b97",
-      "version": 5
-    },
-    "task-worktree-lifecycle": {
-      "sha256": "941614a187dcf4f5e4124c78dfca618076bf5b025aa3d23ae26abc389c1ba429",
-      "version": 1
-    }
-  },
-  "templates/workflows/governed-sdd/docs/workflows/REMEDIATION.md": {
+  "templates/single/docs/workflows/REMEDIATION.md": {
     "bounded-context-readers": {
       "sha256": "385d7e97162088eb0055231bf31da0e0c9326888c7ebd8c5c55e5036b8d7124e",
       "version": 2
@@ -261,7 +255,7 @@
       "version": 5
     },
     "review-remediation-record": {
-      "sha256": "46de0081247d1908224f2d9a0d9a1337a7ab332aa5df2eab513cbc6eae9c0f6a",
+      "sha256": "3500fecbc10a263e78636dbd550d00a39fccd7b32043b52dc5c4399055d935f0",
       "version": 6
     },
     "task-worktree-remediation": {
@@ -269,13 +263,13 @@
       "version": 4
     }
   },
-  "templates/workflows/governed-sdd/docs/workflows/REVIEW.md": {
+  "templates/single/docs/workflows/REVIEW.md": {
     "bounded-context-readers": {
       "sha256": "385d7e97162088eb0055231bf31da0e0c9326888c7ebd8c5c55e5036b8d7124e",
       "version": 2
     },
     "implementer-reviewer-handoff": {
-      "sha256": "5967007cad424d32d3c22444d8826fce0c2862a5ccaf2afcf76c996a009e7f29",
+      "sha256": "93e27cf3245c7afa3d1eec8d8f1ca61adc688336f659eb5c9be3e31faddac88d",
       "version": 5
     },
     "phase-reads": {
@@ -283,108 +277,22 @@
       "version": 1
     },
     "review-mode-boundary": {
-      "sha256": "27b67a3b1048ac23e237484254c1e1c44afdd67b5f3f6e72bde1191ef859c869",
+      "sha256": "c070f5445cdd1162e50d464874cf8ff3657091a4d9995abc1d3d23fb31c26ab5",
       "version": 3
     },
     "reviewer-integrator-identity": {
-      "sha256": "5fb3547f0a7187bab210cbb4189f440080c373e10d52b4406a47c91094352bd2",
+      "sha256": "0d64fdc20a36e7b03226a2d97950bfa37109052b95cad001de8b185afba2bd0d",
       "version": 3
     },
     "task-worktree-review-procedure": {
-      "sha256": "e22c136ea4188224d63850bb3b5efec064236d9a2c276f5892871d4fdc13486e",
+      "sha256": "47cb8e2897d24f4a2429bfa938910abd82cba77b4bd4691731443122b75d71af",
       "version": 13
     }
   },
-  "templates/workflows/governed-sdd/tasks/TASK_BLUEPRINT.md": {
+  "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "f64e1f75e7e4e66452c007368988d99f8bc8d40721702b0dce88d52a80e2c48e",
+      "sha256": "feaf328199a465dfc147eb10095ad07c88207bb4cdbf97a703899d31250b5b62",
       "version": 19
-    }
-  },
-  "templates/workflows/lean-delivery/AGENTS.md": {
-    "git-workflow": {
-      "sha256": "62d95b0cb7a1b1cbdec565bf755625864742ce4cc7adbaee7a002b155a244ae3",
-      "version": 15
-    }
-  },
-  "templates/workflows/lean-delivery/CLAUDE.md": {
-    "git-workflow": {
-      "sha256": "62d95b0cb7a1b1cbdec565bf755625864742ce4cc7adbaee7a002b155a244ae3",
-      "version": 15
-    }
-  },
-  "templates/workflows/lean-delivery/LANGUAGE_POLICY.md": {
-    "language-policy": {
-      "sha256": "71a8ada0767ac92c3b6a4030b8b911fc58b23f7473fd1a96af1fe85f84645985",
-      "version": 2
-    }
-  },
-  "templates/workflows/lean-delivery/PROJECT_WORKFLOW.md": {
-    "bounded-worktree-lifecycle": {
-      "sha256": "259893b098141be06a0634808b5f58d2b2e56dc76cd78f1d6aa4742cbff38b93",
-      "version": 8
-    },
-    "codex-worktree-access": {
-      "sha256": "5db5c51499c52a6227ca4a4b797f98b8ced5caafcffb37db24508469297187c8",
-      "version": 4
-    },
-    "git-workflow": {
-      "sha256": "62d95b0cb7a1b1cbdec565bf755625864742ce4cc7adbaee7a002b155a244ae3",
-      "version": 15
-    },
-    "task-identity-policy": {
-      "sha256": "78df2cd565b113a06771de7572bd260667aa8a687aa3b6066d12b4578d510221",
-      "version": 1
-    },
-    "validation-scoping": {
-      "sha256": "e96c1d406eb517daa36e43819dedddc16bb9574b080115d3961fa1c4edac8f2c",
-      "version": 2
-    },
-    "worktree-command-locations": {
-      "sha256": "a7784fa1a78084ce884379510cbf1b13c6517fb18fb8f92dbb7b3eb1e1824a0b",
-      "version": 1
-    }
-  },
-  "templates/workflows/lean-delivery/docs/CONTEXT_BUDGET_POLICY.md": {
-    "evidence-tiers": {
-      "sha256": "16e34a46c2064604047d9eb13acf5130886605aa930dc0c64413506ba4e6ca4d",
-      "version": 1
-    },
-    "execution-evidence-profile": {
-      "sha256": "1cfafcc7a5f166c5d27828a540324e6172d0046d7bc4532b3a215d29358ca591",
-      "version": 3
-    },
-    "minimal-read-only-status": {
-      "sha256": "e8526a7cb209070293c269433930771a7777c76b4ec74704e384eeb08650662c",
-      "version": 1
-    },
-    "queue-briefing": {
-      "sha256": "66ab441a87d602a6948131f3c28179f59df9a12ce79f0678c62acc79db29e1ac",
-      "version": 1
-    },
-    "read-guard": {
-      "sha256": "7acce046ff647dab6dba45db6d8c439f483af29956416392b2de384edf9992d3",
-      "version": 2
-    },
-    "validation-scoping": {
-      "sha256": "8e165c94ec1b84f1e2da7d5ef6d355c0c009c9e7b2b799aa13422420cf41dd45",
-      "version": 2
-    }
-  },
-  "templates/workflows/lean-delivery/docs/EXECUTION_EVIDENCE_PROFILE.md": {
-    "long-command-waits": {
-      "sha256": "942c3ebfa010f7aba0385d4e0fbb241edf1c17eea89158531a24cddb162198a8",
-      "version": 1
-    }
-  },
-  "templates/workflows/lean-delivery/docs/WORKTREE_LIFECYCLE.md": {
-    "worktree-command-locations": {
-      "sha256": "1237b6520279657674050f09a0fc6eb22982ec1059831e57431b2cc6953c2689",
-      "version": 1
-    },
-    "worktree-lifecycle": {
-      "sha256": "0f3e39fb97e61a4636e83bf2a61ee3a602b3dc2bd0900c3512abb66f716e15ab",
-      "version": 6
     }
   }
 }

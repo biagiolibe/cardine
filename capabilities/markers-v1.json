@@ -20,7 +20,7 @@
       "adoptionRecord": "068-adr-list-discovery"
     },
     "bounded-worktree-lifecycle": {
-      "requiredVersion": 6,
+      "requiredVersion": 8,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"

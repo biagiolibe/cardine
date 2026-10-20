@@ -12,7 +12,7 @@ Work only on a developer-assigned task or an explicitly authorized read-only req
 - `Address review <TASK-ID>` — read `docs/workflows/REMEDIATION.md`.
 - `Restart rejected <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.
 - `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.
-- Status, project question, or tech-design alignment — use `docs/CONTEXT_BUDGET_POLICY.md`.
+- Status, project question, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
 - Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
 <!-- MERIDIAN:END -->
 

@@ -43,7 +43,7 @@ only to obtain `T1_CI`, at most once for that attempt. Amend and force-push rema
 ```
 
 <!-- MERIDIAN:BEGIN capability=handoff-correction-redelivery v1 -->
-After committing a handoff-only correction on a `READY_FOR_REVIEW` task, rerun
+After committing a handoff-only correction on an `in_review` task, rerun
 `meridian execution deliver <TASK-ID> --project .` before beginning the next
 review attempt. The command creates a fresh `Deliver <TASK-ID> for review`
 commit at the corrected handoff and preserves the existing state transitions.

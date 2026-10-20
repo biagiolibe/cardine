@@ -44,7 +44,7 @@ implementation files, or any implementation diff:
    mismatched `HEAD`, dirty worktree, or failed ancestry check is `BLOCKED WRONG_WORKTREE`.
 
 5. Run read-only `meridian execution ready-check <TASK-ID> --project .`
-   in the verified worktree. Require a committed READY_FOR_REVIEW delivery
+   in the verified worktree. Require a committed in_review delivery
    and clean worktree before review. Pending delivery/changes cannot launch
    review. Never run execution start for a review or status request.
 
@@ -75,9 +75,9 @@ cleanup; it also authorizes the first attempt's plain task-branch push, and
 task branch. `Proceed with` never authorizes tags, releases, force/deleting/mirroring pushes, history
 rewrites, forced worktree removal, bypassing this independent review, textual
 conflict resolution, or work on another task. This review is the gate:
-`Review: REQUIRED` stops at `REVIEW_REQUIRED`, not to ask whether review may be
+`Review: required` stops at `REVIEW_REQUIRED`, not to ask whether review may be
 skipped. After `APPROVE`, the reviewer-integrator performs C6 through C10.
-`Review: NOT_REQUIRED` needs no reviewer and proceeds through C10.
+`Review: not_required` needs no reviewer and proceeds through C10.
 
 The closure stops are `ACCEPTANCE_UNMET`, `VALIDATION_FAILED`,
 `REVIEW_REQUIRED`, `WRONG_WORKTREE`, `EVIDENCE_INCOMPLETE`, `PRIMARY_DIRTY`,
@@ -88,15 +88,15 @@ test-reported sandbox skip is accepted only when no acceptance criterion
 depends solely on it and the handoff records it as `Validation skips:`.
 <!-- MERIDIAN:END -->
 
-Candidate validation reads the project's declared fragments for `REUSE`, `BOUNDED`,
-and `FULL` from `.meridian/candidate-validation.json`; `REUSE` also proves only
+Candidate validation reads the task contract's resolved commands for `REUSE`, `BOUNDED`,
+and `FULL` from `validation.candidate` in `.cardine/project.json`; `REUSE` also proves only
 governance paths changed. A missing declaration stops before staging rather than silently
 accepting evidence.
 
 <!-- MERIDIAN:BEGIN capability=review-mode-boundary v3 -->
 ### Review-mode boundary
 
-For `Review <TASK-ID>`, do not edit implementation artifacts to remedy findings. Prepare the evidence as a command argument outside the tracked review record so the reviewed worktree stays clean. Record each verdict with `meridian review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD. Never edit a status or verdict by hand. For `CHANGES_REQUESTED`, commit only the state file, task record projection, and review record locally; leave machine status `CHANGES_REQUESTED` for the implementer. For a blocking verdict, record and commit only the same governance outputs and report the blocker. Findings with priority and evidence form the bounded remediation scope. Do not push these commits. For `APPROVE`, commit the same three outputs with the required reviewer-integrator author override after the required ancestry check. A reviewer never edits the queue, queue archive, or plan; `integrate stage` applies their status.
+For `Review <TASK-ID>`, do not edit implementation artifacts to remedy findings. Prepare the evidence as a command argument outside the tracked review record so the reviewed worktree stays clean. Record each verdict with `meridian review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD. Never edit a status or verdict by hand. For `CHANGES_REQUESTED`, commit only the state file, task record projection, and review record locally; leave machine status `in_progress` with the retained `CHANGES_REQUESTED` verdict for the implementer. For a blocking verdict, record and commit only the same governance outputs and report the blocker. Findings with priority and evidence form the bounded remediation scope. Do not push these commits. For `APPROVE`, commit the same three outputs with the required reviewer-integrator author override after the required ancestry check. A reviewer never edits the queue, queue archive, or plan; `integrate stage` applies their status.
 <!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=implementer-reviewer-handoff v5 -->
@@ -110,11 +110,11 @@ task worktree clean before starting the fresh reviewer session. This durable
 handoff transfers sequential ownership of that worktree; implementation and
 review never overlap.
 
-For `Review: REQUIRED`, the reviewer must never push the task branch. On
+For `Review: required`, the reviewer must never push the task branch. On
 `CHANGES_REQUESTED`, it records the verdict with `meridian review verdict <TASK-ID> CHANGES_REQUESTED` and commits only the state file and record projections; the implementer then resolves the findings and
-makes the next permitted push. For `Review: NOT_REQUIRED`, the implementer
-runs `meridian task transition <TASK-ID> ACCEPTED` after validation without creating a
-reviewer session. Owner acceptance runs `meridian review verdict <TASK-ID> APPROVE --owner` and
+makes the next permitted push. For `Review: not_required`, the implementer
+follows validated closure and integration without creating a
+reviewer session; no acceptance status transition is needed. Owner acceptance runs `meridian review verdict <TASK-ID> APPROVE --owner` and
 continues at C6. Checkout selection, validation ancestry, integration, and cleanup
 are governed by their current dedicated procedures, not by this handoff.
 <!-- MERIDIAN:END -->
@@ -125,7 +125,7 @@ are governed by their current dedicated procedures, not by this handoff.
 Both controls are mandatory and neither substitutes for the other:
 
 - Review runs in a fresh agent session that did not write the code. Re-derive evidence from the actual diff and cited sources; do not trust the implementation report.
-- Only for the `ACCEPTED` commit, use the project-scoped reviewer author override. Its value is printed by `meridian project show --field reviewer-author`, which formats the project declared in `.meridian/project.json`; if that declaration is missing, the command reports `BLOCKED COMMAND_REFUSED` and the commit waits for the developer to declare the project:
+- Only for the approval-metadata commit, use the project-scoped reviewer author override. Its value is printed by `meridian project show --field reviewer-author`, which formats the project declared in `.meridian/project.json`; if that declaration is missing, the command reports `BLOCKED COMMAND_REFUSED` and the commit waits for the developer to declare the project:
 
   ```bash
   git commit --author="$(meridian project show --field reviewer-author)" -m "docs: reviewer-integrator pass <TASK-ID>; independently re-verified diff, cited sources, acceptance evidence, and validation"
@@ -133,7 +133,7 @@ Both controls are mandatory and neither substitutes for the other:
 
 This is the only place the identity rule is stated; every other document defers to it.
 
-Keep the operator's normal committer identity. Do not change global or repository Git config. The override applies only to the `ACCEPTED` commit and can be verified with `git log --format='%an <%ae>'`.
+Keep the operator's normal committer identity. Do not change global or repository Git config. The override applies only to the approval-metadata commit and can be verified with `git log --format='%an <%ae>'`.
 <!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=phase-reads v1 -->

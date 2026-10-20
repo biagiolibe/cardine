@@ -170,12 +170,12 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         self.assertEqual(len(self.catalog.capabilities), 8)
         read_guard = self.catalog.capability("read-guard")
         self.assertEqual(read_guard.version, 1)
-        self.assertEqual(read_guard.workflow_modes, ("lean-delivery", "governed-sdd"))
+        self.assertEqual(read_guard.distribution, "single")
         self.assertTrue(read_guard.self_hosting_eligible)
         self.assertIn(("codex-project", "hook-invocation-observation"), read_guard.host_profiles)
         self.assertIn("shared-source", read_guard.installation_forms)
         self.assertTrue(read_guard.managed_surfaces)
-        self.assertEqual(read_guard.dependencies, (("context-budgeting", 1),))
+        self.assertEqual(read_guard.dependencies, (("context-reading", 1),))
         profile = self.catalog.profile("cardine-self-hosting")
         self.assertEqual(
             profile.verification_probe,
@@ -274,7 +274,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             project = Path(directory)
             self.installed_project(project)
             # MERIDIAN-INSTALLATION-CHECK
-            (project / "docs/CONTEXT_BUDGET_POLICY.md").unlink()
+            (project / "docs/CONTEXT_READING_POLICY.md").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
@@ -283,7 +283,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
                 # MERIDIAN-INSTALLATION-CHECK
-                "missing managed-copy surface docs/CONTEXT_BUDGET_POLICY.md",
+                "missing managed-copy surface docs/CONTEXT_READING_POLICY.md",
                 output.getvalue(),
             )
 
@@ -500,7 +500,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("SUMMARY worst=ADVISORY", output)
             self.assertEqual(output.count("ADVISORY       retired-text"), 2)
             # MERIDIAN-INSTALLATION-CHECK
-            self.assertIn("docs/CONTEXT_BUDGET_POLICY.md:2:", output)
+            self.assertIn("docs/CONTEXT_READING_POLICY.md:2:", output)
             after = {path.relative_to(project): path.read_bytes() for path in project.rglob("*") if path.is_file()}
             self.assertEqual(after, before)
 
@@ -648,7 +648,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             shutil.copytree(ROOT, framework)
             catalog_path = framework / shared_constants.CAPABILITY_CATALOG_PATH
             catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-            catalog["capabilities"]["language-policy"]["workflowModes"] = ["governed-sdd"]
+            catalog["capabilities"]["language-policy"]["selfHostingEligible"] = False
             catalog_path.write_text(
                 json.dumps(catalog, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
@@ -661,20 +661,20 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             declaration["installation"] = {
                 "state": "NOT_APPLICABLE",
                 "evidence": [],
-                "notApplicableRationale": "workflow-mode-excluded",
+                "notApplicableRationale": "self-hosting-ineligible",
             }
             for activation in declaration["hostActivation"].values():
                 activation.update(
                     state="NOT_APPLICABLE",
                     evidence=[],
-                    notApplicableRationale="workflow-mode-excluded",
+                    notApplicableRationale="self-hosting-ineligible",
                 )
             declaration["verification"] = {
                 "state": "NOT_APPLICABLE",
                 "evidence": [],
                 "verifiedAt": None,
                 "verifierVersion": None,
-                "notApplicableRationale": "workflow-mode-excluded",
+                "notApplicableRationale": "self-hosting-ineligible",
             }
             manifest["capabilityProfiles"]["cardine-self-hosting"]["capabilities"][
                 "queue-briefing"
@@ -695,7 +695,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
 
             self.assertEqual(return_code, 0, output.getvalue())
             self.assertIn("NOT_APPLICABLE", output.getvalue())
-            self.assertIn("catalog exclusion: workflow-mode-excluded", output.getvalue())
+            self.assertIn("catalog exclusion: self-hosting-ineligible", output.getvalue())
             self.assertIn(
                 "cardine-self-hosting/queue-briefing/host/codex-project",
                 output.getvalue(),
@@ -734,7 +734,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 # MERIDIAN-INSTALLATION-CHECK
                 "LANGUAGE_POLICY.md",
                 # MERIDIAN-INSTALLATION-CHECK
-                "docs/CONTEXT_BUDGET_POLICY.md",
+                "docs/CONTEXT_READING_POLICY.md",
                 # MERIDIAN-INSTALLATION-CHECK
                 "docs/EXECUTION_EVIDENCE_PROFILE.md",
                 # MERIDIAN-INSTALLATION-CHECK
@@ -745,7 +745,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             <= lean_paths
         )
         policy = (
-            ROOT / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+            ROOT / "templates/single/docs/CONTEXT_READING_POLICY.md"
         ).read_text(encoding="utf-8")
         for governed_only in (
             "READY_FOR_REVIEW",
@@ -832,17 +832,58 @@ HIDDEN_DESTINATIONS = {
 
 def legacy_template_sources() -> list[str]:
     """Every file under the three old source roots, relative to `templates/`."""
-    templates = ROOT / "templates"
-    return sorted(
-        path.relative_to(templates).as_posix()
-        for root in LEGACY_TEMPLATE_ROOTS
-        for path in (templates / root).rglob("*")
-        if path.is_file()
-    )
+    return [
+        'base/.claudeignore',
+        'base/.gitignore',
+        'base/CLAUDE.md',
+        'base/LANGUAGE_POLICY.md',
+        'base/PROJECT_PLAN.md',
+        'base/README.md',
+        'base/TECH_DESIGN.md',
+        'base/tasks/QUEUE.md',
+        'base/tasks/TASK_BLUEPRINT.md',
+        'workflows/governed-sdd/.codex/hooks.json',
+        'workflows/governed-sdd/.codex/rules/meridian.rules',
+        'workflows/governed-sdd/AGENTS.md',
+        'workflows/governed-sdd/CLAUDE.md',
+        'workflows/governed-sdd/LANGUAGE_POLICY.md',
+        'workflows/governed-sdd/PROJECT_WORKFLOW.md',
+        'workflows/governed-sdd/docs/ARCHITECTURE_DECISIONS.md',
+        'workflows/governed-sdd/docs/AUDIT_PROMPT_READ_ONLY.md',
+        'workflows/governed-sdd/docs/CODE_ORGANIZATION.md',
+        'workflows/governed-sdd/docs/CODE_REVIEW_PROMPT.md',
+        'workflows/governed-sdd/docs/COMPLETION_REPORT_TEMPLATE.md',
+        'workflows/governed-sdd/docs/CONTEXT_BUDGET_POLICY.md',
+        'workflows/governed-sdd/docs/EXECUTION_EVIDENCE_PROFILE.md',
+        'workflows/governed-sdd/docs/LIFECYCLE_ORCHESTRATION.md',
+        'workflows/governed-sdd/docs/OPERATOR_PROMPTS.md',
+        'workflows/governed-sdd/docs/PULL_REQUEST_POLICY.md',
+        'workflows/governed-sdd/docs/REVIEW_RECORD_TEMPLATE.md',
+        'workflows/governed-sdd/docs/WORKTREE_LIFECYCLE.md',
+        'workflows/governed-sdd/docs/workflows/IMPLEMENTATION.md',
+        'workflows/governed-sdd/docs/workflows/LIFECYCLE.md',
+        'workflows/governed-sdd/docs/workflows/REMEDIATION.md',
+        'workflows/governed-sdd/docs/workflows/REVIEW.md',
+        'workflows/governed-sdd/tasks/QUEUE.md',
+        'workflows/governed-sdd/tasks/TASK_BLUEPRINT.md',
+        'workflows/lean-delivery/.codex/hooks.json',
+        'workflows/lean-delivery/.codex/rules/meridian.rules',
+        'workflows/lean-delivery/AGENTS.md',
+        'workflows/lean-delivery/CLAUDE.md',
+        'workflows/lean-delivery/LANGUAGE_POLICY.md',
+        'workflows/lean-delivery/PROJECT_WORKFLOW.md',
+        'workflows/lean-delivery/docs/COMPLETION_REPORT_TEMPLATE.md',
+        'workflows/lean-delivery/docs/CONTEXT_BUDGET_POLICY.md',
+        'workflows/lean-delivery/docs/EXECUTION_EVIDENCE_PROFILE.md',
+        'workflows/lean-delivery/docs/WORKTREE_LIFECYCLE.md',
+    ]
+
 
 
 def single_destination(source: str) -> str:
     """The destination under `templates/single/` for one old source file."""
+    if source.endswith("/docs/CONTEXT_BUDGET_POLICY.md"):
+        return "docs/CONTEXT_READING_POLICY.md"
     if source in MERGED_DESTINATIONS:
         return MERGED_DESTINATIONS[source]
     for root in LEGACY_TEMPLATE_ROOTS:
@@ -891,8 +932,8 @@ class SingleTemplateSetTest(unittest.TestCase):
     def test_no_old_root_fallback(self) -> None:
         framework = self.framework_copy()
         expected = [item.target for item in owner_templates_files.managed_files(ROOT)]
-        shutil.rmtree(framework / "templates/workflows")
-        shutil.rmtree(framework / "templates/base")
+        self.assertFalse((framework / "templates/workflows").exists())
+        self.assertFalse((framework / "templates/base").exists())
         self.assertEqual([item.target for item in owner_templates_files.managed_files(framework)], expected)
         (framework / "templates/single/tasks/TASK_BLUEPRINT.md").unlink()
         with self.assertRaises(shared_errors.CardineError):
@@ -901,8 +942,8 @@ class SingleTemplateSetTest(unittest.TestCase):
         with self.assertRaisesRegex(shared_errors.CardineError, "single template set is missing"):
             owner_templates_files.managed_files(framework, "governed-sdd")
 
-    def test_only_the_named_legacy_accessor_reads_the_old_roots(self) -> None:
-        allowed = {"src/cardine/templates/roots.py", "src/cardine/templates/files.py"}
+    def test_no_product_code_reads_the_old_roots(self) -> None:
+        allowed = set()
         offenders = []
         for path in sorted((ROOT / "src/cardine").rglob("*.py")):
             relative = path.relative_to(ROOT).as_posix()
@@ -911,7 +952,7 @@ class SingleTemplateSetTest(unittest.TestCase):
                 offenders.append(relative)
         self.assertEqual(offenders, [])
         files_text = (ROOT / "src/cardine/templates/files.py").read_text(encoding="utf-8")
-        self.assertEqual(files_text.count("legacy_managed_files("), 1, "only the definition may name the accessor")
+        self.assertNotIn("legacy_managed_files", files_text)
 
     def test_every_old_source_file_has_a_destination_and_nothing_else_is_shipped(self) -> None:
         destinations = set()
@@ -927,14 +968,13 @@ class SingleTemplateSetTest(unittest.TestCase):
         self.assertEqual(len(HIDDEN_DESTINATIONS), 6)
         for source, destination in HIDDEN_DESTINATIONS.items():
             with self.subTest(source=source):
-                self.assertTrue((ROOT / "templates" / source).is_file())
+                self.assertFalse((ROOT / "templates" / source).exists())
                 self.assertEqual(single_destination(source), destination)
                 self.assertTrue((self.SINGLE / destination).is_file())
 
-    def test_context_policy_keeps_its_installed_path_until_row_sw5(self) -> None:
-        # Row SW5 renames the policy and its capability together; the catalog still names this path.
-        self.assertTrue((self.SINGLE / "docs/CONTEXT_BUDGET_POLICY.md").is_file())
-        self.assertFalse((self.SINGLE / "docs/CONTEXT_READING_POLICY.md").exists())
+    def test_context_policy_uses_the_reading_path(self) -> None:
+        self.assertTrue((self.SINGLE / "docs/CONTEXT_READING_POLICY.md").is_file())
+        self.assertFalse((self.SINGLE / "docs/CONTEXT_BUDGET_POLICY.md").exists())
 
     def test_template_links_and_document_paths_resolve_inside_the_set(self) -> None:
         link = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
