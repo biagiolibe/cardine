@@ -583,7 +583,7 @@ worktree before the branch only after validated integration succeeds.
             text = current[name].replace("capability=git-workflow v14", "capability=git-workflow v13")
             text = re.sub(r"After validation, commit the completed task record and handoff, then run.*?with the validation evidence\.", old_closure, text)
             text = text.replace("capability=bounded-worktree-lifecycle v7", "capability=bounded-worktree-lifecycle v6").replace(
-                "writer confirmation, except when the record is archived and state is DONE:\nskip execution start, commit staged closure records, then run worktree advance.",
+                "writer confirmation, except when the record is already archived:\nskip execution start, commit staged closure records, then run worktree advance.",
                 "writer confirmation.")
             (workflow / name).write_text(text)
         for path in workflow.rglob("*"):
@@ -712,7 +712,7 @@ worktree before the branch only after validated integration succeeds.
         upgraded_implementation = implementation.read_text(encoding="utf-8")
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
         self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", upgraded_workflow)
-        self.assertIn("Review: REQUIRED` is a gate, not a request for authorization", upgraded_workflow)
+        self.assertIn("Review: required` is a gate, not a request for authorization", upgraded_workflow)
         self.assertIn("capability=task-worktree-boundary v10", upgraded_implementation)
         self.assertIn("REVIEW_REQUIRED`; it is a gate", upgraded_implementation)
         self.assertIn("capability=task-worktree-review-procedure v13", upgraded_review)
@@ -821,7 +821,7 @@ worktree before the branch only after validated integration succeeds.
         for relative in paths:
             self.assertNotEqual(previous[relative], current[relative], relative)
             previous[relative] = previous[relative].replace(
-                "Only explicit Resume passes `--resume` after status/diff inspection and sole\nwriter confirmation, except when the record is archived and state is DONE:\nskip execution start, commit staged closure records, then run worktree advance.", ""
+                "Only explicit Resume passes `--resume` after status/diff inspection and sole\nwriter confirmation, except when the record is already archived:\nskip execution start, commit staged closure records, then run worktree advance.", ""
             ).replace("Only explicit Resume adds `--resume` after\n  status/diff inspection.", "")
             previous[relative] = re.sub(r" On explicit Resume, if the record is already archived.*?with the validation evidence\.", "", previous[relative])
             self.assertNotIn("--resume", previous[relative])

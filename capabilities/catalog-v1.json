@@ -1,7 +1,8 @@
 {
   "capabilities": {
-    "context-budgeting": {
+    "context-reading": {
       "dependencies": [],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [],
         "installation": [
@@ -20,23 +21,20 @@
           "forms": [
             "managed-copy"
           ],
-          "path": "docs/CONTEXT_BUDGET_POLICY.md"
+          "path": "docs/CONTEXT_READING_POLICY.md"
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "execution-evidence": {
       "dependencies": [
         {
-          "id": "context-budgeting",
+          "id": "context-reading",
           "version": 1
         }
       ],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [],
         "installation": [
@@ -56,7 +54,7 @@
           "forms": [
             "managed-copy"
           ],
-          "path": "docs/CONTEXT_BUDGET_POLICY.md"
+          "path": "docs/CONTEXT_READING_POLICY.md"
         },
         {
           "forms": [
@@ -72,14 +70,11 @@
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "language-policy": {
       "dependencies": [],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [
           "adapter-observation"
@@ -111,19 +106,16 @@
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "minimal-read-only-status": {
       "dependencies": [
         {
-          "id": "context-budgeting",
+          "id": "context-reading",
           "version": 1
         }
       ],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [],
         "installation": [
@@ -142,15 +134,11 @@
           "forms": [
             "managed-copy"
           ],
-          "path": "docs/CONTEXT_BUDGET_POLICY.md"
+          "path": "docs/CONTEXT_READING_POLICY.md"
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "queue-briefing": {
       "dependencies": [
@@ -159,6 +147,7 @@
           "version": 1
         }
       ],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [
           "hook-invocation-observation"
@@ -193,19 +182,16 @@
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "read-guard": {
       "dependencies": [
         {
-          "id": "context-budgeting",
+          "id": "context-reading",
           "version": 1
         }
       ],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [
           "hook-invocation-observation"
@@ -250,14 +236,11 @@
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "validation-scoping": {
       "dependencies": [],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [],
         "installation": [
@@ -276,7 +259,7 @@
           "forms": [
             "managed-copy"
           ],
-          "path": "docs/CONTEXT_BUDGET_POLICY.md"
+          "path": "docs/CONTEXT_READING_POLICY.md"
         },
         {
           "forms": [
@@ -286,14 +269,11 @@
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     },
     "worktree-safety": {
       "dependencies": [],
+      "distribution": "single",
       "evidenceRequirements": {
         "hostActivation": [
           "permission-decision-observation"
@@ -340,54 +320,14 @@
         }
       ],
       "selfHostingEligible": true,
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery",
-        "governed-sdd"
-      ]
+      "version": 1
     }
   },
   "catalogVersion": 1,
   "profiles": {
-    "governed-sdd-consumer": {
-      "capabilities": {
-        "context-budgeting": 1,
-        "execution-evidence": 1,
-        "language-policy": 1,
-        "minimal-read-only-status": 1,
-        "validation-scoping": 1
-      },
-      "hostProbes": {
-        "claude-project": ".cardine/probes/governed-sdd-consumer/claude-project-v1.json",
-        "codex-project": ".cardine/probes/governed-sdd-consumer/codex-project-v1.json"
-      },
-      "verificationProbe": ".cardine/probes/governed-sdd-consumer/host-neutral-ci-v1.json",
-      "version": 1,
-      "workflowModes": [
-        "governed-sdd"
-      ]
-    },
-    "lean-delivery-consumer": {
-      "capabilities": {
-        "context-budgeting": 1,
-        "execution-evidence": 1,
-        "language-policy": 1,
-        "minimal-read-only-status": 1,
-        "validation-scoping": 1
-      },
-      "hostProbes": {
-        "claude-project": ".cardine/probes/lean-delivery-consumer/claude-project-v1.json",
-        "codex-project": ".cardine/probes/lean-delivery-consumer/codex-project-v1.json"
-      },
-      "verificationProbe": ".cardine/probes/lean-delivery-consumer/host-neutral-ci-v1.json",
-      "version": 1,
-      "workflowModes": [
-        "lean-delivery"
-      ]
-    },
     "cardine-self-hosting": {
       "capabilities": {
-        "context-budgeting": 1,
+        "context-reading": 1,
         "execution-evidence": 1,
         "language-policy": 1,
         "minimal-read-only-status": 1,
@@ -396,11 +336,44 @@
         "validation-scoping": 1,
         "worktree-safety": 1
       },
+      "distribution": "single",
       "hostProbes": {
         "claude-project": ".cardine/probes/cardine-self-hosting/claude-project-v1.json",
         "codex-project": ".cardine/probes/cardine-self-hosting/codex-project-v1.json"
       },
       "verificationProbe": ".cardine/probes/cardine-self-hosting/host-neutral-ci-v1.json",
+      "version": 1
+    },
+    "governed-sdd-consumer": {
+      "capabilities": {
+        "context-reading": 1,
+        "execution-evidence": 1,
+        "language-policy": 1,
+        "minimal-read-only-status": 1,
+        "validation-scoping": 1
+      },
+      "distribution": "single",
+      "hostProbes": {
+        "claude-project": ".cardine/probes/governed-sdd-consumer/claude-project-v1.json",
+        "codex-project": ".cardine/probes/governed-sdd-consumer/codex-project-v1.json"
+      },
+      "verificationProbe": ".cardine/probes/governed-sdd-consumer/host-neutral-ci-v1.json",
+      "version": 1
+    },
+    "lean-delivery-consumer": {
+      "capabilities": {
+        "context-reading": 1,
+        "execution-evidence": 1,
+        "language-policy": 1,
+        "minimal-read-only-status": 1,
+        "validation-scoping": 1
+      },
+      "distribution": "single",
+      "hostProbes": {
+        "claude-project": ".cardine/probes/lean-delivery-consumer/claude-project-v1.json",
+        "codex-project": ".cardine/probes/lean-delivery-consumer/codex-project-v1.json"
+      },
+      "verificationProbe": ".cardine/probes/lean-delivery-consumer/host-neutral-ci-v1.json",
       "version": 1
     }
   }

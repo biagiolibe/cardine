@@ -13,7 +13,7 @@
       ],
       "files": [
         "docs/EXECUTION_EVIDENCE_PROFILE.md",
-        "docs/CONTEXT_BUDGET_POLICY.md"
+        "docs/CONTEXT_READING_POLICY.md"
       ],
       "remedy": "Remove the retired reasoning text from project-owned sections by hand."
     }

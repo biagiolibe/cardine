@@ -87,7 +87,7 @@ record.
 <!-- MERIDIAN:BEGIN capability=execution-assets v4 -->
 ## Execution assets
 
-- `docs/CONTEXT_BUDGET_POLICY.md` defines task-first context loading and concise communication.
+- `docs/CONTEXT_READING_POLICY.md` defines task-first context loading and concise communication.
 - `tasks/TASK_BLUEPRINT.md` defines the canonical atomic-task shape.
 - `docs/COMPLETION_REPORT_TEMPLATE.md` defines the implementation and review handoff.
 - Completion handoffs live at `tasks/handoffs/<TASK-ID>.md`.
@@ -110,9 +110,9 @@ the review record, the completion handoff), never by a path of its own.
 <!-- MERIDIAN:BEGIN capability=task-identity-policy v1 -->
 ## Task identity
 
-`.meridian/task-identity.json` is the sole optional project declaration for
-task-identity policy. Its absence selects backwards-compatible `opaque` mode;
-an explicit version-1 declaration may select `opaque` or `milestone` mode.
+`taskIdentity.mode` in `.cardine/project.json` is the sole project declaration
+for task identity. Omission selects `opaque`; an explicit value selects
+`opaque` or `milestone`. Preset selection does not change task IDs.
 Meridian resolves task IDs through this declaration and the canonical task and
 queue authorities. The preset, host configuration, and identifier spelling
 do not provide a second identity policy or imply task semantics.
@@ -123,7 +123,7 @@ do not provide a second identity policy or imply task semantics.
 
 - Tech designer: defines ADRs, specifications, task scope, dependencies, and review policy. Does not implement feature code unless explicitly assigned.
 - Implementer: works on exactly one task in its deterministic linked worktree, validates it, creates the task commit, pushes the task branch only to obtain `T1_CI` (at most once per review attempt, and not at all without CI), and records task status in the task record according to its review policy. It never implements in the primary checkout.
-- Reviewer-integrator: independently reviews `READY_FOR_REVIEW` tasks in a fresh agent session using the same dedicated task worktree after the implementer has stopped. It records review evidence in the task's review record for every verdict and never pushes the task branch. For `CHANGES_REQUESTED`, it runs `meridian review verdict <TASK-ID> CHANGES_REQUESTED`; after `APPROVE`, it runs `meridian review verdict <TASK-ID> APPROVE` and commits the state and projections in the local review-and-status commit and integrates from the primary checkout when repository gates allow it.
+- Reviewer-integrator: independently reviews `in_review` tasks in a fresh agent session using the same dedicated task worktree after the implementer has stopped. It records review evidence in the task's review record for every verdict and never pushes the task branch. For `CHANGES_REQUESTED`, it runs `meridian review verdict <TASK-ID> CHANGES_REQUESTED`; after `APPROVE`, it runs `meridian review verdict <TASK-ID> APPROVE` and commits the state and projections in the local review-and-status commit and integrates from the primary checkout when repository gates allow it.
 - Orchestrator: coordinates one explicitly assigned task through distinct implementer and reviewer-integrator sessions. It uses only durable task, review, validation, and Git evidence to select the next permitted action; it never implements or reviews substantively.
 
 The developer drives these roles with five command triggers, defined in `AGENTS.md`/`CLAUDE.md`: `Proceed with <TASK-ID>` starts implementation, `Review <TASK-ID>` starts independent review, `Address review <TASK-ID>` starts the bounded remediation recorded by the reviewer, `Run lifecycle <TASK-ID>` authorizes the orchestrated implementation-to-integration loop, and `Accept <TASK-ID>` records the owner's own review as an `APPROVE` attempt and continues the closure at C6, skipping the agent review without skipping any later gate.
@@ -133,13 +133,11 @@ The developer drives these roles with five command triggers, defined in `AGENTS.
 ## Review policy
 
 Every task resolves a review option, `required` or `not_required`, from its
-own explicit override, the project defaults, and the preset, in that order. A
-`not_required` review suits low-risk documentation, mechanical configuration,
-simple scaffolding, or focused tests that add no production behavior. Do not
-waive review for public APIs, dependencies, security, state transitions,
-deterministic rules, persistence/history, or unresolved design questions
-unless the task itself is a `SPIKE`, whose entire purpose is investigating one
-unresolved design question and whose deliverable is never production code.
+own explicit override, the project defaults, and the preset, in that order.
+Risk informs the contract choice, but no task class, host, or code surface
+silently tightens or loosens it. A lean task may require review; a governed
+task may explicitly waive it. Once snapshotted, an open task keeps its review
+option until an explicit contract revision invalidates incompatible evidence.
 
 A `SPIKE` task resolves review like any other task. When review is not
 required, the implementer self-administers the close-out gate: does the
@@ -187,9 +185,9 @@ After check and minimal metadata/contract resolution, run
 `meridian execution start <TASK-ID> --project <task-worktree>` before
 substantive authority/source analysis, advisor consultation, or implementation.
 Only explicit Resume passes `--resume` after status/diff inspection and sole
-writer confirmation, except when the record is archived and state is DONE:
-skip execution start, commit staged closure records, then run worktree advance. Lean start adds no machine state; Governed start records
-the first IN_PROGRESS transition once. Read-only review/status never starts.
+writer confirmation, except when the record is already archived:
+skip execution start, commit staged closure records, then run worktree advance. Start records the first `queued -> in_progress` transition once for either
+preset and preserves the resolved task contract. Read-only review/status never starts.
 Absolute paths are runtime launch inputs only. A handoff or other tracked
 record that names the worktree uses the `handoff_worktree` value returned by
 `meridian worktree prepare`, the path relative to the worktree root, never an
@@ -236,18 +234,18 @@ rebase, reset, cherry-pick); deleting an unmerged branch or force-removing a
 worktree; bypassing a required independent review; resolving a textual
 conflict; or work on another task.
 
-- `Review: REQUIRED` is a gate, not a request for authorization: after C3,
+- `Review: required` is a gate, not a request for authorization: after C3,
   stop at `REVIEW_REQUIRED`. A fresh reviewer-integrator must approve before
   continuing at C4, and performs C6 through C10 after approval.
-- `Review: NOT_REQUIRED` tasks proceed through C10 after their validation and
-  accepted-status commit. No reviewer session is required.
+- `Review: not_required` tasks proceed through C10 after their validation and
+  completion handoff and closure records. No reviewer session is required.
 
 - One writer at a time owns each task worktree. `meridian worktree prepare` consumes the shared task-identity resolver and repository-qualified path derivation, rejects partial or mismatched state, and returns the only branch and path workers may use.
 - Before any task read or mutation, the worker runs `meridian worktree check` from the exact prepared path. A host-created checkout, the primary checkout, or any sibling path is `BLOCKED WRONG_WORKTREE` even when its branch and HEAD appear correct.
 - After validation, the implementer creates the task commit and, only when `T1_CI` validation is needed, pushes the task branch at most once for each review attempt; a project without CI never pushes it. Its completion handoff records the task branch, the machine-independent worktree value (the `handoff_worktree` field returned by `meridian worktree prepare`: the path relative to the worktree root, never an absolute path), implementation commit, validated task commit, validated base `main` commit, exact successful validation commands or CI evidence, the declared integration surface, and whether full combined-tree validation is required. It stops writing before review and leaves the dedicated worktree clean.
 - The reviewer-integrator's first review action in a fresh session is a fail-closed preflight against the completion handoff: before reading the task, implementation files, or diff, resolve the recorded `handoff_worktree` value against the worktree root at runtime, then locate the resulting absolute path and the recorded branch in `git worktree list --porcelain`, confirm the implementer has stopped, and verify the registered path, branch, HEAD, cleanliness, validated task commit, and validated base commit. Any missing or mismatched evidence is `BLOCKED WRONG_WORKTREE` and preserves all state. A session launched from the primary checkout roots every review read and Git command in the verified task worktree; it never switches or treats the primary checkout as the task checkout.
-- For `Review: REQUIRED`, the reviewer-integrator must never push the task branch. On `CHANGES_REQUESTED`, it runs `meridian review verdict <TASK-ID> CHANGES_REQUESTED --body <review-evidence>` on the clean reviewed HEAD, then creates a local review-handoff commit containing only the state file, review record, and task record projection; it does not edit implementation artifacts. The implementer resolves that record, creates the next implementation commit, and, only to obtain `T1_CI`, pushes the branch once for the next review attempt. After `APPROVE`, run `meridian review verdict <TASK-ID> APPROVE --body <review-evidence>` on the clean reviewed HEAD and commit its state file and projections on the task branch.
-- For `Review: NOT_REQUIRED`, the implementer runs `meridian task transition <TASK-ID> ACCEPTED` after validation and commits its state file and record projection. Neither path rebases, amends, cherry-picks, or force-pushes reviewed task commits.
+- For `Review: required`, the reviewer-integrator must never push the task branch. On `CHANGES_REQUESTED`, it runs `meridian review verdict <TASK-ID> CHANGES_REQUESTED --body <review-evidence>` on the clean reviewed HEAD, then creates a local review-handoff commit containing only the state file, review record, and task record projection; it does not edit implementation artifacts. The implementer resolves that record, creates the next implementation commit, and, only to obtain `T1_CI`, pushes the branch once for the next review attempt. After `APPROVE`, run `meridian review verdict <TASK-ID> APPROVE --body <review-evidence>` on the clean reviewed HEAD and commit its state file and projections on the task branch.
+- For `Review: not_required`, the implementer commits validation evidence and proceeds to closure and integration; status remains `in_progress` until landing writes `done`. Neither path rebases, amends, cherry-picks, or force-pushes reviewed task commits.
 - Final integration is serialized in the primary checkout through `meridian worktree integrate stage`. That command verifies accepted evidence, owns the lease and prescribed no-commit merge, and returns the deterministic decision and candidate tree without running project code. Run the selected bounded or full gate separately in the ordinary sandbox, bind successful evidence to that tree, and call `integrate finalize`; call `integrate abort` after failure. Stale or mismatched evidence is `BLOCKED EVIDENCE_MISMATCH`; missing or incomplete evidence is `BLOCKED EVIDENCE_INCOMPLETE`.
 - Task branches never edit the project's queue, queue archive, or plan (`meridian locations` resolves them). They edit only their own task record, its exact archive, its review record, its handoff, and its own `.meridian/tasks/<TASK-ID>.json` state file. `integrate stage` applies queue and plan status and phase archival once on the merged candidate tree. A shared-governance conflict aborts integration; never choose one task's state over another.
 - Only after successful validated integration and any required `main` push, use `meridian worktree cleanup`. Failure, requested changes, cancellation, or blocked integration retains both; exceptional cleanup remains explicitly authorized and outside the bounded command.
@@ -272,7 +270,7 @@ outcomes using `capabilities/stop-codes-v1.json` in the framework: its
   criterion calls for work on the assigned task. Rerun a failed validation
   once without changes. If the rerun passes, record the test as intermittent
   in the handoff; the attempt does not count. If the rerun fails, count the
-  attempt, fix the task's own work, and validate again. After 3 consecutive
+  attempt, fix the task's own work, and validate again. After the resolved `validationRetryLimit` consecutive
   counted failures, stop with `BLOCKED VALIDATION_RETRY_LIMIT` and a summary
   of the failures. `VALIDATION_FAILED` has `human_decision: false`; a single
   failed validation does not stop the agent.
@@ -325,5 +323,5 @@ incomplete or a check fails, keep the task in progress and report the blocker.
 <!-- MERIDIAN:BEGIN capability=execution-discipline v1 -->
 ## Execution discipline
 
-Apply `docs/CONTEXT_BUDGET_POLICY.md`. The review-policy restrictions above remain authoritative; use parallel agents only when their scopes and worktrees are independent.
+Apply `docs/CONTEXT_READING_POLICY.md`. The review-policy restrictions above remain authoritative; use parallel agents only when their scopes and worktrees are independent.
 <!-- MERIDIAN:END -->

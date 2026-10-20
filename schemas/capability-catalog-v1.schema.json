@@ -113,27 +113,19 @@
             "minimum": 1,
             "type": "integer"
           },
-          "workflowModes": {
-            "items": {
-              "enum": [
-                "lean-delivery",
-                "governed-sdd"
-              ]
-            },
-            "minItems": 1,
-            "type": "array",
-            "uniqueItems": true
+          "distribution": {
+            "const": "single"
           }
         },
         "required": [
           "version",
-          "workflowModes",
           "selfHostingEligible",
           "hostProfiles",
           "installationForms",
           "managedSurfaces",
           "evidenceRequirements",
-          "dependencies"
+          "dependencies",
+          "distribution"
         ],
         "type": "object"
       },
@@ -170,22 +162,16 @@
             "minLength": 1,
             "type": "string"
           },
-          "workflowModes": {
-            "items": {
-              "enum": [
-                "governed-sdd",
-                "lean-delivery"
-              ]
-            },
-            "minItems": 1,
-            "type": "array"
+          "distribution": {
+            "const": "single"
           }
         },
         "required": [
           "version",
           "capabilities",
           "hostProbes",
-          "verificationProbe"
+          "verificationProbe",
+          "distribution"
         ],
         "type": "object"
       },

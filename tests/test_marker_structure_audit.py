@@ -122,7 +122,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
         implementation = self.read("docs/workflows/IMPLEMENTATION.md")
         block = templates_markers.extract_marker_block(implementation, "validation-scoping", 2)
         self.assertTrue(block.startswith("Scope validation"))
-        policy = self.read("docs/CONTEXT_BUDGET_POLICY.md")
+        policy = self.read("docs/CONTEXT_READING_POLICY.md")
         read_guard = templates_markers.extract_marker_block(policy, "read-guard", 2)
         self.assertIn("verified task worktree", read_guard)
         self.assertIn("router read set", read_guard)
@@ -504,8 +504,8 @@ class ConsumerProfileTest(unittest.TestCase):
             profile = catalog.profile(profile_id)
             self.assertIsNotNone(profile)
             self.assertEqual(profile.version, 1)
-            self.assertEqual(profile.workflow_modes, (mode,))
-            self.assertIn("context-budgeting", dict(profile.capabilities))
+            self.assertEqual(profile.distribution, "single")
+            self.assertIn("context-reading", dict(profile.capabilities))
 
     def test_bootstrap_turns_the_legacy_unverified_row_into_declared_profiles(self) -> None:
         for mode in ("governed-sdd", "lean-delivery"):
@@ -541,12 +541,12 @@ class ConsumerProfileTest(unittest.TestCase):
                 code, after = self.audit(project, mode)
                 self.assertNotIn("declaration/legacy-compatibility", after)
                 self.assertNotRegex(after, r"(?m)^FAIL\s")
-                self.assertRegex(after, rf"PASS\s+{profile_id}/context-budgeting/installation")
+                self.assertRegex(after, rf"PASS\s+{profile_id}/context-reading/installation")
                 self.assertEqual(code, 1, after)
 
     def test_a_marker_bearing_file_with_project_text_still_bootstraps_and_audits(self) -> None:
         project = self.legacy_project("governed-sdd")
-        policy = project / "docs/CONTEXT_BUDGET_POLICY.md"
+        policy = project / "docs/CONTEXT_READING_POLICY.md"
         policy.write_text(policy.read_text(encoding="utf-8") + "\n## Project reading notes\n\n- Prefer grep.\n", encoding="utf-8")
 
         owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=True)
@@ -586,21 +586,28 @@ class ConsumerProfileTest(unittest.TestCase):
                     shutil.copyfile(ROOT / surface.path, destination)
         manifest_path = project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        manifest["managedFiles"]["docs/CONTEXT_BUDGET_POLICY.md"] = "0" * 64
+        manifest["managedFiles"]["docs/CONTEXT_READING_POLICY.md"] = "0" * 64
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         before = manifest_path.read_text(encoding="utf-8")
 
         with self.assertRaises(shared_errors.CardineError) as error:
             owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "cardine-self-hosting", apply=True)
 
-        self.assertIn("docs/CONTEXT_BUDGET_POLICY.md", str(error.exception))
+        self.assertIn("docs/CONTEXT_READING_POLICY.md", str(error.exception))
         self.assertEqual(manifest_path.read_text(encoding="utf-8"), before)
 
-    def test_a_consumer_profile_rejects_the_other_workflow_mode(self) -> None:
-        project = self.legacy_project("lean-delivery")
-        with self.assertRaises(shared_errors.CardineError) as error:
-            owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=False)
-        self.assertIn("governed-sdd", str(error.exception))
+    def test_a_consumer_profile_installs_in_either_preset(self) -> None:
+        for mode, profile in (("lean-delivery", "governed-sdd-consumer"),
+                              ("governed-sdd", "lean-delivery-consumer")):
+            with self.subTest(mode=mode, profile=profile):
+                project = self.legacy_project(mode)
+                result = owner_templates_adoption.bootstrap_capability_profile(
+                    project, ROOT, profile, apply=False
+                )
+                declarations = result["capabilityProfiles"][profile]["capabilities"]
+                self.assertIn("context-reading", declarations)
+                self.assertTrue(all(value["installation"]["state"] == "INSTALLED"
+                                    for value in declarations.values()))
 
 
 class RestructureHelpersTest(unittest.TestCase):

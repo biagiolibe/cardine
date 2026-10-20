@@ -184,7 +184,7 @@ class CatalogSurface:
 class CatalogCapability:
     capability_id: str
     version: int
-    workflow_modes: tuple[str, ...]
+    distribution: str
     self_hosting_eligible: bool
     host_profiles: tuple[tuple[str, str], ...]
     installation_forms: tuple[str, ...]
@@ -200,7 +200,7 @@ class CatalogProfile:
     capabilities: tuple[tuple[str, int], ...]
     verification_probe: str
     host_probes: tuple[tuple[str, str], ...]
-    workflow_modes: tuple[str, ...] = ()
+    distribution: str = "single"
 
 
 @dataclass(frozen=True)

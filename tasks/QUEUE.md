@@ -43,6 +43,6 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 6 and decisions 3 and 4, and `do
 | `[x]` | 053 | Resolve one task contract and store its snapshot (single workflow SW2) | 🔴 P1 | 052 | [053](done/053-single-task-contract.md) |
 | `[x]` | 054 | Use one task state machine with review and dependency gates (single workflow SW3) | 🔴 P1 | 053 | [054](done/054-single-state-machine.md) |
 | `[x]` | 055 | Build the single template set (single workflow SW4) | 🔴 P1 | 054 | [055](done/055-single-template-set.md) |
-| `[ ]` | 056 | Reconcile the capability catalog with the single template set (single workflow SW5) | 🔴 P1 | 055 | [056](056-reconcile-capabilities.md) |
+| `[x]` | 056 | Reconcile the capability catalog with the single template set (single workflow SW5) | 🔴 P1 | 055 | [056](done/056-reconcile-capabilities.md) |
 | `[ ]` | 057 | Name the preset in the per-turn briefing (single workflow SW6) | 🔴 P1 | 056 | [057](057-preset-briefing-adapter.md) |
 | `[ ]` | 058 | Remove residual workflow branching and prove parity (single workflow SW7) | 🔴 P1 | 057 | [058](058-remove-workflow-branching.md) |

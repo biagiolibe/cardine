@@ -146,7 +146,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         """
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
@@ -178,7 +178,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                             "supersededBy": "role-scoped-agent-rules",
                         }
                     ],
-                    "managedPaths": ["docs/CONTEXT_BUDGET_POLICY.md"],
+                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
                     "verification": ["test-only"],
                 }
             ),
@@ -186,7 +186,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-        local_policy = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
         self.assertIn("MERIDIAN:BEGIN capability=minimal-read-only-status v3", local_text)
         local_policy.write_text(
@@ -196,7 +196,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("RETIRE-MARKERS docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("RETIRE-MARKERS docs/CONTEXT_READING_POLICY.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
@@ -218,7 +218,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         silently discard the customization along with the block."""
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        policy = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
@@ -241,7 +241,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "to": "1.1.1",
                     "description": "test-only retirement",
                     "removes": [{"capability": "minimal-read-only-status", "capabilityVersion": 3}],
-                    "managedPaths": ["docs/CONTEXT_BUDGET_POLICY.md"],
+                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
                     "verification": ["test-only"],
                 }
             ),
@@ -249,7 +249,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-        local_policy = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
         local_text = local_text.replace("## Task-first loading", "## Task-First Loading (project wording)")
         # Edit inside the very block that is about to be retired.
@@ -261,7 +261,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
-        self.assertIn("CONFLICT docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("CONFLICT docs/CONTEXT_READING_POLICY.md", checked.stdout)
         self.assertIn("BLOCKED", checked.stdout)
 
     def test_retirement_move_preserves_project_text_outside_exact_source_marker(self) -> None:
@@ -273,7 +273,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         """
         self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
 
-        source = self.framework / "templates/single/docs/CONTEXT_BUDGET_POLICY.md"
+        source = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         source_text = source.read_text(encoding="utf-8")
         marker = re.search(
             r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
@@ -306,7 +306,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                         {
                             "stage": "retirement",
                             "source": {
-                                "path": "docs/CONTEXT_BUDGET_POLICY.md",
+                                "path": "docs/CONTEXT_READING_POLICY.md",
                                 "capability": "minimal-read-only-status",
                                 "capabilityVersion": 3,
                                 "markerSha256": digest,
@@ -319,7 +319,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                             },
                         }
                     ],
-                    "managedPaths": ["docs/CONTEXT_BUDGET_POLICY.md", "docs/ROUTED_STATUS_RULE.md"],
+                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md", "docs/ROUTED_STATUS_RULE.md"],
                     "verification": ["test-only"],
                 }
             ),
@@ -327,7 +327,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-        local_source = self.project / "docs/CONTEXT_BUDGET_POLICY.md"
+        local_source = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_source.write_text(
             local_source.read_text(encoding="utf-8").replace(
                 "This policy reduces context and reasoning overhead while preserving authority and review quality.",
@@ -338,7 +338,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("RETIRE-MARKERS docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("RETIRE-MARKERS docs/CONTEXT_READING_POLICY.md", checked.stdout)
         self.assertIn("ADD      docs/ROUTED_STATUS_RULE.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
@@ -372,7 +372,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("APPEND-RETIRE-MARKERS docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("APPEND-RETIRE-MARKERS docs/CONTEXT_READING_POLICY.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
@@ -398,5 +398,5 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
-        self.assertIn("CONFLICT docs/CONTEXT_BUDGET_POLICY.md", checked.stdout)
+        self.assertIn("CONFLICT docs/CONTEXT_READING_POLICY.md", checked.stdout)
         self.assertIn("locally customized.", local_policy.read_text(encoding="utf-8"))

@@ -10,7 +10,6 @@ from cardine.templates.markers import append_only_new_markers
 from cardine.templates.markers import marker_pairs
 from cardine.templates.migrations import migration_capability_entries
 from cardine.templates.migrations import migration_capability_moves
-from cardine.templates.roots import LEGACY_WORKFLOW_ROOT
 from cardine.templates.roots import single_template_root
 from pathlib import Path
 import json
@@ -35,50 +34,6 @@ def latest_migration_to(framework_root: Path, upto: str | None = None) -> str:
 def manifest_baseline_version(manifest: dict[str, object]) -> str:
     """Read the explicit baseline version, with compatibility for legacy manifests."""
     return str(manifest.get("workflowBaselineVersion", manifest.get("frameworkVersion", "")))
-
-
-def managed_files_for_workflow(workflow: Path, mode: str) -> list[ManagedFile]:
-    if not workflow.is_dir():
-        raise CardineError(f"workflow template is missing: {workflow}")
-
-    paths = [
-        Path("PROJECT_WORKFLOW.md"),
-        Path("AGENTS.md"),
-        Path("CLAUDE.md"),
-        Path("LANGUAGE_POLICY.md"),
-    ]
-    if mode == "lean-delivery":
-        paths.extend(
-            [
-                Path("docs/CONTEXT_BUDGET_POLICY.md"),
-                Path("docs/EXECUTION_EVIDENCE_PROFILE.md"),
-            ]
-        )
-    if mode == "governed-sdd":
-        paths.extend(
-            [
-                Path("tasks/TASK_BLUEPRINT.md"),
-                *[
-                    item.relative_to(workflow)
-                    for item in sorted((workflow / "docs").rglob("*.md"))
-                ],
-            ]
-        )
-    # Include optional managed files only when the workflow supplies them.
-    optional_paths = [Path(".codex/rules/meridian.rules"), Path(".codex/hooks.json")]
-    if mode == "lean-delivery":
-        optional_paths.append(Path("docs/WORKTREE_LIFECYCLE.md"))
-    for optional_path in optional_paths:
-        if (workflow / optional_path).is_file():
-            paths.append(optional_path)
-
-    result = []
-    for target in paths:
-        source = workflow / target
-        if not source.is_file():
-            raise CardineError(f"managed template is missing: {source}")
-        result.append(ManagedFile(source=source, target=target))
-    return result
 
 
 def single_managed_files(root: Path) -> list[ManagedFile]:
@@ -110,15 +65,6 @@ def managed_files(framework_root: Path, mode: str | None = None) -> list[Managed
     """The managed files every installation receives. `mode` is a legacy
     compatibility key; the single template set is the only source."""
     return single_managed_files(single_template_root(framework_root))
-
-
-def legacy_managed_files(framework_root: Path, mode: str) -> list[ManagedFile]:
-    """The managed files of an old per-workflow root.
-
-    Only the catalog and marker-baseline checks that still key on those paths
-    call this; row SW5 moves them to the single set and deletes the accessor.
-    """
-    return managed_files_for_workflow(framework_root / LEGACY_WORKFLOW_ROOT / mode, mode)
 
 
 def marker_declaring_migrations(framework_root: Path) -> dict[tuple[str, int], str]:

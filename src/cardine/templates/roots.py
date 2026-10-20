@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 SINGLE_TEMPLATE_ROOT = Path("templates") / "single"
-LEGACY_WORKFLOW_ROOT = Path("templates") / "workflows"
 
 
 def single_template_root(framework_root: Path) -> Path:

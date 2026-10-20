@@ -11,6 +11,18 @@ TOKEN = r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+"
 
 
 class TemplateStopPolicyTest(unittest.TestCase):
+    def test_decision_12_distinguishes_guardrails_recovery_and_failing_work(self):
+        text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
+        policy = text.split("### Stops and denials", 1)[1].split("### Closure", 1)[0]
+        for instruction in (
+            "**Guardrail.** Stop", "human_decision: true", "**Recoverable state.**",
+            "in the same turn and continue", "Never\n  run a recovery twice",
+            "**Failing work.**", "Rerun a failed validation\n  once without changes",
+            "record the test as intermittent", "resolved `validationRetryLimit` consecutive\n  counted failures",
+            "a single\n  failed validation does not stop the agent",
+        ):
+            self.assertIn(instruction, policy)
+
     def test_named_codes_exist_and_guardrails_require_a_person(self):
         entries = {
             entry["code"]: entry
