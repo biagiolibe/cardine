@@ -47,6 +47,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
             self.assertNotIn("task transition <TASK-ID> ACCEPTED", text)
             self.assertNotIn("READY_FOR_REVIEW", text)
             self.assertNotIn("Lean start adds no machine state", text)
+            # MERIDIAN-OLD-NAME-TEST: reject the retired standalone command declaration.
             self.assertNotIn(".meridian/candidate-validation.json", text)
 
     def test_later_v3_lifecycle_occurrence_is_rejected(self):
