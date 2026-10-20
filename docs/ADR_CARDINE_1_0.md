@@ -17,7 +17,9 @@ landing under decision 11, and the queue-briefing requirements in work items
 was proposed and accepted on 2026-10-18. It refines decisions 5 to 7 and adds
 no feature to the 1.0 scope. On 2026-10-19 the developer split work item 5 in
 two, reset the capability marker versions at the marker rename, and placed the
-move of this repository to Cardine after work items 8, 9, and 10.*
+move of this repository to Cardine after work items 8, 9, and 10. On
+2026-10-20 the developer moved the Cardine names of skills, slash commands,
+the plugin, and the Codex rules from work item 5b to work item 9.*
 
 ## Context
 
@@ -536,8 +538,10 @@ surfaces only and leave those files unchanged.
      still runs; no command dispatches it.
    - **5b, after item 6:** the markers become `CARDINE:BEGIN`, and every
      capability restarts at `v1`. The marker baseline and `requiredVersion`
-     values are rewritten to match. Template text, skills, and slash
-     commands lose the Meridian name.
+     values are rewritten to match. Template text loses the Meridian name.
+     Skills, slash commands, the plugin, and the Codex rules file and
+     profile are not renamed here: item 9 rebuilds them under Cardine names
+     (decision of 2026-10-20).
 6. Single workflow: one template set, task contract fields, states, review
    option, `spike` class. The preset comes from the project configuration,
    never from the shape of the queue file. In Meridian 1.4.0 the per-turn
@@ -564,7 +568,9 @@ surfaces only and leave those files unchanged.
    console on this engine. Build integration around the landing mode, with
    `direct` as its only 1.0 mode (decision 11).
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
-   hooks, with one Python implementation of each hook (decision 7). The per-turn queue briefing is one Python implementation that
+   hooks, with one Python implementation of each hook (decision 7). The
+   skills, slash commands, plugin, and Codex rules file and profile are
+   created under Cardine names, replacing the Meridian-named ones. The per-turn queue briefing is one Python implementation that
    prints the status that work item 7 generates. It computes no task state of
    its own. The regression tests of work items 6 and 7 run against the hook
    output on both hosts.
