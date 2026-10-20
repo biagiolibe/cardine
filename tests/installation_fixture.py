@@ -6,7 +6,9 @@ import json
 import os
 import shlex
 import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -168,3 +170,38 @@ def copy_hook(root: Path, filename: str) -> Path:
     )
     runner.chmod(0o755)
     return hook
+
+
+def run_host_briefing(project: Path, host: str, *, adapt: bool = True) -> subprocess.CompletedProcess[str]:
+    """Invoke a copied hook through isolated host command/environment conventions.
+
+    These are invocation fixtures, not host activation or installed hook config.
+    Item 9 can reuse the scenarios when replacing the frozen shell producer.
+    """
+    with tempfile.TemporaryDirectory(prefix="briefing-host-") as directory:
+        root = Path(directory)
+        hook = copy_hook(root, "queue-briefing.sh")
+        environment = hook_environment()
+        home = root / "home"
+        home.mkdir()
+        environment.update(HOME=str(home), XDG_CONFIG_HOME=str(home / ".config"))
+        environment["PYTHONPATH"] = str(ROOT / "src")
+        if host == "claude":
+            environment["CLAUDE_PLUGIN_ROOT"] = str(root)
+            command = ["bash", "-c", 'bash "${CLAUDE_PLUGIN_ROOT}/hooks/queue-briefing.sh"']
+        elif host == "codex":
+            environment["PLUGIN_ROOT"] = str(root)
+            command = ["bash", str(hook)]
+        else:
+            raise ValueError(f"unknown fixture host: {host}")
+        result = subprocess.run(
+            command, cwd=project, env=environment, input=json.dumps({"cwd": str(project)}),
+            capture_output=True, text=True, check=False, timeout=10,
+        )
+        if not adapt or result.returncode:
+            return result
+        return subprocess.run(
+            [sys.executable, "-m", "cardine.hosts.briefing", "--project", str(project)],
+            cwd=project, env=environment, input=result.stdout,
+            capture_output=True, text=True, check=False, timeout=10,
+        )

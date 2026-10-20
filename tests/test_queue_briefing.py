@@ -13,7 +13,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from installation_fixture import copy_hook, hook_environment
+from installation_fixture import copy_hook, hook_environment, run_host_briefing
+from project_config_support import write_project_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -413,6 +414,27 @@ class QueueBriefingTest(unittest.TestCase):
         # MERIDIAN-INSTALLATION-CHECK
         self.assertIn("[Meridian Governed Queue]", result.stdout)
         self.assertIn("In progress: TASK-100", result.stdout)
+
+    def test_preset_adapter_retains_hook_payload_counts_and_startable_logic(self) -> None:
+        write_project_config(self.project, "lean")
+        self.write_language_policy("Italian")
+        self.write_queue(
+            "| 1 | TASK-001 | P0 | ACCEPTED | REQUIRED | — | 001.md |\n"
+            "| 2 | TASK-002 | P1 | QUEUED | REQUIRED | TASK-001 | 002.md |\n"
+            "| 3 | TASK-003 | P1 | QUEUED | REQUIRED | TASK-004 | 003.md |\n"
+        )
+        for host in ("claude", "codex"):
+            with self.subTest(host=host):
+                original = run_host_briefing(self.project, host, adapt=False)
+                adapted = run_host_briefing(self.project, host)
+                self.assertEqual(original.returncode, 0, original.stderr)
+                self.assertEqual(adapted.returncode, 0, adapted.stderr)
+                self.assertIn("Queued (startable): TASK-002", adapted.stdout)
+                self.assertIn("Blocked on dependencies: TASK-003", adapted.stdout)
+                self.assertIn("Accepted: 1", adapted.stdout)
+                self.assertEqual(adapted.stdout, "Preset: lean\n" + original.stdout.replace(
+                    # MERIDIAN-INSTALLATION-CHECK
+                    "[Meridian Governed Queue]\n", ""))
 
 
 if __name__ == "__main__":
