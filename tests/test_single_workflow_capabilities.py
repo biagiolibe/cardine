@@ -32,11 +32,11 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
                 seen.add(capability)
         self.assertTrue({key for key, entry in catalog.items() if entry["required"] and not entry["retired"]} <= seen)
 
-    def test_lifecycle_keeps_v12_and_bounded_worktree_keeps_v8(self):
+    def test_lifecycle_and_bounded_worktree_keep_their_catalog_versions(self):
         pairs = dict(marker_pairs((ROOT / "templates/single/docs/LIFECYCLE_ORCHESTRATION.md").read_text()))
-        self.assertEqual(pairs["lifecycle-orchestration"], 12)
+        self.assertEqual(pairs["lifecycle-orchestration"], 13)
         pairs = dict(marker_pairs((ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()))
-        self.assertEqual(pairs["bounded-worktree-lifecycle"], 8)
+        self.assertEqual(pairs["bounded-worktree-lifecycle"], 9)
         check_repository.check_capability_required_versions(ROOT)
         text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
         self.assertIn("queued -> in_progress", text)
@@ -60,7 +60,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
             output = io.StringIO()
             with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
                 check_repository.check_capability_required_versions(root)
-            self.assertIn("requiredVersion=12", output.getvalue())
+            self.assertIn("requiredVersion=13", output.getvalue())
             self.assertIn("ships v3", output.getvalue())
 
     def test_catalog_and_dependencies_use_the_reading_policy(self):
@@ -108,9 +108,9 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
                 locked = cli("lock", "--mode", mode)
                 self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
                 path = project / "PROJECT_WORKFLOW.md"
-                text = path.read_text().replace("capability=git-workflow v15 -->", "capability=git-workflow v15 -->\nTampered policy.", 1)
+                text = path.read_text().replace("capability=git-workflow v16 -->", "capability=git-workflow v16 -->\nTampered policy.", 1)
                 path.write_text(text)
-                fixture.migration("001-synthetic-policy", "2.1.0", capability="git-workflow", version=16,
+                fixture.migration("001-synthetic-policy", "2.1.0", capability="git-workflow", version=17,
                                   content="Updated canonical policy.", paths=("PROJECT_WORKFLOW.md",), mode=mode)
                 before = {p.relative_to(project): p.read_bytes() for p in project.rglob("*") if p.is_file()}
                 checked = cli("upgrade", "--check")

@@ -2,40 +2,40 @@
 
 Use this procedure only for `Address review <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-remediation v4 -->
+<!-- MERIDIAN:BEGIN capability=task-worktree-remediation v5 -->
 Remediation reuses the prepared task worktree only after the reviewer has
 stopped. Start in the coordinator-supplied existing directory and run
-`meridian worktree check <TASK-ID> --project <primary-checkout>
+`cardine worktree check <TASK-ID> --project <primary-checkout>
 --format json` before reading the task or review record.
 Verify the result against the durable handoff before writing. Never remediate
 in the primary checkout, create a replacement worktree, or run concurrently
 with a reviewer. A mismatch is `BLOCKED WRONG_WORKTREE` and preserves the existing state.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=review-remediation-record v6 -->
+<!-- MERIDIAN:BEGIN capability=review-remediation-record v7 -->
 ### Review-remediation workflow
 
 For `Address review <TASK-ID>`, read the assigned task, its cited authority,
 the current review record at the location `PROJECT_WORKFLOW.md` declares for
 it, and `git status --short`. Confirm the
-machine status is `in_progress` with verdict `CHANGES_REQUESTED` (consult command results, never read or edit the state file directly), that the review record has unchecked
+machine status is `in_progress` with a requested-changes verdict (consult command results, never read or edit the state file directly), that the review record has unchecked
 findings, and that its local review-handoff commit is present. Do not implement
 new work, reinterpret a finding, or erase prior reviewer evidence. The changes-requested verdict already returns the task to `in_progress`; retain its attempt and findings before remediation. Never edit a status or verdict by hand. Resolve
 every unchecked finding, mark each with implementation evidence in a new
 resolution section in the review record without editing verdict headings, rerun the task and baseline validation, and run
-the read-only `meridian execution ready-check <TASK-ID> --project .` after
+the read-only `cardine execution ready-check <TASK-ID> --project .` after
 committing remediation, updated review record, validation evidence, and the
 final handoff. Obtain any required T1_CI evidence with the one authorized
 task-branch push before finalizing the handoff. Run
-`meridian execution deliver <TASK-ID> --project .` as the last delivery step
+`cardine execution deliver <TASK-ID> --project .` as the last delivery step
 and stop writing. Execution start never erases the prior verdict; retain the review
 attempt and findings during remediation. Report the review-record path, resolved findings, commit, and
 validation. If a finding needs an authority or scope change, leave it
 unchecked and return `BLOCKED SCOPE_CHANGE_REQUIRED`.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=rejected-attempt-restart v5 -->
-If a `CHANGES_REQUESTED` finding explicitly cannot be remediated because it
+<!-- MERIDIAN:BEGIN capability=rejected-attempt-restart v6 -->
+If a requested-changes finding explicitly cannot be remediated because it
 needs new or amended authority or scope, leave it unchecked and return
 `BLOCKED SCOPE_CHANGE_REQUIRED` without ref or status mutation. Do not use remediation to restart it;
 only explicit developer authorization may invoke the procedure in
@@ -55,12 +55,12 @@ waived by reading a document later.
 - At a finding that cannot be remediated: `docs/LIFECYCLE_ORCHESTRATION.md`.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-context-readers v2 -->
+<!-- MERIDIAN:BEGIN capability=bounded-context-readers v3 -->
 ## Bounded context readers
 
-Read the task's cited ADRs and specification sections with `meridian context
-authority <TASK-ID>`, and a single ADR with `meridian adr show <ADR-ID>`.
-Find the ADR that governs a question with `meridian adr list`, which prints one
+Read the task's cited ADRs and specification sections with `cardine context
+authority <TASK-ID>`, and a single ADR with `cardine adr show <ADR-ID>`.
+Find the ADR that governs a question with `cardine adr list`, which prints one
 line per ADR. Do not open the whole ADR log or a whole specification to find
 them. Read the
 queue state through the resolved queue briefing, never by opening the whole

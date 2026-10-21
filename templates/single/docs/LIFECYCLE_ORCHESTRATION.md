@@ -2,7 +2,7 @@
 
 Use this procedure for `Run lifecycle <TASK-ID>`, `Accept <TASK-ID>`, and `Restart rejected <TASK-ID>` after the entry-point router has applied its always-loaded invariants. A task whose resolved review option is `not_required` needs no reviewer session; the orchestration then runs only the implementer steps and the integration.
 
-<!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v12 -->
+<!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v13 -->
 `Run lifecycle <TASK-ID>` authorizes an orchestrator to carry one dependency-ready
 task through implementation, independent review, requested-change remediation,
 acceptance, and `main` integration without further developer prompts. It does
@@ -19,7 +19,7 @@ Run lifecycle <TASK-ID>
   -> implementer: Proceed with <TASK-ID>
   -> reviewer: Review <TASK-ID>
        -> APPROVE: acceptance commit, validated merge commit on main, push main
-       -> CHANGES_REQUESTED: implementer: Address review <TASK-ID>
+       -> changes requested: implementer: Address review <TASK-ID>
                               -> reviewer: Review <TASK-ID>
        -> stop: report the `BLOCKED <CODE>` line
 ```
@@ -35,20 +35,20 @@ copies findings between chats.
 ## Preconditions and stop conditions
 
 Before delegation, confirm that the task is assigned and dependency-ready,
-then run `meridian worktree prepare` from the primary checkout. Pass its exact
+then run `cardine worktree prepare` from the primary checkout. Pass its exact
 existing path, branch, primary checkout, and worktree root to every worker as
 durable launch inputs. If the host cannot launch a fresh session with that path
 as its effective workspace, return `BLOCKED WRONG_WORKTREE`; never use automatic isolation,
 `.claude/worktrees`, the primary checkout, or a substitute path.
 Do not run implementation and review concurrently in the same worktree. Every
-worker's first action is `meridian worktree check` in the prepared directory,
+worker's first action is `cardine worktree check` in the prepared directory,
 before any task or handoff read. Stop the implementer before starting the fresh
 reviewer. Implementer prompts prescribe contract resolution, then
-`meridian execution start <TASK-ID> --project .` immediately after check,
+`cardine execution start <TASK-ID> --project .` immediately after check,
 before substantive analysis, advisor consultation, or implementation. Launch
 alone never records execution start. After implementation and validation,
 the implementer commits implementation and the final handoff, runs
-`meridian execution deliver <TASK-ID> --project .` last, and stops writing.
+`cardine execution deliver <TASK-ID> --project .` last, and stops writing.
 Require a clean committed valid delivery before launching review; pending
 delivery/changes is availability information, not a replacement status.
 The reviewer then runs the handoff preflight in
@@ -58,7 +58,7 @@ implementer all verify. If launched from the primary checkout, it roots every
 review read and command in the verified task worktree and never switches the
 primary checkout.
 
-Never edit a status or verdict by hand. Workers use `meridian task transition` for lifecycle transitions and `meridian review verdict` (with `--owner` for owner acceptance) for verdicts. Continue automatically only while the command-reported machine state permits the
+Never edit a status or verdict by hand. Workers use `cardine task transition` for lifecycle transitions and `cardine review verdict` (with `--owner` for owner acceptance) for verdicts. Continue automatically only while the command-reported machine state permits the
 next transition. Stop with the `BLOCKED <CODE>` line of the failing gate when validation fails, authority is
 ambiguous, the task branch or required local handoff commit is unavailable,
 the worktree becomes dirty with unrelated changes, its registered branch/path
@@ -67,7 +67,7 @@ advanced `main` cannot be established, serialized integration conflicts or
 fails its selected integration gate, or an external forge approval is required
 but unavailable.
 
-After two consecutive `CHANGES_REQUESTED` verdicts, stop and report `BLOCKED REVIEW_LOOP_EXHAUSTED`
+After two consecutive requested-changes verdicts, stop and report `BLOCKED REVIEW_LOOP_EXHAUSTED`
 with the review-record path and unresolved findings. A developer may explicitly
 restart the lifecycle after resolving the underlying scope or authority issue.
 
@@ -76,7 +76,7 @@ restart the lifecycle after resolving the underlying scope or authority issue.
 The `Run lifecycle` authorization includes each attempt's task-branch push when
 `T1_CI` needs it (at most once per attempt, by the implementer only, and none
 without CI), the local review-and-status commit,
-`meridian worktree integrate stage`, separately executed candidate validation,
+`cardine worktree integrate stage`, separately executed candidate validation,
 `integrate finalize` or `integrate abort`, and the single `main` push only after
 `APPROVE` and all repository checks pass. The validated task commit must be an ancestor of task
 HEAD, its intervening diff may contain only permitted lifecycle records, and
@@ -88,7 +88,7 @@ interaction or explicit requirement, and `BLOCKED EVIDENCE_MISMATCH` when indepe
 be established. A dirty or unavailable primary checkout blocks integration
 without changing the task worktree. A merge conflict or bounded/full gate
 failure uses `integrate abort` and preserves the task branch and worktree. Only
-successful integration and required push permit `meridian worktree cleanup`.
+successful integration and required push permit `cardine worktree cleanup`.
 These reuse
 rules do not weaken independent review, acceptance evidence, or forge gates,
 and do not fabricate an external approval. If the
@@ -118,18 +118,18 @@ serialized, combined-tree-validated merge transaction defined in
 `docs/LIFECYCLE_ORCHESTRATION.md`.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=owner-acceptance-workflow v4 -->
+<!-- MERIDIAN:BEGIN capability=owner-acceptance-workflow v5 -->
 ## Owner-acceptance workflow
 
 When the developer says `Accept <TASK-ID>` after personally reviewing a `Review: required` task, treat it as explicit authorization to skip the agent review. Confirm that the task record is `in_review`; do not re-review the implementation, change source code, or rerun the task's own validation.
 
-On the clean task branch HEAD, run `meridian review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` with the reviewed/base commit and owner evidence. The command records `approved_by: "owner"`, binds approval to HEAD, and updates the task Status and review heading projections. Never edit a status or verdict by hand. Commit only the task's state file, task record, and review record as `docs: accept <TASK-ID>`. Then continue at C6 under the `Proceed with` authority through `meridian worktree advance`, including candidate validation, the one `git push origin main`, and cleanup. `integrate stage` checks machine acceptance and the approved Git diff automatically; headings are human-readable only. A manual merge is never permitted. If a command stops, report its coded stop and resume command.
+On the clean task branch HEAD, run `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` with the reviewed/base commit and owner evidence. The command records `approved_by: "owner"`, binds approval to HEAD, and updates the task Status and review heading projections. Never edit a status or verdict by hand. Commit only the task's state file, task record, and review record as `docs: accept <TASK-ID>`. Then continue at C6 under the `Proceed with` authority through `cardine worktree advance`, including candidate validation, the one `git push origin main`, and cleanup. `integrate stage` checks machine acceptance and the approved Git diff automatically; headings are human-readable only. A manual merge is never permitted. If a command stops, report its coded stop and resume command.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=rejected-attempt-restart v5 -->
+<!-- MERIDIAN:BEGIN capability=rejected-attempt-restart v6 -->
 ## Rejected-attempt restart after authority change
 
-Use this procedure only when a `CHANGES_REQUESTED` finding explicitly cannot be
+Use this procedure only when a requested-changes finding explicitly cannot be
 remediated without new or amended authority or task scope, and the developer
 explicitly authorizes restart. Before any ref or status mutation, verify the
 original branch, rejected exact tip, review record, handoff, validation evidence,

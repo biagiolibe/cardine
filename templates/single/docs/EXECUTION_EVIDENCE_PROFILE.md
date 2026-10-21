@@ -9,9 +9,9 @@ but unresolved placeholders are never verification evidence.
 - Reuse unchanged sources and successful results from the active session.
 - Locate a large-file range before reading it; the default threshold is 400
   lines.
-<!-- MERIDIAN:BEGIN capability=investigation-scope v3 -->
+<!-- MERIDIAN:BEGIN capability=investigation-scope v4 -->
 - Record broad exploration with its question, source scope, sources, and
-  finding using `meridian execution investigate`.
+  finding using `cardine execution investigate`.
 <!-- MERIDIAN:END -->
 
 ## Successful validation output

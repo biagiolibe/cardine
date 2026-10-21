@@ -114,7 +114,7 @@ class CodexReadGuardTest(unittest.TestCase):
         hook = json.loads(hook_path.read_text(encoding="utf-8"))
         entry = hook["hooks"]["PreToolUse"][0]
         self.assertEqual(entry["matcher"], "Bash")
-        self.assertEqual(entry["hooks"][0]["command"], "meridian hook read-guard --host codex")
+        self.assertEqual(entry["hooks"][0]["command"], "cardine hook read-guard --host codex")
         managed = {str(item.source.relative_to(ROOT / "templates/single"))
                    for item in owner_templates_files.managed_files(ROOT, "single")}
         self.assertIn(".codex/hooks.json", managed)

@@ -2,7 +2,7 @@
 
 Task context loading, task shape, and completion handoffs are governed by `docs/CONTEXT_READING_POLICY.md`, `tasks/TASK_BLUEPRINT.md`, and `docs/COMPLETION_REPORT_TEMPLATE.md`; this document defines review and direct integration only.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-integration v7 -->
+<!-- MERIDIAN:BEGIN capability=task-worktree-integration v8 -->
 For `Review: required`, the implementer pushes the task branch only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, and records its deterministic branch,
 machine-independent dedicated-worktree value (relative to the worktree root, never an absolute path), implementation commit, validated task and
 base `main` commits, exact successful validation evidence, declared integration
@@ -11,7 +11,7 @@ uses that same task worktree in a fresh session after the implementer stops. It
 verifies the registered mapping and cleanliness, never switches the primary
 checkout to the task branch, and never pushes the task branch.
 
-On `CHANGES_REQUESTED`, run `meridian review verdict <TASK-ID> CHANGES_REQUESTED --body <review-evidence>` on the clean reviewed HEAD. Commit only the task state and task/review projections locally; do not push them. The implementer confirms `in_progress` with the retained verdict, resolves every unchecked finding, validates, commits implementation and the final handoff, then runs `meridian execution deliver <TASK-ID> --project .` last and stops writing. Any authorized T1_CI-only task-branch push precedes final handoff and delivery. Never edit a status or verdict by hand.
+When the reviewer requests changes, run `cardine review verdict <TASK-ID> CHANGES_REQUESTED --body <review-evidence>` on the clean reviewed HEAD. Commit only the task state and task/review projections locally; do not push them. The implementer confirms `in_progress` with the retained verdict, resolves every unchecked finding, validates, commits implementation and the final handoff, then runs `cardine execution deliver <TASK-ID> --project .` last and stops writing. Any authorized T1_CI-only task-branch push precedes final handoff and delivery. Never edit a status or verdict by hand.
 
 Before accepting, verify that the validated base is an ancestor of the
 validated task commit, that the validated commit is an ancestor of current
@@ -27,11 +27,11 @@ git diff --name-only <validated-task-commit>..<current-task-commit>
 Current `main` need not be an ancestor of the branch. Missing evidence, a
 failed ancestry check, or any task-relevant change after validation is
 `BLOCKED EVIDENCE_MISMATCH`; do not record approval or completion. Do not fetch,
-rebase, amend, cherry-pick, or force-push as recovery. On the clean reviewed HEAD use `meridian review verdict <TASK-ID> APPROVE --body <review-evidence>`, then commit only the state file and task/review projections. Never edit a status or verdict by hand.
+rebase, amend, cherry-pick, or force-push as recovery. On the clean reviewed HEAD use `cardine review verdict <TASK-ID> APPROVE --body <review-evidence>`, then commit only the state file and task/review projections. Never edit a status or verdict by hand.
 
 Final integration is serialized in the primary checkout under one exclusive
 integration lease, acquired by atomically creating
-`meridian-integration.lock` in the absolute common Git directory, which is computed at runtime and never written to a tracked file. An existing
+`cardine-integration.lock` in the absolute common Git directory, which is computed at runtime and never written to a tracked file. An existing
 lease is `BLOCKED LEASE_HELD`; only its owner removes it, and stale-lease removal requires
 explicit developer authorization. If the primary checkout is missing, dirty,
 cannot switch to `main`, return `BLOCKED PRIMARY_DIRTY`; if another integration owns the lease, return
@@ -58,7 +58,7 @@ worktree and then the local branch only after success. Release the lease after
 success or a clean abort.
 
 For `Review: not_required`, the implementer commits validation evidence and runs the integration transaction; status remains `in_progress` until landing writes `done`.
-`Accept <TASK-ID>` runs `meridian review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on clean HEAD, commits the state and projections, and continues at C6 under the `Proceed with`
+`Accept <TASK-ID>` runs `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on clean HEAD, commits the state and projections, and continues at C6 under the `Proceed with`
 authority; a manual merge is never permitted.
 
 Task reservation, completion, review, and archive mutations stay on the task

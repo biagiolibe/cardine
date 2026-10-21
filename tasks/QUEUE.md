@@ -39,7 +39,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 5b, and `docs/RENAME_PLAN.md`.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 060 | Remove the Meridian name and the old states from the template text (work item 5b) | 🔴 P1 | 058 | [060](060-cardine-template-text.md) |
+| `[x]` | 060 | Remove the Meridian name and the old states from the template text (work item 5b) | 🔴 P1 | 058 | [060](done/060-cardine-template-text.md) |
 | `[ ]` | 061 | Rename the capability markers and restart every capability at v1 (work item 5b) | 🔴 P1 | 060 | [061](061-cardine-markers-from-v1.md) |
 
 ### Phase 17 — Single source of task state

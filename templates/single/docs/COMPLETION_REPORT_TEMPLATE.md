@@ -1,7 +1,7 @@
 # Concise Completion Report
 
 Use this handoff after validation. Keep it short and make every deviation explicit.
-Save it at the handoff location `meridian locations` resolves; `meridian execution handoff-check`
+Save it at the handoff location `cardine locations` resolves; `cardine execution handoff-check`
 and `ready-check` use that canonical path when no report path is supplied.
 
 ```md
@@ -37,21 +37,21 @@ only to obtain `T1_CI`, at most once for that attempt. Amend and force-push rema
 - Validation skips: `<none | test name — test-reported reason; reported by `command`>`
 - Manual verification: `<none | screenshot path — view checked — result>`
 - Acceptance criteria: `<all met | list criterion IDs/status>`
-- Isolated exploration: `<none | question(s) recorded through meridian execution investigate>`
+- Isolated exploration: `<none | question(s) recorded through cardine execution investigate>`
 - Rule discrepancies: `<none | rule, command result, and what was followed>` (optional)
 - Blockers/deviations: `<none | concrete issue, scope expansion, or context expansion and reason>`
 ```
 
-<!-- MERIDIAN:BEGIN capability=handoff-correction-redelivery v1 -->
+<!-- MERIDIAN:BEGIN capability=handoff-correction-redelivery v2 -->
 After committing a handoff-only correction on an `in_review` task, rerun
-`meridian execution deliver <TASK-ID> --project .` before beginning the next
+`cardine execution deliver <TASK-ID> --project .` before beginning the next
 review attempt. The command creates a fresh `Deliver <TASK-ID> for review`
 commit at the corrected handoff and preserves the existing state transitions.
 Changes to any other record or implementation file require renewed implementation
 and validation rather than this correction path.
 <!-- MERIDIAN:END -->
 
-Do not claim completion when validation fails or an acceptance criterion is unresolved. For reviews, retain the same four fields in the review record and add the required verdict from `docs/CODE_REVIEW_PROMPT.md`. For `CHANGES_REQUESTED`, name that review-record path and its local handoff commit in the concise chat report; the record itself remains the canonical evidence.
+Do not claim completion when validation fails or an acceptance criterion is unresolved. For reviews, retain the same four fields in the review record and add the required verdict from `docs/CODE_REVIEW_PROMPT.md`. When changes are requested, name that review-record path and its local handoff commit in the concise chat report; the record itself remains the canonical evidence.
 
 A named sandbox skip is not a passing result for an unrelated failure. Record a
 skip only when the test itself names it, including the test-reported reason and

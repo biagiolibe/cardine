@@ -2,7 +2,7 @@
 
 Use this procedure only for `Proceed with <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v10 -->
+<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v11 -->
 Order of operations: before `prepare`, read only the router read set
 (`AGENTS.md` or `CLAUDE.md`, `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`, and
 this procedure); read no task material and mutate nothing. Apart from the
@@ -18,12 +18,12 @@ task file.
 **Coordinator-launched.** When the coordinator supplied the branch, absolute
 worktree path, primary checkout, and worktree root as launch inputs, start in
 that exact existing directory. Do not use host automatic isolation or create
-another checkout. Run `meridian worktree check <TASK-ID> --project
+another checkout. Run `cardine worktree check <TASK-ID> --project
 <primary-checkout> --format json` before any task read.
 
 **Manually triggered.** When no coordinator supplied all of those launch
 inputs, determine the primary checkout from the first entry of `git worktree
-list --porcelain`. Before any other command, run `meridian worktree prepare
+list --porcelain`. Before any other command, run `cardine worktree prepare
 <TASK-ID> --project <primary-checkout> --format json` for exactly the task ID
 in the trigger, without `--worktree-root`. A non-zero result, including partial
 or mismatched state, an existing active writer, or an unresolvable task ID, is
@@ -35,19 +35,19 @@ worktree, never creates or changes anything, and refuses when none exists. When
 it returns `dirty: true`, `dirty-worktree` is the only error `check` may
 report; any other error is `BLOCKED WRONG_WORKTREE`. Read `git status` and the diff before
 continuing. After a
-successful `prepare`, change to its returned worktree and run `meridian
+successful `prepare`, change to its returned worktree and run `cardine
 worktree check <TASK-ID> --project <primary-checkout> --format json` there.
 
 After successful worktree verification, resolve only the task metadata and
-execution contract needed for `meridian execution start <TASK-ID> --project .`.
+execution contract needed for `cardine execution start <TASK-ID> --project .`.
 For a nonterminal legacy task, reconcile its contract first with
-`meridian execution reconcile <TASK-ID> --apply --project .`; commit that
+`cardine execution reconcile <TASK-ID> --apply --project .`; commit that
 reconciliation before start. Run start before substantive authority/source
 analysis, advisor consultation, or implementation. A repeated in_progress
 start preserves the first transition and its UTC timestamp. Only an explicitly
 authorized Resume may pass `--resume`, after inspecting status and diff and
 confirming the assigned task's changes and sole writer. Review/status requests
-never start work. Meridian does not intercept advisor or host tool calls.
+never start work. Cardine does not intercept advisor or host tool calls.
 
 For either mode, a blocked `check` result stops all task work and preserves both
 checkouts, except the `dirty-worktree` result tolerated after a resumed `dirty:
@@ -62,7 +62,7 @@ validation, completion and archive records, staging and candidate validation,
 finalize or abort, one plain `git push origin main`, and cleanup. It also
 authorizes, for the first review attempt, one plain `git push origin
 <task-branch>` (the `branch` value returned by `prepare`) only to obtain `T1_CI`
-for that task commit; the project's CI is `meridian project show --field ci`,
+for that task commit; the project's CI is `cardine project show --field ci`,
 and without CI there is no push. `Address review <TASK-ID>` authorizes the next
 attempt's push, and a reviewer never pushes. `Proceed with` never authorizes tags or releases; force, deleting, or
 mirroring pushes; history rewrites; forced worktree removal; bypassing a
@@ -71,7 +71,7 @@ Do not ask for confirmation within that boundary.
 
 After acceptance criteria and required validation pass, commit implementation,
 then finalize and commit the completion handoff. For Review: required, run
-`meridian execution deliver <TASK-ID> --project .` as the final delivery step.
+`cardine execution deliver <TASK-ID> --project .` as the final delivery step.
 It commits only state and owned projections and reports the clean committed
 HEAD. Stop writing immediately after successful delivery. `Review: required` then stops at
 `REVIEW_REQUIRED`; it is a gate, not a request for authorization. Leave the
@@ -96,19 +96,19 @@ the handoff.
 Scope validation to the diff's actual surface, following the validation-scope rule in `docs/CONTEXT_READING_POLICY.md`. Skip a full build, test, or lint suite for a documentation or policy-only change, and state the skip explicitly in the completion report.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=execution-command-gate v5 -->
+<!-- MERIDIAN:BEGIN capability=execution-command-gate v6 -->
 For a normal task, execute every named `Validation` entry only through
-`meridian execution validate <TASK-ID> <validation-id> --project .`; running
+`cardine execution validate <TASK-ID> <validation-id> --project .`; running
 the literal command directly is not completion evidence. Record the command, exit status, and bounded evidence without self-reported
 spend counters.
 Before broad or uncertain-yield research outside the initial task authority,
-use `meridian execution investigate`. For `Review: required`, commit implementation, finalize and commit the
-handoff, use read-only `meridian execution ready-check <TASK-ID> --project .`,
-then run `meridian execution deliver <TASK-ID> --project .` last and stop
+use `cardine execution investigate`. For `Review: required`, commit implementation, finalize and commit the
+handoff, use read-only `cardine execution ready-check <TASK-ID> --project .`,
+then run `cardine execution deliver <TASK-ID> --project .` last and stop
 writing. Direct in_review transitions enforce the same prerequisites
 but remain pending until committed. Never edit a status or verdict by hand.
-Use `meridian execution start <TASK-ID> --project .` at implementation start and follow validated closure and integration for `Review: not_required`. If a nonterminal
-legacy task lacks the current generated execution contract, run `meridian
+Use `cardine execution start <TASK-ID> --project .` at implementation start and follow validated closure and integration for `Review: not_required`. If a nonterminal
+legacy task lacks the current generated execution contract, run `cardine
 execution reconcile <TASK-ID> --apply --project .` before substantive work.
 <!-- MERIDIAN:END -->
 
@@ -126,12 +126,12 @@ waived by reading a document later.
 - At completion: `docs/COMPLETION_REPORT_TEMPLATE.md`.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-context-readers v2 -->
+<!-- MERIDIAN:BEGIN capability=bounded-context-readers v3 -->
 ## Bounded context readers
 
-Read the task's cited ADRs and specification sections with `meridian context
-authority <TASK-ID>`, and a single ADR with `meridian adr show <ADR-ID>`.
-Find the ADR that governs a question with `meridian adr list`, which prints one
+Read the task's cited ADRs and specification sections with `cardine context
+authority <TASK-ID>`, and a single ADR with `cardine adr show <ADR-ID>`.
+Find the ADR that governs a question with `cardine adr list`, which prints one
 line per ADR. Do not open the whole ADR log or a whole specification to find
 them. Read the
 queue state through the resolved queue briefing, never by opening the whole

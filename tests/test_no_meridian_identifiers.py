@@ -34,8 +34,17 @@ ALLOWLIST = (
         r"^<path>$",
     ),
     Allowance(
-        2, "5b",
-        r"(?:(?:templates|skills|commands|\.claude-plugin)/.*|capabilities/(?:markers-v1|marker-baselines|retired-text-v1)\.json)",
+        2, "9",
+        r"(?:skills|commands|\.claude-plugin)/.*",
+    ),
+    Allowance(
+        2, "061",
+        r"templates/.*",
+        OLD.upper() + r":(?:BEGIN|END)",
+    ),
+    Allowance(
+        2, "9",
+        r"templates/single/\.codex/rules/" + OLD + r"\.rules",
     ),
     Allowance(
         2, "5b",

@@ -2,25 +2,25 @@
   "catalogVersion": 1,
   "capabilities": {
     "audit-prompt": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "authority-excerpt": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "039-authority-excerpt-command"
     },
     "bounded-context-readers": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "068-adr-list-discovery"
     },
     "bounded-worktree-lifecycle": {
-      "requiredVersion": 8,
+      "requiredVersion": 9,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -32,19 +32,19 @@
       "adoptionRecord": "005-ci-verified-validation"
     },
     "code-organization": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
     },
     "code-review-prompt": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "codex-worktree-access": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
@@ -56,7 +56,7 @@
       "adoptionRecord": "044-rejected-attempt-restart"
     },
     "document-precedence": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
@@ -68,13 +68,13 @@
       "adoptionRecord": "024-evidence-tiers-and-routing"
     },
     "execution-assets": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "063-retire-reasoning-budget-contract"
     },
     "execution-command-gate": {
-      "requiredVersion": 5,
+      "requiredVersion": 6,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -92,13 +92,13 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "git-workflow": {
-      "requiredVersion": 15,
+      "requiredVersion": 16,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "handoff-correction-redelivery": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "070-worktree-template-delivery"
@@ -110,19 +110,19 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "implementer-reviewer-handoff": {
-      "requiredVersion": 5,
+      "requiredVersion": 6,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "investigation-scope": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "isolated-exploration": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "030-isolated-exploration-evidence"
@@ -134,7 +134,7 @@
       "adoptionRecord": "013-language-policy-v2"
     },
     "lifecycle-orchestration": {
-      "requiredVersion": 12,
+      "requiredVersion": 13,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -164,13 +164,13 @@
       "adoptionRecord": null
     },
     "minimal-read-only-status": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "068-adr-list-discovery"
     },
     "owner-acceptance-workflow": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -200,7 +200,7 @@
       "adoptionRecord": null
     },
     "rejected-attempt-restart": {
-      "requiredVersion": 5,
+      "requiredVersion": 6,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
@@ -212,7 +212,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "review-mode-boundary": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -224,13 +224,13 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "review-remediation-record": {
-      "requiredVersion": 6,
+      "requiredVersion": 7,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
     },
     "reviewer-integrator-identity": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
@@ -242,7 +242,7 @@
       "adoptionRecord": null
     },
     "roles": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -254,25 +254,25 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 19,
+      "requiredVersion": 20,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
     },
     "task-identity-policy": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "049-task-identity-policy"
     },
     "task-lifecycle": {
-      "requiredVersion": 5,
+      "requiredVersion": 6,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "task-worktree-boundary": {
-      "requiredVersion": 10,
+      "requiredVersion": 11,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -284,7 +284,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "task-worktree-integration": {
-      "requiredVersion": 7,
+      "requiredVersion": 8,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -296,7 +296,7 @@
       "adoptionRecord": "045-isolated-task-worktrees"
     },
     "task-worktree-remediation": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
@@ -308,7 +308,7 @@
       "adoptionRecord": null
     },
     "task-worktree-review-procedure": {
-      "requiredVersion": 13,
+      "requiredVersion": 14,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -338,7 +338,7 @@
       "adoptionRecord": "070-worktree-template-delivery"
     },
     "worktree-lifecycle": {
-      "requiredVersion": 6,
+      "requiredVersion": 7,
       "retired": false,
       "required": true,
       "adoptionRecord": "068-adr-list-discovery"

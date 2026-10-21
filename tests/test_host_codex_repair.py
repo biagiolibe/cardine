@@ -305,7 +305,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         for fragment in ("repair-required", "Explicit `--apply`", "does not prove", "profile-ownership"):
             self.assertIn(fragment, contract)
         workflow = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-        region = workflow.split("capability=codex-worktree-access v4 -->", 1)[1].split("<!-- MERIDIAN:END -->", 1)[0]
+        region = workflow.split("capability=codex-worktree-access v5 -->", 1)[1].split("<!-- MERIDIAN:END -->", 1)[0]
         for fragment in ("repair-required", "`--apply` only", "`blocked` status", "fresh session"):
             self.assertIn(fragment, region)
 

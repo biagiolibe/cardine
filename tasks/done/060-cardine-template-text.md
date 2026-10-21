@@ -17,28 +17,28 @@ state vocabulary of `docs/SINGLE_WORKFLOW_PLAN.md`, section 3.
 
 ## Acceptance Criteria
 
-- [ ] No text under `templates/single/` names Meridian, except the
+- [x] No text under `templates/single/` names Meridian, except the
   `MERIDIAN:BEGIN` and `MERIDIAN:END` markers (task 061) and the
   `.codex/rules/meridian.rules` file and its references (work item 9).
-- [ ] No text under `templates/single/` uses `READY_FOR_REVIEW`,
+- [x] No text under `templates/single/` uses `READY_FOR_REVIEW`,
   `CHANGES_REQUESTED`, `ACCEPTED`, `Review: REQUIRED`, or `Review:
   NOT_REQUIRED` as a state or field value. The text uses `queued`,
   `in_progress`, `in_review`, `done`, and `cancelled`, and the review
   option `required` or `not_required`.
-- [ ] The archived-record Resume case in the `bounded-worktree-lifecycle`
+- [x] The archived-record Resume case in the `bounded-worktree-lifecycle`
   block no longer says "state is DONE", which the product's `task close`
   does not write before landing (`tasks/handoffs/055.md`). It describes
   what the product actually does.
-- [ ] Every capability block whose protected text changes gets a version bump,
+- [x] Every capability block whose protected text changes gets a version bump,
   with `requiredVersion` and `capabilities/marker-baselines.json` updated
   in the same commit, under the pre-1.0 rule of `CONTRIBUTING.md`. Task
   061 then restarts all versions at `v1`.
-- [ ] The group 2 allowances in `tests/test_no_meridian_identifiers.py` for
+- [x] The group 2 allowances in `tests/test_no_meridian_identifiers.py` for
   template prose are narrowed to what remains, and each remaining entry
   names task 061 or work item 9.
-- [ ] Skills, slash commands, the plugin, and the Codex rules file and profile
+- [x] Skills, slash commands, the plugin, and the Codex rules file and profile
   are not changed (work item 9).
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -47,16 +47,16 @@ state vocabulary of `docs/SINGLE_WORKFLOW_PLAN.md`, section 3.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/060.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/060.json`, which only
   the installed `meridian task close 060` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

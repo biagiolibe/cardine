@@ -11,7 +11,7 @@ For an implementation or review:
 3. Do not scan the repository, full backlog, unrelated ADRs/specifications, prior chats, or generic design documents without a task-specific need.
 4. Expand context only when the task is blocked, an acceptance criterion cannot be verified, or an authoritative conflict is discovered. Record the reason in the completion or review report.
 5. <!-- MERIDIAN:BEGIN capability=queue-briefing v1 -->For the task queue, rely on the resolved briefing that fires at the start of each turn — active, in-review, next-startable, and dependency-blocked rows — instead of opening the queue file. Open it directly only when the briefing did not fire, a row's exact wording or a column it does not surface is needed, or its resolved state conflicts with other evidence.<!-- MERIDIAN:END -->
-6. <!-- MERIDIAN:BEGIN capability=authority-excerpt v1 -->For a task's cited ADRs and specification sections, run `meridian context authority <TASK-ID>` and read its resolved excerpts instead of opening the ADR log or a spec file directly. Open the file itself only when the command reports the entry unresolved or an excerpt is insufficient to verify an acceptance criterion.<!-- MERIDIAN:END -->
+6. <!-- MERIDIAN:BEGIN capability=authority-excerpt v2 -->For a task's cited ADRs and specification sections, run `cardine context authority <TASK-ID>` and read its resolved excerpts instead of opening the ADR log or a spec file directly. Open the file itself only when the command reports the entry unresolved or an excerpt is insufficient to verify an acceptance criterion.<!-- MERIDIAN:END -->
 
 <!-- MERIDIAN:BEGIN capability=read-guard v2 -->
 Item 2's rule is enforced mechanically, not only in prose. A `Read` of a file
@@ -24,7 +24,7 @@ then read that range.
 
 Dependencies establish readiness; they do not automatically require rereading their entire implementation history.
 
-<!-- MERIDIAN:BEGIN capability=isolated-exploration v2 -->
+<!-- MERIDIAN:BEGIN capability=isolated-exploration v3 -->
 ## Isolated exploration
 
 When one specific question requires broad or uncertain-yield material outside a
@@ -36,7 +36,7 @@ worker, or a direct read when the declared scope is small.
 - State the exact question, the expected answer shape, and the source scope
   before reading. A file already named by the task remains a targeted direct
   read; do not add process overhead for it.
-- Record broad exploration with `meridian execution investigate <TASK-ID>`:
+- Record broad exploration with `cardine execution investigate <TASK-ID>`:
   question, source scope, sources materially used, and the distilled finding.
   Return or retain that finding, not a raw transcript or unconstrained search
   output.
@@ -48,7 +48,7 @@ it to bypass a task's authority boundary, conceal a broad repository scan, or
 replace a required spike when the unknown changes the task's design premise.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->
+<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->
 ## Minimal read-only status
 
 For a request to report the current workflow status without modifying
@@ -63,9 +63,9 @@ files, minimize context deliberately:
    relevant.
 3. Read only the direct dependencies and task records needed to establish
    readiness for the next permitted governance action. Read a cited ADR or
-   specification section only through `meridian context authority <TASK-ID>` or
-   `meridian adr show <ADR-ID>`, never by opening the whole ADR log. Discover
-   which ADR governs a question with `meridian adr list`, which prints one
+   specification section only through `cardine context authority <TASK-ID>` or
+   `cardine adr show <ADR-ID>`, never by opening the whole ADR log. Discover
+   which ADR governs a question with `cardine adr list`, which prints one
    line per ADR.
 4. Do not load completed milestones, broad file inventories, full
    specifications, ADRs, audit prompts, review records, or Git history unless
@@ -184,10 +184,10 @@ summarization step or rerun an unchanged successful validation.
 
 ## Context-size policy v1
 
-`meridian context size --role <role> --format text` reports the startup read
+`cardine context size --role <role> --format text` reports the startup read
 set using byte-derived token estimates (bytes / 4 to bytes / 3.3), not a claim
 of tokenizer accuracy. Set a per-file enforcement threshold in
-`.meridian/context-size.json` as `{ "version": 1, "fileBytesThreshold": 12000 }`,
+`.cardine/context-size.json` as `{ "version": 1, "fileBytesThreshold": 12000 }`,
 or pass `--threshold-bytes`; without either, the report is advisory.
 The same version-1 file may set `routerFileLinesCeiling` (default: 1000).
 Router startup files are exempt from the runtime read-guard threshold only up
