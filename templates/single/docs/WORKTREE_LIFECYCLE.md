@@ -26,11 +26,11 @@ only after an explicit Resume directive.
 <!-- MERIDIAN:END -->
 
 
-<!-- MERIDIAN:BEGIN capability=worktree-lifecycle v6 -->
-Use the host-neutral `meridian worktree` namespace for task checkout lifecycle
+<!-- MERIDIAN:BEGIN capability=worktree-lifecycle v7 -->
+Use the host-neutral `cardine worktree` namespace for task checkout lifecycle
 operations. Commands exit `0` on success, `2` when blocked, and `64` on usage
 errors. The root resolves from an explicit option, the environment, user
-configuration, or `~/.meridian/worktrees`, in that order.
+configuration, or `~/.cardine/worktrees`, in that order.
 
 - `path <TASK-ID> --project <primary> [--format json]`
   derives the canonical path.
@@ -43,13 +43,13 @@ configuration, or `~/.meridian/worktrees`, in that order.
 - `check <TASK-ID> --project <primary> --format json`
   is read-only and must be the implementer, reviewer, or remediation worker's
   first action in that same prepared directory.
-- After check and minimal contract resolution, run `meridian execution start
+- After check and minimal contract resolution, run `cardine execution start
   <TASK-ID> --project <task-worktree>` before substantive analysis, advisor
   consultation, or implementation. Only explicit Resume adds `--resume` after
   status/diff inspection. Start records `queued -> in_progress` once for
   either preset, using the task's resolved contract. Preparation/launch alone is not execution start.
 - Workers whose resolved review option is `required` commit implementation and final handoff,
-  check readiness, then run `meridian execution deliver <TASK-ID> --project
+  check readiness, then run `cardine execution deliver <TASK-ID> --project
   <task-worktree>` last. The command commits only state/projection and reports
   clean HEAD. Stop implementer writes; review requires committed valid delivery.
   An uncommitted ready state or later dirt is pending delivery/changes; status
@@ -86,7 +86,7 @@ merges from `main`, no task commits, and a HEAD that is an ancestor of current
 and closure report `BLOCKED STALE_WORKTREE_BASE`; `prepare --resume` preserves
 state without mutation.
 
-Run `meridian worktree repair-base <TASK-ID> --project <primary> --format json`
+Run `cardine worktree repair-base <TASK-ID> --project <primary> --format json`
 from the primary checkout or canonical worktree. It requires a clean,
 correctly registered worktree, matching lifecycle identity, and no integration
 lease or staged merge. It changes only recorded `base_commit` and `task_commit`
@@ -109,12 +109,12 @@ section that mixes both kinds of row archives only when both rules agree. An
 open, invalid-state, or ambiguous row retains the entire section, and so does a
 section that lists no task row of its own. `integrate stage` reports every
 section as archived or retained with its reason and its open or legacy rows.
-`meridian task state import --include-terminal` creates state for terminal
+`cardine task state import --include-terminal` creates state for terminal
 legacy tasks so that their sections archive by state.
 
 ## Machine task state adoption
 
-Run `meridian task state import [<TASK-ID>...] --project <path> --format json` to preview state files for open legacy tasks and inspect the queue, record, and review evidence. Repeat with `--apply` only after resolving reported disagreements. Existing state files are never overwritten, and terminal legacy tasks are skipped unless `--include-terminal` is given; it previews and, with `--apply`, writes their state from the current texts, stops with `TASK_STATE_INVALID` when the queue, record, or review texts disagree, and never creates an approval. Imported transition history describes the bootstrap at the current HEAD and timestamp, not past implementation or review events; it never manufactures an approval. Both presets use the same state vocabulary and retain the resolved contract snapshot. Conversion of existing installations is explicit, never inferred from table shape. Use `meridian task transition` and `meridian review verdict` for subsequent changes; never edit statuses or verdicts by hand. Machine state files stay tracked at their original path when task records are archived.
+Run `cardine task state import [<TASK-ID>...] --project <path> --format json` to preview state files for open legacy tasks and inspect the queue, record, and review evidence. Repeat with `--apply` only after resolving reported disagreements. Existing state files are never overwritten, and terminal legacy tasks are skipped unless `--include-terminal` is given; it previews and, with `--apply`, writes their state from the current texts, stops with `TASK_STATE_INVALID` when the queue, record, or review texts disagree, and never creates an approval. Imported transition history describes the bootstrap at the current HEAD and timestamp, not past implementation or review events; it never manufactures an approval. Both presets use the same state vocabulary and retain the resolved contract snapshot. Conversion of existing installations is explicit, never inferred from table shape. Use `cardine task transition` and `cardine review verdict` for subsequent changes; never edit statuses or verdicts by hand. Machine state files stay tracked at their original path when task records are archived.
 
 ## Candidate validation by integration outcome
 
@@ -131,8 +131,8 @@ review option, including commit-bound approval when required, and becomes
 `done` only after validated landing. Its task diff may contain
 only its record or exact archive rename, handoff, ADR log, documentation paths
 named in its deliverable, changelog fragments, and the canonical
-`.meridian/execution-evidence.json` ledger produced by `meridian execution
-validate`. This exact ledger path does not permit other `.meridian/` paths
+`.cardine/execution-evidence.json` ledger produced by `cardine execution
+validate`. This exact ledger path does not permit other `.cardine/` paths
 or relax validation evidence checks; another path blocks stage before a lease
 or merge.
 
@@ -146,8 +146,8 @@ an output-bounding pipeline when the declared fragment remains present.
 Every candidate evidence record, including one under `none`, must include
 `git diff --check`.
 
-`meridian codex worktree-path` is deprecated for one migration window. New
-instructions and automation use `meridian worktree path`.
+`cardine codex worktree-path` is deprecated for one migration window. New
+instructions and automation use `cardine worktree path`.
 
 The absolute worktree path is a runtime value and is never written to a tracked
 file. `path`, `prepare`, and `check` also return `handoff_worktree`, the path

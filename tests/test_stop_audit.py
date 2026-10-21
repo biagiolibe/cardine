@@ -179,9 +179,9 @@ class StopAuditTest(unittest.TestCase):
     def test_codex_templates_register_the_stop_hook_beside_the_read_guard(self) -> None:
         hooks = json.loads((ROOT / "templates" / "single" / ".codex" / "hooks.json").read_text())["hooks"]
         stop = hooks["Stop"][0]["hooks"][0]
-        self.assertEqual(stop["command"], "meridian hook stop-audit --host codex")
+        self.assertEqual(stop["command"], "cardine hook stop-audit --host codex")
         self.assertLessEqual(stop["timeout"], 5)
-        self.assertEqual(hooks["PreToolUse"][0]["hooks"][0]["command"], "meridian hook read-guard --host codex")
+        self.assertEqual(hooks["PreToolUse"][0]["hooks"][0]["command"], "cardine hook read-guard --host codex")
 
 
 if __name__ == "__main__":

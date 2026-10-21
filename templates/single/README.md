@@ -19,7 +19,7 @@ Notes for reproducing the development setup on another machine.
 - Key dependencies: [list]
 
 **Claude Code — repository files (tracked in Git)**
-- `CLAUDE.md` — project conventions, invariants, and Meridian workflow.
+- `CLAUDE.md` — project conventions, invariants, and Cardine workflow.
 - `LANGUAGE_POLICY.md` — persisted conversation-language preference and English-only repository-text policy.
 - `.claudeignore` — keeps build artifacts and non-source files out of Claude context.
 - `.gitignore` — excludes build output, OS cruft, and editor configuration.

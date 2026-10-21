@@ -139,7 +139,7 @@ class CardineCliFixtureMixin:
             "",
         ))
         previous_implementation = re.sub(
-            r"<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v10 -->.*?<!-- MERIDIAN:END -->\n",
+            r"<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v11 -->.*?<!-- MERIDIAN:END -->\n",
             legacy_implementation,
             current_implementation,
             count=1,

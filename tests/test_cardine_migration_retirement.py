@@ -149,7 +149,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
+            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->\n?.*?"
             r"<!-- MERIDIAN:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -174,7 +174,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "removes": [
                         {
                             "capability": "minimal-read-only-status",
-                            "capabilityVersion": 3,
+                            "capabilityVersion": 4,
                             "supersededBy": "role-scoped-agent-rules",
                         }
                     ],
@@ -188,7 +188,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=minimal-read-only-status v3", local_text)
+        self.assertIn("MERIDIAN:BEGIN capability=minimal-read-only-status v4", local_text)
         local_policy.write_text(
             local_text.replace("## Task-first loading", "## Task-First Loading (project wording)"),
             encoding="utf-8",
@@ -221,7 +221,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
+            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->\n?.*?"
             r"<!-- MERIDIAN:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -240,7 +240,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "from": "1.1.0",
                     "to": "1.1.1",
                     "description": "test-only retirement",
-                    "removes": [{"capability": "minimal-read-only-status", "capabilityVersion": 3}],
+                    "removes": [{"capability": "minimal-read-only-status", "capabilityVersion": 4}],
                     "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
                     "verification": ["test-only"],
                 }
@@ -276,7 +276,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         source = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         source_text = source.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v3 -->\n?.*?"
+            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->\n?.*?"
             r"<!-- MERIDIAN:END -->",
             source_text,
             re.DOTALL,
@@ -308,13 +308,13 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                             "source": {
                                 "path": "docs/CONTEXT_READING_POLICY.md",
                                 "capability": "minimal-read-only-status",
-                                "capabilityVersion": 3,
+                                "capabilityVersion": 4,
                                 "markerSha256": digest,
                             },
                             "target": {
                                 "path": "docs/ROUTED_STATUS_RULE.md",
                                 "capability": "minimal-read-only-status",
-                                "capabilityVersion": 3,
+                                "capabilityVersion": 4,
                                 "markerSha256": digest,
                             },
                         }

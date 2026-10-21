@@ -2,7 +2,7 @@
 
 Use this procedure only for `Review <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-review-procedure v13 -->
+<!-- MERIDIAN:BEGIN capability=task-worktree-review-procedure v14 -->
 ## Mandatory task-worktree preflight
 
 After `APPROVE`, `Review <TASK-ID>` has the `Proceed with` authority for C6 through C10, including the single plain `git push origin main` and cleanup, with the same prohibitions.
@@ -10,8 +10,8 @@ After `APPROVE`, `Review <TASK-ID>` has the `Proceed with` authority for C6 thro
 This is the first review action. Before reading the assigned task,
 implementation files, or any implementation diff:
 
-1. Start in the exact existing directory returned by `meridian worktree
-   prepare` and run `meridian worktree check <TASK-ID> --project
+1. Start in the exact existing directory returned by `cardine worktree
+   prepare` and run `cardine worktree check <TASK-ID> --project
    <primary-checkout> --format json`. A blocked result
    stops before any other read; never use host automatic worktree isolation.
 2. Resolve the canonical completion-handoff location and read only that
@@ -43,7 +43,7 @@ implementation files, or any implementation diff:
    current task `HEAD`. A missing commit, detached or mismatched branch,
    mismatched `HEAD`, dirty worktree, or failed ancestry check is `BLOCKED WRONG_WORKTREE`.
 
-5. Run read-only `meridian execution ready-check <TASK-ID> --project .`
+5. Run read-only `cardine execution ready-check <TASK-ID> --project .`
    in the verified worktree. Require a committed in_review delivery
    and clean worktree before review. Pending delivery/changes cannot launch
    review. Never run execution start for a review or status request.
@@ -61,7 +61,7 @@ task-worktree path and every Git command uses `git -C
 <absolute-task-worktree>`; the initial current directory is never treated as
 the task checkout. Review never runs concurrently with an implementer.
 
-After approval, on the clean reviewed HEAD run `meridian review verdict <TASK-ID> APPROVE --body <review-evidence>`. The command binds approval to HEAD and writes the state file, review heading, and task Status projection. Commit those three artifacts on the task branch, then use the serialized integration transaction in `PROJECT_WORKFLOW.md`. Never edit a status or verdict by hand.
+After approval, on the clean reviewed HEAD run `cardine review verdict <TASK-ID> APPROVE --body <review-evidence>`. The command binds approval to HEAD and writes the state file, review heading, and task Status projection. Commit those three artifacts on the task branch, then use the serialized integration transaction in `PROJECT_WORKFLOW.md`. Never edit a status or verdict by hand.
 The validated task commit must remain an ancestor of task `HEAD`, with only
 permitted lifecycle records in the intervening diff. Current `main` may have
 advanced; reuse evidence, run the bounded gate, select full validation, or
@@ -93,13 +93,13 @@ and `FULL` from `validation.candidate` in `.cardine/project.json`; `REUSE` also 
 governance paths changed. A missing declaration stops before staging rather than silently
 accepting evidence.
 
-<!-- MERIDIAN:BEGIN capability=review-mode-boundary v3 -->
+<!-- MERIDIAN:BEGIN capability=review-mode-boundary v4 -->
 ### Review-mode boundary
 
-For `Review <TASK-ID>`, do not edit implementation artifacts to remedy findings. Prepare the evidence as a command argument outside the tracked review record so the reviewed worktree stays clean. Record each verdict with `meridian review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD. Never edit a status or verdict by hand. For `CHANGES_REQUESTED`, commit only the state file, task record projection, and review record locally; leave machine status `in_progress` with the retained `CHANGES_REQUESTED` verdict for the implementer. For a blocking verdict, record and commit only the same governance outputs and report the blocker. Findings with priority and evidence form the bounded remediation scope. Do not push these commits. For `APPROVE`, commit the same three outputs with the required reviewer-integrator author override after the required ancestry check. A reviewer never edits the queue, queue archive, or plan; `integrate stage` applies their status.
+For `Review <TASK-ID>`, do not edit implementation artifacts to remedy findings. Prepare the evidence as a command argument outside the tracked review record so the reviewed worktree stays clean. Record each verdict with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD. Never edit a status or verdict by hand. When changes are requested, commit only the state file, task record projection, and review record locally; leave machine status `in_progress` with the retained requested-changes verdict for the implementer. For a blocking verdict, record and commit only the same governance outputs and report the blocker. Findings with priority and evidence form the bounded remediation scope. Do not push these commits. For `APPROVE`, commit the same three outputs with the required reviewer-integrator author override after the required ancestry check. A reviewer never edits the queue, queue archive, or plan; `integrate stage` applies their status.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=implementer-reviewer-handoff v5 -->
+<!-- MERIDIAN:BEGIN capability=implementer-reviewer-handoff v6 -->
 ## Implementer-to-reviewer handoff
 
 After validation, create the task commit and, only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, push the task branch. The completion handoff must record the branch name,
@@ -110,25 +110,25 @@ task worktree clean before starting the fresh reviewer session. This durable
 handoff transfers sequential ownership of that worktree; implementation and
 review never overlap.
 
-For `Review: required`, the reviewer must never push the task branch. On
-`CHANGES_REQUESTED`, it records the verdict with `meridian review verdict <TASK-ID> CHANGES_REQUESTED` and commits only the state file and record projections; the implementer then resolves the findings and
+For `Review: required`, the reviewer must never push the task branch. When it
+requests changes, it records the verdict with `cardine review verdict <TASK-ID> CHANGES_REQUESTED` and commits only the state file and record projections; the implementer then resolves the findings and
 makes the next permitted push. For `Review: not_required`, the implementer
 follows validated closure and integration without creating a
-reviewer session; no acceptance status transition is needed. Owner acceptance runs `meridian review verdict <TASK-ID> APPROVE --owner` and
+reviewer session; no acceptance status transition is needed. Owner acceptance runs `cardine review verdict <TASK-ID> APPROVE --owner` and
 continues at C6. Checkout selection, validation ancestry, integration, and cleanup
 are governed by their current dedicated procedures, not by this handoff.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=reviewer-integrator-identity v3 -->
+<!-- MERIDIAN:BEGIN capability=reviewer-integrator-identity v4 -->
 ## Reviewer-integrator identity on a single-operator project
 
 Both controls are mandatory and neither substitutes for the other:
 
 - Review runs in a fresh agent session that did not write the code. Re-derive evidence from the actual diff and cited sources; do not trust the implementation report.
-- Only for the approval-metadata commit, use the project-scoped reviewer author override. Its value is printed by `meridian project show --field reviewer-author`, which formats the project declared in `.meridian/project.json`; if that declaration is missing, the command reports `BLOCKED COMMAND_REFUSED` and the commit waits for the developer to declare the project:
+- Only for the approval-metadata commit, use the project-scoped reviewer author override. Its value is printed by `cardine project show --field reviewer-author`, which formats the project declared in `.cardine/project.json`; if that declaration is missing, the command reports `BLOCKED COMMAND_REFUSED` and the commit waits for the developer to declare the project:
 
   ```bash
-  git commit --author="$(meridian project show --field reviewer-author)" -m "docs: reviewer-integrator pass <TASK-ID>; independently re-verified diff, cited sources, acceptance evidence, and validation"
+  git commit --author="$(cardine project show --field reviewer-author)" -m "docs: reviewer-integrator pass <TASK-ID>; independently re-verified diff, cited sources, acceptance evidence, and validation"
   ```
 
 This is the only place the identity rule is stated; every other document defers to it.
@@ -149,12 +149,12 @@ waived by reading a document later.
 - At verdict: `docs/REVIEW_RECORD_TEMPLATE.md`.
 <!-- MERIDIAN:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-context-readers v2 -->
+<!-- MERIDIAN:BEGIN capability=bounded-context-readers v3 -->
 ## Bounded context readers
 
-Read the task's cited ADRs and specification sections with `meridian context
-authority <TASK-ID>`, and a single ADR with `meridian adr show <ADR-ID>`.
-Find the ADR that governs a question with `meridian adr list`, which prints one
+Read the task's cited ADRs and specification sections with `cardine context
+authority <TASK-ID>`, and a single ADR with `cardine adr show <ADR-ID>`.
+Find the ADR that governs a question with `cardine adr list`, which prints one
 line per ADR. Do not open the whole ADR log or a whole specification to find
 them. Read the
 queue state through the resolved queue briefing, never by opening the whole

@@ -62,7 +62,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         audit = self.run_cli("audit")
         # This legacy lock fixture has no capabilityProfiles; audit reports
         # UNVERIFIED for that declaration independently of marker integrity.
-        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v19 matches the released text", audit.stdout)
+        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v20 matches the released text", audit.stdout)
         self.assertNotIn("FAIL           marker-integrity", audit.stdout)
         self.assertNotIn("DRIFT", audit.stdout)
         repeated = self.run_cli("upgrade", "--check")
@@ -78,7 +78,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         blueprint = self.framework / "templates/single/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
         declaration = current.split("\n## Host impact\n", 1)[1].split("\n## Expected code surface\n", 1)[0]
-        previous = current.replace("capability=task-blueprint v19", "capability=task-blueprint v11", 1)
+        previous = current.replace("capability=task-blueprint v20", "capability=task-blueprint v11", 1)
         previous = previous.replace("\n## Host impact\n" + declaration, "", 1)
 
         installed_baseline = self.project / ".cardine/baselines/1.1.39"
@@ -111,7 +111,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_blueprint = (self.project / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-blueprint v19", upgraded_blueprint)
+        self.assertIn("capability=task-blueprint v20", upgraded_blueprint)
         self.assertIn("Classification: NOT_APPLICABLE", upgraded_blueprint)
         self.assertIn("Classification: REQUIRED", upgraded_blueprint)
         self.assertIn("Project-owned task note.", upgraded_blueprint)
@@ -199,7 +199,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
-            "capability=task-worktree-boundary v10",
+            "capability=task-worktree-boundary v11",
             (self.project / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"),
         )
         report = (self.project / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
@@ -379,8 +379,8 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded = review.read_text(encoding="utf-8")
-        self.assertIn("capability=implementer-reviewer-handoff v5", upgraded)
-        self.assertIn("capability=task-worktree-review-procedure v13", upgraded)
+        self.assertIn("capability=implementer-reviewer-handoff v6", upgraded)
+        self.assertIn("capability=task-worktree-review-procedure v14", upgraded)
         self.assertIn("Consumer-owned review note.", upgraded)
         self.assertNotIn("uses that same primary checkout", upgraded)
         self.assertNotIn("git switch <task-branch>", upgraded)
@@ -391,7 +391,7 @@ worktree before the branch only after validated integration succeeds.
     def test_upgrade_installs_codex_profile_recovery_across_a_cli_only_release(self) -> None:
         """Migration 053 reaches a baseline-1.1.49 project locked under CLI-only release 1.1.50."""
         recovery = re.compile(
-            r"\n\nIf `meridian codex configure --check` reports `repair-required`.*?(?=<!-- MERIDIAN:END -->)",
+            r"\n\nIf `cardine codex configure --check` reports `repair-required`.*?(?=<!-- MERIDIAN:END -->)",
             re.DOTALL,
         )
         for mode in ("single", "single"):
@@ -432,7 +432,7 @@ worktree before the branch only after validated integration succeeds.
                 applied = self.run_cli("upgrade", "--apply")
                 self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
                 upgraded = project_workflow.read_text(encoding="utf-8")
-                self.assertIn("capability=codex-worktree-access v4", upgraded)
+                self.assertIn("capability=codex-worktree-access v5", upgraded)
                 self.assertIn("reports `repair-required`", upgraded)
                 self.assertIn("Consumer-owned note.", upgraded)
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -453,7 +453,7 @@ worktree before the branch only after validated integration succeeds.
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
-        self.assertIn("capability=task-worktree-boundary v10", implementation.read_text(encoding="utf-8"))
+        self.assertIn("capability=task-worktree-boundary v11", implementation.read_text(encoding="utf-8"))
         self.assertIn("**Manually triggered.**", implementation.read_text(encoding="utf-8"))
         upgraded_workflow = project_workflow.read_text(encoding="utf-8")
         self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded_workflow)
@@ -513,7 +513,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("created after this report", upgraded_report)
         self.assertIn("Consumer-owned handoff note.", upgraded_report)
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-worktree-review-procedure v13", upgraded_review)
+        self.assertIn("capability=task-worktree-review-procedure v14", upgraded_review)
         self.assertIn("resolve it to the registered task branch `HEAD`", upgraded_review)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.55")
@@ -522,9 +522,9 @@ worktree before the branch only after validated integration succeeds.
     def test_1_4_0_template_capabilities_are_required(self) -> None:
         requirements = owner_templates_migrations.capability_requirements(self.framework)
         self.assertNotIn("worktree-budget-retirement", requirements)
-        for capability in ("worktree-command-locations", "handoff-correction-redelivery"):
+        for capability, version in (("worktree-command-locations", 1), ("handoff-correction-redelivery", 2)):
             with self.subTest(capability=capability):
-                self.assertEqual(requirements[capability], (1, "030-synthetic-delivery"))
+                self.assertEqual(requirements[capability], (version, "030-synthetic-delivery"))
 
     def test_pristine_1_3_0_upgrades_all_1_4_0_managed_text(self) -> None:
         # Only template text comes from this archive; both ledgers are synthetic.
@@ -604,7 +604,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         for name, text in current.items():
             self.assertEqual((self.project / name).read_text(), text)
-            self.assertIn("meridian task close <TASK-ID>", text)
+            self.assertIn("cardine task close <TASK-ID>", text)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text())
         self.assertEqual(manifest["workflowBaselineVersion"], "1.3.0")
         self.assertEqual(manifest["appliedMigrations"][-1], "029-synthetic-close")
@@ -671,7 +671,7 @@ worktree before the branch only after validated integration succeeds.
                 flags=re.DOTALL,
             ),
             "docs/workflows/IMPLEMENTATION.md": re.sub(
-                r"\n<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v10 -->.*?<!-- MERIDIAN:END -->\n",
+                r"\n<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v11 -->.*?<!-- MERIDIAN:END -->\n",
                 "\n",
                 current["docs/workflows/IMPLEMENTATION.md"],
                 flags=re.DOTALL,
@@ -713,9 +713,9 @@ worktree before the branch only after validated integration succeeds.
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
         self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", upgraded_workflow)
         self.assertIn("Review: required` is a gate, not a request for authorization", upgraded_workflow)
-        self.assertIn("capability=task-worktree-boundary v10", upgraded_implementation)
+        self.assertIn("capability=task-worktree-boundary v11", upgraded_implementation)
         self.assertIn("REVIEW_REQUIRED`; it is a gate", upgraded_implementation)
-        self.assertIn("capability=task-worktree-review-procedure v13", upgraded_review)
+        self.assertIn("capability=task-worktree-review-procedure v14", upgraded_review)
         self.assertIn("reviewer-integrator performs C6 through C10", upgraded_review)
         self.assertIn("Consumer-owned closure note.", upgraded_implementation)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
@@ -729,7 +729,7 @@ worktree before the branch only after validated integration succeeds.
         new_sentence = re.search(r"^The project records its layered module map.*$", current, re.MULTILINE)
         self.assertNotIn("\n## Project module map", current)
         self.assertIsNotNone(new_sentence)
-        previous = current.replace("capability=code-organization v2", "capability=code-organization v1").replace(
+        previous = current.replace("capability=code-organization v3", "capability=code-organization v1").replace(
             new_sentence.group(0),
             "Record this project's actual layered module map in its own architecture documentation, not in this file.",
         )
@@ -753,7 +753,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded = organization.read_text(encoding="utf-8")
-        self.assertIn("capability=code-organization v2", upgraded)
+        self.assertIn("capability=code-organization v3", upgraded)
         self.assertIn(new_sentence.group(0), upgraded)
         self.assertTrue(upgraded.endswith(module_map))
         self.assertEqual(len(re.findall(r"^## Project module map$", upgraded, re.MULTILINE)), 1)
@@ -814,7 +814,7 @@ worktree before the branch only after validated integration succeeds.
                     r"## Commit-less fast-forward recovery.*?(?=## Candidate validation)",
                     "", current["docs/WORKTREE_LIFECYCLE.md"], flags=re.DOTALL,
                 ).replace(
-                    "capability=worktree-lifecycle v6", "capability=worktree-lifecycle v1"
+                    "capability=worktree-lifecycle v7", "capability=worktree-lifecycle v1"
                 ), count=1,
             ),
         }
@@ -852,7 +852,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("`--resume` is allowed only for that directive", upgraded)
         self.assertIn("Consumer-owned resume note.", upgraded)
         lifecycle = (self.project / "docs/WORKTREE_LIFECYCLE.md").read_text(encoding="utf-8")
-        self.assertIn("capability=worktree-lifecycle v6", lifecycle)
+        self.assertIn("capability=worktree-lifecycle v7", lifecycle)
         self.assertIn("Only a Resume directive adds `--resume`", lifecycle)
 
     def test_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules(self) -> None:
@@ -863,7 +863,7 @@ worktree before the branch only after validated integration succeeds.
         template = workflow / "docs/WORKTREE_LIFECYCLE.md"
         current = template.read_text(encoding="utf-8")
         previous = re.sub(
-            r"\n## Candidate validation by integration outcome\n.*?(?=\n`meridian codex worktree-path`)",
+            r"\n## Candidate validation by integration outcome\n.*?(?=\n`cardine codex worktree-path`)",
             "\n",
             current,
             count=1,

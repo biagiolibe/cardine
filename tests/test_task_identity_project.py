@@ -286,7 +286,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
 
     def test_migration_delivers_only_managed_guidance_and_never_opts_in(self) -> None:
         template = ROOT / "templates/single/PROJECT_WORKFLOW.md"
-        self.assertIn("capability=task-identity-policy v1", template.read_text(encoding="utf-8"))
+        self.assertIn("capability=task-identity-policy v2", template.read_text(encoding="utf-8"))
 
         root = Path(self.temporary.name)
         framework = root / "framework"
@@ -295,7 +295,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
             shutil.copytree(ROOT / source, framework / source)
         current = (framework / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         previous = re.sub(
-            r"\n<!-- MERIDIAN:BEGIN capability=task-identity-policy v1 -->.*?<!-- MERIDIAN:END -->\n",
+            r"\n<!-- MERIDIAN:BEGIN capability=task-identity-policy v2 -->.*?<!-- MERIDIAN:END -->\n",
             "\n",
             current,
             flags=re.DOTALL,
@@ -323,7 +323,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         )
         self.assertEqual(upgraded.returncode, 0, upgraded.stdout + upgraded.stderr)
         workflow = (consumer / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-identity-policy v1", workflow)
+        self.assertIn("capability=task-identity-policy v2", workflow)
         self.assertIn("Consumer-owned note.", workflow)
         self.assertFalse((consumer / shared_constants.TASK_IDENTITY_PATH).exists())
 

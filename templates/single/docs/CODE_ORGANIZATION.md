@@ -1,6 +1,6 @@
 # Code Organization Policy
 
-<!-- MERIDIAN:BEGIN capability=code-organization v2 -->
+<!-- MERIDIAN:BEGIN capability=code-organization v3 -->
 ## Status and precedence
 
 This is the normative source-organization policy for production code. It is subordinate to `AGENTS.md`/`CLAUDE.md`, accepted ADRs, specifications, and the assigned atomic task. It organizes an authorized implementation; it never expands scope, changes behavior, or authorizes a new abstraction.
@@ -19,7 +19,7 @@ File length is a diagnostic signal, not an acceptance limit. Split when a file a
 
 ## Where the project module map lives
 
-The project records its layered module map and dependency direction either in its architecture documentation or in a `## Project module map` section after this managed block, never inside the block. This file states the ownership rules; the project states which modules exist and how they depend on each other. Keep domain-specific architecture out of Meridian's generic workflow assets.
+The project records its layered module map and dependency direction either in its architecture documentation or in a `## Project module map` section after this managed block, never inside the block. This file states the ownership rules; the project states which modules exist and how they depend on each other. Keep domain-specific architecture out of Cardine's generic workflow assets.
 
 ## Crate/package roots and public API
 

@@ -210,7 +210,7 @@ def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
     preflight, boundary = preflight_match.group(0), boundary_match.group(0)
     required = (
         "Before reading the assigned task",
-        "meridian worktree check <TASK-ID>",
+        "cardine worktree check <TASK-ID>",
         "stops before any other read",
         "git worktree list\n   --porcelain",
         "git -C\n   <absolute-task-worktree>",
@@ -234,7 +234,7 @@ FORBIDDEN_TEMPLATE_TEXT = (
     "task-<TASK-ID>",
     "<PROJECT_NAME>",
     "<project-slug>",
-    "meridian Reviewer-Integrator",
+    "cardine Reviewer-Integrator",
     "Project integration smoke command",
 )
 # A managed block may state what the queue is or who applies its status, but never

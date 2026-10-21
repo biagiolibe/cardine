@@ -1,6 +1,6 @@
 # Operator Prompts
 
-This non-normative cookbook provides focused prompts for starting Meridian chats. It does not change document precedence, task scope, task status, review policy, Git safeguards, or tool permissions. `LANGUAGE_POLICY.md`, `AGENTS.md`/`CLAUDE.md`, the assigned task, and the canonical workflow documents always govern the result.
+This non-normative cookbook provides focused prompts for starting Cardine chats. It does not change document precedence, task scope, task status, review policy, Git safeguards, or tool permissions. `LANGUAGE_POLICY.md`, `AGENTS.md`/`CLAUDE.md`, the assigned task, and the canonical workflow documents always govern the result.
 
 For a repository containing `PROJECT_WORKFLOW.md`, these prompts operate only
 under the lifecycle that `PROJECT_WORKFLOW.md` defines. They never authorize a fallback to
@@ -12,7 +12,7 @@ Replace every `<PLACEHOLDER>` before sending a prompt. Use one workflow per chat
 The agent must communicate in the language persisted in `LANGUAGE_POLICY.md`, even if a prompt uses another language. Any repository artifact produced by a prompt must remain in English.
 
 Resolve the canonical queue, task, and review-record locations from
-`PROJECT_WORKFLOW.md` before using a prompt. `meridian locations --project .`
+`PROJECT_WORKFLOW.md` before using a prompt. `cardine locations --project .`
 may report them when available. Do not substitute a template path for a
 project-declared location.
 
@@ -160,11 +160,11 @@ Use this only after personally reviewing a `Review: required` task whose task re
 Accept <TASK-ID>.
 ```
 
-The trigger runs `meridian review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on the clean task HEAD, commits the state and projections, and continues at C6 under the `Proceed with` authority, as defined in `docs/LIFECYCLE_ORCHESTRATION.md`; it does not authorize a review, a source change, or a manual merge.
+The trigger runs `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on the clean task HEAD, commits the state and projections, and continues at C6 under the `Proceed with` authority, as defined in `docs/LIFECYCLE_ORCHESTRATION.md`; it does not authorize a review, a source change, or a manual merge.
 
 ## 6a. Address requested review changes
 
-Use this after an independent reviewer returns `CHANGES_REQUESTED`. The
+Use this after an independent reviewer requests changes. The
 reviewer has already recorded the scope, evidence, and state transition in
 the declared review record; do not copy the findings into this prompt.
 
@@ -174,7 +174,7 @@ Address review <TASK-ID>.
 
 The trigger limits implementation to the unchecked findings in the durable
 review record, validates them, confirms `in_progress` with the retained verdict before remediation and makes any authorized T1_CI-only push before finalizing delivery. It commits remediation,
-validation evidence, and the final handoff, then runs `meridian execution deliver
+validation evidence, and the final handoff, then runs `cardine execution deliver
 <TASK-ID> --project .` last and stops writing. It does not authorize unrelated work or a
 reinterpretation of a finding.
 
@@ -187,16 +187,16 @@ create commits, or implement code. Report PASS/FAIL findings with file and line
 evidence only.
 ```
 
-## 8. Inspect a Meridian framework upgrade (read-only)
+## 8. Inspect a Cardine framework upgrade (read-only)
 
 Use this before deciding whether a managed workflow upgrade is needed.
 
 ```text
-Check whether this project's Meridian baseline can be upgraded.
+Check whether this project's Cardine baseline can be upgraded.
 
-Run `meridian upgrade --project . --check`. Report the detected version, the
+Run `cardine upgrade --project . --check`. Report the detected version, the
 complete plan, conflicts, and the next permitted action. Do not run
-`meridian upgrade --apply`, `meridian adopt`, or `finalize-adoption`; do not
+`cardine upgrade --apply`, `cardine adopt`, or `finalize-adoption`; do not
 edit files or create commits.
 ```
 
@@ -249,4 +249,4 @@ Report the current SDD handoff state; do not modify files.
 - `Run lifecycle <TASK-ID>` may coordinate the required-review loop only through distinct implementer and reviewer sessions, as defined by `docs/LIFECYCLE_ORCHESTRATION.md`.
 - A task, review, audit, or analysis does not authorize unrelated code, future milestones, destructive Git recovery, or external publication.
 
-Never edit a status or verdict by hand; use `meridian task transition` and `meridian review verdict` for task state and verdicts.
+Never edit a status or verdict by hand; use `cardine task transition` and `cardine review verdict` for task state and verdicts.
