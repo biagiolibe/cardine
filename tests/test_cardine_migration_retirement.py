@@ -144,7 +144,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         customization that blocks a clean three-way merge -- the retirement
         mirror of `test_upgrade_appends_new_marker_when_existing_marker_was_moved`.
         """
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
@@ -209,14 +209,14 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertIn("capability=validation-scoping v2", upgraded)
         self.assertIn("capability=evidence-tiers v1", upgraded)
 
-        audited = self.run_cli("audit", "--mode", "governed-sdd")
+        audited = self.run_cli("audit", "--mode", "single")
         self.assertNotIn("minimal-read-only-status", audited.stdout)
 
     def test_upgrade_refuses_to_retire_a_locally_modified_block(self) -> None:
         """The same retirement, but the local copy of the retired block itself
         was edited -- must fall through to a blocking conflict rather than
         silently discard the customization along with the block."""
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
@@ -271,7 +271,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         and its follow-up audit; otherwise a consumer with a customized agent
         guide can never adopt compact routing safely.
         """
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         source = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         source_text = source.read_text(encoding="utf-8")
@@ -348,7 +348,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertNotIn("capability=minimal-read-only-status", upgraded_source)
         self.assertEqual((self.project / "docs/ROUTED_STATUS_RULE.md").read_text(encoding="utf-8"), marker_text + "\n")
 
-        audited = self.run_cli("audit", "--mode", "governed-sdd")
+        audited = self.run_cli("audit", "--mode", "single")
         self.assertEqual(audited.returncode, 1, audited.stdout + audited.stderr)
         self.assertIn("declaration/legacy-compatibility", audited.stdout)
 

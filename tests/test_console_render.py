@@ -94,7 +94,7 @@ class ConsoleListLayoutTest(unittest.TestCase):
                  + "| `[ ]` | 002 | Second | P2 | — | — |\n\n"
                  + "### Phase 2\n\n" + HEADER
                  + "| `[ ]` | 003 | Third | P2 | — | — |\n")
-        rows = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["lean-delivery"])
+        rows = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["single"])
         tasks = [
             owner_console_models.Task(row.task_id, row.title, row.status, row.section,
                          (), None, (), (), readiness="READY")
@@ -119,7 +119,7 @@ class ConsoleListLayoutTest(unittest.TestCase):
     def test_lean_active_queue_wrapper_keeps_phase_only_rendering(self) -> None:
         queue = ("# Queue\n\n## 🏃 Active Queue\n\n### Phase 29 — Work\n\n"
                  + HEADER + "| `[ ]` | 001 | First | P2 | — | — |\n")
-        row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["lean-delivery"])[0]
+        row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["single"])[0]
         self.assertEqual(row.section, ("Phase 29 — Work",))
         task = owner_console_models.Task(row.task_id, row.title, row.status, row.section,
                             (), None, (), (), readiness="READY")
@@ -133,7 +133,7 @@ class ConsoleListLayoutTest(unittest.TestCase):
                 label = f"Level {level} Queue — Work"
                 queue = (f"# Queue\n\n{'#' * level} {label}\n\n" + HEADER
                          + "| `[ ]` | 001 | First | P2 | — | — |\n")
-                row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["lean-delivery"])[0]
+                row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["single"])[0]
                 task = owner_console_models.Task(row.task_id, row.title, row.status, row.section,
                                     (), None, (), (), readiness="READY")
                 self.assertEqual(row.section, (label,))

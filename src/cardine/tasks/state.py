@@ -97,7 +97,7 @@ def review_is_required(state):
     options = state.get("contract", {}).get("options", {})
     if "review" in options:
         return options["review"] == "required"
-    return state.get("review", {}).get("required", state.get("workflow") == "governed-sdd")
+    return state.get("review", {}).get("required", True)
 
 
 def dependency_satisfied(state):

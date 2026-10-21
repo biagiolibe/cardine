@@ -66,7 +66,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertFalse((self.root / ".cardine/tasks").exists())
         self.assertEqual(self.cli("001", "--apply").returncode, 0)
         path = self.root / proposal["path"]
-        state = task_state.read_task_state(self.root, "001", "governed-sdd", stop_factory=owner_stops_render.stop_error)
+        state = task_state.read_task_state(self.root, "001", "single", stop_factory=owner_stops_render.stop_error)
         self.assertEqual(state["transitions"][0]["commit"], self.git("rev-parse", "HEAD"))
         self.assertEqual(state["status"], "in_progress")
         original = path.read_bytes()
@@ -124,7 +124,7 @@ class TaskStateImportTest(unittest.TestCase):
         state = json.loads((self.root / ".cardine/tasks/001.json").read_text())
         self.assertEqual(state["review"]["verdict"], "CHANGES_REQUESTED")
         self.assertEqual(state["review"]["attempt"], 2)
-        task_state.validate_task_state(state, "001", "governed-sdd")
+        task_state.validate_task_state(state, "001", "single")
         self.assertIn("2026-10-11", json.loads(result.stdout)["tasks"][0]["evidence"]["review"]["heading"])
 
     def test_review_disagreement_and_malformed_evidence_refused(self):
@@ -144,7 +144,7 @@ class TaskStateImportTest(unittest.TestCase):
         self.add_task("002", "`[x]`").unlink()
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
-        state = task_state.read_task_state(self.root, "001", "lean-delivery", stop_factory=owner_stops_render.stop_error)
+        state = task_state.read_task_state(self.root, "001", "single", stop_factory=owner_stops_render.stop_error)
         self.assertEqual(state["status"], "in_progress")
         self.assertEqual(len(state["transitions"]), 1)
         self.assertEqual(json.loads(result.stdout)["tasks"][1]["action"], "skip-terminal")
@@ -155,14 +155,14 @@ class TaskStateImportTest(unittest.TestCase):
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
         for task_id, spike in (("001", True), ("002", False)):
-            state = task_state.read_task_state(self.root, task_id, "governed-sdd", spike=spike,
+            state = task_state.read_task_state(self.root, task_id, "single", spike=spike,
                                                review_required=None, stop_factory=owner_stops_render.stop_error)
             self.assertFalse(state["review"]["required"])
             if not spike:
                 with self.assertRaises(CardineStop) as caught:
                     owner_tasks_transitions.transition_task_state(self.root, task_id, "done")
                 self.assertIn("verified landing", str(caught.exception))
-                task_state.read_task_state(self.root, task_id, "governed-sdd", review_required=None,
+                task_state.read_task_state(self.root, task_id, "single", review_required=None,
                                            stop_factory=owner_stops_render.stop_error)
 
     def test_duplicate_rows_and_review_policy_disagreement_refused(self):

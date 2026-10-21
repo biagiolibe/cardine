@@ -209,9 +209,9 @@ class LayoutTest(unittest.TestCase):
         source.write_text("baseline", encoding="utf-8")
         managed = ManagedFile(source, Path("docs/example.md"))
         with use(OTHER_NAMES):
-            merge.copy_baseline(self.root, ROOT, "lean-delivery", "1.0.0", [managed])
+            merge.copy_baseline(self.root, ROOT, "single", "1.0.0", [managed])
             self.assertEqual((self.root / ".other/baselines/1.0.0/docs/example.md").read_text(), "baseline")
-            value = {"protocolVersion": 2, "workflowMode": "lean-delivery",
+            value = {"protocolVersion": 2, "workflowMode": "single",
                      "frameworkVersion": "1.4.0", "managedFiles": {}}
             manifest.write_manifest(self.root, value)
             self.assertEqual(manifest.load_manifest(self.root), value)
@@ -244,12 +244,12 @@ class LayoutTest(unittest.TestCase):
 
     def test_task_audit_reads_selected_state_directory(self):
         self.write_json(OTHER_NAMES.tasks_path / "042.json", {"invalid": True})
-        self.assertEqual(audit.audit_task_state_projections(self.root, "lean-delivery"), [])
+        self.assertEqual(audit.audit_task_state_projections(self.root, "single"), [])
         with use(OTHER_NAMES):
-            results = audit.audit_task_state_projections(self.root, "lean-delivery")
+            results = audit.audit_task_state_projections(self.root, "single")
             self.assertEqual(len(results), 1)
             self.assertIn(".other/tasks/042.json", results[0].detail)
-        self.assertEqual(audit.audit_task_state_projections(self.root, "lean-delivery"), [])
+        self.assertEqual(audit.audit_task_state_projections(self.root, "single"), [])
 
     def test_worktree_root_and_configuration_use_selected_names(self):
         default = storage.resolve_worktree_root(environment={}, home=self.root)

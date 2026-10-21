@@ -31,8 +31,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     git = fixtures.BoundedWorktreeLifecycleFixture.git
 
-    def start(self, *, workflow="governed-sdd", spike=False):
-        if workflow == "lean-delivery":
+    def start(self, *, workflow="single", spike=False, preset="governed"):
+        if preset == "lean":
             write_project_config(self.primary, "lean", validation=fixtures.VALIDATION)
             (self.primary / "tasks/QUEUE.md").write_text("| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n")
             (self.primary / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Lifecycle\n")
@@ -252,7 +252,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assert_stop("TASK_STATE_INVALID", "spike landing requires an outcome")
 
     def test_lean_done_projection(self):
-        self.start(workflow="lean-delivery")
+        self.start(workflow="single", preset="lean")
         self.write_state(required=False)
         self.assertEqual(self.stage(self.reviewed)["completion"]["source"], "machine")
         self.assertIn("`[x]`", (self.primary / "tasks/QUEUE.md").read_text())
@@ -269,7 +269,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertEqual(result["step"], "C6")
 
     def test_advance_state_gate_runs_before_stage(self):
-        self.start(workflow="lean-delivery")
+        self.start(workflow="single", preset="lean")
         self.write_state(required=False, status="queued")
         for missing in (True, False):
             with self.subTest(missing=missing):
@@ -299,7 +299,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.assertFalse(owner_worktree_storage._merge_head_path(self.primary).exists())
 
     def test_advance_requires_state_even_before_machine_state_adoption(self):
-        self.start(workflow="lean-delivery")
+        self.start(workflow="single", preset="lean")
         self.assertFalse((self.worker / ".cardine/tasks").exists())
         with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
             result, blocked = owner_lifecycle_closure.advance_task_closure(
@@ -316,7 +316,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     (self.worker / ".cardine/tasks/056.json").unlink()
                     self.commit()
                 else:
-                    self.start(workflow="lean-delivery")
+                    self.start(workflow="single", preset="lean")
                     handoff = self.worker / "tasks/handoffs/056.md"
                     handoff.parent.mkdir(exist_ok=True)
                     handoff.write_text("Validated task completion.\n")
@@ -355,12 +355,14 @@ class TaskIntegrationStateTest(unittest.TestCase):
         result, blocked = owner_lifecycle_closure.advance_task_closure(
             "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         self.assertTrue(blocked)
-        expected = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
-        self.assertEqual(result["resume"], expected)
-        self.assertEqual(result["commands"], [expected])
+        # Both presets now use the same contract-aware closure recovery.
+        self.assertIn("task transition 056 in_progress", result["resume"])
+        self.assertIn("task close 056", result["resume"])
+        self.assertIn("worktree advance 056", result["resume"])
+        self.assertEqual(result["resume"], " && ".join(result["commands"]))
 
     def test_advance_terminal_state_reaches_stage(self):
-        self.start(workflow="lean-delivery")
+        self.start(workflow="single", preset="lean")
         self.write_state(required=False)
         original = owner_integration_merge.stage_task_integration
         with mock.patch.object(owner_lifecycle_closure, "stage_task_integration", wraps=original) as stage:

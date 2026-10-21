@@ -23,7 +23,7 @@ from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin
 class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_upgrade_check_reports_retired_text_without_writes_or_exit_change(self) -> None:
         (self.framework / "VERSION").write_text(cardine_cli.read_version(ROOT) + "\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
         baseline = self.run_cli("upgrade", "--check")
         self.assertEqual(baseline.returncode, 0, baseline.stdout + baseline.stderr)
@@ -85,7 +85,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(agents.read_text(encoding="utf-8"), original + "\n" + modified + "\n")
 
     def test_lock_and_apply_clean_template_upgrade(self) -> None:
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stderr)
 
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
@@ -139,7 +139,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.5\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "lean-delivery").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         lifecycle = self.project / "docs/WORKTREE_LIFECYCLE.md"
         (self.project / ".cardine/baselines/1.2.5/docs/WORKTREE_LIFECYCLE.md").unlink()
         template.write_text(current, encoding="utf-8")
@@ -156,7 +156,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         """A conflict outside a
         satisfied capability marker is cosmetic and should be left untouched,
         not treated the same as a real, unverifiable conflict."""
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.framework / "templates/single/docs/workflows/REMEDIATION.md"
         agents.write_text(
             agents.read_text(encoding="utf-8").replace("# Remediation Procedure", "# Remediation Procedure Rules"),
@@ -202,7 +202,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         shutil.rmtree(self.project)
         self.project.mkdir()
         self.copy_governed_templates()
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
@@ -302,7 +302,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         actually marked in that file's template. The per-file cosmetic-conflict
         check must derive required capabilities from the template's own marker
         set, not from `managedPaths`, or this file can never be verified."""
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         policy.write_text(
             policy.read_text(encoding="utf-8").replace("## Task-first loading", "## Task-First Loading Rules"),
@@ -321,7 +321,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("VERIFIED docs/CONTEXT_READING_POLICY.md", checked.stdout)
 
     def test_apply_refuses_conflicting_local_change(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Roles", "## Updated Roles"), encoding="utf-8")
         local = self.project / "PROJECT_WORKFLOW.md"
@@ -350,7 +350,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.project.mkdir()
         self.copy_governed_templates()
         (self.framework / "VERSION").write_text("1.1.49\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
 
         shutil.rmtree(current_templates)
@@ -375,7 +375,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertNotIn("CONFLICT", noop.stdout)
 
     def test_owner_reconciled_upgrade_registers_baseline_despite_conflicts(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Roles", "## Updated Roles"), encoding="utf-8")
         local = self.project / "PROJECT_WORKFLOW.md"
@@ -398,7 +398,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("## Updated Roles", baseline_workflow.read_text(encoding="utf-8"))
 
     def test_check_reports_multiple_merge_conflicts(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(
             workflow.read_text(encoding="utf-8")

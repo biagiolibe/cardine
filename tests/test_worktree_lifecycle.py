@@ -642,7 +642,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertNotIn("MAIN_BEHIND_ORIGIN", result.stderr + result.stdout)
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def _advance_ready_task(self) -> Path:
+    def _advance_ready_task(self, candidate_command="scripts/check_repository.py") -> Path:
         """A completed task branch with origin and a handoff but no recorded evidence."""
         (self.project / "tasks/handoffs").mkdir()
         (self.project / "tasks/handoffs/056.md").write_text("# Completion Report — 056\n", encoding="utf-8")
@@ -654,6 +654,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "worktree", "path", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
         ).stdout)["path"])
+        # Freeze the gate this fixture exercises before creating its contract.
+        record = worktree / "tasks/056-lifecycle.md"
+        record.write_text(record.read_text().replace("python3 -c 'pass'", candidate_command))
         owner_tasks_transitions.transition_task_state(worktree, "056", "in_progress")
         subprocess.run(["git", "add", "."], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "record terminal state"], cwd=worktree, check=True, capture_output=True)
@@ -723,7 +726,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
 
     def test_advance_complete_commands_run_unchanged_and_finalize(self) -> None:
-        self._advance_ready_task()
+        self._advance_ready_task(candidate_command="python3 scripts/check_repository.py")
         script = self.project / "scripts/check_repository.py"
         script.parent.mkdir(exist_ok=True)
         script.write_text("from pathlib import Path\nassert Path('.cardine/project.json').is_file()\n", encoding="utf-8")

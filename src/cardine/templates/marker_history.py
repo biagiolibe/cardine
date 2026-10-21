@@ -69,8 +69,6 @@ def capability_presence_map(
     Pure phrase matching is the fallback only for projects adopted before
     markers existed.
     """
-    if mode != "governed-sdd":
-        return {}
 
     combined_text = "\n".join(
         path.read_text(encoding="utf-8")

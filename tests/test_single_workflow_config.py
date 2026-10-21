@@ -150,14 +150,14 @@ class SingleWorkflowConfigTest(unittest.TestCase):
             self.assertEqual(path.name, "project.json", f"unexpected workflow read: {path}")
             return original(path, *args, **kwargs)
 
-        for preset, mode in (("lean", "lean-delivery"), ("governed", "governed-sdd")):
+        for preset, mode in (("lean", "single"), ("governed", "single")):
             write_project_config(self.project, preset)
             with patch.object(Path, "read_text", read):
                 self.assertEqual(resolve_preset(self.project), preset)
                 self.assertEqual(detect_mode(self.project), mode)
         (self.project / "PROJECT_WORKFLOW.md").unlink()
         (self.project / "tasks/QUEUE.md").write_text("")
-        self.assertEqual(detect_mode(self.project), "governed-sdd")
+        self.assertEqual(detect_mode(self.project), "single")
 
     def test_missing_and_malformed_configuration_are_errors(self):
         with self.assertRaisesRegex(CardineError, "missing project configuration"):

@@ -54,8 +54,7 @@
     },
     "workflowMode": {
       "enum": [
-        "lean-delivery",
-        "governed-sdd"
+        "single"
       ]
     }
   },

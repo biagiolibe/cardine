@@ -76,8 +76,6 @@ def _context_router(project_root: Path) -> Path:
 
 
 def _context_routed_workflow(project_root: Path, mode: str, role: str, router: Path) -> Path:
-    if mode == "lean-delivery":
-        return Path("PROJECT_WORKFLOW.md")
     text = (project_root / router).read_text(encoding="utf-8") if (project_root / router).is_file() else ""
     patterns = {
         "status": r"Status, project question, or tech-design alignment.*?`([^`]+\.md)`",
@@ -89,7 +87,7 @@ def _context_routed_workflow(project_root: Path, mode: str, role: str, router: P
     }
     match = re.search(patterns[role], text)
     if not match:
-        raise CardineError(f"cannot resolve the {role} route from {router}")
+        return Path("PROJECT_WORKFLOW.md")
     path = Path(match.group(1))
     if path.is_absolute() or ".." in path.parts:
         raise CardineError(f"unsafe {role} route in {router}: {path}")

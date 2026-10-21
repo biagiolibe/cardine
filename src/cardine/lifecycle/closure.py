@@ -160,7 +160,7 @@ def advance_task_closure(
                                             Path(str(inspection["worktree"])), require_tracked=True)
             except CardineStop as error:
                 resume = stop_resume(error.code, task_id=task, project=project_root)
-                if error.code == "TASK_STATE_MISSING" and detect_mode(project_root) == "lean-delivery":
+                if error.code == "TASK_STATE_MISSING":
                     recovery_project = _task_state_recovery_project(project_root, task)
                     recovery_identity = resolve_task_identity(
                         recovery_project, task, "existing", allow_archived_queue_links=True,
@@ -211,7 +211,7 @@ def advance_task_closure(
             return stopped(step, code)
         elif step == "C7":
             staged = _read_json_object(integration_path, "staged integration state")
-            declaration_state, fragments = candidate_validation_declaration(project_root)
+            declaration_state, fragments = candidate_validation_declaration(project_root, task)
             required = ["git diff --check", *fragments.get(str(staged.get("decision")), ())]
             commands = [entry for entry in required if runnable_candidate_validation_command(entry, project_root)]
             instruction = (

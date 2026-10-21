@@ -59,7 +59,8 @@ class Task:
     record_problem: str | None = None
     review: str | None = None
     dependency_states: tuple[tuple[str, str], ...] = ()
-    workflow: str = "lean-delivery"
+    workflow: str = "single"
+    checkbox: bool = False
     closure_stop_reason: str | None = None
     closure_resume: str | None = None
     cleanup_pending: bool = False
@@ -96,7 +97,7 @@ class Task:
         if self.lifecycle == "todo" and self.readiness == "READY":
             return f"Proceed with {self.task_id}"
         if self.lifecycle == "ready_for_review":
-            if self.review == "REQUIRED" or (self.legacy and self.workflow == "lean-delivery"):
+            if self.review == "REQUIRED" or (self.legacy and self.checkbox and self.review is None):
                 return f"Review {self.task_id}"
         if self.lifecycle == "in_progress" and self.changes_requested:
             return f"Address review {self.task_id}"

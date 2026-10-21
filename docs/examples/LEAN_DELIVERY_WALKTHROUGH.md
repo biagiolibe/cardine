@@ -44,10 +44,10 @@ for path in Path.cwd().rglob("*"):
         path.write_text(text)
 Path("tasks/done").mkdir(exist_ok=True)
 PY
-cardine lock --project . --mode lean-delivery
+cardine lock --project . --mode single
 ```
 
-The initialized files include `PROJECT_WORKFLOW.md` (the workflow lock),
+The initialized files include `PROJECT_WORKFLOW.md` (the shared lifecycle),
 `AGENTS.md`, `CLAUDE.md`, `LANGUAGE_POLICY.md`, `TECH_DESIGN.md`,
 `PROJECT_PLAN.md`, `tasks/QUEUE.md`, the task blueprint, the `docs/`
 and `.codex/` files, and the generated `.cardine/manifest.json` and baseline.
@@ -73,12 +73,6 @@ Path(".cardine/project.json").write_text(json.dumps({
                    "candidate": {name: [] for name in ("REUSE", "BOUNDED", "FULL")}}
 }) + "\n")
 Path("TECH_DESIGN.md").write_text("# Technical design\n\nMarkdown documentation; Git for version control.\n")
-Path(".cardine/task-identity.json").write_text(json.dumps({"version": 1, "mode": "opaque"}) + "\n")
-Path(".cardine/candidate-validation.json").write_text(json.dumps({
-    "version": 1, "state": "declared", "outcomes": {
-        name: ["git diff --check"] for name in ("REUSE", "BOUNDED", "FULL")
-    }
-}) + "\n")
 Path("README.md").write_text("# Walkthrough\n")
 Path("tasks/001-purpose.md").write_text("""# Task 001 — Add the purpose sentence
 

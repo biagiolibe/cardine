@@ -37,7 +37,7 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
     def lock(self) -> None:
         shutil.copytree(self.fixture.root / "templates/single", self.project,
                         dirs_exist_ok=True)
-        result = self.run_cli("lock", "--mode", "lean-delivery")
+        result = self.run_cli("lock", "--mode", "single")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def tree(self) -> dict[str, bytes]:
@@ -60,18 +60,18 @@ class SyntheticMigrationUpgradeTest(unittest.TestCase):
     def test_insertion_supersession_and_retirement_keep_consumer_text(self) -> None:
         paths = ("PROJECT_WORKFLOW.md",)
         self.fixture.migration("001-synthetic-rule", "2.1.0", capability="rule", version=1,
-                               operation="insert", content="Original rule.", paths=paths, mode="lean-delivery")
+                               operation="insert", content="Original rule.", paths=paths, mode="single")
         self.fixture.migration("002-synthetic-old", "2.2.0", capability="old-rule", version=1,
-                               operation="insert", content="Retire this rule.", paths=paths, mode="lean-delivery")
+                               operation="insert", content="Retire this rule.", paths=paths, mode="single")
         self.lock()
         local = self.project / paths[0]
         local.write_text(local.read_text() + "\n## Consumer notes\n\nKeep this text.\n")
         self.fixture.migration("003-synthetic-new", "2.3.0", capability="new-rule", version=1,
-                               operation="insert", content="New rule.", paths=paths, mode="lean-delivery")
+                               operation="insert", content="New rule.", paths=paths, mode="single")
         self.fixture.migration("004-synthetic-supersede", "2.4.0", capability="rule", version=2,
-                               operation="supersede", content="Updated rule.", paths=paths, mode="lean-delivery")
+                               operation="supersede", content="Updated rule.", paths=paths, mode="single")
         self.fixture.migration("005-synthetic-retire", "2.5.0", capability="old-rule", version=1,
-                               operation="retire", paths=paths, mode="lean-delivery")
+                               operation="retire", paths=paths, mode="single")
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertIn("005-synthetic-retire", checked.stdout)

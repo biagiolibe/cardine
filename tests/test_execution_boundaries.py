@@ -34,7 +34,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.git('init', '-q', '-b', 'main', cwd=self.primary)
         self.git('config', 'user.name', 'Test', cwd=self.primary)
         self.git('config', 'user.email', 'test@example.invalid', cwd=self.primary)
-        write_project_config(self.primary, "governed", validation=VALIDATION)
+        write_project_config(self.primary, getattr(self, "preset", "governed"), validation=VALIDATION)
         (self.primary / 'tasks').mkdir()
         (self.primary / 'docs').mkdir()
         (self.primary / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')

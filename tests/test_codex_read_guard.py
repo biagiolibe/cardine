@@ -116,7 +116,7 @@ class CodexReadGuardTest(unittest.TestCase):
         self.assertEqual(entry["matcher"], "Bash")
         self.assertEqual(entry["hooks"][0]["command"], "meridian hook read-guard --host codex")
         managed = {str(item.source.relative_to(ROOT / "templates/single"))
-                   for item in owner_templates_files.managed_files(ROOT, "governed-sdd")}
+                   for item in owner_templates_files.managed_files(ROOT, "single")}
         self.assertIn(".codex/hooks.json", managed)
 
 

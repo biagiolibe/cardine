@@ -130,7 +130,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.git("branch", "-d", prepared["branch"])
         with self.assertRaisesRegex(shared_errors.CardineError, "tracked task state on main must be done"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
-        state = {"version": 1, "task_id": "056", "workflow": "lean-delivery",
+        state = {"version": 1, "task_id": "056", "workflow": "single",
                  "status": "queued", "transitions": []}
         path = self.primary / ".cardine/tasks/056.json"
         path.parent.mkdir(parents=True)

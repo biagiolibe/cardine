@@ -38,7 +38,7 @@ class ProfileSurfaceUpgradeTest(unittest.TestCase):
                 destination = self.project / path.relative_to(source)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         owner_templates_adoption.bootstrap_capability_profile(self.project, self.framework, self.PROFILE, apply=True)
         self.expected = self.read_manifest()
         self.catalog = owner_templates_catalog.load_capability_catalog(self.framework)

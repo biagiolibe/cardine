@@ -78,7 +78,7 @@ class AgentLaunchTest(unittest.TestCase):
         self.assertEqual(self.task().launch_command, "Proceed with 001")
         self.assertFalse(self.task().is_resume)
         self.assertEqual(self.task().resume_confirmations, 0)
-        for workflow in ("lean-delivery", "governed-sdd"):
+        for workflow in ("single", "single"):
             with self.subTest(workflow=workflow):
                 resumed = self.task(workflow=workflow, readiness="IN PROGRESS",
                                     lifecycle="in_progress")
@@ -95,17 +95,17 @@ class AgentLaunchTest(unittest.TestCase):
                               lifecycle="in_progress", active_writer=True).resume_confirmations,
                     2,
                 )
-        self.assertEqual(self.task(workflow="lean-delivery", readiness="READY FOR REVIEW",
-                                   lifecycle="ready_for_review").launch_command, "Review 001")
-        self.assertEqual(self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+        self.assertEqual(self.task(workflow="single", readiness="READY FOR REVIEW",
+                                   lifecycle="ready_for_review", checkbox=True).launch_command, "Review 001")
+        self.assertEqual(self.task(workflow="single", readiness="READY FOR REVIEW",
                                    lifecycle="ready_for_review", review="REQUIRED").launch_command,
                          "Review 001")
-        self.assertFalse(self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+        self.assertFalse(self.task(workflow="single", readiness="READY FOR REVIEW",
                                    lifecycle="ready_for_review", review="REQUIRED").is_resume)
-        self.assertEqual(self.task(workflow="governed-sdd", readiness="IN PROGRESS",
+        self.assertEqual(self.task(workflow="single", readiness="IN PROGRESS",
                                    lifecycle="in_progress", changes_requested=True).launch_command,
                          "Address review 001")
-        self.assertIsNone(self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+        self.assertIsNone(self.task(workflow="single", readiness="READY FOR REVIEW",
                                     lifecycle="ready_for_review", review="NOT_REQUIRED").launch_command)
         self.assertIsNone(self.task(readiness="MISMATCH", active_writer=True).launch_command)
         self.assertIsNone(self.task(active_writer=True).launch_command)
@@ -115,21 +115,21 @@ class AgentLaunchTest(unittest.TestCase):
                                     record_problem="duplicate record").launch_command)
 
     def test_next_action_explains_review_launches_and_refusals(self) -> None:
-        required = self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+        required = self.task(workflow="single", readiness="READY FOR REVIEW",
                              lifecycle="ready_for_review", review="REQUIRED")
         self.assertEqual(required.next_action, "If assigned: Review 001")
         self.assertEqual(
-            self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+            self.task(workflow="single", readiness="READY FOR REVIEW",
                       lifecycle="ready_for_review").next_action,
             "Review unavailable: review policy not declared",
         )
         self.assertEqual(
-            self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+            self.task(workflow="single", readiness="READY FOR REVIEW",
                       lifecycle="ready_for_review", review="NOT REQUIRED").next_action,
             "Review unavailable: Review: NOT REQUIRED",
         )
         self.assertEqual(
-            self.task(workflow="governed-sdd", readiness="READY FOR REVIEW",
+            self.task(workflow="single", readiness="READY FOR REVIEW",
                       lifecycle="ready_for_review", review="REQUIRED", active_writer=True).next_action,
             "Review unavailable: active writer",
         )
@@ -142,7 +142,7 @@ class AgentLaunchTest(unittest.TestCase):
                       record_problem="task record not found").next_action,
             "Resolve the task record: task record not found",
         )
-        lean = self.task(workflow="lean-delivery", readiness="READY FOR REVIEW",
+        lean = self.task(workflow="single", checkbox=True, readiness="READY FOR REVIEW",
                          lifecycle="ready_for_review")
         self.assertEqual(lean.next_action, "If assigned: Review 001")
 
@@ -283,7 +283,7 @@ class AgentLaunchTest(unittest.TestCase):
         request.assert_not_called()
 
     def test_resume_flag_is_only_in_the_dirty_resume_directive(self) -> None:
-        for workflow in ("lean-delivery", "governed-sdd"):
+        for workflow in ("single", "single"):
             for fields in (
                 dict(readiness="READY", lifecycle="todo"),
                 dict(readiness="IN PROGRESS", lifecycle="in_progress"),

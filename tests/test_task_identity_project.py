@@ -311,7 +311,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         (framework / "VERSION").write_text("1.1.45\n", encoding="utf-8")
         command = [sys.executable, str(CLI), "--framework-root", str(framework)]
         locked = subprocess.run(
-            command + ["lock", "--mode", "lean-delivery", "--project", str(consumer)],
+            command + ["lock", "--mode", "single", "--project", str(consumer)],
             text=True, capture_output=True, check=False,
         )
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)

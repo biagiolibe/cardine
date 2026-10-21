@@ -52,10 +52,8 @@ def import_task_states(
     terminal = {"done", "cancelled"}
 
     def normalize(value):
-        if workflow == "lean-delivery":
-            return {"[ ]": "queued", "[/]": "in_progress",
-                    "[x]": "done"}.get(value, value)
-        return value
+        return {"[ ]": "queued", "[/]": "in_progress",
+                "[x]": "done"}.get(value, value)
 
     for supplied in selected:
         matches = _authority_matches(context.authorities, supplied)
@@ -93,7 +91,7 @@ def import_task_states(
         proposal["evidence"]["record"] = {"path": identity.task_path.relative_to(project_root).as_posix(),
                                              "status": record_status}
         # Lean records may have no Status field; progress is derived from worktrees.
-        if (record_status is None and workflow == "governed-sdd") or (record_status is not None and normalize(record_status) != status):
+        if (record_status is not None and normalize(record_status) != status):
             invalid(f"queue Status={queue['status']!r}; record Status={record_status!r}")
         try:
             contract = resolve_task_contract(project_root, task_id, text=record)
@@ -128,7 +126,7 @@ def import_task_states(
                 (latest[1] == "APPROVE" and status != "in_progress") or status == "queued"
                 or (latest[1] == "BLOCKED" and status != "in_review")):
             invalid(f"queue/record Status={status!r}; review verdict={latest[1]!r}")
-        if status in terminal and workflow == "governed-sdd" and required and latest and latest[1] != "APPROVE":
+        if status in terminal and required and latest and latest[1] != "APPROVE":
             # A recorded verdict must agree with the terminal text; an absent
             # record stays absent (verdict null), so an import never invents an approval.
             invalid(f"queue/record Status={status!r}; review verdict: allowed 'APPROVE'; found {latest[1]!r}")
@@ -155,7 +153,7 @@ def import_task_states(
             head = head or git_output(project_root, "rev-parse", "HEAD")
             state["transitions"].append({"from": current, "to": target, "commit": head, "at": at})
             current = target
-        if workflow == "governed-sdd" and not required:
+        if not required:
             state["review"] = {"required": False, "verdict": None, "attempt": 1,
                                "reviewed_commit": None, "approved_by": None}
         if latest:

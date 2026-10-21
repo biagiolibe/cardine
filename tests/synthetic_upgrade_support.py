@@ -68,7 +68,7 @@ class SyntheticFramework:
 
     def migration(self, identifier: str, target: str, *, capability: str | None = None,
                   version: int = 1, operation: str = "supersede", content: str | None = None,
-                  paths: tuple[str, ...] = (), mode: str = "governed-sdd", **metadata: object) -> str:
+                  paths: tuple[str, ...] = (), mode: str = "single", **metadata: object) -> str:
         """Declare one transition, optionally installing its marked template text."""
         record = {
             "id": identifier, "from": self.version, "to": target,
@@ -196,7 +196,7 @@ class SyntheticUpgradeFixtureMixin(CardineCliFixtureMixin):
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertIn("MIGRATION 022-synthetic-adoption", checked.stdout)
-        if mode == "governed-sdd":
+        if mode == "single":
             lifecycle_plan = next(
                 line
                 for line in checked.stdout.splitlines()

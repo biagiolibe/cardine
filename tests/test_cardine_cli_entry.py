@@ -31,7 +31,7 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
             self.assertEqual(shown.stdout.strip(), raw)
 
     def test_upgrade_preserves_a_verified_agents_pointer_claude_file(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agent_template = self.framework / "templates/single/AGENTS.md"
         claude_template = self.framework / "templates/single/CLAUDE.md"
         marker = "<!-- MERIDIAN:BEGIN capability=pointer-test v1 -->\nShared gate.\n<!-- MERIDIAN:END -->\n"
@@ -55,7 +55,7 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
                          "# Project instructions\n\nThis repository is governed by `AGENTS.md`, which is authoritative.\n\nEvery Meridian capability marker lives in `AGENTS.md`, once.\n\nKeep this file a pointer.\n")
 
     def test_upgrade_preserves_an_explicit_agents_pointer_claude_file(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agent_template = self.framework / "templates/single/AGENTS.md"
         claude_template = self.framework / "templates/single/CLAUDE.md"
         marker = "<!-- MERIDIAN:BEGIN capability=pointer-test v1 -->\nShared gate.\n<!-- MERIDIAN:END -->\n"

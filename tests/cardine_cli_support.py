@@ -89,7 +89,7 @@ class CardineCliFixtureMixin:
             (self.project / name).write_text(old_text, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.40\n", encoding="utf-8")
         self.write_synthetic_migration("001-synthetic-before-restart", "1.1.39", "1.1.40")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         for name in ("AGENTS.md", "CLAUDE.md"):
             source = ROOT / "templates/single" / name
             (workflow / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
@@ -161,7 +161,7 @@ class CardineCliFixtureMixin:
             source.write_text(previous, encoding="utf-8")
             (self.project / relative).write_text(previous, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.53\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
         implementation.write_text(current_implementation, encoding="utf-8")
         project_workflow.write_text(current_workflow, encoding="utf-8")
@@ -275,7 +275,7 @@ class CardineCliFixtureMixin:
         for path in (self.framework / "migrations").glob("*.json"):
             path.unlink()
         (self.framework / "VERSION").write_text("1.1.0\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         agents.write_text("# Agent entry point\n\n" + router_v2, encoding="utf-8")
         claude.write_text("# Compact Claude router\n", encoding="utf-8")
@@ -357,7 +357,7 @@ class CardineCliFixtureMixin:
             json.dumps(migration), encoding="utf-8"
         )
         (self.framework / "VERSION").write_text("1.1.0\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
 
     def add_version_split_migration(self) -> None:
@@ -405,7 +405,7 @@ class CardineCliFixtureMixin:
         shutil.rmtree(self.project)
         self.project.mkdir()
         self.copy_governed_templates()
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         policy.write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.9\n", encoding="utf-8")
         self.write_synthetic_migration(

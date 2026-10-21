@@ -166,8 +166,6 @@ def audit_duplicate_headings(project_root: Path, framework_root: Path, mode: str
 
 def audit_capability_moves(project_root: Path, framework_root: Path, mode: str) -> list[tuple[str, str]]:
     """Verify that declared additive relocations retain both exact copies."""
-    if mode != "governed-sdd":
-        return []
     try:
         applied = {
             str(item)

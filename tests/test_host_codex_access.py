@@ -39,7 +39,7 @@ class CodexRulesUpgradeTest(unittest.TestCase):
         self.rules = source / ".codex/rules/meridian.rules"
         self.rules_text = self.rules.read_text(encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.37\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         # A 1.1.37 consumer predates task 040. Remove the new file from both
         # its live tree and recorded baseline while keeping the current
         # framework template intact as the incoming 1.1.38 source.

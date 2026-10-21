@@ -26,8 +26,7 @@
     "workflow": {
       "type": "string",
       "enum": [
-        "lean-delivery",
-        "governed-sdd"
+        "single"
       ]
     },
     "status": {

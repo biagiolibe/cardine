@@ -67,23 +67,23 @@ only chooses the defaults that `.cardine/project.json` records.
 
 12. In `README.md`, fill in the "Toolchain" bullet with the pinned language/runtime version and key dependencies, and the "Claude Code — session settings" bullets with the model, advisor, and effort level currently in use for this session (ask the user via `/model`, `/advisor`, `/effort` output if not already known from context).
 
-13. Register the initialized workflow for deterministic framework upgrades. The lock command still takes the legacy workflow key until the single workflow work item removes it; map `lean` to `lean-delivery` and `governed` to `governed-sdd`:
+13. Register the initialized single distribution for deterministic framework upgrades. Both presets use the same lock:
 
     ```bash
-    ${CLAUDE_PLUGIN_ROOT}/bin/meridian lock --project . --mode <legacy-workflow-key>
+    ${CLAUDE_PLUGIN_ROOT}/bin/cardine lock --project . --mode single
     ```
 
-    This writes `.meridian/manifest.json` and an installed-template baseline.
+    This writes `.cardine/manifest.json` and an installed-template baseline.
     Do not edit the manifest or baseline snapshots manually.
 
 14. Print the once-per-machine setup instruction. Show the read-only plan
     first:
 
     ```bash
-    ${CLAUDE_PLUGIN_ROOT}/bin/meridian setup --check
+    ${CLAUDE_PLUGIN_ROOT}/bin/cardine setup --check
     ```
 
-    Run `meridian setup --apply` only after explicit confirmation. A decline,
+    Run `cardine setup --apply` only after explicit confirmation. A decline,
     unavailable user configuration layer, or missing permission does not invalidate initialization.
     Claude Code needs no host setup. Report the
     exact check and apply commands so the user can run them later. Never edit

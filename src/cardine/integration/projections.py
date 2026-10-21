@@ -248,8 +248,6 @@ def _queue_section_ranges(contents: str) -> list[tuple[int, int, int, str]]:
 
 def _queue_section_completion(section: str, mode: str) -> tuple[list[re.Match[str]], str | None]:
     """Check every pipe table, retaining ambiguous task input with a reason."""
-    expected = "| Order | ID | Priority | Status | Review |" if mode == "governed-sdd" else "| Status |"
-    pattern = _GOVERNED_QUEUE_TASK_ROW if mode == "governed-sdd" else _QUEUE_TASK_ROW
     lines = section.splitlines()
     rows: list[re.Match[str]] = []
     index = 0
@@ -263,6 +261,9 @@ def _queue_section_completion(section: str, mode: str) -> tuple[list[re.Match[st
         table = lines[index:end]
         index = end
         cells = [cell.strip().strip("`").casefold() for cell in table[0].strip().strip("|").split("|")]
+        checkbox = table[0].startswith("| Status |")
+        expected = "| Status |" if checkbox else "| Order | ID | Priority | Status | Review |"
+        pattern = _QUEUE_TASK_ROW if checkbox else _GOVERNED_QUEUE_TASK_ROW
         task_like = "status" in cells or any(pattern.fullmatch(line) for line in table)
         if not task_like:
             continue
@@ -281,10 +282,7 @@ def _queue_section_completion(section: str, mode: str) -> tuple[list[re.Match[st
     return rows, None
 
 
-_STATE_TERMINAL_STATUSES = {
-    "governed-sdd": frozenset({"done", "cancelled"}),
-    "lean-delivery": frozenset({"done", "cancelled"}),
-}
+_STATE_TERMINAL_STATUSES = frozenset({"done", "cancelled"})
 
 
 # (kind, detail): kind is terminal, open, legacy (no state file), or invalid.
@@ -296,7 +294,7 @@ def _queue_state_resolver(
 ) -> QueueStateResolver:
     """Resolve each queue row's status from its state file, read by task ID."""
     context = task_identity_context(project_root)
-    terminal = _STATE_TERMINAL_STATUSES[mode]
+    terminal = _STATE_TERMINAL_STATUSES
     cache: dict[str, tuple[str, str]] = {}
 
     def resolve(supplied: str) -> tuple[str, str]:
@@ -312,7 +310,7 @@ def _queue_state_resolver(
             else:
                 record = ""
                 authority = context.authorities.get(task_id)
-                if mode == "governed-sdd" and authority is not None and len(authority.task_paths) == 1:
+                if authority is not None and len(authority.task_paths) == 1:
                     record = authority.task_paths[0].read_text(encoding="utf-8")
                 state = override or read_task_state(
                     project_root, task_id, mode, review_required=None, stop_factory=stop_error,
@@ -330,7 +328,6 @@ def _queue_state_resolver(
 
 def _queue_unidentified_tables(section: str, mode: str) -> bool:
     """Whether a task-like table lacks the named ID column the state rule reads."""
-    pattern = _GOVERNED_QUEUE_TASK_ROW if mode == "governed-sdd" else _QUEUE_TASK_ROW
     lines = section.splitlines()
     index = 0
     while index < len(lines):
@@ -345,7 +342,7 @@ def _queue_unidentified_tables(section: str, mode: str) -> bool:
         cells = [cell.strip().strip("`").casefold() for cell in table[0].strip().strip("|").split("|")]
         if "id" in cells and "status" in cells:
             continue
-        if "status" in cells or any(pattern.fullmatch(line) for line in table):
+        if "status" in cells or any(_GOVERNED_QUEUE_TASK_ROW.fullmatch(line) or _QUEUE_TASK_ROW.fullmatch(line) for line in table):
             return True
     return False
 
@@ -354,7 +351,7 @@ def _queue_section_decisions(
     queue_contents: str, mode: str, resolve_state: QueueStateResolver | None
 ) -> list[dict[str, object]]:
     """Decide every section; nested sections of an archived section are covered by it."""
-    completed_statuses = {"done", "cancelled"} if mode == "governed-sdd" else {"[x]"}
+    completed_statuses = {"done", "cancelled", "[x]"}
     ranges = _queue_section_ranges(queue_contents)
     decisions: list[dict[str, object]] = []
     covered_until = -1
@@ -419,7 +416,7 @@ def _queue_section_decisions(
 
 
 def _archive_completed_queue_sections(
-    queue_contents: str, queue_path: Path, archive_path: Path, mode: str = "lean-delivery",
+    queue_contents: str, queue_path: Path, archive_path: Path, mode: str = "single",
     *, resolve_state: QueueStateResolver | None = None, report: list[dict[str, object]] | None = None,
 ) -> tuple[str, str | None]:
     """Move disjoint, fully complete sections to the archive in memory.
@@ -446,13 +443,13 @@ def _archive_completed_queue_sections(
         cursor = end
     retained.append(queue_contents[cursor:])
     updated_queue = "".join(retained).rstrip("\n") + "\n"
-    default_header = _GOVERNED_QUEUE_ARCHIVE_HEADER if mode == "governed-sdd" else _QUEUE_ARCHIVE_HEADER
+    default_header = _QUEUE_ARCHIVE_HEADER
     archive_contents = archive_path.read_text(encoding="utf-8") if archive_path.exists() else default_header
     return updated_queue, archive_contents.rstrip("\n") + "\n\n" + archived
 
 
 def _queue_archival_warnings(
-    queue_contents: str, mode: str = "lean-delivery", resolve_state: QueueStateResolver | None = None
+    queue_contents: str, mode: str = "single", resolve_state: QueueStateResolver | None = None
 ) -> list[str]:
     """Use the archival boundaries and completion checks to explain retained input."""
     warnings: list[str] = []
@@ -524,7 +521,8 @@ def _apply_task_completion_rows(
     mode = detect_mode(project_root)
     # The integrating task's proven state stands in for its file on the candidate tree.
     overrides = {task_id: task_state} if task_state else None
-    if mode == "governed-sdd":
+    task_rows = [row for row in _queue_task_rows(queue_contents) if row["id"] == task_id]
+    if not task_rows or task_rows[0]["status"] not in {"[ ]", "[/]", "[x]"}:
         queue_completed, accepted, reason = _governed_completion_row(queue_contents, identity, queue_path, task_state)
         queue_completed = _relink_archived_task_row(queue_completed, queue_path, identity)
         if not accepted:

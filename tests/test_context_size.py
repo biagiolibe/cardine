@@ -24,7 +24,7 @@ class ContextSizeTest(unittest.TestCase):
         (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
         write_project_config(self.project, "lean")
         (self.project / "LANGUAGE_POLICY.md").write_text("English\n", encoding="utf-8")
-        (self.project / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md`.\n", encoding="utf-8")
+        (self.project / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md`.\n- `Proceed with <TASK-ID>` — read `docs/workflows/IMPLEMENTATION.md`.\n- `Review <TASK-ID>` — read `docs/workflows/REVIEW.md`.\n", encoding="utf-8")
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -52,7 +52,7 @@ class ContextSizeTest(unittest.TestCase):
             result = self.run_cli("--role", role, "--format", "json")
             self.assertEqual(result.returncode, 0, result.stderr)
             report = json.loads(result.stdout)
-            self.assertEqual(report["mode"], "lean-delivery")
+            self.assertEqual(report["mode"], "single")
             self.assertIn("not tokenizer-accurate", report["estimate"])
             self.assertGreater(report["total"]["bytes"], 0)
 
@@ -63,7 +63,7 @@ class ContextSizeTest(unittest.TestCase):
             result = self.run_cli("--role", role, "--format", "json")
             self.assertEqual(result.returncode, 0, result.stderr)
             report = json.loads(result.stdout)
-            self.assertEqual(report["mode"], "governed-sdd")
+            self.assertEqual(report["mode"], "single")
         report = json.loads(self.run_cli("--role", "implementation", "--format", "json").stdout)
         self.assertIn("docs/MISSING.md", [item["path"] for item in report["files"] if item["status"] == "missing"])
 

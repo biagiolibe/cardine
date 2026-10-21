@@ -51,7 +51,7 @@ class MachineTaskStateTest(unittest.TestCase):
         return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "task", "transition", "001", status, *options,
                                "--project", str(self.root), "--format", "json"], capture_output=True, text=True)
 
-    def state(self, workflow="lean-delivery", steps=()):
+    def state(self, workflow="single", steps=()):
         current = "queued"
         transitions = []
         for destination in steps:
@@ -64,7 +64,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps(state))
 
-    def read(self, workflow="lean-delivery", spike=False):
+    def read(self, workflow="single", spike=False):
         return task_state.read_task_state(self.root, "001", workflow, spike=spike, stop_factory=owner_stops_render.stop_error)
 
     def test_every_machine_edge_and_terminal_refusals(self):
@@ -74,7 +74,7 @@ class MachineTaskStateTest(unittest.TestCase):
         prefixes = {"queued": (), "in_progress": ("in_progress",),
                     "in_review": ("in_progress", "in_review"),
                     "done": ("in_progress", "done"), "cancelled": ("cancelled",)}
-        for workflow in ("lean-delivery", "governed-sdd"):
+        for workflow in ("single", "single"):
             for spike in (False, True):
                 for required in (False, True):
                     graph = task_state.machine(workflow, spike, required)
@@ -151,7 +151,7 @@ class MachineTaskStateTest(unittest.TestCase):
         for status in ("in_review", "done", "ACCEPTED"):
             self.assertEqual(self.cli(status).returncode, 2)
             self.assertEqual(self.path.read_bytes(), before)
-        state = self.read("governed-sdd")
+        state = self.read("single")
         self.assertEqual(state["status"], "in_progress")
         self.assertEqual(state["contract"]["options"]["review"], "not_required")
 
@@ -241,12 +241,12 @@ class MachineTaskStateTest(unittest.TestCase):
         state = self.state()
         state["review"] = {"required": True, "verdict": None, "attempt": 1,
                            "reviewed_commit": None, "approved_by": None}
-        task_state.validate_task_state(state, "001", "lean-delivery")
+        task_state.validate_task_state(state, "001", "single")
         state["review"].update(verdict="APPROVE", reviewed_commit=SHA, approved_by="owner")
-        task_state.validate_task_state(state, "001", "lean-delivery")
+        task_state.validate_task_state(state, "001", "single")
         state["review"]["attempt"] = 0
         with self.assertRaisesRegex(task_state.TaskStateInvalid, "review.attempt"):
-            task_state.validate_task_state(state, "001", "lean-delivery")
+            task_state.validate_task_state(state, "001", "single")
 
     def test_reader_never_enumerates_state_directory(self):
         self.write(self.state())
@@ -329,7 +329,7 @@ class MachineTaskStateTest(unittest.TestCase):
         state = self.state(steps=("in_progress", "done"))
         state["transitions"][0]["at"] = "2026-10-12T12:00:00Z"
         with self.assertRaisesRegex(task_state.TaskStateInvalid, "chronological"):
-            task_state.validate_task_state(state, "001", "lean-delivery")
+            task_state.validate_task_state(state, "001", "single")
 
     def test_context_size_and_read_guard_sets_exclude_state_files(self):
         before = owner_shared_context.context_size_report(self.root, "implementation")

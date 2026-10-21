@@ -53,7 +53,7 @@ def copy_tree(source: Path, destination: Path) -> None:
 
 
 class FrameworkFixture(unittest.TestCase):
-    MODE = "governed-sdd"
+    MODE = "single"
 
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -139,7 +139,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
             copy_tree(ROOT / "templates/single", project)
-            results = owner_templates_marker_audit.audit_capability_markers(project, ROOT, "governed-sdd")
+            results = owner_templates_marker_audit.audit_capability_markers(project, ROOT, "single")
             self.assertFalse([item for item in results if item[0] != "PASS"], results)
             names = " ".join(detail for _status, detail in results)
             for capability in (
@@ -327,7 +327,7 @@ class WrappedTextUpgradeTest(unittest.TestCase):
 
     def test_a_customized_lean_lifecycle_document_is_a_conflict_not_a_duplicate(self) -> None:
         stdout, stderr = self.scenario(
-            "lean-delivery", "docs/WORKTREE_LIFECYCLE.md", "worktree-lifecycle",
+            "single", "docs/WORKTREE_LIFECYCLE.md", "worktree-lifecycle",
             ("Use the host-neutral", "Use the project-specific host-neutral"),
         )
         self.assertRegex(stdout, r"CONFLICT\s+docs/WORKTREE_LIFECYCLE.md")
@@ -336,7 +336,7 @@ class WrappedTextUpgradeTest(unittest.TestCase):
 
     def test_a_customized_remote_cleanup_section_is_a_conflict_not_a_duplicate(self) -> None:
         stdout, stderr = self.scenario(
-            "governed-sdd", "docs/INTEGRATION_POLICY.md", "remote-branch-cleanup",
+            "single", "docs/INTEGRATION_POLICY.md", "remote-branch-cleanup",
             ("may intentionally lack a local", "may, in this project, lack a local"),
         )
         self.assertRegex(stdout, r"CONFLICT\s+docs/INTEGRATION_POLICY.md")
@@ -477,8 +477,7 @@ class ConsumerProfileTest(unittest.TestCase):
         self.temporary.cleanup()
 
     def legacy_project(self, mode: str) -> Path:
-        project = self.root / mode
-        project.mkdir()
+        project = Path(tempfile.mkdtemp(prefix=mode + "-", dir=self.root))
         copy_tree(ROOT / "templates/single", project)
         locked = subprocess.run(
             [sys.executable, str(CLI), "--framework-root", str(ROOT), "lock", "--mode", mode, "--project", str(project)],
@@ -498,8 +497,8 @@ class ConsumerProfileTest(unittest.TestCase):
     def test_catalog_ships_a_consumer_profile_per_mode(self) -> None:
         catalog = owner_templates_catalog.load_capability_catalog(ROOT)
         for profile_id, mode in (
-            ("governed-sdd-consumer", "governed-sdd"),
-            ("lean-delivery-consumer", "lean-delivery"),
+            ("governed-sdd-consumer", "single"),
+            ("lean-delivery-consumer", "single"),
         ):
             profile = catalog.profile(profile_id)
             self.assertIsNotNone(profile)
@@ -508,10 +507,10 @@ class ConsumerProfileTest(unittest.TestCase):
             self.assertIn("context-reading", dict(profile.capabilities))
 
     def test_bootstrap_turns_the_legacy_unverified_row_into_declared_profiles(self) -> None:
-        for mode in ("governed-sdd", "lean-delivery"):
-            with self.subTest(mode=mode):
+        for profile_id in ("lean-delivery-consumer", "governed-sdd-consumer"):
+            mode = "single"
+            with self.subTest(profile=profile_id):
                 project = self.legacy_project(mode)
-                profile_id = f"{mode}-consumer"
                 _code, before = self.audit(project, mode)
                 self.assertIn("declaration/legacy-compatibility", before)
 
@@ -545,27 +544,27 @@ class ConsumerProfileTest(unittest.TestCase):
                 self.assertEqual(code, 1, after)
 
     def test_a_marker_bearing_file_with_project_text_still_bootstraps_and_audits(self) -> None:
-        project = self.legacy_project("governed-sdd")
+        project = self.legacy_project("single")
         policy = project / "docs/CONTEXT_READING_POLICY.md"
         policy.write_text(policy.read_text(encoding="utf-8") + "\n## Project reading notes\n\n- Prefer grep.\n", encoding="utf-8")
 
         owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "governed-sdd-consumer", apply=True)
-        code, output = self.audit(project, "governed-sdd")
+        code, output = self.audit(project, "single")
         self.assertNotRegex(output, r"(?m)^FAIL\s")
 
         policy.write_text(policy.read_text(encoding="utf-8") + "\n- Another note.\n", encoding="utf-8")
-        _code, later = self.audit(project, "governed-sdd")
+        _code, later = self.audit(project, "single")
         self.assertNotRegex(later, r"(?m)^FAIL\s")
 
     def test_a_configured_evidence_profile_does_not_block_a_lean_consumer(self) -> None:
-        project = self.legacy_project("lean-delivery")
+        project = self.legacy_project("single")
         profile_file = project / "docs/EXECUTION_EVIDENCE_PROFILE.md"
         profile_file.write_text(
             profile_file.read_text(encoding="utf-8").replace("400\n  lines", "800\n  lines"), encoding="utf-8"
         )
 
         owner_templates_adoption.bootstrap_capability_profile(project, ROOT, "lean-delivery-consumer", apply=True)
-        code, output = self.audit(project, "lean-delivery")
+        code, output = self.audit(project, "single")
 
         self.assertNotRegex(output, r"(?m)^FAIL\s")
         self.assertNotIn("EXECUTION_EVIDENCE_PROFILE.md: differs", output)
@@ -576,7 +575,7 @@ class ConsumerProfileTest(unittest.TestCase):
         self.assertLess(code, 2, output)
 
     def test_bootstrap_does_not_launder_a_drifted_copy_under_the_strict_profile(self) -> None:
-        project = self.legacy_project("lean-delivery")
+        project = self.legacy_project("single")
         catalog = owner_templates_catalog.load_capability_catalog(ROOT)
         for capability_id, _version in catalog.profile("cardine-self-hosting").capabilities:
             for surface in catalog.capability(capability_id).managed_surfaces:
@@ -597,8 +596,8 @@ class ConsumerProfileTest(unittest.TestCase):
         self.assertEqual(manifest_path.read_text(encoding="utf-8"), before)
 
     def test_a_consumer_profile_installs_in_either_preset(self) -> None:
-        for mode, profile in (("lean-delivery", "governed-sdd-consumer"),
-                              ("governed-sdd", "lean-delivery-consumer")):
+        for mode, profile in (("single", "governed-sdd-consumer"),
+                              ("single", "lean-delivery-consumer")):
             with self.subTest(mode=mode, profile=profile):
                 project = self.legacy_project(mode)
                 result = owner_templates_adoption.bootstrap_capability_profile(

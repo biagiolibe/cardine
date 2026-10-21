@@ -32,8 +32,7 @@ def audit_task_state_projections(project_root: Path, workflow: str) -> list[Audi
             continue
         for found in _queue_task_rows(path.read_text(encoding="utf-8")):
             value = str(found["status"])
-            if workflow == "lean-delivery":
-                value = {"[ ]": "queued", "[/]": "in_progress", "[x]": "done"}.get(value, value)
+            value = {"[ ]": "queued", "[/]": "in_progress", "[x]": "done"}.get(value, value)
             projections.setdefault(str(found["id"]), []).append((path.relative_to(project_root).as_posix(), value))
     results = []
     for path in paths:

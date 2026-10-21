@@ -48,7 +48,7 @@ PROFILES = {
         phases={"queued": "todo", "in_progress": "in_progress", "in_review": "ready_for_review",
                 "done": "done", "cancelled": "done", "STATE_ERROR": "in_progress"},
         satisfying=frozenset({"done"}), closing_status="done",
-    ) for mode in ("lean-delivery", "governed-sdd")
+    ) for mode in ("single",)
 }
 
 
@@ -61,6 +61,7 @@ class QueueRow:
     dependencies: str
     link: str
     review: str | None
+    checkbox: bool = False
 
 
 def _cell(row: dict[str, str], *names: str) -> str:
@@ -83,7 +84,7 @@ def parse_queue(text: str, label: str, profile: Profile,
             level = len(heading.group(1))
             headings = [(depth, title) for depth, title in headings if depth < level]
             if level >= 2 and not (
-                profile.name == "lean-delivery" and level == 2
+                level == 2
                 and LEAN_QUEUE_WRAPPER.search(heading.group(2))
             ):
                 headings.append((level, heading.group(2)))
@@ -117,6 +118,7 @@ def parse_queue(text: str, label: str, profile: Profile,
             link=_cell(row, "File", "Task file"),
             # None: the queue has no Review column, so no policy is declared.
             review=_cell(row, "Review").strip("`") if "review" in folded_headers else None,
+            checkbox=row.get("Status", "").strip("`") in {"[ ]", "[/]", "[x]"},
         ))
     return rows
 
@@ -231,7 +233,7 @@ def effective_state(profile: Profile, primary: QueueRow, primary_record: str | N
         source = facts.state_source if facts and facts.state is not None else "task state on main"
         lifecycle = profile.phases[status]
         writer = bool(facts and facts.dirty)
-        if (profile.name == "lean-delivery" and status == "queued" and facts
+        if (status == "queued" and facts
                 and facts.worktree_available and facts.record_path
                 and not facts.record_path.startswith("tasks/done/")):
             lifecycle = "in_progress"
@@ -265,7 +267,7 @@ def effective_state(profile: Profile, primary: QueueRow, primary_record: str | N
             if working_phase > committed_phase:
                 row = facts.working_row
                 source = f"uncommitted {facts.branch}"
-        if (profile.name == "lean-delivery" and primary.status == "queued"
+        if (primary.checkbox and primary.status == "queued"
                 and row.status == "queued" and facts.worktree_available
                 and facts.record_path and not facts.record_path.startswith("tasks/done/")):
             # Lean Delivery keeps [/] derived: reserving the canonical branch and
@@ -278,7 +280,7 @@ def effective_state(profile: Profile, primary: QueueRow, primary_record: str | N
         return Effective("in_progress", "MISMATCH", source, active_writer=writer, mismatch=reason)
 
     phase = profile.phases[row.status]
-    if profile.name == "governed-sdd":
+    if not primary.checkbox:
         review_value = row.review if review is None else review
         if (facts is not None and primary.status == "queued" and row.status == "queued"
                 and facts.worktree_available and facts.record_path
