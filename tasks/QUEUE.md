@@ -32,3 +32,17 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 20 — Single source of task state: implementation
+
+Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 7 and decision 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 064 | Extract the installation snapshot path (single source SS1) | 🔴 P1 | 061 | [064](064-legacy-installation-snapshot.md) |
+| `[ ]` | 065 | Build the task status service and cardine status (single source SS2) | 🔴 P1 | 064 | [065](065-task-status-service.md) |
+| `[ ]` | 066 | Create the task record and its state together (single source SS3) | 🔴 P1 | 065 | [066](066-paired-task-creation.md) |
+| `[ ]` | 067 | Generate the queue and the plan status region (single source SS4) | 🔴 P1 | 066 | [067](067-generated-status-views.md) |
+| `[ ]` | 068 | Remove the product prose status gates (single source SS5) | 🔴 P1 | 067 | [068](068-remove-prose-status-gates.md) |
+| `[ ]` | 069 | Keep task records stable through close and landing (single source SS6) | 🔴 P1 | 068 | [069](069-stable-records-through-landing.md) |
+| `[ ]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 069 | [070](070-status-consumers.md) |
