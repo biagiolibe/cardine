@@ -1,6 +1,6 @@
 # Workflow — [Project Name]
 
-<!-- MERIDIAN:BEGIN capability=workflow-mode-lock v2 -->
+<!-- CARDINE:BEGIN capability=workflow-mode-lock v1 -->
 ## Workflow lock
 
 The presence of this file selects the single Cardine lifecycle. Before any file
@@ -15,7 +15,7 @@ request such as “update the queue” changes only the authorized record and ne
 authorizes a different workflow. If the local workflow documents or the project
 configuration are absent, contradictory, or cannot be read before a mutation,
 return `BLOCKED WORKFLOW_UNREADABLE` without changing files or Git state.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Preset and options
 
@@ -43,7 +43,7 @@ task is exempt from registration or validation. An omitted optional section
 never grants permission for work outside the stated objective, relevant files,
 and out-of-scope clauses.
 
-<!-- MERIDIAN:BEGIN capability=document-precedence v3 -->
+<!-- CARDINE:BEGIN capability=document-precedence v1 -->
 ## Document precedence
 
 When documents conflict, the first applicable document wins:
@@ -57,9 +57,9 @@ When documents conflict, the first applicable document wins:
 7. Design/background documents.
 
 Implementation never resolves a conflict silently: update the lower-precedence document or record an ADR.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=task-lifecycle v6 -->
+<!-- CARDINE:BEGIN capability=task-lifecycle v1 -->
 ## Task lifecycle
 
 ```text
@@ -82,9 +82,9 @@ queue, the queue archive, or the plan: `cardine worktree integrate stage`
 applies the queue's status on the merged candidate tree, and in-progress state
 is derived from the task branch, its registered worktree, and its unarchived
 record.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=execution-assets v5 -->
+<!-- CARDINE:BEGIN capability=execution-assets v1 -->
 ## Execution assets
 
 - `docs/CONTEXT_READING_POLICY.md` defines task-first context loading and concise communication.
@@ -105,9 +105,9 @@ unless `.cardine/project.json` or this section declares different locations
 for this project. These are defaults: run `cardine locations` for the
 resolved values. Every other document names a location by role (the queue,
 the review record, the completion handoff), never by a path of its own.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=task-identity-policy v2 -->
+<!-- CARDINE:BEGIN capability=task-identity-policy v1 -->
 ## Task identity
 
 `taskIdentity.mode` in `.cardine/project.json` is the sole project declaration
@@ -116,9 +116,9 @@ for task identity. Omission selects `opaque`; an explicit value selects
 Cardine resolves task IDs through this declaration and the canonical task and
 queue authorities. The preset, host configuration, and identifier spelling
 do not provide a second identity policy or imply task semantics.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=roles v5 -->
+<!-- CARDINE:BEGIN capability=roles v1 -->
 ## Roles
 
 - Tech designer: defines ADRs, specifications, task scope, dependencies, and review policy. Does not implement feature code unless explicitly assigned.
@@ -127,9 +127,9 @@ do not provide a second identity policy or imply task semantics.
 - Orchestrator: coordinates one explicitly assigned task through distinct implementer and reviewer-integrator sessions. It uses only durable task, review, validation, and Git evidence to select the next permitted action; it never implements or reviews substantively.
 
 The developer drives these roles with five command triggers, defined in `AGENTS.md`/`CLAUDE.md`: `Proceed with <TASK-ID>` starts implementation, `Review <TASK-ID>` starts independent review, `Address review <TASK-ID>` starts the bounded remediation recorded by the reviewer, `Run lifecycle <TASK-ID>` authorizes the orchestrated implementation-to-integration loop, and `Accept <TASK-ID>` records the owner's own review as an `APPROVE` attempt and continues the closure at C6, skipping the agent review without skipping any later gate.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=review-policy v4 -->
+<!-- CARDINE:BEGIN capability=review-policy v1 -->
 ## Review policy
 
 Every task resolves a review option, `required` or `not_required`, from its
@@ -147,9 +147,9 @@ committed deliverable answer the declared `Question` within the declared
 `Question`, record `INCONCLUSIVE` rather than `ANSWERED` on the strength of
 author judgment. When review is required, the spike waits for an independent
 reviewer like any other task.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=codex-worktree-access v5 -->
+<!-- CARDINE:BEGIN capability=codex-worktree-access v1 -->
 Task worktrees live below one machine-level resolved root, namespaced as
 `<root>/<remote-host>/<owner>/<repository>/<canonical-task-id>`. Use `cardine
 codex worktree-path` for derivation and collision checks and `cardine codex
@@ -165,14 +165,14 @@ example by a Codex app rewrite. Review the printed diff and run `--apply` only
 after explicit confirmation. A `blocked` status names the diverging fields and
 requires manual reconciliation. Repair never proves that a running session
 loaded the profile; start a fresh session and probe it.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=worktree-command-locations v1 -->
+<!-- CARDINE:BEGIN capability=worktree-command-locations v1 -->
 Before switching from worktree prepare/check to execution start, consult the
 [command location table](docs/WORKTREE_LIFECYCLE.md#command-locations).
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v9 -->
+<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v1 -->
 `Proceed with <TASK-ID>` runs `cardine worktree prepare <task-id> --project
 <primary-checkout> --format json` before
 starting a worker. The coordinator passes the returned branch and absolute
@@ -203,9 +203,9 @@ json` from that exact worktree. Accept `status: ready-dirty`, read `git status`
 and the diff, confirm sole writer ownership, then run `cardine execution start
 <TASK-ID> --resume --project <task-worktree>`. Classify any other result under
 Stops and denials; never treat an unrelated check error as accepted dirt.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=git-workflow v16 -->
+<!-- CARDINE:BEGIN capability=git-workflow v1 -->
 ## Git workflow
 
 ### Authority of `Proceed with`
@@ -301,17 +301,17 @@ for diagnosis and manual recovery.
 A named sandbox skip is not a validation failure only when the test itself
 reports it and no acceptance criterion depends solely on that test. Record its
 test name, reason, and reporting command as `Validation skips:` in the handoff.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Completion and integration
 
-<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->
+<!-- CARDINE:BEGIN capability=validation-scoping v1 -->
 Classify the changed surface before validation. Documentation-only changes may
 skip unrelated build, test, or lint commands when the task does not require
 them, and the completion evidence records that skip. Source, build, runtime,
 or CI changes run every task-required check plus the applicable project
 baseline. Validation scope never weakens an explicit acceptance criterion.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Before marking a task done, verify its acceptance criteria and run its stated
 validation plus the project's applicable baseline checks. The handoff records
@@ -320,8 +320,8 @@ successful results, whether full combined-tree validation is required, and the
 task's declared files, dependencies, and behavioral surfaces. If evidence is
 incomplete or a check fails, keep the task in progress and report the blocker.
 
-<!-- MERIDIAN:BEGIN capability=execution-discipline v1 -->
+<!-- CARDINE:BEGIN capability=execution-discipline v1 -->
 ## Execution discipline
 
 Apply `docs/CONTEXT_READING_POLICY.md`. The review-policy restrictions above remain authoritative; use parallel agents only when their scopes and worktrees are independent.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

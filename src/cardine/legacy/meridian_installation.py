@@ -14,7 +14,7 @@ from cardine.shared.errors import CardineError
 from cardine.console.models import Snapshot
 from cardine.console.snapshot import load_snapshot
 from cardine.shared.layout import ProjectNames, use
-from cardine.shared.snapshot_adapters import state_adapter, status_adapter
+from cardine.shared.snapshot_adapters import execution_assets_adapter, state_adapter, status_adapter
 
 
 MERIDIAN_INSTALLATION_NAMES = ProjectNames(
@@ -33,6 +33,16 @@ _MARKED_BLOCK = re.compile(
     r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->\n?.*?<!-- MERIDIAN:END -->",
     re.DOTALL,
 )
+
+
+_EXECUTION_ASSETS_BLOCK = r"<!-- MERIDIAN:BEGIN capability=execution-assets .*?<!-- MERIDIAN:END -->"
+
+
+def read_meridian_execution_assets(workflow_text: str) -> tuple[str, str]:
+    """Return the installed block and the zone that follows it, or empty strings."""
+    block_match = re.search(_EXECUTION_ASSETS_BLOCK, workflow_text, re.DOTALL)
+    match = re.search(_EXECUTION_ASSETS_BLOCK + r"\s*(.*?)(?=^## |\Z)", workflow_text, re.MULTILINE | re.DOTALL)
+    return (block_match.group(0) if block_match else ""), (match.group(1) if match else "")
 
 
 def is_meridian_installation(project: Path) -> bool:
@@ -123,9 +133,11 @@ def load_meridian_snapshot(project: Path) -> Snapshot:
     """Build an installation snapshot under the frozen Meridian names."""
     state_token = state_adapter.set(snapshot_task_state)
     status_token = status_adapter.set(lambda value: MERIDIAN_STATUSES.get(value, value))
+    assets_token = execution_assets_adapter.set(read_meridian_execution_assets)
     try:
         with use(MERIDIAN_INSTALLATION_NAMES):
             return load_snapshot(project, workflow_resolver=_snapshot_workflow)
     finally:
         state_adapter.reset(state_token)
         status_adapter.reset(status_token)
+        execution_assets_adapter.reset(assets_token)

@@ -2,7 +2,7 @@
 
 Use this procedure only for `Review <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-review-procedure v14 -->
+<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v1 -->
 ## Mandatory task-worktree preflight
 
 After `APPROVE`, `Review <TASK-ID>` has the `Proceed with` authority for C6 through C10, including the single plain `git push origin main` and cleanup, with the same prohibitions.
@@ -86,20 +86,20 @@ The closure stops are `ACCEPTANCE_UNMET`, `VALIDATION_FAILED`,
 `CLEANUP_BLOCKED`; each reports once with its resume command. A named,
 test-reported sandbox skip is accepted only when no acceptance criterion
 depends solely on it and the handoff records it as `Validation skips:`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Candidate validation reads the task contract's resolved commands for `REUSE`, `BOUNDED`,
 and `FULL` from `validation.candidate` in `.cardine/project.json`; `REUSE` also proves only
 governance paths changed. A missing declaration stops before staging rather than silently
 accepting evidence.
 
-<!-- MERIDIAN:BEGIN capability=review-mode-boundary v4 -->
+<!-- CARDINE:BEGIN capability=review-mode-boundary v1 -->
 ### Review-mode boundary
 
 For `Review <TASK-ID>`, do not edit implementation artifacts to remedy findings. Prepare the evidence as a command argument outside the tracked review record so the reviewed worktree stays clean. Record each verdict with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD. Never edit a status or verdict by hand. When changes are requested, commit only the state file, task record projection, and review record locally; leave machine status `in_progress` with the retained requested-changes verdict for the implementer. For a blocking verdict, record and commit only the same governance outputs and report the blocker. Findings with priority and evidence form the bounded remediation scope. Do not push these commits. For `APPROVE`, commit the same three outputs with the required reviewer-integrator author override after the required ancestry check. A reviewer never edits the queue, queue archive, or plan; `integrate stage` applies their status.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=implementer-reviewer-handoff v6 -->
+<!-- CARDINE:BEGIN capability=implementer-reviewer-handoff v1 -->
 ## Implementer-to-reviewer handoff
 
 After validation, create the task commit and, only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, push the task branch. The completion handoff must record the branch name,
@@ -117,9 +117,9 @@ follows validated closure and integration without creating a
 reviewer session; no acceptance status transition is needed. Owner acceptance runs `cardine review verdict <TASK-ID> APPROVE --owner` and
 continues at C6. Checkout selection, validation ancestry, integration, and cleanup
 are governed by their current dedicated procedures, not by this handoff.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=reviewer-integrator-identity v4 -->
+<!-- CARDINE:BEGIN capability=reviewer-integrator-identity v1 -->
 ## Reviewer-integrator identity on a single-operator project
 
 Both controls are mandatory and neither substitutes for the other:
@@ -134,9 +134,9 @@ Both controls are mandatory and neither substitutes for the other:
 This is the only place the identity rule is stated; every other document defers to it.
 
 Keep the operator's normal committer identity. Do not change global or repository Git config. The override applies only to the approval-metadata commit and can be verified with `git log --format='%an <%ae>'`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=phase-reads v1 -->
+<!-- CARDINE:BEGIN capability=phase-reads v1 -->
 ## Phase reads
 
 Read each document when its phase begins, in the order listed. This changes
@@ -147,9 +147,9 @@ waived by reading a document later.
 - At first production-source diff hunk: `docs/CODE_ORGANIZATION.md`.
 - At first validation evidence check: `docs/EXECUTION_EVIDENCE_PROFILE.md`.
 - At verdict: `docs/REVIEW_RECORD_TEMPLATE.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-context-readers v3 -->
+<!-- CARDINE:BEGIN capability=bounded-context-readers v1 -->
 ## Bounded context readers
 
 Read the task's cited ADRs and specification sections with `cardine context
@@ -163,4 +163,4 @@ row must be read verbatim or edited, locate that row and read only its range.
 Open a source document directly only when a bounded reader reports an entry
 unresolved or its excerpt cannot verify an acceptance criterion, and record
 that reason in the report.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

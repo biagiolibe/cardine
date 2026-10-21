@@ -2,7 +2,7 @@
 
 Task context loading, task shape, and completion handoffs are governed by `docs/CONTEXT_READING_POLICY.md`, `tasks/TASK_BLUEPRINT.md`, and `docs/COMPLETION_REPORT_TEMPLATE.md`; this document defines review and direct integration only.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-integration v8 -->
+<!-- CARDINE:BEGIN capability=task-worktree-integration v1 -->
 For `Review: required`, the implementer pushes the task branch only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, and records its deterministic branch,
 machine-independent dedicated-worktree value (relative to the worktree root, never an absolute path), implementation commit, validated task and
 base `main` commits, exact successful validation evidence, declared integration
@@ -66,11 +66,11 @@ branch. Concurrent tasks change only their own task records. They do
 not reorder shared governance files, change shared timestamps, or archive a
 phase; phase archival waits until all rows are integrated. Any shared-file
 conflict blocks integration with both branches intact.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Validation evidence for review
 
-<!-- MERIDIAN:BEGIN capability=ci-verified-validation v1 -->
+<!-- CARDINE:BEGIN capability=ci-verified-validation v1 -->
 A reviewer never accepts a bare "tests passed" claim as evidence — that
 self-report is exactly what an independent review exists to verify, not to
 repeat back. Two paths, in order:
@@ -93,12 +93,12 @@ repeat back. Two paths, in order:
 Either path requires the completion report to name exact commands and exit
 status, or the CI check run, per `docs/COMPLETION_REPORT_TEMPLATE.md` — a
 claim that cannot be checked is not evidence.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Remote task-branch cleanup
 
-<!-- MERIDIAN:BEGIN capability=remote-branch-cleanup v1 -->
+<!-- CARDINE:BEGIN capability=remote-branch-cleanup v1 -->
 A remote task branch may intentionally lack a local review-and-approval commit: its acceptance evidence is published through the subsequent `main` push. Once `main` contains and has pushed the accepted work, local integration is complete and the local task branch may be deleted.
 
 Remote task-branch deletion is optional and non-blocking. After successful `main` integration, an agent may attempt `git push origin --delete <task-branch>` without force. If the remote deletion fails or the branch is already absent, report a warning only. Never block accepted integration, fetch/rebase, or force-delete solely to clean up a remote task branch.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

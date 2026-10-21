@@ -35,9 +35,9 @@ LEGACY_REVIEW_PROMPT = """# Code Review and Integration Prompt
 ```text
 Review and integrate <TASK-ID>.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-review v4 -->Run this in a fresh session.<!-- MERIDIAN:END --> Re-derive evidence.
+<!-- CARDINE:BEGIN capability=task-worktree-review v4 -->Run this in a fresh session.<!-- CARDINE:END --> Re-derive evidence.
 
-Review scope. <!-- MERIDIAN:BEGIN capability=manual-verification-review-check v1 -->Confirm the rationale.<!-- MERIDIAN:END --> Read cited documents. <!-- MERIDIAN:BEGIN capability=ci-verified-validation v1 -->Follow the CI-first rule.<!-- MERIDIAN:END --> Report findings.
+Review scope. <!-- CARDINE:BEGIN capability=manual-verification-review-check v1 -->Confirm the rationale.<!-- CARDINE:END --> Read cited documents. <!-- CARDINE:BEGIN capability=ci-verified-validation v1 -->Follow the CI-first rule.<!-- CARDINE:END --> Report findings.
 ```
 """
 
@@ -105,32 +105,32 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
 
     def test_review_prompt_is_one_block_and_applies_the_project_checklist(self) -> None:
         text = self.read(REVIEW_PROMPT)
-        self.assertEqual(templates_markers.marker_pairs(text), [("code-review-prompt", 4)])
-        block = templates_markers.extract_marker_block(text, "code-review-prompt", 4)
+        self.assertEqual(templates_markers.marker_pairs(text), [("code-review-prompt", 1)])
+        block = templates_markers.extract_marker_block(text, "code-review-prompt", 1)
         self.assertIn("## Project review checklist", block)
         self.assertNotRegex(block, r"(?m)^#+ Project review checklist")
-        self.assertTrue(text.rstrip().endswith("<!-- MERIDIAN:END -->"))
+        self.assertTrue(text.rstrip().endswith("<!-- CARDINE:END -->"))
 
     def test_audit_prompt_runs_the_project_specific_checks_section(self) -> None:
         text = self.read("docs/AUDIT_PROMPT_READ_ONLY.md")
-        self.assertEqual(templates_markers.marker_pairs(text), [("audit-prompt", 5)])
-        block = templates_markers.extract_marker_block(text, "audit-prompt", 5)
+        self.assertEqual(templates_markers.marker_pairs(text), [("audit-prompt", 1)])
+        block = templates_markers.extract_marker_block(text, "audit-prompt", 1)
         self.assertIn("## Project-specific checks", block)
         self.assertIn("cite an accepted ADR", block)
 
     def test_inline_markers_became_complete_standalone_blocks(self) -> None:
         implementation = self.read("docs/workflows/IMPLEMENTATION.md")
-        block = templates_markers.extract_marker_block(implementation, "validation-scoping", 2)
+        block = templates_markers.extract_marker_block(implementation, "validation-scoping", 1)
         self.assertTrue(block.startswith("Scope validation"))
         policy = self.read("docs/CONTEXT_READING_POLICY.md")
-        read_guard = templates_markers.extract_marker_block(policy, "read-guard", 2)
+        read_guard = templates_markers.extract_marker_block(policy, "read-guard", 1)
         self.assertIn("verified task worktree", read_guard)
         self.assertIn("router read set", read_guard)
-        self.assertNotRegex(policy, r"(?m)^\d+\. <!-- MERIDIAN:BEGIN capability=(?:read-guard|validation-scoping)")
+        self.assertNotRegex(policy, r"(?m)^\d+\. <!-- CARDINE:BEGIN capability=(?:read-guard|validation-scoping)")
 
     def test_lifecycle_and_remote_cleanup_are_managed_capabilities(self) -> None:
         text = self.read("docs/WORKTREE_LIFECYCLE.md")
-        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 1), ("worktree-lifecycle", 7)])
+        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 1), ("worktree-lifecycle", 1)])
         policy = self.read("docs/INTEGRATION_POLICY.md")
         self.assertIn(("remote-branch-cleanup", 1), templates_markers.marker_pairs(policy))
         self.assertNotIn("distinct authorized reviewer identity", policy)
@@ -214,7 +214,7 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         self.assertTrue(upgraded.startswith(current.rstrip("\n")))
         self.assertIn("## Project review checklist\n\n- Check the migration note.", upgraded)
         self.assertEqual(
-            templates_markers.marker_pairs(upgraded), [("code-review-prompt", 4)]
+            templates_markers.marker_pairs(upgraded), [("code-review-prompt", 1)]
         )
         self.assertNotIn("project rule", upgraded)
         self.assertIn("project rule", backup.read_text(encoding="utf-8"))
@@ -247,16 +247,16 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         self.assertIn("ci-verified-validation", requirements)
         self.assertNotIn("task-worktree-review", requirements)
         self.assertNotIn("manual-verification-review-check", requirements)
-        self.assertEqual(requirements["code-review-prompt"][0], 4)
+        self.assertEqual(requirements["code-review-prompt"][0], 1)
 
     def test_restructure_removes_retired_blocks_from_a_carried_checklist(self) -> None:
         current = self.locked_at_legacy_prompt(
             LEGACY_REVIEW_PROMPT
             + "\n## Project review checklist\n\n"
             + "- Keep this checklist item.\n\n"
-            + "<!-- MERIDIAN:BEGIN capability=task-worktree-review v4 -->Retired review text.<!-- MERIDIAN:END -->\n\n"
-            + "<!-- MERIDIAN:BEGIN capability=manual-verification-review-check v1 -->Retired manual text.<!-- MERIDIAN:END -->\n\n"
-            + "<!-- MERIDIAN:BEGIN capability=ci-verified-validation v1 -->Retired CI text.<!-- MERIDIAN:END -->\n"
+            + "<!-- CARDINE:BEGIN capability=task-worktree-review v4 -->Retired review text.<!-- CARDINE:END -->\n\n"
+            + "<!-- CARDINE:BEGIN capability=manual-verification-review-check v1 -->Retired manual text.<!-- CARDINE:END -->\n\n"
+            + "<!-- CARDINE:BEGIN capability=ci-verified-validation v1 -->Retired CI text.<!-- CARDINE:END -->\n"
         )
 
         applied = self.run_cli("upgrade", "--apply")
@@ -265,7 +265,7 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         upgraded = (self.project / REVIEW_PROMPT).read_text(encoding="utf-8")
         self.assertTrue(upgraded.startswith(current.rstrip("\n")))
         self.assertTrue(upgraded.endswith("## Project review checklist\n\n- Keep this checklist item.\n"))
-        self.assertEqual(templates_markers.marker_pairs(upgraded), [("code-review-prompt", 4)])
+        self.assertEqual(templates_markers.marker_pairs(upgraded), [("code-review-prompt", 1)])
         code, output = self.audit()
         self.assertNotRegex(output, r"(?m)^FAIL\\s")
 
@@ -273,7 +273,7 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         local = (
             LEGACY_REVIEW_PROMPT
             + "\n## Project review checklist\n\n"
-            + "<!-- MERIDIAN:BEGIN capability=task-worktree-review v4 -->Edited retired text.<!-- MERIDIAN:END -->\n"
+            + "<!-- CARDINE:BEGIN capability=task-worktree-review v4 -->Edited retired text.<!-- CARDINE:END -->\n"
         )
         self.locked_at_legacy_prompt(local)
 
@@ -298,9 +298,9 @@ class WrappedTextUpgradeTest(unittest.TestCase):
             template = framework / "templates/single" / relative
             current = template.read_text(encoding="utf-8")
             version = re.search(rf"capability={capability} v(\d+) -->", current).group(1)
-            legacy = current.replace(f"<!-- MERIDIAN:BEGIN capability={capability} v{version} -->\n", "")
-            end = legacy.rindex("<!-- MERIDIAN:END -->\n")
-            legacy = legacy[:end] + legacy[end + len("<!-- MERIDIAN:END -->\n"):]
+            legacy = current.replace(f"<!-- CARDINE:BEGIN capability={capability} v{version} -->\n", "")
+            end = legacy.rindex("<!-- CARDINE:END -->\n")
+            legacy = legacy[:end] + legacy[end + len("<!-- CARDINE:END -->\n"):]
             template.write_text(legacy, encoding="utf-8")
             (framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
             project.mkdir()
@@ -629,11 +629,11 @@ class RestructureHelpersTest(unittest.TestCase):
         template = "# T\n\n## Known\n\nnew body\n"
         local = (
             "# T\n\n## Known\n\nedited\n\n## Mine\n\n"
-            "<!-- MERIDIAN:BEGIN capability=kept-marker v1 -->Keep this.<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=kept-marker v1 -->Keep this.<!-- CARDINE:END -->\n"
         )
         self.assertEqual(
             owner_templates_migrations.project_sections(local, base, template, [("retired-marker", 1)]),
-            ["## Mine\n\n<!-- MERIDIAN:BEGIN capability=kept-marker v1 -->Keep this.<!-- MERIDIAN:END -->\n"],
+            ["## Mine\n\n<!-- CARDINE:BEGIN capability=kept-marker v1 -->Keep this.<!-- CARDINE:END -->\n"],
         )
 
 

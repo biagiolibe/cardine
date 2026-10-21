@@ -38,82 +38,77 @@ ALLOWLIST = (
         r"(?:skills|commands|\.claude-plugin)/.*",
     ),
     Allowance(
-        2, "061",
-        r"templates/.*",
-        OLD.upper() + r":(?:BEGIN|END)",
-    ),
-    Allowance(
         2, "9",
         r"templates/single/\.codex/rules/" + OLD + r"\.rules",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
+        r"(?:src|tests)/.*",
+        OLD.upper() + r":(?:BEGIN|END|\(\?:BEGIN\|END\))(?:\s+|\\s\+)(?:worktree-permissions|codex-user-rules)\b",
+    ),
+    Allowance(
+        2, "9",
+        r"tests/test_host_codex_repair\.py",
+        r'"# ' + OLD.upper() + r':BEGIN(?:  )?"',
+    ),
+    Allowance(
+        2, "10",
         r"tests/fixtures/task-blueprint-v15\.md",
     ),
     Allowance(
-        2, "5b",
-        r"(?:src|scripts|tests|docs)/.*",
-        OLD.upper() + r":(?:BEGIN|END|CLAUDE-AGENTS-POINTER|\(\?:BEGIN\|END\))",
-    ),
-    Allowance(
-        2, "5b",
+        2, "9",
         r"src/cardine/shared/models\.py",
         r'CODEX_PERMISSION_PROFILE = "' + OLD + r'-worktrees"',
     ),
-    Allowance(2, "5b", r"tests/test_(?:host_codex_access|host_codex_repair|host_worktree_setup|queue_briefing)\.py",
+    Allowance(2, "9", r"tests/test_(?:host_codex_access|host_codex_repair|host_worktree_setup|queue_briefing)\.py",
               r'''(?:permissions\.|["']|\\n)''' + OLD + r'''-worktrees(?=["'.\] =])'''),
     Allowance(
-        2, "5b",
+        2, "9",
         r"(?:src|tests|capabilities)/.*",
         OLD + r"\.rules\b",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"(?:src|scripts|tests|docs)/.*",
         OLD + r"-(?:lean-delivery|governed-sdd)(?:-claude-code)?\b",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"(?:src|scripts|tests|docs)/.*",
         r"(?:commands/|/)?" + OLD + r"-(?:init|task|upgrade|audit)\b",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"src/cardine/hosts/skills\.py",
         OLD + r"-\*",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"(?:src/cardine/hosts/codex|tests/test_host_codex_(?:access|repair)|tests/test_queue_briefing)\.py",
         r"Workspace access plus " + OLD.capitalize() + r"-managed task worktrees\.",
     ),
     Allowance(
-        2, "5b",
-        r"(?:src/cardine/templates/markers|tests/test_cardine_cli_entry)\.py",
-        r"Every " + OLD.capitalize() + r" capability marker",
-    ),
-    Allowance(
-        2, "5b",
+        2, "9",
         r"(?:src/cardine/hosts/claude|tests/test_host_worktree_setup)\.py",
         r"(?:\"" + OLD + r"\"|" + OLD + r"@local)",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"(?:src/cardine/release/update|scripts/(?:release|upgrade_project)|tests/test_(?:release_self_check|self_update))\.(?:py|sh)",
         r"(?:biagiolibe/|extraKnownMarketplaces\.|cache/|marketplace update |get\(\"|\{\")" + OLD + r"\b",
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"(?:scripts/(?:check_repository|align_queue)|src/cardine/(?:hosts/setup|tasks/(?:contract|preflight))|tests/(?:cardine_cli_support|synthetic_upgrade_support|test_(?:codex_rules|codex_worktree_hooks|codex_read_guard|execution_evidence|integration_projections|stop_audit|template_marker_heading|cardine_upgrade_lifecycle)))\.py",
         OLD + r'''(?=\s+(?:worktree|execution|locations|audit|upgrade|adopt|review|codex|task|hook|Reviewer-Integrator)|["'][,\n\)])''',
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"tests/test_check_repository\.py",
         r'"name": "' + OLD + r'"',
     ),
     Allowance(
-        2, "5b",
+        2, "9",
         r"tests/program_word_support\.py",
         re.escape(TEMPLATE_TAG) + r"\b|(?<![\w./-])" + OLD + r"(?![\w./-])",
         tag=TEMPLATE_TAG,
@@ -138,11 +133,11 @@ ALLOWLIST = (
     ),
     Allowance(
         4, "kept: historical records",
-        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard|052-project-presets-and-resolution|053-single-task-contract|054-single-state-machine|055-single-template-set|056-reconcile-capabilities|057-preset-briefing-adapter|058-remove-workflow-branching|059-plan-single-source-of-truth|060-cardine-template-text|061-cardine-markers-from-v1|062-plan-cardine-run-engine)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
+        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard|052-project-presets-and-resolution|053-single-task-contract|054-single-state-machine|055-single-template-set|056-reconcile-capabilities|057-preset-briefing-adapter|058-remove-workflow-branching|059-plan-single-source-of-truth|060-cardine-template-text|061-cardine-markers-from-v1|062-plan-cardine-run-engine|063-plan-benchmark-preparation)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
     ),
     Allowance(
         4, "kept: historical design and guides; guides replaced by 11",
-        r"docs/(?:ADR_[^/]+\.md|AGENT_OPERATIONS\.md|CLEAN_INSTALL_VERIFICATION\.md|CONSUMER_PROFILES\.md|CONSUMER_ROUTER_ADOPTION_PLAYBOOK\.md|DISTRIBUTION_AND_UPDATE_DESIGN\.md|GOVERNED_WORKFLOW\.md|HOST_CAPABILITY_CONTRACT\.md|HOW_TO_UPGRADE\.md|" + OLD.upper() + r"_SELF_HOSTING_PROFILE\.md|MODULE_SPLIT_PLAN\.md|PLATFORM_SUPPORT\.md|PROJECT_DECLARATION\.md|QUICKSTART\.md|RENAME_PLAN\.md|SINGLE_WORKFLOW_PLAN\.md|TASK_IDENTITY_POLICY\.md|assets/.*)",
+        r"docs/(?:ADR_[^/]+\.md|AGENT_OPERATIONS\.md|CLEAN_INSTALL_VERIFICATION\.md|CONSUMER_PROFILES\.md|CONSUMER_ROUTER_ADOPTION_PLAYBOOK\.md|DISTRIBUTION_AND_UPDATE_DESIGN\.md|GOVERNED_WORKFLOW\.md|HOST_CAPABILITY_CONTRACT\.md|HOW_TO_UPGRADE\.md|" + OLD.upper() + r"_SELF_HOSTING_PROFILE\.md|MODULE_SPLIT_PLAN\.md|PLATFORM_SUPPORT\.md|BENCHMARK_PROTOCOL\.md|PROJECT_DECLARATION\.md|QUICKSTART\.md|RENAME_PLAN\.md|SINGLE_WORKFLOW_PLAN\.md|TASK_IDENTITY_POLICY\.md|assets/.*)",
     ),
     Allowance(
         5, "10",
@@ -151,6 +146,10 @@ ALLOWLIST = (
     Allowance(
         5, "10",
         r"tests/test_legacy_" + OLD + r"_installation\.py",
+    ),
+    Allowance(
+        5, "10",
+        r"tests/test_legacy_marker_syntax\.py",
     ),
     Allowance(
         5, "10",
@@ -234,7 +233,7 @@ class IdentifierGuardTest(unittest.TestCase):
             tracked.write_text('TITLE = "Cardine"\n')
             subprocess.run(["git", "add", "."], cwd=root, check=True)
             self.assertEqual(scan_repository(root, ())[0], [])
-            marker_allowance = Allowance(2, "5b", r"src/.*", OLD.upper() + r":BEGIN")
+            marker_allowance = Allowance(2, "9", r"src/.*", OLD.upper() + r":BEGIN")
             for text in (OLD.capitalize(), OLD.upper(), OLD.upper() + ":BEGIN " + OLD):
                 tracked.write_text(text + "\n")
                 failures, _ = scan_repository(root, (marker_allowance,))
@@ -254,7 +253,7 @@ class IdentifierGuardTest(unittest.TestCase):
             self.assertTrue(any(untracked.name + ":1:" in f for f in failures))
             (root / ".gitignore").write_text("*.txt\n")
             self.assertEqual(scan_repository(root, ())[0], [])
-            failures, _ = scan_repository(root, (Allowance(2, "5b", "missing/.*"),))
+            failures, _ = scan_repository(root, (Allowance(2, "9", "missing/.*"),))
             self.assertTrue(any("unused allowlist entry" in f for f in failures))
 
 

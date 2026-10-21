@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cardine.shared.constants import MARKER_BEGIN
 from cardine.shared.models import CapabilityMove
 from cardine.templates.files import managed_files
 from cardine.templates.markers import LEGACY_CAPABILITY_EVIDENCE
@@ -60,7 +61,7 @@ def capability_presence_map(
     """capability id -> (present, evidence), by behavior rather than exact wording.
 
     A capability is present when the project carries a
-    `<!-- MERIDIAN:BEGIN capability=<id> vN --> ... <!-- MERIDIAN:END -->`
+    `<!-- CARDINE:BEGIN capability=<id> vN --> ... <!-- CARDINE:END -->`
     marker for it at or above the version the framework currently requires,
     found anywhere among the project's managed governed-SDD files. When no
     marker is found, a capability with a pre-marker legacy check
@@ -104,7 +105,7 @@ def capability_presence_map(
             else:
                 presence[capability_id] = (
                     False,
-                    f"no MERIDIAN:BEGIN capability={capability_id} marker found",
+                    f"no {MARKER_BEGIN} capability={capability_id} marker found",
                 )
     return presence
 

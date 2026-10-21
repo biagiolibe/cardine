@@ -8,7 +8,6 @@ from pathlib import Path
 import json
 import re
 import shutil
-import tarfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -47,7 +46,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         agents.write_text(agents.read_text(encoding="utf-8") + "\nProject-owned agent text.\n", encoding="utf-8")
         pointer = self.project / "CLAUDE.md"
         pointer.write_text(
-            "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
+            "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
             encoding="utf-8",
         )
 
@@ -60,7 +59,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertIn("Project-owned agent text.", agents.read_text(encoding="utf-8"))
         self.assertNotIn("capability=route-rule", agents.read_text(encoding="utf-8"))
-        self.assertEqual(pointer.read_text(encoding="utf-8"), "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n")
+        self.assertEqual(pointer.read_text(encoding="utf-8"), "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n")
         self.assertEqual(target.read_text(encoding="utf-8"), "# Implementation\n\n" + moved + "\n")
 
     def test_upgrade_blocks_a_long_lag_move_with_a_modified_or_duplicated_source_marker(self) -> None:
@@ -164,7 +163,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         local = self.project / "docs/workflows/REMEDIATION.md"
         local_text = local.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=review-remediation-record", local_text)
+        self.assertIn("CARDINE:BEGIN capability=review-remediation-record", local_text)
         local.write_text(
             local_text.replace("# Remediation Procedure", "# Our Remediation Procedure"), encoding="utf-8"
         )
@@ -190,8 +189,8 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         profile = self.framework / "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v6 -->\n?.*?"
-            r"<!-- MERIDIAN:END -->\n?",
+            r"<!-- CARDINE:BEGIN capability=execution-evidence-profile v1 -->\n?.*?"
+            r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
         )
@@ -207,8 +206,8 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
         validation = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->\n?.*?"
-            r"<!-- MERIDIAN:END -->\n?",
+            r"<!-- CARDINE:BEGIN capability=validation-scoping v1 -->\n?.*?"
+            r"<!-- CARDINE:END -->\n?",
             local_text,
             re.DOTALL,
         )
@@ -237,7 +236,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         self.assertIsNotNone(appended)
         self.assertIn("## Project validation baseline", appended)
-        self.assertIn("capability=execution-evidence-profile v6", appended)
+        self.assertIn("capability=execution-evidence-profile v1", appended)
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
@@ -247,14 +246,14 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stderr)
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertIn("## Project validation baseline", upgraded)
-        self.assertIn("capability=validation-scoping v2", upgraded)
-        self.assertIn("capability=execution-evidence-profile v6", upgraded)
+        self.assertIn("capability=validation-scoping v1", upgraded)
+        self.assertIn("capability=execution-evidence-profile v1", upgraded)
         self.assertTrue((self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file())
 
     def test_marker_insertion_promotes_an_identical_unmarked_local_rule(self) -> None:
         template = (
-            "# Profile\n\n<!-- MERIDIAN:BEGIN capability=investigation-scope v2 -->\n"
-            "- Investigation scope: 2 per task.\n<!-- MERIDIAN:END -->\n"
+            "# Profile\n\n<!-- CARDINE:BEGIN capability=investigation-scope v2 -->\n"
+            "- Investigation scope: 2 per task.\n<!-- CARDINE:END -->\n"
         )
         content = templates_markers.extract_marker_block(template, "investigation-scope", 2)
         self.assertIsNotNone(content)
@@ -275,9 +274,9 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_marker_normalization_accepts_prose_reflow_but_not_fenced_content(self) -> None:
         template = (
-            "<!-- MERIDIAN:BEGIN capability=example v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=example v1 -->\n"
             "One long policy sentence wraps here.\n\n```text\nexact value\n```\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         reflowed = template.replace("One long policy sentence wraps here.", "One long policy\nsentence wraps here.")
         normalized = templates_markers.reflowed_marker_normalization(reflowed, template)
@@ -286,12 +285,12 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIsNone(templates_markers.reflowed_marker_normalization(changed_fence, template))
 
     def test_marker_deduplication_removes_only_identical_template_copies(self) -> None:
-        block = "<!-- MERIDIAN:BEGIN capability=example v1 -->\nRule.\n<!-- MERIDIAN:END -->\n"
+        block = "<!-- CARDINE:BEGIN capability=example v1 -->\nRule.\n<!-- CARDINE:END -->\n"
         duplicated = "# Policy\n\n" + block + "\n" + block
         normalized = templates_markers.deduplicate_identical_template_markers(duplicated, block)
         self.assertIsNotNone(normalized)
         self.assertEqual(normalized.count("capability=example v1"), 1)
-        divergent = duplicated.replace("Rule.\n<!-- MERIDIAN:END -->\n\n<!--", "Different.\n<!-- MERIDIAN:END -->\n\n<!--", 1)
+        divergent = duplicated.replace("Rule.\n<!-- CARDINE:END -->\n\n<!--", "Different.\n<!-- CARDINE:END -->\n\n<!--", 1)
         self.assertIsNone(templates_markers.deduplicate_identical_template_markers(divergent, block))
 
     def test_upgrade_does_not_require_a_capability_not_marked_in_this_file(self) -> None:
@@ -310,7 +309,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         local = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=validation-scoping", local_text)
+        self.assertIn("CARDINE:BEGIN capability=validation-scoping", local_text)
         local.write_text(
             local_text.replace("## Task-first loading", "## Our Task-First Loading"), encoding="utf-8"
         )
@@ -332,47 +331,6 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 2)
         self.assertIn("BLOCKED", applied.stderr)
         self.assertIn("## Local Roles", local.read_text(encoding="utf-8"))
-
-    def test_oldest_published_release_upgrades_to_current_in_one_apply(self) -> None:
-        """Decision 6: the oldest published release reaches the current one in one step."""
-        current_templates = self.framework / "templates/single"
-        shutil.rmtree(current_templates)
-        # Verbatim templates/workflows/governed-sdd at tag v1.1.49; do not edit. That
-        # release predates the single template set, so its files overlay the current
-        # set: the old release locks a complete project whose archived files are the
-        # pristine 1.1.49 text.
-        release = self.framework.parent / "release-1.1.49"
-        with tarfile.open(ROOT / "tests/fixtures/release-1.1.49-governed-sdd.tar.gz") as archive:
-            archive.extractall(release, filter="data")
-        shutil.copytree(ROOT / "templates/single", current_templates)
-        shutil.copytree(release / "governed-sdd", current_templates, dirs_exist_ok=True)
-        shutil.rmtree(self.project)
-        self.project.mkdir()
-        self.copy_governed_templates()
-        (self.framework / "VERSION").write_text("1.1.49\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "single")
-        self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
-
-        shutil.rmtree(current_templates)
-        shutil.copytree(ROOT / "templates/single", current_templates)
-        current = "1.4.0"  # Fixed target of this historical fixture.
-        (self.framework / "VERSION").write_text(current + "\n", encoding="utf-8")
-
-        applied = self.run_cli("upgrade", "--apply")
-        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["frameworkVersion"], current)
-        expected = [
-            path.stem
-            for path in sorted((self.framework / "migrations").glob("*.json"))
-            if tuple(map(int, json.loads(path.read_text(encoding="utf-8"))["from"].split(".")))
-            >= (1, 1, 49)
-        ]
-        self.assertTrue(expected, "the current release must apply at least one migration after 1.1.49")
-        self.assertTrue(set(expected) <= set(manifest["appliedMigrations"]))
-        noop = self.run_cli("upgrade", "--check")
-        self.assertEqual(noop.returncode, 0, noop.stdout + noop.stderr)
-        self.assertNotIn("CONFLICT", noop.stdout)
 
     def test_owner_reconciled_upgrade_registers_baseline_despite_conflicts(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)

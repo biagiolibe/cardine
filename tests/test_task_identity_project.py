@@ -117,11 +117,11 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.declare()
         workflow = self.project / "PROJECT_WORKFLOW.md"
         workflow.write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v2 -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v2 -->\n"
             "**Canonical locations.** Task files live at `docs/tasks/<milestone>/<TASK-ID>.md`, "
             "the queue at `docs/TASK_QUEUE.md`, completion handoffs live at "
             "`artifacts/handoffs/<TASK-ID>.md`, and durable review records at "
-            "`artifacts/reviews/<TASK-ID>.md`.\n<!-- MERIDIAN:END -->\n",
+            "`artifacts/reviews/<TASK-ID>.md`.\n<!-- CARDINE:END -->\n",
             encoding="utf-8",
         )
         task = self.add_task("M8-API-011", "docs/tasks/M8/M8-API-011.md")
@@ -286,7 +286,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
 
     def test_migration_delivers_only_managed_guidance_and_never_opts_in(self) -> None:
         template = ROOT / "templates/single/PROJECT_WORKFLOW.md"
-        self.assertIn("capability=task-identity-policy v2", template.read_text(encoding="utf-8"))
+        self.assertIn("capability=task-identity-policy v1", template.read_text(encoding="utf-8"))
 
         root = Path(self.temporary.name)
         framework = root / "framework"
@@ -295,7 +295,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
             shutil.copytree(ROOT / source, framework / source)
         current = (framework / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         previous = re.sub(
-            r"\n<!-- MERIDIAN:BEGIN capability=task-identity-policy v2 -->.*?<!-- MERIDIAN:END -->\n",
+            r"\n<!-- CARDINE:BEGIN capability=task-identity-policy v1 -->.*?<!-- CARDINE:END -->\n",
             "\n",
             current,
             flags=re.DOTALL,
@@ -323,7 +323,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         )
         self.assertEqual(upgraded.returncode, 0, upgraded.stdout + upgraded.stderr)
         workflow = (consumer / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-identity-policy v2", workflow)
+        self.assertIn("capability=task-identity-policy v1", workflow)
         self.assertIn("Consumer-owned note.", workflow)
         self.assertFalse((consumer / shared_constants.TASK_IDENTITY_PATH).exists())
 
@@ -356,7 +356,7 @@ class ProjectDeclarationTest(unittest.TestCase):
                 owner_shared_project.read_project_declaration(self.project)
 
     def test_declaration_overrides_legacy_and_cli_fields(self) -> None:
-        (self.project / "PROJECT_WORKFLOW.md").write_text("<!-- MERIDIAN:BEGIN capability=execution-assets v2 -->\n<!-- MERIDIAN:END -->\nTask files live at `legacy/tasks/<TASK-ID>.md`; queue is `legacy/QUEUE.md`.\n", encoding="utf-8")
+        (self.project / "PROJECT_WORKFLOW.md").write_text("<!-- CARDINE:BEGIN capability=execution-assets v2 -->\n<!-- CARDINE:END -->\nTask files live at `legacy/tasks/<TASK-ID>.md`; queue is `legacy/QUEUE.md`.\n", encoding="utf-8")
         self.write({"version": 1, "preset": "lean", "project": {"name": "Example", "slug": "example"}, "locations": {"queue": "docs/QUEUE.md"}})
         result = subprocess.run([sys.executable, str(CLI), "locations", "--field", "queue", "--project", str(self.project)], text=True, capture_output=True, check=False)
         self.assertEqual((result.returncode, result.stdout.strip(), result.stderr), (0, "docs/QUEUE.md", ""))
@@ -366,7 +366,7 @@ class ProjectDeclarationTest(unittest.TestCase):
 
     def test_declaration_overrides_an_invalid_legacy_location(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v2 -->\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v2 -->\n<!-- CARDINE:END -->\n"
             "queue is `/tmp/QUEUE.md`.\n",
             encoding="utf-8",
         )
@@ -375,7 +375,7 @@ class ProjectDeclarationTest(unittest.TestCase):
 
     def test_legacy_location_warning_is_emitted_once_per_process(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v2 -->\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v2 -->\n<!-- CARDINE:END -->\n"
             "Task files live at `legacy/tasks/<TASK-ID>.md`; queue is `legacy/QUEUE.md`.\n",
             encoding="utf-8",
         )

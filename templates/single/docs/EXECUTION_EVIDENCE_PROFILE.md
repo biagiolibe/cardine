@@ -9,10 +9,10 @@ but unresolved placeholders are never verification evidence.
 - Reuse unchanged sources and successful results from the active session.
 - Locate a large-file range before reading it; the default threshold is 400
   lines.
-<!-- MERIDIAN:BEGIN capability=investigation-scope v4 -->
+<!-- CARDINE:BEGIN capability=investigation-scope v1 -->
 - Record broad exploration with its question, source scope, sources, and
   finding using `cardine execution investigate`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Successful validation output
 
@@ -31,7 +31,7 @@ Run a command expected to take longer than one minute in the foreground with a
 timeout of up to 600 seconds, or in a persistent terminal session; never
 detach it and poll for completion.
 
-<!-- MERIDIAN:BEGIN capability=long-command-waits v1 -->
+<!-- CARDINE:BEGIN capability=long-command-waits v1 -->
 Long commands and suite runs:
 
 - Start a command expected to take longer than one minute with a wait long
@@ -52,7 +52,7 @@ Long commands and suite runs:
   record, and rerun it only when code changed since. This does not change the
   declared candidate validation (`REUSE`, `BOUNDED`, `FULL`) in
   `docs/WORKTREE_LIFECYCLE.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Failure diagnostics
 

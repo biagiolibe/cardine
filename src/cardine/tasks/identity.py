@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from cardine.shared.constants import MARKER_BEGIN, MARKER_END
 from cardine.shared.layout import names
+from cardine.shared.snapshot_adapters import execution_assets_adapter
 
 from cardine.shared.errors import CardineError
 from cardine.shared.git import primary_project_root
@@ -52,6 +54,17 @@ def task_identity_json(project_root: Path, identity: ResolvedTaskIdentity) -> di
     return identity.as_json(project_root)
 
 
+def read_execution_assets(workflow_text: str) -> tuple[str, str]:
+    """Return the execution-assets block and the zone that follows it, or empty strings."""
+    reader = execution_assets_adapter.get()
+    if reader is not None:
+        return reader(workflow_text)
+    block = rf"<!-- {MARKER_BEGIN} capability=execution-assets .*?{re.escape(MARKER_END)}"
+    block_match = re.search(block, workflow_text, re.DOTALL)
+    match = re.search(block + r"\s*(.*?)(?=^## |\Z)", workflow_text, re.MULTILINE | re.DOTALL)
+    return (block_match.group(0) if block_match else ""), (match.group(1) if match else "")
+
+
 def resolve_project_locations(project_root: Path) -> ProjectLocations:
     """Resolve project customizations declared after execution-assets.
 
@@ -64,19 +77,7 @@ def resolve_project_locations(project_root: Path) -> ProjectLocations:
     zone = ""
     block_zone = ""
     if workflow.is_file():
-        workflow_text = workflow.read_text(encoding="utf-8")
-        block_match = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=execution-assets .*?<!-- MERIDIAN:END -->",
-            workflow_text,
-            re.DOTALL,
-        )
-        block_zone = block_match.group(0) if block_match else ""
-        match = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=execution-assets .*?<!-- MERIDIAN:END -->\s*(.*?)(?=^## |\Z)",
-            workflow_text,
-            re.MULTILINE | re.DOTALL,
-        )
-        zone = match.group(1) if match else ""
+        block_zone, zone = read_execution_assets(workflow.read_text(encoding="utf-8"))
     queue_matches = re.findall(r"`([^`]*queue[^`]*\.md)`", zone, re.IGNORECASE)
     queues = [Path(path) for path in dict.fromkeys(path for path in queue_matches if "archive" not in path.lower())]
     if len(queues) != 1:

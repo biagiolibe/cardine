@@ -1,6 +1,6 @@
 # Code Review and Integration Prompt
 
-<!-- MERIDIAN:BEGIN capability=code-review-prompt v4 -->
+<!-- CARDINE:BEGIN capability=code-review-prompt v1 -->
 ```text
 Review and integrate <TASK-ID> as an independent reviewer-integrator.
 
@@ -25,4 +25,4 @@ The author override applies only to this approval-metadata commit; keep the oper
 
 Keep the final review report within ten lines unless findings require more detail.
 ```
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

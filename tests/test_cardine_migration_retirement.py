@@ -26,7 +26,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         original_agents = agents.read_text(encoding="utf-8")
         pointer = self.project / "CLAUDE.md"
         pointer.write_text(
-            "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
+            "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
             encoding="utf-8",
         )
 
@@ -54,7 +54,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertNotIn("entry-router v2", agents.read_text(encoding="utf-8"))
         self.assertEqual(
             pointer.read_text(encoding="utf-8"),
-            "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
+            "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
         )
 
         implementation = self.project / "docs/workflows/IMPLEMENTATION.md"
@@ -72,7 +72,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.reset_project_to_installed_baseline()
         self.make_route_rule_physically_present(moved)
         (self.project / "CLAUDE.md").write_text(
-            "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
+            "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
             encoding="utf-8",
         )
         self.assertEqual(self.run_cli("upgrade", "--apply", "--stop-before-retirement").returncode, 0)
@@ -101,7 +101,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.reset_project_to_installed_baseline()
         self.make_route_rule_physically_present(moved)
         (self.project / "CLAUDE.md").write_text(
-            "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
+            "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\n# Project Claude entry point\n",
             encoding="utf-8",
         )
         self.assertEqual(self.run_cli("upgrade", "--apply", "--stop-before-retirement").returncode, 0)
@@ -149,8 +149,8 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->\n?.*?"
-            r"<!-- MERIDIAN:END -->\n?",
+            r"<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->\n?.*?"
+            r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
         )
@@ -174,7 +174,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "removes": [
                         {
                             "capability": "minimal-read-only-status",
-                            "capabilityVersion": 4,
+                            "capabilityVersion": 1,
                             "supersededBy": "role-scoped-agent-rules",
                         }
                     ],
@@ -188,7 +188,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local_policy.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=minimal-read-only-status v4", local_text)
+        self.assertIn("CARDINE:BEGIN capability=minimal-read-only-status v1", local_text)
         local_policy.write_text(
             local_text.replace("## Task-first loading", "## Task-First Loading (project wording)"),
             encoding="utf-8",
@@ -206,7 +206,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         # The unrelated local customization survives untouched.
         self.assertIn("## Task-First Loading (project wording)", upgraded)
         # Every other still-required capability in this file is untouched.
-        self.assertIn("capability=validation-scoping v2", upgraded)
+        self.assertIn("capability=validation-scoping v1", upgraded)
         self.assertIn("capability=evidence-tiers v1", upgraded)
 
         audited = self.run_cli("audit", "--mode", "single")
@@ -221,8 +221,8 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->\n?.*?"
-            r"<!-- MERIDIAN:END -->\n?",
+            r"<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->\n?.*?"
+            r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
         )
@@ -240,7 +240,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "from": "1.1.0",
                     "to": "1.1.1",
                     "description": "test-only retirement",
-                    "removes": [{"capability": "minimal-read-only-status", "capabilityVersion": 4}],
+                    "removes": [{"capability": "minimal-read-only-status", "capabilityVersion": 1}],
                     "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
                     "verification": ["test-only"],
                 }
@@ -276,8 +276,8 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         source = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         source_text = source.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->\n?.*?"
-            r"<!-- MERIDIAN:END -->",
+            r"<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->\n?.*?"
+            r"<!-- CARDINE:END -->",
             source_text,
             re.DOTALL,
         )
@@ -308,13 +308,13 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                             "source": {
                                 "path": "docs/CONTEXT_READING_POLICY.md",
                                 "capability": "minimal-read-only-status",
-                                "capabilityVersion": 4,
+                                "capabilityVersion": 1,
                                 "markerSha256": digest,
                             },
                             "target": {
                                 "path": "docs/ROUTED_STATUS_RULE.md",
                                 "capability": "minimal-read-only-status",
-                                "capabilityVersion": 4,
+                                "capabilityVersion": 1,
                                 "markerSha256": digest,
                             },
                         }
@@ -353,7 +353,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertIn("declaration/legacy-compatibility", audited.stdout)
 
     def test_upgrade_retires_reasoning_contract_alongside_a_marker_supersession(self) -> None:
-        """A migration that both supersedes execution-evidence-profile v3 and
+        """A migration that both supersedes execution-evidence-profile v1 and
         retires reasoning-budget-contract in one file; when the three-way merge
         conflicts, the retirement must still apply, not be skipped."""
         policy, local_policy = self._lock_project_with_reasoning_contract()
@@ -378,7 +378,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertNotIn("reasoning-budget-contract", upgraded)
-        self.assertIn("capability=execution-evidence-profile v6", upgraded)
+        self.assertIn("capability=execution-evidence-profile v2", upgraded)
         self.assertIn("Task-First Loading (project wording)", upgraded)
 
     def test_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract(self) -> None:

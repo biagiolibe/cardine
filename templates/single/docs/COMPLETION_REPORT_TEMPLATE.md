@@ -10,7 +10,7 @@ and `ready-check` use that canonical path when no report path is supplied.
 - Files changed: `<paths>`
 Candidate validation declaration: `<declared fragments per REUSE/BOUNDED/FULL | none; undeclared blocks before stage>`
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-handoff v5 -->
+<!-- CARDINE:BEGIN capability=task-worktree-handoff v1 -->
 - Branch: `<task-branch>`
 - Worktree: `<task-worktree path relative to the worktree root, as returned in handoff_worktree; never an absolute path>`
 - Implementation commit: `<commit SHA, or the descriptive form below>`
@@ -32,7 +32,7 @@ record the validated base `main` commit or any other commit in that field. To
 correct a wrong commit field, create a new lifecycle-only commit changing only
 the handoff record, then begin the next review attempt; push the task branch
 only to obtain `T1_CI`, at most once for that attempt. Amend and force-push remain prohibited.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 - Validation: `<exact commands run with their exit status, or the CI check run and its conclusion for this exact commit — not a bare "passed">`
 - Validation skips: `<none | test name — test-reported reason; reported by `command`>`
 - Manual verification: `<none | screenshot path — view checked — result>`
@@ -42,14 +42,14 @@ only to obtain `T1_CI`, at most once for that attempt. Amend and force-push rema
 - Blockers/deviations: `<none | concrete issue, scope expansion, or context expansion and reason>`
 ```
 
-<!-- MERIDIAN:BEGIN capability=handoff-correction-redelivery v2 -->
+<!-- CARDINE:BEGIN capability=handoff-correction-redelivery v1 -->
 After committing a handoff-only correction on an `in_review` task, rerun
 `cardine execution deliver <TASK-ID> --project .` before beginning the next
 review attempt. The command creates a fresh `Deliver <TASK-ID> for review`
 commit at the corrected handoff and preserves the existing state transitions.
 Changes to any other record or implementation file require renewed implementation
 and validation rather than this correction path.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Do not claim completion when validation fails or an acceptance criterion is unresolved. For reviews, retain the same four fields in the review record and add the required verdict from `docs/CODE_REVIEW_PROMPT.md`. When changes are requested, name that review-record path and its local handoff commit in the concise chat report; the record itself remains the canonical evidence.
 
@@ -57,19 +57,19 @@ A named sandbox skip is not a passing result for an unrelated failure. Record a
 skip only when the test itself names it, including the test-reported reason and
 the command that reported it; otherwise treat validation as failed.
 
-<!-- MERIDIAN:BEGIN capability=manual-verification-record v1 -->
+<!-- CARDINE:BEGIN capability=manual-verification-record v1 -->
 When the task declares `Manual verification: required`, name the screenshot
 path, the view checked, and the result (pass/fail) — a reviewer must be able
 to use it without reconstructing the session. When the task declares
 `Manual verification: none`, state that explicitly rather than omitting the
 field.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=ci-verified-validation v1 -->
+<!-- CARDINE:BEGIN capability=ci-verified-validation v1 -->
 Report validation as falsifiable evidence, not an assertion: a self-reported
 "tests passed" is exactly the claim an independent reviewer exists to verify,
 not to repeat back. Name the exact command(s) actually run and their exit
 status (or the CI check run for this commit), so a reviewer can decide,
 per `docs/INTEGRATION_POLICY.md`, whether to trust an independent CI result
 or perform its own scoped validation.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

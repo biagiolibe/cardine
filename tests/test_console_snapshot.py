@@ -187,9 +187,9 @@ class ProjectConsoleTest(unittest.TestCase):
         self.write_queue()
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "# LEAN_DELIVERY\n"
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n"
             "Task files live under `docs/tasks/`\n"
-            "<!-- MERIDIAN:END -->\n", encoding="utf-8")
+            "<!-- CARDINE:END -->\n", encoding="utf-8")
         write_project_config(self.project, "lean")
         record = self.project / "tasks/002-second.md"
         for root in ("tasks/done", "docs/tasks"):
@@ -453,8 +453,8 @@ class LinklessQueueTest(support.RepoCase):
         self.write(self.project, ".cardine/task-identity.json",
                    json.dumps({"version": 1, "mode": "milestone"}))
         self.write(self.project, "PROJECT_WORKFLOW.md", (
-            f"# {self.lock}\n\n<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
-            "<!-- MERIDIAN:END -->\n\n"
+            f"# {self.lock}\n\n<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n"
+            "<!-- CARDINE:END -->\n\n"
             "The queue is `docs/TASK_QUEUE.md`. Task files live under "
             "`docs/tasks/<milestone>/<TASK-ID>.md`. Durable review records at "
             "`docs/tasks/reviews/<TASK-ID>.md`. Completion handoffs live at "

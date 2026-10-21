@@ -6,15 +6,15 @@ from pathlib import Path
 import hashlib
 import re
 
-from cardine.shared.constants import CAPABILITY_MARKER
+from cardine.shared.constants import CAPABILITY_MARKER, CLAUDE_AGENTS_POINTER_MARKER, MARKER_BEGIN, MARKER_END
 from cardine.templates.roots import single_template_root
 
 
 def marker_blocks(text: str, capability: str, version: int) -> list[str]:
     """Every complete exact marker block for one capability/version pair."""
     pattern = re.compile(
-        rf"<!-- MERIDIAN:BEGIN capability={re.escape(capability)} v{version} -->\n?.*?"
-        r"<!-- MERIDIAN:END -->",
+        rf"<!-- {MARKER_BEGIN} capability={re.escape(capability)} v{version} -->\n?.*?"
+        rf"{re.escape(MARKER_END)}",
         re.DOTALL,
     )
     return [match.group(0) for match in pattern.finditer(text)]
@@ -68,8 +68,8 @@ def extract_marker_block(text: str, capability: str, version: int) -> str | None
     sentence (a single clause inside a larger numbered step); both are legal.
     """
     pattern = re.compile(
-        rf"<!-- MERIDIAN:BEGIN capability={re.escape(capability)} v{version} -->\n?(.*?)"
-        r"<!-- MERIDIAN:END -->",
+        rf"<!-- {MARKER_BEGIN} capability={re.escape(capability)} v{version} -->\n?(.*?)"
+        rf"{re.escape(MARKER_END)}",
         re.DOTALL,
     )
     match = pattern.search(text)
@@ -78,8 +78,8 @@ def extract_marker_block(text: str, capability: str, version: int) -> str | None
 def extract_marked_block(text: str, capability: str, version: int) -> str | None:
     """Return one complete protected marker block, delimiters included."""
     pattern = re.compile(
-        rf"<!-- MERIDIAN:BEGIN capability={re.escape(capability)} v{version} -->\n?(.*?)"
-        r"<!-- MERIDIAN:END -->",
+        rf"<!-- {MARKER_BEGIN} capability={re.escape(capability)} v{version} -->\n?(.*?)"
+        rf"{re.escape(MARKER_END)}",
         re.DOTALL,
     )
     match = pattern.search(text)
@@ -177,24 +177,13 @@ def append_only_new_markers(local_text: str, base_text: str, template_text: str)
 
     return result
 
-CLAUDE_AGENTS_POINTER_MARKER = "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->"
-
 def is_agents_pointer(text: str) -> bool:
     """Recognize a project-owned CLAUDE.md that deliberately delegates to AGENTS.
 
-    New pointers declare a compact, versioned marker rather than depending on
-    explanatory prose. The former prose signature remains a compatibility path
-    for pointers created before the marker existed; neither form is safe when
+    A pointer declares a compact, versioned marker; it is not safe when
     CLAUDE.md contains capability markers of its own.
     """
-    legacy_pointer = (
-        "`AGENTS.md`, which is authoritative" in text
-        and "Every Meridian capability marker" in text
-        and "lives in `AGENTS.md`, once" in text
-        and "Keep this file a pointer" in text
-    )
-    explicit_pointer = text.count(CLAUDE_AGENTS_POINTER_MARKER) == 1
-    return (explicit_pointer or legacy_pointer) and not marker_pairs(text)
+    return text.count(CLAUDE_AGENTS_POINTER_MARKER) == 1 and not marker_pairs(text)
 
 def agents_pointer_satisfies_claude(
     project_root: Path, framework_root: Path, mode: str, claude_template_text: str, claude_local_text: str

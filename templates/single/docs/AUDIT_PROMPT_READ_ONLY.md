@@ -1,6 +1,6 @@
 # Audit Prompt (Read-only)
 
-<!-- MERIDIAN:BEGIN capability=audit-prompt v5 -->
+<!-- CARDINE:BEGIN capability=audit-prompt v1 -->
 Use this prompt in a fresh session for a periodic or second-opinion audit of process conformance. The audit must not modify files, run formatters in write mode, create commits, or implement code.
 
 ```text
@@ -27,4 +27,4 @@ If `docs/AUDIT_PROMPT_READ_ONLY.md` has a `## Project-specific checks` section a
 
 Output: a concise audit report with PASS/FAIL per item, discrepancies, ambiguous requirements, stale lower-precedence text, and recommended documentation-only follow-ups. Do not propose feature implementation.
 ```
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

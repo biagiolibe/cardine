@@ -34,7 +34,7 @@ class TemplateStopPolicyTest(unittest.TestCase):
         for path in (ROOT / "templates/single").rglob("*.md"):
             text = path.read_text()
             match = re.search(
-                r"<!-- MERIDIAN:BEGIN capability=git-workflow v\d+ -->(.*?)<!-- MERIDIAN:END -->",
+                r"<!-- CARDINE:BEGIN capability=git-workflow v\d+ -->(.*?)<!-- CARDINE:END -->",
                 text, re.S,
             )
             if not match:

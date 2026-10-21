@@ -70,7 +70,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
         absent = templates_markers.find_capability_marker_version("no marker here", "widget")
         self.assertIsNone(absent)
 
-        stale_text = "<!-- MERIDIAN:BEGIN capability=widget v1 -->text<!-- MERIDIAN:END -->"
+        stale_text = "<!-- CARDINE:BEGIN capability=widget v1 -->text<!-- CARDINE:END -->"
         self.assertEqual(templates_markers.find_capability_marker_version(stale_text, "widget"), 1)
 
     def test_detect_capabilities_distinguishes_absent_stale_and_satisfied(self) -> None:
@@ -92,10 +92,10 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
             absent = owner_templates_marker_history.capability_presence_map(self.project, "single", self.framework)
             self.assertEqual(len(absent), 1)
             self.assertFalse(absent["widget"][0])
-            self.assertIn("no MERIDIAN:BEGIN", absent["widget"][1])
+            self.assertIn("no CARDINE:BEGIN", absent["widget"][1])
 
             agents.write_text(
-                "<!-- MERIDIAN:BEGIN capability=widget v1 -->text<!-- MERIDIAN:END -->",
+                "<!-- CARDINE:BEGIN capability=widget v1 -->text<!-- CARDINE:END -->",
                 encoding="utf-8",
             )
             stale = owner_templates_marker_history.capability_presence_map(self.project, "single", self.framework)
@@ -103,7 +103,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
             self.assertEqual(stale["widget"][1], "marker present at v1, but v2 is required")
 
             agents.write_text(
-                "<!-- MERIDIAN:BEGIN capability=widget v2 -->text<!-- MERIDIAN:END -->",
+                "<!-- CARDINE:BEGIN capability=widget v2 -->text<!-- CARDINE:END -->",
                 encoding="utf-8",
             )
             satisfied = owner_templates_marker_history.capability_presence_map(self.project, "single", self.framework)

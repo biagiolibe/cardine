@@ -203,8 +203,8 @@ def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
                 )
 
     review = review_paths[-1].read_text(encoding="utf-8")
-    preflight_match = re.search(r"<!-- MERIDIAN:BEGIN capability=task-worktree-review-procedure v\d+ -->", review)
-    boundary_match = re.search(r"<!-- MERIDIAN:BEGIN capability=review-mode-boundary v\d+ -->", review)
+    preflight_match = re.search(rf"<!-- {constants.MARKER_BEGIN} capability=task-worktree-review-procedure v\d+ -->", review)
+    boundary_match = re.search(rf"<!-- {constants.MARKER_BEGIN} capability=review-mode-boundary v\d+ -->", review)
     if preflight_match is None or boundary_match is None:
         fail("governed review must begin with the task-worktree preflight")
     preflight, boundary = preflight_match.group(0), boundary_match.group(0)
@@ -227,7 +227,7 @@ def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
 
 
 MANAGED_BLOCK = re.compile(
-    r"<!-- MERIDIAN:BEGIN capability=(?P<capability>[\w-]+) v(?P<version>\d+) -->(?P<body>.*?)<!-- MERIDIAN:END -->",
+    rf"<!-- {constants.MARKER_BEGIN} capability=(?P<capability>[\w-]+) v(?P<version>\d+) -->(?P<body>.*?){re.escape(constants.MARKER_END)}",
     re.DOTALL,
 )
 FORBIDDEN_TEMPLATE_TEXT = (
@@ -689,7 +689,7 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
     design), so content is keyed per file, never merged across files.
     """
     marked_content = re.compile(
-        r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->\n?(.*?)<!-- MERIDIAN:END -->",
+        rf"<!-- {constants.MARKER_BEGIN} capability=([a-z0-9-]+) v(\d+) -->\n?(.*?){re.escape(constants.MARKER_END)}",
         re.DOTALL,
     )
     baselines: dict[str, dict[str, dict[str, object]]] = {}
@@ -771,7 +771,7 @@ def check_capability_required_versions(root: Path = ROOT) -> None:
     occurrences: dict[str, list[tuple[Path, int]]] = {}
     for item in owner_templates_files.managed_files(root):
         for capability, version in re.findall(
-            r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->",
+            rf"<!-- {constants.MARKER_BEGIN} capability=([a-z0-9-]+) v(\d+) -->",
             item.source.read_text(encoding="utf-8"),
         ):
             occurrences.setdefault(capability, []).append((item.source, int(version)))
