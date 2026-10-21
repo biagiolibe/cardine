@@ -21,7 +21,7 @@ code changes.
 
 ## Acceptance Criteria
 
-- [ ] `docs/RUN_ENGINE_PLAN.md` exists, in English, and contains:
+- [x] `docs/RUN_ENGINE_PLAN.md` exists, in English, and contains:
   - **Steps and next-step resolution.** The seven steps of decision 6, how the
     engine derives the next one from the task state alone, and how it resumes
     after any step or stop. Each step names the existing code it reuses:
@@ -69,19 +69,19 @@ code changes.
     of work item 7, which the plan of task 059 defines. Two tasks that touch
     the same file are never parallel. The tasks prove each recoverable code
     with a test that runs the command it returns, as decision 12 requires.
-- [ ] The plan follows `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` (task 059) for
+- [x] The plan follows `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` (task 059) for
   task states and generated status, and `docs/SINGLE_WORKFLOW_PLAN.md`,
   section 8, for what work item 8 inherits. Where it needs a choice those
   plans leave open, it states the choice.
-- [ ] This repository keeps running its lifecycle on the installed Meridian
+- [x] This repository keeps running its lifecycle on the installed Meridian
   until work item 10. No planned task runs `cardine run` on this
   repository or changes how its tasks are delivered.
-- [ ] The plan does not plan work items 9 or 10, but it names any choice that
+- [x] The plan does not plan work items 9 or 10, but it names any choice that
   would make them harder.
-- [ ] No file changes outside `docs/RUN_ENGINE_PLAN.md` and this task's
+- [x] No file changes outside `docs/RUN_ENGINE_PLAN.md` and this task's
   records: the task record, its handoff, and its archive under
   `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -90,9 +90,9 @@ code changes.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/062.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/062.json`, which only
   the installed `meridian task close 062` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
