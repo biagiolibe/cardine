@@ -20,7 +20,7 @@ design and the task sequence before any code changes.
 
 ## Acceptance Criteria
 
-- [ ] `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` exists, in English, and contains:
+- [x] `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` exists, in English, and contains:
   - **Duplicates to remove.** Every place in the product where status lives
     outside the task state file today: the `Status` field of the record, the
     queue and plan rows, the archive move to `tasks/done/`, and the code that
@@ -51,16 +51,16 @@ design and the task sequence before any code changes.
     scope, files, tests, and dependencies. Every task depends on task 061, the
     last task of work item 5b. Two tasks that touch the same file are never
     parallel.
-- [ ] The plan keeps `load_meridian_snapshot` working on this repository,
+- [x] The plan keeps `load_meridian_snapshot` working on this repository,
   whose queue, plan, and records stay in their Meridian form until work
   item 10. It says how, or states that the product changes do not reach
   `cardine.legacy`.
-- [ ] The plan does not plan work items 8, 9, or 10, but it names any choice
+- [x] The plan does not plan work items 8, 9, or 10, but it names any choice
   that would make them harder.
-- [ ] No file changes outside `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` and this
+- [x] No file changes outside `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` and this
   task's records: the task record, its handoff, and its archive under
   `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -69,9 +69,9 @@ design and the task sequence before any code changes.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/059.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/059.json`, which only
   the installed `meridian task close 059` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

@@ -33,14 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 17 — Single source of task state
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work item 7 and decision 4.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 059 | Plan the single source of task state (work item 7) | 🔴 P1 | — | [059](059-plan-single-source-of-truth.md) |
-
 ### Phase 18 — The cardine run engine
 
 Authority: `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 5, 6, 11, and 12.
