@@ -33,14 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 18 — The cardine run engine
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 5, 6, 11, and 12.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 062 | Plan the cardine run engine (work item 8) | 🔴 P1 | 059 | [062](062-plan-cardine-run-engine.md) |
-
 ### Phase 19 — Benchmark against a minimal procedure
 
 Authority: `docs/BENCHMARK_PROTOCOL.md`.

@@ -183,3 +183,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 7 and decision 4.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 059 | Plan the single source of task state (work item 7) | 🔴 P1 | — | [059](done/059-plan-single-source-of-truth.md) |
+
+### Phase 18 — The cardine run engine
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 5, 6, 11, and 12.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 062 | Plan the cardine run engine (work item 8) | 🔴 P1 | 059 | [062](done/062-plan-cardine-run-engine.md) |
