@@ -2,7 +2,7 @@
 
 Use this procedure only for `Proceed with <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v11 -->
+<!-- CARDINE:BEGIN capability=task-worktree-boundary v1 -->
 Order of operations: before `prepare`, read only the router read set
 (`AGENTS.md` or `CLAUDE.md`, `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`, and
 this procedure); read no task material and mutate nothing. Apart from the
@@ -84,19 +84,19 @@ stops are `ACCEPTANCE_UNMET`, `VALIDATION_FAILED`, `WRONG_WORKTREE`,
 command. A test-reported sandbox skip is not `VALIDATION_FAILED` only when no
 acceptance criterion depends solely on it; record it as `Validation skips:` in
 the handoff.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=manual-verification-precondition v4 -->If the task declares `Manual verification: required`, check its `Manual verification rationale` first, before any probe: if it is missing, or names a property readable as a value anywhere in the program (a tier-1 structural or tier-2 derived-value property per `docs/CONTEXT_READING_POLICY.md`'s evidence tiers), return `BLOCKED SCOPE_CHANGE_REQUIRED` asking for the task to be re-scoped as a deterministic check instead — do not run the probe. Only once the rationale names a genuine tier-3 perceptual property, confirm evidence availability before any implementation, not after: run an end-to-end probe that actually succeeds and produces the exact evidence channel the task will record, confirmed readable by the responsible agent or reviewer. A visible terminal entry, a launched process, or a presumed ability to automate an application window is not evidence availability; the probe must actually locate the application window and acquire its image, or otherwise produce and open the real artifact. If no such probe succeeds before implementation, return `BLOCKED SCOPE_CHANGE_REQUIRED` immediately; do not implement in the hope the channel will become available later. A probe that has been attempted and failed is positive evidence about the environment: report it and request the evidence channel from the developer before continuing, whatever the evidence tier — never respond to a failed probe by exploring the local environment for an alternative. When a deterministic test can serve as the change's primary acceptance evidence (for example, a geometry or layout assertion), it suspends only the requirement to *capture* manual or visual confirmation as the sole gate; it never suspends the requirement to stop on a probe that has already been attempted and failed.<!-- MERIDIAN:END -->
+<!-- CARDINE:BEGIN capability=manual-verification-precondition v1 -->If the task declares `Manual verification: required`, check its `Manual verification rationale` first, before any probe: if it is missing, or names a property readable as a value anywhere in the program (a tier-1 structural or tier-2 derived-value property per `docs/CONTEXT_READING_POLICY.md`'s evidence tiers), return `BLOCKED SCOPE_CHANGE_REQUIRED` asking for the task to be re-scoped as a deterministic check instead — do not run the probe. Only once the rationale names a genuine tier-3 perceptual property, confirm evidence availability before any implementation, not after: run an end-to-end probe that actually succeeds and produces the exact evidence channel the task will record, confirmed readable by the responsible agent or reviewer. A visible terminal entry, a launched process, or a presumed ability to automate an application window is not evidence availability; the probe must actually locate the application window and acquire its image, or otherwise produce and open the real artifact. If no such probe succeeds before implementation, return `BLOCKED SCOPE_CHANGE_REQUIRED` immediately; do not implement in the hope the channel will become available later. A probe that has been attempted and failed is positive evidence about the environment: report it and request the evidence channel from the developer before continuing, whatever the evidence tier — never respond to a failed probe by exploring the local environment for an alternative. When a deterministic test can serve as the change's primary acceptance evidence (for example, a geometry or layout assertion), it suspends only the requirement to *capture* manual or visual confirmation as the sole gate; it never suspends the requirement to stop on a probe that has already been attempted and failed.<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=host-impact-routing v2 -->Before implementation, read the task's `Host impact` declaration. `NOT_APPLICABLE` needs a non-empty rationale explaining why no host-facing contract can change. `REQUIRED` needs a host-independent policy outcome, one profile row with every declared column, all three evidence-plan categories, and a fallback for every profile. For a host-sensitive task, if the required static, host-execution, or manual-activation evidence cannot be obtained for a profile, stop and return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`; retain that profile as `unverified`, `advisory`, or `unsupported` with its fallback rather than claiming `enforced`. A template declaration is not host enforcement, and no automatic host probe is required by this routing rule.<!-- MERIDIAN:END -->
+<!-- CARDINE:BEGIN capability=host-impact-routing v1 -->Before implementation, read the task's `Host impact` declaration. `NOT_APPLICABLE` needs a non-empty rationale explaining why no host-facing contract can change. `REQUIRED` needs a host-independent policy outcome, one profile row with every declared column, all three evidence-plan categories, and a fallback for every profile. For a host-sensitive task, if the required static, host-execution, or manual-activation evidence cannot be obtained for a profile, stop and return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`; retain that profile as `unverified`, `advisory`, or `unsupported` with its fallback rather than claiming `enforced`. A template declaration is not host enforcement, and no automatic host probe is required by this routing rule.<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=spike-routing v3 -->If any acceptance criterion cannot be evaluated without first discovering an unknown, do not implement past that point: return `BLOCKED SCOPE_CHANGE_REQUIRED`, naming the exact `Class: SPIKE` task (see `tasks/TASK_BLUEPRINT.md`'s spike shape) needed to resolve the unknown, proposing it if it does not exist yet. Do not investigate the unknown inside this task's own branch, commit, or timebox — that is what turns a spike into an unbounded side-channel for work that should have gone through its own `Question`/`Timebox` gate.<!-- MERIDIAN:END -->
+<!-- CARDINE:BEGIN capability=spike-routing v1 -->If any acceptance criterion cannot be evaluated without first discovering an unknown, do not implement past that point: return `BLOCKED SCOPE_CHANGE_REQUIRED`, naming the exact `Class: SPIKE` task (see `tasks/TASK_BLUEPRINT.md`'s spike shape) needed to resolve the unknown, proposing it if it does not exist yet. Do not investigate the unknown inside this task's own branch, commit, or timebox — that is what turns a spike into an unbounded side-channel for work that should have gone through its own `Question`/`Timebox` gate.<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->
+<!-- CARDINE:BEGIN capability=validation-scoping v1 -->
 Scope validation to the diff's actual surface, following the validation-scope rule in `docs/CONTEXT_READING_POLICY.md`. Skip a full build, test, or lint suite for a documentation or policy-only change, and state the skip explicitly in the completion report.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=execution-command-gate v6 -->
+<!-- CARDINE:BEGIN capability=execution-command-gate v1 -->
 For a normal task, execute every named `Validation` entry only through
 `cardine execution validate <TASK-ID> <validation-id> --project .`; running
 the literal command directly is not completion evidence. Record the command, exit status, and bounded evidence without self-reported
@@ -110,9 +110,9 @@ but remain pending until committed. Never edit a status or verdict by hand.
 Use `cardine execution start <TASK-ID> --project .` at implementation start and follow validated closure and integration for `Review: not_required`. If a nonterminal
 legacy task lacks the current generated execution contract, run `cardine
 execution reconcile <TASK-ID> --apply --project .` before substantive work.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=phase-reads v1 -->
+<!-- CARDINE:BEGIN capability=phase-reads v1 -->
 ## Phase reads
 
 Read each document when its phase begins, in the order listed. This changes
@@ -124,9 +124,9 @@ waived by reading a document later.
 - At proposing a spike: `tasks/TASK_BLUEPRINT.md`.
 - At first validation: `docs/EXECUTION_EVIDENCE_PROFILE.md`.
 - At completion: `docs/COMPLETION_REPORT_TEMPLATE.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=bounded-context-readers v3 -->
+<!-- CARDINE:BEGIN capability=bounded-context-readers v1 -->
 ## Bounded context readers
 
 Read the task's cited ADRs and specification sections with `cardine context
@@ -140,4 +140,4 @@ row must be read verbatim or edited, locate that row and read only its range.
 Open a source document directly only when a bounded reader reports an entry
 unresolved or its excerpt cannot verify an acceptance criterion, and record
 that reason in the report.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

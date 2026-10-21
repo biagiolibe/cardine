@@ -15,7 +15,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RULES = ROOT / "templates/single/.codex/rules/meridian.rules"
 LEAN_RULES = ROOT / "templates/single/.codex/rules/meridian.rules"
-PROJECT_RULES = ROOT / ".codex/rules/meridian.rules"
 PREFIX_RULE = re.compile(
     r'^prefix_rule\(pattern=\[[^\n]+\], decision="(allow|prompt|forbidden)"\)$'
 )
@@ -35,7 +34,7 @@ class CodexRulesTemplateTest(unittest.TestCase):
         self.assertIn(Path(".codex/rules/meridian.rules"), lean)
 
     def test_prefix_rules_are_single_line_and_well_formed(self) -> None:
-        for path in (RULES, LEAN_RULES, PROJECT_RULES):
+        for path in (RULES, LEAN_RULES):
             lines = path.read_text(encoding="utf-8").splitlines()
             rules = [line for line in lines if line.startswith("prefix_rule(")]
             self.assertGreaterEqual(len(rules), 9)
@@ -46,7 +45,7 @@ class CodexRulesTemplateTest(unittest.TestCase):
     def test_only_origin_main_is_allowlisted_for_pushes(self) -> None:
         exact = 'prefix_rule(pattern=["git", "push", "origin", "main"], decision="allow")'
         broad = 'prefix_rule(pattern=["git", "push"], decision="allow")'
-        for path in (RULES, LEAN_RULES, PROJECT_RULES):
+        for path in (RULES, LEAN_RULES):
             text = path.read_text(encoding="utf-8")
             self.assertIn(exact, text)
             self.assertNotIn(broad, text)
@@ -54,7 +53,7 @@ class CodexRulesTemplateTest(unittest.TestCase):
     def test_closure_rule_block_is_identical_in_every_shipped_file(self) -> None:
         pattern = re.compile(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", re.DOTALL)
         blocks = []
-        for path in (RULES, LEAN_RULES, PROJECT_RULES):
+        for path in (RULES, LEAN_RULES):
             match = pattern.search(path.read_text(encoding="utf-8"))
             self.assertIsNotNone(match, path)
             blocks.append(match.group(0))
@@ -71,7 +70,7 @@ class CodexRulesTemplateTest(unittest.TestCase):
         for unsafe in ('["sed"', '["rg"', '["find"', '["mv"'):
             self.assertNotIn(unsafe, block.replace("# ", ""))
         # New rules sit before the unchanged restrictive block, never at end of file.
-        for path in (RULES, LEAN_RULES, PROJECT_RULES):
+        for path in (RULES, LEAN_RULES):
             text = path.read_text(encoding="utf-8")
             self.assertLess(text.index("Unattended-closure additions"), text.index('decision="forbidden"'))
             self.assertTrue(text.rstrip().endswith('decision="forbidden")'))
@@ -103,7 +102,7 @@ class CodexRulesTemplateTest(unittest.TestCase):
             (["git", "reset", "--hard"], "forbidden"),
             (["git", "push", "--force", "origin", "main"], "forbidden"),
         ]
-        for path in (RULES, LEAN_RULES, PROJECT_RULES):
+        for path in (RULES, LEAN_RULES):
             for command, expected in cases:
                 with self.subTest(rules=path.parts[-4], command=command):
                     result = subprocess.run(

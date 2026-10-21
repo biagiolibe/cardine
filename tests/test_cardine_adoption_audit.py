@@ -24,7 +24,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.project / "docs/LIFECYCLE_ORCHESTRATION.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=lifecycle-orchestration v13", text)
+        self.assertIn("CARDINE:BEGIN capability=lifecycle-orchestration v1", text)
         edited = text.replace(
             "The orchestrator is a coordination-only role", "The orchestrator is a coordination-only role (edited without an upgrade)"
         )
@@ -35,7 +35,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
             "FAIL           marker-integrity — docs/LIFECYCLE_ORCHESTRATION.md: "
-            "capability=lifecycle-orchestration v13",
+            "capability=lifecycle-orchestration v1",
             audited.stdout,
         )
         self.assertIn("SUMMARY worst=FAIL", audited.stdout)
@@ -47,14 +47,14 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.project / "AGENTS.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("MERIDIAN:BEGIN capability=command-triggers v3", text)
+        self.assertIn("CARDINE:BEGIN capability=command-triggers v1", text)
         relabeled = text.replace(
-            "MERIDIAN:BEGIN capability=command-triggers v3",
-            "MERIDIAN:BEGIN capability=command-triggers v4",
+            "CARDINE:BEGIN capability=command-triggers v1",
+            "CARDINE:BEGIN capability=command-triggers v4",
             1,
         )
         duplicate_block = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=command-triggers v4 -->.*?<!-- MERIDIAN:END -->",
+            r"<!-- CARDINE:BEGIN capability=command-triggers v4 -->.*?<!-- CARDINE:END -->",
             relabeled,
             re.DOTALL,
         )
@@ -65,7 +65,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
             "FAIL           marker-integrity — AGENTS.md: capability=command-triggers "
-            "carries 2 versions (v3, v4)",
+            "carries 2 versions (v1, v4)",
             audited.stdout,
         )
 
@@ -75,8 +75,8 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
             local = self.project / name
             local.write_text(
                 local.read_text(encoding="utf-8").replace(
-                    "MERIDIAN:BEGIN capability=lifecycle-orchestration v13",
-                    "MERIDIAN:BEGIN capability=lifecycle-orchestration v99",
+                    "CARDINE:BEGIN capability=lifecycle-orchestration v1",
+                    "CARDINE:BEGIN capability=lifecycle-orchestration v99",
                 ),
                 encoding="utf-8",
             )
@@ -93,7 +93,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.project / "docs/CONTEXT_READING_POLICY.md"
         policy.write_text(
             policy.read_text(encoding="utf-8")
-            + "\n<!-- MERIDIAN:BEGIN capability=reasoning-budget-contract v1 -->\nRetired.\n<!-- MERIDIAN:END -->\n",
+            + "\n<!-- CARDINE:BEGIN capability=reasoning-budget-contract v1 -->\nRetired.\n<!-- CARDINE:END -->\n",
             encoding="utf-8",
         )
 
@@ -115,7 +115,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
                     "from": "1.1.0",
                     "to": "1.1.1",
                     "description": "test-only retirement",
-                    "removes": [{"capability": "validation-scoping", "capabilityVersion": 2}],
+                    "removes": [{"capability": "validation-scoping", "capabilityVersion": 1}],
                     "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
                     "verification": ["test-only"],
                 }
@@ -125,8 +125,8 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         policy_text = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->\n?.*?"
-            r"<!-- MERIDIAN:END -->\n?",
+            r"<!-- CARDINE:BEGIN capability=validation-scoping v1 -->\n?.*?"
+            r"<!-- CARDINE:END -->\n?",
             policy_text,
             re.DOTALL,
         )
@@ -140,4 +140,4 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         audited = self.run_cli("audit", "--mode", "single")
         self.assertEqual(audited.returncode, 2, audited.stdout + audited.stderr)
         self.assertIn("FAIL", audited.stdout)
-        self.assertIn("validation-scoping v2 is retired but still present", audited.stdout)
+        self.assertIn("validation-scoping v1 is retired but still present", audited.stdout)

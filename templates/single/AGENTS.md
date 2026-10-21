@@ -4,7 +4,7 @@ Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before responding or mutatin
 
 Work only on a developer-assigned task or an explicitly authorized read-only request. Before a write or Git mutation, read the task and `git status --short`; preserve unrelated changes and do not discard, stage, or overwrite them. Select one route below. A mixed or unrecognized request needs clarification; do not load a universal procedure.
 
-<!-- MERIDIAN:BEGIN capability=command-triggers v3 -->
+<!-- CARDINE:BEGIN capability=command-triggers v1 -->
 ## Command triggers
 
 - `Proceed with <TASK-ID>` — read `docs/workflows/IMPLEMENTATION.md`.
@@ -14,6 +14,6 @@ Work only on a developer-assigned task or an explicitly authorized read-only req
 - `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.
 - Status, project question, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
 - Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Follow `docs/CODE_ORGANIZATION.md` for production-source changes. The routed procedure supplies all role-specific validation, review, lifecycle, and Git detail.

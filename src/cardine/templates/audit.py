@@ -4,6 +4,7 @@ from cardine.shared.constants import AUDIT_STATES
 from cardine.shared.models import AuditResult
 from cardine.shared.constants import CAPABILITY_DECLARATION_REQUIRED_PROTOCOL
 from cardine.shared.constants import CAPABILITY_MARKER
+from cardine.shared.constants import MARKER_BEGIN, MARKER_END
 from cardine.shared.constants import CONTEXT_SIZE_ROLES
 from cardine.shared.models import CapabilityDeclaration
 from cardine.shared.models import CatalogProfile
@@ -508,7 +509,7 @@ def retired_text_advisories(
             # Blank managed regions without changing line numbers. An unfinished
             # region remains managed through EOF; marker audit handles corruption.
             text = re.sub(
-                r"<!-- MERIDIAN:BEGIN\b.*?(?:<!-- MERIDIAN:END -->|\Z)",
+                rf"<!-- {MARKER_BEGIN}\b.*?(?:{re.escape(MARKER_END)}|\Z)",
                 lambda match: "".join("\n" if char == "\n" else " " for char in match.group()),
                 text, flags=re.DOTALL,
             )

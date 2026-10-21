@@ -62,7 +62,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         )
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n<!-- CARDINE:END -->\n"
             "Task files live under `docs/tasks/<milestone>/`; queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n",
             encoding="utf-8",
         )

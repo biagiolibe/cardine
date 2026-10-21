@@ -166,3 +166,12 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work item 6 and decisions 3 and 4, and `do
 | `[x]` | 056 | Reconcile the capability catalog with the single template set (single workflow SW5) | 🔴 P1 | 055 | [056](done/056-reconcile-capabilities.md) |
 | `[x]` | 057 | Name the preset in the per-turn briefing (single workflow SW6) | 🔴 P1 | 056 | [057](done/057-preset-briefing-adapter.md) |
 | `[x]` | 058 | Remove residual workflow branching and prove parity (single workflow SW7) | 🔴 P1 | 057 | [058](done/058-remove-workflow-branching.md) |
+
+### Phase 16 — Marker and template text rename
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 5b, and `docs/RENAME_PLAN.md`.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 060 | Remove the Meridian name and the old states from the template text (work item 5b) | 🔴 P1 | 058 | [060](done/060-cardine-template-text.md) |
+| `[x]` | 061 | Rename the capability markers and restart every capability at v1 (work item 5b) | 🔴 P1 | 060 | [061](done/061-cardine-markers-from-v1.md) |

@@ -40,7 +40,7 @@ class ReadGuardTest(unittest.TestCase):
         (self.project / "tasks").mkdir()
         # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n<!-- CARDINE:END -->\n"
             "Task files live under `tasks/`; queue is `tasks/QUEUE.md`.\n\n## Roles\n",
             encoding="utf-8",
         )

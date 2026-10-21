@@ -34,9 +34,9 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
 
     def test_lifecycle_and_bounded_worktree_keep_their_catalog_versions(self):
         pairs = dict(marker_pairs((ROOT / "templates/single/docs/LIFECYCLE_ORCHESTRATION.md").read_text()))
-        self.assertEqual(pairs["lifecycle-orchestration"], 13)
+        self.assertEqual(pairs["lifecycle-orchestration"], 1)
         pairs = dict(marker_pairs((ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()))
-        self.assertEqual(pairs["bounded-worktree-lifecycle"], 9)
+        self.assertEqual(pairs["bounded-worktree-lifecycle"], 1)
         check_repository.check_capability_required_versions(ROOT)
         text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
         self.assertIn("queued -> in_progress", text)
@@ -56,11 +56,11 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
             shutil.copytree(ROOT / "templates/single", root / "templates/single")
             shutil.copytree(ROOT / "capabilities", root / "capabilities")
             later = root / "templates/single/docs/workflows/IMPLEMENTATION.md"
-            later.write_text(later.read_text() + "\n<!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v3 -->\nOld variant.\n<!-- MERIDIAN:END -->\n")
+            later.write_text(later.read_text() + "\n<!-- CARDINE:BEGIN capability=lifecycle-orchestration v3 -->\nOld variant.\n<!-- CARDINE:END -->\n")
             output = io.StringIO()
             with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
                 check_repository.check_capability_required_versions(root)
-            self.assertIn("requiredVersion=13", output.getvalue())
+            self.assertIn("requiredVersion=1,", output.getvalue())
             self.assertIn("ships v3", output.getvalue())
 
     def test_catalog_and_dependencies_use_the_reading_policy(self):
@@ -108,7 +108,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
                 locked = cli("lock", "--mode", mode)
                 self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
                 path = project / "PROJECT_WORKFLOW.md"
-                text = path.read_text().replace("capability=git-workflow v16 -->", "capability=git-workflow v16 -->\nTampered policy.", 1)
+                text = path.read_text().replace("capability=git-workflow v1 -->", "capability=git-workflow v1 -->\nTampered policy.", 1)
                 path.write_text(text)
                 fixture.migration("001-synthetic-policy", "2.1.0", capability="git-workflow", version=17,
                                   content="Updated canonical policy.", paths=("PROJECT_WORKFLOW.md",), mode=mode)

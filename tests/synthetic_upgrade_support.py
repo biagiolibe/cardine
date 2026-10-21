@@ -89,9 +89,9 @@ class SyntheticFramework:
                     destination = self.root / relative
                     text = destination.read_text(encoding="utf-8") if destination.exists() else ""
                     block = "" if operation == "retire" else (
-                        f"<!-- MERIDIAN:BEGIN capability={capability} v{version} -->\n{content}\n<!-- MERIDIAN:END -->\n"
+                        f"<!-- CARDINE:BEGIN capability={capability} v{version} -->\n{content}\n<!-- CARDINE:END -->\n"
                     )
-                    pattern = rf"<!-- MERIDIAN:BEGIN capability={re.escape(capability)} v\d+ -->.*?<!-- MERIDIAN:END -->\n?"
+                    pattern = rf"<!-- CARDINE:BEGIN capability={re.escape(capability)} v\d+ -->.*?<!-- CARDINE:END -->\n?"
                     if re.search(pattern, text, re.DOTALL):
                         text = re.sub(pattern, lambda _: block, text, flags=re.DOTALL)
                     else:

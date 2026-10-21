@@ -1,6 +1,6 @@
 # Review Record
 
-<!-- MERIDIAN:BEGIN capability=review-remediation-record v7 -->
+<!-- CARDINE:BEGIN capability=review-remediation-record v1 -->
 Use one durable review record per required-review task at the location
 `cardine locations` resolves for it. It is the canonical handoff from reviewer to
 implementer; chat output may summarize it but must not be the only location of
@@ -37,12 +37,12 @@ Use `- [ ]` only for changes that must be made before approval. `P0` and `P1`
 findings block approval; `P2` findings are included only when they require a
 bounded change in this task. Style-only commentary does not belong in the
 record.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=manual-verification-record v1 -->
+<!-- CARDINE:BEGIN capability=manual-verification-record v1 -->
 When the task declared `Manual verification: required`, the reviewer
 independently confirms the named screenshot against the view it claims to
 show and adds `Manual verification observed: <screenshot path — view
 checked — result>` alongside the attempt's other evidence fields, rather
 than restating the implementer's claim unverified.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

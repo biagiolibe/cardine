@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import builtins
+import re
 from dataclasses import FrozenInstanceError
 import io
 import json
@@ -21,6 +22,8 @@ from cardine.legacy import meridian_installation as installation
 from cardine.console.snapshot import load_snapshot
 from cardine.shared.constants import CAPABILITY_MARKER, MARKED_BLOCK
 from cardine.shared.layout import ProjectNames, names, use
+from cardine.shared.snapshot_adapters import execution_assets_adapter
+from cardine.tasks.identity import resolve_project_locations
 from cardine.tasks.state import read_task_state
 from cardine.templates.catalog import load_capability_catalog
 from cardine.templates.audit import profile_doctor
@@ -234,6 +237,38 @@ class InstallationTest(RepoCase):
                 installation.read_manifest(self.project)
             self.assertEqual(path.read_text(encoding="utf-8"), text)
 
+    def test_execution_assets_are_read_only_through_the_injected_reader(self):
+        self.write(self.project, "PROJECT_WORKFLOW.md", (
+            "LEAN_DELIVERY\n\n<!-- MERIDIAN:BEGIN capability=execution-assets v5 -->\n## Execution assets\n"
+            "<!-- MERIDIAN:END -->\nThe queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n"
+        ))
+        self.assertEqual(resolve_project_locations(self.project).queue, Path("tasks/QUEUE.md"))
+        token = execution_assets_adapter.set(installation.read_meridian_execution_assets)
+        try:
+            self.assertEqual(resolve_project_locations(self.project).queue, Path("docs/TASK_QUEUE.md"))
+        finally:
+            execution_assets_adapter.reset(token)
+        self.assertEqual(resolve_project_locations(self.project).queue, Path("tasks/QUEUE.md"))
+
+    def test_snapshot_resolves_a_declared_queue_and_restores_the_product_reader(self):
+        expected = {task.task_id for task in installation.load_meridian_snapshot(self.project).tasks}
+        self.assertTrue(expected)
+        queue = (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8")
+        self.write(self.project, "tasks/TASK_QUEUE.md", queue)
+        (self.project / "tasks/QUEUE.md").unlink()
+        self.write(self.project, "PROJECT_WORKFLOW.md", (
+            "LEAN_DELIVERY\n\n<!-- MERIDIAN:BEGIN capability=execution-assets v5 -->\n## Execution assets\n"
+            "<!-- MERIDIAN:END -->\nThe queue is `tasks/TASK_QUEUE.md`.\n\n## Roles\n"
+        ))
+        snapshot = installation.load_meridian_snapshot(self.project)
+        self.assertEqual({task.task_id for task in snapshot.tasks}, expected)
+        self.assertIsNone(execution_assets_adapter.get())
+
+    def test_snapshot_still_reads_this_repository(self):
+        snapshot = installation.load_meridian_snapshot(ROOT)
+        self.assertTrue(snapshot.tasks)
+        self.assertIsNone(execution_assets_adapter.get())
+
     def test_snapshot_restores_context_after_failure(self):
         selected = ProjectNames(project_directory=".other")
         with use(selected), patch.object(installation, "load_snapshot", side_effect=RuntimeError("test")):
@@ -249,15 +284,21 @@ class MarkerAndIsolationTest(unittest.TestCase):
         self.assertEqual(installation.meridian_marker_blocks("prefix" + block + other), (("sample", 12, block),))
         self.assertEqual(installation.meridian_marker_blocks("<!-- MERIDIAN:BEGIN capability=sample v1 -->"), ())
 
-    def test_marker_patterns_match_current_templates(self):
+    def test_marker_patterns_read_the_meridian_rendering_of_current_templates(self):
+        begin = re.compile(r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->\n?.*?<!-- MERIDIAN:END -->", re.DOTALL)
         count = 0
         for path in (ROOT / "templates").rglob("*"):
             if not path.is_file():
                 continue
-            text = path.read_text(encoding="utf-8")
-            expected = tuple((m.group(1), int(m.group(2)), m.group(0)) for m in MARKED_BLOCK.finditer(text))
+            text = path.read_text(encoding="utf-8").replace("CARDINE:", "MERIDIAN:")
+            expected = tuple((m.group(1), int(m.group(2)), m.group(0)) for m in begin.finditer(text))
             self.assertEqual(installation.meridian_marker_blocks(text), expected, str(path))
-            self.assertEqual(installation._CAPABILITY_MARKER.findall(text), CAPABILITY_MARKER.findall(text))
+            self.assertEqual(
+                installation._CAPABILITY_MARKER.findall(text),
+                [(m.group(1), m.group(2)) for m in begin.finditer(text)],
+            )
+            self.assertEqual(CAPABILITY_MARKER.findall(text), [], str(path))
+            self.assertEqual(MARKED_BLOCK.findall(text), [], str(path))
             count += len(expected)
         self.assertGreater(count, 0)
 

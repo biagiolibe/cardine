@@ -10,21 +10,21 @@ For an implementation or review:
 2. Read only the task's `Authority` entries and the minimum files needed to verify its `Expected code surface`.
 3. Do not scan the repository, full backlog, unrelated ADRs/specifications, prior chats, or generic design documents without a task-specific need.
 4. Expand context only when the task is blocked, an acceptance criterion cannot be verified, or an authoritative conflict is discovered. Record the reason in the completion or review report.
-5. <!-- MERIDIAN:BEGIN capability=queue-briefing v1 -->For the task queue, rely on the resolved briefing that fires at the start of each turn — active, in-review, next-startable, and dependency-blocked rows — instead of opening the queue file. Open it directly only when the briefing did not fire, a row's exact wording or a column it does not surface is needed, or its resolved state conflicts with other evidence.<!-- MERIDIAN:END -->
-6. <!-- MERIDIAN:BEGIN capability=authority-excerpt v2 -->For a task's cited ADRs and specification sections, run `cardine context authority <TASK-ID>` and read its resolved excerpts instead of opening the ADR log or a spec file directly. Open the file itself only when the command reports the entry unresolved or an excerpt is insufficient to verify an acceptance criterion.<!-- MERIDIAN:END -->
+5. <!-- CARDINE:BEGIN capability=queue-briefing v1 -->For the task queue, rely on the resolved briefing that fires at the start of each turn — active, in-review, next-startable, and dependency-blocked rows — instead of opening the queue file. Open it directly only when the briefing did not fire, a row's exact wording or a column it does not surface is needed, or its resolved state conflicts with other evidence.<!-- CARDINE:END -->
+6. <!-- CARDINE:BEGIN capability=authority-excerpt v1 -->For a task's cited ADRs and specification sections, run `cardine context authority <TASK-ID>` and read its resolved excerpts instead of opening the ADR log or a spec file directly. Open the file itself only when the command reports the entry unresolved or an excerpt is insufficient to verify an acceptance criterion.<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=read-guard v2 -->
+<!-- CARDINE:BEGIN capability=read-guard v1 -->
 Item 2's rule is enforced mechanically, not only in prose. A `Read` of a file
 past the configured `Read-guard threshold` with no `offset` or `limit` is
 denied. The active task comes from the verified task worktree, and the task's
 Authority and exemption paths are allowed. The router read set is exempt from
 the threshold up to the router file ceiling. Locate the needed lines first,
 then read that range.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Dependencies establish readiness; they do not automatically require rereading their entire implementation history.
 
-<!-- MERIDIAN:BEGIN capability=isolated-exploration v3 -->
+<!-- CARDINE:BEGIN capability=isolated-exploration v1 -->
 ## Isolated exploration
 
 When one specific question requires broad or uncertain-yield material outside a
@@ -46,9 +46,9 @@ worker, or a direct read when the declared scope is small.
 Use isolated exploration only for a genuinely open-ended question. Do not use
 it to bypass a task's authority boundary, conceal a broad repository scan, or
 replace a required spike when the unknown changes the task's design premise.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=minimal-read-only-status v4 -->
+<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->
 ## Minimal read-only status
 
 For a request to report the current workflow status without modifying
@@ -76,11 +76,11 @@ A status report is not a conformance audit. It reports workflow mode,
 non-terminal work, dependency readiness, Git state, the next permitted action,
 and blockers; use the audit procedure only when the developer asks for an
 audit.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Validation scope
 
-<!-- MERIDIAN:BEGIN capability=validation-scoping v2 -->
+<!-- CARDINE:BEGIN capability=validation-scoping v1 -->
 Before running validation, classify the diff by surface: *documentation/policy
 text* (Markdown, comments, configuration prose with no build or runtime
 effect) versus *source/build* (application code, dependency manifests, build
@@ -96,9 +96,9 @@ command here because its surface was not touched, not because it cannot run.
 A reviewer verifies the same scoping: confirm that validation evidence
 matches the actual diff surface, that nothing relevant was skipped, and that
 nothing irrelevant was run and reported as if it were meaningful evidence.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=evidence-tiers v1 -->
+<!-- CARDINE:BEGIN capability=evidence-tiers v1 -->
 ## Evidence tiers
 
 Before declaring `Manual verification: required`, name which tier the
@@ -109,9 +109,9 @@ property belongs to; only tier 3 justifies it.
 3. **Perceptual** — exists only in the rendered artifact and nowhere as a value: shading, font rendering, visual balance, "does it read correctly".
 
 If the property is readable as a value anywhere in the program, assert it instead of capturing it.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=execution-evidence-profile v6 -->
+<!-- CARDINE:BEGIN capability=execution-evidence-profile v1 -->
 ## Execution evidence discipline
 
 Apply the project-specific `docs/EXECUTION_EVIDENCE_PROFILE.md` before an
@@ -154,9 +154,9 @@ first implementation after an upgrade that adds it.
 
 If the active agent interface offers a faster execution mode, it may be used
 only when it does not reduce required evidence.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=phase-reads v1 -->
+<!-- CARDINE:BEGIN capability=phase-reads v1 -->
 ## Phase reads
 
 When this policy is the routed document for a status or design request, read
@@ -165,7 +165,7 @@ no rule here is waived by reading a document later.
 
 - At start: this policy.
 - At first validation, only for an implementation, remediation, or review: `docs/EXECUTION_EVIDENCE_PROFILE.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 ## Lifecycle orchestration
 

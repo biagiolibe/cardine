@@ -220,18 +220,18 @@ class QueueBriefingTest(unittest.TestCase):
 
     def test_resolves_a_projects_declared_queue_location(self) -> None:
         """The consumer project A-shaped customization: an annotated paragraph right
-        after execution-assets' MERIDIAN:END, still inside the section,
+        after execution-assets' CARDINE:END, still inside the section,
         naming a different queue path than the tasks/QUEUE.md default."""
         # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "# Project Workflow\n\n"
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n"
             "## Execution assets\n\n"
             "**Canonical locations.** Task files live at `tasks/<TASK-ID>.md`, "
             "the queue at `tasks/QUEUE.md`, and durable review records at "
             "`tasks/reviews/<TASK-ID>.md`, unless this section declares "
             "different locations for this project.\n"
-            "<!-- MERIDIAN:END -->\n\n"
+            "<!-- CARDINE:END -->\n\n"
             "This project declares its real locations: `docs/TASK_QUEUE.md` "
             "for the queue and `docs/tasks/reviews/<TASK-ID>.md` for review "
             "records.\n\n"
@@ -259,8 +259,8 @@ class QueueBriefingTest(unittest.TestCase):
         )
         # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n"
+            "<!-- CARDINE:END -->\n"
             "The queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n",
             encoding="utf-8",
         )
@@ -279,13 +279,13 @@ class QueueBriefingTest(unittest.TestCase):
         # MERIDIAN-INSTALLATION-CHECK
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "# Project Workflow\n\n"
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n"
             "## Execution assets\n\n"
             "**Canonical locations.** Task files live at `tasks/<TASK-ID>.md`, "
             "the queue at `tasks/QUEUE.md`, and durable review records at "
             "`tasks/reviews/<TASK-ID>.md`, unless this section declares "
             "different locations for this project.\n"
-            "<!-- MERIDIAN:END -->\n\n"
+            "<!-- CARDINE:END -->\n\n"
             "Archive terminal rows to `docs/TASK_QUEUE_ARCHIVE.md` once a phase closes.\n\n"
             "## Roles\n",
             encoding="utf-8",

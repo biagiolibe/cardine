@@ -77,10 +77,16 @@ SELF_CHECK_UNKNOWN = 11
 CAPABILITY_DECLARATION_REQUIRED_PROTOCOL = 3
 
 
-CAPABILITY_MARKER = re.compile(r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->")
+MARKER_BEGIN = "CARDINE:BEGIN"
+
+MARKER_END = "<!-- CARDINE:END -->"
+
+CLAUDE_AGENTS_POINTER_MARKER = "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->"
+
+CAPABILITY_MARKER = re.compile(rf"<!-- {MARKER_BEGIN} capability=([a-z0-9-]+) v(\d+) -->")
 
 MARKED_BLOCK = re.compile(
-    r"<!-- MERIDIAN:BEGIN capability=([a-z0-9-]+) v(\d+) -->\n?.*?<!-- MERIDIAN:END -->",
+    rf"<!-- {MARKER_BEGIN} capability=([a-z0-9-]+) v(\d+) -->\n?.*?{re.escape(MARKER_END)}",
     re.DOTALL,
 )
 
@@ -117,7 +123,9 @@ CONTEXT_SIZE_CONFIG_PATH = PRODUCT_NAMES.context_size_config_path
 
 CONTEXT_SIZE_POLICY_PATH = Path("docs/CONTEXT_READING_POLICY.md")
 
-CONTEXT_PHASE_READS_BLOCK = re.compile(r"<!-- MERIDIAN:BEGIN capability=phase-reads v\d+ -->(.*?)<!-- MERIDIAN:END -->", re.DOTALL)
+CONTEXT_PHASE_READS_BLOCK = re.compile(
+    rf"<!-- {MARKER_BEGIN} capability=phase-reads v\d+ -->(.*?){re.escape(MARKER_END)}", re.DOTALL
+)
 
 CONTEXT_PHASE_READ_LINE = re.compile(r"^- At ([^:\n]+): (.+)$", re.MULTILINE)
 

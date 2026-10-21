@@ -17,35 +17,35 @@ as the developer decided on 2026-10-19.
 
 ## Acceptance Criteria
 
-- [ ] Every marker under `templates/single/` uses the Cardine syntax at `v1`.
+- [x] Every marker under `templates/single/` uses the Cardine syntax at `v1`.
   Every live capability in `capabilities/markers-v1.json` has
   `requiredVersion: 1`, and `capabilities/marker-baselines.json` is
   rewritten to match. Retired entries keep their historical values; the
   handoff says why they are kept.
-- [ ] The product's marker patterns (`cardine.shared.constants`,
+- [x] The product's marker patterns (`cardine.shared.constants`,
   `cardine.templates.markers`, `marker_history`, `audit`, `files`,
   `cardine.tasks.identity`, `cardine.shared.models`, and
   `scripts/check_repository.py`) read only the Cardine syntax. A test
   proves that a `MERIDIAN:BEGIN` block is not recognized by the product
   and is not upgraded.
-- [ ] `cardine.legacy.meridian_installation` keeps the Meridian patterns.
+- [x] `cardine.legacy.meridian_installation` keeps the Meridian patterns.
   `load_meridian_snapshot` still reads this repository, including the
   `execution-assets` block of its frozen `PROJECT_WORKFLOW.md`, through an
   injected reader in the same way that task 052 injected the workflow
   resolver. No product command imports `cardine.legacy`.
-- [ ] `tests/test_codex_rules.py` no longer compares the frozen
+- [x] `tests/test_codex_rules.py` no longer compares the frozen
   `.codex/rules/meridian.rules` copy with the templates (rename plan
   choice 2).
-- [ ] The archive fixtures `tests/fixtures/release-1.1.49-governed-sdd.tar.gz`
+- [x] The archive fixtures `tests/fixtures/release-1.1.49-governed-sdd.tar.gz`
   and `tests/fixtures/release-1.3.0-upgrade.tar.gz` are retired with the
   tests that only they serve, or read through `cardine.legacy` (rename
   plan choice 3). The handoff lists which.
-- [ ] The Codex profile block `# MERIDIAN:BEGIN worktree-permissions` and the
+- [x] The Codex profile block `# MERIDIAN:BEGIN worktree-permissions` and the
   rules markers in `cardine.hosts.codex` and `cardine.hosts.setup` are not
   changed: work item 9 replaces them.
-- [ ] The marker allowances of `tests/test_no_meridian_identifiers.py` are
+- [x] The marker allowances of `tests/test_no_meridian_identifiers.py` are
   removed; each remaining group 2 entry names work item 9 or work item 10.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -54,16 +54,16 @@ as the developer decided on 2026-10-19.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/061.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/061.json`, which only
   the installed `meridian task close 061` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

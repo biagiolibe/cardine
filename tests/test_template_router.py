@@ -69,16 +69,16 @@ class GenerateClaudeMdTest(unittest.TestCase):
         agents_text = (
             "# [Project Name] — Agent Rules\n\npreamble\n\n"
             "## Command triggers\n\n"
-            "<!-- MERIDIAN:BEGIN capability=example-capability v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=example-capability v1 -->\n"
             "NEW WORDING the generator must not introduce.\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         claude_text = (
             "# [Project Name]\n\nown preamble\n\n"
             "## Command triggers\n\n"
-            "<!-- MERIDIAN:BEGIN capability=example-capability v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=example-capability v1 -->\n"
             "ORIGINAL RELEASED WORDING.\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         generated = owner_generator.generate_claude_md(agents_text, claude_text)
         self.assertIn("ORIGINAL RELEASED WORDING.", generated)
@@ -97,9 +97,9 @@ class GenerateClaudeMdTest(unittest.TestCase):
         agents_text = (
             "# [Project Name] — Agent Rules\n\npreamble\n\n"
             "## Command triggers\n\n"
-            "<!-- MERIDIAN:BEGIN capability=brand-new-capability v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=brand-new-capability v1 -->\n"
             "First-ever wording.\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         claude_text = "# [Project Name]\n\nown preamble\n\n## Command triggers\n\nno markers here.\n"
         generated = owner_generator.generate_claude_md(agents_text, claude_text)
@@ -217,7 +217,7 @@ class GeneratedEntryRouterTest(unittest.TestCase):
 
     def test_generator_refuses_to_emit_a_pointer(self) -> None:
         self.router.write_text(
-            "<!-- MERIDIAN:CLAUDE-AGENTS-POINTER v1 -->\n\nRead `AGENTS.md`.\n", encoding="utf-8"
+            "<!-- CARDINE:CLAUDE-AGENTS-POINTER v1 -->\n\nRead `AGENTS.md`.\n", encoding="utf-8"
         )
         with self.assertRaisesRegex(shared_errors.CardineError, "must not emit a Claude-to-AGENTS pointer"):
             owner_templates_router.entry_router_outputs(self.project)

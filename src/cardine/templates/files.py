@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cardine.release.version import read_version
 from cardine.release.version import version_key
+from cardine.shared.constants import MARKER_BEGIN, MARKER_END
 from cardine.shared.errors import CardineError
 from cardine.shared.models import ManagedFile
 from cardine.templates.markers import append_only_new_markers
@@ -96,8 +97,8 @@ def strip_marker_block(text: str, capability: str, version: int) -> str:
     template as it existed before an excluded migration introduced or bumped
     one of its markers."""
     pattern = re.compile(
-        rf"<!-- MERIDIAN:BEGIN capability={re.escape(capability)} v{version} -->\n?.*?"
-        r"<!-- MERIDIAN:END -->\n?",
+        rf"<!-- {MARKER_BEGIN} capability={re.escape(capability)} v{version} -->\n?.*?"
+        rf"{re.escape(MARKER_END)}\n?",
         re.DOTALL,
     )
     return pattern.sub("", text, count=1)

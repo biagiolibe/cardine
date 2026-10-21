@@ -79,8 +79,8 @@ class CardineCliFixtureMixin:
         for name in ("AGENTS.md", "CLAUDE.md"):
             current = workflow / name
             old_text = current.read_text(encoding="utf-8").replace(
-                "MERIDIAN:BEGIN capability=command-triggers v3",
-                "MERIDIAN:BEGIN capability=command-triggers v2",
+                "CARDINE:BEGIN capability=command-triggers v1",
+                "CARDINE:BEGIN capability=command-triggers v2",
             ).replace(
                 "- `Restart rejected <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.\n",
                 "",
@@ -96,7 +96,7 @@ class CardineCliFixtureMixin:
         (self.framework / "VERSION").write_text("1.1.41\n", encoding="utf-8")
         self.write_synthetic_migration(
             "002-synthetic-restart", "1.1.40", "1.1.41", ["AGENTS.md", "CLAUDE.md"],
-            capabilities=[{"capability": "command-triggers", "capabilityVersion": 3}],
+            capabilities=[{"capability": "command-triggers", "capabilityVersion": 1}],
         )
 
     def configure_1_1_53_to_1_1_54_manual_proceed_upgrade(self) -> tuple[Path, Path]:
@@ -107,7 +107,7 @@ class CardineCliFixtureMixin:
         current_implementation = implementation.read_text(encoding="utf-8")
         current_workflow = project_workflow.read_text(encoding="utf-8")
         legacy_implementation = "\n".join((
-            "<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v4 -->",
+            "<!-- CARDINE:BEGIN capability=task-worktree-boundary v4 -->",
             "The coordinator runs `meridian worktree prepare` before starting this worker",
             "and passes its returned branch, absolute worktree path, primary checkout, and",
             "worktree root as launch inputs. Start in that exact existing directory; do not",
@@ -117,11 +117,11 @@ class CardineCliFixtureMixin:
             "result stops all task work and preserves both checkouts. Run every later read,",
             "implementation, validation, status, and handoff operation in the same verified",
             "worktree, never the primary checkout.",
-            "<!-- MERIDIAN:END -->",
+            "<!-- CARDINE:END -->",
             "",
         ))
         legacy_workflow = "\n".join((
-            "<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v3 -->",
+            "<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v3 -->",
             "The coordinator runs `meridian worktree prepare` before creating an",
             "implementer, reviewer, or remediation session and passes the returned existing",
             "path, branch, primary checkout, and worktree root as durable launch inputs.",
@@ -135,18 +135,18 @@ class CardineCliFixtureMixin:
             "record that names the worktree uses the `handoff_worktree` value returned by",
             "`meridian worktree prepare`, the path relative to the worktree root, never an",
             "absolute path.",
-            "<!-- MERIDIAN:END -->",
+            "<!-- CARDINE:END -->",
             "",
         ))
         previous_implementation = re.sub(
-            r"<!-- MERIDIAN:BEGIN capability=task-worktree-boundary v11 -->.*?<!-- MERIDIAN:END -->\n",
+            r"<!-- CARDINE:BEGIN capability=task-worktree-boundary v1 -->.*?<!-- CARDINE:END -->\n",
             legacy_implementation,
             current_implementation,
             count=1,
             flags=re.DOTALL,
         )
         previous_workflow = re.sub(
-            r"<!-- MERIDIAN:BEGIN capability=bounded-worktree-lifecycle v\d+ -->.*?<!-- MERIDIAN:END -->\n",
+            r"<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v\d+ -->.*?<!-- CARDINE:END -->\n",
             legacy_workflow,
             current_workflow,
             count=1,
@@ -256,16 +256,16 @@ class CardineCliFixtureMixin:
         agents = workflow / "AGENTS.md"
         claude = workflow / "CLAUDE.md"
         router_v1 = (
-            "<!-- MERIDIAN:BEGIN capability=entry-router v1 -->\n"
-            "Read the entry-point procedures.\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=entry-router v1 -->\n"
+            "Read the entry-point procedures.\n<!-- CARDINE:END -->\n"
         )
         router_v2 = (
-            "<!-- MERIDIAN:BEGIN capability=entry-router v2 -->\n"
-            "Read the managed procedures.\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=entry-router v2 -->\n"
+            "Read the managed procedures.\n<!-- CARDINE:END -->\n"
         )
         moved = (
-            "<!-- MERIDIAN:BEGIN capability=route-rule v1 -->\n"
-            "Run the managed route rule.\n<!-- MERIDIAN:END -->"
+            "<!-- CARDINE:BEGIN capability=route-rule v1 -->\n"
+            "Run the managed route rule.\n<!-- CARDINE:END -->"
         )
         agents.write_text("# Agent entry point\n\n" + router_v1, encoding="utf-8")
         claude.write_text("# Claude entry point\n\n" + router_v1, encoding="utf-8")
@@ -380,22 +380,20 @@ class CardineCliFixtureMixin:
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
     REASONING_CONTRACT_BLOCK = (
-        "<!-- MERIDIAN:BEGIN capability=reasoning-budget-contract v1 -->\n"
+        "<!-- CARDINE:BEGIN capability=reasoning-budget-contract v1 -->\n"
         "## Reasoning budget contract\n\n"
         "Select the lowest reliable reasoning effort while designing the task.\n"
-        "<!-- MERIDIAN:END -->\n\n"
+        "<!-- CARDINE:END -->\n\n"
     )
 
     def _lock_project_with_reasoning_contract(self) -> tuple[Path, Path]:
         """Lock a governed project from templates that still carry the retired
-        block and the superseded `execution-evidence-profile` v3 marker."""
+        block and the superseded `execution-evidence-profile` v1 marker."""
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         current = (ROOT / "templates/single/docs/CONTEXT_READING_POLICY.md").read_text(
             encoding="utf-8"
         )
         previous = current.replace(
-            "capability=execution-evidence-profile v6", "capability=execution-evidence-profile v3"
-        ).replace(
             "\n## Lifecycle orchestration", "\n" + self.REASONING_CONTRACT_BLOCK + "## Lifecycle orchestration", 1
         )
         self.assertIn("reasoning-budget-contract", previous)
@@ -406,11 +404,16 @@ class CardineCliFixtureMixin:
         self.project.mkdir()
         self.copy_governed_templates()
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
-        policy.write_text(current, encoding="utf-8")
+        policy.write_text(
+            current.replace(
+                "capability=execution-evidence-profile v1", "capability=execution-evidence-profile v2"
+            ),
+            encoding="utf-8",
+        )
         (self.framework / "VERSION").write_text("1.2.9\n", encoding="utf-8")
         self.write_synthetic_migration(
             "002-synthetic-retire-contract", "1.2.8", "1.2.9", ["docs/CONTEXT_READING_POLICY.md"],
-            capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 6}],
+            capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 2}],
             removes=[{"capability": "reasoning-budget-contract", "capabilityVersion": 1}],
         )
         return policy, self.project / "docs/CONTEXT_READING_POLICY.md"

@@ -26,19 +26,19 @@ class MarkerSupersessionTest(unittest.TestCase):
 
     BASE = (
         "intro\n\n"
-        "<!-- MERIDIAN:BEGIN capability=mvp v1 -->\n"
+        "<!-- CARDINE:BEGIN capability=mvp v1 -->\n"
         "old rule text.\n"
-        "<!-- MERIDIAN:END -->\n\n"
+        "<!-- CARDINE:END -->\n\n"
         "tail\n"
     )
-    OLD_BLOCK = "<!-- MERIDIAN:BEGIN capability=mvp v1 -->\nold rule text.\n<!-- MERIDIAN:END -->"
-    NEW_BLOCK = "<!-- MERIDIAN:BEGIN capability=mvp v2 -->\nnew rule text.\n<!-- MERIDIAN:END -->"
+    OLD_BLOCK = "<!-- CARDINE:BEGIN capability=mvp v1 -->\nold rule text.\n<!-- CARDINE:END -->"
+    NEW_BLOCK = "<!-- CARDINE:BEGIN capability=mvp v2 -->\nnew rule text.\n<!-- CARDINE:END -->"
 
     def test_added_capability_still_appends(self) -> None:
         template = self.BASE + (
-            "\n<!-- MERIDIAN:BEGIN capability=other v1 -->\n"
+            "\n<!-- CARDINE:BEGIN capability=other v1 -->\n"
             "new capability.\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         result = templates_markers.append_only_new_markers(self.BASE, self.BASE, template)
         self.assertIsNotNone(result)
@@ -77,9 +77,9 @@ class MarkerSupersessionTest(unittest.TestCase):
         edit to a different, already-current protected block."""
         local = self.BASE.replace("old rule text.", "old rule text, locally edited.")
         template = self.BASE + (
-            "\n<!-- MERIDIAN:BEGIN capability=other v1 -->\n"
+            "\n<!-- CARDINE:BEGIN capability=other v1 -->\n"
             "new capability.\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         result = templates_markers.append_only_new_markers(local, self.BASE, template)
         self.assertIsNone(result)
@@ -94,9 +94,9 @@ class RetiredTextAdvisoryTest(unittest.TestCase):
                 path = project / relative_path
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(
-                    "intro\n<!-- MERIDIAN:BEGIN capability=example v1 -->\n"
+                    "intro\n<!-- CARDINE:BEGIN capability=example v1 -->\n"
                     + "\n".join(entry["phrases"])
-                    + "\n<!-- MERIDIAN:END -->\n"
+                    + "\n<!-- CARDINE:END -->\n"
                     + "\n".join(phrase.upper() for phrase in entry["phrases"]) + "\n",
                     encoding="utf-8",
                 )
@@ -123,7 +123,7 @@ class RetiredTextAdvisoryTest(unittest.TestCase):
             project = Path(directory)
             path = project / "docs/example.md"
             path.parent.mkdir()
-            path.write_text("cap abc\n<!-- MERIDIAN:BEGIN capability=example v1 -->cap [a-z].*<!-- MERIDIAN:END --> CAP [A-Z].*\n", encoding="utf-8")
+            path.write_text("cap abc\n<!-- CARDINE:BEGIN capability=example v1 -->cap [a-z].*<!-- CARDINE:END --> CAP [A-Z].*\n", encoding="utf-8")
             rows = owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.9"})
             self.assertEqual(len(rows), 1)
             self.assertIn("docs/example.md:2:", rows[0].detail)
@@ -164,9 +164,9 @@ class CapabilityRetirementTest(unittest.TestCase):
 
     BASE = (
         "intro\n\n"
-        "<!-- MERIDIAN:BEGIN capability=old-rule v1 -->\n"
+        "<!-- CARDINE:BEGIN capability=old-rule v1 -->\n"
         "retired rule text.\n"
-        "<!-- MERIDIAN:END -->\n\n"
+        "<!-- CARDINE:END -->\n\n"
         "tail\n"
     )
 
@@ -181,9 +181,9 @@ class CapabilityRetirementTest(unittest.TestCase):
 
     def test_retiring_an_already_absent_block_is_idempotent(self) -> None:
         local = self.BASE.replace(
-            "<!-- MERIDIAN:BEGIN capability=old-rule v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=old-rule v1 -->\n"
             "retired rule text.\n"
-            "<!-- MERIDIAN:END -->\n\n",
+            "<!-- CARDINE:END -->\n\n",
             "",
         )
         result = templates_markers.remove_retired_markers(local, self.BASE, [("old-rule", 1)])
@@ -204,9 +204,9 @@ class CapabilityRetirementTest(unittest.TestCase):
         refuse instead, the same duplicate-paste case `audit_duplicate_headings`
         exists to catch."""
         duplicated = self.BASE + (
-            "\n<!-- MERIDIAN:BEGIN capability=old-rule v1 -->\n"
+            "\n<!-- CARDINE:BEGIN capability=old-rule v1 -->\n"
             "retired rule text.\n"
-            "<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:END -->\n"
         )
         result = templates_markers.remove_retired_markers(duplicated, duplicated, [("old-rule", 1)])
         self.assertIsNone(result)
@@ -217,9 +217,9 @@ class CapabilityRetirementTest(unittest.TestCase):
         elsewhere in the same file."""
         text = (
             "intro\n\n"
-            "<!-- MERIDIAN:BEGIN capability=old-rule v1 -->\n"
+            "<!-- CARDINE:BEGIN capability=old-rule v1 -->\n"
             "retired rule text.\n"
-            "<!-- MERIDIAN:END -->\n\n"
+            "<!-- CARDINE:END -->\n\n"
             "middle\n\n\n\n"
             "tail\n"
         )

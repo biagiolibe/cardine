@@ -110,11 +110,11 @@ class ContextSizeTest(unittest.TestCase):
             "\n".join((
                 "Also see `docs/CODE_ORGANIZATION.md` and `docs/COMPLETION_REPORT_TEMPLATE.md`.",
                 "- At first plan: `docs/CODE_ORGANIZATION.md`.",
-                "<!-- MERIDIAN:BEGIN capability=phase-reads v1 -->",
+                "<!-- CARDINE:BEGIN capability=phase-reads v1 -->",
                 "- At start: `docs/START.md`.",
                 "- At first plan: `docs/CODE_ORGANIZATION.md`.",
                 "- At completion: `docs/COMPLETION_REPORT_TEMPLATE.md`.",
-                "<!-- MERIDIAN:END -->",
+                "<!-- CARDINE:END -->",
             )), encoding="utf-8"
         )
         report = json.loads(self.run_cli("--role", "implementation", "--format", "json").stdout)

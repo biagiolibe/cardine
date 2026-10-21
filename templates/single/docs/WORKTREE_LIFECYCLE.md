@@ -1,6 +1,6 @@
 # Bounded Worktree Lifecycle
 
-<!-- MERIDIAN:BEGIN capability=worktree-command-locations v1 -->
+<!-- CARDINE:BEGIN capability=worktree-command-locations v1 -->
 ## Command locations
 
 After prepare/check, switch `--project` from the primary checkout to the task
@@ -23,10 +23,10 @@ only after an explicit Resume directive.
 | `execution validate`, `preflight`, `contract`, `reconcile`, `handoff-check`, legacy `ready-check`, `evidence`, `investigate` | Any directory; existing contract/evidence checks apply. Contract preparation may also precede a worktree | Task worktree (or project being prepared for contract operations) |
 | `task close` | Any directory; canonical registered task worktree, clean and without active integration | Task worktree |
 | `task transition`, `review verdict` | Task worktree context; existing branch/state checks apply | Task worktree |
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 
-<!-- MERIDIAN:BEGIN capability=worktree-lifecycle v7 -->
+<!-- CARDINE:BEGIN capability=worktree-lifecycle v1 -->
 Use the host-neutral `cardine worktree` namespace for task checkout lifecycle
 operations. Commands exit `0` on success, `2` when blocked, and `64` on usage
 errors. The root resolves from an explicit option, the environment, user
@@ -157,4 +157,4 @@ root yields the same path on every machine. A repository without a usable remote
 uses a local name plus a Git-common-directory hash, so its value is stable only
 on the machines that share that hash. `check` also accepts a legacy absolute
 `Worktree:` value in an existing handoff.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->

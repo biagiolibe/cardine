@@ -2,37 +2,37 @@
   "templates/single/AGENTS.md": {
     "command-triggers": {
       "sha256": "ff1994a7de7a09388ea92b29203854c5794d817cfb7f912e5a6cd3718a429311",
-      "version": 3
+      "version": 1
     }
   },
   "templates/single/CLAUDE.md": {
     "command-triggers": {
       "sha256": "ff1994a7de7a09388ea92b29203854c5794d817cfb7f912e5a6cd3718a429311",
-      "version": 3
+      "version": 1
     }
   },
   "templates/single/LANGUAGE_POLICY.md": {
     "language-policy": {
       "sha256": "71a8ada0767ac92c3b6a4030b8b911fc58b23f7473fd1a96af1fe85f84645985",
-      "version": 2
+      "version": 1
     }
   },
   "templates/single/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
       "sha256": "d1e409654bb68f18c6b0d6acac45578161edbadc377cb846e5c27f9ad9809f49",
-      "version": 9
+      "version": 1
     },
     "codex-worktree-access": {
       "sha256": "ed58a5c6af82dd649570b68c38216a290272aabe96a5001a908c4def59976185",
-      "version": 5
+      "version": 1
     },
     "document-precedence": {
       "sha256": "fe854d8f791b811680469e6339dac3b706d68f2ac54cca9be32429ee3c9f5ab2",
-      "version": 3
+      "version": 1
     },
     "execution-assets": {
       "sha256": "8277d23ed52db13e44672fce0287fa7bfefcac41652148ef01fc3de85feba39b",
-      "version": 5
+      "version": 1
     },
     "execution-discipline": {
       "sha256": "0b84e693518e8a3cde74c714d205516677d76d11327ce57ed297b56efaec0227",
@@ -40,31 +40,31 @@
     },
     "git-workflow": {
       "sha256": "a789d125a68a9be4a6e13df9d4ec22d823c8fe8ba6491f3a023e812333547b6f",
-      "version": 16
+      "version": 1
     },
     "review-policy": {
       "sha256": "fd1e33245126c97f148085442a69bd3a44dc8329c0f18b6993a6b114a794d499",
-      "version": 4
+      "version": 1
     },
     "roles": {
       "sha256": "01da4345826aa7a29ca2395b261d6951c9635eb503e8ca5be21a38a46de72418",
-      "version": 5
+      "version": 1
     },
     "task-identity-policy": {
       "sha256": "10e381f42f15aa8230cb924b34d01320f441baf2c01ecbb51a0d5ba1c2d61962",
-      "version": 2
+      "version": 1
     },
     "task-lifecycle": {
       "sha256": "89f5b15638fc63b930672296764adaf80e09dead5478ece796431f1411e22a01",
-      "version": 6
+      "version": 1
     },
     "validation-scoping": {
       "sha256": "e96c1d406eb517daa36e43819dedddc16bb9574b080115d3961fa1c4edac8f2c",
-      "version": 2
+      "version": 1
     },
     "workflow-mode-lock": {
       "sha256": "750a035d681e67321c85c2c7a3baf1a115b039b9d64cc55069f6b48c45f1984a",
-      "version": 2
+      "version": 1
     },
     "worktree-command-locations": {
       "sha256": "a7784fa1a78084ce884379510cbf1b13c6517fb18fb8f92dbb7b3eb1e1824a0b",
@@ -74,19 +74,19 @@
   "templates/single/docs/AUDIT_PROMPT_READ_ONLY.md": {
     "audit-prompt": {
       "sha256": "20929aa675d1463c75f8f0f439d87bde07f93eebf22ea3f3413b5467f6c8f466",
-      "version": 5
+      "version": 1
     }
   },
   "templates/single/docs/CODE_ORGANIZATION.md": {
     "code-organization": {
       "sha256": "304af93829529abc266e2585f5b9d6672549db092ecd73903a965560b880d19e",
-      "version": 3
+      "version": 1
     }
   },
   "templates/single/docs/CODE_REVIEW_PROMPT.md": {
     "code-review-prompt": {
       "sha256": "3af294ed68a784823dcac3593fdc67268eab02065b4468fc6651de3c1c56de73",
-      "version": 4
+      "version": 1
     }
   },
   "templates/single/docs/COMPLETION_REPORT_TEMPLATE.md": {
@@ -96,7 +96,7 @@
     },
     "handoff-correction-redelivery": {
       "sha256": "9eeb816d594ea925f2a58e6eb5db6d7cb155c22013340bed439d256b230c54bc",
-      "version": 2
+      "version": 1
     },
     "manual-verification-record": {
       "sha256": "df183bbca1242244974b7cc46669fc2792fbb956bca5cdfaa931ae24b94e03fa",
@@ -104,13 +104,13 @@
     },
     "task-worktree-handoff": {
       "sha256": "cd10b79d1a6df6937dc2ffdc2272487450e7e932ee96e1bbf12c3a6c91249686",
-      "version": 5
+      "version": 1
     }
   },
   "templates/single/docs/CONTEXT_READING_POLICY.md": {
     "authority-excerpt": {
       "sha256": "5d5428d7b9af8b757c8ff098cfc941599aa647dcf08144fa7e0ea6c06013e0a4",
-      "version": 2
+      "version": 1
     },
     "evidence-tiers": {
       "sha256": "17e3cf089faf004c49dadfcd2874a795a7679bb6af9e6166a39abee5049ae379",
@@ -118,15 +118,15 @@
     },
     "execution-evidence-profile": {
       "sha256": "81e826ee14d7ba6b9667d8a90cc8b13c3a08347c2b6a9e4f0467248d911776c1",
-      "version": 6
+      "version": 1
     },
     "isolated-exploration": {
       "sha256": "3aad44cacc052e614a63a2e052be06a563aa95a4c004324ebb0ec2209b62c2b9",
-      "version": 3
+      "version": 1
     },
     "minimal-read-only-status": {
       "sha256": "7891180aa44bff5f222945f6367e609376fd1ad928318855d5d1804a66be6339",
-      "version": 4
+      "version": 1
     },
     "phase-reads": {
       "sha256": "0db50cbc054ade823b2f6909c93f96da8529614ae9fc8af35c6a953fbeb4a49c",
@@ -138,17 +138,17 @@
     },
     "read-guard": {
       "sha256": "0ed9579cf7807597c65ea59c9eb63c577bd168ebaaf96afe3c3d6cde1a77f1b9",
-      "version": 2
+      "version": 1
     },
     "validation-scoping": {
       "sha256": "fe8f3d6bf7bd3b49f613c1e9759583bda5cf8678396d52578ef877b504c3c68f",
-      "version": 2
+      "version": 1
     }
   },
   "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md": {
     "investigation-scope": {
       "sha256": "ccece353a49e0c8685918788875451533be79ed37ab7aabd30172b066a9904e2",
-      "version": 4
+      "version": 1
     },
     "long-command-waits": {
       "sha256": "942c3ebfa010f7aba0385d4e0fbb241edf1c17eea89158531a24cddb162198a8",
@@ -166,21 +166,21 @@
     },
     "task-worktree-integration": {
       "sha256": "24623e5e763e6f5207bb041968c25f8b5f35d997c1e3eea430d888a94686e9c1",
-      "version": 8
+      "version": 1
     }
   },
   "templates/single/docs/LIFECYCLE_ORCHESTRATION.md": {
     "lifecycle-orchestration": {
       "sha256": "d46aceec3d1b72b08e63cc1f272148ffbf589ebf8c036be109fe5759e109e58d",
-      "version": 13
+      "version": 1
     },
     "owner-acceptance-workflow": {
       "sha256": "32392826652d55fc1c27a7fa1fdf57fcc5907a30d421623f25e226fb4531260d",
-      "version": 5
+      "version": 1
     },
     "rejected-attempt-restart": {
       "sha256": "ee7a1862bb659141cd86e2e6581d83df07089e28da53a986a4494126b936ef58",
-      "version": 6
+      "version": 1
     },
     "task-worktree-lifecycle": {
       "sha256": "941614a187dcf4f5e4124c78dfca618076bf5b025aa3d23ae26abc389c1ba429",
@@ -194,7 +194,7 @@
     },
     "review-remediation-record": {
       "sha256": "df851f2f62e56e9134ae831836bea6385f7b7bd341df8147b30ad4c4de0727be",
-      "version": 7
+      "version": 1
     }
   },
   "templates/single/docs/WORKTREE_LIFECYCLE.md": {
@@ -204,25 +204,25 @@
     },
     "worktree-lifecycle": {
       "sha256": "fa85e5cfc0df79443bf1109e6505e083c319564cd5f25633492c0685f76cd9f8",
-      "version": 7
+      "version": 1
     }
   },
   "templates/single/docs/workflows/IMPLEMENTATION.md": {
     "bounded-context-readers": {
       "sha256": "25722a247a2ef2b6c5f33c92eaa566e1683986ffec587146a336978b58e13941",
-      "version": 3
+      "version": 1
     },
     "execution-command-gate": {
       "sha256": "44caf60ec684635a93ee41e476f22920aa6d93812573cf4f9c86fdb2db12e042",
-      "version": 6
+      "version": 1
     },
     "host-impact-routing": {
       "sha256": "cf52d83970d2711f2b818dbbf5017344c1afd38c6714d524900f6c847d98dfc9",
-      "version": 2
+      "version": 1
     },
     "manual-verification-precondition": {
       "sha256": "2356db371a5f1ab9ea931eae170de220b21f0ce3d891643a514e82c9cde27458",
-      "version": 4
+      "version": 1
     },
     "phase-reads": {
       "sha256": "abca6bce9d39064ab5546cfc169283dfd4e0d2339accc6931fe12de4e56d80f7",
@@ -230,21 +230,21 @@
     },
     "spike-routing": {
       "sha256": "ad7246e5602198bd223e1650047633e08d321d2707ed47553c22280cb98e3cdd",
-      "version": 3
+      "version": 1
     },
     "task-worktree-boundary": {
       "sha256": "8350c755a8a9a501239ff1ec88e3a47fb482aaac2366bb54ce631616f34545c6",
-      "version": 11
+      "version": 1
     },
     "validation-scoping": {
       "sha256": "d7e8db61f47099a632f3afe1e8728ee3303443b7ef0ac9f3077b0295386545c8",
-      "version": 2
+      "version": 1
     }
   },
   "templates/single/docs/workflows/REMEDIATION.md": {
     "bounded-context-readers": {
       "sha256": "25722a247a2ef2b6c5f33c92eaa566e1683986ffec587146a336978b58e13941",
-      "version": 3
+      "version": 1
     },
     "phase-reads": {
       "sha256": "8693526d918a057acea808d3396af2c0d07c60194d76fe4c0e9102b9cc3ec2d5",
@@ -252,25 +252,25 @@
     },
     "rejected-attempt-restart": {
       "sha256": "fba731055684c24f03dc20f323bf028634080465607f5d5bbb27b45dfbd0fa76",
-      "version": 6
+      "version": 1
     },
     "review-remediation-record": {
       "sha256": "7bce093fc219d19629e29652df60e762b42dc7e883a500de713646973870841a",
-      "version": 7
+      "version": 1
     },
     "task-worktree-remediation": {
       "sha256": "6f1f2e12be1429bde89a5fd78bfe79321509330e6f929564e058cb65ad0820b5",
-      "version": 5
+      "version": 1
     }
   },
   "templates/single/docs/workflows/REVIEW.md": {
     "bounded-context-readers": {
       "sha256": "25722a247a2ef2b6c5f33c92eaa566e1683986ffec587146a336978b58e13941",
-      "version": 3
+      "version": 1
     },
     "implementer-reviewer-handoff": {
       "sha256": "02b49b9a0d1e781ec559499a795d31c53594773e7fec28865637f7bfb7f9caf5",
-      "version": 6
+      "version": 1
     },
     "phase-reads": {
       "sha256": "28db36d8d50d95dc6b0d299dd9bb41fcc31f58a89384fd199becbc54a1c50683",
@@ -278,21 +278,21 @@
     },
     "review-mode-boundary": {
       "sha256": "df6bf45dc11fa6e7e7487d2b6f46779db6ab2fa3cb1278df73a55b748083ffec",
-      "version": 4
+      "version": 1
     },
     "reviewer-integrator-identity": {
       "sha256": "edcb1c46b66d1d949775403f357c4ee1358198d49d1b577c24a95a590775a51f",
-      "version": 4
+      "version": 1
     },
     "task-worktree-review-procedure": {
       "sha256": "56ed252dafa14473f5de8fde6b776a99e30aafe58ee837999313339e5f4f9548",
-      "version": 14
+      "version": 1
     }
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
       "sha256": "1bf565cc2512680abe0ed9f5686e85333e42ef5f6ce0d1169ac6919029c00905",
-      "version": 20
+      "version": 1
     }
   }
 }

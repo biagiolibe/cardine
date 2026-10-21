@@ -79,7 +79,7 @@ class AuthorityExcerptTest(unittest.TestCase):
             "## ADR-0001 — Custom log\nBody.\n", encoding="utf-8"
         )
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- MERIDIAN:BEGIN capability=execution-assets v1 -->\n<!-- MERIDIAN:END -->\n"
+            "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n<!-- CARDINE:END -->\n"
             "ADR log is `docs/DECISIONS.md`.\n\n## Roles\n",
             encoding="utf-8",
         )

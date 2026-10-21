@@ -8,7 +8,7 @@ Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORK
 # Fill in the project's run, test, lint, and format commands.
 ```
 
-<!-- MERIDIAN:BEGIN capability=command-triggers v3 -->
+<!-- CARDINE:BEGIN capability=command-triggers v1 -->
 ## Command triggers
 
 - `Proceed with <TASK-ID>` — read `docs/workflows/IMPLEMENTATION.md`.
@@ -18,6 +18,6 @@ Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORK
 - `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.
 - Status, project question, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
 - Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Follow `docs/CODE_ORGANIZATION.md` for production-source changes. The routed procedure supplies all role-specific validation, review, lifecycle, and Git detail.

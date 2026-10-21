@@ -251,8 +251,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         target = self.root / "templates/single/AGENTS.md"
         text = target.read_text(encoding="utf-8")
         text = text.replace(
-            "<!-- MERIDIAN:BEGIN capability=command-triggers v3 -->",
-            "<!-- MERIDIAN:BEGIN capability=command-triggers v4 -->",
+            "<!-- CARDINE:BEGIN capability=command-triggers v1 -->",
+            "<!-- CARDINE:BEGIN capability=command-triggers v4 -->",
             1,
         )
         target.write_text(text, encoding="utf-8")
@@ -280,7 +280,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
 
         text = target.read_text(encoding="utf-8")
         pattern = re.compile(
-            rf"<!-- MERIDIAN:BEGIN capability={capability} v{version} -->\n?.*?<!-- MERIDIAN:END -->\n?",
+            rf"<!-- CARDINE:BEGIN capability={capability} v{version} -->\n?.*?<!-- CARDINE:END -->\n?",
             re.DOTALL,
         )
         match = pattern.search(text)
@@ -291,12 +291,12 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         """The baseline guard's original task-014 behavior: an absence with
         no accounting migration is still an unauthorized change, retirement
         infrastructure or not."""
-        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
+        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 1)
         with self.assertRaises(SystemExit):
             cr.check_capability_marker_baselines(self.root)
 
     def test_a_capability_retired_in_the_catalog_passes_without_a_migration(self) -> None:
-        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 3)
+        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 1)
         path = self.root / "capabilities/markers-v1.json"
         catalog = json.loads(path.read_text(encoding="utf-8"))
         catalog["capabilities"]["spike-routing"].update(retired=True, required=False)
@@ -378,14 +378,14 @@ class CapabilityRequiredVersionsTest(unittest.TestCase):
         original = later.read_text(encoding="utf-8")
         for version in (3, 99):
             with self.subTest(later_version=version):
-                later.write_text(original + f"\n<!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v{version} -->\n<!-- MERIDIAN:END -->\n", encoding="utf-8")
+                later.write_text(original + f"\n<!-- CARDINE:BEGIN capability=lifecycle-orchestration v{version} -->\n<!-- CARDINE:END -->\n", encoding="utf-8")
                 message = self.failure()
                 self.assertIn(f"ships v{version}", message)
                 self.assertIn(str(later.relative_to(self.root)), message)
 
     def test_every_marker_in_a_file_must_match(self) -> None:
         target = self.root / "templates/single/PROJECT_WORKFLOW.md"
-        target.write_text("<!-- MERIDIAN:BEGIN capability=git-workflow v999 -->\n<!-- MERIDIAN:END -->\n"
+        target.write_text("<!-- CARDINE:BEGIN capability=git-workflow v999 -->\n<!-- CARDINE:END -->\n"
                           + target.read_text(encoding="utf-8"), encoding="utf-8")
         self.assertIn("ships v999", self.failure())
 
@@ -421,8 +421,8 @@ class GovernedReviewWorktreeContractTest(unittest.TestCase):
             / "templates/single/docs/workflows/REVIEW.md"
         )
         text = review.read_text(encoding="utf-8")
-        begin = re.search(r"<!-- MERIDIAN:BEGIN capability=task-worktree-review-procedure v\d+ -->", text).group(0)
-        boundary = re.search(r"<!-- MERIDIAN:BEGIN capability=review-mode-boundary v\d+ -->", text).group(0)
+        begin = re.search(r"<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v\d+ -->", text).group(0)
+        boundary = re.search(r"<!-- CARDINE:BEGIN capability=review-mode-boundary v\d+ -->", text).group(0)
         text = text.replace(begin, "TEMP-PREFLIGHT", 1)
         text = text.replace(boundary, begin, 1).replace("TEMP-PREFLIGHT", boundary, 1)
         review.write_text(text, encoding="utf-8")
@@ -463,7 +463,7 @@ class GovernedLifecycleTextTest(unittest.TestCase):
                 path = self.workflows / relative
                 original = path.read_text(encoding="utf-8")
                 path.write_text(
-                    original.replace("<!-- MERIDIAN:END -->", "The reviewer updates its queue row.\n<!-- MERIDIAN:END -->", 1),
+                    original.replace("<!-- CARDINE:END -->", "The reviewer updates its queue row.\n<!-- CARDINE:END -->", 1),
                     encoding="utf-8",
                 )
                 with self.assertRaises(SystemExit):
@@ -473,7 +473,7 @@ class GovernedLifecycleTextTest(unittest.TestCase):
     def test_governed_block_naming_a_literal_location_fails_but_execution_assets_may(self) -> None:
         path = self.workflows / "docs/workflows/REMEDIATION.md"
         original = path.read_text(encoding="utf-8")
-        path.write_text(original.replace("<!-- MERIDIAN:END -->", "Read tasks/reviews/X.md.\n<!-- MERIDIAN:END -->", 1), encoding="utf-8")
+        path.write_text(original.replace("<!-- CARDINE:END -->", "Read tasks/reviews/X.md.\n<!-- CARDINE:END -->", 1), encoding="utf-8")
         with self.assertRaises(SystemExit):
             cr.check_governed_lifecycle_text(self.root)
         path.write_text(original, encoding="utf-8")

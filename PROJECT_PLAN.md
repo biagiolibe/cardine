@@ -102,6 +102,6 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 058 — Remove residual workflow branching and prove parity (single workflow SW7).
 - `[ ]` 059 — Plan the single source of task state (work item 7).
 - `[x]` 060 — Remove the Meridian name and the old states from the template text (work item 5b).
-- `[ ]` 061 — Rename the capability markers and restart every capability at v1 (work item 5b).
+- `[x]` 061 — Rename the capability markers and restart every capability at v1 (work item 5b).
 - `[ ]` 062 — Plan the cardine run engine (work item 8).
 - `[ ]` 063 — Plan the preparation of the benchmark against a minimal procedure.

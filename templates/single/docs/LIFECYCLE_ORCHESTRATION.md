@@ -2,7 +2,7 @@
 
 Use this procedure for `Run lifecycle <TASK-ID>`, `Accept <TASK-ID>`, and `Restart rejected <TASK-ID>` after the entry-point router has applied its always-loaded invariants. A task whose resolved review option is `not_required` needs no reviewer session; the orchestration then runs only the implementer steps and the integration.
 
-<!-- MERIDIAN:BEGIN capability=lifecycle-orchestration v13 -->
+<!-- CARDINE:BEGIN capability=lifecycle-orchestration v1 -->
 `Run lifecycle <TASK-ID>` authorizes an orchestrator to carry one dependency-ready
 task through implementation, independent review, requested-change remediation,
 acceptance, and `main` integration without further developer prompts. It does
@@ -102,7 +102,7 @@ The orchestrator uses command-reported state, the latest commit, and the latest
 review-record evidence. It never loads state files as startup context or infers acceptance from headings. Workers use task-first context loading. Do not recreate
 prior chat context, repeat successful validation without a changed relevant
 surface, or add a summarization agent between workers.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
 Candidate validation follows `validation.candidate` in the consumer-owned
 `.cardine/project.json`, frozen in the task contract:
@@ -111,22 +111,22 @@ gate, `BOUNDED` adds affected-module tests, and `FULL` adds the declared full su
 invalid declaration stops before staging, lease, or merge. Empty command lists
 are explicit; every candidate still runs `git diff --check`.
 
-<!-- MERIDIAN:BEGIN capability=task-worktree-lifecycle v1 -->
+<!-- CARDINE:BEGIN capability=task-worktree-lifecycle v1 -->
 The implementer and reviewer sessions use the same dedicated task worktree
 sequentially; neither uses the primary checkout. Final integration uses the
 serialized, combined-tree-validated merge transaction defined in
 `docs/LIFECYCLE_ORCHESTRATION.md`.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=owner-acceptance-workflow v5 -->
+<!-- CARDINE:BEGIN capability=owner-acceptance-workflow v1 -->
 ## Owner-acceptance workflow
 
 When the developer says `Accept <TASK-ID>` after personally reviewing a `Review: required` task, treat it as explicit authorization to skip the agent review. Confirm that the task record is `in_review`; do not re-review the implementation, change source code, or rerun the task's own validation.
 
 On the clean task branch HEAD, run `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` with the reviewed/base commit and owner evidence. The command records `approved_by: "owner"`, binds approval to HEAD, and updates the task Status and review heading projections. Never edit a status or verdict by hand. Commit only the task's state file, task record, and review record as `docs: accept <TASK-ID>`. Then continue at C6 under the `Proceed with` authority through `cardine worktree advance`, including candidate validation, the one `git push origin main`, and cleanup. `integrate stage` checks machine acceptance and the approved Git diff automatically; headings are human-readable only. A manual merge is never permitted. If a command stops, report its coded stop and resume command.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
 
-<!-- MERIDIAN:BEGIN capability=rejected-attempt-restart v6 -->
+<!-- CARDINE:BEGIN capability=rejected-attempt-restart v1 -->
 ## Rejected-attempt restart after authority change
 
 Use this procedure only when a requested-changes finding explicitly cannot be
@@ -159,4 +159,4 @@ branch from that current `main`, review and integrate its authority/scope
 amendment, then invoke `Restart rejected <TASK-ID>` from the updated `main`.
 The retry therefore starts from the accepted design base, not from the rejected
 task branch.
-<!-- MERIDIAN:END -->
+<!-- CARDINE:END -->
