@@ -19,7 +19,7 @@ code changes.
 
 ## Acceptance Criteria
 
-- [ ] `docs/BENCHMARK_PROTOCOL.md` gains a section "Preparation tasks", in
+- [x] `docs/BENCHMARK_PROTOCOL.md` gains a section "Preparation tasks", in
   English, with an ordered list of tasks of 2–3 hours. Each task states its
   scope, files, tests, dependencies, and whether it can start before
   Cardine 0.9. The sequence covers at least:
@@ -37,20 +37,20 @@ code changes.
     correct solution, and deliberately wrong solutions;
   - the part 2 scenarios of section 6, starting from `evals/scenarios`;
   - the raw request of variant 2-bis.
-- [ ] The section states where each artifact lives. Contoso code and
+- [x] The section states where each artifact lives. Contoso code and
   baselines never enter this repository, and no tracked file names the real
   project behind the Contoso pseudonym.
-- [ ] It answers the open point of section 12 on the field trial of work
+- [x] It answers the open point of section 12 on the field trial of work
   item 13: overlap, separation, or a stated reason to defer the choice.
-- [ ] The protocol's decided sections 1 to 11 keep their decisions. A
+- [x] The protocol's decided sections 1 to 11 keep their decisions. A
   conflict found while planning is reported in the handoff, not resolved by
   changing a decision.
-- [ ] No agent benchmark run, calibration run, or paid host invocation is
+- [x] No agent benchmark run, calibration run, or paid host invocation is
   made by this task.
-- [ ] No file changes outside `docs/BENCHMARK_PROTOCOL.md` and this task's
+- [x] No file changes outside `docs/BENCHMARK_PROTOCOL.md` and this task's
   records: the task record, its handoff, and its archive under
   `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -59,9 +59,9 @@ code changes.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/063.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/063.json`, which only
   the installed `meridian task close 063` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
