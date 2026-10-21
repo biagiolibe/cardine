@@ -19,17 +19,17 @@ the twelve parity rows of section 6 for both presets.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SW7 is implemented as the plan describes it, with the
+- [x] The scope of row SW7 is implemented as the plan describes it, with the
   design of the plan's sections 1 to 6. A file the plan missed but that
   the same change needs is in scope; the handoff lists it.
-- [ ] Every test that row SW7 lists under "Tests that prove it" exists and
+- [x] Every test that row SW7 lists under "Tests that prove it" exists and
   passes.
-- [ ] `git grep` for `lean-delivery`, `governed-sdd`, `LEAN_DELIVERY`, and
+- [x] `git grep` for `lean-delivery`, `governed-sdd`, `LEAN_DELIVERY`, and
   `GOVERNED_SDD` in `src/cardine/` finds only `cardine.legacy` and group 2
   text that work item 5b renames. The handoff lists what remains and why.
-- [ ] The handoff names, for work items 5b, 7, 8, and 9, what this work item
+- [x] The handoff names, for work items 5b, 7, 8, and 9, what this work item
   leaves to each, following section 8 of the plan.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -38,16 +38,16 @@ the twelve parity rows of section 6 for both presets.
   worktree` line of `.codex/rules/local.rules`. No task of this work item
   runs the checkout's `setup --apply` against the real home directory or
   creates `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/058.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/058.json`, which only
   the installed `meridian task close 058` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
