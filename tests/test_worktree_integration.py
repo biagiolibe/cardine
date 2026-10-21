@@ -315,12 +315,12 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "| 1 | 056 | P0 | in_progress | SPIKE | — | [056](056.md) |\n"
             "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n"
         )
-        warnings = owner_integration_projections._queue_archival_warnings(held, "governed-sdd")
+        warnings = owner_integration_projections._queue_archival_warnings(held, "single")
         self.assertEqual(warnings, [])
         queued = held.replace("done", "queued")
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(queued, "governed-sdd"), [])
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(queued, "single"), [])
         retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            held, self.primary / "tasks/QUEUE.md", self.primary / "tasks/QUEUE_ARCHIVE.md", "governed-sdd"
+            held, self.primary / "tasks/QUEUE.md", self.primary / "tasks/QUEUE_ARCHIVE.md", "single"
         )
         self.assertEqual(retained, held)
         self.assertIsNone(archive)
@@ -496,8 +496,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
 
     def test_archival_checks_all_tables_and_nested_rows_in_both_modes(self) -> None:
-        for mode in ("lean-delivery", "governed-sdd"):
-            if mode == "lean-delivery":
+        for mode in ("single", "single"):
+            if mode == "single":
                 header = "| Status | ID | Title |\n|---|---|---|\n"
                 closed = "| `[x]` | A | Done |\n"
                 terminals = ("[x]",)
@@ -560,13 +560,13 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "| 1 | B-SPIKE | P0 | queued | SPIKE | — | B.md |\n"
         )
         retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            contents, self.primary / "docs/QUEUE.md", self.primary / "archive.md", "governed-sdd"
+            contents, self.primary / "docs/QUEUE.md", self.primary / "archive.md", "single"
         )
         self.assertIn("B-SPIKE", retained)
         self.assertNotIn("B-SPIKE", archive or "")
         self.assertIn("A.md", archive or "")
         self.assertNotIn("tasks/QUEUE.md", archive or "")
-        warnings = owner_integration_projections._queue_archival_warnings(contents, "governed-sdd")
+        warnings = owner_integration_projections._queue_archival_warnings(contents, "single")
         self.assertEqual(len(warnings), 1)
         self.assertIn("## Phase B", warnings[0])
 

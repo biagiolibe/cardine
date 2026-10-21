@@ -121,10 +121,10 @@ def check_template_context_sizes() -> None:
         if found_workflow == SINGLE_POLICY_LABEL
     }
     # The legacy workflow key selects the full role set; both presets install it.
-    for role in cardine_cli.CONTEXT_SIZE_ROLES["governed-sdd"]:
+    for role in cardine_cli.CONTEXT_SIZE_ROLES["single"]:
         if role not in rows:
             fail(f"context-size ceiling is missing for {role}")
-        report = owner_shared_context.context_size_report(project, role, workflow_mode="governed-sdd")
+        report = owner_shared_context.context_size_report(project, role, workflow_mode="single")
         actual = int(report["total"]["bytes"])
         if actual > rows[role]:
             fail(f"context-size ceiling exceeded for {role}: {actual} bytes > {rows[role]} bytes")
@@ -559,7 +559,7 @@ def check_migrations(root: Path = ROOT) -> None:
     # chain has no last migration.
     if previous_to is not None and cardine_cli.version_key(previous_to) > cardine_cli.version_key(current_version):
         fail("a migration must never target a version ahead of the current release")
-    for error in owner_templates_migration_audit.validate_capability_moves(root, "governed-sdd"):
+    for error in owner_templates_migration_audit.validate_capability_moves(root, "single"):
         fail(f"invalid capability move: {error}")
 
 

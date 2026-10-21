@@ -430,7 +430,7 @@ def _branch_facts(project: Path, profile: Profile, task_id: str, queue: str,
         record = show(record_path) if record_path else None
     legacy = branch_state is None and main_state is None and branch_error is None
     review = (show(_relative(project, identity.review_path))
-              if profile.name == "governed-sdd" and legacy else None)
+              if legacy else None)
     base = "refs/heads/main" if _git_optional(
         project, "rev-parse", "--verify", "--quiet", "refs/heads/main") is not None else "HEAD"
     ahead = (_git_optional(project, "rev-list", "--count", f"{base}..{ref}") or "0").strip() != "0"
@@ -560,7 +560,7 @@ def _closing_task(project: Path, profile: Profile, row: QueueRow, queue: Path,
         worktree=worktree, readiness="DONE" if cleanup_pending else "CLOSING",
         lifecycle="done" if cleanup_pending else "closing", source="main",
         cleanup_pending=cleanup_pending,
-        registered_worktree=True, workflow=profile.name,
+        registered_worktree=True, workflow=profile.name, checkbox=row.checkbox,
         updated_at=_committed_update(project, _relative(project, path)) if path else None,
         closure_stop_reason=closure["stop_reason"] if closure else None,
         closure_resume=closure["resume"] if closure else None,
@@ -713,7 +713,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             tasks.append(Task(
                 row.task_id, row.title or row.task_id, "STATE_ERROR", row.section, (), None, (), (),
                 lifecycle="in_progress", readiness="STATE ERROR", legacy=False,
-                source="task state on main", state_error=state_errors[row.task_id], workflow=profile.name,
+                source="task state on main", state_error=state_errors[row.task_id], workflow=profile.name, checkbox=row.checkbox,
             ))
             continue
         if profile.phases[row.status] == "done":
@@ -755,7 +755,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         # The lifecycle command is authoritative for closure guidance.  Restrict
         # the extra read to registered active worktrees; queued tasks retain the
         # constant-cost refresh path established by task 078.
-        if (facts and facts.worktree and profile.name == "governed-sdd"
+        if (facts and facts.worktree and not row.checkbox
                 and effective.lifecycle == "ready_for_review"):
             # A task waiting for approval stops at the review gate (C3), which
             # closure-status never reports; keep its timing and gate visible.
@@ -832,7 +832,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
                 and facts.row.status == row.status
             ),
             record_problem=problem, review=review,
-            workflow=profile.name,
+            workflow=profile.name, checkbox=row.checkbox,
             closure_stop_reason=closure_reason,
             closure_resume=closure_resume,
             started_at=started_at,

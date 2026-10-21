@@ -28,9 +28,9 @@ class CodexRulesTemplateTest(unittest.TestCase):
     def test_rules_are_managed_for_both_workflows(self) -> None:
         governed = {
             item.target
-            for item in owner_templates_files.managed_files(ROOT, "governed-sdd")
+            for item in owner_templates_files.managed_files(ROOT, "single")
         }
-        lean = {item.target for item in owner_templates_files.managed_files(ROOT, "lean-delivery")}
+        lean = {item.target for item in owner_templates_files.managed_files(ROOT, "single")}
         self.assertIn(Path(".codex/rules/meridian.rules"), governed)
         self.assertIn(Path(".codex/rules/meridian.rules"), lean)
 

@@ -146,7 +146,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.assertIn("done | NOT_REQUIRED", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
         inconclusive = contents.replace("queued", "in_progress")
         retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            inconclusive, queue, self.primary / "tasks/QUEUE_ARCHIVE.md", "governed-sdd"
+            inconclusive, queue, self.primary / "tasks/QUEUE_ARCHIVE.md", "single"
         )
         self.assertEqual(retained, inconclusive)
         self.assertIsNone(archive)

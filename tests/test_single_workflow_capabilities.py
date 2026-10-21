@@ -79,7 +79,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
     def test_catalog_rejects_workflow_selection_and_unknown_distribution(self):
         original = json.loads((ROOT / "capabilities/catalog-v1.json").read_text())
         for group in ("capabilities", "profiles"):
-            for change in ({"workflowModes": ["lean-delivery"]}, {"distribution": "other"}):
+            for change in ({"workflowModes": ["single"]}, {"distribution": "other"}):
                 with self.subTest(group=group, change=change):
                     catalog = json.loads(json.dumps(original))
                     next(iter(catalog[group].values())).update(change)
@@ -94,7 +94,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
             self.assertNotIn(retired, text)
 
     def test_both_presets_refuse_a_tampered_same_version_block(self):
-        for preset, mode in (("lean", "lean-delivery"), ("governed", "governed-sdd")):
+        for preset, mode in (("lean", "single"), ("governed", "single")):
             with self.subTest(preset=preset), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 framework = root / "framework"

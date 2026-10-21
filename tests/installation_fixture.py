@@ -27,7 +27,7 @@ class InstallationFixture:
         self.framework = framework
         self.catalog = owner_templates_catalog.load_capability_catalog(framework)
 
-    def manifest(self, mode: str = "lean-delivery") -> dict[str, object]:
+    def manifest(self, mode: str = "single") -> dict[str, object]:
         profile = self.catalog.profile("cardine-self-hosting")
         assert profile is not None
         capabilities: dict[str, object] = {}
@@ -76,7 +76,7 @@ class InstallationFixture:
         }
 
     def installed_project(
-        self, project: Path, mode: str = "lean-delivery"
+        self, project: Path, mode: str = "single"
     ) -> dict[str, object]:
         manifest = self.manifest(mode)
         managed_files: dict[str, str] = {}

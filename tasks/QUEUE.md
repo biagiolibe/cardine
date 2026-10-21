@@ -33,20 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 15 — Single workflow
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work item 6 and decisions 3 and 4, and `docs/SINGLE_WORKFLOW_PLAN.md`.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 052 | Resolve the project preset from the configuration (single workflow SW1) | 🔴 P1 | 051 | [052](done/052-project-presets-and-resolution.md) |
-| `[x]` | 053 | Resolve one task contract and store its snapshot (single workflow SW2) | 🔴 P1 | 052 | [053](done/053-single-task-contract.md) |
-| `[x]` | 054 | Use one task state machine with review and dependency gates (single workflow SW3) | 🔴 P1 | 053 | [054](done/054-single-state-machine.md) |
-| `[x]` | 055 | Build the single template set (single workflow SW4) | 🔴 P1 | 054 | [055](done/055-single-template-set.md) |
-| `[x]` | 056 | Reconcile the capability catalog with the single template set (single workflow SW5) | 🔴 P1 | 055 | [056](done/056-reconcile-capabilities.md) |
-| `[x]` | 057 | Name the preset in the per-turn briefing (single workflow SW6) | 🔴 P1 | 056 | [057](done/057-preset-briefing-adapter.md) |
-| `[ ]` | 058 | Remove residual workflow branching and prove parity (single workflow SW7) | 🔴 P1 | 057 | [058](058-remove-workflow-branching.md) |
-
 ### Phase 16 — Marker and template text rename
 
 Authority: `docs/ADR_CARDINE_1_0.md`, work item 5b, and `docs/RENAME_PLAN.md`.

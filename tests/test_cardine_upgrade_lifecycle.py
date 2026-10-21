@@ -36,7 +36,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         blueprint.write_text(previous, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.11\n", encoding="utf-8")
         self.copy_governed_templates()
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         installed = self.project / "tasks/TASK_BLUEPRINT.md"
         installed.write_text(previous + "\nConsumer-owned task note.\n", encoding="utf-8")
         records = {}
@@ -73,7 +73,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         """Migration 043 upgrades the two managed host-impact files without
         replacing consumer-owned text outside their protected regions."""
         (self.framework / "VERSION").write_text("1.1.39\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         blueprint = self.framework / "templates/single/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
@@ -178,7 +178,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
                 (root / relative).write_text(previous, encoding="utf-8")
 
         (self.framework / "VERSION").write_text("1.1.41\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         project_workflow = self.project / "PROJECT_WORKFLOW.md"
         project_workflow.write_text(
             project_workflow.read_text(encoding="utf-8") + "\nConsumer-owned note.\n",
@@ -196,7 +196,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("MIGRATION 011-synthetic-access", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
+        self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
             "capability=task-worktree-boundary v10",
@@ -207,7 +207,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.48")
         self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
-        audited = self.run_cli("audit", "--mode", "governed-sdd")
+        audited = self.run_cli("audit", "--mode", "single")
         self.assertEqual(audited.returncode, 1, audited.stdout + audited.stderr)
         self.assertIn("declaration/legacy-compatibility", audited.stdout)
 
@@ -251,7 +251,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
                 (root / relative).write_text(previous, encoding="utf-8")
 
         (self.framework / "VERSION").write_text("1.1.42\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         project_workflow = self.project / "PROJECT_WORKFLOW.md"
         project_workflow.write_text(
             project_workflow.read_text(encoding="utf-8") + "\nConsumer-owned note.\n",
@@ -268,7 +268,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("MIGRATION 011-synthetic-access", checked.stdout)
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
-        self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
+        self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
             "capability=task-worktree-handoff v5",
@@ -360,7 +360,7 @@ worktree before the branch only after validated integration succeeds.
             (workflow / relative).write_text(text, encoding="utf-8")
             (self.project / relative).write_text(text, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.46\n", encoding="utf-8")
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
 
         review = self.project / "docs/workflows/REVIEW.md"
@@ -394,7 +394,7 @@ worktree before the branch only after validated integration succeeds.
             r"\n\nIf `meridian codex configure --check` reports `repair-required`.*?(?=<!-- MERIDIAN:END -->)",
             re.DOTALL,
         )
-        for mode in ("governed-sdd", "lean-delivery"):
+        for mode in ("single", "single"):
             with self.subTest(mode):
                 shutil.rmtree(self.project)
                 self.project.mkdir()
@@ -456,7 +456,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("capability=task-worktree-boundary v10", implementation.read_text(encoding="utf-8"))
         self.assertIn("**Manually triggered.**", implementation.read_text(encoding="utf-8"))
         upgraded_workflow = project_workflow.read_text(encoding="utf-8")
-        self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded_workflow)
+        self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded_workflow)
         self.assertIn("Consumer-owned worktree note.", upgraded_workflow)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.54")
@@ -495,7 +495,7 @@ worktree before the branch only after validated integration succeeds.
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(text, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.54\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         report = self.project / "docs/COMPLETION_REPORT_TEMPLATE.md"
         report.write_text(report.read_text(encoding="utf-8") + "\nConsumer-owned handoff note.\n", encoding="utf-8")
 
@@ -558,7 +558,7 @@ worktree before the branch only after validated integration succeeds.
                              *arguments, "--project", str(self.project)],
                             text=True, capture_output=True,
                         )
-                    locked = cli(old_framework, "lock", "--mode", mode)
+                    locked = cli(old_framework, "lock", "--mode", "single")
                     self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
                     checked = cli(self.framework, "upgrade", "--check")
                     self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
@@ -592,7 +592,7 @@ worktree before the branch only after validated integration succeeds.
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.15\n")
-        locked = self.run_cli("lock", "--mode", "lean-delivery")
+        locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
         for name, text in current.items():
             (workflow / name).write_text(text)
@@ -630,7 +630,7 @@ worktree before the branch only after validated integration succeeds.
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.3\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "lean-delivery").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         for relative, text in previous.items():
             self.assertEqual((self.project / relative).read_text(encoding="utf-8"), text)
@@ -648,7 +648,7 @@ worktree before the branch only after validated integration succeeds.
 
         for relative in paths:
             upgraded = (self.project / relative).read_text(encoding="utf-8")
-            self.assertIn(f"MERIDIAN:BEGIN capability=git-workflow v{self.baseline_version('lean-delivery', relative, 'git-workflow')}", upgraded)
+            self.assertIn(f"MERIDIAN:BEGIN capability=git-workflow v{self.baseline_version('single', relative, 'git-workflow')}", upgraded)
             self.assertIn("Task branches never edit the project's queue", upgraded)
         self.assertIn("Consumer-owned closure note.", agents.read_text(encoding="utf-8"))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
@@ -691,7 +691,7 @@ worktree before the branch only after validated integration succeeds.
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.4\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         implementation = self.project / "docs/workflows/IMPLEMENTATION.md"
         implementation.write_text(
@@ -711,7 +711,7 @@ worktree before the branch only after validated integration succeeds.
         upgraded_workflow = (self.project / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
         upgraded_implementation = implementation.read_text(encoding="utf-8")
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        self.assertIn(f"capability=git-workflow v{self.baseline_version('governed-sdd', 'PROJECT_WORKFLOW.md', 'git-workflow')}", upgraded_workflow)
+        self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", upgraded_workflow)
         self.assertIn("Review: required` is a gate, not a request for authorization", upgraded_workflow)
         self.assertIn("capability=task-worktree-boundary v10", upgraded_implementation)
         self.assertIn("REVIEW_REQUIRED`; it is a gate", upgraded_implementation)
@@ -741,7 +741,7 @@ worktree before the branch only after validated integration succeeds.
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
         module_map = "\n## Project module map\n\nThe `core` module owns domain rules; `app` depends on `core`.\n"
         organization = self.project / relative
@@ -772,7 +772,7 @@ worktree before the branch only after validated integration succeeds.
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         project_workflow = self.project / relative
         locked = project_workflow.read_text(encoding="utf-8")
 
@@ -786,7 +786,7 @@ worktree before the branch only after validated integration succeeds.
         shutil.rmtree(self.project / ".cardine")
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
         (workflow / relative).write_text(current.replace(anchor, smoke + anchor, 1), encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         project_workflow.write_text(locked.replace("`none`", "`make smoke`"), encoding="utf-8")
         (workflow / relative).write_text(current, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.7\n", encoding="utf-8")
@@ -795,7 +795,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Project integration smoke command: `make smoke`", project_workflow.read_text(encoding="utf-8"))
 
     def test_upgrade_installs_closure_command_policy_for_governed_and_keeps_local_rules(self) -> None:
-        self._assert_upgrade_installs_closure_command_policy("governed-sdd")
+        self._assert_upgrade_installs_closure_command_policy("single")
 
     def test_upgrade_installs_resume_guidance_for_lean_from_1_2_6(self) -> None:
         workflow = self.framework / "templates/single"
@@ -832,7 +832,7 @@ worktree before the branch only after validated integration succeeds.
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
         (self.framework / "VERSION").write_text("1.2.6\n", encoding="utf-8")
-        self.assertEqual(self.run_cli("lock", "--mode", "lean-delivery").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         project_workflow = self.project / "PROJECT_WORKFLOW.md"
         project_workflow.write_text(
             project_workflow.read_text(encoding="utf-8") + "\nConsumer-owned resume note.\n", encoding="utf-8"
@@ -848,7 +848,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded = project_workflow.read_text(encoding="utf-8")
-        self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('lean-delivery', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded)
+        self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded)
         self.assertIn("`--resume` is allowed only for that directive", upgraded)
         self.assertIn("Consumer-owned resume note.", upgraded)
         lifecycle = (self.project / "docs/WORKTREE_LIFECYCLE.md").read_text(encoding="utf-8")
@@ -856,7 +856,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Only a Resume directive adds `--resume`", lifecycle)
 
     def test_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules(self) -> None:
-        self._assert_upgrade_installs_closure_command_policy("lean-delivery")
+        self._assert_upgrade_installs_closure_command_policy("single")
 
     def test_upgrade_installs_lean_lifecycle_document_from_1_2_5(self) -> None:
         workflow = self.framework / "templates/single"
@@ -890,7 +890,7 @@ worktree before the branch only after validated integration succeeds.
                         destination.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copyfile(path, destination)
                 (self.framework / "VERSION").write_text("1.2.5\n", encoding="utf-8")
-                locked = self.run_cli("lock", "--mode", "lean-delivery")
+                locked = self.run_cli("lock", "--mode", "single")
                 self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
 
                 lifecycle = self.project / "docs/WORKTREE_LIFECYCLE.md"

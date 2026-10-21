@@ -471,7 +471,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
         self.assertIn("branch task-001", task.source)
         self.write(self.project, "tasks/TASK-001.md", "# Task TASK-001 — Spike\nClass: SPIKE\nStatus: queued\n")
         self.write(self.project, ".cardine/tasks/TASK-001.json", json.dumps({
-            "version": 1, "task_id": "TASK-001", "workflow": "governed-sdd", "status": "done", "outcome": "ANSWERED",
+            "version": 1, "task_id": "TASK-001", "workflow": "single", "status": "done", "outcome": "ANSWERED",
             "transitions": [{"from": before, "to": after, "commit": "a" * 40,
                              "at": "2026-10-11T12:00:00Z"}
                             for before, after in [("queued", "in_progress"), ("in_progress", "done")]],
@@ -483,7 +483,7 @@ class MachineStateConsoleTest(support.MachineStateConsoleFixture):
     def test_lean_machine_state_keeps_worktree_derived_progress(self) -> None:
         support.write_project_config(self.project, "lean")
         support.LeanEffectiveStateFixture.setup_project(self, {"001": " "})
-        self.state(self.project, "001", "queued", workflow="lean-delivery")
+        self.state(self.project, "001", "queued", workflow="single")
         self.commit(self.project)
         self.worktree("task-001")
         task = self.load()["001"]

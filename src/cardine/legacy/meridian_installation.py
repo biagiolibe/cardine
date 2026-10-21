@@ -101,6 +101,10 @@ def snapshot_task_state(state):
     value = json.loads(json.dumps(state))
     old = value["status"]
     value["status"] = MERIDIAN_STATUSES[old]
+    value["workflow"] = "single"
+    if "review" not in value:
+        value["review"] = {"required": state["workflow"] == "governed-sdd", "verdict": None,
+                           "attempt": 1, "reviewed_commit": None, "approved_by": None}
     if old in ("ANSWERED", "INCONCLUSIVE"):
         value["outcome"] = old
     for transition in value["transitions"]:
@@ -109,13 +113,19 @@ def snapshot_task_state(state):
     return value
 
 
+def _snapshot_workflow(project: Path) -> str:
+    """Validate the installed lock before selecting the common read model."""
+    detect_meridian_mode(project)
+    return "single"
+
+
 def load_meridian_snapshot(project: Path) -> Snapshot:
     """Build an installation snapshot under the frozen Meridian names."""
     state_token = state_adapter.set(snapshot_task_state)
     status_token = status_adapter.set(lambda value: MERIDIAN_STATUSES.get(value, value))
     try:
         with use(MERIDIAN_INSTALLATION_NAMES):
-            return load_snapshot(project, workflow_resolver=detect_meridian_mode)
+            return load_snapshot(project, workflow_resolver=_snapshot_workflow)
     finally:
         state_adapter.reset(state_token)
         status_adapter.reset(status_token)

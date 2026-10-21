@@ -147,8 +147,31 @@ def _bool_field(value: object, label: str) -> bool:
     return value
 
 
-def candidate_validation_declaration(project_root: Path) -> tuple[str, dict[str, tuple[str, ...]]]:
-    """Load the consumer-owned candidate-validation declaration without running it."""
+def candidate_validation_declaration(
+    project_root: Path, task_id: str | None = None, *, task_project: Path | None = None,
+) -> tuple[str, dict[str, tuple[str, ...]]]:
+    """Use frozen task commands; retain declarations for pre-contract records."""
+    if task_id is not None:
+        source = task_project or project_root
+        path = state_path(source, task_id)
+        if path.is_file():
+            try:
+                snapshot = _read_json_object(path, "task state")
+            except (CardineError, OSError, UnicodeError) as error:
+                raise stop_error(
+                    "TASK_STATE_INVALID", f"{path}: expected readable UTF-8 JSON; found {error}",
+                    task_id=task_id, project=project_root,
+                ) from error
+            if "contract" in snapshot:
+                from cardine.tasks.state import read_task_state
+                from cardine.shared.project import project_validation_commands
+                state = read_task_state(source, task_id, "single", stop_factory=stop_error)
+                contract = state["contract"]
+                return "declared", {
+                    outcome: tuple(command for command in project_validation_commands(contract, outcome)
+                                   if command != "git diff --check")
+                    for outcome in CANDIDATE_VALIDATION_OUTCOMES
+                }
     path = project_root / names().candidate_validation_path
     if not path.exists():
         return "undeclared", {}

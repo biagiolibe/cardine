@@ -132,7 +132,7 @@ def build_parser() -> CardineArgumentParser:
 
     lock = subparsers.add_parser("lock", help="register a newly initialized project for deterministic upgrades")
     lock.add_argument("--project", type=Path, default=Path.cwd())
-    lock.add_argument("--mode", choices=("lean-delivery", "governed-sdd"), required=True)
+    lock.add_argument("--mode", choices=("single",), default="single")
 
     upgrade = subparsers.add_parser("upgrade", help="plan or apply a framework upgrade")
     upgrade.add_argument("--project", type=Path, default=Path.cwd())
@@ -161,8 +161,8 @@ def build_parser() -> CardineArgumentParser:
     audit.add_argument("--project", type=Path, default=Path.cwd())
     audit.add_argument(
         "--mode",
-        choices=("lean-delivery", "governed-sdd"),
-        help="detected from the project's PROJECT_WORKFLOW.md mode lock when omitted",
+        choices=("single",),
+        help="single distribution; validates project configuration when omitted",
     )
     audit.add_argument(
         "--ci-profile",

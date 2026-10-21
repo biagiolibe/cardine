@@ -140,7 +140,7 @@ class MachineStateConsoleFixture(RepoCase):
 
     write_record = GovernedEffectiveStateFixture.write_record
 
-    def state(self, root: Path, task_id: str, status: str, *, workflow="governed-sdd",
+    def state(self, root: Path, task_id: str, status: str, *, workflow="single",
               verdict=None, required=True) -> None:
         # MERIDIAN-INSTALLATION-CHECK
         if names().project_directory == ".meridian":

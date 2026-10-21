@@ -537,15 +537,9 @@ def plan_from_baseline(
                 )
             else:
                 plan.append(PlanItem(item, "conflict", "three-way merge"))
-    if mode == "governed-sdd":
-        plan = apply_additive_move_checks(
-            plan,
-            project_root,
-            framework_root,
-            mode,
-            baseline_root,
-            pending_migrations,
-        )
+    plan = apply_additive_move_checks(
+        plan, project_root, framework_root, mode, baseline_root, pending_migrations,
+    )
     if capability_profiles is not None:
         plan.extend(profile_surface_plan(project_root, framework_root, manifest))
     return manifest, plan

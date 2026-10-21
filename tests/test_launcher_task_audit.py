@@ -43,12 +43,12 @@ class TaskStateAuditTest(unittest.TestCase):
         (self.project / "tasks/QUEUE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | queued | [001](001.md) |\n")
         self.path = self.project / ".cardine/tasks/001.json"
-        self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "governed-sdd",
+        self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "single",
                                          "status": "queued", "transitions": []}))
 
     def test_audit_pass_and_drift_are_one_read_only_row_per_state(self):
         before = {p: p.read_bytes() for p in self.project.rglob("*") if p.is_file()}
-        rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].status, "PASS")
         self.assertEqual(before, {p: p.read_bytes() for p in before})
@@ -56,24 +56,24 @@ class TaskStateAuditTest(unittest.TestCase):
         (self.project / "tasks/QUEUE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | in_progress | [001](001.md) |\n")
         before = {p: p.read_bytes() for p in before}
-        rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].status, "ADVISORY")
         self.assertIn(".cardine/tasks/001.json", rows[0].detail)
         self.assertIn("tasks/QUEUE.md queue Status: state=queued, projection=in_progress", rows[0].detail)
         self.assertIn("tasks/001.md record Status: state=queued, projection=ACCEPTED", rows[0].detail)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
-        with mock.patch.object(owner_templates_audit, "audit_declared_capabilities", return_value=([], "governed-sdd")), \
+        with mock.patch.object(owner_templates_audit, "audit_declared_capabilities", return_value=([], "single")), \
                 mock.patch.object(owner_templates_audit, "audit_capability_markers", return_value=[]), \
                 mock.patch.object(owner_templates_audit, "audit_duplicate_headings", return_value=[]), \
                 mock.patch.object(owner_templates_audit, "audit_capability_moves", return_value=[]), \
                 mock.patch.object(owner_templates_audit, "audit_entry_router", return_value=[]), redirect_stdout(io.StringIO()) as out:
-            owner_templates_audit.run_audit(self.project, ROOT, "governed-sdd")
+            owner_templates_audit.run_audit(self.project, ROOT, "single")
         self.assertRegex(out.getvalue(), r"ADVISORY\s+task-state")
 
     def test_audit_invalid_state_is_coded_and_other_rows_survive(self):
         self.path.write_text("not JSON")
-        rows = owner_tasks_audit.audit_task_state_projections(self.project, "governed-sdd")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
         self.assertEqual(rows[0].status, "FAIL")
         self.assertIn("TASK_STATE_INVALID", rows[0].detail)
 
@@ -84,9 +84,9 @@ class TaskStateAuditTest(unittest.TestCase):
         (self.project / "tasks/QUEUE.md").write_text("")
         (self.project / "tasks/QUEUE_ARCHIVE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | `[x]` | — |\n")
-        self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "lean-delivery",
+        self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "single",
             "status": "done", "transitions": [{"from": before, "to": after, "commit": "a" * 40,
                                                 "at": "2026-10-11T12:00:00Z"}
                                                for before, after in (("queued", "in_progress"), ("in_progress", "done"))]}))
-        rows = owner_tasks_audit.audit_task_state_projections(self.project, "lean-delivery")
+        rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
         self.assertEqual(rows[0].status, "PASS")

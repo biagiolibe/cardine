@@ -99,7 +99,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 055 — Build the single template set (single workflow SW4).
 - `[x]` 056 — Reconcile the capability catalog with the single template set (single workflow SW5).
 - `[x]` 057 — Name the preset in the per-turn briefing (single workflow SW6).
-- `[ ]` 058 — Remove residual workflow branching and prove parity (single workflow SW7).
+- `[x]` 058 — Remove residual workflow branching and prove parity (single workflow SW7).
 - `[ ]` 059 — Plan the single source of task state (work item 7).
 - `[ ]` 060 — Remove the Meridian name and the old states from the template text (work item 5b).
 - `[ ]` 061 — Rename the capability markers and restart every capability at v1 (work item 5b).

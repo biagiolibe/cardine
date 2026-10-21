@@ -22,7 +22,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
                   for path in self.project.rglob("*") if path.is_file()}
         (self.framework / "VERSION").write_text("1.2.0-rc.1\n", encoding="utf-8")
 
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
 
         self.assertNotEqual(locked.returncode, 0)
         self.assertIn("prerelease", locked.stderr)
@@ -31,7 +31,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
                                   for path in self.project.rglob("*") if path.is_file()})
 
     def test_upgrade_apply_rejects_a_prerelease_target_before_touching_files(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         manifest_path = self.project / ".cardine/manifest.json"
         manifest_before = manifest_path.read_bytes()
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
@@ -50,7 +50,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
     def test_build_metadata_is_accepted_but_never_persisted(self) -> None:
         (self.framework / "VERSION").write_text("1.1.0+dev.5\n", encoding="utf-8")
 
-        locked = self.run_cli("lock", "--mode", "governed-sdd")
+        locked = self.run_cli("lock", "--mode", "single")
 
         self.assertEqual(locked.returncode, 0, locked.stderr)
         manifest_text = (self.project / ".cardine/manifest.json").read_text(encoding="utf-8")
@@ -131,11 +131,11 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertNotIn("CONFLICT ", current.stdout)
 
     def test_manifest_protocol_compatibility_for_upgrade_check_and_audit(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         manifest_path = self.project / ".cardine/manifest.json"
         commands = (
             ("upgrade --check", ("upgrade", "--check")),
-            ("audit", ("audit", "--mode", "governed-sdd")),
+            ("audit", ("audit", "--mode", "single")),
         )
         cases = (
             ("newer", shared_constants.PROTOCOL_VERSION + 1, 2),
@@ -169,7 +169,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
                         self.assertIn("update your Cardine checkout", result.stderr)
 
     def test_upgrade_apply_rejects_newer_protocol_before_touching_project(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         manifest_path = self.project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["protocolVersion"] = shared_constants.PROTOCOL_VERSION + 1
@@ -197,7 +197,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         )
 
     def test_upgrade_apply_rewrites_lower_protocol_to_current(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         manifest_path = self.project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["protocolVersion"] = shared_constants.PROTOCOL_VERSION - 1
@@ -213,7 +213,7 @@ class ManifestProtocolTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(rewritten["protocolVersion"], shared_constants.PROTOCOL_VERSION)
 
     def test_manifest_protocol_version_must_be_an_integer(self) -> None:
-        self.assertEqual(self.run_cli("lock", "--mode", "governed-sdd").returncode, 0)
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         manifest_path = self.project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["protocolVersion"] = "1"

@@ -336,7 +336,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
                 destination = project / path.relative_to(source)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
-        results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "governed-sdd")
+        results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "single")
         self.assertEqual(results, [])
 
     def test_flags_a_capability_duplicated_under_two_headings_in_one_file(self) -> None:
@@ -360,7 +360,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
         original = owner_templates_files.managed_files
         owner_templates_files.managed_files = lambda framework_root, mode: [FakeManagedFile(Path("PROJECT_WORKFLOW.md"))]
         try:
-            results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "governed-sdd")
+            results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "single")
         finally:
             owner_templates_files.managed_files = original
         self.assertEqual(len(results), 1)
@@ -393,7 +393,7 @@ class DuplicateHeadingAuditTest(unittest.TestCase):
             FakeManagedFile(Path("CLAUDE.md")),
         ]
         try:
-            results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "governed-sdd")
+            results = owner_templates_marker_audit.audit_duplicate_headings(project, ROOT, "single")
         finally:
             owner_templates_files.managed_files = original
         self.assertEqual(results, [])

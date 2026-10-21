@@ -1,4 +1,4 @@
-"""Resolve product workflow compatibility keys from project configuration."""
+"""Resolve preset provenance independently of the single distribution."""
 
 from __future__ import annotations
 
@@ -13,5 +13,6 @@ def resolve_preset(project_root: Path) -> str:
 
 
 def detect_mode(project_root: Path) -> str:
-    """Keep legacy internal keys until workflow consumers are consolidated."""
-    return {"lean": "lean-delivery", "governed": "governed-sdd"}[resolve_preset(project_root)]
+    """Validate project configuration and select the sole distribution."""
+    resolve_preset(project_root)
+    return "single"

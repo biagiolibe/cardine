@@ -91,7 +91,12 @@ def _integration_task_state(
         or bool(git_output(project_root, "ls-tree", "-d", task_commit, "--", str(relative.parent)))
     )
     if not adopted and not require_tracked:
-        if detect_mode(project_root) == "governed-sdd":
+        from cardine.shared.project import resolve_project_configuration
+        from cardine.shared.console_workflow import record_review
+        declared = record_review(identity.task_path.read_text(encoding="utf-8"))
+        required = (declared == "REQUIRED" if declared is not None else
+                    resolve_project_configuration(project_root)["taskDefaults"]["review"] == "required")
+        if required:
             candidate_identity = resolve_task_identity(worktree, identity.canonical_id, "existing", check_queue_links=False)
             _row, accepted, reason = _governed_completion_row(
                 candidate_identity.queue_path.read_text(encoding="utf-8"), candidate_identity, candidate_identity.queue_path,
@@ -236,7 +241,9 @@ def stage_task_integration(
             task_id=identity.canonical_id, project=project_root, evidence=evidence_path,
         )
     evidence = _integration_evidence(evidence_path)
-    declaration_state, _fragments = candidate_validation_declaration(project_root)
+    declaration_state, _fragments = candidate_validation_declaration(
+        project_root, identity.canonical_id, task_project=Path(str(inspection["worktree"])),
+    )
     if declaration_state == "undeclared":
         # This is deliberately before inspection, lease creation, and merge so the
         # first-use decision cannot strand an integration transaction.
@@ -356,8 +363,9 @@ def stage_task_integration(
                                   {identity.canonical_id: task_state} if task_state else None),
         )
         lifecycle_paths = [str(identity.queue_path.relative_to(project_root))]
-        if detect_mode(project_root) == "lean-delivery":
-            lifecycle_paths.append(str(resolve_project_locations(project_root).plan))
+        plan = resolve_project_locations(project_root).plan
+        if (project_root / plan).is_file():
+            lifecycle_paths.append(str(plan))
         archive_path = identity.queue_path.with_name("QUEUE_ARCHIVE.md")
         if archive_path.exists():
             lifecycle_paths.append(str(archive_path.relative_to(project_root)))
@@ -429,7 +437,7 @@ def finalize_task_integration(
         raise stop_error(
             "EVIDENCE_MISMATCH", "candidate validation evidence must name successful commands", task_id=identity.canonical_id, project=project_root
         )
-    declaration_state, declaration_fragments = candidate_validation_declaration(project_root)
+    declaration_state, declaration_fragments = candidate_validation_declaration(project_root, identity.canonical_id)
     if declaration_state == "undeclared":
         raise stop_error(
             "UNDECLARED_VALIDATION_COMMANDS", "declare candidate validation commands before finalize"

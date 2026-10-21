@@ -40,7 +40,7 @@ class StateArchivalTest(unittest.TestCase):
         self.queue = self.root / "tasks/QUEUE.md"
         self.archive = self.root / "tasks/QUEUE_ARCHIVE.md"
 
-    def state(self, task_id: str, status: str, workflow: str = "lean-delivery", spike: bool = False) -> None:
+    def state(self, task_id: str, status: str, workflow: str = "single", spike: bool = False) -> None:
         current, transitions = "queued", []
         for target in ROUTES[status]:
             transitions.append({"from": current, "to": target, "commit": SHA, "at": AT})
@@ -53,7 +53,7 @@ class StateArchivalTest(unittest.TestCase):
             (self.root / "tasks" / f"{task_id}.md").write_text(
                 f"# Task\n\n> **ID**: `{task_id}`\n\nClass: SPIKE\n", encoding="utf-8")
 
-    def archive_queue(self, contents: str, mode: str = "lean-delivery", *, with_state: bool = True):
+    def archive_queue(self, contents: str, mode: str = "single", *, with_state: bool = True):
         report: list[dict[str, object]] = []
         resolver = owner_integration_projections._queue_state_resolver(self.root, mode) if with_state else None
         retained, archived = owner_integration_projections._archive_completed_queue_sections(
@@ -76,18 +76,18 @@ class StateArchivalTest(unittest.TestCase):
 
     def test_governed_inconclusive_spike_closes_its_section(self) -> None:
         write_project_config(self.root, "governed")
-        self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
-        self.state("057", "done", "governed-sdd")
+        self.state("056", "INCONCLUSIVE", "single", spike=True)
+        self.state("057", "done", "single")
         contents = ("## Spikes\n\n" + GOVERNED_HEADER
                     + "| 1 | 056 | P0 | done | SPIKE | — | [056](056.md) |\n"
                     + "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n")
-        retained, archived, report = self.archive_queue(contents, "governed-sdd")
+        retained, archived, report = self.archive_queue(contents, "single")
         self.assertEqual(retained, "\n")
         self.assertIn("| 1 | 056 | P0 | done |", archived or "")
         self.assertTrue(report["## Spikes"]["archive"])
         # Without state the conservative table rule still holds the INCONCLUSIVE row open.
         held, none_archived, held_report = self.archive_queue(
-            contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"), "governed-sdd", with_state=False)
+            contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"), "single", with_state=False)
         self.assertEqual(held, contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"))
         self.assertIsNone(none_archived)
         self.assertFalse(held_report["### Spikes"]["archive"])
@@ -107,7 +107,7 @@ class StateArchivalTest(unittest.TestCase):
     def test_invalid_state_retains_the_section_with_its_reason(self) -> None:
         self.state("A", "done")
         path = self.root / ".cardine/tasks/A.json"
-        path.write_text(path.read_text(encoding="utf-8").replace('"lean-delivery"', '"unknown"'), encoding="utf-8")
+        path.write_text(path.read_text(encoding="utf-8").replace('"single"', '"unknown"'), encoding="utf-8")
         contents = "## Phase\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n"
         retained, _archived, report = self.archive_queue(contents)
         self.assertEqual(retained, contents)
@@ -181,18 +181,18 @@ class StateArchivalTest(unittest.TestCase):
         from cardine.shared.console_workflow import PROFILES, parse_queue
 
         write_project_config(self.root, "governed")
-        self.state("056", "INCONCLUSIVE", "governed-sdd", spike=True)
-        self.state("057", "done", "governed-sdd")
+        self.state("056", "INCONCLUSIVE", "single", spike=True)
+        self.state("057", "done", "single")
         contents = ("## Closed\n\n" + GOVERNED_HEADER
                     + "| 1 | 056 | P0 | done | SPIKE | — | [056](056.md) |\n"
                     + "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n\n"
                     "## Next\n\n" + GOVERNED_HEADER
                     + "| 3 | 058 | P1 | queued | NOT_REQUIRED | 056 | [058](058.md) |\n"
                     + "| 4 | 059 | P1 | queued | NOT_REQUIRED | 057 | [059](059.md) |\n")
-        retained, archived, _report = self.archive_queue(contents, "governed-sdd")
+        retained, archived, _report = self.archive_queue(contents, "single")
         self.assertNotIn("| 1 | 056 |", retained)
         self.assertIn("| 1 | 056 |", archived or "")
-        profile = PROFILES["governed-sdd"]
+        profile = PROFILES["single"]
         rows = (*parse_queue(retained, "QUEUE.md", profile), *parse_queue(archived or "", "QUEUE_ARCHIVE.md", profile))
         by_id = {row.task_id: row.status for row in rows}
         from cardine.tasks.state import dependency_satisfied
@@ -206,9 +206,9 @@ class StateArchivalTest(unittest.TestCase):
         self.state("B", "queued")
         contents = ("## Closed\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n"
                     "## Open\n\n" + LEAN_HEADER + "| `[ ]` | B | Waiting |\n")
-        resolver = owner_integration_projections._queue_state_resolver(self.root, "lean-delivery")
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents, "lean-delivery", resolver), [])
-        self.assertEqual(len(owner_integration_projections._queue_archival_warnings(contents, "lean-delivery")), 2)
+        resolver = owner_integration_projections._queue_state_resolver(self.root, "single")
+        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents, "single", resolver), [])
+        self.assertEqual(len(owner_integration_projections._queue_archival_warnings(contents, "single")), 2)
 
 
 class IncludeTerminalImportTest(unittest.TestCase):

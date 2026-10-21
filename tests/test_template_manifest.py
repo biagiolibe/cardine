@@ -89,7 +89,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
         original_managed_files = owner_templates_marker_history.managed_files
         owner_templates_marker_history.managed_files = lambda framework_root, mode: managed
         try:
-            absent = owner_templates_marker_history.capability_presence_map(self.project, "governed-sdd", self.framework)
+            absent = owner_templates_marker_history.capability_presence_map(self.project, "single", self.framework)
             self.assertEqual(len(absent), 1)
             self.assertFalse(absent["widget"][0])
             self.assertIn("no MERIDIAN:BEGIN", absent["widget"][1])
@@ -98,7 +98,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
                 "<!-- MERIDIAN:BEGIN capability=widget v1 -->text<!-- MERIDIAN:END -->",
                 encoding="utf-8",
             )
-            stale = owner_templates_marker_history.capability_presence_map(self.project, "governed-sdd", self.framework)
+            stale = owner_templates_marker_history.capability_presence_map(self.project, "single", self.framework)
             self.assertFalse(stale["widget"][0])
             self.assertEqual(stale["widget"][1], "marker present at v1, but v2 is required")
 
@@ -106,7 +106,7 @@ class CapabilityVersionDetectionTest(unittest.TestCase):
                 "<!-- MERIDIAN:BEGIN capability=widget v2 -->text<!-- MERIDIAN:END -->",
                 encoding="utf-8",
             )
-            satisfied = owner_templates_marker_history.capability_presence_map(self.project, "governed-sdd", self.framework)
+            satisfied = owner_templates_marker_history.capability_presence_map(self.project, "single", self.framework)
             self.assertTrue(satisfied["widget"][0])
         finally:
             owner_templates_marker_history.managed_files = original_managed_files
@@ -129,8 +129,8 @@ class MarkerCatalogTest(unittest.TestCase):
             managed = mock.Mock(target=Path("AGENTS.md"))
             with mock.patch.object(owner_templates_marker_history, "managed_files", return_value=[managed]):
                 self.assertEqual(
-                    owner_templates_marker_history.capability_presence_map(framework, "governed-sdd", framework),
-                    owner_templates_marker_history.capability_presence_map(framework, "governed-sdd", ROOT),
+                    owner_templates_marker_history.capability_presence_map(framework, "single", framework),
+                    owner_templates_marker_history.capability_presence_map(framework, "single", ROOT),
                 )
 
     def test_invalid_marker_catalog_fields_fail(self) -> None:
@@ -153,13 +153,13 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def setUp(self) -> None:
         self.catalog = owner_templates_catalog.load_capability_catalog(ROOT)
 
-    def manifest(self, mode: str = "lean-delivery") -> dict[str, object]:
+    def manifest(self, mode: str = "single") -> dict[str, object]:
         return InstallationFixture().manifest(mode)
 
-    def installed_project(self, project: Path, mode: str = "lean-delivery") -> dict[str, object]:
+    def installed_project(self, project: Path, mode: str = "single") -> dict[str, object]:
         return InstallationFixture().installed_project(project, mode)
 
-    def audit(self, project: Path, mode: str = "lean-delivery") -> tuple[int, str]:
+    def audit(self, project: Path, mode: str = "single") -> tuple[int, str]:
         output = io.StringIO()
         with redirect_stdout(output):
             return_code = owner_templates_audit.run_audit(project, ROOT, mode)
@@ -252,7 +252,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "cardine-self-hosting"
+                    project, ROOT, "single", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 0, output.getvalue())
             self.assertIn("SUMMARY worst=UNVERIFIED", output.getvalue())
@@ -263,7 +263,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "cardine-self-hosting"
+                    project, ROOT, "single", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             # MERIDIAN-INSTALLATION-CHECK
@@ -278,7 +278,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "cardine-self-hosting"
+                    project, ROOT, "single", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
@@ -296,7 +296,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "cardine-self-hosting"
+                    project, ROOT, "single", "cardine-self-hosting"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn(
@@ -312,7 +312,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
-                    project, ROOT, "lean-delivery", "unknown-profile"
+                    project, ROOT, "single", "unknown-profile"
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn("CI_GATE profile=unknown-profile worst=FAIL", output.getvalue())
@@ -365,7 +365,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def test_legacy_mode_and_migration_history_do_not_fabricate_capabilities(self) -> None:
         legacy = {
             "protocolVersion": 1,
-            "mode": "lean-delivery",
+            "mode": "single",
             "managedFiles": {},
             "appliedMigrations": [
                 "014-minimal-read-only-status",
@@ -375,14 +375,14 @@ class CapabilityProfileManifestTest(unittest.TestCase):
         }
         self.assertEqual(owner_templates_manifest.validate_manifest(legacy, self.catalog), ())
         projected = owner_templates_manifest.canonical_manifest(legacy)
-        self.assertEqual(projected["workflowMode"], "lean-delivery")
+        self.assertEqual(projected["workflowMode"], "single")
         self.assertNotIn("mode", projected)
         self.assertNotIn("capabilityProfiles", projected)
         self.assertEqual(projected, owner_templates_manifest.canonical_manifest(legacy))
 
     def test_conflicting_mode_aliases_are_rejected(self) -> None:
         manifest = self.manifest()
-        manifest["mode"] = "governed-sdd"
+        manifest["mode"] = "unsupported"
         with self.assertRaisesRegex(shared_errors.CardineError, "mode and workflowMode conflict"):
             owner_templates_manifest.validate_manifest(manifest, self.catalog)
 
@@ -435,7 +435,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 str(framework),
                 "lock",
                 "--mode",
-                "governed-sdd",
+                "single",
                 "--project",
                 str(project),
             ]
@@ -443,7 +443,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
             manifest_path = project / shared_constants.MANIFEST_PATH
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest["capabilityProfiles"] = self.manifest("governed-sdd")["capabilityProfiles"]
+            manifest["capabilityProfiles"] = self.manifest("single")["capabilityProfiles"]
             manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             before = {
                 path.relative_to(project): path.read_bytes()
@@ -691,7 +691,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             output = io.StringIO()
 
             with redirect_stdout(output):
-                return_code = owner_templates_audit.run_audit(project, framework, "lean-delivery")
+                return_code = owner_templates_audit.run_audit(project, framework, "single")
 
             self.assertEqual(return_code, 0, output.getvalue())
             self.assertIn("NOT_APPLICABLE", output.getvalue())
@@ -709,7 +709,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 project,
                 {
                     "protocolVersion": 1,
-                    "mode": "lean-delivery",
+                    "mode": "single",
                     "frameworkVersion": cardine_cli.read_version(ROOT),
                     "managedFiles": {},
                     "appliedMigrations": ["040-pretooluse-read-guard"],
@@ -727,7 +727,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
     def test_lean_managed_files_deliver_only_neutral_profile_surfaces(self) -> None:
         lean_paths = {
             item.target.as_posix()
-            for item in owner_templates_files.managed_files(ROOT, "lean-delivery")
+            for item in owner_templates_files.managed_files(ROOT, "single")
         }
         self.assertTrue(
             {
@@ -762,7 +762,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             manifest = {
                 "protocolVersion": shared_constants.PROTOCOL_VERSION,
                 "frameworkVersion": cardine_cli.read_version(ROOT),
-                "workflowMode": "lean-delivery",
+                "workflowMode": "single",
                 "managedFiles": {},
                 "appliedMigrations": [],
             }
@@ -905,12 +905,12 @@ class SingleTemplateSetTest(unittest.TestCase):
         return framework
 
     def test_both_presets_install_the_same_file_list(self) -> None:
-        lean = [item.target for item in owner_templates_files.managed_files(ROOT, "lean-delivery")]
-        governed = [item.target for item in owner_templates_files.managed_files(ROOT, "governed-sdd")]
+        lean = [item.target for item in owner_templates_files.managed_files(ROOT, "single")]
+        governed = [item.target for item in owner_templates_files.managed_files(ROOT, "single")]
         self.assertEqual(lean, governed)
-        self.assertTrue(all(item.source.is_relative_to(self.SINGLE) for item in owner_templates_files.managed_files(ROOT, "lean-delivery")))
+        self.assertTrue(all(item.source.is_relative_to(self.SINGLE) for item in owner_templates_files.managed_files(ROOT, "single")))
         locked = {}
-        for preset, mode in (("lean", "lean-delivery"), ("governed", "governed-sdd")):
+        for preset, mode in (("lean", "single"), ("governed", "single")):
             with tempfile.TemporaryDirectory() as directory:
                 project = Path(directory)
                 shutil.copytree(self.SINGLE, project, dirs_exist_ok=True)
@@ -940,7 +940,7 @@ class SingleTemplateSetTest(unittest.TestCase):
             owner_templates_files.managed_files(framework)
         shutil.rmtree(framework / "templates/single")
         with self.assertRaisesRegex(shared_errors.CardineError, "single template set is missing"):
-            owner_templates_files.managed_files(framework, "governed-sdd")
+            owner_templates_files.managed_files(framework, "single")
 
     def test_no_product_code_reads_the_old_roots(self) -> None:
         allowed = set()
@@ -1046,7 +1046,7 @@ class SingleTemplateSetTest(unittest.TestCase):
                 text=True, capture_output=True, check=False,
             )
 
-        self.assertEqual(cli("lock", "--mode", "lean-delivery").returncode, 0)
+        self.assertEqual(cli("lock", "--mode", "single").returncode, 0)
         local_note = "\n## Project conventions\n\nProject-owned prose that no update may drop.\n"
         for name in ("PROJECT_WORKFLOW.md", "tasks/TASK_BLUEPRINT.md"):
             installed = project / name

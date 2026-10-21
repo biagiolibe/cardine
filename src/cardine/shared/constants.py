@@ -32,7 +32,7 @@ PROTOCOL_VERSION = 2
 
 LEGACY_PROTOCOL_VERSION = 1
 
-WORKFLOW_MODES = ("lean-delivery", "governed-sdd")
+WORKFLOW_MODES = ("single",)
 
 INSTALLATION_FORMS = ("managed-copy", "shared-source", "declaration-only")
 
@@ -122,8 +122,7 @@ CONTEXT_PHASE_READS_BLOCK = re.compile(r"<!-- MERIDIAN:BEGIN capability=phase-re
 CONTEXT_PHASE_READ_LINE = re.compile(r"^- At ([^:\n]+): (.+)$", re.MULTILINE)
 
 CONTEXT_SIZE_ROLES = {
-    "governed-sdd": ("status", "design", "implementation", "review", "remediation", "lifecycle"),
-    "lean-delivery": ("implementation", "review"),
+    "single": ("status", "design", "implementation", "review", "remediation", "lifecycle"),
 }
 
 USAGE_HOSTS = ("codex", "claude")

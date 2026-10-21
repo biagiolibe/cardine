@@ -232,7 +232,7 @@ class SingleWorkflowContractTest(unittest.TestCase):
 
     def test_schema_rejects_invalid_snapshot_types_unknown_keys_and_references(self):
         state = import_task_states(self.root, ['001'])['tasks'][0]['state']
-        validate_task_state(state, '001', 'lean-delivery')
+        validate_task_state(state, '001', 'single')
         for mutate in (
             lambda c: c.update(unowned=True),
             lambda c: c['options'].update(validationRetryLimit=True),
@@ -245,10 +245,10 @@ class SingleWorkflowContractTest(unittest.TestCase):
             broken = deepcopy(state)
             mutate(broken['contract'])
             with self.assertRaises(TaskStateInvalid):
-                validate_task_state(broken, '001', 'lean-delivery')
+                validate_task_state(broken, '001', 'single')
         # Historical state remains readable; imports never rewrite it.
         state.pop('contract')
-        validate_task_state(state, '001', 'lean-delivery')
+        validate_task_state(state, '001', 'single')
 
     def test_invalid_second_contract_prevents_all_writes(self):
         self.record(task_id='002', extra='Options: {"review": true}\n')
