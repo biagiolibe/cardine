@@ -338,3 +338,201 @@ benchmark. They are not its results.
 - Extend `scripts/run_agent_evals.py`, or add a separate runner, for model
   and effort pinning, configuration isolation, the scripted operator, the
   limits, and journal-free grading.
+
+## 13. Preparation tasks
+
+This is an ordered backlog, not authorization to implement or run it. Each
+item is a separate 2–3 hour task; dependencies below allow independent work
+after its inputs are ready. Sections 1–11 remain the measurement contract.
+No benchmark or calibration is performed by this planning task.
+
+Artifact locations use two roots. Public, project-neutral harness code and
+synthetic fixtures belong in this repository under `scripts/`, `tests/`,
+`evals/benchmark/`, and `docs/benchmark/`. A separately provisioned private
+artifact store, called `CONTOSO_BENCHMARK_ROOT` here, holds all Contoso code,
+baselines, contracts, patches, overlays, evaluator fixtures, and run outputs.
+It is outside this repository and its worktrees. Its actual path, access
+credentials, repository URL, and the project's real name never enter tracked
+files. Public manifests use only Contoso, the task IDs, and content hashes;
+private manifests retain retrieval details. Publishing overlays side by side
+means publishing them to the same authorized audience in that external store,
+not importing Contoso into this repository. Historical solutions and judge
+materials are inaccessible from agent run copies.
+
+1. **Freeze source and toolchain (3h).** Scope: preserve both exact baseline
+   commits from section 5.1 as verified bundles or immutable archives, their
+   lockfiles, required assets, Rust compiler/Cargo versions, target, and build
+   environment. Files: external `baselines/<task>/` and `toolchains/`, with
+   hashes and a private retrieval manifest; public
+   `docs/benchmark/artifact-schema.md` contains only a neutral schema.
+   Tests: restore each archive offline into a disposable external directory,
+   verify commit and content hashes, and run its baseline validation with the
+   frozen toolchain; record any unavailable input rather than substitute a
+   newer version. Runs obtain read-only artifacts through an explicit store
+   argument, verify hashes, then create fresh copies containing no commits
+   after the baseline. Dependencies: access to both baselines. Before 0.9:
+   yes; freeze now, independently of adoption.
+
+2. **Split both contracts (3h).** Scope: extract section 5.2's identical
+   product contract for each task and separate A/B process instructions.
+   Preserve authority, expected surface, exclusions, examples, validation and
+   expected evaluator hashes. Include DRIFT's qualifying-source placement
+   clarification and minimal application compile consequences; require its
+   independent review, and explicitly remove ECON's historical review
+   requirement in both groups. Files: external `contracts/<task>/product.md`,
+   `process-a.md`, `process-b.md`, and a source-to-clause checklist.
+   Tests: compare rendered product inputs byte for byte across groups; audit
+   every historical clause as product, process, or explicitly excluded, and
+   verify section 5.5 coverage without prescribing unrequired helper names.
+   Dependencies: item 1. Before 0.9: yes; B's command wiring is finalized in
+   item 4. Record the enforced-versus-advisory surface asymmetry explicitly.
+
+3. **Build group A overlays (2h).** Scope: remove Meridian process blocks
+   and project hooks, install section 4's procedure and the A process contract
+   on each baseline. Files: external `overlays/<task>/a/`, overlay commits,
+   patch manifests, and protected-file hashes relative to those commits.
+   Tests: allowlisted overlay diffs preserve product rules, ADRs, specs and
+   source; check no active coordinator remains and both groups receive the
+   same product inputs, tools, and navigation information. Dependencies:
+   items 1–2. Before 0.9: yes.
+
+4. **Build group B overlays through adoption (3h).** Scope: run
+   `cardine adopt` on fresh copies of both frozen baselines after ADR work
+   item 10 lands, then install the B process contracts and `governed` preset,
+   with DRIFT review required and ECON review not required. Files: external
+   `overlays/<task>/b/`, adoption receipts, overlay commits and integrity
+   manifests. Tests: inspect conversion of open tasks, authority, surface,
+   validation and task identity; retain closed archives as ignored history;
+   compare product inputs with A and repeat adoption on fresh copies for
+   reproducibility. Record adoption effort separately. Dependencies: items
+   1–3 and work item 10. Before 0.9: yes if adoption is available; freeze the
+   final overlay against the selected 0.9 version before measured runs.
+
+5. **Add a separate neutral runner and host adapter (3h).** Scope: add
+   `scripts/run_benchmark.py`, `evals/benchmark/run-schema.json`, and
+   `tests/test_benchmark_runner.py`. Keep `scripts/run_agent_evals.py` as the
+   existing Cardine regression runner: its mandatory journal expectations,
+   status-line grading and multi-host interface would otherwise mix two
+   experimental contracts. Reuse only audited neutral fixture/Git utilities.
+   Pin Claude Code version, exact `claude-sonnet-5-5` model and one recorded
+   effort value for implementer, reviewer and variant contract writer; fail
+   closed if the host cannot honor or verify them. Isolate a dedicated host
+   configuration and home, user instructions, skills, plugins, hooks, memory,
+   Git configuration and MCP configuration, with credentials supplied outside
+   fixtures. Give both groups equal tool permissions. Files: the paths above
+   and `docs/benchmark/runner.md`; external `runs/<id>/manifest.json` records
+   resolved versions, settings, cache policy, machine resources and fresh-copy
+   hashes. Tests: fake-host argv/environment assertions, hostile user-config
+   fixtures, model/effort mismatch rejection and absence of later history or
+   historical patches. Dependencies: item 1's schema; final overlay loading
+   also needs items 3–4. Before 0.9: yes, with fake hosts only.
+
+6. **Implement run control and accounting (3h).** Scope: extend the separate
+   runner with randomized group order, three repetitions per cell, independent
+   review and corrections for DRIFT, and the fixed scripted operator of
+   section 7.3. Include Cardine's printed resume command only for B; count
+   replies and fixed active-minute cost, fail on a third requested reply,
+   and never reply to a declared correct part 2 stop. Enforce shared
+   whole-run time/spend caps and three final validation submissions; keep
+   development tests distinct. Implement the six outcomes and at most two
+   fresh-copy reruns for verified external failures, retaining every attempt.
+   Files: `scripts/run_benchmark.py`, its tests, public run schema; external
+   run transcripts, timing, usage and intervention receipts. Tests: fake-clock
+   and fake-host cases for every outcome, cap across review/resume sessions,
+   submission accounting, retry exhaustion and unchanged neutral reply text.
+   Dependencies: item 5. Before 0.9: yes, without host invocations.
+
+7. **Prepare deterministic evaluation (3h).** Scope: implement a journal-free
+   evaluator of candidate code, test results and Git state. Check every
+   section 5.5 criterion, both explicit evaluator hashes per task, protected
+   files against the relevant overlay, integration on `main`, review evidence
+   from neutral runner receipts, recoverability and absence of weakened tests.
+   Hidden tests may reference only contract-named symbols. Files: public
+   `evals/benchmark/checks/` interface and synthetic tests; external
+   `judging/checks/` contains Contoso-specific checks and a versioned manifest.
+   Tests: synthetic candidates with good/bad refs, dirty state, changed frozen
+   files and missing review; prove grading works with all Cardine state,
+   journals and record status lines absent. Dependencies: items 1–2 and overlay
+   manifest schema from item 3. Before 0.9: yes.
+
+8. **Write blind rubric and judge packaging (2h).** Scope: translate judgment
+   criteria from section 9 into yes/no questions with reasons; pin Claude
+   Opus 5.5's exact supported identifier and judge settings in the manifest.
+   Strip process files, state, handoffs, reports, group labels and identifying
+   metadata from the product diff; expose the common product requirements.
+   Send only disagreement or undecidable items to developer arbitration and
+   retain the disagreement denominator. Files: public neutral
+   `evals/benchmark/rubric-schema.json` and redaction tests; external
+   `judging/rubric.md`, blinded packets and arbitration records. Tests: planted
+   process markers cannot reach a packet, product evidence remains complete,
+   and mock judge outputs map to individual rubric items. Dependencies: items
+   2 and 7. Before 0.9: yes; no paid judge call in this item.
+
+9. **Calibrate and freeze the evaluator (3h).** Scope: for each task prepare
+   the historical solution, a hand-written alternative correct solution with
+   different helpers/placement, and deliberately wrong candidates. Include
+   wrong rounding, reversed ties and production drift activation for DRIFT;
+   wrong closed forms, re-exports or premature callers for ECON. Files:
+   external `judging/calibration/<task>/`, acceptance matrix and immutable
+   check-package/rubric hashes; public reports contain pseudonymous outcomes
+   only. Tests: deterministic checks and blind rubric accept both correct
+   solutions and reject declared mutations; adjudicate ambiguous requirements
+   before freezing, without changing sections 1–11. Dependencies: items 7–8.
+   Before 0.9: yes; any paid judge calibration is a separately authorized
+   future execution, never this planning task. If the fixture preparation
+   exceeds this timebox, create another bounded task before running it.
+
+10. **Port part 2 fixtures (3h).** Scope: start from `evals/scenarios` fixtures
+    for advancing `main`, dirty primary, rejected push and refused tag; add
+    intermittent-test and textual-conflict fixtures. Keep the existing
+    regression scenarios intact; add paired A/B fixtures under
+    `evals/benchmark/scenarios/`, with the section 6 outcomes declared before
+    execution. Replace journal/status expectations with observable Git,
+    protected-file, test and neutral operator evidence. Files: that directory,
+    neutral setup helpers and scenario tests. Tests: scripted fake agents
+    demonstrate completion on new `main`, preservation of unrelated dirt,
+    reported intermittence, no force push, no tag and no conflict resolution;
+    check both allowed dirty-primary outcomes. Dependencies: items 5–7;
+    B fixture wiring also needs work item 8's run engine. Before 0.9: yes;
+    real runs wait for 0.9 and retain three repetitions per group/scenario.
+
+11. **Freeze variant 2-bis inputs (2h).** Scope: write a raw request per task
+    containing only outcome, client scope bounds, specification, ADRs and
+    baseline code references, including that drift is not activated. Keep it
+    distinct from the prepared contract; both groups get identical raw inputs.
+    Files: external `variant-2bis/<task>/request.md` and input manifests;
+    public `docs/benchmark/variant-input-schema.md`. Tests: parity of group
+    inputs, no historical solution or prepared contract leakage, scope
+    traceability to the product requirements; fake runner verifies that B's
+    contract-writing time/cost belongs inside its run and A plans freely.
+    Dependencies: items 1–2 and 6. Before 0.9: yes. This remains a separate
+    experiment, outside the main twelve-run measurement.
+
+12. **Prepare calibration and measured-run release gate (3h).** Scope: create
+    an explicit execution manifest and reporting templates, then, only on
+    0.9 under a future run task, conduct one calibration per task/group.
+    Freeze each task's time and spend limits at 2.5 times the slowest and most
+    expensive calibration respectively across both groups. Files: public
+    `docs/benchmark/run-checklist.md` and reporting schema; external
+    `calibration/`, `release-manifest.json` and `results/`. Tests: dry-run
+    fixtures prove four calibration cells are excluded, caps are identical
+    across groups, the twelve measured cells are scheduled, and reports
+    separate tasks, parts, failures, adoption, preparation and judge costs.
+    Verify hashes of baselines, toolchain, overlays, contracts, checks and
+    rubric before releasing any run. Dependencies: items 4–11 and Cardine 0.9.
+    Before 0.9: checklist and fake-data tests only; agent calibration and
+    measurements cannot start. The 3h preparation timebox excludes actual
+    agent runtime and any separately scheduled executions.
+
+### Field-trial relationship
+
+Resolve section 12's field-trial question by separation. Part 2 reuses useful
+scenario designs as diagnostic inputs to work item 13, but synthetic runs do
+not satisfy its exit criterion: real tasks must land on `main` in Contoso or
+Fabrikam, covering required review with requested changes, no review, a spike,
+ADR authority with a declared surface, and stop/resume on 0.9. A synthetic
+protective stop cannot stand in for that delivery evidence. Store field-trial
+receipts separately from benchmark results, and cross-reference defects
+without pooling denominators or costs. The benchmark still blocks neither
+0.9 nor 1.0. This answers the overlap question without altering the ADR or
+sections 1–11; section 12's remaining execution work is assigned above.

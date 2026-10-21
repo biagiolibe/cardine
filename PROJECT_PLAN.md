@@ -104,4 +104,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 060 — Remove the Meridian name and the old states from the template text (work item 5b).
 - `[x]` 061 — Rename the capability markers and restart every capability at v1 (work item 5b).
 - `[x]` 062 — Plan the cardine run engine (work item 8).
-- `[ ]` 063 — Plan the preparation of the benchmark against a minimal procedure.
+- `[x]` 063 — Plan the preparation of the benchmark against a minimal procedure.

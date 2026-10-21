@@ -32,11 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 19 — Benchmark against a minimal procedure
-
-Authority: `docs/BENCHMARK_PROTOCOL.md`.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 063 | Plan the preparation of the benchmark against a minimal procedure | 🟡 P2 | — | [063](063-plan-benchmark-preparation.md) |
