@@ -130,6 +130,8 @@ class LayoutTest(unittest.TestCase):
             self.assertEqual(paths, (self.root / ".git/other-worktrees/042.json",
                                      self.root / ".git/other-integration.lock",
                                      self.root / ".git/other-integration.json"))
+            self.write_json(OTHER_NAMES.project_declaration_path, {"version": 1, "preset": "lean"})
+            self.write_json(OTHER_NAMES.tasks_path / "042.json", {"version": 1, "task_id": "042", "workflow": "single", "status": "queued", "transitions": []})
             self.write_json(paths[0], {"task_id": "042", "branch": "task-042", "worktree": str(self.root)})
             with patch.object(checkout, "_git_worktrees", return_value=[{
                 "worktree": str(self.root), "branch": "refs/heads/task-042",

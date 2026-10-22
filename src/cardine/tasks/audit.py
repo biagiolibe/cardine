@@ -1,68 +1,35 @@
-"""Helpers extracted from the legacy CLI; see the module split plan."""
-
+"""Validate authoritative states and report disposable generated-view drift."""
 from __future__ import annotations
 
-from cardine.shared.layout import names
-
 from pathlib import Path
-
-from cardine.integration.projections import _queue_task_rows
+from cardine.shared.layout import names
 from cardine.shared.errors import CardineError
 from cardine.shared.models import AuditResult
-from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
-from cardine.tasks.identity import _task_authorities
-from cardine.tasks.identity import resolve_project_locations
 from cardine.tasks.state import read_task_state
+from cardine.tasks.status_render import stale_views
 
 
 def audit_task_state_projections(project_root: Path, workflow: str) -> list[AuditResult]:
-    """Explicit full check: enumerate state files and report prose drift without repairs."""
+    """Read validated state only; generated output never repairs or gates state."""
     project_root = project_root.resolve()
-    directory = project_root / names().tasks_path
-    paths = sorted(directory.glob("*.json"))
-    if not paths:
-        return []
-    locations = resolve_project_locations(project_root)
-    authorities = _task_authorities(project_root, locations)
-    projections: dict[str, list[tuple[str, str]]] = {}
-    queue = project_root / locations.queue
-    for path in (queue, queue.with_name("QUEUE_ARCHIVE.md")):
-        if not path.is_file():
-            continue
-        for found in _queue_task_rows(path.read_text(encoding="utf-8")):
-            value = str(found["status"])
-            value = {"[ ]": "queued", "[/]": "in_progress", "[x]": "done"}.get(value, value)
-            projections.setdefault(str(found["id"]), []).append((path.relative_to(project_root).as_posix(), value))
+    paths = sorted((project_root / names().tasks_path).glob("*.json"))
     results = []
     for path in paths:
-        task_id = path.stem
         relative = path.relative_to(project_root).as_posix()
-        authority = authorities.get(task_id)
-        records = authority.task_paths if authority else ()
-        record = records[0] if len(records) == 1 else None
         try:
-            record_text = record.read_text(encoding="utf-8") if record else ""
-            state = read_task_state(
-                project_root, task_id, workflow, review_required=None,
-                spike=(read_task_field(record_text, "Class") or "").lower() == "spike", stop_factory=stop_error,
-            )
+            state = read_task_state(project_root, path.stem, workflow, stop_factory=stop_error)
         except (CardineError, OSError, UnicodeError) as error:
             results.append(AuditResult("FAIL", "task-state", f"{relative}: {error}"))
             continue
-        expected = state["status"]
-        drift = []
-        queue_values = projections.get(task_id, [(locations.queue, "missing")])
-        for label, value in queue_values:
-            if value != expected:
-                drift.append(f"{label} queue Status: state={expected}, projection={value}")
-        value = read_task_field(record_text, "Status")
-        value = value.strip("`") if value else "missing"
-        label = record.relative_to(project_root).as_posix() if record else "task record (missing or ambiguous)"
-        if value != expected:
-            drift.append(f"{label} record Status: state={expected}, projection={value}")
-        results.append(AuditResult(
-            "ADVISORY" if drift else "PASS", "task-state",
-            f"{relative}: " + ("; ".join(drift) if drift else f"queue Status and record Status match {expected}"),
-        ))
+        results.append(AuditResult("PASS", "task-state", f"{relative}: validated status={state['status']}"))
+    if paths and all(row.status == "PASS" for row in results):
+        try:
+            drift = stale_views(project_root)
+            detail = ", ".join(path.relative_to(project_root).as_posix() for path in drift)
+        except (CardineError, OSError, UnicodeError) as error:
+            detail = str(error)
+        if detail:
+            results.append(AuditResult("ADVISORY", "generated-status",
+                f"stale generated output: {detail}; regenerate with cardine status --write"))
     return results

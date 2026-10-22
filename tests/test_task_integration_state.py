@@ -25,6 +25,9 @@ from cardine.integration import merge as owner_integration_merge
 class TaskIntegrationStateTest(unittest.TestCase):
     def setUp(self):
         fixtures.GovernedCompletionRowsFixture.setUp(self)
+        path = self.primary / ".cardine/tasks/056.json"
+        path.unlink()
+        path.parent.rmdir()
 
     def tearDown(self):
         fixtures.BoundedWorktreeLifecycleFixture.tearDown(self)
@@ -322,11 +325,11 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.assertIn(".cardine/tasks/056.json", result["stop_detail"])
                 if missing:
                     command = shlex.split(result["commands"][0])
-                    self.assertEqual(command[:3], ["cd", str(self.worker), "&&"])
+                    self.assertEqual(command[:4], ["cardine", "task", "state", "import"])
                     self.assertEqual(command[command.index("cardine"):command.index("cardine") + 4],
-                                     ["cardine", "task", "transition", "056"])
+                                     ["cardine", "task", "state", "import"])
                     self.assertEqual(command[command.index("--project") + 1], str(self.worker))
-                    self.assertEqual(len(result["commands"]), 6)
+                    self.assertEqual(len(result["commands"]), 1)
                     self.assertEqual(result["resume"], " && ".join(result["commands"]))
                 for path, tree in before.items():
                     self.assertEqual(self.git("write-tree", cwd=path).stdout, tree)
@@ -343,46 +346,30 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
 
     def test_advance_missing_state_recovery_commands_run_unchanged(self):
+        self.start(workflow="single", preset="lean")
+        handoff = self.worker / "tasks/handoffs/056.md"
+        handoff.parent.mkdir(exist_ok=True)
+        handoff.write_text("Validated task completion.\n")
+        self.commit()
         for archived in (False, True):
             with self.subTest(archived=archived):
                 if archived:
-                    # The first recovery was aborted after proving the next step.
-                    (self.worker / ".cardine/tasks/056.json").unlink()
+                    record = self.worker / "tasks/056-lifecycle.md"
+                    target = record.parent / "done" / record.name
+                    target.parent.mkdir(exist_ok=True)
+                    record.rename(target)
                     self.commit()
-                else:
-                    self.start(workflow="single", preset="lean")
-                    handoff = self.worker / "tasks/handoffs/056.md"
-                    handoff.parent.mkdir(exist_ok=True)
-                    handoff.write_text("Validated task completion.\n")
-                    self.commit()
+                before = self.git("write-tree", cwd=self.worker).stdout
                 result, blocked = owner_lifecycle_closure.advance_task_closure(
                     "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
-                self.assertIn("task transition 056 in_progress" if archived else "task close 056", result["resume"])
-                if archived:
-                    self.assertNotIn("task close", result["resume"])
-                # Supply the CLI from this source tree through PATH, then execute
-                # exactly the emitted shell commands, including their locations.
-                bin_dir = self.root / "bin"
-                bin_dir.mkdir(exist_ok=True)
-                cli = bin_dir / "cardine"
-                cli.write_text("#!/bin/sh\nexec " + shlex.join([
-                    sys.executable, str(fixtures.ROOT / "scripts/cardine_cli.py")]) + ' "$@"\n')
-                cli.chmod(0o755)
-                env = dict(os.environ, PATH=str(bin_dir) + os.pathsep + os.environ["PATH"])
-                for command in result["commands"]:
-                    completed = subprocess.run(command, shell=True, cwd=self.root, env=env,
-                                               text=True, capture_output=True)
-                    self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
-                advanced = json.loads(completed.stdout)
-                self.assertIn("C6", advanced["performed"])
-                self.assertEqual(advanced["step"], "C7")
-                self.assertFalse((self.worker / "tasks/056-lifecycle.md").exists())
-                self.git("cat-file", "-e", "HEAD:tasks/done/056-lifecycle.md", cwd=self.worker)
-                state = json.loads(self.git("show", "HEAD:.cardine/tasks/056.json", cwd=self.worker).stdout)
-                self.assertEqual(state["status"], "in_progress")
-                owner_integration_merge.abort_task_integration("056", self.primary)
+                self.assertIn("task state import 056", result["resume"])
+                self.assertNotIn("task transition", result["resume"])
+                self.assertEqual(result["commands"], [result["resume"]])
+                self.assertFalse((self.worker / ".cardine/tasks/056.json").exists())
+                self.assertEqual(self.git("write-tree", cwd=self.worker).stdout, before)
+
 
     def test_advance_governed_missing_state_keeps_import_resume(self):
         self.start()
@@ -390,9 +377,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
             "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
         self.assertTrue(blocked)
         # Both presets now use the same contract-aware closure recovery.
-        self.assertIn("task transition 056 in_progress", result["resume"])
-        self.assertIn("task close 056", result["resume"])
-        self.assertIn("worktree advance 056", result["resume"])
+        self.assertIn("task state import 056", result["resume"])
+        self.assertNotIn("task close 056", result["resume"])
+        self.assertNotIn("worktree advance 056", result["resume"])
         self.assertEqual(result["resume"], " && ".join(result["commands"]))
 
     def test_advance_terminal_state_reaches_stage(self):
@@ -417,13 +404,10 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     def test_legacy_stage_is_labeled_and_missing_approval_blocks(self):
         self.start()
-        staged = self.stage()
-        self.assertEqual(staged["completion"]["source"], "legacy")
-        owner_integration_merge.abort_task_integration("056", self.primary)
-        record = self.worker / "tasks/056-lifecycle.md"
-        record.write_text(record.read_text() + "Review: REQUIRED\n")
-        # A project-shaped queue without Review uses the legacy record policy.
-        queue = self.worker / "tasks/QUEUE.md"
-        queue.write_text("| ID | Status |\n|---|---|\n| 056 | queued |\n")
+        report = self.worker / "tasks/reviews/056.md"
+        report.parent.mkdir(exist_ok=True)
+        report.write_text("## Attempt 1 — APPROVE\n")
         self.commit()
-        self.assert_stop("REVIEW_NOT_APPROVED", "legacy")
+        self.assert_stop("TASK_STATE_MISSING", "tracked state")
+        self.write_state(required=True, verdict=None)
+        self.assert_stop("REVIEW_NOT_APPROVED", "review.verdict")

@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, write_state
 from unittest import mock
 from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
@@ -50,6 +50,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
             encoding="utf-8",
         )
+        write_state(self.project, "056", "in_progress", review_required=False)
         subprocess.run(["git", "add", "."], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "initial"], cwd=self.project, check=True, capture_output=True)
 
@@ -450,7 +451,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
         gates = (
             "EXECUTION_CONTRACT_UNRESOLVED", "EXECUTION_PROFILE_MISSING", "VALIDATION_ENTRY_FORMAT",
-            "TASK_RECORD_INCOMPLETE", "TASK_STATUS_REJECTED", "QUEUE_STATUS_MISMATCH",
+            "TASK_RECORD_INCOMPLETE", "TASK_STATUS_REJECTED",
             "EXECUTION_EVIDENCE_ARGUMENTS", "HANDOFF_REPORT_MISSING", "HANDOFF_FIELDS_MISSING",
             "HANDOFF_FIELD_FORMAT", "HANDOFF_TASK_MISMATCH", "HANDOFF_VALIDATION_FAILING",
             "HANDOFF_VALIDATION_EVIDENCE_MISSING", "HANDOFF_EXPLORATION_MISMATCH",
@@ -657,6 +658,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         # Freeze the gate this fixture exercises before creating its contract.
         record = worktree / "tasks/056-lifecycle.md"
         record.write_text(record.read_text().replace("python3 -c 'pass'", candidate_command))
+        write_state(worktree, "056")
         owner_tasks_transitions.transition_task_state(worktree, "056", "in_progress")
         subprocess.run(["git", "add", "."], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "record terminal state"], cwd=worktree, check=True, capture_output=True)

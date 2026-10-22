@@ -42,6 +42,15 @@ class TaskStateLookupTest(unittest.TestCase):
         (self.worker / "tasks" / "001.md").write_text(
             "> **ID**: `001`\n\nStatus: in_progress\n", encoding="utf-8"
         )
+        from project_config_support import write_project_config
+        write_project_config(self.root, "lean")
+        write_project_config(self.worker, "lean")
+        directory = self.worker / ".cardine/tasks"
+        directory.mkdir(parents=True)
+        (directory / "001.json").write_text(json.dumps({
+            "version": 1, "task_id": "001", "workflow": "single", "status": "in_progress",
+            "transitions": [{"from": "queued", "to": "in_progress", "commit": "a" * 40,
+                             "at": "2026-10-11T12:00:00Z"}]}))
         self.records = [
             {"worktree": str(self.root), "branch": "refs/heads/main"},
             {"worktree": str(self.worker), "branch": "refs/heads/task-001"},

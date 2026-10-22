@@ -31,10 +31,10 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
     state = read_task_state(project_root, task_id, workflow,
                             spike=(read_task_field(record, "Class") or "").lower() == "spike",
                             review_required=None,
-                            stop_factory=stop_error) if state_path(project_root, task_id).exists() else None
+                            stop_factory=stop_error)
     _execution_worktree(project_root, task_id, resume=resume,
                         repeated_start=bool(state and state["status"] == "in_progress"), inspection=inspection)
-    status = state["status"] if state else "queued"
+    status = state["status"]
     if identity.task_path.parent.name == "done":
         if not resume or status != "in_progress":
             raise stop_error("TASK_STATUS_REJECTED", "archived task requires closure recovery", task_id=task_id, project=project_root)

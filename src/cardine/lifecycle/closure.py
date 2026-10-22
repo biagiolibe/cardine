@@ -169,47 +169,6 @@ def advance_task_closure(
                                             Path(str(inspection["worktree"])), require_tracked=True)
             except CardineStop as error:
                 resume = stop_resume(error.code, task_id=task, project=project_root)
-                if error.code == "TASK_STATE_MISSING":
-                    recovery_project = _task_state_recovery_project(project_root, task)
-                    recovery_identity = resolve_task_identity(
-                        recovery_project, task, "existing", allow_archived_queue_links=True,
-                    )
-                    archived = recovery_identity.task_path.parent.name == "done"
-                    recovery = ["cardine", "task", "transition", task, "in_progress"]
-                    recovery.extend(["--project", str(recovery_project)])
-                    if worktree_root is not None:
-                        recovery = ["env", f"CARDINE_WORKTREE_ROOT={worktree_root}", *recovery]
-                    commands = [f"cd {shlex.quote(str(recovery_project))} && {shlex.join(recovery)}"]
-                    commands.append(shlex.join([
-                        "git", "-C", str(recovery_project), "add", "--",
-                        (names().tasks_path / f"{task}.json").as_posix(),
-                        recovery_identity.task_path.relative_to(recovery_project).as_posix(),
-                    ]))
-                    commands.append(shlex.join([
-                        "git", "-C", str(recovery_project), "commit", "-m", f"Recover task state {task}",
-                    ]))
-                    if not archived:
-                        close = ["cardine", "task", "close", task, "--project", str(recovery_project)]
-                        if worktree_root is not None:
-                            close = ["env", f"CARDINE_WORKTREE_ROOT={worktree_root}", *close]
-                        commands.append(f"cd {shlex.quote(str(recovery_project))} && {shlex.join(close)}")
-                        commands.append(shlex.join([
-                            "git", "-C", str(recovery_project), "commit", "-m", f"Close task {task}",
-                        ]))
-                    advance = ["cardine", "worktree", "advance", task, "--project", str(project_root),
-                               "--format", "json"]
-                    if worktree_root is not None:
-                        advance.extend(["--worktree-root", str(worktree_root)])
-                    if accepted:
-                        advance.append("--accepted")
-                    for command, exit_code in zip(validation_commands, validation_exit_codes):
-                        advance.extend(["--validation-command", command, "--validation-exit-code", str(exit_code)])
-                    for command, exit_code in zip(candidate_commands, candidate_exit_codes):
-                        advance.extend(["--candidate-command", command, "--candidate-exit-code", str(exit_code)])
-                    commands.append(f"cd {shlex.quote(str(project_root))} && {shlex.join(advance)}")
-                    return result("C6", "resolve", commands=commands, stop_code=error.code,
-                                  stop_detail=error_detail(error),
-                                  resume=" && ".join(commands), blocked=True)
                 return result("C6", "resolve", commands=[resume], stop_code=error.code,
                               stop_detail=error_detail(error), resume=resume, blocked=True)
             try:

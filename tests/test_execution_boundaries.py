@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, write_state
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -45,6 +45,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         (self.primary / self.record).write_text(text)
         text += owner_tasks_preflight.execution_contract(self.primary, '001') + '\n'
         (self.primary / self.record).write_text(text)
+        write_state(self.primary)
         self.git('add', '.', cwd=self.primary)
         self.git('commit', '-qm', 'Initial', cwd=self.primary)
         self.oldcwd = Path.cwd()
@@ -96,7 +97,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertTrue(state['transitions'][0]['at'].endswith('Z'))
         owner_lifecycle_commands.execution_start(self.worker, '001')
         self.assertEqual(self.state(), state)
-        self.assertIn('Status: in_progress', (self.worker / self.record).read_text())
+        self.assertIn('Status: queued', (self.worker / self.record).read_text())
         self.assertIn('| queued |', (self.worker / 'tasks/QUEUE.md').read_text())
         task = project_console.load_snapshot(self.primary).tasks[0]
         self.assertEqual(task.status, 'in_progress')
@@ -163,10 +164,11 @@ class ExecutionBoundariesTest(unittest.TestCase):
         (self.worker / self.record).write_text(text.replace('Profile revision:', 'Missing revision:'))
         self.commit('Unresolved contract')
         self.assert_stop('EXECUTION_CONTRACT_UNRESOLVED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
-        self.assertFalse((self.worker / '.cardine/tasks/001.json').exists())
+        self.assertEqual(self.state()['status'], 'queued')
+        self.assertEqual(self.state()['transitions'], [])
         os.chdir(self.primary)
         self.assert_stop('WRONG_WORKTREE', lambda: owner_lifecycle_commands.execution_start(self.primary, '001'))
-        self.assertFalse((self.primary / '.cardine/tasks/001.json').exists())
+        self.assertEqual(json.loads((self.primary / '.cardine/tasks/001.json').read_text())['status'], 'queued')
 
     def test_lean_start_is_read_only_and_preserves_machine(self):
         write_project_config(self.primary, "lean", validation=VALIDATION)
@@ -188,7 +190,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(result['status'], 'in_review')
         self.assertTrue(result['clean'])
         self.assertEqual(set(self.git('diff', '--name-only', before, 'HEAD').splitlines()),
-                         {'.cardine/tasks/001.json', 'tasks/001.md'})
+                         {'.cardine/tasks/001.json'})
         state = self.state()
         self.assertEqual(state['transitions'][-1]['commit'], before)
         self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), result)
@@ -423,7 +425,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.git('rev-parse', 'HEAD^'), before)
         self.assertEqual(self.git('log', '-1', '--format=%s'), 'Deliver 001 for review')
         self.assertEqual(set(self.git('diff', '--name-only', before, 'HEAD').splitlines()),
-                         {'.cardine/tasks/001.json', 'tasks/001.md'})
+                         {'.cardine/tasks/001.json'})
         self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), delivered)
         self.assertEqual(Path.cwd(), directory.resolve())
         self.assertEqual(self.git('status', '--porcelain'), '')
@@ -457,7 +459,8 @@ class ExecutionBoundariesTest(unittest.TestCase):
                               + f'expected worktree={self.worker}; --project does not name the canonical task worktree')
                     resume = shlex.join(['cardine', *command, '--project', str(self.worker)])
                     self.assertEqual(result.stderr.strip(), f'BLOCKED WRONG_WORKTREE: {detail}; resume: {resume}')
-        self.assertFalse((self.worker / '.cardine/tasks/001.json').exists())
+        self.assertEqual(self.state()['status'], 'queued')
+        self.assertEqual(self.state()['transitions'], [])
         self.assertEqual(self.git('status', '--porcelain'), '')
 
     def test_no_registered_worktree_keeps_prepare_resume(self):

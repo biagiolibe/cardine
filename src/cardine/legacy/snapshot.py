@@ -51,11 +51,17 @@ from cardine.shared.models import (
 )
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
-from cardine.tasks.identity import resolve_project_locations, resolve_task_identity
+from cardine.tasks.identity import resolve_project_locations, resolve_task_identity as _resolve_task_identity
+from cardine.tasks.importer import legacy_identity_context
+
 from cardine.tasks.state import read_task_state, state_path, review_is_required
 from cardine.templates.mode import detect_mode
 from cardine.worktree.closure_status import closure_status
 from cardine.worktree.storage import lifecycle_started_at
+
+
+def resolve_legacy_task_identity(project, task_id, intent, **kwargs):
+    return _resolve_task_identity(project, task_id, intent, context=legacy_identity_context(project), **kwargs)
 
 
 def _read_text(path: Path) -> str:
@@ -329,7 +335,7 @@ class IdentityCache:
             self._declaration, self._loaded = declaration, True
         identity = self._items.get(task_id)
         if identity is None:
-            identity = self._items[task_id] = resolve_task_identity(project, task_id, "existing")
+            identity = self._items[task_id] = resolve_legacy_task_identity(project, task_id, "existing")
         return identity
 
 
@@ -376,7 +382,7 @@ def _branch_facts(project: Path, profile: Profile, task_id: str, queue: str,
     try:
         if archived_link:
             # _task_path already verified the uniquely moved record and its heading.
-            identity = resolve_task_identity(project, task_id, "existing", check_queue_links=False)
+            identity = resolve_legacy_task_identity(project, task_id, "existing", check_queue_links=False)
         else:
             identity = (identities or IdentityCache()).resolve(project, task_id)
     except CardineError as error:

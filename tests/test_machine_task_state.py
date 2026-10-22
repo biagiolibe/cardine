@@ -40,6 +40,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.record = self.root / "tasks/001.md"
         self.record.write_text(contract_record(extra="Status: queued\n"))
         self.path = task_state.state_path(self.root, "001")
+        self.write(self.state())
         self.git("init", "-q", "-b", "main")
         self.git("add", ".")
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Initial")
@@ -107,7 +108,7 @@ class MachineTaskStateTest(unittest.TestCase):
         result = self.cli("in_progress")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.read()["status"], "in_progress")
-        self.assertIn("Status: in_progress", archived.read_text())
+        self.assertIn("Status: queued", archived.read_text())
         self.assertFalse(self.record.exists())
         self.assertEqual(queue.read_bytes(), before)
 
@@ -123,7 +124,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(state, self.read())
         self.assertEqual(state["transitions"][0]["commit"], self.git("rev-parse", "HEAD"))
         self.assertTrue(state["transitions"][0]["at"].endswith("Z"))
-        self.assertIn("Status: in_progress\n", self.record.read_text())
+        self.assertIn("Status: queued\n", self.record.read_text())
         self.assertEqual(len(state["transitions"]), 1)
 
     def test_governed_cli_requires_delivery_and_preserves_spike(self):
@@ -134,7 +135,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(refused.returncode, 2)
         self.assertIn("BLOCKED WRONG_WORKTREE", refused.stderr)
         self.assertEqual(self.path.read_bytes(), before)
-        self.path.unlink()
+        self.write(self.state())
         self.record.write_text(contract_record(spike=True, extra="Review: NOT_REQUIRED\nStatus: queued\n"))
         self.assertEqual(self.cli("in_progress").returncode, 0)
         for outcome in ("ANSWERED", "INCONCLUSIVE"):
@@ -184,6 +185,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(calls, [self.path])
 
     def test_missing_stop(self):
+        self.path.unlink()
         write_project_config(self.root, "lean", validation=VALIDATION)
         self.record.write_text(contract_record(extra="Status: queued\n"))
         (self.root / "tasks/QUEUE.md").write_text(
@@ -207,8 +209,9 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.path.unlink()
         result = self.cli("in_progress")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(self.path.exists())
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("TASK_STATE_MISSING", result.stderr)
+        self.assertFalse(self.path.exists())
 
     def test_invalid_existing_schema_history_and_identity_write_nothing(self):
         good = self.state(steps=("in_progress", "done"))

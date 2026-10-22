@@ -205,8 +205,6 @@ def _clean_queue_id(cell: str) -> tuple[str, str | None]:
 
 def _task_authorities(project_root: Path, locations: ProjectLocations) -> dict[str, _TaskAuthority]:
     task_paths: dict[str, set[Path]] = {}
-    queue_links: dict[str, set[Path]] = {}
-    queue_counts: dict[str, int] = {}
     excluded_names = {"QUEUE.md", "QUEUE_ARCHIVE.md", "QUEUE_TEMPLATE.md", "TASK_BLUEPRINT.md"}
     for root in locations.task_roots:
         absolute = project_root / root
@@ -219,45 +217,8 @@ def _task_authorities(project_root: Path, locations: ProjectLocations) -> dict[s
             canonical = _task_record_id(path) or path.stem
             task_paths.setdefault(canonical, set()).add(path.resolve())
 
-    queue_path = (project_root / locations.queue).resolve()
-    if queue_path.is_file():
-        lines = queue_path.read_text(encoding="utf-8").splitlines()
-        headers: list[str] | None = None
-        for line in lines:
-            if not line.lstrip().startswith("|"):
-                headers = None
-                continue
-            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-            if "ID" in cells:
-                headers = cells
-                continue
-            if headers is None or len(cells) != len(headers) or set("".join(cells)) <= {"-", ":"}:
-                continue
-            canonical, inline_link = _clean_queue_id(cells[headers.index("ID")])
-            if not canonical or canonical in ("ID", "[ID]"):
-                continue
-            queue_counts[canonical] = queue_counts.get(canonical, 0) + 1
-            link_value = inline_link
-            for heading in ("Task file", "File"):
-                if heading in headers:
-                    _label, candidate = _clean_queue_id(cells[headers.index(heading)])
-                    link_value = candidate or link_value
-            if link_value and "://" not in link_value and not link_value.startswith("#"):
-                resolved = (queue_path.parent / link_value.split("#", 1)[0]).resolve()
-                if project_root.resolve() not in (resolved, *resolved.parents):
-                    raise CardineError(f"queue task link escapes the project: {link_value}")
-                queue_links.setdefault(canonical, set()).add(resolved)
-
-    identities = set(task_paths) | set(queue_counts)
-    return {
-        canonical: _TaskAuthority(
-            canonical,
-            tuple(sorted(task_paths.get(canonical, set()))),
-            tuple(sorted(queue_links.get(canonical, set()))),
-            queue_counts.get(canonical, 0),
-        )
-        for canonical in identities
-    }
+    return {canonical: _TaskAuthority(canonical, tuple(sorted(paths)), (), 0)
+            for canonical, paths in task_paths.items()}
 
 
 def _numeric_alias_key(value: str) -> str | None:

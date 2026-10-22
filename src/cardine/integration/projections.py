@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from cardine.shared.console_workflow import latest_review_verdict
-from cardine.shared.console_workflow import record_review
 from cardine.shared.errors import CardineError
 from cardine.shared.errors import CardineStop
 from cardine.shared.models import ResolvedTaskIdentity
@@ -157,11 +155,6 @@ def _governed_completion_row(
         raise _governed_completion_error(path, sections, f"task {identity.canonical_id} appears {len(candidates)} times")
 
     row_index, status_index, start, _, section, header = candidates[0]
-    cells = [cell.strip() for cell in lines[row_index].strip().strip("|").split("|")]
-    status = cells[status_index].strip("`")
-    if status not in _GOVERNED_QUEUE_STATUSES:
-        raise _governed_completion_error(path, section, f"unknown Governed status {cells[status_index]!r}")
-
     if task_state is not None:
         terminal = str(task_state["status"])
         parts = lines[row_index].split("|")
@@ -174,64 +167,7 @@ def _governed_completion_row(
             True, f"task state is {terminal}",
         )
 
-    review_index = next((i for i, cell in enumerate(header) if cell.casefold() == "review"), None)
-    record_path = identity.task_path
-    archived_path = record_path.parent / "done" / record_path.name
-    if not record_path.is_file() and archived_path.is_file():
-        record_path = archived_path
-    record_text = record_path.read_text(encoding="utf-8") if record_path.is_file() else ""
-    if review_index is None:
-        review = record_review(record_text)
-        review = "REQUIRED" if review == "REQUIRED" else "NOT_REQUIRED" if review == "NOT REQUIRED" else None
-        if review is None:
-            raise _governed_completion_error(path, section, "no Review column and task record has no recognized review policy")
-    else:
-        review = cells[review_index].strip("`")
-        if review == "SPIKE":
-            # Class never waives review; old table layouts obtain policy from
-            # the task declaration, or inherit the configured project default.
-            declared = record_review(record_text)
-            if declared is not None:
-                review = declared.replace(" ", "_")
-            else:
-                from cardine.shared.project import resolve_project_configuration
-                from cardine.shared.git import canonical_project_root
-                policy = resolve_project_configuration(canonical_project_root(path.parent))["taskDefaults"]["review"]
-                review = "REQUIRED" if policy == "required" else "NOT_REQUIRED"
-        if review not in ("REQUIRED", "NOT_REQUIRED"):
-            raise _governed_completion_error(path, section, f"unknown Review value {cells[review_index]!r}")
-
-    if review == "REQUIRED":
-        review_path = identity.review_path
-        verdict = latest_review_verdict(
-            review_path.read_text(encoding="utf-8") if review_path.is_file() else None
-        )
-        if verdict != "APPROVE":
-            reason = "review record is missing or malformed" if verdict is None else f"latest review verdict is {verdict}"
-            return contents, False, reason
-
-    if status == "done":
-        return (
-            contents,
-            True,
-            "review not required" if review == "NOT_REQUIRED" else "latest review verdict is APPROVE",
-        )
-
-    line = lines[row_index]
-    parts = line.split("|")
-    # A leading pipe makes markdown cell N live at split index N + 1. Replace
-    # only the cell payload so all formatting around it remains unchanged.
-    cell_index = status_index + 1
-    payload = parts[cell_index]
-    replacement = re.sub(r"(?<!\S)(?:`)?[^`\s|]+(?:`)?(?!\S)", "done", payload, count=1)
-    if replacement == payload:
-        raise _governed_completion_error(path, section, "Status cell has no replaceable token")
-    parts[cell_index] = replacement
-    return (
-        f"{contents[:start]}{'|'.join(parts)}{contents[start + len(line):]}",
-        True,
-        "review not required" if review == "NOT_REQUIRED" else "latest review verdict is APPROVE",
-    )
+    raise _governed_completion_error(path, section, "validated task state is required; review prose is not state")
 
 
 def _queue_section_ranges(contents: str) -> list[tuple[int, int, int, str]]:
@@ -519,6 +455,11 @@ def _apply_task_completion_rows(
     task_id = identity.canonical_id
     queue_contents = queue_path.read_text(encoding="utf-8")
     mode = detect_mode(project_root)
+    if task_state is None:
+        task_state = read_task_state(project_root, task_id, mode, stop_factory=stop_error)
+    from cardine.tasks.state import review_is_required
+    if review_is_required(task_state) and task_state.get("review", {}).get("verdict") != "APPROVE":
+        raise stop_error("REVIEW_NOT_APPROVED", "validated task state requires APPROVE", task_id=task_id, project=project_root)
     # The integrating task's proven state stands in for its file on the candidate tree.
     overrides = {task_id: task_state} if task_state else None
     task_rows = [row for row in _queue_task_rows(queue_contents) if row["id"] == task_id]

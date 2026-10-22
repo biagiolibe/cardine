@@ -22,7 +22,7 @@ from cardine.worktree import storage as owner_worktree_storage
 
 
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, write_state
 
 
 class BoundedWorktreeLifecycleFixture(unittest.TestCase):
@@ -50,6 +50,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
             "- `[ ]` 056 — Lifecycle\n", encoding="utf-8"
         )
         write_project_config(self.primary, validation=VALIDATION)
+        write_state(self.primary, "056", "in_progress", review_required=False)
         (self.primary / "README.md").write_text("base\n", encoding="utf-8")
         declaration = self.primary / ".cardine/candidate-validation.json"
         declaration.parent.mkdir(exist_ok=True)

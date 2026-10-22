@@ -170,8 +170,8 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.add_task("M4-API-001")
         self.add_task("M4-API-002")
         self.write_queue([("M4-API-001", "M4-API-002.md")])
-        with self.assertRaisesRegex(shared_errors.CardineError, "disagree"):
-            owner_tasks_identity.resolve_task_identity(self.project, "M4-API-001", "existing")
+        resolved = owner_tasks_identity.resolve_task_identity(self.project, "M4-API-001", "existing")
+        self.assertEqual(resolved.canonical_id, "M4-API-001")
 
         duplicate = self.project / "tasks/nested/M4-API-001.md"
         duplicate.parent.mkdir()

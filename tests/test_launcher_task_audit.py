@@ -49,7 +49,7 @@ class TaskStateAuditTest(unittest.TestCase):
     def test_audit_pass_and_drift_are_one_read_only_row_per_state(self):
         before = {p: p.read_bytes() for p in self.project.rglob("*") if p.is_file()}
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len([r for r in rows if r.identity == "task-state"]), 1)
         self.assertEqual(rows[0].status, "PASS")
         self.assertEqual(before, {p: p.read_bytes() for p in before})
         (self.project / "tasks/001.md").write_text("# Task 001 — Task\nStatus: ACCEPTED\n")
@@ -57,11 +57,12 @@ class TaskStateAuditTest(unittest.TestCase):
             "| ID | Status | File |\n|---|---|---|\n| 001 | in_progress | [001](001.md) |\n")
         before = {p: p.read_bytes() for p in before}
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0].status, "ADVISORY")
+        self.assertEqual(len([r for r in rows if r.identity == "task-state"]), 1)
+        self.assertEqual(rows[0].status, "PASS")
+        self.assertEqual(rows[1].identity, "generated-status")
+        self.assertEqual(rows[1].status, "ADVISORY")
         self.assertIn(".cardine/tasks/001.json", rows[0].detail)
-        self.assertIn("tasks/QUEUE.md queue Status: state=queued, projection=in_progress", rows[0].detail)
-        self.assertIn("tasks/001.md record Status: state=queued, projection=ACCEPTED", rows[0].detail)
+        self.assertIn("cardine status --write", rows[1].detail)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
         with mock.patch.object(owner_templates_audit, "audit_declared_capabilities", return_value=([], "single")), \
                 mock.patch.object(owner_templates_audit, "audit_capability_markers", return_value=[]), \
@@ -69,7 +70,7 @@ class TaskStateAuditTest(unittest.TestCase):
                 mock.patch.object(owner_templates_audit, "audit_capability_moves", return_value=[]), \
                 mock.patch.object(owner_templates_audit, "audit_entry_router", return_value=[]), redirect_stdout(io.StringIO()) as out:
             owner_templates_audit.run_audit(self.project, ROOT, "single")
-        self.assertRegex(out.getvalue(), r"ADVISORY\s+task-state")
+        self.assertRegex(out.getvalue(), r"ADVISORY\s+generated-status")
 
     def test_audit_invalid_state_is_coded_and_other_rows_survive(self):
         self.path.write_text("not JSON")

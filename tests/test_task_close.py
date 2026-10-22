@@ -62,7 +62,7 @@ class TaskCloseTest(unittest.TestCase):
         self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
                          {'tasks/001.md', 'tasks/done/001.md'})
         self.assertEqual(self.git('diff', '--name-only'), '')
-        self.assertIn('Status: in_progress', (self.worker / result['archive']).read_text())
+        self.assertIn('Status: queued', (self.worker / result['archive']).read_text())
 
     def test_primary_and_dirty_worktrees_refuse_without_writes(self):
         (self.worker / 'partial').write_text('unfinished')

@@ -85,28 +85,6 @@ def _integration_task_state(
 ) -> dict[str, object] | None:
     """Prove terminal state and commit-bound approval before any lease or merge."""
     relative = state_path(project_root, identity.canonical_id).relative_to(project_root)
-    adopted = (
-        (project_root / relative.parent).is_dir()
-        or (worktree / relative.parent).is_dir()
-        or bool(git_output(project_root, "ls-tree", "-d", task_commit, "--", str(relative.parent)))
-    )
-    if not adopted and not require_tracked:
-        from cardine.shared.project import resolve_project_configuration
-        from cardine.shared.console_workflow import record_review
-        declared = record_review(identity.task_path.read_text(encoding="utf-8"))
-        required = (declared == "REQUIRED" if declared is not None else
-                    resolve_project_configuration(project_root)["taskDefaults"]["review"] == "required")
-        if required:
-            candidate_identity = resolve_task_identity(worktree, identity.canonical_id, "existing", check_queue_links=False)
-            _row, accepted, reason = _governed_completion_row(
-                candidate_identity.queue_path.read_text(encoding="utf-8"), candidate_identity, candidate_identity.queue_path,
-            )
-            if not accepted:
-                raise stop_error(
-                    "REVIEW_NOT_APPROVED", f"{identity.review_path}: expected APPROVE; found {reason} (legacy)",
-                    task_id=identity.canonical_id, project=project_root,
-                )
-        return None
     try:
         shown = _run_git(project_root, "show", f"{task_commit}:{relative.as_posix()}")
     except UnicodeError as error:
@@ -344,15 +322,7 @@ def stage_task_integration(
             task_state["status"] = "done"
             path = state_path(project_root, identity.canonical_id)
             _write_json_atomic(path, task_state)
-            record_path = identity.task_path
-            if not record_path.exists():
-                record_path = record_path.parent / "done" / record_path.name
-            if record_path.exists():
-                contents = record_path.read_text(encoding="utf-8")
-                record_path.write_text(re.sub(r"^Status:[^\n]*", "Status: done", contents, flags=re.MULTILINE), encoding="utf-8")
             paths = [path.relative_to(project_root).as_posix()]
-            if record_path.exists():
-                paths.append(record_path.relative_to(project_root).as_posix())
             staged_state = _run_git(project_root, "add", "--", *paths)
             if staged_state.returncode:
                 raise CardineError(staged_state.stderr.strip() or "could not stage landed task state")
