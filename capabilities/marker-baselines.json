@@ -68,7 +68,7 @@
     },
     "worktree-command-locations": {
       "sha256": "a7784fa1a78084ce884379510cbf1b13c6517fb18fb8f92dbb7b3eb1e1824a0b",
-      "version": 1
+      "version": 2
     }
   },
   "templates/single/docs/AUDIT_PROMPT_READ_ONLY.md": {
@@ -121,8 +121,8 @@
       "version": 1
     },
     "isolated-exploration": {
-      "sha256": "3aad44cacc052e614a63a2e052be06a563aa95a4c004324ebb0ec2209b62c2b9",
-      "version": 1
+      "sha256": "ca3229d41f88ad385ee18353a4d61abcb9773fc0d13e8f753d9ca740a9e1f940",
+      "version": 2
     },
     "minimal-read-only-status": {
       "sha256": "7891180aa44bff5f222945f6367e609376fd1ad928318855d5d1804a66be6339",
@@ -147,8 +147,8 @@
   },
   "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md": {
     "investigation-scope": {
-      "sha256": "ccece353a49e0c8685918788875451533be79ed37ab7aabd30172b066a9904e2",
-      "version": 1
+      "sha256": "571eab77a13768f0d2e7d370497fc7cef09f293ce0c22c9e649991222e7bcdb1",
+      "version": 2
     },
     "long-command-waits": {
       "sha256": "942c3ebfa010f7aba0385d4e0fbb241edf1c17eea89158531a24cddb162198a8",
@@ -199,8 +199,8 @@
   },
   "templates/single/docs/WORKTREE_LIFECYCLE.md": {
     "worktree-command-locations": {
-      "sha256": "1237b6520279657674050f09a0fc6eb22982ec1059831e57431b2cc6953c2689",
-      "version": 1
+      "sha256": "20eeecaa2b2953529bc29a78202f4b16196c878d1795b02661fcb2ca82bdacbe",
+      "version": 2
     },
     "worktree-lifecycle": {
       "sha256": "d754b393116ce3b77f3349f3eda5c2cd1d733419fb87068ec5a6499c57e2d334",
@@ -213,8 +213,8 @@
       "version": 1
     },
     "execution-command-gate": {
-      "sha256": "44caf60ec684635a93ee41e476f22920aa6d93812573cf4f9c86fdb2db12e042",
-      "version": 1
+      "sha256": "29410b8537370318c5dfdfb81c330a3045a1da7cd464ebab3e25cde78ff2cf37",
+      "version": 2
     },
     "host-impact-routing": {
       "sha256": "cf52d83970d2711f2b818dbbf5017344c1afd38c6714d524900f6c847d98dfc9",
@@ -291,8 +291,8 @@
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "6a95b83290a38ca0bd42a2fdcceb0430355cc83201870326a86e5193845decb4",
-      "version": 4
+      "sha256": "7588d173ee940156dfeab401d46ea076147c09463ac1f79236df9a9a7ccd0a7b",
+      "version": 5
     }
   }
 }

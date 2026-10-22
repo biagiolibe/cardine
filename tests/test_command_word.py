@@ -30,6 +30,9 @@ class CommandWordTest(unittest.TestCase):
         baseline = json.loads((ROOT / "tests/fixtures/stop-decisions-before-047.json").read_text())
         # SS5 removes the obsolete prose-agreement gate; every remaining decision is preserved.
         baseline.pop("QUEUE_STATUS_MISMATCH")
+        # RX1 retires stops owned exclusively by the deleted self-report commands.
+        for code in ("EXECUTION_EVIDENCE_ARGUMENTS", "HANDOFF_EXPLORATION_MISMATCH", "HANDOFF_EXPLORATION_SUMMARY_MISSING"):
+            baseline.pop(code)
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []

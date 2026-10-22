@@ -74,7 +74,7 @@
       "adoptionRecord": "063-retire-reasoning-budget-contract"
     },
     "execution-command-gate": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -116,13 +116,13 @@
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "investigation-scope": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "isolated-exploration": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "030-isolated-exploration-evidence"
@@ -254,7 +254,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "079-contract-snapshot-human-fields"
@@ -332,7 +332,7 @@
       "adoptionRecord": null
     },
     "worktree-command-locations": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "070-worktree-template-delivery"

@@ -24,7 +24,7 @@ then read that range.
 
 Dependencies establish readiness; they do not automatically require rereading their entire implementation history.
 
-<!-- CARDINE:BEGIN capability=isolated-exploration v1 -->
+<!-- CARDINE:BEGIN capability=isolated-exploration v2 -->
 ## Isolated exploration
 
 When one specific question requires broad or uncertain-yield material outside a
@@ -36,10 +36,8 @@ worker, or a direct read when the declared scope is small.
 - State the exact question, the expected answer shape, and the source scope
   before reading. A file already named by the task remains a targeted direct
   read; do not add process overhead for it.
-- Record broad exploration with `cardine execution investigate <TASK-ID>`:
-  question, source scope, sources materially used, and the distilled finding.
-  Return or retain that finding, not a raw transcript or unconstrained search
-  output.
+- Retain the distilled finding and the sources materially used, not a raw
+  transcript or unconstrained search output.
 - The implementation worker remains responsible for validating any finding
   that becomes material to an acceptance criterion or implementation decision.
 

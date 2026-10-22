@@ -34,7 +34,7 @@ from cardine.templates.upgrade_support import recorded_managed_digests, profile_
 from cardine.templates.merge import copy_baseline, prune_stale_baselines, lock_project, merge_clean, apply_additive_move_checks, plan_from_baseline
 from cardine.templates.adoption import _capability_declaration, bootstrap_capability_profile
 from cardine.integration.merge import _spike_disallowed_paths, _integration_task_state, stage_task_integration, finalize_task_integration, runnable_candidate_validation_command, missing_candidate_validation_commands, abort_task_integration, cleanup_task_worktree
-from cardine.tasks.recording import EVIDENCE_EVENT_KINDS, record_validation, run_validation, record_execution_event, record_investigation
+from cardine.tasks.recording import record_validation, run_validation
 from cardine.tasks.transitions import transition_task_state, close_task
 from cardine.templates.audit import _audit_evidence_reference, _audit_snapshot_evidence, _digest_exempt, installation_surface_diagnostics, _audit_probe_evidence, managed_copy_drift, declared_managed_copy_paths, is_markerless_managed_copy_digest_audited, audit_managed_copy_digests, audit_declared_capabilities, load_retired_text_registry, retired_text_advisories, run_audit, _load_profile_probe, profile_doctor
 from cardine.worktree.closure_status import closure_status

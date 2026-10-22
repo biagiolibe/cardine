@@ -406,43 +406,6 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
             task_id=task_id,
         )
 
-    investigations = [entry for entry in entries if entry.get("kind") == "investigation"]
-    reported = re.search(r"^- Isolated exploration:\s*(.+)$", report_text, re.MULTILINE)
-    assert reported is not None  # HANDOFF_FIELDS has already checked its presence.
-    value = reported.group(1).strip()
-    if not investigations:
-        if not re.match(r"(?i)(?:none|no)(?![A-Za-z0-9])", value):
-            raise stop_error(
-                "HANDOFF_EXPLORATION_MISMATCH",
-                f"rule: with no recorded investigation the report must say there was none; field checked: "
-                f"Isolated exploration against {names().execution_evidence_path.as_posix()}; accepted: `none`, or text "
-                f"starting with `none` or `no`; found: {value!r}; expected `none` (or record the investigation)",
-                task_id=task_id,
-            )
-        return
-    if value.lower() == "none":
-        raise stop_error(
-            "HANDOFF_EXPLORATION_MISMATCH",
-            f"rule: recorded investigations must be reported; field checked: Isolated exploration against "
-            f"{names().execution_evidence_path.as_posix()}; accepted: a summary of each recorded investigation; "
-            f"found: `none` with {len(investigations)} recorded",
-            task_id=task_id,
-        )
-    missing_summaries = [
-        str(entry.get("question", ""))
-        for entry in investigations
-        if str(entry.get("question", "")) not in report_text
-        or str(entry.get("finding", "")) not in report_text
-    ]
-    if missing_summaries:
-        raise stop_error(
-            "HANDOFF_EXPLORATION_SUMMARY_MISSING",
-            f"rule: the report must contain each recorded question and finding; source checked: "
-            f"{names().execution_evidence_path.as_posix()}; accepted: the exact question and finding text; "
-            f"missing the question or finding of: " + "; ".join(missing_summaries),
-            task_id=task_id,
-        )
-
 
 def check_handoff(project_root: Path, task_id: str, report: Path) -> str:
     """Reject incomplete completion evidence before it can be used as a handoff."""

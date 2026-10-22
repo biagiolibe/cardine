@@ -56,7 +56,7 @@ prefix_rule(pattern=["python3", "scripts/check_repository.py"], decision="allow"
 prefix_rule(pattern=["python3", "-m", "unittest", "discover", "-s", "tests"], decision="allow")
 prefix_rule(pattern=["set", "-o", "pipefail"], decision="allow")
 prefix_rule(pattern=[["ls", "cat", "head", "tail", "wc", "pwd", "grep"]], decision="allow")
-prefix_rule(pattern=["meridian", "execution", ["start", "deliver", "validate", "ready-check", "handoff-check", "preflight", "evidence", "contract", "investigate"]], decision="allow")
+prefix_rule(pattern=["meridian", "execution", ["start", "deliver", "validate", "ready-check", "handoff-check", "preflight", "contract"]], decision="allow")
 
 # More restrictive matches override the broad Git rules above.
 prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease", "--delete", "--mirror"]], decision="forbidden")

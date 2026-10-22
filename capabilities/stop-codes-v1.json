@@ -275,7 +275,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`; `cardine execution contract`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution contract`",
       "human_decision": false,
       "resume": "cardine execution reconcile {task_id} --apply --project .",
       "kind": "stop",
@@ -289,7 +289,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
+      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`",
       "human_decision": true,
       "resume": "add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -303,7 +303,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
+      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`",
       "human_decision": false,
       "resume": "rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the blocked cardine execution command",
       "kind": "stop",
@@ -317,7 +317,7 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
+      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`",
       "human_decision": false,
       "resume": "add the listed sections or fields to the task record, then rerun cardine execution preflight {task_id} --project .",
       "kind": "stop",
@@ -331,27 +331,13 @@
       "workflows": [
         "governed-sdd"
       ],
-      "emitter": "`cardine execution preflight`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
+      "emitter": "`cardine execution preflight`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`",
       "human_decision": true,
       "resume": "bring the task to queued or in_progress through its lifecycle, then rerun the blocked cardine execution command",
       "kind": "stop",
       "summary": "the task status is not one the execution command accepts",
       "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "guardrail"
-    },
-    {
-      "code": "EXECUTION_EVIDENCE_ARGUMENTS",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`cardine execution evidence`; `cardine execution investigate`; `cardine budget spend`",
-      "human_decision": false,
-      "resume": "rerun the cardine execution evidence command with the missing options",
-      "kind": "stop",
-      "summary": "an execution evidence, investigation, or budget command lacks a required option or has an invalid one",
-      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
-      "resolution": "failing-work"
     },
     {
       "code": "HANDOFF_REPORT_MISSING",
@@ -434,34 +420,6 @@
       "resume": "run cardine execution validate {task_id} <validation-id> --project . for each listed ID, then rerun the handoff check",
       "kind": "stop",
       "summary": "a declared validation has no successful durable record",
-      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
-      "resolution": "failing-work"
-    },
-    {
-      "code": "HANDOFF_EXPLORATION_MISMATCH",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
-      "human_decision": false,
-      "resume": "correct the Isolated exploration field or record the investigation with cardine execution investigate {task_id}, then rerun the handoff check",
-      "kind": "stop",
-      "summary": "the Isolated exploration field disagrees with the durable investigation records",
-      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
-      "resolution": "failing-work"
-    },
-    {
-      "code": "HANDOFF_EXPLORATION_SUMMARY_MISSING",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`cardine execution handoff-check`; `cardine execution ready-check`",
-      "human_decision": false,
-      "resume": "add each listed question and finding to the report, then rerun cardine execution handoff-check {task_id} <report> --project .",
-      "kind": "stop",
-      "summary": "the report omits a recorded exploration question or finding",
       "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_handoff_gates_report_coded_actionable_stops",
       "resolution": "failing-work"
     },

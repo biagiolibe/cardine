@@ -104,8 +104,6 @@ including command containers and nested subcommands.
 | `cardine execution handoff-check` | Stable |
 | `cardine execution ready-check` | Stable |
 | `cardine execution validate` | Stable |
-| `cardine execution evidence` | Stable |
-| `cardine execution investigate` | Stable |
 | `cardine hook` | Host-facing |
 | `cardine hook read-guard` | Host-facing |
 | `cardine hook stop-audit` | Host-facing |

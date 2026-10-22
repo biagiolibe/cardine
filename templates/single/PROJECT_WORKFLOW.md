@@ -174,7 +174,7 @@ requires manual reconciliation. Repair never proves that a running session
 loaded the profile; start a fresh session and probe it.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=worktree-command-locations v1 -->
+<!-- CARDINE:BEGIN capability=worktree-command-locations v2 -->
 Before switching from worktree prepare/check to execution start, consult the
 [command location table](docs/WORKTREE_LIFECYCLE.md#command-locations).
 <!-- CARDINE:END -->

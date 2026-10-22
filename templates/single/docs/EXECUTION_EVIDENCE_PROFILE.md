@@ -9,9 +9,9 @@ but unresolved placeholders are never verification evidence.
 - Reuse unchanged sources and successful results from the active session.
 - Locate a large-file range before reading it; the default threshold is 400
   lines.
-<!-- CARDINE:BEGIN capability=investigation-scope v1 -->
-- Record broad exploration with its question, source scope, sources, and
-  finding using `cardine execution investigate`.
+<!-- CARDINE:BEGIN capability=investigation-scope v2 -->
+- Keep the question, sources materially used, and distilled finding when
+  broad exploration informs an implementation decision.
 <!-- CARDINE:END -->
 
 ## Successful validation output

@@ -19,27 +19,27 @@ command that the engine makes redundant. `cardine execution evidence`
 
 ## Acceptance Criteria
 
-- [ ] `cardine execution evidence` and `cardine execution investigate` are
+- [x] `cardine execution evidence` and `cardine execution investigate` are
   removed from the CLI with their implementation in
   `src/cardine/tasks/recording.py` and wherever else they live, and with
   their tests. No product code reads what they wrote.
-- [ ] The template text that asks agents to run them or report those counters
+- [x] The template text that asks agents to run them or report those counters
   is removed (inventory entries TB-10, CR-07, EE-02, IM-14). The template
   change follows the pre-1.0 rule of task 031: the owning capability's
   version rises and its baseline is rewritten, with no migration and no
   `VERSION` change.
-- [ ] `cardine execution validate` and every other command that records real
+- [x] `cardine execution validate` and every other command that records real
   results keep working; the handoff lists what the removal touched and
   confirms that no gate lost a fact it needed.
-- [ ] Every row of the known-violation table of `tests/test_text_gates.py` for
+- [x] Every row of the known-violation table of `tests/test_text_gates.py` for
   entries in `src/cardine/tasks/recording.py` and the `build_parser`
   options of `src/cardine/cli.py` that this task removes is deleted, and
   the test passes. The handoff lists the deleted rows and any row of those
   entries that remains, with its destination.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -48,16 +48,16 @@ command that the engine makes redundant. `cardine execution evidence`
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/083.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/083.json`, which only
   the installed `meridian task close 083` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -123,3 +123,13 @@ revalidation in the same turn; do not stop to report the fix.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Completion evidence
+
+Implemented RX1 and verified every acceptance criterion on commit
+`2af046304aa30907b9fa131eaee00950f1f92a01`. All six required validation
+commands passed; local and clean-clone suites each ran 1,284 tests without
+failures, errors or skips. See [the handoff](../handoffs/083.md) for the reader
+inventory, retained gate facts, marker versions, ratchet destinations, coverage
+changes and the three validation attempts. Installed Meridian owns closure
+and integration records.

@@ -65,6 +65,10 @@ class ModuleInventoryTest(unittest.TestCase):
                 owners[name].append(str(path.relative_to(ROOT)))
         # Task 034 retires historical adoption without rewriting the split inventory.
         retired = {
+            # Task 083 removes self-reported evidence and investigations.
+            "EVIDENCE_EVENT_KINDS",
+            "record_execution_event",
+            "record_investigation",
             # Task 072 removes the delivery commit gate.
             '_delivery_current_commit',
             # Task 056 removes the accessor for the deleted per-workflow roots.

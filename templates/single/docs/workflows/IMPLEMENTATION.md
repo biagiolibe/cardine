@@ -96,13 +96,12 @@ the handoff.
 Scope validation to the diff's actual surface, following the validation-scope rule in `docs/CONTEXT_READING_POLICY.md`. Skip a full build, test, or lint suite for a documentation or policy-only change, and state the skip explicitly in the completion report.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=execution-command-gate v1 -->
+<!-- CARDINE:BEGIN capability=execution-command-gate v2 -->
 For a normal task, execute every named `Validation` entry only through
 `cardine execution validate <TASK-ID> <validation-id> --project .`; running
 the literal command directly is not completion evidence. Record the command, exit status, and bounded evidence without self-reported
 spend counters.
-Before broad or uncertain-yield research outside the initial task authority,
-use `cardine execution investigate`. For `Review: required`, commit implementation, finalize and commit the
+For `Review: required`, commit implementation, finalize and commit the
 handoff, use read-only `cardine execution ready-check <TASK-ID> --project .`,
 then run `cardine execution deliver <TASK-ID> --project .` last and stop
 writing. Direct in_review transitions enforce the same prerequisites
