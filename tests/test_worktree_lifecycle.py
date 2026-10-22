@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION, write_state
+from task_contract_support import contract_record, VALIDATION, write_state, freeze_record
 from unittest import mock
 from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
@@ -659,6 +659,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         record = worktree / "tasks/056-lifecycle.md"
         record.write_text(record.read_text().replace("python3 -c 'pass'", candidate_command))
         write_state(worktree, "056")
+        freeze_record(worktree, "056", record)
         owner_tasks_transitions.transition_task_state(worktree, "056", "in_progress")
         subprocess.run(["git", "add", "."], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "record terminal state"], cwd=worktree, check=True, capture_output=True)

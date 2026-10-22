@@ -172,6 +172,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
     def test_lean_start_is_read_only_and_preserves_machine(self):
         write_project_config(self.primary, "lean", validation=VALIDATION)
         write_project_config(self.worker, "lean", validation=VALIDATION)
+        freeze_record(self.worker, '001', self.worker / self.record)
         self.commit('Select Lean')
         before = self.git('status', '--porcelain')
         result = owner_lifecycle_commands.execution_start(self.worker, '001')
