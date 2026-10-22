@@ -19,32 +19,32 @@ any new read slipping in.
 
 ## Acceptance Criteria
 
-- [ ] `tests/test_text_gates.py` scans every `src/cardine/**/*.py` and the
+- [x] `tests/test_text_gates.py` scans every `src/cardine/**/*.py` and the
   scripts product code imports with `ast`, and applies the three rules of
   the inventory section: named readers, text read from disk through
   record, handoff, review, queue, plan, or report paths, and options that
   carry declared results (`*-exit-code`, `--accepted`, and the others
   listed there).
-- [ ] Findings are keyed by file, qualified function, rule, and name, never by
+- [x] Findings are keyed by file, qualified function, rule, and name, never by
   line number. The permanent allowlist holds exactly the three classes of
   decision 13: the contract creation path, the managed-text integrity
   checks, and `cardine.legacy`.
-- [ ] The known-violation table maps every key to its T-ID in
+- [x] The known-violation table maps every key to its T-ID in
   `docs/TEXT_GATE_INVENTORY.md`. The test fails when a finding is in
   neither list, when a known violation no longer exists but its row
   remains, or when a T-ID in the table is missing from the inventory.
-- [ ] The table matches the code on the `main` this task starts from, after
+- [x] The table matches the code on the `main` this task starts from, after
   tasks 069 and 072. Entries those tasks removed are absent from the
   table, and the inventory marks them as removed by those tasks without
   other changes.
-- [ ] A test proves each failure mode with a synthetic source tree: a new
+- [x] A test proves each failure mode with a synthetic source tree: a new
   reader, a stale table row, and an unknown T-ID.
-- [ ] The handoff gives the table size by row of destination (SS7, N1, N2, N3,
+- [x] The handoff gives the table size by row of destination (SS7, N1, N2, N3,
   RE3, RE5, RE6, work item 9), so that later records can cite it.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -53,16 +53,16 @@ any new read slipping in.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/078.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/078.json`, which only
   the installed `meridian task close 078` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
