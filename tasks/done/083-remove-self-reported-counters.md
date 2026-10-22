@@ -129,7 +129,7 @@ revalidation in the same turn; do not stop to report the fix.
 Implemented RX1 and verified every acceptance criterion on commit
 `2af046304aa30907b9fa131eaee00950f1f92a01`. All six required validation
 commands passed; local and clean-clone suites each ran 1,284 tests without
-failures, errors or skips. See [the handoff](handoffs/083.md) for the reader
+failures, errors or skips. See [the handoff](../handoffs/083.md) for the reader
 inventory, retained gate facts, marker versions, ratchet destinations, coverage
 changes and the three validation attempts. Installed Meridian owns closure
 and integration records.
