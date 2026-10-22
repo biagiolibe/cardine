@@ -109,5 +109,6 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 066 — Create the task record and its state together (single source SS3).
 - `[ ]` 067 — Generate the queue and the plan status region (single source SS4).
 - `[ ]` 068 — Remove the product prose status gates (single source SS5).
+- `[ ]` 071 — Report the stop detail in worktree advance output.
 - `[ ]` 069 — Keep task records stable through close and landing (single source SS6).
 - `[ ]` 070 — Switch the console and the briefing to the status service (single source SS7).
