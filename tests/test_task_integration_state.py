@@ -34,11 +34,12 @@ class TaskIntegrationStateTest(unittest.TestCase):
 
     git = fixtures.BoundedWorktreeLifecycleFixture.git
 
-    def start(self, *, workflow="single", spike=False, preset="governed"):
+    def start(self, *, workflow="single", spike=False, preset="governed", plan=None):
         if preset == "lean":
             write_project_config(self.primary, "lean", validation=fixtures.VALIDATION)
             (self.primary / "tasks/QUEUE.md").write_text("| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n")
-            (self.primary / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Lifecycle\n")
+            (self.primary / "PROJECT_PLAN.md").write_text(plan if plan is not None else
+                "Narrative stays.\n\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n\nTail stays.\n")
         elif spike:
             (self.primary / "tasks/056-lifecycle.md").write_text(
                 "# Task 056\n\n> **ID**: `056`\nClass: SPIKE\nStatus: in_progress\n")
@@ -121,8 +122,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.commit()
         staged = self.stage(self.reviewed)
         self.assertEqual(staged["decision"], "REUSE")
-        self.assertEqual(staged["completion"]["source"], "machine")
-        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         validation = self.root / "candidate.json"
         validation.write_text(json.dumps({"candidate_tree": staged["candidate_tree"], "passed": True,
                                          "scope": "bounded", "commands": ["git diff --check", "scripts/check_repository.py"]}))
@@ -194,17 +195,34 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.write_state()
         record = self.worker / "tasks/056-lifecycle.md"
         record.write_text(record.read_text() + "\nCompletion evidence.\n")
-        archive = self.worker / "tasks/done/056-lifecycle.md"
-        archive.parent.mkdir()
-        record.rename(archive)
         handoff = self.worker / "tasks/handoffs/056.md"
         handoff.parent.mkdir()
         handoff.write_text("Completion evidence.\n")
         (self.worker / ".cardine/execution-evidence.json").write_text("{}\n")
         self.commit()
         staged = self.stage()
-        self.assertEqual(staged["completion"]["status"], "COMPLETED")
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertTrue((self.primary / "tasks/056-lifecycle.md").is_file())
         owner_integration_merge.abort_task_integration("056", self.primary)
+
+    def test_record_move_or_queue_edit_after_validation_is_not_governance(self):
+        for label, change in (
+            ("archive move", lambda: (self.worker / "tasks/done").mkdir() or
+             (self.worker / "tasks/056-lifecycle.md").rename(self.worker / "tasks/done/056-lifecycle.md")),
+            ("queue edit", lambda: (self.worker / "tasks/QUEUE.md").write_text(
+                (self.worker / "tasks/QUEUE.md").read_text() + "edited\n")),
+            ("queue archive", lambda: (self.worker / "tasks/QUEUE_ARCHIVE.md").write_text("archive\n")),
+        ):
+            with self.subTest(label):
+                self.start()
+                self.write_state()
+                change()
+                self.commit()
+                error = self.assert_stop("REVIEW_STALE", "offending paths")
+                self.assertNotIn(".cardine/tasks/056.json", str(error).split("offending paths:")[1].split(";")[0])
+                self.git("worktree", "remove", "--force", str(self.worker))
+                self.git("branch", "-D", "task-056")
+                self.git("reset", "--hard", self.base)
 
     def test_other_task_state_invalidates_approval(self):
         self.start()
@@ -225,8 +243,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_not_required_task_integrates_without_prose(self):
         self.start()
         self.write_state(required=False, verdict=None)
-        self.assertEqual(self.stage()["completion"]["source"], "machine")
-        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
+        self.assertEqual(self.stage()["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
     def check_spike_projection(self, status, *, required=False):
@@ -234,8 +252,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.write_state(spike=True, status=status, verdict="APPROVE" if required else None, required=required)
         staged = self.stage(self.reviewed)
         self.assertEqual(staged["decision"], "REUSE")
-        # Archival reads task state, so a terminal spike closes its section, INCONCLUSIVE included.
-        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_spike_terminal_projection_ignores_record_status(self):
@@ -257,9 +275,45 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_lean_done_projection(self):
         self.start(workflow="single", preset="lean")
         self.write_state(required=False)
-        self.assertEqual(self.stage(self.reviewed)["completion"]["source"], "machine")
-        self.assertIn("`[x]`", (self.primary / "tasks/QUEUE.md").read_text())
-        self.assertIn("`[x]`", (self.primary / "PROJECT_PLAN.md").read_text())
+        staged = self.stage(self.reviewed)
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
+        self.assertIn("| done | 056 |", (self.primary / "PROJECT_PLAN.md").read_text())
+        self.assertNotIn("| 056 |", (self.primary / "tasks/QUEUE.md").read_text())
+        plan = (self.primary / "PROJECT_PLAN.md").read_text()
+        self.assertTrue(plan.startswith("Narrative stays.\n\n") and plan.endswith("\n\nTail stays.\n"))
+        self.assertEqual(self.git("diff", "--cached", "--name-only").stdout.split(),
+                         [".cardine/tasks/056.json", "PROJECT_PLAN.md", "feature.txt", "tasks/QUEUE.md"])
+        owner_integration_merge.abort_task_integration("056", self.primary)
+
+    def test_abort_restores_state_and_views_together(self):
+        self.start(workflow="single", preset="lean", plan="")
+        (self.primary / "PROJECT_PLAN.md").unlink()
+        self.git("commit", "-am", "no plan on main")
+        self.write_state(required=False)
+        before_tree = self.git("rev-parse", "HEAD^{tree}").stdout
+        queue = (self.primary / "tasks/QUEUE.md").read_bytes()
+        self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
+        staged = self.stage(self.reviewed)
+        self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
+        self.assertTrue((self.primary / "PROJECT_PLAN.md").is_file())
+        owner_integration_merge.abort_task_integration("056", self.primary)
+        self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
+        self.assertEqual((self.primary / "tasks/QUEUE.md").read_bytes(), queue)
+        self.assertFalse((self.primary / ".cardine/tasks/056.json").exists())
+        self.assertEqual(self.git("status", "--porcelain").stdout, "")
+        self.assertEqual(self.git("rev-parse", "HEAD^{tree}").stdout, before_tree)
+
+    def test_failed_view_write_reports_stale_view_and_keeps_landed_state(self):
+        self.start(workflow="single", preset="lean", plan="No region here.\n")
+        self.write_state(required=False)
+        staged = self.stage(self.reviewed)
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertEqual(staged["views"]["status"], "STALE")
+        self.assertIn("cardine status --write", staged["warnings"][0])
+        self.assertEqual((self.primary / "PROJECT_PLAN.md").read_text(), "No region here.\n")
+        landed = json.loads((self.primary / ".cardine/tasks/056.json").read_text())
+        self.assertEqual(landed["status"], "done")
         owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_advance_reports_review_gate(self):

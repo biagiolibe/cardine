@@ -35,13 +35,6 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
     _execution_worktree(project_root, task_id, resume=resume,
                         repeated_start=bool(state and state["status"] == "in_progress"), inspection=inspection)
     status = state["status"]
-    if identity.task_path.parent.name == "done":
-        if not resume or status != "in_progress":
-            raise stop_error("TASK_STATUS_REJECTED", "archived task requires closure recovery", task_id=task_id, project=project_root)
-        dirty = bool(git_output(project_root, "status", "--porcelain"))
-        return {"task_id": task_id, "workflow": workflow, "status": status, "started": False,
-                "state": state, "commit": git_output(project_root, "rev-parse", "HEAD"),
-                "next_action": "commit-closure-records" if dirty else "worktree-advance"}
     eligible = ("queued", "in_progress")
     if status not in eligible:
         raise stop_error("TASK_STATUS_REJECTED", f"execution start allows {eligible}; found {status}", task_id=task_id, project=canonical_project_root(project_root))

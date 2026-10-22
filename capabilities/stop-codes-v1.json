@@ -619,7 +619,7 @@
       "resume": "cardine task state import {task_id} --project {project} --apply --include-terminal",
       "tool_hint": "cardine task transition",
       "kind": "stop",
-      "summary": "a task has no tracked state file; closure recovery creates in_progress state, commits it, archives the active record through task close, commits closure records, then advances; archived records recreate only their missing state; state import remains available; recovery uses the registered task worktree when present",
+      "summary": "a task has no tracked state file; closure recovery creates in_progress state, commits it, verifies closure through task close, then advances; a record at any path recreates only its missing state; state import remains available; recovery uses the registered task worktree when present",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_missing_stop",
       "resolution": "recoverable"
     },

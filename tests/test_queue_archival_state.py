@@ -1,4 +1,4 @@
-"""Queue archival decided from task state, its report, and terminal state import."""
+"""Terminal tasks stay in the generated views; no queue archive; terminal state import."""
 
 from __future__ import annotations
 
@@ -14,23 +14,19 @@ from task_contract_support import contract_record, VALIDATION
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import cardine_cli
-from cardine.integration import projections as owner_integration_projections
+from cardine.tasks import status_render
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.tasks import importer as owner_tasks_importer
 
 SHA = "a" * 40
 AT = "2026-10-14T12:00:00Z"
-ROUTES = {
-    "done": ("in_progress", "done"), "queued": (),
-    "in_progress": ("in_progress",), "ANSWERED": ("in_progress", "done"),
-    "INCONCLUSIVE": ("in_progress", "done"),
-}
-LEAN_HEADER = "| Status | ID | Title |\n|---|---|---|\n"
 GOVERNED_HEADER = "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n|---|---|---|---|---|---|---|\n"
 
 
-class StateArchivalTest(unittest.TestCase):
+class TerminalTasksStayInViewsTest(unittest.TestCase):
+    """The queue is a generated view: a closed phase is never moved out of the state."""
+
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -39,176 +35,65 @@ class StateArchivalTest(unittest.TestCase):
         write_project_config(self.root, "lean")
         self.queue = self.root / "tasks/QUEUE.md"
         self.archive = self.root / "tasks/QUEUE_ARCHIVE.md"
+        self.plan = self.root / "PROJECT_PLAN.md"
+        self.plan.write_text(f"Narrative.\n{status_render.REGION_BEGIN}\n{status_render.REGION_END}\n", encoding="utf-8")
 
-    def state(self, task_id: str, status: str, workflow: str = "single", spike: bool = False) -> None:
+    def task(self, task_id: str, status: str, dependencies: str = "none") -> None:
+        steps = {"queued": (), "in_progress": ("in_progress",), "done": ("in_progress", "done"),
+                 "cancelled": ("cancelled",)}[status]
         current, transitions = "queued", []
-        for target in ROUTES[status]:
-            transitions.append({"from": current, "to": target, "commit": SHA, "at": AT})
+        for target in steps:
+            transitions.append({"from": current, "to": target, "commit": SHA, "at": AT,
+                                **({"authority": "owner", "reason": "dropped"} if target == "cancelled" else {})})
             current = target
         path = self.root / ".cardine/tasks" / f"{task_id}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"version": 1, "task_id": task_id, "workflow": workflow,
-                                    "status": current, "transitions": transitions, **({"outcome": status} if status in ("ANSWERED", "INCONCLUSIVE") else {})}), encoding="utf-8")
-        if spike:
-            (self.root / "tasks" / f"{task_id}.md").write_text(
-                f"# Task\n\n> **ID**: `{task_id}`\n\nClass: SPIKE\n", encoding="utf-8")
+        path.write_text(json.dumps({"version": 1, "task_id": task_id, "workflow": "single",
+                                    "status": current, "transitions": transitions}), encoding="utf-8")
+        (self.root / "tasks" / f"{task_id}.md").write_text(
+            f"# Task {task_id}\n\n> **ID**: `{task_id}`\n> **Priority**: P1\n> **Phase**: Build\n\n"
+            f"## Dependencies\n- **Depends on**: {dependencies}\n", encoding="utf-8")
 
-    def archive_queue(self, contents: str, mode: str = "single", *, with_state: bool = True):
-        report: list[dict[str, object]] = []
-        resolver = owner_integration_projections._queue_state_resolver(self.root, mode) if with_state else None
-        retained, archived = owner_integration_projections._archive_completed_queue_sections(
-            contents, self.queue, self.archive, mode, resolve_state=resolver, report=report)
-        return retained, archived, {str(item["section"]): item for item in report}
+    def test_closed_phase_is_never_archived_and_totals_keep_it(self) -> None:
+        self.task("A", "done")
+        self.task("B", "queued")
+        status_render.write_views(self.root)
+        self.assertFalse(self.archive.exists())
+        self.assertNotIn("| A |", self.queue.read_text())
+        self.assertIn("total=2", self.queue.read_text())
+        self.assertIn("| done | A |", self.plan.read_text())
 
-    def test_section_at_any_heading_level_closes_when_every_state_is_terminal(self) -> None:
-        for task in ("A", "B"):
-            self.state(task, "done")
-        # Column order and status wording are not read: the cell may say anything.
-        contents = ("# Queue\n\n## Phase — Bootstrap\n\n| Title | ID | Priority | Status |\n|---|---|---|---|\n"
-                    "| One | A | P1 | shipped |\n| Two | `B` | P1 | whatever |\n\n## Phase — Next\nPlanned.\n")
-        retained, archived, report = self.archive_queue(contents)
-        self.assertEqual(retained, "# Queue\n\n## Phase — Next\nPlanned.\n")
-        self.assertIn("| One | A | P1 | shipped |", archived or "")
-        entry = report["## Phase — Bootstrap"]
-        self.assertTrue(entry["archive"])
-        self.assertEqual(entry["rule"], "state")
-        self.assertIn("terminal by task state", str(entry["reason"]))
+    def test_queue_of_only_terminal_tasks_still_renders_without_an_archive(self) -> None:
+        self.task("A", "done")
+        self.task("B", "cancelled")
+        status_render.write_views(self.root)
+        self.assertFalse(self.archive.exists())
+        self.assertIn("done=1, cancelled=1, total=2", self.queue.read_text())
+        self.assertIn("| cancelled | B |", self.plan.read_text())
 
-    def test_governed_inconclusive_spike_closes_its_section(self) -> None:
-        write_project_config(self.root, "governed")
-        self.state("056", "INCONCLUSIVE", "single", spike=True)
-        self.state("057", "done", "single")
-        contents = ("## Spikes\n\n" + GOVERNED_HEADER
-                    + "| 1 | 056 | P0 | done | SPIKE | — | [056](056.md) |\n"
-                    + "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n")
-        retained, archived, report = self.archive_queue(contents, "single")
-        self.assertEqual(retained, "\n")
-        self.assertIn("| 1 | 056 | P0 | done |", archived or "")
-        self.assertTrue(report["## Spikes"]["archive"])
-        # Without state the conservative table rule still holds the INCONCLUSIVE row open.
-        held, none_archived, held_report = self.archive_queue(
-            contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"), "single", with_state=False)
-        self.assertEqual(held, contents.replace("## Spikes", "### Spikes").replace("| P0 | done | SPIKE", "| P0 | in_progress | SPIKE"))
-        self.assertIsNone(none_archived)
-        self.assertFalse(held_report["### Spikes"]["archive"])
+    def test_landing_a_task_never_writes_an_archive_file(self) -> None:
+        self.task("A", "in_progress")
+        status_render.write_views(self.root)
+        self.task("A", "done")
+        status_render.write_views(self.root)
+        self.assertFalse(self.archive.exists())
+        self.assertEqual(status_render.stale_views(self.root), [])
 
-    def test_section_with_one_open_state_is_retained_and_names_it(self) -> None:
-        self.state("A", "done")
-        self.state("B", "queued")
-        contents = "## Phase\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n| `[x]` | B | Claimed done |\n"
-        retained, archived, report = self.archive_queue(contents)
-        self.assertEqual(retained, contents)
-        self.assertIsNone(archived)
-        entry = report["## Phase"]
-        self.assertFalse(entry["archive"])
-        self.assertEqual(entry["open"], ["B"])
-        self.assertIn("open by task state: B", str(entry["reason"]))
+    def test_dependency_results_do_not_depend_on_the_open_view(self) -> None:
+        from cardine.tasks.status import load_task_snapshot
 
-    def test_invalid_state_retains_the_section_with_its_reason(self) -> None:
-        self.state("A", "done")
-        path = self.root / ".cardine/tasks/A.json"
-        path.write_text(path.read_text(encoding="utf-8").replace('"single"', '"unknown"'), encoding="utf-8")
-        contents = "## Phase\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n"
-        retained, _archived, report = self.archive_queue(contents)
-        self.assertEqual(retained, contents)
-        self.assertIn("invalid task state: A", str(report["## Phase"]["reason"]))
-
-    def test_legacy_only_queue_behaves_as_before(self) -> None:
-        contents = ("## Level two\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n"
-                    "### Level three\n\n" + LEAN_HEADER + "| `[x]` | B | Done |\n\n"
-                    "### Open\n\n" + LEAN_HEADER + "| `[/]` | C | Working |\n")
-        for with_state in (False, True):
-            with self.subTest(with_state=with_state):
-                retained, archived, report = self.archive_queue(contents, with_state=with_state)
-                self.assertEqual(
-                    (retained, archived),
-                    owner_integration_projections._archive_completed_queue_sections(contents, self.queue, self.archive))
-                self.assertIn("| `[x]` | B | Done |", archived or "")
-                self.assertNotIn("| `[x]` | A | Done |", archived or "")
-                self.assertTrue(report["### Level three"]["archive"])
-                self.assertFalse(report["## Level two"]["archive"])
-                self.assertIn("heading level 2", str(report["## Level two"]["reason"]))
-                self.assertEqual(report["### Open"]["legacy"], ["C"] if with_state else [])
-
-    def test_mixed_section_needs_both_rules_to_agree(self) -> None:
-        self.state("A", "done")
-        table = LEAN_HEADER + "| `[x]` | A | By state |\n| `[x]` | B | By table |\n"
-        closed = "### Mixed\n\n" + table
-        retained, archived, report = self.archive_queue(closed)
-        self.assertEqual(retained, "\n")
-        self.assertIn("terminal by task state and by the table rule", str(report["### Mixed"]["reason"]))
-        self.assertIn("By table", archived or "")
-        # The table rule does not read `##` sections, so the legacy row keeps it open.
-        retained, archived, report = self.archive_queue("## Mixed\n\n" + table)
-        self.assertEqual(retained, "## Mixed\n\n" + table)
-        self.assertIsNone(archived)
-        self.assertEqual(report["## Mixed"]["legacy"], ["B"])
-        self.assertIn("rows without a state file", str(report["## Mixed"]["reason"]))
-        # An open legacy row keeps even a `###` section.
-        retained, _archived, _report = self.archive_queue(closed.replace("`[x]` | B", "`[ ]` | B"))
-        self.assertIn("`[ ]` | B", retained)
-
-    def test_containers_never_archive_the_queue_around_a_closed_phase(self) -> None:
-        for task in ("205", "206"):
-            self.state(task, "done")
-        contents = (
-            "# Task Execution Queue\n\nIntro.\n\n## Priorities\n\n| Code | Meaning |\n|---|---|\n| P1 | Critical |\n\n"
-            "## 🏃 Active Queue\n\nOrdered by return.\n\n### Phase 64 — Issues\n\n"
-            "| Status | ID | Title | Priority |\n|--------|----|-------|----------|\n"
-            "| `[x]` | 205 | First | P1 |\n| `[x]` | 206 | Second | P2 |\n"
-        )
-        retained, archived, report = self.archive_queue(contents)
-        self.assertIn("# Task Execution Queue", retained)
-        self.assertIn("## 🏃 Active Queue", retained)
-        self.assertIn("| P1 | Critical |", retained)
-        self.assertNotIn("Phase 64", retained)
-        self.assertIn("### Phase 64 — Issues", archived or "")
-        self.assertNotIn("Priorities", archived or "")
-        self.assertEqual([title for title, item in report.items() if item["archive"]], ["### Phase 64 — Issues"])
-        self.assertIn("container", str(report["## 🏃 Active Queue"]["reason"]))
-
-    def test_outermost_section_wins_and_nested_sections_are_not_duplicated(self) -> None:
-        for task in ("A", "B"):
-            self.state(task, "done")
-        contents = ("## Outer\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n### Inner\n\n"
-                    + LEAN_HEADER + "| `[x]` | B | Done |\n\n## After\nKeep.\n")
-        retained, archived, report = self.archive_queue(contents)
-        self.assertEqual(retained, "## After\nKeep.\n")
-        self.assertEqual((archived or "").count("### Inner"), 1)
-        self.assertNotIn("### Inner", report)
-
-    def test_dependency_satisfaction_is_unchanged_by_archival_from_state(self) -> None:
-        from cardine.shared.console_workflow import PROFILES, parse_queue
-
-        write_project_config(self.root, "governed")
-        self.state("056", "INCONCLUSIVE", "single", spike=True)
-        self.state("057", "done", "single")
-        contents = ("## Closed\n\n" + GOVERNED_HEADER
-                    + "| 1 | 056 | P0 | done | SPIKE | — | [056](056.md) |\n"
-                    + "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n\n"
-                    "## Next\n\n" + GOVERNED_HEADER
-                    + "| 3 | 058 | P1 | queued | NOT_REQUIRED | 056 | [058](058.md) |\n"
-                    + "| 4 | 059 | P1 | queued | NOT_REQUIRED | 057 | [059](059.md) |\n")
-        retained, archived, _report = self.archive_queue(contents, "single")
-        self.assertNotIn("| 1 | 056 |", retained)
-        self.assertIn("| 1 | 056 |", archived or "")
-        profile = PROFILES["single"]
-        rows = (*parse_queue(retained, "QUEUE.md", profile), *parse_queue(archived or "", "QUEUE_ARCHIVE.md", profile))
-        by_id = {row.task_id: row.status for row in rows}
-        from cardine.tasks.state import dependency_satisfied
-        waiting = {row.task_id for row in rows for dependency in row.dependencies.split(",")
-                   if dependency.strip() in by_id and not dependency_satisfied(json.loads(
-                       (self.root / f".cardine/tasks/{dependency.strip()}.json").read_text()))}
-        self.assertEqual(waiting, {"058"})
-
-    def test_stage_report_and_warnings_cover_state_sections(self) -> None:
-        self.state("A", "done")
-        self.state("B", "queued")
-        contents = ("## Closed\n\n" + LEAN_HEADER + "| `[x]` | A | Done |\n\n"
-                    "## Open\n\n" + LEAN_HEADER + "| `[ ]` | B | Waiting |\n")
-        resolver = owner_integration_projections._queue_state_resolver(self.root, "single")
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents, "single", resolver), [])
-        self.assertEqual(len(owner_integration_projections._queue_archival_warnings(contents, "single")), 2)
+        self.task("A", "done")
+        self.task("B", "cancelled")
+        self.task("C", "queued", dependencies="A")
+        self.task("D", "queued", dependencies="B")
+        before, _inputs, _config = load_task_snapshot(self.root, all_tasks=True)
+        status_render.write_views(self.root)
+        after, _inputs, _config = load_task_snapshot(self.root, all_tasks=True)
+        self.assertEqual(before["totals"], after["totals"])
+        startable = {row["id"]: row["startable"] for row in after["tasks"]}
+        self.assertEqual(startable["C"], True)
+        self.assertEqual(startable["D"], False)
+        self.assertEqual({row["id"]: row["startable"] for row in before["tasks"]}, startable)
 
 
 class IncludeTerminalImportTest(unittest.TestCase):

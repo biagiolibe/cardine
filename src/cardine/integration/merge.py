@@ -6,17 +6,13 @@ from cardine.integration.decision import IntegrationValidationOutcome
 from cardine.shared.errors import CardineError
 from pathlib import Path
 from cardine.shared.models import ResolvedTaskIdentity
-from cardine.integration.projections import _apply_task_completion_rows
 from cardine.worktree.storage import _branch_commit
 from cardine.worktree.storage import _effective_worktree_root
 from cardine.shared.git import _git_worktrees
-from cardine.integration.projections import _governed_completion_row
 from cardine.integration.evidence import _integration_evidence
 from cardine.integration.evidence import _lifecycle_changes_after_validation
 from cardine.worktree.storage import _lifecycle_paths
 from cardine.worktree.storage import _merge_head_path
-from cardine.integration.projections import _queue_archival_warnings
-from cardine.integration.projections import _queue_state_resolver
 from cardine.shared.jsonio import _read_json_object
 from cardine.integration.evidence import _remove_owned_file
 from cardine.shared.git import _run_git
@@ -40,6 +36,7 @@ import shlex
 import shutil
 from cardine.tasks.state import state_path
 from cardine.stops.render import stop_error
+from cardine.tasks import status_render
 from cardine.integration.evidence import undeclared_validation_commands_error
 
 
@@ -48,19 +45,12 @@ def _spike_disallowed_paths(
 ) -> tuple[str, ...]:
     """Return changed paths a SPIKE task is not allowed to integrate."""
     record_path = identity.task_path
-    archived_path = record_path.parent / "done" / record_path.name
-    task_record = ""
-    for candidate in (record_path, archived_path):
-        relative = candidate.relative_to(project_root)
-        shown = _run_git(project_root, "show", f"{validated_task}:{relative}")
-        if shown.returncode == 0:
-            task_record = shown.stdout
-            break
+    shown = _run_git(project_root, "show", f"{validated_task}:{record_path.relative_to(project_root)}")
+    task_record = shown.stdout if shown.returncode == 0 else ""
     if (read_task_field(task_record, "Class") or "").lower() != "spike":
         return ()
     allowed = {
         str(record_path.relative_to(project_root)),
-        str(archived_path.relative_to(project_root)),
         str(identity.handoff_path.relative_to(project_root)),
         str(identity.review_path.relative_to(project_root)),
         str(find_adr_log(project_root).relative_to(project_root)),
@@ -99,14 +89,8 @@ def _integration_task_state(
         )
     workflow = detect_mode(project_root)
     record = identity.task_path.relative_to(project_root)
-    if record.parent.name == "done":
-        record = record.parent.parent / record.name
-    record_text = ""
-    for candidate in (record, record.parent / "done" / record.name):
-        snapshot = _run_git(project_root, "show", f"{task_commit}:{candidate.as_posix()}")
-        if snapshot.returncode == 0:
-            record_text = snapshot.stdout
-            break
+    snapshot = _run_git(project_root, "show", f"{task_commit}:{record.as_posix()}")
+    record_text = snapshot.stdout if snapshot.returncode == 0 else ""
     spike = (read_task_field(record_text, "Class") or "").lower() == "spike"
     state = read_task_state(
         project_root, identity.canonical_id, workflow, spike=spike, review_required=None,
@@ -138,7 +122,7 @@ def _integration_task_state(
                 task_id=identity.canonical_id, project=project_root,
             )
         allowed = {
-            record.as_posix(), (record.parent / "done" / record.name).as_posix(),
+            record.as_posix(),
             identity.handoff_path.relative_to(project_root).as_posix(),
             identity.review_path.relative_to(project_root).as_posix(),
             relative.as_posix(), names().execution_evidence_path.as_posix(),
@@ -151,6 +135,25 @@ def _integration_task_state(
                 task_id=identity.canonical_id, project=project_root,
             )
     return state
+
+
+def _regenerate_status_views(project_root: Path) -> dict[str, object]:
+    """Regenerate the queue and plan views once on the candidate tree and stage what changed.
+
+    A failed write leaves the already written landed state in place and reports
+    the stale view with the command that regenerates it.
+    """
+    command = status_render.COMMAND
+    try:
+        changed = [path.relative_to(project_root).as_posix() for path in status_render.write_views(project_root)]
+        if changed:
+            staged = _run_git(project_root, "add", "--", *changed)
+            if staged.returncode:
+                raise CardineError(staged.stderr.strip() or "could not stage the regenerated views")
+    except (OSError, CardineError) as error:
+        return {"status": "STALE", "paths": [], "command": command,
+                "warning": f"status views are stale: {error}; run `{command}` after integration"}
+    return {"status": "REGENERATED", "paths": changed, "command": command, "warning": None}
 
 
 def stage_task_integration(
@@ -312,46 +315,23 @@ def stage_task_integration(
             task_id=identity.canonical_id, project=project_root, evidence=evidence_path,
         )
     try:
-        archival: list[dict[str, object]] = []
-        if task_state is not None:
-            from datetime import datetime, timezone
-            import copy
-            task_state = copy.deepcopy(task_state)
-            task_state["transitions"].append({"from": "in_progress", "to": "done", "commit": task_commit,
-                                              "at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")})
-            task_state["status"] = "done"
-            path = state_path(project_root, identity.canonical_id)
-            _write_json_atomic(path, task_state)
-            paths = [path.relative_to(project_root).as_posix()]
-            staged_state = _run_git(project_root, "add", "--", *paths)
-            if staged_state.returncode:
-                raise CardineError(staged_state.stderr.strip() or "could not stage landed task state")
-        completion = _apply_task_completion_rows(project_root, identity, task_state, archival)
-        queue_warnings = _queue_archival_warnings(
-            identity.queue_path.read_text(encoding="utf-8"), detect_mode(project_root),
-            _queue_state_resolver(project_root, detect_mode(project_root),
-                                  {identity.canonical_id: task_state} if task_state else None),
-        )
-        lifecycle_paths = [str(identity.queue_path.relative_to(project_root))]
-        plan = resolve_project_locations(project_root).plan
-        if (project_root / plan).is_file():
-            lifecycle_paths.append(str(plan))
-        archive_path = identity.queue_path.with_name("QUEUE_ARCHIVE.md")
-        if archive_path.exists():
-            lifecycle_paths.append(str(archive_path.relative_to(project_root)))
-        staged_rows = _run_git(
-            project_root,
-            "add",
-            "--",
-            *lifecycle_paths,
-        )
-        if staged_rows.returncode != 0:
-            raise CardineError(staged_rows.stderr.strip() or "could not stage completion rows")
+        from datetime import datetime, timezone
+        import copy
+        task_state = copy.deepcopy(task_state)
+        task_state["transitions"].append({"from": "in_progress", "to": "done", "commit": task_commit,
+                                          "at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")})
+        task_state["status"] = "done"
+        path = state_path(project_root, identity.canonical_id)
+        _write_json_atomic(path, task_state)
+        staged_state = _run_git(project_root, "add", "--", path.relative_to(project_root).as_posix())
+        if staged_state.returncode:
+            raise CardineError(staged_state.stderr.strip() or "could not stage landed task state")
     except (OSError, CardineError) as error:
         aborted = _run_git(project_root, "merge", "--abort")
         if aborted.returncode == 0:
             _remove_owned_file(lease_path)
         raise CardineError(str(error)) from error
+    views = _regenerate_status_views(project_root)
     candidate_tree = git_output(project_root, "write-tree")
     staged = {
         **lease,
@@ -364,9 +344,9 @@ def stage_task_integration(
         "reason": decision.reason,
         "candidate_tree": candidate_tree,
         "next_action": "validate-candidate",
-        "completion": completion,
-        "archival": archival,
-        "warnings": queue_warnings,
+        "landed_status": "done",
+        "views": views,
+        "warnings": [views["warning"]] if views["status"] == "STALE" else [],
     }
     _write_json_atomic(integration_path, staged, exclusive=True)
     return staged

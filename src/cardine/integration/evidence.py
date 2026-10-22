@@ -345,30 +345,21 @@ def _lifecycle_changes_after_validation(
     validated_task: str,
     task_commit: str,
 ) -> tuple[bool, tuple[str, ...]]:
-    """Accept only lifecycle-only changes, including one exact task archive rename."""
+    """Accept only changes to the task's own stable record, handoff, review, state and evidence."""
     project_root = project_root.resolve()
-    active_record = identity.task_path.relative_to(project_root)
-    if active_record.parts[:2] == ("tasks", "done"):
-        active_record = Path("tasks") / active_record.name
-    archive_record = Path("tasks") / "done" / active_record.name
-    plan_path = resolve_project_locations(project_root).plan
     allowed = {
-        str(active_record),
-        str(archive_record),
-        str(identity.queue_path.relative_to(project_root)),
+        str(identity.task_path.relative_to(project_root)),
         str(identity.handoff_path.relative_to(project_root)),
         str(identity.review_path.relative_to(project_root)),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
         names().execution_evidence_path.as_posix(),
-        str(plan_path),
-        "tasks/QUEUE_ARCHIVE.md",
     }
     output = _run_git(
         project_root,
         "diff",
         "--name-status",
         "-z",
-        "--find-renames=100%",
+        "--no-renames",
         validated_task,
         task_commit,
     ).stdout
@@ -376,30 +367,14 @@ def _lifecycle_changes_after_validation(
     if fields and fields[-1] == "":
         fields.pop()
     offending: set[str] = set()
-    validated_is_archived = _run_git(
-        project_root, "cat-file", "-e", f"{validated_task}:{archive_record}"
-    ).returncode == 0
     index = 0
     while index < len(fields):
         status = fields[index]
-        index += 1
-        if status.startswith(("R", "C")):
-            if index + 1 >= len(fields):
-                raise CardineError("invalid rename-aware Git diff output")
-            old_path, new_path = fields[index], fields[index + 1]
-            index += 2
-            if status != "R100" or old_path != str(active_record) or new_path != str(archive_record):
-                offending.update((old_path, new_path))
-            continue
-        if index >= len(fields):
-            raise CardineError("invalid rename-aware Git diff output")
-        path = fields[index]
-        index += 1
-        if path not in allowed:
-            offending.add(path)
-        elif path == str(archive_record):
-            offending.add(path)
-        elif path == str(active_record) and (status != "M" or validated_is_archived):
+        if index + 1 >= len(fields):
+            raise CardineError("invalid Git diff output")
+        path = fields[index + 1]
+        index += 2
+        if path not in allowed or (path == str(identity.task_path.relative_to(project_root)) and status != "M"):
             offending.add(path)
     return not offending, tuple(sorted(offending))
 

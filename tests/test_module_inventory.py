@@ -67,6 +67,28 @@ class ModuleInventoryTest(unittest.TestCase):
         retired = {
             # Task 056 removes the accessor for the deleted per-workflow roots.
             'managed_files_for_workflow',
+            # Task 069 removes the queue and plan status mutation and queue archival route.
+            '_completed_task_row',
+            '_QUEUE_TABLE_DIVIDER',
+            '_QUEUE_TASK_ROW',
+            '_QUEUE_ARCHIVE_HEADER',
+            '_GOVERNED_QUEUE_ARCHIVE_HEADER',
+            '_GOVERNED_QUEUE_TASK_ROW',
+            '_GOVERNED_QUEUE_STATUSES',
+            '_MARKDOWN_HEADING',
+            '_governed_completion_error',
+            '_governed_completion_row',
+            '_queue_section_ranges',
+            '_queue_section_completion',
+            '_STATE_TERMINAL_STATUSES',
+            'QueueStateResolver',
+            '_queue_state_resolver',
+            '_queue_unidentified_tables',
+            '_queue_section_decisions',
+            '_archive_completed_queue_sections',
+            '_queue_archival_warnings',
+            '_relink_archived_task_row',
+            '_apply_task_completion_rows',
             # Task 035 removes self-reported counters.
             'BUDGET_PATH',
             'BUDGET_STATE_NAME',

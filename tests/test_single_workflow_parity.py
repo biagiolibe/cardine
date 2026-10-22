@@ -236,8 +236,9 @@ class SingleWorkflowParityTest(unittest.TestCase):
                     commands.execution_deliver(f.worker, '001')
                     record_review_verdict(f.worker, '001', 'APPROVE')
                     f.commit('Record approved review')
-                close_task(f.worker, '001')
-                f.commit('Archive completed record')
+                closed = close_task(f.worker, '001')
+                self.assertEqual(closed['record'], 'tasks/001.md')
+                self.assertEqual(f.git('status', '--porcelain'), '')
                 head = f.git('rev-parse', 'HEAD')
                 evidence = Path(f.temp.name) / 'accepted.json'
                 evidence.write_text(json.dumps({
@@ -262,7 +263,8 @@ class SingleWorkflowParityTest(unittest.TestCase):
                     self.assertEqual(landed['review']['verdict'], 'APPROVE')
                 else:
                     self.assertFalse(any(t['to'] == 'in_review' for t in landed['transitions']))
-                self.assertTrue((f.primary / 'tasks/done/001.md').is_file())
+                self.assertTrue((f.primary / 'tasks/001.md').is_file())
+                self.assertFalse((f.primary / 'tasks/done/001.md').exists())
                 self.assertTrue(dependency_satisfied(landed))
 
     def test_one_distribution_machine_and_template_root(self):

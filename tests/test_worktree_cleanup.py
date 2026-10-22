@@ -64,8 +64,8 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             "056", self.worktree_root, evidence_path, self.primary
         )
         self.assertEqual(staged["decision"], "REUSE")
-        self.assertFalse(queue.read_text(encoding="utf-8").strip())
-        self.assertIn("### Phase 1 — Closing", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         self.assertEqual(
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary),
             staged,
