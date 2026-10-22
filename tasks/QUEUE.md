@@ -59,7 +59,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 13 and 14.
 | `[ ]` | 074 | Inventory the template rules and their enforcement (decision 14) | 🔴 P1 | — | [074](074-rule-enforcement-inventory.md) |
 | `[ ]` | 075 | Map what an agent can forge among the artifacts gates trust (decision 14) | 🔴 P1 | — | [075](075-forgery-inventory.md) |
 | `[ ]` | 076 | Review every stop the tool could resolve itself (decision 14) | 🔴 P1 | — | [076](076-stop-review.md) |
-| `[ ]` | 077 | Use one product name in the execution contract line | 🔴 P1 | 073 | [077](077-execution-contract-product-name.md) |
+| `[x]` | 077 | Use one product name in the execution contract line | 🔴 P1 | 073 | [077](done/077-execution-contract-product-name.md) |
 | `[ ]` | 078 | Add the text gate static guard as a ratchet (decision 13) | 🔴 P1 | 069, 072 | [078](078-text-gate-static-guard.md) |
 | `[ ]` | 079 | Freeze the remaining human contract fields in the snapshot (N1, part 1) | 🔴 P1 | 077, 078 | [079](079-contract-snapshot-human-fields.md) |
 | `[ ]` | 080 | Read the human contract fields from the snapshot (N1, part 2) | 🔴 P1 | 079 | [080](080-readers-use-contract-snapshot.md) |

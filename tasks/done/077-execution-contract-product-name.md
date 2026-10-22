@@ -25,27 +25,27 @@ writer, checker, and template disagree.
 
 ## Acceptance Criteria
 
-- [ ] The writer, the checker, the preflight error text, and the product
+- [x] The writer, the checker, the preflight error text, and the product
   blueprint use one constant with the product name, `required via cardine
   execution`, defined once in product code; no product file under
   `src/cardine/` or `templates/single/` contains `required via meridian
   execution`.
-- [ ] A test proves that the line in
+- [x] A test proves that the line in
   `templates/single/tasks/TASK_BLUEPRINT.md` equals the line `cardine
   execution contract` generates, so the template and the code cannot drift
   again.
-- [ ] A test creates a task from the product blueprint and passes
+- [x] A test creates a task from the product blueprint and passes
   `execution_preflight` without regenerating the block.
-- [ ] The handoff explains why the Meridian-identifier guard of task 051 and
+- [x] The handoff explains why the Meridian-identifier guard of task 051 and
   the retired text catalog did not catch this literal, and either extends
   the guard so it would, or states why it cannot.
-- [ ] If the template text changes, the pre-1.0 rule of task 031 applies: the
+- [x] If the template text changes, the pre-1.0 rule of task 031 applies: the
   owning capability's version rises and its baseline is rewritten, with no
   migration and no `VERSION` change.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -54,16 +54,16 @@ writer, checker, and template disagree.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/077.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/077.json`, which only
   the installed `meridian task close 077` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

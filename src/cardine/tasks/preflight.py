@@ -6,6 +6,8 @@ from cardine.shared.git import TASK_BRANCH_OPEN_STATUSES
 from cardine.shared.git import current_branch
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
+from cardine.tasks.contract import EXECUTION_COMMANDS_LINE
+from cardine.tasks.contract import EXECUTION_COMMANDS_VALUE
 from cardine.tasks.contract import NORMAL_PREFLIGHT_HEADINGS
 from cardine.tasks.contract import PREFLIGHT_HEADINGS
 from cardine.tasks.contract import SPIKE_PREFLIGHT_FIELDS
@@ -35,7 +37,7 @@ def execution_contract(project_root: Path, task_id: str) -> str:
         "- Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`",
         f"- Profile revision: `sha256:{profile_digest(project_root)}`",
         f"- Validation IDs: {commands}",
-        "- Execution commands: `required via meridian execution`",
+        EXECUTION_COMMANDS_LINE,
     ))
 
 
@@ -72,7 +74,7 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
         raise stop_error(
             "EXECUTION_CONTRACT_UNRESOLVED",
             f"rule: the contract must require execution commands; field checked: `- Execution commands` in "
-            f"{task_name}; expected: `required via meridian execution`; found: no such line",
+            f"{task_name}; expected: `{EXECUTION_COMMANDS_VALUE}`; found: no such line",
             task_id=task_id,
         )
     if options is None:
