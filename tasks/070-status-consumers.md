@@ -96,7 +96,7 @@ repository, and every frozen file.
 
 ## Dependencies
 
-- **Depends on**: 069
+- **Depends on**: 069, 072
 - **Blocks**: work item 8
 
 ## Developer decisions given in advance
