@@ -105,7 +105,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 061 — Rename the capability markers and restart every capability at v1 (work item 5b).
 - `[x]` 062 — Plan the cardine run engine (work item 8).
 - `[x]` 063 — Plan the preparation of the benchmark against a minimal procedure.
-- `[ ]` 064 — Extract the installation snapshot path (single source SS1).
+- `[x]` 064 — Extract the installation snapshot path (single source SS1).
 - `[ ]` 065 — Build the task status service and cardine status (single source SS2).
 - `[ ]` 066 — Create the task record and its state together (single source SS3).
 - `[ ]` 067 — Generate the queue and the plan status region (single source SS4).

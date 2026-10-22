@@ -39,7 +39,7 @@ Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, wor
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 064 | Extract the installation snapshot path (single source SS1) | 🔴 P1 | 061 | [064](064-legacy-installation-snapshot.md) |
+| `[x]` | 064 | Extract the installation snapshot path (single source SS1) | 🔴 P1 | 061 | [064](done/064-legacy-installation-snapshot.md) |
 | `[ ]` | 065 | Build the task status service and cardine status (single source SS2) | 🔴 P1 | 064 | [065](065-task-status-service.md) |
 | `[ ]` | 066 | Create the task record and its state together (single source SS3) | 🔴 P1 | 065 | [066](066-paired-task-creation.md) |
 | `[ ]` | 067 | Generate the queue and the plan status region (single source SS4) | 🔴 P1 | 066 | [067](067-generated-status-views.md) |

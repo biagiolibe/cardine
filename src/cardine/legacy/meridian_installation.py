@@ -12,7 +12,7 @@ import re
 
 from cardine.shared.errors import CardineError
 from cardine.console.models import Snapshot
-from cardine.console.snapshot import load_snapshot
+from cardine.legacy.snapshot import load_snapshot
 from cardine.shared.layout import ProjectNames, use
 from cardine.shared.snapshot_adapters import execution_assets_adapter, state_adapter, status_adapter
 
