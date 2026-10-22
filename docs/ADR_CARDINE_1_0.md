@@ -22,7 +22,9 @@ move of this repository to Cardine after work items 8, 9, and 10. On
 the plugin, and the Codex rules from work item 5b to work item 9. Decision
 13, gates that read facts instead of prose, and decision 14, a product that
 holds against weak and strong agents, were proposed and accepted on
-2026-10-22.*
+2026-10-22. On 2026-10-23 the developer set the trust boundary of decision
+14, rule 2, at the host's permission system and left the installation
+surface outside it until after 1.0.*
 
 ## Context
 
@@ -583,11 +585,36 @@ Five rules follow:
    enforced by the tool, by a CLI gate, a hook, or a host deny rule, and then
    stated in one line, or labelled as advice, or deleted. No rule whose
    violation causes harm exists only in prose.
-2. **Nothing to forge.** Every artifact a gate trusts is written by Cardine,
-   and Cardine detects a write it did not make. A file an agent writes on the
-   task branch, such as a state file, an evidence file, the project
-   configuration, or the contract snapshot, never changes a gate's outcome.
-   This extends decision 13 from text to files.
+2. **Nothing to forge, within the host boundary.** Every artifact a gate
+   trusts is written by Cardine. A file an agent writes on the task branch,
+   such as a state file, an evidence file, the project configuration, or the
+   contract snapshot, never changes a gate's outcome. This extends decision
+   13 from text to files. The boundary has three layers:
+   - **Receipts.** Every Cardine write is bound by an operation receipt to
+     its inputs and outputs. A gate rejects an artifact that no receipt
+     covers or that differs from its receipt, which catches an agent's
+     honest mistake, such as the hand-written Contoso state, and any
+     incoherent edit.
+   - **Host permissions.** The host refuses the shortcuts before they
+     happen. Host rules deny agents writes to the state and receipt paths
+     and the developer-only commands, such as recording a verdict as the
+     developer or pushing `main` outside integration. The engine launches
+     the implementer and the reviewer with distinct host profiles, so an
+     implementer cannot approve its own work. Work item 9 installs these
+     rules on both hosts.
+   - **Declared limit.** An agent runs as the developer's user, so a
+     receipt or hash Cardine writes can be rewritten by an agent that
+     deliberately bypasses the host permissions, for example through
+     another host launched with a different profile. Cardine does not claim
+     authenticity against that agent, and never presents a same-user
+     receipt or hash as proof of authorship. A protected signer outside the
+     agent's reach (a separate user, a service, or a key that needs the
+     developer's presence) can later sign the same receipts; it is not part
+     of 1.0.
+
+   The installation surface (the manifest, marker baselines, and capability
+   evidence) is outside this boundary until after 1.0. Those files describe
+   the installed templates and do not decide whether a task lands.
 3. **The tool resolves what it knows.** A stop for something the tool can
    determine, such as the right directory, the order of commands, or a lease
    held by another task, is a defect. The tool resolves it, waits, or returns

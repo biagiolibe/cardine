@@ -32,3 +32,14 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 22 — The cardine run engine: implementation
+
+Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 13 and 14.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 082 | Revise the run engine plan with the inventories and the trust boundary | 🔴 P1 | — | [082](082-revise-run-engine-plan.md) |
+| `[ ]` | 083 | Remove the self-reported evidence counters (RX1) | 🔴 P1 | — | [083](083-remove-self-reported-counters.md) |
+| `[ ]` | 084 | Read class, review policy, and deliverables from the snapshot (N2a) | 🔴 P1 | 083 | [084](084-read-class-review-deliverables.md) |
+| `[ ]` | 085 | Read validation commands, host impact, and locations from frozen inputs (N2b) | 🔴 P1 | 084 | [085](085-read-validation-and-locations.md) |

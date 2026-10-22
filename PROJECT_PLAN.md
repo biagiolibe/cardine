@@ -36,6 +36,7 @@ the named work item finds it on `main`.
 | Delete `MERIDIAN_ROOT`, `bin/`, `scripts/upgrade_project.sh`, and the old release scripts instead of keeping them renamed | Decision 9 and work item 12 | `docs/RENAME_PLAN.md`, choice 6 |
 | Add `cardine init` (decision 8), replacing the copy steps of the init slash command that task 055 rewrites | Work item 9 | Task 055 record |
 | Move `cardine task state import` (`tasks/importer.py`) and its queue reader `_queue_task_rows` (`integration/projections.py`, re-exported by `scripts/cardine_cli.py`) into the conversion that rebuilds `cardine adopt`, so that the three documented exceptions of `tests/test_product_prose_readers.py` and entries T-27 and T-31 of `docs/TEXT_GATE_INVENTORY.md` reach zero | Work item 10 | `tasks/handoffs/070.md`; coordinator decision, 2026-10-22 |
+| Protect the installation surface (manifest, marker baselines, capability and probe evidence, upgrade recovery) against coherent project-file forgery, row FI1 | After 1.0 | `docs/FORGERY_INVENTORY.md`, F-E; ADR decision 14, rule 2, as amended on 2026-10-23 |
 | The governed skills route `Accept` to `docs/workflows/LIFECYCLE.md`, which the single template set no longer installs | Work item 9 | `tasks/handoffs/055.md` |
 
 ## Active Delivery
@@ -123,3 +124,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 079 — Freeze the remaining human contract fields in the snapshot (N1, part 1).
 - `[x]` 080 — Read the human contract fields from the snapshot (N1, part 2).
 - `[x]` 081 — Allow every task record in the identifier guard by pattern.
+- `[ ]` 082 — Revise the run engine plan with the inventories and the trust boundary.
+- `[ ]` 083 — Remove the self-reported evidence counters (RX1).
+- `[ ]` 084 — Read class, review policy, and deliverables from the snapshot (N2a).
+- `[ ]` 085 — Read validation commands, host impact, and locations from frozen inputs (N2b).
