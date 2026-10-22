@@ -135,7 +135,8 @@ revalidation in the same turn; do not stop to report the fix.
 - `meridian profile doctor meridian-self-hosting --project .`
 - `meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
 - `git diff --check`
+- `python3 -m unittest tests.test_no_meridian_identifiers`
 
 This task changes documentation only. Under the validation-scoping rule of
 `PROJECT_WORKFLOW.md`, it skips the test suites and records that skip in the
-handoff.
+handoff. It still runs the identifier guard, which scans documentation.
