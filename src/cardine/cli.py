@@ -169,6 +169,11 @@ def build_parser() -> CardineArgumentParser:
         help="gate catalog-required static installation while retaining visible host UNVERIFIED rows",
     )
 
+    status = subparsers.add_parser("status", help="show read-only task status from validated states")
+    status.add_argument("--project", type=Path, default=Path.cwd())
+    status.add_argument("--all", action="store_true")
+    status.add_argument("--format", choices=("text", "json"), default="text")
+
     locations = subparsers.add_parser("locations", help="print resolved project locations")
     locations.add_argument("--project", type=Path, default=Path.cwd())
     locations.add_argument("--field", choices=("queue", "queue-archive", "task-roots", "review-root", "handoff-root", "adr-log", "plan"))
@@ -490,6 +495,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
         elif arguments.command == "audit":
             mode = arguments.mode or detect_mode(project_root)
             return run_audit(project_root, framework_root, mode, arguments.ci_profile)
+        elif arguments.command == "status":
+            from cardine.tasks.status import load_task_status, render_task_status
+            report = load_task_status(project_root, all_tasks=arguments.all)
+            print(json.dumps(report, sort_keys=True) if arguments.format == "json" else render_task_status(report))
+            return 2 if report["diagnostics"] else 0
         elif arguments.command == "locations":
             locations = resolve_project_locations(project_root)
             if arguments.field == "queue":
