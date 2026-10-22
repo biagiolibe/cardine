@@ -20,7 +20,8 @@ two, reset the capability marker versions at the marker rename, and placed the
 move of this repository to Cardine after work items 8, 9, and 10. On
 2026-10-20 the developer moved the Cardine names of skills, slash commands,
 the plugin, and the Codex rules from work item 5b to work item 9. Decision
-13, gates that read facts instead of prose, was proposed and accepted on
+13, gates that read facts instead of prose, and decision 14, a product that
+holds against weak and strong agents, were proposed and accepted on
 2026-10-22.*
 
 ## Context
@@ -554,6 +555,60 @@ contract creation path, the integrity checks, and `cardine.legacy`. A planning
 task inventories the current reads and assigns each to work item 7, work item
 8, removal, or the integrity class before the work item 8 tasks are written.
 
+### 14. Robust against weak and strong agents
+
+Cardine must give the right outcome whichever agent runs it. A weak agent
+forgets rules, misreads long instructions, and gets the form of things wrong.
+A strong agent reinterprets rules and takes shortcuts it can justify. A rule
+that only works when the agent reads, remembers, and obeys it fails with the
+first; a check that trusts what the agent wrote fails with the second.
+
+The evidence, as of 2026-10-22:
+
+- The single template set gives agents about 21,000 words of instructions;
+  `PROJECT_WORKFLOW.md` alone has about 3,500.
+- The CLI declares 205 options, and the stop registry has 51 codes, 27 of
+  them guardrails.
+- This repository's journal records 15 stops over 71 tasks. Eight are
+  `WRONG_WORKTREE`, a location the tool can resolve itself (decision 6), and
+  five are `COMMAND_REFUSED`, including one task waiting for another task's
+  integration lease.
+- On Contoso, a hand-written state file passed every command until
+  integration.
+
+Five rules follow:
+
+1. **Little to read.** An agent needs the next action that `cardine run`
+   returns and a short contract. Every rule in the templates is either
+   enforced by the tool, by a CLI gate, a hook, or a host deny rule, and then
+   stated in one line, or labelled as advice, or deleted. No rule whose
+   violation causes harm exists only in prose.
+2. **Nothing to forge.** Every artifact a gate trusts is written by Cardine,
+   and Cardine detects a write it did not make. A file an agent writes on the
+   task branch, such as a state file, an evidence file, the project
+   configuration, or the contract snapshot, never changes a gate's outcome.
+   This extends decision 13 from text to files.
+3. **The tool resolves what it knows.** A stop for something the tool can
+   determine, such as the right directory, the order of commands, or a lease
+   held by another task, is a defect. The tool resolves it, waits, or returns
+   the next action. Decision 12 keeps stops for what a person brings.
+4. **Every effect can be repeated.** Interrupting any command at any effect
+   boundary, such as a commit, a state write, a merge, a push, or a cleanup,
+   and running it again converges to the same result. Two tasks that reach
+   integration together wait for each other instead of stopping.
+5. **Proved with both kinds of agent.** After work item 8, the evaluation
+   scenarios run with a weak and a strong model. They measure completed
+   tasks, stops by class, attempted denied actions, and shortcuts taken, such
+   as hand edits of state or Git commands that bypass the CLI. Paid runs are
+   authorized separately.
+
+Planning tasks inventory the template rules and their enforcement, what an
+agent can forge among the artifacts gates trust, and every stop code and
+journal stop the tool could resolve itself. Their results set the scope of
+the work item 8 tasks. Rule 4 becomes an acceptance criterion of every work
+item 8 task that performs effects. The surface of options and modules is
+reviewed after work item 10, when `cardine.legacy` can be deleted.
+
 ## Work items to 0.9
 
 Most items are one or more tasks of 2–3 hours. Item 3 is mechanical and
@@ -627,6 +682,8 @@ surfaces only and leave those files unchanged.
    `direct` as its only 1.0 mode (decision 11). It applies decision 13: the
    engine runs validation and records the delivered commit itself, so no gate
    reads agent-written text or agent-reported exit codes.
+   It applies decision 14: it resolves what it can determine, waits for
+   another task's integration, and converges when interrupted and rerun.
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
    hooks, with one Python implementation of each hook (decision 7). The
    skills, slash commands, plugin, and Codex rules file and profile are

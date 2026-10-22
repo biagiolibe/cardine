@@ -46,6 +46,20 @@ Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, wor
 | `[x]` | 068 | Remove the product prose status gates (single source SS5) | 🔴 P1 | 067 | [068](done/068-remove-prose-status-gates.md) |
 | `[x]` | 071 | Report the stop detail in worktree advance output | 🔴 P1 | 066 | [071](done/071-advance-stop-detail.md) |
 | `[ ]` | 069 | Keep task records stable through close and landing (single source SS6) | 🔴 P1 | 068, 071 | [069](069-stable-records-through-landing.md) |
-| `[ ]` | 073 | Inventory the product gates that read text (decision 13) | 🔴 P1 | — | [073](073-text-gate-inventory.md) |
-| `[ ]` | 072 | Give the delivery commit field a literal form | 🔴 P1 | 067, 073 | [072](072-literal-delivery-commit-field.md) |
-| `[ ]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 069 | [070](070-status-consumers.md) |
+| `[x]` | 073 | Inventory the product gates that read text (decision 13) | 🔴 P1 | — | [073](done/073-text-gate-inventory.md) |
+| `[ ]` | 072 | Remove the delivery commit gate | 🔴 P1 | 073 | [072](072-remove-delivery-commit-gate.md) |
+| `[ ]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 080 | [070](070-status-consumers.md) |
+
+### Phase 21 — Robustness against weak and strong agents
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decisions 13 and 14.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 074 | Inventory the template rules and their enforcement (decision 14) | 🔴 P1 | — | [074](074-rule-enforcement-inventory.md) |
+| `[ ]` | 075 | Map what an agent can forge among the artifacts gates trust (decision 14) | 🔴 P1 | — | [075](075-forgery-inventory.md) |
+| `[ ]` | 076 | Review every stop the tool could resolve itself (decision 14) | 🔴 P1 | — | [076](076-stop-review.md) |
+| `[x]` | 077 | Use one product name in the execution contract line | 🔴 P1 | 073 | [077](done/077-execution-contract-product-name.md) |
+| `[ ]` | 078 | Add the text gate static guard as a ratchet (decision 13) | 🔴 P1 | 069, 072 | [078](078-text-gate-static-guard.md) |
+| `[ ]` | 079 | Freeze the remaining human contract fields in the snapshot (N1, part 1) | 🔴 P1 | 077, 078 | [079](079-contract-snapshot-human-fields.md) |
+| `[ ]` | 080 | Read the human contract fields from the snapshot (N1, part 2) | 🔴 P1 | 079 | [080](080-readers-use-contract-snapshot.md) |
