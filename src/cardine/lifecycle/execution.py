@@ -141,28 +141,6 @@ def execution_source_digest(project_root: Path, task_id: str) -> str:
     return hashlib.sha256(json.dumps(entries).encode()).hexdigest()
 
 
-def _delivery_current_commit(project_root: Path, task_id: str, report: Path, head: str, base: str) -> None:
-    """Reject handoff commit fields that cannot identify the review HEAD."""
-    text = report.read_text(encoding="utf-8")
-    match = re.search(r"^- Current task commit:[ \t]*(.+)$", text, re.MULTILINE)
-    value = match.group(1).strip().strip("`") if match else ""
-    valid = False
-    if re.fullmatch(r"[0-9a-f]{40}", value):
-        valid = value != base and _run_git(project_root, "merge-base", "--is-ancestor", value, head).returncode == 0
-    elif value:
-        subject = git_output(project_root, "log", "-1", "--format=%s", head)
-        branch = git_output(project_root, "branch", "--show-current")
-        # Delivery's known subject is usable before its commit exists.
-        valid = (f"Deliver {task_id} for review" in value
-                 or (subject in value and branch in value))
-    if not valid:
-        raise stop_error(
-            "EVIDENCE_INCOMPLETE",
-            "Current task commit must name a full task commit SHA (never the validated base main commit), "
-            f"or describe the commit by subject and branch; for delivery use `Deliver {task_id} for review`; "
-            f"found: {value!r}", task_id=task_id, project=canonical_project_root(project_root))
-
-
 def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, object], head: str,
                             owned: set[str], report_path: str) -> list[str]:
     """Check every post-delivery commit, including changes later reverted.
@@ -224,7 +202,6 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
     report_path = identity.handoff_path.relative_to(project_root).as_posix()
     if _run_git(project_root, "cat-file", "-e", f"HEAD:{report_path}").returncode:
         raise stop_error("EVIDENCE_INCOMPLETE", "final handoff must be committed", task_id=task_id, project=canonical_project_root(project_root))
-    _delivery_current_commit(project_root, task_id, identity.handoff_path, head, base)
     digest = execution_source_digest(project_root, task_id)
     entries = execution_entries(project_root, task_id)
     commands = validation_commands(record)

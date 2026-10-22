@@ -178,7 +178,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertEqual(
             self.marker_pairs(completion_report),
             [
-                ("task-worktree-handoff", "1"),
+                ("task-worktree-handoff", "2"),
                 ("handoff-correction-redelivery", "1"),
                 ("manual-verification-record", "1"),
                 ("ci-verified-validation", "1"),
@@ -269,9 +269,9 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn(("command-triggers", "1"), self.marker_pairs((self.WORKFLOW / "AGENTS.md").read_text(encoding="utf-8")))
         review = self.marker_pairs((self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8"))
         self.assertIn(("review-mode-boundary", "1"), review)
-        self.assertIn(("implementer-reviewer-handoff", "1"), review)
+        self.assertIn(("implementer-reviewer-handoff", "2"), review)
         self.assertIn(("reviewer-integrator-identity", "1"), review)
-        self.assertIn(("task-worktree-review-procedure", "1"), review)
+        self.assertIn(("task-worktree-review-procedure", "2"), review)
 
     def test_review_preflight_fails_closed_before_substantive_inspection(self) -> None:
         review = (self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
@@ -290,9 +290,7 @@ class CapabilityMarkerTest(unittest.TestCase):
             "dirty worktree",
             "disagrees with the handoff",
             "active or unconfirmed implementer",
-            "validated task and base commits exist",
-            "resolve it to the registered task branch `HEAD`",
-            "mismatched subject",
+            "base commit exists and is an ancestor of `HEAD`",
         ):
             with self.subTest(condition=condition):
                 self.assertIn(condition, normalized)

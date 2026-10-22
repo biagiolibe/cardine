@@ -47,7 +47,7 @@ Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, wor
 | `[x]` | 071 | Report the stop detail in worktree advance output | 🔴 P1 | 066 | [071](done/071-advance-stop-detail.md) |
 | `[ ]` | 069 | Keep task records stable through close and landing (single source SS6) | 🔴 P1 | 068, 071 | [069](069-stable-records-through-landing.md) |
 | `[x]` | 073 | Inventory the product gates that read text (decision 13) | 🔴 P1 | — | [073](done/073-text-gate-inventory.md) |
-| `[ ]` | 072 | Remove the delivery commit gate | 🔴 P1 | 073 | [072](072-remove-delivery-commit-gate.md) |
+| `[x]` | 072 | Remove the delivery commit gate | 🔴 P1 | 073 | [072](done/072-remove-delivery-commit-gate.md) |
 | `[ ]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 080 | [070](070-status-consumers.md) |
 
 ### Phase 21 — Robustness against weak and strong agents

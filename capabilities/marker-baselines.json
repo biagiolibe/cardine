@@ -103,8 +103,8 @@
       "version": 1
     },
     "task-worktree-handoff": {
-      "sha256": "cd10b79d1a6df6937dc2ffdc2272487450e7e932ee96e1bbf12c3a6c91249686",
-      "version": 1
+      "sha256": "ecd50e31d8e4430f67e1e13e6e7b53ccc3dcae4dffa6d1f4b41ffcb5a2b65a63",
+      "version": 2
     }
   },
   "templates/single/docs/CONTEXT_READING_POLICY.md": {
@@ -269,8 +269,8 @@
       "version": 1
     },
     "implementer-reviewer-handoff": {
-      "sha256": "02b49b9a0d1e781ec559499a795d31c53594773e7fec28865637f7bfb7f9caf5",
-      "version": 1
+      "sha256": "5dc2a7ed41495e9ca56d6fac6ba7842ea87eeb3d8c32f025c17e55e9130b10ec",
+      "version": 2
     },
     "phase-reads": {
       "sha256": "28db36d8d50d95dc6b0d299dd9bb41fcc31f58a89384fd199becbc54a1c50683",
@@ -285,8 +285,8 @@
       "version": 1
     },
     "task-worktree-review-procedure": {
-      "sha256": "56ed252dafa14473f5de8fde6b776a99e30aafe58ee837999313339e5f4f9548",
-      "version": 1
+      "sha256": "70166bde10ab28f4a38fa050b6ddca126053f7e4d83aefdf813cf4d6f4ff91e5",
+      "version": 2
     }
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {

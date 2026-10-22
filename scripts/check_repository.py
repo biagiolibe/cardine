@@ -215,7 +215,7 @@ def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
         "git worktree list\n   --porcelain",
         "git -C\n   <absolute-task-worktree>",
         "empty `git status --short`",
-        "task and base commits exist",
+        "base commit\n   exists and is an ancestor of `HEAD`",
         "Only after every preflight check passes",
         "initial current directory is never treated as\nthe task checkout",
     )
