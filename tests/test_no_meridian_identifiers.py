@@ -132,8 +132,8 @@ ALLOWLIST = (
         r'prefix_rule\(pattern=\["' + OLD + r'", "worktree", \["evidence", "closure-status", "advance"\]\], decision="allow"\)',
     ),
     Allowance(
-        4, "kept: historical records",
-        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard|052-project-presets-and-resolution|053-single-task-contract|054-single-state-machine|055-single-template-set|056-reconcile-capabilities|057-preset-briefing-adapter|058-remove-workflow-branching|059-plan-single-source-of-truth|060-cardine-template-text|061-cardine-markers-from-v1|062-plan-cardine-run-engine|063-plan-benchmark-preparation|064-legacy-installation-snapshot|065-task-status-service|066-paired-task-creation|067-generated-status-views|068-remove-prose-status-gates|069-stable-records-through-landing|070-status-consumers|071-advance-stop-detail|072-remove-delivery-commit-gate|074-rule-enforcement-inventory|075-forgery-inventory|076-stop-review|077-execution-contract-product-name|078-text-gate-static-guard|079-contract-snapshot-human-fields|080-readers-use-contract-snapshot|081-identifier-guard-record-pattern)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
+        4, "kept: historical records; remove or narrow in work item 10 when this repository moves to Cardine and records stop naming installed " + OLD.capitalize(),
+        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|[0-9]{3}-[^/]+)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
     ),
     Allowance(
         4, "kept: historical design and guides; guides replaced by 11",
@@ -221,6 +221,28 @@ class IdentifierGuardTest(unittest.TestCase):
     def test_repository_has_no_unallowed_identifiers_or_stale_allowances(self):
         failures, _ = scan_repository(ROOT)
         self.assertEqual(failures, [], "\n".join(failures))
+
+    def test_future_task_records_pass_without_allowing_other_paths(self):
+        allowance = next(e for e in ALLOWLIST if e.removal.startswith("kept: historical records"))
+        with tempfile.TemporaryDirectory(prefix="cardine-task-record-guard-") as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            record = root / "tasks/999-future-record.md"
+            record.parent.mkdir()
+            record.write_text(OLD + "\n")
+            self.assertEqual(scan_repository(root, (allowance,))[0], [])
+            for name in (
+                "tasks/notes.md", "tasks/99-short-id.md", "tasks/1000-long-id.md",
+                "tasks/999-.md", "tasks/999-nested/record.md", "tasks/999-record.txt",
+                "src/cardine/example.py", "templates/example.md", "tests/test_example.py",
+            ):
+                with self.subTest(path=name):
+                    path = root / name
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(OLD + "\n")
+                    failures, _ = scan_repository(root)
+                    self.assertIn(f"{name}:1: {OLD}", failures)
+                    path.unlink()
 
     def test_seeded_group_one_identifier_fails_in_temporary_repository(self):
         with tempfile.TemporaryDirectory(prefix="cardine-identifier-guard-") as directory:
