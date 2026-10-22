@@ -172,6 +172,7 @@ def build_parser() -> CardineArgumentParser:
     status = subparsers.add_parser("status", help="show read-only task status from validated states")
     status.add_argument("--project", type=Path, default=Path.cwd())
     status.add_argument("--all", action="store_true")
+    status.add_argument("--write", action="store_true", help="atomically regenerate the configured queue and the plan's generated status region")
     status.add_argument("--format", choices=("text", "json"), default="text")
 
     locations = subparsers.add_parser("locations", help="print resolved project locations")
@@ -504,6 +505,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             return run_audit(project_root, framework_root, mode, arguments.ci_profile)
         elif arguments.command == "status":
             from cardine.tasks.status import load_task_status, render_task_status
+            if arguments.write:
+                from cardine.tasks.status_render import write_views
+                written = write_views(project_root)
+                print("\n".join(f"updated {path.relative_to(project_root.resolve())}" for path in written) or "views already up to date")
+                return 0
             report = load_task_status(project_root, all_tasks=arguments.all)
             print(json.dumps(report, sort_keys=True) if arguments.format == "json" else render_task_status(report))
             return 2 if report["diagnostics"] else 0

@@ -49,6 +49,11 @@ def _dependencies(text: str) -> list[str]:
 
 def load_task_status(project_root: Path, *, all_tasks: bool = False) -> dict:
     """Read a bounded consistent snapshot; never recover state from Markdown."""
+    return load_task_snapshot(project_root, all_tasks=all_tasks)[0]
+
+
+def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[dict, dict[Path, bytes], dict]:
+    """Return the status model, the exact input bytes it was built from, and the declaration."""
     root = Path(project_root).resolve()
     diagnostics = []
     model = {'version': 1, 'preset': None, 'totals': {**dict.fromkeys(STATUSES, 0), 'total': 0},
@@ -68,7 +73,7 @@ def load_task_status(project_root: Path, *, all_tasks: bool = False) -> dict:
             raise ValueError('task creation is in progress; retry status')
     except (OSError, UnicodeError, ValueError, CardineError) as error:
         diagnostics.append({'path': str(config_path.relative_to(root)), 'error': str(error)})
-        return model
+        return model, {}, {}
     model['preset'] = config['preset']
 
     def diagnose(path, error):
@@ -153,7 +158,7 @@ def load_task_status(project_root: Path, *, all_tasks: bool = False) -> dict:
         return (int(match.group(1)) if match else 999, row['id'])
     model['tasks'] = sorted((row for row in rows.values() if all_tasks or row['status'] not in ('done', 'cancelled')), key=order)
     diagnostics.sort(key=lambda item: (item['path'], item['error']))
-    return model
+    return model, inputs, config
 
 
 def render_task_status(model: dict) -> str:
