@@ -133,15 +133,15 @@ ALLOWLIST = (
     ),
     Allowance(
         4, "kept: historical records",
-        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard|052-project-presets-and-resolution|053-single-task-contract|054-single-state-machine|055-single-template-set|056-reconcile-capabilities|057-preset-briefing-adapter|058-remove-workflow-branching|059-plan-single-source-of-truth|060-cardine-template-text|061-cardine-markers-from-v1|062-plan-cardine-run-engine|063-plan-benchmark-preparation)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
+        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|051-rename-strings-and-guard|052-project-presets-and-resolution|053-single-task-contract|054-single-state-machine|055-single-template-set|056-reconcile-capabilities|057-preset-briefing-adapter|058-remove-workflow-branching|059-plan-single-source-of-truth|060-cardine-template-text|061-cardine-markers-from-v1|062-plan-cardine-run-engine|063-plan-benchmark-preparation|064-legacy-installation-snapshot|065-task-status-service|066-paired-task-creation|067-generated-status-views|068-remove-prose-status-gates|069-stable-records-through-landing|070-status-consumers)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
     ),
     Allowance(
         4, "kept: historical design and guides; guides replaced by 11",
-        r"docs/(?:ADR_[^/]+\.md|AGENT_OPERATIONS\.md|CLEAN_INSTALL_VERIFICATION\.md|CONSUMER_PROFILES\.md|CONSUMER_ROUTER_ADOPTION_PLAYBOOK\.md|DISTRIBUTION_AND_UPDATE_DESIGN\.md|GOVERNED_WORKFLOW\.md|HOST_CAPABILITY_CONTRACT\.md|HOW_TO_UPGRADE\.md|" + OLD.upper() + r"_SELF_HOSTING_PROFILE\.md|MODULE_SPLIT_PLAN\.md|PLATFORM_SUPPORT\.md|BENCHMARK_PROTOCOL\.md|PROJECT_DECLARATION\.md|QUICKSTART\.md|RENAME_PLAN\.md|SINGLE_WORKFLOW_PLAN\.md|TASK_IDENTITY_POLICY\.md|assets/.*)",
+        r"docs/(?:ADR_[^/]+\.md|AGENT_OPERATIONS\.md|CLEAN_INSTALL_VERIFICATION\.md|CONSUMER_PROFILES\.md|CONSUMER_ROUTER_ADOPTION_PLAYBOOK\.md|DISTRIBUTION_AND_UPDATE_DESIGN\.md|GOVERNED_WORKFLOW\.md|HOST_CAPABILITY_CONTRACT\.md|HOW_TO_UPGRADE\.md|" + OLD.upper() + r"_SELF_HOSTING_PROFILE\.md|MODULE_SPLIT_PLAN\.md|PLATFORM_SUPPORT\.md|BENCHMARK_PROTOCOL\.md|RUN_ENGINE_PLAN\.md|SINGLE_SOURCE_OF_TRUTH_PLAN\.md|PROJECT_DECLARATION\.md|QUICKSTART\.md|RENAME_PLAN\.md|SINGLE_WORKFLOW_PLAN\.md|TASK_IDENTITY_POLICY\.md|assets/.*)",
     ),
     Allowance(
         5, "10",
-        r"src/cardine/legacy/" + OLD + r"_installation\.py",
+        r"src/cardine/legacy/(?:" + OLD + r"_installation|snapshot)\.py",
     ),
     Allowance(
         5, "10",
@@ -149,7 +149,7 @@ ALLOWLIST = (
     ),
     Allowance(
         5, "10",
-        r"tests/test_legacy_marker_syntax\.py",
+        r"tests/test_(?:legacy_marker_syntax|status_legacy_boundary)\.py",
     ),
     Allowance(
         5, "10",
