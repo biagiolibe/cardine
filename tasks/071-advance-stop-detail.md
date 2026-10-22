@@ -24,25 +24,25 @@ stop, so that the agent can act on it without rerunning single-step commands.
 
 ## Acceptance Criteria
 
-- [ ] Every result of `cardine worktree advance` that has a non-null
+- [x] Every result of `cardine worktree advance` that has a non-null
   `stop_code` also has a `stop_detail` string: the detail of the caught
   stop as `format_stop` would print it after the code, including the file
   and field that `read_task_state` names. Results without a stop have
   `stop_detail: null`. The result keeps `version: 1`, because the field is
   added and no field changes meaning.
-- [ ] A test drives `worktree advance` to C6 with a task state whose recorded
+- [x] A test drives `worktree advance` to C6 with a task state whose recorded
   history violates its review policy, and asserts that `stop_detail` names
   the state file and the failing `transitions[...]` field. A second test
   covers a stop returned through `stopped(...)` in another step.
-- [ ] The steps that build a stop from a status code with no caught error (for
+- [x] The steps that build a stop from a status code with no caught error (for
   example `VALIDATION_FAILED` at C2) set `stop_detail` from the closure
   status reason when one exists, and never to an invented text.
-- [ ] `docs/RUN_ENGINE_PLAN.md` already gives `cardine run` a `stop.detail`
+- [x] `docs/RUN_ENGINE_PLAN.md` already gives `cardine run` a `stop.detail`
   field; the handoff states that this change matches it, and changes
   nothing in that plan.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code and tests only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -51,16 +51,16 @@ stop, so that the agent can act on it without rerunning single-step commands.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/071.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/071.json`, which only
   the installed `meridian task close 071` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
