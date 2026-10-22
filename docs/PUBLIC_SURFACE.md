@@ -38,6 +38,7 @@ including command containers and nested subcommands.
 | `cardine lock` | Stable |
 | `cardine upgrade` | Stable |
 | `cardine audit` | Stable |
+| `cardine status` | Stable |
 | `cardine locations` | Stable |
 | `cardine project` | Stable |
 | `cardine setup` | Stable |

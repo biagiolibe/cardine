@@ -19,41 +19,41 @@ record metadata, computes dependency blockers and startability, and prints
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SS2 is implemented as the design of the plan's sections
+- [x] The scope of row SS2 is implemented as the design of the plan's sections
   "Duplicates to remove", "Generated status contract", "Startability and
   totals", "Creation and stable records", and "Consumers and the Meridian
   boundary" describes it. A file the row missed but that the same change
   needs is in scope; the handoff lists it.
-- [ ] Every test that row SS2 lists under "Tests" exists and passes.
-- [ ] `cardine status --project <root>` prints the preset, the totals of all
+- [x] Every test that row SS2 lists under "Tests" exists and passes.
+- [x] `cardine status --project <root>` prints the preset, the totals of all
   five states, and the task rows that the plan's "Generated status
   contract" names; `--all` adds terminal tasks; `--format json` returns
   the `version: 1` object with `preset`, `totals`, `tasks`, and
   `diagnostics`. Text and JSON come from the same model, with no
   separately computed totals.
-- [ ] `tests/test_task_status.py` contains the three ADR regressions under
+- [x] `tests/test_task_status.py` contains the three ADR regressions under
   these names:
   `test_queued_row_with_met_dependencies_and_in_progress_state_is_not_startable`,
   `test_queued_row_with_met_dependencies_and_in_review_state_is_not_startable`,
   and `test_empty_queue_with_done_states_preserves_totals`.
-- [ ] The tests also cover the other cases of "Startability and totals": no
+- [x] The tests also cover the other cases of "Startability and totals": no
   queue file, a removed phase, both presets, cancellation, ANSWERED and
   INCONCLUSIVE spike dependencies, invalid and missing states, cycles,
   duplicate IDs, and identical text and JSON counts. Invalid states are
   diagnosed and never counted as queued; an incomplete snapshot exits
   non-zero.
-- [ ] `cardine status` writes no file.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] `cardine status` writes no file.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. Its Meridian-shaped records stay as they are: `Status:` lines,
   archive moves to `tasks/done/`, hand-maintained `tasks/QUEUE.md`,
   `tasks/QUEUE_ARCHIVE.md`, and `PROJECT_PLAN.md`. The task changes
   product code, product templates, and tests only; it edits none of those
   repository records except its own task record, handoff, and archive.
   `python3 scripts/check_repository.py` still passes on them.
-- [ ] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
+- [x] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
   still returns this repository's tasks with the same IDs and states, and
   the legacy fixture assertions are not weakened.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -62,16 +62,16 @@ record metadata, computes dependency blockers and startability, and prints
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/065.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/065.json`, which only
   the installed `meridian task close 065` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

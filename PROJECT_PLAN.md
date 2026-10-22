@@ -106,7 +106,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 062 — Plan the cardine run engine (work item 8).
 - `[x]` 063 — Plan the preparation of the benchmark against a minimal procedure.
 - `[x]` 064 — Extract the installation snapshot path (single source SS1).
-- `[ ]` 065 — Build the task status service and cardine status (single source SS2).
+- `[x]` 065 — Build the task status service and cardine status (single source SS2).
 - `[ ]` 066 — Create the task record and its state together (single source SS3).
 - `[ ]` 067 — Generate the queue and the plan status region (single source SS4).
 - `[ ]` 068 — Remove the product prose status gates (single source SS5).
