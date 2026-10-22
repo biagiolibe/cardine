@@ -97,11 +97,11 @@ class TaskCreationTest(unittest.TestCase):
             self.create()
         self.assertEqual(self.state.read_bytes(), before[1])
 
-    def test_ambiguous_id_and_unsafe_paths_rejected(self):
+    def test_existing_id_and_unsafe_paths_rejected(self):
         self.record.parent.mkdir()
         self.record.write_text(self.text)
         (self.record.parent / 'duplicate.md').write_text(self.text)
-        with self.assertRaisesRegex(CardineError, 'ambiguous'):
+        with self.assertRaisesRegex(CardineError, 'already exists'):
             self.create()
         for task_id in ('../outside', '/absolute', 'a/b', '..'):
             with self.subTest(task_id=task_id), self.assertRaises(CardineError):

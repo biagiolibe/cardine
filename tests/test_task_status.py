@@ -1,4 +1,5 @@
 """State-first status regressions and incomplete snapshot diagnostics."""
+from task_contract_support import freeze_record
 import json
 import subprocess
 import sys
@@ -40,6 +41,7 @@ class TaskStatusTests(unittest.TestCase):
             state['outcome'] = outcome
         (self.root / f'.cardine/tasks/{task_id}.json').write_text(json.dumps(state))
         (self.root / f'tasks/{task_id}.md').write_text(f'# Task {task_id}\n\n> **ID**: `{task_id}`\n> **Priority**: P1\n> **Phase**: Build\n\n## Dependencies\n- **Depends on**: {dependencies}\n')
+        freeze_record(self.root, task_id, spike=bool(outcome))
 
     def test_queued_row_with_met_dependencies_and_in_progress_state_is_not_startable(self):
         self.task('001', 'done')
@@ -94,7 +96,8 @@ class TaskStatusTests(unittest.TestCase):
         model = load_task_status(self.root)
         self.assertEqual(model['totals']['queued'], 1)
         self.assertEqual(model['tasks'][0]['blocked_by'], ['001', '999'])
-        self.assertGreaterEqual(len(model['diagnostics']), 3)
+        self.assertGreaterEqual(len(model['diagnostics']), 2)
+        self.assertNotIn('003', [row['id'] for row in model['tasks']])  # No registered snapshot.
 
     def test_cycles_and_duplicate_records(self):
         self.task('001', dependencies='002')
@@ -102,7 +105,7 @@ class TaskStatusTests(unittest.TestCase):
         (self.root / 'tasks/duplicate.md').write_bytes((self.root / 'tasks/001.md').read_bytes())
         model = load_task_status(self.root)
         self.assertTrue(all(not row['startable'] for row in model['tasks']))
-        self.assertTrue(any('duplicate' in item['error'] for item in model['diagnostics']))
+        self.assertFalse(any('duplicate' in item['error'] for item in model['diagnostics']))  # Prose duplicates are not identity.
         self.assertTrue(any('cycle' in item['error'] for item in model['diagnostics']))
 
     def test_cli_counts_filters_and_no_writes(self):
@@ -142,6 +145,8 @@ class TaskStatusTests(unittest.TestCase):
         record.write_text(record.read_text().replace('P1', 'P0'))
         state_path = self.root / '.cardine/tasks/002.json'
         state = json.loads(state_path.read_text())
+        state['contract']['priority'] = 'P0'
+        state['contract']['options']['review'] = 'required'
         state['review'] = {'required': True, 'verdict': 'APPROVE', 'attempt': 1,
                            'reviewed_commit': 'b' * 40, 'approved_by': 'reviewer'}
         state_path.write_text(json.dumps(state))

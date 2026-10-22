@@ -134,9 +134,32 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
     }
 
 
+def _field(text: str, name: str) -> str:
+    match = re.search(rf"^(?:>\s*)?(?:-\s*)?(?:\*\*)?{name}(?:\*\*)?:\s*(.*)$", text, re.M | re.I)
+    return match.group(1).strip().strip('`') if match else ""
+
+
+def _dependencies(text: str) -> list[str]:
+    section = re.search(r'^## Dependencies\s*\n(.*?)(?=^## |\Z)', text, re.M | re.S)
+    if not section:
+        return []
+    body = section.group(1)
+    raw = _field(body, 'Depends on') or body.strip()
+    raw = re.sub(r'\[([^]]+)\]\([^)]+\)', r'\1', raw)
+    result = []
+    for item in re.split(r'[,\n]', raw):
+        item = item.strip().removeprefix('- ').strip().strip('`').strip()
+        if item.lower().strip(' .') in ('', 'none', '—', '-'):
+            continue
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', item):
+            raise ValueError(f'invalid dependency declaration: {item!r}')
+        if item not in result:
+            result.append(item)
+    return result
+
+
 def resolve_human_fields(project_root, identity, text, task_class):
     """Parse human intent once; absent optional labels have explicit empty values."""
-    from cardine.tasks.status import _dependencies
     from cardine.shared.authority import authority_entries
     try:
         dependencies = _dependencies(text)

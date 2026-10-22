@@ -120,5 +120,5 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 077 — Use one product name in the execution contract line.
 - `[x]` 078 — Add the text gate static guard as a ratchet (decision 13).
 - `[x]` 079 — Freeze the remaining human contract fields in the snapshot (N1, part 1).
-- `[ ]` 080 — Read the human contract fields from the snapshot (N1, part 2).
+- `[x]` 080 — Read the human contract fields from the snapshot (N1, part 2).
 - `[x]` 081 — Allow every task record in the identifier guard by pattern.

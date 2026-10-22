@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import freeze_record
 from unittest import mock
 
 import test_execution_boundaries as boundaries
@@ -36,6 +37,7 @@ class TaskCloseTest(unittest.TestCase):
         self.identity = identity
         record = identity.task_path
         record.write_text(record.read_text().replace('Review: REQUIRED', 'Review: NOT_REQUIRED'))
+        freeze_record(self.worker, '001', record)
         self.commit('Resolve no-review task')
         owner_lifecycle_commands.execution_start(self.worker, '001')
         self.commit('Start task')

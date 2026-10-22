@@ -9,6 +9,7 @@ from unittest import mock
 import shlex
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import freeze_record
 
 from tests import worktree_support as fixtures
 
@@ -275,6 +276,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_lean_done_projection(self):
         self.start(workflow="single", preset="lean")
         self.write_state(required=False)
+        freeze_record(self.worker, "056", self.worker / "tasks/056-lifecycle.md")
+        self.commit()
         staged = self.stage(self.reviewed)
         self.assertEqual(staged["landed_status"], "done")
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
@@ -291,6 +294,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         (self.primary / "PROJECT_PLAN.md").unlink()
         self.git("commit", "-am", "no plan on main")
         self.write_state(required=False)
+        freeze_record(self.worker, "056", self.worker / "tasks/056-lifecycle.md")
+        self.commit()
         before_tree = self.git("rev-parse", "HEAD^{tree}").stdout
         queue = (self.primary / "tasks/QUEUE.md").read_bytes()
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())

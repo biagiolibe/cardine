@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from task_contract_support import freeze_record
 import json
 import subprocess
 import sys
@@ -42,6 +43,7 @@ class AuthorityExcerptTest(unittest.TestCase):
 
     def write_task(self, task_id: str, body: str) -> None:
         (self.project / "tasks" / f"{task_id}.md").write_text(body, encoding="utf-8")
+        freeze_record(self.project, task_id)
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(

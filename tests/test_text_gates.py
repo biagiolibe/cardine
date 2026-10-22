@@ -21,7 +21,7 @@ NAMED_READERS = frozenset({
     "validation_commands", "require_named_validation_commands", "contract_digest",
     "record_status", "record_review", "handoff_status", "latest_review_verdict",
     "parse_queue", "_queue_task_rows", "_governed_completion_row", "check_handoff",
-    "authority_entries", "context_authority", "resolve_task_contract", "resolve_human_fields",
+    "authority_entries", "resolve_task_contract", "resolve_human_fields",
     # Inventory readers with generic path parameters still need protection.
     "threshold_for", "final_message",
 })
@@ -233,12 +233,9 @@ def allowed(key: Key) -> bool:
 # stays until every reference of that reader kind in the function is gone.
 KNOWN_VIOLATIONS: dict[Key, str] = {
     ('scripts/codex_read_guard.py', 'decision', 'named-reader', 'threshold_for'): 'T-46',
-    ('scripts/codex_read_guard.py', 'is_exempt', 'named-reader', 'context_authority'): 'T-18',
     ('scripts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
     ('src/cardine/cli.py', '<module>', 'named-reader', 'check_handoff'): 'T-19',
-    ('src/cardine/cli.py', '<module>', 'named-reader', 'context_authority'): 'T-18',
     ('src/cardine/cli.py', '_run_cli', 'named-reader', 'check_handoff'): 'T-19',
-    ('src/cardine/cli.py', '_run_cli', 'named-reader', 'context_authority'): 'T-18',
     ('src/cardine/cli.py', 'build_parser', 'declared-result', 'worktree_advance:--accepted'): 'T-39',
     ('src/cardine/cli.py', 'build_parser', 'declared-result', 'worktree_advance:--candidate-exit-code'): 'T-40',
     ('src/cardine/cli.py', 'build_parser', 'declared-result', 'worktree_advance:--validation-exit-code'): 'T-39',
@@ -288,9 +285,6 @@ KNOWN_VIOLATIONS: dict[Key, str] = {
     ('src/cardine/review/verdict.py', 'record_review_verdict', 'disk-text', 'read_text:review_path'): 'T-25',
     ('src/cardine/review/verdict.py', 'record_review_verdict', 'disk-text', 'read_text:task_path'): 'T-13',
     ('src/cardine/review/verdict.py', 'record_review_verdict', 'named-reader', 'read_task_field'): 'T-13',
-    ('src/cardine/shared/authority.py', 'context_authority', 'named-reader', 'authority_entries'): 'T-18',
-    ('src/cardine/shared/context.py', '<module>', 'named-reader', 'authority_entries'): 'T-18',
-    ('src/cardine/shared/context.py', 'context_size_report', 'named-reader', 'authority_entries'): 'T-18',
     ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'require_named_validation_commands'): 'T-15',
     ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'validation_commands'): 'T-15',
     ('src/cardine/tasks/contract.py', 'check_handoff', 'disk-text', 'read_text:report'): 'T-19',

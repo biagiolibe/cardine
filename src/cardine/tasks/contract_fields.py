@@ -13,7 +13,7 @@ def contract_hash(contract):
     return 'sha256:' + hashlib.sha256(encoded).hexdigest()
 
 
-# These fields are creation input. Readers migrate separately in task 080.
+# Human intent is frozen at creation and shared by all runtime readers.
 HUMAN_CONTRACT_FIELDS = ("dependencies", "title", "priority", "phase", "origin",
                          "deliverables", "authority", "recordPath")
 
@@ -21,8 +21,8 @@ HUMAN_CONTRACT_FIELDS = ("dependencies", "title", "priority", "phase", "origin",
 def frozen_human_fields(state):
     """Require a complete snapshot without ever recovering missing intent from prose.
 
-    Old snapshots remain structurally readable by the pre-080 readers. Audit
-    diagnoses them, and this accessor is the strict boundary for new consumers.
+    Old snapshots remain structurally readable by the state validator. Audit
+    diagnoses them, and runtime consumers require these fields.
     Only an explicit contract update may complete them.
     """
     contract = state.get("contract", {})
@@ -32,3 +32,16 @@ def frozen_human_fields(state):
                            + f"); run cardine task contract update {state['task_id']}")
     return {key: contract[key] for key in HUMAN_CONTRACT_FIELDS}
 
+
+def snapshot_record_path(project_root, human):
+    """Resolve the frozen path, including the exact lifecycle archive move."""
+    from pathlib import Path
+    root = Path(project_root).resolve()
+    path = (root / human["recordPath"]).resolve()
+    if not path.is_relative_to(root):
+        raise CardineError("contract record path escapes the project")
+    if not path.exists() and path.parent.name != "done":
+        archive = path.parent / "done" / path.name
+        if archive.is_file() and archive.resolve().is_relative_to(root):
+            return archive.resolve()
+    return path

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from task_contract_support import freeze_record
 import json
 import subprocess
 import sys
@@ -74,6 +75,7 @@ class ContextSizeTest(unittest.TestCase):
         (self.project / "docs/ARCHITECTURE_DECISIONS.md").write_text("## ADR-0001 — Test\n\nBody.\n", encoding="utf-8")
         task = self.project / "tasks/M1-CORE-001.md"
         task.write_text("# Task\n\n## Authority\n\n- ADR-0001\n", encoding="utf-8")
+        freeze_record(self.project, "M1-CORE-001", task)
         before = {path.relative_to(self.project): path.stat().st_mtime_ns for path in self.project.rglob("*") if path.is_file()}
         result = self.run_cli("--role", "implementation", "--task", "M1-CORE-001", "--threshold-bytes", "1", "--format", "text")
         self.assertEqual(result.returncode, 2, result.stderr)

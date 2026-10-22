@@ -14,7 +14,7 @@ from cardine.shared.errors import CardineError
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.journal import JOURNAL_VERSION
 from cardine.stops.registry import load_stop_registry
-from cardine.tasks.identity import find_task_file
+from cardine.tasks.contract_snapshot import read_human_contract
 from cardine.worktree.storage import lifecycle_started_at
 
 
@@ -78,13 +78,12 @@ def _flow_read_journal(project_root: Path) -> tuple[list[dict[str, object]], int
 
 
 def _flow_origin(project_root: Path, task: str) -> str:
-    """Read the optional `Origin` task header from the task record or its archive."""
+    """Read the frozen origin label, using unknown for unavailable snapshots."""
     try:
-        text = find_task_file(project_root, task).read_text(encoding="utf-8")
+        origin = read_human_contract(project_root, task)["origin"].lower()
     except (CardineError, OSError, UnicodeDecodeError):
         return "unknown"
-    match = FLOW_ORIGIN_PATTERN.search(text)
-    return match.group(1).lower() if match and match.group(1).lower() in FLOW_ORIGINS else "unknown"
+    return origin if origin in FLOW_ORIGINS else "unknown"
 
 
 def _flow_median(values: list[float]) -> float | None:

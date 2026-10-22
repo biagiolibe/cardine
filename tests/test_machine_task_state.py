@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, freeze_record
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,6 +41,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.record.write_text(contract_record(extra="Status: queued\n"))
         self.path = task_state.state_path(self.root, "001")
         self.write(self.state())
+        freeze_record(self.root, "001", self.record)
         self.git("init", "-q", "-b", "main")
         self.git("add", ".")
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Initial")
@@ -129,6 +130,7 @@ class MachineTaskStateTest(unittest.TestCase):
 
     def test_governed_cli_requires_delivery_and_preserves_spike(self):
         write_project_config(self.root, "governed", validation=VALIDATION)
+        freeze_record(self.root, "001", self.record)
         self.assertEqual(self.cli("in_progress").returncode, 0)
         before = self.path.read_bytes()
         refused = self.cli("in_review")
@@ -137,6 +139,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), before)
         self.write(self.state())
         self.record.write_text(contract_record(spike=True, extra="Review: NOT_REQUIRED\nStatus: queued\n"))
+        freeze_record(self.root, "001", self.record)
         self.assertEqual(self.cli("in_progress").returncode, 0)
         for outcome in ("ANSWERED", "INCONCLUSIVE"):
             state = owner_tasks_transitions.record_spike_outcome(self.root, "001", outcome)
@@ -147,6 +150,7 @@ class MachineTaskStateTest(unittest.TestCase):
     def test_review_not_required_goes_directly_to_accepted(self):
         write_project_config(self.root, "governed", validation=VALIDATION)
         self.record.write_text(self.record.read_text() + "Review: NOT_REQUIRED\n")
+        freeze_record(self.root, "001", self.record)
         self.assertEqual(self.cli("in_progress").returncode, 0)
         before = self.path.read_bytes()
         for status in ("in_review", "done", "ACCEPTED"):
@@ -164,6 +168,7 @@ class MachineTaskStateTest(unittest.TestCase):
 
     def test_atomic_replace_and_write_failure_preserves_files(self):
         self.write(self.state())
+        freeze_record(self.root, "001", self.record)
         before = self.path.read_bytes(), self.record.read_bytes()
         real_replace = cardine_cli.os.replace
         calls = []
@@ -201,6 +206,7 @@ class MachineTaskStateTest(unittest.TestCase):
 
     def test_invalid_stop(self):
         self.write(self.state())
+        freeze_record(self.root, "001", self.record)
         before = self.path.read_bytes(), self.record.read_bytes()
         result = self.cli("UNKNOWN")
         self.assertEqual(result.returncode, 2)
@@ -287,6 +293,10 @@ class MachineTaskStateTest(unittest.TestCase):
         dependency_path = task_state.state_path(self.root, "002")
         dependency_path.parent.mkdir(parents=True, exist_ok=True)
         record = "## Dependencies\n- **Depends on**: 002\n- **Blocks**: 003\n"
+        current = self.state()
+        current["contract"] = copy.deepcopy(contract)
+        current["contract"]["dependencies"] = ["002"]
+        self.write(current)
         for preset in ("lean", "governed"):
             write_project_config(self.root, preset, validation=VALIDATION)
             for task_class, status, outcome, satisfied in (
@@ -338,6 +348,7 @@ class MachineTaskStateTest(unittest.TestCase):
         before = owner_shared_context.context_size_report(self.root, "implementation")
         self.write(self.state())
         self.record.write_text(self.record.read_text() + "\n## Authority\n\n- `.cardine/tasks/001.json`#State\n")
+        freeze_record(self.root, "001", self.record)
         with mock.patch.object(owner_shared_authority, "extract_spec_heading", side_effect=AssertionError("state startup read")):
             report = owner_shared_context.context_size_report(self.root, "implementation", task_id="001")
         self.assertNotIn(".cardine/tasks/001.json", [item["path"] for item in report["files"]])

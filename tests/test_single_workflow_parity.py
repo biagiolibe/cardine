@@ -49,6 +49,10 @@ class SingleWorkflowParityTest(unittest.TestCase):
             text = text.replace('Class: standard', 'Class: spike\nQuestion: Is this feasible?\n'
                                 'Timebox: 1h\nDeliverable: docs/result.md')
         record.write_text(text)
+        state_path = fixture.worker / '.cardine/tasks/001.json'
+        state = json.loads(state_path.read_text())
+        state['contract'] = resolve_task_contract(fixture.worker, '001')
+        state_path.write_text(json.dumps(state))
         fixture.commit('Configure parity fixture')
         return fixture
 
@@ -165,6 +169,10 @@ class SingleWorkflowParityTest(unittest.TestCase):
             with self.subTest(preset=preset):
                 f = self.project(preset)
                 record = (f.worker / f.record).read_text().replace('## Dependencies\nnone', '## Dependencies\n002')
+                task_path = f.worker / '.cardine/tasks/001.json'
+                snapshot = json.loads(task_path.read_text())
+                snapshot['contract']['dependencies'] = ['002']
+                task_path.write_text(json.dumps(snapshot))
                 self.stop('TASK_STATUS_REJECTED', lambda: check_dependencies(f.worker, '001', record))
                 state = {'version': 1, 'task_id': '002', 'workflow': 'single', 'status': 'done',
                          'transitions': [

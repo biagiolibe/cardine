@@ -49,18 +49,3 @@ Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, wor
 | `[x]` | 073 | Inventory the product gates that read text (decision 13) | 🔴 P1 | — | [073](done/073-text-gate-inventory.md) |
 | `[x]` | 072 | Remove the delivery commit gate | 🔴 P1 | 073 | [072](done/072-remove-delivery-commit-gate.md) |
 | `[ ]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 080 | [070](070-status-consumers.md) |
-
-### Phase 21 — Robustness against weak and strong agents
-
-Authority: `docs/ADR_CARDINE_1_0.md`, decisions 13 and 14.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 074 | Inventory the template rules and their enforcement (decision 14) | 🔴 P1 | — | [074](done/074-rule-enforcement-inventory.md) |
-| `[x]` | 075 | Map what an agent can forge among the artifacts gates trust (decision 14) | 🔴 P1 | — | [075](done/075-forgery-inventory.md) |
-| `[x]` | 076 | Review every stop the tool could resolve itself (decision 14) | 🔴 P1 | — | [076](done/076-stop-review.md) |
-| `[x]` | 077 | Use one product name in the execution contract line | 🔴 P1 | 073 | [077](done/077-execution-contract-product-name.md) |
-| `[x]` | 078 | Add the text gate static guard as a ratchet (decision 13) | 🔴 P1 | 069, 072 | [078](done/078-text-gate-static-guard.md) |
-| `[x]` | 079 | Freeze the remaining human contract fields in the snapshot (N1, part 1) | 🔴 P1 | 077, 078 | [079](done/079-contract-snapshot-human-fields.md) |
-| `[ ]` | 080 | Read the human contract fields from the snapshot (N1, part 2) | 🔴 P1 | 079 | [080](080-readers-use-contract-snapshot.md) |
-| `[x]` | 081 | Allow every task record in the identifier guard by pattern | 🔴 P1 | — | [081](done/081-identifier-guard-record-pattern.md) |

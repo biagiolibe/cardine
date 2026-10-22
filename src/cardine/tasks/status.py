@@ -5,46 +5,29 @@ import json
 import re
 from pathlib import Path
 
+from cardine.tasks.contract_fields import frozen_human_fields, snapshot_record_path
 from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
 from cardine.shared.project import parse_project_declaration
 from cardine.tasks.state import STATUSES, TaskStateInvalid, dependency_satisfied, validate_task_state
 
 
-def _field(text: str, name: str) -> str:
-    match = re.search(rf"^(?:>\s*)?(?:-\s*)?(?:\*\*)?{name}(?:\*\*)?:\s*(.*)$", text, re.M | re.I)
-    return match.group(1).strip().strip('`') if match else ""
-
-
 def _inputs(root: Path, config: dict) -> dict[Path, bytes]:
     paths = {root / names().project_declaration_path}
     paths.update((root / names().tasks_path).glob('*.json'))
-    locations = config.get('locations', {})
-    excluded = {'QUEUE.md', 'QUEUE_ARCHIVE.md', 'QUEUE_TEMPLATE.md', 'TASK_BLUEPRINT.md'}
-    for directory in locations.get('taskRoots', ['tasks']):
-        for path in (root / directory).rglob('*.md'):
-            if path.name not in excluded and not {'handoffs', 'reviews'}.intersection(path.relative_to(root / directory).parts):
-                paths.add(path)
-    return {path: path.read_bytes() for path in sorted(paths)}
-
-
-def _dependencies(text: str) -> list[str]:
-    section = re.search(r'^## Dependencies\s*\n(.*?)(?=^## |\Z)', text, re.M | re.S)
-    if not section:
-        return []
-    body = section.group(1)
-    raw = _field(body, 'Depends on') or body.strip()
-    raw = re.sub(r'\[([^]]+)\]\([^)]+\)', r'\1', raw)
-    result = []
-    for item in re.split(r'[,\n]', raw):
-        item = item.strip().removeprefix('- ').strip().strip('`').strip()
-        if item.lower().strip(' .') in ('', 'none', '—', '-'):
+    # Record content is not an input: only snapshot paths and their existence matter.
+    inputs = {path: path.read_bytes() for path in sorted(paths)}
+    for path, content in list(inputs.items()):
+        if path.parent != root / names().tasks_path:
             continue
-        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', item):
-            raise ValueError(f'invalid dependency declaration: {item!r}')
-        if item not in result:
-            result.append(item)
-    return result
+        try:
+            human = frozen_human_fields(json.loads(content))
+            record = snapshot_record_path(root, human)
+            if record.is_file():
+                inputs[record] = b""
+        except (ValueError, KeyError, TypeError, AttributeError, CardineError):
+            pass
+    return inputs
 
 
 def load_task_status(project_root: Path, *, all_tasks: bool = False) -> dict:
@@ -53,7 +36,7 @@ def load_task_status(project_root: Path, *, all_tasks: bool = False) -> dict:
 
 
 def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[dict, dict[Path, bytes], dict]:
-    """Return the status model, the exact input bytes it was built from, and the declaration."""
+    """Return the status model, the snapshot bytes and record-presence markers, and the declaration."""
     root = Path(project_root).resolve()
     diagnostics = []
     model = {'version': 1, 'preset': None, 'totals': {**dict.fromkeys(STATUSES, 0), 'total': 0},
@@ -81,21 +64,6 @@ def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[
 
     records = {}
     invalid_records = set()
-    for path, content in inputs.items():
-        if path.suffix != '.md':
-            continue
-        try:
-            text = content.decode('utf-8')
-            task_id = _field(text, 'ID')
-            if not task_id:
-                continue
-            if task_id in records:
-                invalid_records.add(task_id)
-                diagnose(path, f'duplicate task ID {task_id}')
-                continue
-            records[task_id] = (path, text)
-        except UnicodeError as error:
-            diagnose(path, error)
     states = {}
     for path, content in inputs.items():
         if path.parent != root / names().tasks_path:
@@ -106,28 +74,30 @@ def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[
             states[path.stem] = state
         except (ValueError, UnicodeError, TaskStateInvalid) as error:
             diagnose(path, error)
-    for task_id, (path, _) in records.items():
-        if task_id not in states:
-            diagnose(path, f'missing or invalid state for {task_id}')
     rows = {}
+    priorities = {}
     for task_id, state in sorted(states.items()):
         model['totals'][state['status']] += 1
         model['totals']['total'] += 1
-        record = records.get(task_id)
-        if record is None:
-            diagnose(root / names().tasks_path / f'{task_id}.json', f'missing record for {task_id}')
-        path, text = record or (root / names().tasks_path / f'{task_id}.json', '')
+        state_file = root / names().tasks_path / f'{task_id}.json'
         try:
-            dependencies = _dependencies(text)
-        except ValueError as error:
-            diagnose(path, error)
+            human = frozen_human_fields(state)
+            path = snapshot_record_path(root, human)
+        except CardineError as error:
+            diagnose(state_file, error)
             invalid_records.add(task_id)
-            dependencies = []
-        title = re.search(r'^#\s+(.+)$', text, re.M)
-        rows[task_id] = {'id': task_id, 'title': title.group(1) if title else task_id,
-                         'status': state['status'], 'record': str(path.relative_to(root)) if record else None,
-                         'dependencies': dependencies, 'blocked_by': [], 'startable': False,
-                         'phase': _field(text, 'Phase') or None, 'review': state.get('review', {})}
+            human = dict(dependencies=[], title=task_id, phase='', priority='')
+            path = None
+        record = path if path in inputs else None
+        if record:
+            records[task_id] = record
+        else:
+            diagnose(state_file, f'missing record for {task_id}')
+        priorities[task_id] = human['priority']
+        rows[task_id] = {'id': task_id, 'title': human['title'],
+                         'status': state['status'], 'record': str(record.relative_to(root)) if record else None,
+                         'dependencies': human['dependencies'], 'blocked_by': [], 'startable': False,
+                         'phase': human['phase'] or None, 'review': state.get('review', {})}
     # Reachability detects every member of a cycle without recursion depth limits.
     cyclic = set()
     for task_id in rows:
@@ -153,7 +123,7 @@ def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[
         row['startable'] = (row['status'] == 'queued' and not row['blocked_by']
                             and task_id not in cyclic | invalid_records and task_id in records)
     def order(row):
-        priority = _field(records.get(row['id'], (None, ''))[1], 'Priority')
+        priority = priorities[row['id']]
         match = re.search(r'P(\d+)', priority)
         return (int(match.group(1)) if match else 999, row['id'])
     model['tasks'] = sorted((row for row in rows.values() if all_tasks or row['status'] not in ('done', 'cancelled')), key=order)

@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, freeze_record
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -53,6 +53,7 @@ class TerminalTasksStayInViewsTest(unittest.TestCase):
         (self.root / "tasks" / f"{task_id}.md").write_text(
             f"# Task {task_id}\n\n> **ID**: `{task_id}`\n> **Priority**: P1\n> **Phase**: Build\n\n"
             f"## Dependencies\n- **Depends on**: {dependencies}\n", encoding="utf-8")
+        freeze_record(self.root, task_id)
 
     def test_closed_phase_is_never_archived_and_totals_keep_it(self) -> None:
         self.task("A", "done")

@@ -22,6 +22,7 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 
 import worktree_support as support
+from task_contract_support import freeze_record
 
 
 class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
@@ -200,6 +201,10 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
 
     def test_stage_completes_rows_after_main_registration_advance(self) -> None:
+        freeze_record(self.primary, "056", self.primary / "tasks/056-lifecycle.md")
+        self.git("add", ".")
+        self.git("commit", "-m", "freeze fixture contract")
+        self.base = self.git("rev-parse", "HEAD").stdout.strip()
         prepared = self.prepare()
         task_worktree = Path(str(prepared["worktree"]))
         (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
@@ -282,6 +287,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         declaration = self.primary / ".cardine/project.json"
         declaration.write_text(json.dumps({"version": 1, "preset": "lean", "locations": {"plan": "docs/PLAN.md"}}), encoding="utf-8")
         plan.write_text("Narrative.\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n", encoding="utf-8")
+        freeze_record(self.primary, "056", self.primary / "tasks/056-lifecycle.md")
         self.git("add", "-A")
         self.git("commit", "-m", "declare custom project plan")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()

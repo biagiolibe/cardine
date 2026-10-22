@@ -176,19 +176,8 @@ def check_dependencies(project_root: Path, task_id: str, record: str) -> None:
     from cardine.templates.mode import detect_mode
     from cardine.shared.git import canonical_project_root, _run_git
     from cardine.tasks.state import read_task_state, state_path, dependency_satisfied
-    match = re.search(r"^## Dependencies\s*$\n(.*?)(?=^## |\Z)", record, re.MULTILINE | re.DOTALL)
-    body = match.group(1) if match else ""
-    field = re.search(r"(?:Depends on|Dependencies)\*{0,2}\s*:\s*(.+)", body, re.IGNORECASE)
-    raw = field.group(1) if field else body.strip()
-    raw = re.sub(r"\[([^]]+)\]\([^)]+\)", r"\1", raw)
-    dependencies = []
-    for item in re.split(r"[,\n]", raw):
-        item = item.strip().removeprefix("- ").strip().strip("`").strip()
-        if item.lower().strip(" .") in ("", "none", "—", "-"):
-            continue
-        if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", item) is None:
-            raise stop_error("TASK_STATUS_REJECTED", f"invalid dependency declaration {item!r}", task_id=task_id, project=project_root)
-        dependencies.append(item)
+    from cardine.tasks.contract_snapshot import read_human_contract
+    dependencies = read_human_contract(project_root, task_id)["dependencies"]
     primary = canonical_project_root(project_root)
     for dependency in dependencies:
         path = state_path(project_root, dependency).relative_to(project_root)

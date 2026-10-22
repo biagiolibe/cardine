@@ -264,7 +264,7 @@ class GovernedEffectiveStateTest(support.GovernedEffectiveStateFixture):
         self.assertEqual(tasks["TASK-002"].readiness, "READY")
         self.assertEqual(tasks["TASK-006"].readiness, "READY")
         self.assertEqual(tasks["TASK-008"].readiness, "BLOCKED: TASK-007")
-        self.assertEqual(tasks["TASK-004"].title, "Governed TASK-004")
+        self.assertEqual(tasks["TASK-004"].title, "TASK-004")
         self.assertEqual(tasks["TASK-003"].launch_command, "Proceed with TASK-003")
         self.assertEqual(tasks["TASK-004"].launch_command, "Review TASK-004")
 

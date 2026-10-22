@@ -205,7 +205,7 @@ class ProjectConsoleTest(unittest.TestCase):
         self.assertIsNone(path)
         self.assertIn("ambiguous task record:", problem)
 
-    def test_archived_filename_with_wrong_heading_is_rejected(self) -> None:
+    def test_archived_filename_ignores_edited_heading(self) -> None:
         self.write_queue()
         record = self.project / "tasks/002-second.md"
         archived = self.project / "tasks/done" / record.name
@@ -214,8 +214,7 @@ class ProjectConsoleTest(unittest.TestCase):
         for heading in ("# Task 003", "# Task 002-other", "# Unrelated"):
             with self.subTest(heading=heading):
                 archived.write_text(heading + "\n\n> **ID**: `003`\n", encoding="utf-8")
-                with self.assertRaisesRegex(owner_console_workflow.ConsoleError, "Task 002 file is unavailable"):
-                    self.snapshot()
+                self.assertEqual(self.snapshot().tasks[0].path, archived.resolve())
 
     def test_filename_lookup_reuses_scan_and_excludes_non_records(self) -> None:
         self.write_queue()
@@ -500,7 +499,7 @@ class LinklessQueueTest(support.RepoCase):
                                          "M37-CAUSE-004", "M37-CAUSE-005"])
         self.assertEqual(tasks["M37-CAUSE-002"].path,
                          self.project / "docs/tasks/M37/M37-CAUSE-002.md")
-        self.assertEqual(tasks["M37-CAUSE-002"].title, "Title of M37-CAUSE-002")
+        self.assertEqual(tasks["M37-CAUSE-002"].title, "M37-CAUSE-002")
         self.assertEqual(tasks["M37-CAUSE-002"].objective, ("Objective of M37-CAUSE-002.",))
         self.assertIsNone(tasks["M37-CAUSE-002"].record_problem)
         self.assertEqual(tasks["M37-CAUSE-002"].readiness, "READY")
@@ -674,7 +673,7 @@ class LinklessQueueTest(support.RepoCase):
                    "# M37-CAUSE-001 — Linked\n\nStatus: queued\n")
         self.commit(self.project)
         task = self.load()["M37-CAUSE-001"]
-        self.assertEqual((task.title, task.record_problem), ("Linked", None))
+        self.assertEqual((task.title, task.record_problem), ("M37-CAUSE-001", None))
 
     def test_record_is_read_from_the_task_branch_without_links(self) -> None:
         self.setup_project([("M37-CAUSE-001", "queued", "—")])

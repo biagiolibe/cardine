@@ -160,10 +160,9 @@ def record_matches(task_id: str, paths: list[str], excluded_roots: tuple[str, ..
                   if posixpath.basename(path) == name and is_task_record_path(path, excluded_roots))
 
 
-def heading_title(text: str) -> str:
-    lines = text.splitlines()
-    match = TASK_HEADING.match(lines[0]) if lines else None
-    return match.group(1) if match else ""
+def heading_title(state: dict | None) -> str:
+    """Read a title from frozen intent; a missing state has no title."""
+    return state.get("contract", {}).get("title", "") if state is not None else ""
 
 
 def record_status(text: str | None) -> str | None:

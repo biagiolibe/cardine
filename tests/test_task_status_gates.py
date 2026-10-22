@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 from project_config_support import write_project_config
-from task_contract_support import contract_record, write_state, VALIDATION
+from task_contract_support import contract_record, write_state, VALIDATION, freeze_record
 from cardine.tasks import preflight, transitions, audit, importer
 from cardine.tasks.identity import resolve_task_identity
 from cardine.shared.errors import CardineStop
@@ -27,6 +27,7 @@ class TaskStatusGateTest(unittest.TestCase):
         self.record.write_text(contract_record(extra="Status: cancelled\n"))
         self.record.write_text(self.record.read_text() + "\n" + preflight.execution_contract(self.root, "001") + "\n")
         self.path = write_state(self.root)
+        freeze_record(self.root, "001")
         self.queue = self.root / "tasks/QUEUE.md"
         self.queue.write_text("| Order | ID | Status | File |\n|---|---|---|---|\n| 1 | 001 | done | [001](missing.md) |\n")
         subprocess.run(["git", "init", "-q", "-b", "main", str(self.root)], check=True)

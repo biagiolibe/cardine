@@ -180,21 +180,6 @@ def read_task_identity_policy(project_root: Path) -> TaskIdentityPolicy:
     return parse_task_identity_policy(declaration)
 
 
-def _task_record_id(path: Path) -> str | None:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
-        return None
-    for pattern in (
-        r"^>\s*\*\*ID\*\*:\s*`([^`]+)`\s*$",
-        r"^ID:\s*`?([^`\s]+)`?\s*$",
-    ):
-        match = re.search(pattern, text, re.MULTILINE)
-        if match and "[" not in match.group(1) and "<" not in match.group(1):
-            return match.group(1)
-    return None
-
-
 def _clean_queue_id(cell: str) -> tuple[str, str | None]:
     cell = cell.strip().strip("`")
     link = re.fullmatch(r"\[([^]]+)\]\(([^)]+)\)", cell)
@@ -203,20 +188,31 @@ def _clean_queue_id(cell: str) -> tuple[str, str | None]:
     return cell, None
 
 
-def _task_authorities(project_root: Path, locations: ProjectLocations) -> dict[str, _TaskAuthority]:
-    task_paths: dict[str, set[Path]] = {}
-    excluded_names = {"QUEUE.md", "QUEUE_ARCHIVE.md", "QUEUE_TEMPLATE.md", "TASK_BLUEPRINT.md"}
+def _task_authorities(project_root: Path, locations: ProjectLocations, *, states: dict | None = None) -> dict[str, _TaskAuthority]:
+    from cardine.tasks.contract_fields import snapshot_record_path
+    # Stable filenames support records awaiting explicit creation/import and old
+    # sparse snapshots. Registered recordPath always overrides filesystem discovery.
+    task_paths = {}
+    excluded = {"QUEUE.md", "QUEUE_ARCHIVE.md", "QUEUE_TEMPLATE.md", "TASK_BLUEPRINT.md"}
     for root in locations.task_roots:
-        absolute = project_root / root
-        if not absolute.is_dir():
-            continue
-        for path in absolute.rglob("*.md"):
-            relative_parts = path.relative_to(absolute).parts
-            if path.name in excluded_names or {"handoffs", "reviews"}.intersection(relative_parts):
+        for path in (project_root / root).rglob("*.md"):
+            if path.name in excluded or {"handoffs", "reviews"}.intersection(path.relative_to(project_root / root).parts):
                 continue
-            canonical = _task_record_id(path) or path.stem
+            match = re.match(r"^(M[1-9][0-9]*-[A-Za-z][A-Za-z0-9_]*-[0-9]{3}|(?:TASK-)?[0-9]+)(?:-|$)", path.stem, re.I)
+            canonical = match.group(1) if match else path.stem
             task_paths.setdefault(canonical, set()).add(path.resolve())
-
+    if states is None:
+        states = {}
+        for path in sorted((project_root / names().tasks_path).glob("*.json")):
+            try:
+                states[path.stem] = json.loads(path.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                # State readers report malformed state; identity never repairs it.
+                continue
+    for task_id, state in states.items():
+        human = (state or {}).get("contract", {}) if isinstance(state, dict) else {}
+        if "recordPath" in human:
+            task_paths[task_id] = {snapshot_record_path(project_root, human)}
     return {canonical: _TaskAuthority(canonical, tuple(sorted(paths)), (), 0)
             for canonical, paths in task_paths.items()}
 
@@ -387,12 +383,12 @@ def resolve_task_identity(
     )
 
 
-def task_identity_context(project_root: Path) -> TaskIdentityContext:
+def task_identity_context(project_root: Path, *, states: dict | None = None) -> TaskIdentityContext:
     """Build the authoritative identity inputs once for a command."""
     project_root = project_root.resolve()
     policy = read_task_identity_policy(project_root)
     locations = resolve_project_locations(project_root)
-    return TaskIdentityContext(policy, locations, _task_authorities(project_root, locations))
+    return TaskIdentityContext(policy, locations, _task_authorities(project_root, locations, states=states))
 
 
 def next_milestone_task_identity(

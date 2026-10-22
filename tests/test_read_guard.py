@@ -13,6 +13,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
+from task_contract_support import freeze_record
 from installation_fixture import copy_hook, hook_environment
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -95,6 +96,7 @@ class ReadGuardTest(unittest.TestCase):
             "## Expected code surface\n",
             encoding="utf-8",
         )
+        freeze_record(self.project, "TASK-001")
         result = run_hook(self.payload(target))
         self.assertEqual(result.returncode, 0, result.stderr)
 

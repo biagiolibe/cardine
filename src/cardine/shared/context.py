@@ -5,7 +5,7 @@ from __future__ import annotations
 from cardine.shared.layout import names
 
 from cardine.shared.authority import SPEC_HEADING_CITATION
-from cardine.shared.authority import authority_entries
+from cardine.tasks.contract_snapshot import read_human_contract
 from cardine.shared.authority import resolve_authority_entry
 from cardine.shared.constants import CONTEXT_PHASE_READS_BLOCK
 from cardine.shared.constants import CONTEXT_PHASE_READ_LINE
@@ -203,7 +203,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
     if task_id is not None:
         task = find_task_file(project_root, task_id)
         records.append(_context_file_record(project_root, task.relative_to(project_root), "task-record"))
-        for entry in authority_entries(task.read_text(encoding="utf-8")):
+        for entry in read_human_contract(project_root, task_id)["authority"]:
             citation = SPEC_HEADING_CITATION.match(entry.strip())
             if citation and Path(citation.group(1)).parts[:2] == (names().project_directory, "tasks"):
                 continue
