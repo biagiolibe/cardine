@@ -116,7 +116,7 @@ def advance_task_closure(
         }, blocked)
 
     def error_detail(error: CardineStop) -> str:
-        return str(error).removeprefix(f"BLOCKED {error.code}: ").rsplit("; resume: ", 1)[0]
+        return str(error).split(f"{error.code}: ", 1)[-1].rsplit("; resume: ", 1)[0]
 
     def stopped(step: str, code: str, detail: str | None = None) -> tuple[dict[str, object], bool]:
         entry = load_stop_registry()[code]
