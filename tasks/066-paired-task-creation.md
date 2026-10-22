@@ -19,36 +19,36 @@ tasks on the same command and schema.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SS3 is implemented as the design of the plan's sections
+- [x] The scope of row SS3 is implemented as the design of the plan's sections
   "Duplicates to remove", "Generated status contract", "Startability and
   totals", "Creation and stable records", and "Consumers and the Meridian
   boundary" describes it. A file the row missed but that the same change
   needs is in scope; the handoff lists it.
-- [ ] Every test that row SS3 lists under "Tests" exists and passes.
-- [ ] `cardine task new` uses `resolve_task_contract` of
+- [x] Every test that row SS3 lists under "Tests" exists and passes.
+- [x] `cardine task new` uses `resolve_task_contract` of
   `src/cardine/tasks/contract.py` (task 053), validates the complete
   record and queued state with its contract snapshot before publishing
   either, and rejects existing or ambiguous IDs and unsafe paths without
   overwriting a file.
-- [ ] Publication happens under a creation lock; a failure of the second
+- [x] Publication happens under a creation lock; a failure of the second
   publication rolls back the first. Tests inject a failure at each
   publication boundary and a concurrent creation of the same ID.
-- [ ] A quick task uses the same command and schema with a minimal record:
+- [x] A quick task uses the same command and schema with a minimal record:
   objective, acceptance criteria, validation, and dependencies.
-- [ ] `templates/single/tasks/TASK_BLUEPRINT.md` loses its `Status:` field.
+- [x] `templates/single/tasks/TASK_BLUEPRINT.md` loses its `Status:` field.
   This repository's own `tasks/TASK_BLUEPRINT.md` is coordinator-owned and
   stays unchanged.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. Its Meridian-shaped records stay as they are: `Status:` lines,
   archive moves to `tasks/done/`, hand-maintained `tasks/QUEUE.md`,
   `tasks/QUEUE_ARCHIVE.md`, and `PROJECT_PLAN.md`. The task changes
   product code, product templates, and tests only; it edits none of those
   repository records except its own task record, handoff, and archive.
   `python3 scripts/check_repository.py` still passes on them.
-- [ ] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
+- [x] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
   still returns this repository's tasks with the same IDs and states, and
   the legacy fixture assertions are not weakened.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -57,16 +57,16 @@ tasks on the same command and schema.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/066.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/066.json`, which only
   the installed `meridian task close 066` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
