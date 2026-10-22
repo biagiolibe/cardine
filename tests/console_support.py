@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from project_config_support import write_project_config
+from task_state_support import set_state, write_task
 from cardine.shared.layout import names
 from cardine.console import models as owner_console_models
 from cardine.console import snapshot as owner_console_snapshot
@@ -166,3 +167,21 @@ class MachineStateConsoleFixture(RepoCase):
         self.write(root, str(names().tasks_path / f"{task_id}.json"), json.dumps(snapshot))
 
     queue = LeanEffectiveStateFixture.queue
+
+
+class StateConsoleFixture(RepoCase):
+    """Product console fixture: a task exists only as validated state plus its record."""
+
+    def add(self, task_id: str, status: str = "queued", dependencies: str = "none", **options) -> Path:
+        return write_task(self.project, task_id, status, dependencies, **options)
+
+    def setup_project(self, tasks: dict[str, str], deps: dict[str, str] | None = None) -> None:
+        for task_id, status in tasks.items():
+            self.add(task_id, status, (deps or {}).get(task_id, "none"))
+        self.commit(self.project, "initial")
+
+    def branch_state(self, worktree: Path, task_id: str, status: str, *, verdict: str | None = None,
+                     commit: bool = True) -> None:
+        set_state(worktree, task_id, status, verdict=verdict)
+        if commit:
+            self.commit(worktree, f"{task_id} {status}")

@@ -50,7 +50,6 @@ from cardine.templates.catalog import manifest_workflow_mode, _parse_catalog_sur
 from cardine.shared import project as shared_project
 from cardine.shared.paths import SCRIPTS_ROOT
 from cardine.tasks.state import TaskStateInvalid, machine, read_task_state, state_path, validate_task_state
-from cardine.shared.console_workflow import latest_review_verdict, record_review
 from cardine.integration.projections import _queue_task_rows
 from cardine.release.update import fetch_latest_release, run_self_update, claude_user_settings_path, plugin_marketplace_ref, plugin_ref_report, run_self_check
 from cardine.review.verdict import record_review_verdict, _review_verdict_projection, _review_attempt_text

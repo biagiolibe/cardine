@@ -27,19 +27,16 @@ from cardine.console import entry as owner_console_entry
 from cardine.console import launch as owner_console_launch
 from cardine.console import models as owner_console_models
 from cardine.console import snapshot as owner_console_snapshot
-from cardine.shared import console_workflow as owner_console_workflow
 from cardine.shared import errors as owner_shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 
 
-from console_support import HEADER, RESUME_001
 import console_support as support
-
-import test_console_states as state_tests
+from test_console_states import delivery_ready
 
 class ClosingTaskMixin:
-    """Terminal rows distinguish pending integration from cleanup in both workflows."""
+    """Done tasks distinguish pending integration from cleanup, whatever the ID shape."""
 
     done_id: str
     open_id: str
@@ -61,12 +58,13 @@ class ClosingTaskMixin:
     def test_task_stays_visible_after_stage_with_derived_closing_state(self) -> None:
         self.closing_project()
         before = self.refs_and_status()
-        queue = (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8")
+        state_file = self.project / ".cardine/tasks" / f"{self.done_id}.json"
+        state_bytes = state_file.read_bytes()
         tasks, _status = self.load_closing(
             self.report("C7", None, "run the selected candidate validation"))
         task = tasks[self.done_id]
         self.assertEqual(self.refs_and_status(), before)
-        self.assertEqual((self.project / "tasks/QUEUE.md").read_text(encoding="utf-8"), queue)
+        self.assertEqual(state_file.read_bytes(), state_bytes)
         self.assertEqual((task.readiness, task.lifecycle, task.status),
                          ("CLOSING", "closing", self.done_token))
         self.assertEqual(task.progress_phase, "candidate validation")
@@ -234,69 +232,45 @@ class ClosingTaskMixin:
 
 
 
-class LeanClosingTaskTest(ClosingTaskMixin, state_tests.LeanEffectiveStateTest):
+class OpaqueIdClosingTaskTest(ClosingTaskMixin, support.StateConsoleFixture):
     done_id, open_id, done_token = "001", "002", "done"
+    branch = "task-001"
 
     def closing_project(self, worktree: bool = True, archived: bool = False) -> None:
-        self.setup_project({"001": "x", "002": " "}, {"002": "001"})
+        self.setup_project({self.done_id: "done", self.open_id: "queued"}, {self.open_id: self.done_id})
         if archived:
-            queue = (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8")
-            lines = queue.splitlines(keepends=True)
-            done_row = next(line for line in lines if "| 001 |" in line)
-            self.write(self.project, "tasks/QUEUE.md", queue.replace(done_row, ""))
-            self.write(self.project, "tasks/QUEUE_ARCHIVE.md", HEADER + done_row)
+            record = self.project / f"tasks/{self.done_id}.md"
+            target = self.project / "tasks/done" / record.name
+            target.parent.mkdir()
+            record.rename(target)
             self.commit(self.project, "archive")
         if worktree:
-            self.worktree("task-001")
+            self.worktree(self.branch)
 
-
-
-class GovernedClosingTaskTest(ClosingTaskMixin, state_tests.GovernedEffectiveStateTest):
-    done_id, open_id, done_token = "TASK-001", "TASK-002", "done"
-
-    def closing_project(self, worktree: bool = True, archived: bool = False) -> None:
-        self.setup_project([
-            ("TASK-001", "done", "REQUIRED", "—"),
-            ("TASK-002", "queued", "REQUIRED", "TASK-001"),
-        ])
-        if archived:
-            queue = (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8")
-            done_row = next(line for line in queue.splitlines(keepends=True) if "| TASK-001 |" in line)
-            self.write(self.project, "tasks/QUEUE.md", queue.replace(done_row, ""))
-            self.write(self.project, "tasks/QUEUE_ARCHIVE.md", self.header + done_row)
-            self.commit(self.project, "archive")
-        if worktree:
-            self.worktree("task-001")
-
-    def test_reserved_worktree_derives_in_progress_without_a_queue_edit(self) -> None:
-        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
-        self.worktree("task-001")
-        task = self.load()["TASK-001"]
+    def test_reserved_worktree_derives_in_progress_without_a_state_write(self) -> None:
+        self.setup_project({"003": "queued"})
+        self.worktree("task-003")
+        task = self.load()["003"]
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
-        self.assertEqual(task.source, "branch task-001")
-        self.assertIn("queued", (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8"))
+        self.assertEqual((task.source, task.status), ("branch task-003", "queued"))
 
-    def test_record_ready_for_review_with_queued_row_is_derived_and_shows_progress(self) -> None:
-        self.setup_project([("TASK-001", "queued", "REQUIRED", "—")])
-        wt = self.worktree("task-001")
-        self.write_record(wt, "TASK-001", "in_review")
-        self.commit(wt, "ready")
-        with mock.patch.object(owner_console_snapshot, "closure_status") as status, \
-             mock.patch.object(owner_console_snapshot, "lifecycle_started_at",
-                               return_value="2026-01-01T00:00:00Z"):
-            task = self.load()["TASK-001"]
+    def test_review_ready_branch_state_shows_progress_and_reads_no_closure(self) -> None:
+        self.setup_project({"003": "queued"})
+        self.branch_state(self.worktree("task-003"), "003", "in_review")
+        with mock.patch.object(owner_console_snapshot, "closure_status") as status, delivery_ready():
+            task = self.load()["003"]
         status.assert_not_called()
         self.assertEqual((task.readiness, task.lifecycle),
                          ("READY FOR REVIEW", "ready_for_review"))
-        self.assertEqual(task.launch_command, "Review TASK-001")
+        self.assertEqual(task.launch_command, "Review 003")
         self.assertEqual(task.progress_phase, "review pending")
         self.assertEqual(task.remaining_gates[0], "Independent review")
         self.assertTrue(task.shows_progress)
         self.assertNotEqual(owner_console_render._elapsed(task.started_at), "unavailable")
 
     def test_ready_for_review_without_a_worktree_shows_no_progress(self) -> None:
-        self.setup_project([("TASK-001", "in_review", "REQUIRED", "—")])
-        task = self.load()["TASK-001"]
+        self.setup_project({"003": "in_review"})
+        task = self.load()["003"]
         self.assertFalse(task.shows_progress)
         self.assertEqual(task.progress_phase, "unavailable")
 
@@ -305,6 +279,14 @@ class GovernedClosingTaskTest(ClosingTaskMixin, state_tests.GovernedEffectiveSta
         self.assertEqual(phase, "review pending")
         self.assertEqual(gates[0], "Independent review")
 
+
+class NamedIdClosingTaskTest(OpaqueIdClosingTaskTest):
+    done_id, open_id, done_token = "TASK-001", "TASK-002", "done"
+
+    test_reserved_worktree_derives_in_progress_without_a_state_write = None
+    test_review_ready_branch_state_shows_progress_and_reads_no_closure = None
+    test_ready_for_review_without_a_worktree_shows_no_progress = None
+    test_review_gate_progress_phase = None
 
 
 if __name__ == "__main__":

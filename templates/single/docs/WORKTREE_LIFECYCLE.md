@@ -26,7 +26,7 @@ only after an explicit Resume directive.
 <!-- CARDINE:END -->
 
 
-<!-- CARDINE:BEGIN capability=worktree-lifecycle v1 -->
+<!-- CARDINE:BEGIN capability=worktree-lifecycle v2 -->
 Use the host-neutral `cardine worktree` namespace for task checkout lifecycle
 operations. Commands exit `0` on success, `2` when blocked, and `64` on usage
 errors. The root resolves from an explicit option, the environment, user
@@ -96,22 +96,6 @@ stale: renew validation and record new evidence before closure. The result
 reports `evidence_renewal_required: true`; repeating recovery at the same commit
 is a read-only no-op. Unproven transitions report `BLOCKED WRONG_WORKTREE`.
 
-## Queue-section archival
-
-A section ends at the next heading of the same or a higher level and includes
-its nested headings; its heading level does not restrict archival. A section
-that itself lists task rows is archived when every task row in it has a state
-file, read by task ID, whose status is terminal (`done` or `cancelled`). Table
-shape, column order, and status-cell wording are not read. `INCONCLUSIVE` closes its section but still does not satisfy a dependency. A row without
-a state file keeps the conservative table rule: only a `###` section whose task
-tables and rows are all recognized and terminal (`done` or `cancelled`) is archived, and a
-section that mixes both kinds of row archives only when both rules agree. An
-open, invalid-state, or ambiguous row retains the entire section, and so does a
-section that lists no task row of its own. `integrate stage` reports every
-section as archived or retained with its reason and its open or legacy rows.
-`cardine task state import --include-terminal` creates state for terminal
-legacy tasks so that their sections archive by state.
-
 ## Machine task state adoption
 
 Run `cardine task state import [<TASK-ID>...] --project <path> --format json` to preview state files for open legacy tasks and inspect the queue, record, and review evidence. Repeat with `--apply` only after resolving reported disagreements. Existing state files are never overwritten, and terminal legacy tasks are skipped unless `--include-terminal` is given; it previews and, with `--apply`, writes their state from the current texts, stops with `TASK_STATE_INVALID` when the queue, record, or review texts disagree, and never creates an approval. Imported transition history describes the bootstrap at the current HEAD and timestamp, not past implementation or review events; it never manufactures an approval. Both presets use the same state vocabulary and retain the resolved contract snapshot. Conversion of existing installations is explicit, never inferred from table shape. Use `cardine task transition` and `cardine review verdict` for subsequent changes; never edit statuses or verdicts by hand. Machine state files stay tracked at their original path when task records are archived.
@@ -137,9 +121,8 @@ or relax validation evidence checks; another path blocks stage before a lease
 or merge.
 
 For `REUSE`, run the declared repository gate and prove with `git diff --name-only
-"$VALIDATED_TASK_COMMIT" "$CANDIDATE_TREE"` that only the task record or exact
-archive rename, handoff, review record, queue, plan, queue archive, and changelog
-fragment changed. `BOUNDED` adds tests for modules changed by the task and
+"$VALIDATED_TASK_COMMIT" "$CANDIDATE_TREE"` that only the task record, handoff, review record, the generated queue and plan status
+views, and changelog fragment changed. `BOUNDED` adds tests for modules changed by the task and
 advanced `main`; `FULL` adds the declared full suite. A stricter gate is allowed.
 The literal fragment check executes nothing and accepts `set -o pipefail;` and
 an output-bounding pipeline when the declared fragment remains present.

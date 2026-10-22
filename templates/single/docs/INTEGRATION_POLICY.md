@@ -2,7 +2,7 @@
 
 Task context loading, task shape, and completion handoffs are governed by `docs/CONTEXT_READING_POLICY.md`, `tasks/TASK_BLUEPRINT.md`, and `docs/COMPLETION_REPORT_TEMPLATE.md`; this document defines review and direct integration only.
 
-<!-- CARDINE:BEGIN capability=task-worktree-integration v1 -->
+<!-- CARDINE:BEGIN capability=task-worktree-integration v2 -->
 For `Review: required`, the implementer pushes the task branch only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, and records its deterministic branch,
 machine-independent dedicated-worktree value (relative to the worktree root, never an absolute path), implementation commit, validated task and
 base `main` commits, exact successful validation evidence, declared integration
@@ -61,11 +61,12 @@ For `Review: not_required`, the implementer commits validation evidence and runs
 `Accept <TASK-ID>` runs `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on clean HEAD, commits the state and projections, and continues at C6 under the `Proceed with`
 authority; a manual merge is never permitted.
 
-Task reservation, completion, review, and archive mutations stay on the task
-branch. Concurrent tasks change only their own task records. They do
-not reorder shared governance files, change shared timestamps, or archive a
-phase; phase archival waits until all rows are integrated. Any shared-file
-conflict blocks integration with both branches intact.
+Task reservation, completion, and review mutations stay on the task branch.
+Concurrent tasks change only their own task records and state files. The
+generated queue and plan status views are regenerated once, on the integration
+candidate tree, by `cardine worktree integrate stage`; no task regenerates them
+or archives a phase. Any shared-file conflict blocks integration with both
+branches intact.
 <!-- CARDINE:END -->
 
 ## Validation evidence for review

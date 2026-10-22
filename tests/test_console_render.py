@@ -27,13 +27,11 @@ from cardine.console import entry as owner_console_entry
 from cardine.console import launch as owner_console_launch
 from cardine.console import models as owner_console_models
 from cardine.console import snapshot as owner_console_snapshot
-from cardine.shared import console_workflow as owner_console_workflow
 from cardine.shared import errors as owner_shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
 
 
-from console_support import HEADER, RESUME_001
 import console_support as support
 
 class FakeScreen:
@@ -89,16 +87,13 @@ class ConsoleListLayoutTest(unittest.TestCase):
                 self.assertEqual(screen.row(3)[layout.age_x:layout.age_x + 7], "Updated")
 
     def test_two_level_groups_render_once_and_search_both_labels(self) -> None:
-        queue = ("# Queue\n\n## Program Queue\n\n### Phase 1\n\n" + HEADER
-                 + "| `[ ]` | 001 | First | P2 | — | — |\n"
-                 + "| `[ ]` | 002 | Second | P2 | — | — |\n\n"
-                 + "### Phase 2\n\n" + HEADER
-                 + "| `[ ]` | 003 | Third | P2 | — | — |\n")
-        rows = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["single"])
+        # Phases come from the task contract snapshot, with an optional group above them.
+        groups = {"001": ("Program Queue", "Phase 1"), "002": ("Program Queue", "Phase 1"),
+                  "003": ("Program Queue", "Phase 2")}
         tasks = [
-            owner_console_models.Task(row.task_id, row.title, row.status, row.section,
+            owner_console_models.Task(task_id, f"Task {task_id}", "queued", phase,
                          (), None, (), (), readiness="READY")
-            for row in rows
+            for task_id, phase in groups.items()
         ]
         screen = self.render(tasks, 100)
         drawn = [screen.row(y).strip() for y in range(5, 12)]
@@ -116,27 +111,18 @@ class ConsoleListLayoutTest(unittest.TestCase):
         self.assertEqual([task.task_id for task in owner_console_render._visible_tasks(snapshot, "All", "phase 2")],
                          ["003"])
 
-    def test_lean_active_queue_wrapper_keeps_phase_only_rendering(self) -> None:
-        queue = ("# Queue\n\n## 🏃 Active Queue\n\n### Phase 29 — Work\n\n"
-                 + HEADER + "| `[ ]` | 001 | First | P2 | — | — |\n")
-        row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["single"])[0]
-        self.assertEqual(row.section, ("Phase 29 — Work",))
-        task = owner_console_models.Task(row.task_id, row.title, row.status, row.section,
+    def test_single_phase_label_keeps_phase_only_rendering(self) -> None:
+        task = owner_console_models.Task("001", "First", "queued", ("Phase 29 — Work",),
                             (), None, (), (), readiness="READY")
         screen = self.render([task], 100)
         self.assertEqual(screen.row(5).strip(), "Phase 29 — Work")
-        self.assertNotIn("Active Queue", " ".join(screen.row(y) for y in range(5, 8)))
 
     def test_queue_heading_levels_two_through_six_render(self) -> None:
         for level in range(2, 7):
             with self.subTest(level=level):
                 label = f"Level {level} Queue — Work"
-                queue = (f"# Queue\n\n{'#' * level} {label}\n\n" + HEADER
-                         + "| `[ ]` | 001 | First | P2 | — | — |\n")
-                row = owner_console_workflow.parse_queue(queue, "fixture", owner_console_workflow.PROFILES["single"])[0]
-                task = owner_console_models.Task(row.task_id, row.title, row.status, row.section,
+                task = owner_console_models.Task("001", "First", "queued", (label,),
                                     (), None, (), (), readiness="READY")
-                self.assertEqual(row.section, (label,))
                 self.assertEqual(self.render([task], 100).row(5).strip(),
                                  f"Level {level} — Work")
 

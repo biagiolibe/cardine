@@ -83,5 +83,6 @@ class LegacyBoundaryTest(support.RepoCase):
         with mock.patch.object(legacy, "load_snapshot", side_effect=AssertionError("installation selected")), \
              mock.patch.object(installation, "load_snapshot", side_effect=AssertionError("installation selected")):
             snapshot = product.load_snapshot(self.project)
-        self.assertEqual(snapshot.done_count, 1)
-        self.assertEqual([t.task_id for t in snapshot.tasks], ["002"])
+        # Without task states the product lists nothing; queue rows and records are not a fallback.
+        self.assertEqual(snapshot.done_count, 0)
+        self.assertEqual(snapshot.tasks, ())

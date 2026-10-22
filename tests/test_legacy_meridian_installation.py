@@ -179,8 +179,9 @@ class InstallationTest(RepoCase):
              patch.object(builtins, "open", side_effect=observing_open(real_open)):
             snapshot = load_snapshot(self.project)
         self.assertTrue(opened)
+        # The product reads validated task state only: queue prose enumerates nothing.
         self.assertEqual(snapshot.done_count, 0)
-        self.assertEqual({task.task_id for task in snapshot.tasks}, {"001", "002"})
+        self.assertEqual(snapshot.tasks, ())
 
     # MERIDIAN-OLD-NAME-TEST
     def test_old_task_state_is_missing_to_product(self):
