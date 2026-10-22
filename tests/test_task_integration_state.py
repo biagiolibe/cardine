@@ -268,6 +268,39 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertEqual(result["stop_code"], "REVIEW_NOT_APPROVED")
         self.assertEqual(result["step"], "C6")
 
+    def test_advance_reports_invalid_review_history_detail(self):
+        self.start()
+        self.write_state(required=False)
+        state = json.loads(self.state_file.read_text())
+        state["transitions"].append({**state["transitions"][0], "from": "in_progress", "to": "in_review"})
+        state["status"] = "in_review"
+        self.state_file.write_text(json.dumps(state))
+        self.commit()
+        with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
+            result, blocked = owner_lifecycle_closure.advance_task_closure(
+                "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+        stage.assert_not_called()
+        self.assertTrue(blocked)
+        self.assertEqual((result["step"], result["stop_code"]), ("C6", "TASK_STATE_INVALID"))
+        self.assertIn(".cardine/tasks/056.json", result["stop_detail"])
+        self.assertIn("transitions[1].to", result["stop_detail"])
+        self.assertIn("allowed", result["stop_detail"])
+        self.assertIn("found 'in_review'", result["stop_detail"])
+        self.assertNotIn("BLOCKED TASK_STATE_INVALID:", result["stop_detail"])
+        self.assertNotIn("; resume:", result["stop_detail"])
+
+    def test_advance_status_detail_uses_only_the_available_reason(self):
+        self.start()
+        for reason in ("recorded validation failed", None):
+            with self.subTest(reason=reason), mock.patch.object(
+                owner_lifecycle_closure, "closure_status",
+                return_value=({"step": "C2", "stop_reason": "VALIDATION_FAILED", "resume": reason}, False),
+            ):
+                result, blocked = owner_lifecycle_closure.advance_task_closure(
+                    "056", self.worktree_root, [], [], accepted=True, supplied_project=self.primary)
+                self.assertTrue(blocked)
+                self.assertEqual(result["stop_detail"], reason or "")
+
     def test_advance_state_gate_runs_before_stage(self):
         self.start(workflow="single", preset="lean")
         self.write_state(required=False, status="queued")
@@ -286,6 +319,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 stage.assert_not_called()
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING" if missing else "TASK_STATE_INVALID")
+                self.assertIn(".cardine/tasks/056.json", result["stop_detail"])
                 if missing:
                     command = shlex.split(result["commands"][0])
                     self.assertEqual(command[:3], ["cd", str(self.worker), "&&"])

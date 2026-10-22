@@ -699,11 +699,13 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual(set(report), {
-            "version", "task_id", "step", "action_required", "commands", "required_fragments", "stop_code", "resume", "performed",
+            "version", "task_id", "step", "action_required", "commands", "required_fragments", "stop_code", "stop_detail", "resume", "performed",
         })
         self.assertEqual((report["step"], report["action_required"]), ("C7", "run-candidate-validation"))
         self.assertEqual(report["performed"], ["C5", "C6"])
         self.assertIsNone(report["stop_code"])
+        self.assertIsNone(report["stop_detail"])
+        self.assertEqual(report["version"], 1)
         self.assertEqual(report["commands"][0], "git diff --check")
         self.assertEqual(report["commands"], ["git diff --check"])
         self.assertIn("scripts/check_repository.py", report["required_fragments"])
@@ -800,6 +802,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         report = json.loads(failed.stdout)
         self.assertEqual((report["step"], report["action_required"], report["stop_code"]), ("C2", "run-validation", "VALIDATION_FAILED"))
         self.assertEqual(report["resume"], "fix the failure on the task branch and rerun the failing command")
+        self.assertEqual(report["stop_detail"], "record machine evidence")
         unaccepted = self._advance("--validation-command", "check", "--validation-exit-code", "0")
         self.assertEqual(unaccepted.returncode, 2, unaccepted.stderr)
         self.assertEqual(json.loads(unaccepted.stdout)["stop_code"], "ACCEPTANCE_UNMET")
@@ -834,6 +837,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             ("C6", "human", "INTEGRATION_CONFLICT", ["C5"]),
         )
         self.assertIn(str(evidence_path), report["resume"])
+        self.assertEqual(report["stop_detail"],
+                         "integration conflict was aborted; task branch and worktree were retained")
         last = self._journal()[-1]
         self.assertEqual((last["command"], last["result"], last["stop_code"]), ("advance", "blocked", "INTEGRATION_CONFLICT"))
 
@@ -937,6 +942,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertEqual((report["step"], report["stop_code"]), ("C8", "EVIDENCE_MISMATCH"))
         self.assertIn("integrate abort", report["resume"])
+        self.assertEqual(report["stop_detail"], "staged candidate tree changed after integration stage")
         self.assertTrue((self.project / ".git/MERGE_HEAD").exists())
         self.assertEqual(self._journal()[-1]["stop_code"], "EVIDENCE_MISMATCH")
 

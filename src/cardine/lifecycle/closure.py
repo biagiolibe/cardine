@@ -92,11 +92,16 @@ def advance_task_closure(
         commands: list[str] | None = None,
         required_fragments: list[str] | None = None,
         stop_code: str | None = None,
+        stop_detail: str | None = None,
         resume: str | None = None,
         blocked: bool = False,
     ) -> tuple[dict[str, object], bool]:
         if stop_code is not None and resume is None:
             resume = stop_resume(stop_code, task_id=task, project=str(project_root), evidence=str(evidence_path))
+        # Status-only stops have no exception detail; keep the available reason,
+        # or an empty string when closure-status supplied none.
+        if stop_code is not None and stop_detail is None:
+            stop_detail = str(status.get("resume") or "")
         return ({
             "version": 1,
             "task_id": task,
@@ -105,11 +110,15 @@ def advance_task_closure(
             "commands": commands or [],
             **({"required_fragments": required_fragments} if required_fragments is not None else {}),
             "stop_code": stop_code,
+            "stop_detail": stop_detail if stop_code is not None else None,
             "resume": resume,
             "performed": performed,
         }, blocked)
 
-    def stopped(step: str, code: str) -> tuple[dict[str, object], bool]:
+    def error_detail(error: CardineStop) -> str:
+        return str(error).removeprefix(f"BLOCKED {error.code}: ").rsplit("; resume: ", 1)[0]
+
+    def stopped(step: str, code: str, detail: str | None = None) -> tuple[dict[str, object], bool]:
         entry = load_stop_registry()[code]
         if entry.get("human_decision") is True:
             action = "human"
@@ -117,7 +126,7 @@ def advance_task_closure(
             action = "run-validation"
         else:
             action = "resolve"
-        return result(step, action, stop_code=code, blocked=entry.get("kind") != "status")
+        return result(step, action, stop_code=code, stop_detail=detail, blocked=entry.get("kind") != "status")
 
     while True:
         status, _ready = closure_status(task, worktree_root, project_root)
@@ -199,12 +208,14 @@ def advance_task_closure(
                         advance.extend(["--candidate-command", command, "--candidate-exit-code", str(exit_code)])
                     commands.append(f"cd {shlex.quote(str(project_root))} && {shlex.join(advance)}")
                     return result("C6", "resolve", commands=commands, stop_code=error.code,
+                                  stop_detail=error_detail(error),
                                   resume=" && ".join(commands), blocked=True)
-                return result("C6", "resolve", commands=[resume], stop_code=error.code, resume=resume, blocked=True)
+                return result("C6", "resolve", commands=[resume], stop_code=error.code,
+                              stop_detail=error_detail(error), resume=resume, blocked=True)
             try:
                 staged = stage_task_integration(task, worktree_root, evidence_path, project_root)
             except CardineStop as error:
-                return stopped("C6", error.code)
+                return stopped("C6", error.code, error_detail(error))
             performed.append("C6")
             _journal_advance_step(project_root, "integrate stage", task, str(staged.get("next_action", "C6")))
         elif code is not None and not (step == "C9" and code == "PUSH_PENDING"):
@@ -263,7 +274,7 @@ def advance_task_closure(
             try:
                 finalize_task_integration(task, candidate_evidence, project_root)
             except CardineStop as error:
-                return stopped("C8", error.code)
+                return stopped("C8", error.code, error_detail(error))
             performed.append("C8")
             _journal_advance_step(project_root, "integrate finalize", task, "C8")
             return result(
