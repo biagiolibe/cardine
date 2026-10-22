@@ -59,10 +59,16 @@ class TaskStateAuditTest(unittest.TestCase):
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
         self.assertEqual(len([r for r in rows if r.identity == "task-state"]), 1)
         self.assertEqual(rows[0].status, "PASS")
-        self.assertEqual(rows[1].identity, "generated-status")
-        self.assertEqual(rows[1].status, "ADVISORY")
+        generated = [row for row in rows if row.identity == "generated-status"]
+        self.assertEqual(len(generated), 1)
+        self.assertEqual(generated[0].status, "ADVISORY")
+        contracts = [row for row in rows if row.identity == "task-contract"]
+        self.assertEqual(len(contracts), 1)
+        self.assertEqual(contracts[0].status, "ADVISORY")
+        self.assertIn("incomplete contract snapshot", contracts[0].detail)
+        self.assertIn("cardine task contract update 001", contracts[0].detail)
         self.assertIn(".cardine/tasks/001.json", rows[0].detail)
-        self.assertIn("cardine status --write", rows[1].detail)
+        self.assertIn("cardine status --write", generated[0].detail)
         self.assertEqual(before, {p: p.read_bytes() for p in before})
         with mock.patch.object(owner_templates_audit, "audit_declared_capabilities", return_value=([], "single")), \
                 mock.patch.object(owner_templates_audit, "audit_capability_markers", return_value=[]), \

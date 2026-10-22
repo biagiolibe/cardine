@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 
 from cardine.shared.errors import CardineError
+from cardine.tasks.contract_fields import HUMAN_CONTRACT_FIELDS, contract_hash, frozen_human_fields
 from cardine.stops.render import stop_error
 from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
@@ -133,18 +134,6 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
     }
 
 
-def contract_hash(contract):
-    if contract is None:
-        return None
-    encoded = json.dumps(contract, sort_keys=True, separators=(",", ":")).encode('utf-8')
-    return 'sha256:' + hashlib.sha256(encoded).hexdigest()
-
-
-# These fields are creation input. Readers migrate separately in task 080.
-HUMAN_CONTRACT_FIELDS = ("dependencies", "title", "priority", "phase", "origin",
-                         "deliverables", "authority", "recordPath")
-
-
 def resolve_human_fields(project_root, identity, text, task_class):
     """Parse human intent once; absent optional labels have explicit empty values."""
     from cardine.tasks.status import _dependencies
@@ -173,21 +162,6 @@ def resolve_human_fields(project_root, identity, text, task_class):
         "authority": list(dict.fromkeys(authority_entries(text))),
         "recordPath": identity.task_path.relative_to(Path(project_root).resolve()).as_posix(),
     }
-
-
-def frozen_human_fields(state):
-    """Require a complete snapshot without ever recovering missing intent from prose.
-
-    Old snapshots remain structurally readable by the pre-080 readers. Audit
-    diagnoses them, and this accessor is the strict boundary for new consumers.
-    Only an explicit contract update may complete them.
-    """
-    contract = state.get("contract", {})
-    missing = [key for key in HUMAN_CONTRACT_FIELDS if key not in contract]
-    if missing:
-        raise CardineError("incomplete contract snapshot (missing " + ", ".join(missing)
-                           + f"); run cardine task contract update {state['task_id']}")
-    return {key: contract[key] for key in HUMAN_CONTRACT_FIELDS}
 
 
 def profile_digest(project_root: Path) -> str:

@@ -118,7 +118,7 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
         from cardine.shared.project import parse_project_declaration
         from cardine.shared.errors import CardineError
         contract = state["contract"]
-        from cardine.tasks.contract import HUMAN_CONTRACT_FIELDS, frozen_human_fields
+        from cardine.tasks.contract_fields import HUMAN_CONTRACT_FIELDS, frozen_human_fields
         if any(key in contract for key in HUMAN_CONTRACT_FIELDS):
             try:
                 human = frozen_human_fields(state)
@@ -138,7 +138,7 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
         except CardineError as error:
             raise TaskStateInvalid(f"contract: {error}") from error
     if state.get("contract_history"):
-        from cardine.tasks.contract import contract_hash
+        from cardine.tasks.contract_fields import contract_hash
         previous_revision = None
         for index, revision in enumerate(state["contract_history"]):
             at = datetime.fromisoformat(revision["at"].replace("Z", "+00:00"))
