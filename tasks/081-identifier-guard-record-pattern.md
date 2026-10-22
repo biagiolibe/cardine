@@ -24,24 +24,24 @@ never touches the guard.
 
 ## Acceptance Criteria
 
-- [ ] The "kept: historical records" allowance matches every task record under
+- [x] The "kept: historical records" allowance matches every task record under
   `tasks/` by the pattern `tasks/[0-9]{3}-[^/]+\.md`, in place of the list
   of record names. The other paths of that allowance (`tasks/done/`,
   `tasks/handoffs/`, the queue files, the blueprint, `PROJECT_PLAN.md`,
   and the rest) stay unchanged.
-- [ ] A test proves that a new record file `tasks/<NNN>-<slug>.md` containing
+- [x] A test proves that a new record file `tasks/<NNN>-<slug>.md` containing
   the retired identifier passes the guard without editing it, and that a
   file elsewhere under `tasks/` that does not match the pattern still
   fails.
-- [ ] The guard still fails on the retired identifier in product code,
+- [x] The guard still fails on the retired identifier in product code,
   templates, and tests outside their existing allowances; no other
   allowance changes.
-- [ ] The allowance's removal label states that it is removed or narrowed by
+- [x] The allowance's removal label states that it is removed or narrowed by
   work item 10, when this repository moves to Cardine and its records stop
   naming the installed Meridian.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes this test file only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -50,16 +50,16 @@ never touches the guard.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/081.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/081.json`, which only
   the installed `meridian task close 081` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
