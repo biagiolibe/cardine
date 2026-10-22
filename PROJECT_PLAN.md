@@ -110,7 +110,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 067 — Generate the queue and the plan status region (single source SS4).
 - `[x]` 068 — Remove the product prose status gates (single source SS5).
 - `[x]` 071 — Report the stop detail in worktree advance output.
-- `[ ]` 069 — Keep task records stable through close and landing (single source SS6).
+- `[x]` 069 — Keep task records stable through close and landing (single source SS6).
 - `[x]` 073 — Inventory the product gates that read text (decision 13).
 - `[x]` 072 — Remove the delivery commit gate.
 - `[ ]` 070 — Switch the console and the briefing to the status service (single source SS7).

@@ -346,7 +346,7 @@ def build_parser() -> CardineArgumentParser:
     outcome.add_argument("outcome", choices=("ANSWERED", "INCONCLUSIVE"))
     outcome.add_argument("--project", type=Path, default=Path.cwd())
     outcome.add_argument("--format", choices=("json",), default="json")
-    close = task_sub.add_parser("close", help="stage Lean task state and record archive without committing")
+    close = task_sub.add_parser("close", help="verify closure from committed records; the record stays at its path")
     close.add_argument("task_id")
     close.add_argument("--project", type=Path, default=Path.cwd())
     close.add_argument("--format", choices=("json",), default="json")
@@ -356,7 +356,7 @@ def build_parser() -> CardineArgumentParser:
     state_import.add_argument("task_ids", nargs="*")
     state_import.add_argument("--apply", action="store_true")
     state_import.add_argument("--include-terminal", action="store_true",
-                              help="also propose state for terminal tasks, so queue archival reads it")
+                              help="also propose state for terminal tasks")
     state_import.add_argument("--project", type=Path, default=Path.cwd())
     state_import.add_argument("--format", choices=("json",), default="json")
     identity = task_sub.add_parser("identity", help="resolve the project-selected task identity policy")

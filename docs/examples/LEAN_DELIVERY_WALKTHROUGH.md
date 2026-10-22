@@ -159,8 +159,10 @@ git commit -m "Add the project purpose sentence"
 
 The handoff records actual validation, task/base commits, and the relative
 worktree identity. Queue and plan stay untouched on the task branch. Close
-through the CLI; do not write machine status fields yourself. Archival leaves
-the task `in_progress`; only validated landing projects `done` on the candidate.
+through the CLI; do not write machine status fields yourself. Closing verifies
+the committed record and handoff and writes nothing: the record stays at its
+path and the task stays `in_progress`. Only validated landing writes `done` and
+regenerates the queue and the plan region on the candidate.
 
 ```bash
 python3 - <<'PY'
@@ -194,7 +196,6 @@ PY
 git add tasks/001-purpose.md tasks/handoffs/001.md
 git commit -m "Record verified completion of task 001"
 cardine task close 001 --project .
-git commit -m "Archive closed task 001"
 cd "$PRIMARY"
 cardine worktree advance 001 --project . --accepted --validation-command "git diff --check" --validation-exit-code 0 --format json
 ```
@@ -224,14 +225,11 @@ git branch --list task-001
 The last advance performs cleanup and returns `action_required: none`.
 The explicit cleanup call shows its idempotent result. Status and branch output
 are empty, only the primary worktree remains, and `HEAD` equals `origin/main`.
-The closed queue section moves to the archive; the plan and handoff remain:
-
-```text checked=tasks/QUEUE_ARCHIVE.md
-| `[x]` | 001 | Add the purpose sentence | 🔴 P1 | none |
-```
+Landing regenerated the queue and the plan status region from the landed
+state; nothing was archived or moved:
 
 ```text checked=PROJECT_PLAN.md
-- `[x]` 001 — Add the purpose sentence
+| done | 001 |
 ```
 
 ```text checked=tasks/handoffs/001.md
@@ -241,5 +239,5 @@ The closed queue section moves to the archive; the plan and handoff remain:
 - Acceptance criteria: all met.
 ```
 
-The completed contract is now `tasks/done/001-purpose.md`. For an application,
+The completed contract stays at `tasks/001-purpose.md`. For an application,
 replace the minimal gate with its real checks before assigning a source task.

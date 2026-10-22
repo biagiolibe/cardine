@@ -65,7 +65,9 @@ class LeanWalkthroughTest(unittest.TestCase):
         self.assertEqual(git("rev-parse", "HEAD"), git("rev-parse", "origin/main"))
         self.assertEqual(git("branch", "--list", "task-001"), "")
         self.assertEqual(git("worktree", "list", "--porcelain").count("worktree "), 1)
-        self.assertTrue((project / "tasks/done/001-purpose.md").is_file())
+        self.assertTrue((project / "tasks/001-purpose.md").is_file())
+        self.assertFalse((project / "tasks/done/001-purpose.md").exists())
+        self.assertFalse((project / "tasks/QUEUE_ARCHIVE.md").exists())
 
     def test_nonzero_command_stops_execution(self):
         result = self.run_document("```bash\nfalse\nprintf should-not-run\n```\n")

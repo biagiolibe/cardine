@@ -1,4 +1,4 @@
-"""Lean closure gates, shared transition state, and archived Resume recovery."""
+"""Lean closure gates and shared transition state; closure writes nothing."""
 import json
 import os
 import sys
@@ -50,19 +50,19 @@ class TaskCloseTest(unittest.TestCase):
         self.assert_stop(code, lambda: owner_tasks_transitions.close_task(self.worker, '001'))
         self.assertEqual(self.snapshot(), before)
 
-    def test_success_stages_exact_archive_and_identical_transition_state_without_commit(self):
+    def test_success_verifies_closure_and_leaves_every_record_in_place(self):
         expected = json.loads(cardine_cli.state_path(self.worker, '001').read_text())
-        before = self.git('rev-parse', 'HEAD')
+        before = self.snapshot()
         result = owner_tasks_transitions.close_task(self.worker, '001')
         self.assertEqual(result['state'], expected)
+        self.assertEqual(result['record'], 'tasks/001.md')
+        self.assertTrue(result['verified'])
+        self.assertFalse(result['staged'])
         self.assertFalse(result['committed'])
-        self.assertEqual(self.git('rev-parse', 'HEAD'), before)
-        self.assertFalse((self.worker / self.record).exists())
-        self.assertTrue((self.worker / 'tasks/done/001.md').is_file())
-        self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
-                         {'tasks/001.md', 'tasks/done/001.md'})
-        self.assertEqual(self.git('diff', '--name-only'), '')
-        self.assertIn('Status: queued', (self.worker / result['archive']).read_text())
+        self.assertEqual(self.snapshot(), before)
+        self.assertTrue((self.worker / 'tasks/001.md').is_file())
+        self.assertFalse((self.worker / 'tasks/done').exists())
+        self.assertEqual(self.git('diff', '--cached', '--name-only'), '')
 
     def test_primary_and_dirty_worktrees_refuse_without_writes(self):
         (self.worker / 'partial').write_text('unfinished')
@@ -81,15 +81,22 @@ class TaskCloseTest(unittest.TestCase):
         self.commit('Ignore uncommitted handoff')
         self.refused('HANDOFF_REPORT_MISSING')
 
-    def test_archived_record_refuses_without_state_write(self):
+    def test_record_path_does_not_decide_closure(self):
         archive = self.worker / 'tasks/done/001.md'
         archive.parent.mkdir()
         self.identity.task_path.rename(archive)
-        self.commit('Archive without state')
-        self.refused('TASK_STATUS_REJECTED')
+        self.commit('Historical record under done')
+        result = owner_tasks_transitions.close_task(self.worker, '001')
+        self.assertEqual(result['record'], 'tasks/done/001.md')
+        self.assertTrue(archive.is_file())
         self.assertEqual(json.loads(cardine_cli.state_path(self.worker, '001').read_text())['status'], 'in_progress')
 
-    def test_done_and_invalid_state_refuse_without_archive(self):
+    def test_uncommitted_record_refuses_without_writes(self):
+        record = self.identity.task_path
+        record.write_text(record.read_text() + '\nUncommitted evidence.\n')
+        self.refused('WRONG_WORKTREE')
+
+    def test_done_and_invalid_state_refuse(self):
         path = cardine_cli.state_path(self.worker, '001')
         state = json.loads(path.read_text())
         state['transitions'].append(dict(state['transitions'][-1], **{'from': 'in_progress', 'to': 'done'}))
@@ -102,6 +109,18 @@ class TaskCloseTest(unittest.TestCase):
         self.commit('Invalid state')
         self.refused('TASK_STATE_INVALID')
 
+    def test_cancellation_writes_reason_in_state_and_keeps_the_record(self):
+        record = self.identity.task_path
+        before = record.read_bytes()
+        state = owner_tasks_transitions.transition_task_state(
+            self.worker, '001', 'cancelled', cancellation_authority='owner', reason='superseded')
+        self.assertEqual(state['status'], 'cancelled')
+        self.assertEqual(state['transitions'][-1]['reason'], 'superseded')
+        self.assertEqual(state['transitions'][-1]['authority'], 'owner')
+        self.assertEqual(state['transitions'][-2]['to'], 'in_progress')
+        self.assertEqual(record.read_bytes(), before)
+        self.assertFalse((self.worker / 'tasks/done').exists())
+
     def test_governed_refusal_names_transition_command(self):
         write_project_config(self.primary, "governed")
         write_project_config(self.worker, "governed")
@@ -111,19 +130,14 @@ class TaskCloseTest(unittest.TestCase):
         self.assertEqual(result['state']['status'], 'in_progress')
         self.assertEqual(result['state']['contract']['preset'], 'lean')
 
-    def test_resume_archived_done_with_staged_and_committed_closure(self):
+    def test_close_writes_nothing_so_resume_has_no_closure_records_to_commit(self):
         owner_tasks_transitions.close_task(self.worker, '001')
         before = self.snapshot()
         result = owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
-        self.assertFalse(result['started'])
-        self.assertEqual(result['next_action'], 'commit-closure-records')
+        self.assertEqual(result['status'], 'in_progress')
+        self.assertNotIn('next_action', result)
         self.assertEqual(self.snapshot(), before)
-        self.git('commit', '-qm', 'Commit closure')
-        before = self.snapshot()
-        result = owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
-        self.assertEqual(result['next_action'], 'worktree-advance')
-        self.assertEqual(self.snapshot(), before)
-        self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
+        self.assertEqual(self.git('status', '--porcelain'), '')
 
     def close_from(self, directory):
         os.chdir(directory)
@@ -132,8 +146,7 @@ class TaskCloseTest(unittest.TestCase):
         self.assertEqual(result['state']['status'], 'in_progress')
         self.assertEqual(result['state']['transitions'][-1]['commit'], self.git('rev-parse', 'HEAD^'))
         self.assertEqual(self.git('rev-parse', 'HEAD'), before)
-        self.assertEqual(set(self.git('diff', '--cached', '--name-only', '--no-renames').splitlines()),
-                         {'tasks/001.md', 'tasks/done/001.md'})
+        self.assertEqual(self.git('diff', '--cached', '--name-only'), '')
         self.assertEqual(self.git('diff', '--name-only'), '')
         self.assertEqual(Path.cwd(), directory.resolve())
 

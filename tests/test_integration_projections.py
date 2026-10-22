@@ -16,7 +16,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from cardine.integration import merge as owner_integration_merge
 from cardine.lifecycle import execution as owner_lifecycle_execution
 from cardine.tasks import preflight as owner_tasks_preflight
-from cardine.integration import projections as owner_integration_projections
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import storage as owner_worktree_storage
@@ -27,13 +26,6 @@ import worktree_support as support
 
 class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
     """Completion rows use the shipped Governed template's table shape."""
-
-    def complete(self, identity, *, required=False, verdict=None):
-        # This projection unit test supplies the already validated landed state.
-        state = json.loads((self.primary / ".cardine/tasks/056.json").read_text())
-        state["status"] = "done"
-        state.setdefault("review", {}).update(required=required, verdict=verdict)
-        return owner_integration_projections._apply_task_completion_rows(self.primary, identity, state)
 
     def test_governed_stage_succeeds_without_project_plan(self) -> None:
         prepared = self.prepare()
@@ -53,10 +45,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         }), encoding="utf-8")
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
-        self.assertIn(
-            "| done | NOT_REQUIRED |",
-            (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"),
-        )
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
@@ -98,12 +88,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        self.assertEqual(staged["completion"]["status"], "COMPLETED")
-        self.assertEqual(staged["completion"]["reason"], "task state is done")
-        self.assertIn(
-            "| done | REQUIRED |",
-            (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"),
-        )
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
@@ -136,32 +122,9 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        self.assertEqual(staged["completion"]["status"], "COMPLETED")
-        self.assertIn("done | NOT_REQUIRED", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
+        self.assertEqual(staged["landed_status"], "done")
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
-
-
-    def test_governed_spike_completion_and_archival_terminal_states(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        task = self.primary / "tasks/056-lifecycle.md"
-        task.write_text("# Task 056\n\n> **ID**: `056`\n\nClass: spike\nReview: NOT_REQUIRED\nStatus: done\n", encoding="utf-8")
-        contents = (
-            "### Phase 1 — Governed\n\n"
-            "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-            "|---:|---|---|---|---|---|---|\n"
-            "| 1 | 056 | P0 | queued | SPIKE | — | [056](056-lifecycle.md) |\n"
-        )
-        queue.write_text(contents.replace("| SPIKE |", "| NOT_REQUIRED |"), encoding="utf-8")
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        result = self.complete(identity)
-        self.assertEqual(result["status"], "COMPLETED")
-        self.assertIn("done | NOT_REQUIRED", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
-        inconclusive = contents.replace("queued", "in_progress")
-        retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            inconclusive, queue, self.primary / "tasks/QUEUE_ARCHIVE.md", "single"
-        )
-        self.assertEqual(retained, inconclusive)
-        self.assertIsNone(archive)
 
 
     def test_governed_spike_integrates_declared_validation_evidence(self) -> None:
@@ -228,7 +191,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         owner_integration_merge.finalize_task_integration("056", candidate, self.primary)
         self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
         self.assertEqual((self.primary / "docs/answer.md").read_bytes(), (worktree / "docs/answer.md").read_bytes())
-        self.assertIn("done | SPIKE", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text(encoding="utf-8"))
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
 
 
     def test_spike_path_allowlist_stays_exact_and_does_not_restrict_normal_tasks(self) -> None:
@@ -295,100 +258,6 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.assertFalse(staged.exists())
 
 
-    def test_governed_completion_matrix_relinks_archives_and_ignores_plan(self) -> None:
-        statuses = ("queued", "in_progress", "in_review", "done")
-        links = {
-            "active": "[056](056-lifecycle.md)",
-            "archived": "[056](done/056-lifecycle.md)",
-            "absent": "—",
-        }
-        for status in statuses:
-            for link_name, link in links.items():
-                for archived_record in (False, True):
-                    for plan_present in (False, True):
-                        with self.subTest(status=status, link=link_name, archived=archived_record, plan=plan_present):
-                            queue = self.primary / "tasks/QUEUE.md"
-                            queue.write_text(
-                                "### Phase 1 — Governed\n\n"
-                                "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-                                "|---:|---|---|---|---|---|---|\n"
-                                f"| 1 | 056 | P0 | {status} | NOT_REQUIRED | — | {link} |\n"
-                                "| 2 | 057 | P1 | queued | NOT_REQUIRED | — | [057](057.md) |\n",
-                                encoding="utf-8",
-                            )
-                            plan = self.primary / "PROJECT_PLAN.md"
-                            if plan_present:
-                                plan.write_text("unrelated plan\n", encoding="utf-8")
-                            elif plan.exists():
-                                plan.unlink()
-                            active = self.primary / "tasks/056-lifecycle.md"
-                            done = self.primary / "tasks/done/056-lifecycle.md"
-                            done.parent.mkdir(exist_ok=True)
-                            if not active.exists():
-                                done.rename(active)
-                            identity = owner_tasks_identity.resolve_task_identity(
-                                self.primary, "056", "existing", check_queue_links=False
-                            )
-                            if archived_record:
-                                active.rename(done)
-                            self.complete(identity)
-                            row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
-                            self.assertIn("| done | NOT_REQUIRED |", row)
-                            if link_name != "absent":
-                                expected_link = "done/056-lifecycle.md" if archived_record else "056-lifecycle.md"
-                                self.assertIn(f"[056]({expected_link})", row)
-                            self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
-
-
-    def test_governed_required_review_is_not_accepted(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        original = queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "REQUIRED")
-        queue.write_text(original, encoding="utf-8")
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-            self.complete(identity, required=True)
-        self.assertEqual(queue.read_text(encoding="utf-8"), original)
-
-
-    def test_governed_required_review_uses_the_latest_attempt(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        queue.write_text(
-            queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "REQUIRED")
-            + "| 2 | 057 | P1 | queued | NOT_REQUIRED | — | [057](057.md) |\n",
-            encoding="utf-8",
-        )
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        review = identity.review_path
-        review.parent.mkdir(exist_ok=True)
-        cases = {
-            "approve": "## Attempt 1 — APPROVE\n",
-            "changes requested": "## Attempt 1 — CHANGES_REQUESTED\n",
-            "blocked": "## Attempt 1 — BLOCKED\n",
-            "latest wins": "## Attempt 1 — APPROVE\n\n## Attempt 2 — CHANGES_REQUESTED\n",
-            "missing": None,
-            "malformed": "review pending\n",
-        }
-        for label, record in cases.items():
-            with self.subTest(label=label):
-                queue.write_text(queue.read_text(encoding="utf-8").replace("done", "queued"), encoding="utf-8")
-                if record is None:
-                    review.unlink(missing_ok=True)
-                else:
-                    review.write_text(record, encoding="utf-8")
-                if label == "approve":
-                    result = self.complete(identity, required=True, verdict="APPROVE")
-                else:
-                    with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-                        self.complete(identity, required=True, verdict="CHANGES_REQUESTED")
-                row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
-                if label == "approve":
-                    self.assertIn("| done | REQUIRED |", row)
-                    self.assertEqual(result["status"], "COMPLETED")
-                else:
-                    self.assertIn("| queued | REQUIRED |", row)
-                    self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
-
-
     def test_owner_accept_text_uses_command_and_legacy_approve_attempt_is_supported(self) -> None:
         workflow = (ROOT / "templates/single/docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")
         record_template = (ROOT / "templates/single/docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
@@ -399,139 +268,3 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         heading = re.search(r"^## Attempt <N> — <(.+?)>$", record_template, re.MULTILINE)
         self.assertIsNotNone(heading)
         self.assertIn("APPROVE", heading.group(1))
-        queue = self.primary / "tasks/QUEUE.md"
-        queue.write_text(
-            queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "REQUIRED")
-            + "| 2 | 057 | P1 | queued | NOT_REQUIRED | — | [057](057.md) |\n",
-            encoding="utf-8",
-        )
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        identity.review_path.parent.mkdir(exist_ok=True)
-        identity.review_path.write_text(
-            "# Review Record — 056\n\n## Attempt 1 — CHANGES_REQUESTED\n\n- [x] P1 — fixed\n\n"
-            "## Attempt 2 — APPROVE\n\n- Approved by: owner\n- Reviewed commit: `abc`\n- Base `main` commit: `def`\n",
-            encoding="utf-8",
-        )
-        result = self.complete(identity, required=True, verdict="APPROVE")
-        row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
-        self.assertEqual(result["status"], "COMPLETED")
-        self.assertIn("| done | REQUIRED |", row)
-
-
-    def test_required_review_relinks_an_archived_task_without_accepting(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        queue.write_text(
-            "### Phase 1 — Governed\n\n| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-            "|---:|---|---|---|---|---|---|\n"
-            "| 1 | 056 | P0 | queued | REQUIRED | — | [056](056-lifecycle.md) |\n"
-            "| 2 | 057 | P1 | queued | NOT_REQUIRED | — | [057](057.md) |\n",
-            encoding="utf-8",
-        )
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-        archived = self.primary / "tasks/done/056-lifecycle.md"
-        archived.parent.mkdir(exist_ok=True)
-        identity.task_path.rename(archived)
-        with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-            self.complete(identity, required=True)
-        row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
-        self.assertIn("| queued | REQUIRED |", row)
-        self.assertIn("[056](056-lifecycle.md)", row)
-        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
-
-
-    def test_governed_archive_requires_every_row_accepted(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        queue.write_text(
-            "### Phase 1 — Governed\n\n"
-            "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-            "|---:|---|---|---|---|---|---|\n"
-            "| 1 | 056 | P0 | queued | NOT_REQUIRED | — | [056](056-lifecycle.md) |\n"
-            "| 2 | 057 | P1 | queued | NOT_REQUIRED | — | [057](057.md) |\n",
-            encoding="utf-8",
-        )
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        self.complete(identity)
-        self.assertIn("| done |", queue.read_text(encoding="utf-8"))
-        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
-
-
-    def test_governed_unrecognized_status_is_replaced_from_state(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        original = queue.read_text(encoding="utf-8").replace("| 1 | 056 | P0 | queued |", "| 1 | 056 | P0 | UNKNOWN |")
-        queue.write_text(original, encoding="utf-8")
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        self.assertEqual(self.complete(identity)["source"], "machine")
-        self.assertNotIn("UNKNOWN", queue.read_text())
-        self.assertIn("| done |", (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
-
-
-    def test_governed_project_shaped_queue_updates_only_status_and_is_not_archived(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        original = (
-            "## Milestone 37 — Causes — complete\n\n"
-            "| Order | Estimate | Status | Dependencies | ID | Priority |\n"
-            "|---:|---|---|---|---|---|\n"
-            "| 2 | 60–90m | queued | — | `056` | P0 |\n"
-        )
-        queue.write_text(original, encoding="utf-8")
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-        task = identity.task_path
-        task.write_text("# Task 056\n\nReview: NOT REQUIRED\n", encoding="utf-8")
-        result = self.complete(identity)
-        expected = original.replace("queued", "done")
-        self.assertEqual(queue.read_text(encoding="utf-8"), "\n")
-        self.assertIn(expected.strip(), (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
-        self.assertEqual(result["status"], "COMPLETED")
-        self.assertTrue((self.primary / "tasks/QUEUE_ARCHIVE.md").is_file())
-
-
-    def test_governed_project_shaped_queue_uses_review_column_in_any_position(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        original = (
-            "#### Milestone 37\n\n"
-            "| ID | Review | Estimate | Status | Dependencies |\n"
-            "|---|---|---|---|---|\n"
-            "| 056 | REQUIRED | 60–90m | queued | — |\n"
-        )
-        queue.write_text(original, encoding="utf-8")
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-        with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED REVIEW_NOT_APPROVED:"):
-            self.complete(identity, required=True)
-        self.assertEqual(queue.read_text(encoding="utf-8"), original)
-        identity.review_path.parent.mkdir(exist_ok=True)
-        identity.review_path.write_text("## Attempt 1 — APPROVE\n", encoding="utf-8")
-        result = self.complete(identity, required=True, verdict="APPROVE")
-        self.assertEqual(result["status"], "COMPLETED")
-        self.assertEqual(queue.read_text(encoding="utf-8"), "\n")
-        self.assertIn(original.replace("queued", "done").strip(), (self.primary / "tasks/QUEUE_ARCHIVE.md").read_text())
-
-
-    def test_governed_project_shaped_queue_rejects_ambiguous_or_invalid_rows(self) -> None:
-        cases = {
-            "missing status": (
-                "### Milestone\n\n| ID | Estimate |\n|---|---|\n| 056 | 60m |\n",
-                "no table header has both ID and Status columns",
-            ),
-            "duplicate": (
-                "### One\n\n| ID | Status |\n|---|---|\n| 056 | queued |\n\n"
-                "### Two\n\n| ID | Status |\n|---|---|\n| 056 | queued |\n",
-                "appears 2 times",
-            ),
-            "cell count": (
-                "### Milestone\n\n| ID | Status | Estimate |\n|---|---|---|\n| 056 | queued |\n",
-                "cell count differs",
-            ),
-        }
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-        queue = self.primary / "tasks/QUEUE.md"
-        for label, (contents, message) in cases.items():
-            with self.subTest(label=label):
-                queue.write_text(contents, encoding="utf-8")
-                with self.assertRaisesRegex(shared_errors.CardineError, message):
-                    self.complete(identity)
-                self.assertEqual(queue.read_text(encoding="utf-8"), contents)
-
-
-
-if __name__ == "__main__":
-    unittest.main()

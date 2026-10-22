@@ -51,7 +51,7 @@ from cardine.shared import project as shared_project
 from cardine.shared.paths import SCRIPTS_ROOT
 from cardine.tasks.state import TaskStateInvalid, machine, read_task_state, state_path, validate_task_state
 from cardine.shared.console_workflow import latest_review_verdict, record_review
-from cardine.integration.projections import _completed_task_row, _queue_task_rows, _QUEUE_TABLE_DIVIDER, _QUEUE_TASK_ROW, _QUEUE_ARCHIVE_HEADER, _GOVERNED_QUEUE_ARCHIVE_HEADER, _GOVERNED_QUEUE_TASK_ROW, _GOVERNED_QUEUE_STATUSES, _MARKDOWN_HEADING, _governed_completion_error, _governed_completion_row, _queue_section_ranges, _queue_section_completion, _STATE_TERMINAL_STATUSES, QueueStateResolver, _queue_state_resolver, _queue_unidentified_tables, _queue_section_decisions, _archive_completed_queue_sections, _queue_archival_warnings, _relink_archived_task_row, _apply_task_completion_rows
+from cardine.integration.projections import _queue_task_rows
 from cardine.release.update import fetch_latest_release, run_self_update, claude_user_settings_path, plugin_marketplace_ref, plugin_ref_report, run_self_check
 from cardine.review.verdict import record_review_verdict, _review_verdict_projection, _review_attempt_text
 from cardine.shared.context import _context_path_references, _context_relative_references, _context_phase_reads, _context_router, _context_routed_workflow, _context_file_record, _context_configuration, _context_threshold, context_router_files, context_size_report, format_context_size_report

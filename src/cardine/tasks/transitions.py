@@ -68,36 +68,23 @@ def transition_task_state(project_root: Path, task_id: str, status: str, *, canc
 
 
 def close_task(project_root: Path, task_id: str) -> dict[str, object]:
-    """Stage the exact record archive, leaving status in_progress until landing."""
+    """Verify closure from committed records; the record stays at its path and landing writes done."""
     project_root = project_root.resolve()
     _execution_worktree(project_root, task_id, command=("task", "close"))
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
-    record_path = identity.task_path
-    if record_path.parent.name == "done":
-        raise stop_error("TASK_STATUS_REJECTED", "record is already archived; use cardine worktree advance",
-                         task_id=task_id, project=project_root)
-    archive = record_path.parent / "done" / record_path.name
-    if archive.exists():
-        raise stop_error("TASK_STATUS_REJECTED", "exact archive path already exists; inspect the task record before retrying task close",
-                         task_id=task_id, project=project_root)
-    handoff = identity.handoff_path.relative_to(project_root).as_posix()
-    if not identity.handoff_path.is_file() or _run_git(project_root, "cat-file", "-e", f"HEAD:{handoff}").returncode:
-        raise stop_error("HANDOFF_REPORT_MISSING", "task close requires a committed handoff; commit it before cardine task close",
-                         task_id=task_id, project=project_root)
-    path = state_path(project_root, task_id)
+    for label, path in (("task record", identity.task_path), ("handoff", identity.handoff_path)):
+        relative = path.relative_to(project_root).as_posix()
+        if not path.is_file() or _run_git(project_root, "cat-file", "-e", f"HEAD:{relative}").returncode:
+            code = "HANDOFF_REPORT_MISSING" if label == "handoff" else "TASK_STATUS_REJECTED"
+            raise stop_error(code, f"task close requires a committed {label}; commit it before cardine task close",
+                             task_id=task_id, project=project_root)
     state = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)
     if state["status"] != "in_progress":
         raise stop_error("TASK_STATUS_REJECTED", "closure requires in_progress; done is written by landing",
                          task_id=task_id, project=project_root)
-    archive.parent.mkdir(parents=True, exist_ok=True)
-    record_path.rename(archive)
-    staged = _run_git(project_root, "add", "--", record_path.relative_to(project_root).as_posix(),
-                      archive.relative_to(project_root).as_posix(), path.relative_to(project_root).as_posix())
-    if staged.returncode:
-        raise CardineError(f"could not stage closure records: {staged.stderr.strip()}")
-    return {"task_id": task_id, "state": state, "archive": archive.relative_to(project_root).as_posix(),
-            "staged": True, "committed": False}
+    return {"task_id": task_id, "state": state, "record": identity.task_path.relative_to(project_root).as_posix(),
+            "verified": True, "staged": False, "committed": False}
 
 
 def record_spike_outcome(project_root: Path, task_id: str, outcome: str) -> dict[str, object]:

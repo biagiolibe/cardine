@@ -16,7 +16,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from cardine.integration import merge as owner_integration_merge
 from cardine.integration import evidence as owner_integration_evidence
-from cardine.integration import projections as owner_integration_projections
 import cardine.integration.decision as integration_decision
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
@@ -216,7 +215,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         )
         plan = self.primary / "PROJECT_PLAN.md"
         plan.write_text(
-            plan.read_text(encoding="utf-8") + "- `[ ]` 999 — Registered\n",
+            plan.read_text(encoding="utf-8") + "\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n",
             encoding="utf-8",
         )
         self.git("add", "tasks/QUEUE.md", "PROJECT_PLAN.md")
@@ -233,12 +232,14 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "BOUNDED")
-        self.assertIn("| `[x]` | 056 | Lifecycle |", queue.read_text(encoding="utf-8"))
-        self.assertIn("- `[x]` 056 — Lifecycle", plan.read_text(encoding="utf-8"))
+        self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
+        self.assertIn("cardine status --write", queue.read_text(encoding="utf-8"))
+        self.assertNotIn("Registered", queue.read_text(encoding="utf-8"))
+        self.assertIn("| done | 056 |", plan.read_text(encoding="utf-8"))
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
-    def test_stage_reports_an_unreadable_queue_section_without_changing_the_tree(self) -> None:
+    def test_stage_reports_stale_views_and_keeps_a_hand_written_queue(self) -> None:
         prepared = self.prepare()
         task_worktree = Path(str(prepared["worktree"]))
         (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
@@ -265,65 +266,13 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         }), encoding="utf-8")
 
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.assertNotIn("archival", staged)
+        self.assertEqual(staged["views"]["status"], "STALE")
         self.assertEqual(len(staged["warnings"]), 1)
-        self.assertIn("## Phase 2 — Unreadable", staged["warnings"][0])
-        report = {item["section"]: item for item in staged["archival"]}
-        self.assertFalse(report["## Phase 2 — Unreadable"]["archive"])
-        self.assertTrue(report["## Phase 2 — Unreadable"]["reason"])
+        self.assertIn("cardine status --write", staged["warnings"][0])
         self.assertIn(unreadable, queue.read_text(encoding="utf-8"))
+        self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
-
-
-    def test_queue_archival_warnings_name_the_unrecognized_section_and_reason(self) -> None:
-        issue_example = (
-            "## Phase 2 — Wrong level\n\n"
-            "| Status | ID | Title | Dependencies | Estimate |\n|---|---|---|---|---|\n"
-            "| `[x]` | 090 | Done | — | 1h |\n"
-        )
-        warnings = owner_integration_projections._queue_archival_warnings(issue_example)
-        self.assertEqual(len(warnings), 1)
-        self.assertIn("## Phase 2 — Wrong level", warnings[0])
-        self.assertIn("heading level 2", warnings[0])
-        column_order = (
-            "### Phase 3 — Column order\n\n"
-            "| ID | Status | Title |\n|---|---|---|\n| 090 | `[x]` | Done |\n"
-        )
-        warnings = owner_integration_projections._queue_archival_warnings(column_order)
-        self.assertEqual(len(warnings), 1)
-        self.assertIn("### Phase 3 — Column order", warnings[0])
-        self.assertIn("expected columns", warnings[0])
-
-
-    def test_queue_archival_warnings_ignore_recognized_sections_and_tables_without_status(self) -> None:
-        contents = (
-            "### Phase 1 — Open\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n| `[x]` | 056 | Lifecycle |\n\n"
-            "#### Nested\n\n| Status | ID |\n|---|---|\n| `[ ]` | 057 |\n"
-        )
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents), [])
-        notes = "## Notes\n\n| Term | Meaning |\n|---|---|\n| a | b |\n"
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(notes), [])
-
-
-    def test_queue_archival_warnings_report_a_section_held_open_by_inconclusive(self) -> None:
-        header = (
-            "### Phase 1 — Governed\n\n"
-            "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-            "|---:|---|---|---|---|---|---|\n"
-        )
-        held = header + (
-            "| 1 | 056 | P0 | in_progress | SPIKE | — | [056](056.md) |\n"
-            "| 2 | 057 | P0 | done | NOT_REQUIRED | — | [057](057.md) |\n"
-        )
-        warnings = owner_integration_projections._queue_archival_warnings(held, "single")
-        self.assertEqual(warnings, [])
-        queued = held.replace("done", "queued")
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(queued, "single"), [])
-        retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            held, self.primary / "tasks/QUEUE.md", self.primary / "tasks/QUEUE_ARCHIVE.md", "single"
-        )
-        self.assertEqual(retained, held)
-        self.assertIsNone(archive)
 
 
     def test_stage_uses_the_declared_project_plan(self) -> None:
@@ -332,6 +281,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         (self.primary / "PROJECT_PLAN.md").rename(plan)
         declaration = self.primary / ".cardine/project.json"
         declaration.write_text(json.dumps({"version": 1, "preset": "lean", "locations": {"plan": "docs/PLAN.md"}}), encoding="utf-8")
+        plan.write_text("Narrative.\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n", encoding="utf-8")
         self.git("add", "-A")
         self.git("commit", "-m", "declare custom project plan")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()
@@ -353,13 +303,14 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         }), encoding="utf-8")
 
         owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        self.assertIn("- `[x]` 056 — Lifecycle", plan.read_text(encoding="utf-8"))
+        self.assertIn("| done | 056 |", plan.read_text(encoding="utf-8"))
+        self.assertTrue(plan.read_text(encoding="utf-8").startswith("Narrative.\n"))
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
         self.assertIn("docs/PLAN.md", self.git("diff", "--cached", "--name-only").stdout.splitlines())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
-    def test_stage_accepts_exact_task_record_archive_after_validation(self) -> None:
+    def test_stage_accepts_record_and_handoff_changes_after_validation(self) -> None:
         prepared = self.prepare()
         task_worktree = Path(str(prepared["worktree"]))
         (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
@@ -367,17 +318,12 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         validated_task = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
 
-        queue = task_worktree / "tasks/QUEUE.md"
-        queue.write_text(queue.read_text(encoding="utf-8").replace("`[ ]`", "`[x]`"), encoding="utf-8")
-        plan = task_worktree / "PROJECT_PLAN.md"
-        plan.write_text("- `[x]` 056 — Lifecycle\n", encoding="utf-8")
+        record = task_worktree / "tasks/056-lifecycle.md"
+        record.write_text(record.read_text(encoding="utf-8") + "\nValidation evidence.\n", encoding="utf-8")
         handoff = task_worktree / "tasks/handoffs/056.md"
         handoff.parent.mkdir()
         handoff.write_text("validated\n", encoding="utf-8")
-        archive = task_worktree / "tasks/done"
-        archive.mkdir()
-        self.git("mv", "tasks/056-lifecycle.md", "tasks/done/056-lifecycle.md", cwd=task_worktree)
-        self.git("add", "tasks/QUEUE.md", "PROJECT_PLAN.md", "tasks/handoffs/056.md", cwd=task_worktree)
+        self.git("add", "tasks/056-lifecycle.md", "tasks/handoffs/056.md", cwd=task_worktree)
         self.git("commit", "-m", "close task", cwd=task_worktree)
 
         evidence_path = self.root / "integration-evidence.json"
@@ -397,47 +343,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
-        owner_integration_merge.abort_task_integration("056", self.primary)
-
-
-    def test_stage_relinks_the_queue_row_to_the_archived_task_record(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        queue.write_text(
-            "| Status | ID | Title | Task file |\n|---|---|---|---|\n"
-            "| `[ ]` | 056 | Lifecycle | [056](056-lifecycle.md) |\n",
-            encoding="utf-8",
-        )
-        self.git("add", "tasks/QUEUE.md")
-        self.git("commit", "-m", "link the task row")
-        base = self.git("rev-parse", "HEAD").stdout.strip()
-        prepared = self.prepare()
-        task_worktree = Path(str(prepared["worktree"]))
-        (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
-        self.git("add", "feature.txt", cwd=task_worktree)
-        self.git("commit", "-m", "implement task", cwd=task_worktree)
-        validated_task = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        (task_worktree / "tasks/done").mkdir()
-        self.git("mv", "tasks/056-lifecycle.md", "tasks/done/056-lifecycle.md", cwd=task_worktree)
-        self.git("commit", "-m", "archive task record", cwd=task_worktree)
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True,
-            "validation_passed": True,
-            "validated_task_commit": validated_task,
-            "validated_base_commit": base,
-            "full_validation_required": False,
-            "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"],
-            "task_dependencies": [],
-            "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-
-        owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        row = [line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line][0]
-        self.assertEqual(row, "| `[x]` | 056 | Lifecycle | [056](done/056-lifecycle.md) |")
-        self.assertTrue((self.primary / "tasks/done/056-lifecycle.md").is_file())
+        self.assertTrue((self.primary / "tasks/056-lifecycle.md").is_file())
+        self.assertFalse((self.primary / "tasks/done").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
@@ -448,9 +355,12 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         invalid_diffs = {
             "deletion": f"D\0{active}\0",
             "separate archive addition": f"A\0{archive}\0",
-            "changed-content rename": f"R099\0{active}\0{archive}\0",
-            "wrong archive destination": f"R100\0{active}\0tasks/done/other.md\0",
+            "exact archive move": f"D\0{active}\0A\0{archive}\0",
+            "wrong archive destination": f"D\0{active}\0A\0tasks/done/other.md\0",
             "different task path": "A\0tasks/done/057-other.md\0",
+            "queue edit": "M\0tasks/QUEUE.md\0",
+            "plan edit": "M\0PROJECT_PLAN.md\0",
+            "queue archive": "A\0tasks/QUEUE_ARCHIVE.md\0",
         }
         for label, diff in invalid_diffs.items():
             with self.subTest(label=label), mock.patch.object(
@@ -466,192 +376,11 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
                 )
                 self.assertFalse(unchanged)
                 self.assertTrue(offending)
-
-
-    def test_completion_rows_reject_unknown_shape_without_editing_queue(self) -> None:
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        queue = self.primary / "tasks/QUEUE.md"
-        original_queue = queue.read_text(encoding="utf-8")
-        (self.primary / "PROJECT_PLAN.md").write_text("Task 056: TODO\n", encoding="utf-8")
-
-        with self.assertRaisesRegex(shared_errors.CardineError, r"unrecognized completion row"):
-            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
-
-        self.assertEqual(queue.read_text(encoding="utf-8"), original_queue)
-
-
-    def test_completion_rows_archive_a_closing_phase_and_create_the_archive(self) -> None:
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        queue = self.primary / "tasks/QUEUE.md"
-        queue.write_text(
-            "### Phase 1 — Closing\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
-            encoding="utf-8",
-        )
-        from task_contract_support import write_state
-        write_state(self.primary, "056", "done", review_required=False)
-        owner_integration_projections._apply_task_completion_rows(self.primary, identity)
-        archive = self.primary / "tasks/QUEUE_ARCHIVE.md"
-        self.assertEqual(queue.read_text(encoding="utf-8"), "\n")
-        self.assertIn("### Phase 1 — Closing", archive.read_text(encoding="utf-8"))
-        self.assertIn("| `[x]` | 056 | Lifecycle |", archive.read_text(encoding="utf-8"))
-
-
-    def test_archival_checks_all_tables_and_nested_rows_in_both_modes(self) -> None:
-        for mode in ("single", "single"):
-            if mode == "single":
-                header = "| Status | ID | Title |\n|---|---|---|\n"
-                closed = "| `[x]` | A | Done |\n"
-                terminals = ("[x]",)
-                open_states = ("[ ]", "[/]")
-                row = lambda status: f"| `{status}` | B | Other |\n"
-            else:
-                header = "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n|---|---|---|---|---|---|---|\n"
-                closed = "| 1 | A | P0 | done | NOT_REQUIRED | — | A.md |\n"
-                terminals = ("done", "done")
-                open_states = ("queued", "in_progress", "CHANGES_REQUESTED", "in_review", "in_progress")
-                row = lambda status: f"| 2 | B | P0 | {status} | SPIKE | — | B.md |\n"
-            for nested in ("", "#### Nested\n", "##### Deep\n"):
-                for status in terminals + open_states:
-                    with self.subTest(mode=mode, nested=nested, status=status):
-                        contents = "### Phase\n" + header + closed + "\n" + nested + header + row(status)
-                        retained, archive = owner_integration_projections._archive_completed_queue_sections(
-                            contents, self.primary / "custom/QUEUE.md", self.primary / "archive.md", mode
-                        )
-                        if status in terminals:
-                            self.assertEqual(retained, "\n")
-                            self.assertEqual((archive or "").count(closed), 1)
-                            self.assertEqual((archive or "").count(row(status)), 1)
-                        else:
-                            self.assertEqual(retained, contents)
-                            self.assertIsNone(archive)
-                for malformed in (header + row("UNKNOWN"), header.splitlines()[0] + "\n", header + row(terminals[0]).replace(" | B |", " | B | extra |")):
-                    contents = "### Ambiguous\n" + header + closed + "\n" + nested + malformed
-                    retained, archive = owner_integration_projections._archive_completed_queue_sections(
-                        contents, self.primary / "QUEUE.md", self.primary / "archive.md", mode
-                    )
-                    self.assertEqual(retained, contents)
-                    self.assertIsNone(archive)
-                    warnings = owner_integration_projections._queue_archival_warnings(contents, mode)
-                    self.assertEqual(len(warnings), 1)
-                    self.assertIn("### Ambiguous", warnings[0])
-
-
-    def test_archival_mixed_boundaries_do_not_duplicate_nested_content(self) -> None:
-        table = "| Status | ID | Title |\n|---|---|---|\n| `[x]` | A | Done |\n"
-        contents = "# Queue\n## Parent\n### One\n" + table + "#### Notes\nText\n### Two\n" + table + "# Later\nKeep me\n"
-        retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            contents, self.primary / "QUEUE.md", self.primary / "archive.md"
-        )
-        self.assertEqual(retained, "# Queue\n## Parent\n# Later\nKeep me\n")
-        self.assertEqual((archive or "").count("#### Notes"), 1)
-        self.assertEqual((archive or "").count(table), 2)
-        self.assertNotIn("Keep me", archive or "")
-        self.assertEqual(owner_integration_projections._queue_archival_warnings(contents), [])
-
-
-    def test_issue_8_archival_does_not_carry_later_open_phase(self) -> None:
-        contents = (
-            "## Phase A\n### Completed\n"
-            "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-            "|---|---|---|---|---|---|---|\n"
-            "| 1 | A | P0 | done | NOT_REQUIRED | — | A.md |\n"
-            "## Phase B\n"
-            "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
-            "|---|---|---|---|---|---|---|\n"
-            "| 1 | B-SPIKE | P0 | queued | SPIKE | — | B.md |\n"
-        )
-        retained, archive = owner_integration_projections._archive_completed_queue_sections(
-            contents, self.primary / "docs/QUEUE.md", self.primary / "archive.md", "single"
-        )
-        self.assertIn("B-SPIKE", retained)
-        self.assertNotIn("B-SPIKE", archive or "")
-        self.assertIn("A.md", archive or "")
-        self.assertNotIn("tasks/QUEUE.md", archive or "")
-        warnings = owner_integration_projections._queue_archival_warnings(contents, "single")
-        self.assertEqual(len(warnings), 1)
-        self.assertIn("## Phase B", warnings[0])
-
-
-    def test_completed_queue_archival_leaves_an_open_phase_in_place(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        contents = (
-            "### Phase 1 — Open\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n"
-            "| `[x]` | 056 | Lifecycle |\n| `[ ]` | 057 | Follow-up |\n"
-        )
-        queue.write_text(contents, encoding="utf-8")
-        archived, archive_contents = owner_integration_projections._archive_completed_queue_sections(
-            contents, queue, self.primary / "tasks/QUEUE_ARCHIVE.md"
-        )
-        self.assertEqual(archived, contents)
-        self.assertIsNone(archive_contents)
-
-
-    def test_completion_rows_complete_an_in_progress_task(self) -> None:
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        queue = self.primary / "tasks/QUEUE.md"
-        plan = self.primary / "PROJECT_PLAN.md"
-        queue.write_text(
-            queue.read_text(encoding="utf-8").replace("`[ ]`", "`[/]`"), encoding="utf-8"
-        )
-        plan.write_text("- `[/]` 056 — Lifecycle\n", encoding="utf-8")
-        owner_integration_projections._apply_task_completion_rows(self.primary, identity)
-        self.assertIn("| `[x]` | 056 | Lifecycle |", queue.read_text(encoding="utf-8"))
-        self.assertEqual(plan.read_text(encoding="utf-8"), "- `[x]` 056 — Lifecycle\n")
-
-
-    def test_completed_queue_archival_keeps_a_section_with_an_in_progress_row(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        contents = (
-            "### Phase 1 — Open\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n"
-            "| `[x]` | 056 | Lifecycle |\n| `[/]` | 057 | Follow-up |\n"
-        )
-        queue.write_text(contents, encoding="utf-8")
-        archived, archive_contents = owner_integration_projections._archive_completed_queue_sections(
-            contents, queue, self.primary / "tasks/QUEUE_ARCHIVE.md"
-        )
-        self.assertEqual(archived, contents)
-        self.assertIsNone(archive_contents)
-
-
-    def test_completed_queue_archival_is_idempotent_on_rerun(self) -> None:
-        queue = self.primary / "tasks/QUEUE.md"
-        contents = (
-            "### Phase 1 — Closing\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n| `[x]` | 056 | Lifecycle |\n"
-        )
-        archived, archive_contents = owner_integration_projections._archive_completed_queue_sections(
-            contents, queue, self.primary / "tasks/QUEUE_ARCHIVE.md"
-        )
-        archive = self.primary / "tasks/QUEUE_ARCHIVE.md"
-        archive.write_text(archive_contents or "", encoding="utf-8")
-        repeated_queue, repeated_archive = owner_integration_projections._archive_completed_queue_sections(
-            archived, queue, archive
-        )
-        self.assertEqual(repeated_queue, archived)
-        self.assertIsNone(repeated_archive)
-
-
-    def test_completion_rows_retain_ambiguous_archival_section_with_warning(self) -> None:
-        identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
-        queue = self.primary / "tasks/QUEUE.md"
-        contents = (
-            "### Phase 1 — Current\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n\n"
-            "### Phase 2 — Malformed\n\n"
-            "| Status | ID | Title |\n|---|---|---|\n| [x] | 057 | Malformed status |\n"
-        )
-        queue.write_text(contents, encoding="utf-8")
-        result = owner_integration_projections._apply_task_completion_rows(self.primary, identity)
-        retained = queue.read_text(encoding="utf-8")
-        self.assertEqual(result["status"], "COMPLETED")
-        self.assertIn(contents[contents.index("### Phase 2"):], retained)
-        warnings = owner_integration_projections._queue_archival_warnings(retained)
-        self.assertEqual(len(warnings), 1)
-        self.assertIn("### Phase 2 — Malformed", warnings[0])
-        self.assertIn("unrecognized task row", warnings[0])
+        valid = f"M\0{active}\0A\0tasks/handoffs/056.md\0M\0.cardine/tasks/056.json\0"
+        with mock.patch.object(owner_integration_evidence, "_run_git",
+                               return_value=subprocess.CompletedProcess([], 0, valid, "")):
+            self.assertEqual(owner_integration_evidence._lifecycle_changes_after_validation(
+                self.primary, identity, "validated", "current"), (True, ()))
 
 
     def test_stage_blocks_invalid_archive_before_creating_lifecycle_state(self) -> None:
@@ -736,48 +465,3 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
         decision = self.validation_decision(task_commit, assessment_complete=False)
         self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BLOCKED)
-
-
-    def test_lean_completion_matrix_handles_links_records_and_plan_rows(self) -> None:
-        links = {"active": "[056](056-lifecycle.md)", "archived": "[056](done/056-lifecycle.md)", "absent": "—"}
-        for status in ("[ ]", "[/]", "[x]"):
-            for link_name, link in links.items():
-                for archived_record in (False, True):
-                    for plan_present in (False, True):
-                        with self.subTest(status=status, link=link_name, archived=archived_record, plan=plan_present):
-                            queue = self.primary / "tasks/QUEUE.md"
-                            queue.write_text(
-                                "### Phase 1 — Lean\n\n| Status | ID | Title | Task file |\n|---|---|---|---|\n"
-                                f"| `{status}` | 056 | Lifecycle | {link} |\n"
-                                "| `[ ]` | 057 | Follow-up | [057](057.md) |\n",
-                                encoding="utf-8",
-                            )
-                            plan = self.primary / "PROJECT_PLAN.md"
-                            if plan_present:
-                                plan.write_text("- `[ ]` 056 — Lifecycle\n", encoding="utf-8")
-                            elif plan.exists():
-                                plan.unlink()
-                            active = self.primary / "tasks/056-lifecycle.md"
-                            done = self.primary / "tasks/done/056-lifecycle.md"
-                            done.parent.mkdir(exist_ok=True)
-                            if not active.exists():
-                                done.rename(active)
-                            identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing", check_queue_links=False)
-                            if archived_record:
-                                active.rename(done)
-                            if not plan_present:
-                                with self.assertRaisesRegex(shared_errors.CardineError, "unrecognized completion row"):
-                                    owner_integration_projections._apply_task_completion_rows(self.primary, identity)
-                                continue
-                            owner_integration_projections._apply_task_completion_rows(self.primary, identity)
-                            row = next(line for line in queue.read_text(encoding="utf-8").splitlines() if "| 056 |" in line)
-                            self.assertIn("| `[x]` | 056 |", row)
-                            if link_name != "absent":
-                                expected = "done/056-lifecycle.md" if archived_record else "056-lifecycle.md"
-                                self.assertIn(f"[056]({expected})", row)
-                            self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
-
-
-
-if __name__ == "__main__":
-    unittest.main()
