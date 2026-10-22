@@ -509,11 +509,11 @@ worktree before the branch only after validated integration succeeds.
 
         upgraded_report = report.read_text(encoding="utf-8")
         self.assertIn("capability=task-worktree-handoff v2", upgraded_report)
-        self.assertIn("created after this report", upgraded_report)
+        self.assertNotIn("Current task commit", upgraded_report)
         self.assertIn("Consumer-owned handoff note.", upgraded_report)
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
         self.assertIn("capability=task-worktree-review-procedure v2", upgraded_review)
-        self.assertIn("resolve it to the registered task branch `HEAD`", upgraded_review)
+        self.assertIn("base commit exists and is an ancestor of `HEAD`", " ".join(upgraded_review.split()))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.55")
         self.assertEqual(manifest["appliedMigrations"][-1], "018-synthetic-handoff")
