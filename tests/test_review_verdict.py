@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, freeze_record
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +32,7 @@ class ReviewVerdictTest(unittest.TestCase):
         self.review = self.root / "tasks/reviews/001.md"
         self.path.parent.mkdir(parents=True)
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "single", "status": "queued", "transitions": []}))
+        freeze_record(self.root, "001")
         self.git("init", "-q", "-b", "main")
         self.commit()
         self.git("switch", "-qc", "task-001")

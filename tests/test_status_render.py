@@ -1,4 +1,5 @@
 """Generated queue and plan status region: read-only default, atomic explicit write."""
+from task_contract_support import freeze_record
 import json
 import os
 import subprocess
@@ -39,6 +40,7 @@ class StatusRenderTests(unittest.TestCase):
         (self.root / f"tasks/{task_id}.md").write_text(
             f"# {title or 'Task ' + task_id}\n\n> **ID**: `{task_id}`\n> **Priority**: P1\n> **Phase**: Build\n\n"
             f"## Dependencies\n- **Depends on**: {dependencies}\n")
+        freeze_record(self.root, task_id)
 
     def region_plan(self, before=b"Intro\n", after=b"\nOutro\n"):
         return before + REGION_BEGIN.encode() + b"\nold\n" + REGION_END.encode() + after

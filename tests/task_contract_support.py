@@ -42,3 +42,42 @@ def write_state(root, task_id="001", status="queued", *, review_required=None):
                            "reviewed_commit": None, "approved_by": None}
     path.write_text(json.dumps(state))
     return path
+
+
+def freeze_record(root, task_id, record=None, *, spike=None):
+    """Freeze fixture input at setup time, preserving its independent machine history."""
+    import json
+    from types import SimpleNamespace
+    from cardine.tasks.contract import resolve_human_fields
+    from cardine.shared.project import preset_task_defaults
+    root = root.resolve()
+    record = (record or root / "tasks" / f"{task_id}.md").resolve()
+    path = root / ".cardine/tasks" / f"{task_id}.json"
+    state = json.loads(path.read_text()) if path.exists() else {
+        "version": 1, "task_id": task_id, "workflow": "single", "status": "queued", "transitions": []}
+    from cardine.tasks.contract import resolve_task_contract, task_contract_options
+    from cardine.shared.errors import CardineError
+    from cardine.shared.project import resolve_project_configuration
+    identity = SimpleNamespace(canonical_id=task_id, task_path=record)
+    text = record.read_text() if record.is_file() else ""
+    if spike is None:
+        from cardine.shared.text import read_task_field
+        spike = (read_task_field(text, "Class") or "").lower() == "spike"
+    try:
+        contract = resolve_task_contract(root, task_id, text=text, identity=identity)
+    except CardineError:
+        human = resolve_human_fields(root, identity, text, "spike" if spike else "standard")
+        try:
+            config = resolve_project_configuration(root)
+        except CardineError:
+            config = {"preset": "lean", "taskDefaults": preset_task_defaults("lean")}
+        contract = {"class": "spike" if spike else "standard", "preset": config["preset"],
+                    "projectDigest": "sha256:" + "0" * 64,
+                    "options": {**config["taskDefaults"], **task_contract_options(text)},
+                    "validation": config.get("validation", VALIDATION), "ci": "none", "validationScoping": [], **human}
+        if state.get("review", {}).get("required") or state["status"] == "in_review":
+            contract["options"]["review"] = "required"
+    state["contract"] = contract
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(state))
+    return state

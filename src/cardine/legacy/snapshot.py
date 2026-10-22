@@ -31,7 +31,6 @@ from cardine.shared.console_workflow import (
     effective_state,
     handoff_status,
     has_link,
-    heading_title,
     is_task_record_path,
     latest_review_verdict,
     link_target,
@@ -69,6 +68,14 @@ def _read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
         raise ConsoleError(f"Cannot read {path}: {error}") from error
+
+
+def heading_title(text: str) -> str:
+    """Historical installation titles remain a read-only compatibility concern."""
+    lines = text.splitlines()
+    from cardine.shared.console_workflow import TASK_HEADING
+    match = TASK_HEADING.match(lines[0]) if lines else None
+    return match.group(1) if match else ""
 
 
 class RecordResolver:

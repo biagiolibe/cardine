@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cardine_cli_support import CLI, ROOT
+from task_contract_support import freeze_record
 import json
 import subprocess
 import sys
@@ -219,6 +220,7 @@ class FlowReportTest(unittest.TestCase):
         header = f"> **Origin**: {origin}\n" if origin else ""
         folder = self.project / "tasks" / ("done" if archived else "")
         (folder / f"{task}-work.md").write_text(f"# Task {task}\n\n> **ID**: `{task}`\n{header}", encoding="utf-8")
+        freeze_record(self.project, task, folder / f"{task}-work.md")
 
     def targets(self) -> None:
         (self.project / ".cardine" / "flow-targets.json").write_text(json.dumps({

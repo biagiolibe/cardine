@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.tasks.contract_snapshot import read_human_contract
+from cardine.tasks.contract_fields import snapshot_record_path
 from cardine.shared.layout import ProjectNames, names
 from cardine.shared.snapshot_adapters import state_adapter
 
@@ -46,7 +48,7 @@ from cardine.shared.models import (
 )
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
-from cardine.tasks.identity import resolve_project_locations, resolve_task_identity
+from cardine.tasks.identity import resolve_project_locations, resolve_task_identity, task_identity_context
 from cardine.tasks.state import read_task_state, state_path, review_is_required
 from cardine.templates.mode import detect_mode
 from cardine.worktree.closure_status import closure_status
@@ -72,6 +74,7 @@ class RecordResolver:
         self.roots = tuple(root.as_posix() for root in locations.task_roots)
         self.excluded = (locations.handoff_root.as_posix(), locations.review_root.as_posix())
         self._paths: list[str] | None = None
+        self.states: dict[str, dict | None] = {}
 
     def _scan(self) -> list[str]:
         if self._paths is None:
@@ -125,30 +128,34 @@ class RecordResolver:
 
 def _task_path(project: Path, queue: Path, row: QueueRow,
                resolver: RecordResolver) -> tuple[Path | None, str | None]:
-    """Resolve a queue link, searching task roots when its record has moved."""
-    if not has_link(row.link):
-        return resolver.find(row.task_id)
-    target = link_target(queue.relative_to(project).as_posix(), row.link)
-    if target is None:
-        raise ConsoleError(f"Task {row.task_id} has no unambiguous file link")
-    path = (project / target).resolve()
-    if path.is_relative_to(project) and not path.exists():
-        relative = path.relative_to(project).as_posix()
-        in_task_root = any(relative.startswith(root.rstrip("/") + "/")
-                           for root in resolver.roots)
-        if in_task_root and is_task_record_path(relative, resolver.excluded):
-            archived, problem = resolver.find_by_name(Path(target).name)
-            if archived is not None and problem is None:
-                try:
-                    text = _read_text(archived)
-                except ConsoleError:
-                    text = ""
-                heading = text.splitlines()[0] if text else ""
-                if re.match(rf"^#\s+(?:Task\s+)?`?{re.escape(row.task_id)}`?(?:\s|$)",
-                            heading):
+    """Resolve the frozen record path, including its exact archive location."""
+    try:
+        if resolver is not None and row.task_id in resolver.states:
+            human = (resolver.states[row.task_id] or {}).get("contract", {})
+            if "recordPath" not in human:
+                raise CardineError("no frozen record path")
+        else:
+            human = read_human_contract(project, row.task_id)
+        path = snapshot_record_path(project, human)
+    except CardineError:
+        # Unregistered and sparse historical records have only stable file
+        # identity. This compatibility lookup never reads their headings.
+        if not has_link(row.link):
+            return resolver.find(row.task_id)
+        target = link_target(queue.relative_to(project).as_posix(), row.link)
+        if target is None:
+            raise ConsoleError(f"Task {row.task_id} has no unambiguous file link")
+        path = (project / target).resolve()
+        if path.is_relative_to(project) and not path.exists():
+            relative = path.relative_to(project).as_posix()
+            if any(relative.startswith(root.rstrip("/") + "/") for root in resolver.roots):
+                archived, problem = resolver.find_by_name(Path(target).name)
+                if archived is not None and problem is None:
                     return archived, None
-    if not path.is_relative_to(project) or not path.is_file():
-        raise ConsoleError(f"Task {row.task_id} file is unavailable within the project: {path}")
+        if not path.is_relative_to(project) or not path.is_file():
+            raise ConsoleError(f"Task {row.task_id} file is unavailable within the project: {path}")
+    if not path.is_file():
+        return None, "task record not found"
     return path, None
 
 
@@ -312,6 +319,7 @@ class IdentityCache:
         self._declaration: bytes | None = None
         self._loaded = False
         self._items: dict[str, ResolvedTaskIdentity] = {}
+        self.context = None
 
     def resolve(self, project: Path, task_id: str) -> ResolvedTaskIdentity:
         try:
@@ -324,7 +332,7 @@ class IdentityCache:
             self._declaration, self._loaded = declaration, True
         identity = self._items.get(task_id)
         if identity is None:
-            identity = self._items[task_id] = resolve_task_identity(project, task_id, "existing")
+            identity = self._items[task_id] = resolve_task_identity(project, task_id, "existing", context=self.context)
         return identity
 
 
@@ -334,15 +342,21 @@ def _read_console_state(project: Path, profile: Profile, task_id: str,
     """Read only the addressed task; missing state alone enables legacy prose."""
     # Class is metadata for outcome validation, never a status projection.
     try:
-        record = record_loader() if text is not None or state_path(project, task_id).exists() else ""
+        journal = project / names().project_directory / "task-creation.lock"
+        if text is None and journal.exists():
+            raise stop_error("TASK_STATE_INVALID", "task creation is in progress; retry", task_id=task_id, project=project)
+        raw = text if text is not None else state_path(project, task_id).read_text(encoding="utf-8")
+        if text is None and journal.exists():
+            raise stop_error("TASK_STATE_INVALID", "task creation changed during read; retry", task_id=task_id, project=project)
         adapter = state_adapter.get()
         if adapter is not None:
-            raw = text if text is not None else state_path(project, task_id).read_text(encoding="utf-8")
             return adapter(json.loads(raw)), None
+        data = json.loads(raw)
+        record = record_loader() if "contract" not in data else ""
         state = read_task_state(
             project, task_id, profile.name, review_required=None,
             spike=(read_task_field(record or "", "Class") or "").lower() == "spike",
-            text=text, stop_factory=stop_error,
+            text=raw, stop_factory=stop_error,
         )
         return state, None
     except FileNotFoundError:
@@ -369,11 +383,7 @@ def _branch_facts(project: Path, profile: Profile, task_id: str, queue: str,
     registered worktree path (known even when the branch ref is unreadable).
     """
     try:
-        if archived_link:
-            # _task_path already verified the uniquely moved record and its heading.
-            identity = resolve_task_identity(project, task_id, "existing", check_queue_links=False)
-        else:
-            identity = (identities or IdentityCache()).resolve(project, task_id)
+        identity = (identities or IdentityCache()).resolve(project, task_id)
     except CardineError as error:
         raise ConsoleError(f"Cannot resolve task identity for {task_id}: {error}") from error
     branch = identity.branch_name
@@ -553,7 +563,7 @@ def _closing_task(project: Path, profile: Profile, row: QueueRow, queue: Path,
         path, text = None, None
     dependencies = _dependency_ids(row)
     return Task(
-        task_id=row.task_id, title=row.title or heading_title(text or "") or row.task_id,
+        task_id=row.task_id, title=heading_title(_read_console_state(project, profile, row.task_id, lambda: None)[0]) or row.title or row.task_id,
         status=row.status, phase=row.section, dependencies=dependencies, path=path,
         objective=_section(text or "", "Objective", "Goal"),
         criteria=_section(text or "", "Acceptance Criteria"),
@@ -650,6 +660,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
     resolver = RecordResolver(project, locations)
     states: dict[str, dict | None] = {}
     state_errors: dict[str, str | None] = {}
+    resolver.states = states
 
     def status_reader(task_id: str, cells: dict[str, str]) -> str | None:
         provisional = QueueRow(
@@ -658,6 +669,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         def record_loader():
             path, _problem = _task_path(project, queue, provisional, resolver)
             return _read_text(path) if path else None
+        states[task_id] = None
         states[task_id], state_errors[task_id] = _read_console_state(
             project, profile, task_id, record_loader)
         if state_errors[task_id]:
@@ -678,6 +690,8 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             raise ConsoleError(f"Duplicate task ID across queues: {row.task_id}")
         by_id[row.task_id] = row.status
     from cardine.tasks.state import dependency_satisfied
+    identities = identities or IdentityCache()
+    identities.context = task_identity_context(project, states=states)
     satisfied_ids = {row.task_id for row in (*active_rows, *archived_rows)
                      if (dependency_satisfied(states[row.task_id]) if states.get(row.task_id)
                          else row.status in profile.satisfying and not state_errors.get(row.task_id))}
@@ -816,7 +830,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
                 readiness = "PENDING DELIVERY/CHANGES"
         updated_path = branch_path if from_branch else (_relative(project, path) if path else None)
         updated_ref = ("refs/heads/" + facts.branch) if from_branch else "HEAD"
-        title = row.title or heading_title(task_text or "") or row.task_id
+        title = heading_title(state) or row.title or row.task_id
         tasks.append(Task(
             task_id=row.task_id, title=title, status=effective.status,
             phase=row.section, dependencies=dependencies, path=path,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cardine_cli_support import CLI, ROOT
 import io
+from task_contract_support import freeze_record
 import json
 import re
 import shutil
@@ -39,6 +40,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         path = self.project / (relative or f"tasks/{task_id}.md")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(f"ID: {task_id}\nStatus: IN_PROGRESS\n", encoding="utf-8")
+        freeze_record(self.project, task_id, path)
         return path
 
     def write_queue(self, rows: list[tuple[str, str]], path: str = "tasks/QUEUE.md") -> None:
@@ -176,8 +178,8 @@ class TaskIdentityResolverTest(unittest.TestCase):
         duplicate = self.project / "tasks/nested/M4-API-001.md"
         duplicate.parent.mkdir()
         duplicate.write_text("ID: M4-API-001\n", encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.CardineError, "ambiguous"):
-            owner_tasks_identity.resolve_task_identity(self.project, "M4-API-001", "existing")
+        self.assertEqual(owner_tasks_identity.resolve_task_identity(self.project, "M4-API-001", "existing").task_path,
+                         (self.project / "tasks/M4-API-001.md").resolve())  # Frozen path ignores prose duplicates.
 
         self.declare("opaque")
         with self.assertRaises(shared_errors.CardineError):
@@ -281,8 +283,8 @@ class TaskIdentityResolverTest(unittest.TestCase):
             "task", "identity", "next", "--milestone", "2", "--workstream", "API",
             "--project", str(self.project), "--format", "json",
         )
-        self.assertEqual(ambiguous.returncode, 2)
-        self.assertIn("ambiguous", ambiguous.stderr)
+        self.assertEqual(ambiguous.returncode, 0, ambiguous.stderr)
+        self.assertEqual(json.loads(ambiguous.stdout)["canonical_id"], "M2-API-002")  # One frozen identity.
 
     def test_migration_delivers_only_managed_guidance_and_never_opts_in(self) -> None:
         template = ROOT / "templates/single/PROJECT_WORKFLOW.md"

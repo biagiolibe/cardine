@@ -122,9 +122,7 @@ def is_exempt(path: Path, project: Path) -> bool:
         if active and str(path) in active["exempt_paths"]:
             return True
         if active:
-            authority = owner_shared_authority.context_authority(project, str(active["task_id"]), labels_only=True)
-            sources = re.findall(r"^### (.+?) —", authority, re.MULTILINE)
-            if relative in sources:
+            if path.resolve() in owner_shared_authority.authority_sources(project, str(active["task_id"])):
                 return True
     except CardineError:
         pass

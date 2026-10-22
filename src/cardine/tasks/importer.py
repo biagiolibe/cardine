@@ -22,15 +22,48 @@ from cardine.templates.mode import detect_mode
 from cardine.tasks.contract import resolve_task_contract
 
 from cardine.shared.models import TaskIdentityContext
-from cardine.tasks.identity import (_task_authorities, _TaskAuthority, _clean_queue_id,
+from cardine.tasks.identity import (_TaskAuthority, _clean_queue_id,
     read_task_identity_policy, resolve_project_locations)
+
+
+def _task_record_id(path: Path) -> str | None:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    for pattern in (
+        r"^>\s*\*\*ID\*\*:\s*`([^`]+)`\s*$",
+        r"^ID:\s*`?([^`\s]+)`?\s*$",
+    ):
+        match = re.search(pattern, text, re.MULTILINE)
+        if match and "[" not in match.group(1) and "<" not in match.group(1):
+            return match.group(1)
+    return None
+
+
+def _legacy_task_authorities(project_root, locations):
+    task_paths: dict[str, set[Path]] = {}
+    excluded_names = {"QUEUE.md", "QUEUE_ARCHIVE.md", "QUEUE_TEMPLATE.md", "TASK_BLUEPRINT.md"}
+    for root in locations.task_roots:
+        absolute = project_root / root
+        if not absolute.is_dir():
+            continue
+        for path in absolute.rglob("*.md"):
+            relative_parts = path.relative_to(absolute).parts
+            if path.name in excluded_names or {"handoffs", "reviews"}.intersection(relative_parts):
+                continue
+            canonical = _task_record_id(path) or path.stem
+            task_paths.setdefault(canonical, set()).add(path.resolve())
+
+    return {canonical: _TaskAuthority(canonical, tuple(sorted(paths)), (), 0)
+            for canonical, paths in task_paths.items()}
 
 
 def legacy_identity_context(project_root: Path) -> TaskIdentityContext:
     """Read queue identity evidence only for explicit import and installation snapshots."""
     project_root = project_root.resolve()
     locations = resolve_project_locations(project_root)
-    task_paths = {key: set(value.task_paths) for key, value in _task_authorities(project_root, locations).items()}
+    task_paths = {key: set(value.task_paths) for key, value in _legacy_task_authorities(project_root, locations).items()}
     queue_links = {}
     queue_counts = {}
     queue_path = (project_root / locations.queue).resolve()

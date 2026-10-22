@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION, write_state
+from task_contract_support import freeze_record, contract_record, VALIDATION, write_state
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -46,6 +46,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         text += owner_tasks_preflight.execution_contract(self.primary, '001') + '\n'
         (self.primary / self.record).write_text(text)
         write_state(self.primary)
+        freeze_record(self.primary, "001", self.primary / self.record)
         self.git('add', '.', cwd=self.primary)
         self.git('commit', '-qm', 'Initial', cwd=self.primary)
         self.oldcwd = Path.cwd()
@@ -336,6 +337,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         record = self.worker / self.record
         record.write_text(record.read_text().replace("Class: standard", "Class: spike")
                           + "\nQuestion: Can this probe answer the question?\nTimebox: 1h\nDeliverable: docs/result.md\n")
+        freeze_record(self.worker, '001', record)
         self.commit('Declare Lean review-required spike')
         self.implemented()
         owner_tasks_transitions.record_spike_outcome(self.worker, '001', 'ANSWERED')
@@ -391,6 +393,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
     def test_review_not_required_keeps_its_terminal_path(self):
         record = self.worker / self.record
         record.write_text(record.read_text().replace('Review: REQUIRED', 'Review: NOT_REQUIRED'))
+        freeze_record(self.worker, '001', record)
         self.commit('No review policy')
         owner_lifecycle_commands.execution_start(self.worker, '001')
         self.assert_stop('TASK_STATE_INVALID', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'done'))
@@ -402,6 +405,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         text = record.read_text().replace('Class: standard', 'Class: spike')
         text += '\nQuestion: Does the probe pass?\nTimebox: 1 iteration\nDeliverable: `answer.md`\n'
         record.write_text(text)
+        freeze_record(self.worker, '001', record)
         self.commit('Spike policy')
         owner_lifecycle_commands.execution_start(self.worker, '001')
         owner_tasks_transitions.record_spike_outcome(self.worker, '001', 'ANSWERED')

@@ -5,7 +5,7 @@ from __future__ import annotations
 from cardine.shared.errors import CardineError
 from cardine.shared.text import HEADING_LINE
 from cardine.shared.text import extract_heading_block
-from cardine.tasks.identity import find_task_file
+from cardine.tasks.contract_snapshot import read_human_contract
 from cardine.tasks.identity import resolve_project_locations
 from pathlib import Path
 import re
@@ -168,9 +168,7 @@ def context_authority(project_root: Path, task_id: str, labels_only: bool = Fals
     directly. `labels_only` drops excerpt bodies, keeping only source and
     heading, for the queue-briefing hook.
     """
-    task = find_task_file(project_root, task_id)
-    text = task.read_text(encoding="utf-8")
-    entries = authority_entries(text)
+    entries = read_human_contract(project_root, task_id)["authority"]
     if not entries:
         return f"{task_id}: no Authority entries."
     lines: list[str] = []
@@ -186,3 +184,15 @@ def context_authority(project_root: Path, task_id: str, labels_only: bool = Fals
         lines.append("### Unresolved")
         lines.extend(f"- {item}" for item in unresolved_all)
     return "\n".join(lines).rstrip("\n")
+
+
+def authority_sources(project_root: Path, task_id: str) -> set[Path]:
+    """Resolve structured frozen citations directly for the read guard."""
+    sources = set()
+    for entry in read_human_contract(project_root, task_id)["authority"]:
+        resolved, _unresolved = resolve_authority_entry(project_root, entry)
+        for source, _heading, _excerpt in resolved:
+            path = (project_root / source).resolve()
+            if path.is_relative_to(project_root.resolve()):
+                sources.add(path)
+    return sources
