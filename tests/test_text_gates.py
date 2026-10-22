@@ -2,7 +2,7 @@
 
 Keys are (repository path, qualified function, rule, name), without line
 numbers. A key is one reader kind per function, not one occurrence. The
-legacy import boundary is enforced by test_legacy_meridian_installation.
+legacy import boundary is enforced by the existing legacy import-graph test.
 """
 
 from __future__ import annotations
