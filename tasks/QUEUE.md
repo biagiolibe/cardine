@@ -44,6 +44,6 @@ Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, wor
 | `[x]` | 066 | Create the task record and its state together (single source SS3) | 🔴 P1 | 065 | [066](done/066-paired-task-creation.md) |
 | `[ ]` | 067 | Generate the queue and the plan status region (single source SS4) | 🔴 P1 | 066 | [067](067-generated-status-views.md) |
 | `[ ]` | 068 | Remove the product prose status gates (single source SS5) | 🔴 P1 | 067 | [068](068-remove-prose-status-gates.md) |
-| `[ ]` | 071 | Report the stop detail in worktree advance output | 🔴 P1 | 066 | [071](071-advance-stop-detail.md) |
+| `[x]` | 071 | Report the stop detail in worktree advance output | 🔴 P1 | 066 | [071](done/071-advance-stop-detail.md) |
 | `[ ]` | 069 | Keep task records stable through close and landing (single source SS6) | 🔴 P1 | 068, 071 | [069](069-stable-records-through-landing.md) |
 | `[ ]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 069 | [070](070-status-consumers.md) |
