@@ -16,22 +16,22 @@ record prose to the snapshot fields that task 079 added.
 
 ## Acceptance Criteria
 
-- [ ] Dependency checks at start (`check_dependencies`), the status service
+- [x] Dependency checks at start (`check_dependencies`), the status service
   (`tasks/status.py`: dependencies, title, phase, priority), identity
   resolution, the flow report origin, the Codex read guard authority
   exemptions, and the console title lookup read the snapshot. None parses
   the record after creation.
-- [ ] Tests prove that a record edited after creation, with a different
+- [x] Tests prove that a record edited after creation, with a different
   `Depends on`, title, priority, or authority list, changes neither
   startability, ordering, identity, nor the read guard decision.
-- [ ] Spike `deliverables` are available to the landing check of entry T-16;
+- [x] Spike `deliverables` are available to the landing check of entry T-16;
   switching that check is row N2, and the handoff says so.
-- [ ] Every known-violation entry of `tests/test_text_gates.py` (task 078)
+- [x] Every known-violation entry of `tests/test_text_gates.py` (task 078)
   that this task removes is deleted from its table, and the test passes.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -40,16 +40,16 @@ record prose to the snapshot fields that task 079 added.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/080.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/080.json`, which only
   the installed `meridian task close 080` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -116,3 +116,11 @@ revalidation in the same turn; do not stop to report the fix.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Completion evidence
+
+- Implemented in `c946a5068030e3868ddbfb7c034fd9c5af9cc94c`, including preceding implementation and fixture commits.
+- Every required validation command passed. The full and clean-clone suites each ran 1321 tests with zero failures/errors and one named environment skip.
+- See `tasks/handoffs/080.md` for exact commands, coverage accounting, frozen-file verification, and integration scope.
+- Runtime readers use frozen human intent. The known-violation table falls from 102 to 96 entries without new violations.
+- Spike deliverables are available in the snapshot; switching the T-16 landing check remains N2. SS7 retains the console section/display work.
