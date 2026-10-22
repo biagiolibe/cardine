@@ -19,41 +19,41 @@ the instructions an agent always reads.
 
 ## Acceptance Criteria
 
-- [ ] `docs/RULE_ENFORCEMENT_INVENTORY.md` exists, in English, names the
+- [x] `docs/RULE_ENFORCEMENT_INVENTORY.md` exists, in English, names the
   `main` commit it was taken on, and gives the commands it used, so that
   it can be repeated.
-- [ ] It covers every instruction to an agent in `templates/single/`
+- [x] It covers every instruction to an agent in `templates/single/`
   (workflow, entry routers, `docs/`, workflows, blueprint, completion
   report template, host rule files) and the host assets that product setup
   installs. It reports the word count per file and which files an agent
   reads on every task, on some tasks, or only on demand.
-- [ ] Every rule is one entry with file and line, the rule in a few words, and
+- [x] Every rule is one entry with file and line, the rule in a few words, and
   its enforcement: a CLI gate (name the function), a hook, a host deny
   rule, or none. Entries with no enforcement say what harm a violation
   causes.
-- [ ] Every entry has one action: **enforce** (name the gate to add and its
+- [x] Every entry has one action: **enforce** (name the gate to add and its
   row), **one line** (already enforced; the prose shrinks to one line),
   **advice** (no harm; labelled as advice), **delete** (duplicated,
   obsolete, or describing what `cardine run` will do for the agent), or
   **moved** (belongs to a document an agent reads only on demand).
-- [ ] It proposes a word budget for what an agent reads on every task after
+- [x] It proposes a word budget for what an agent reads on every task after
   work item 8, and shows that the actions reach it. It names the rules
   that `cardine run` makes unnecessary, because the engine returns the
   next action.
-- [ ] It lists duplicated rules, rules that contradict each other or the code,
+- [x] It lists duplicated rules, rules that contradict each other or the code,
   and rules that refer to removed commands or Meridian behavior.
-- [ ] Every finding that needs a change has a destination: a named row of
+- [x] Every finding that needs a change has a destination: a named row of
   `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` (SS6, SS7) or
   `docs/RUN_ENGINE_PLAN.md` (RE1 to RE7) whose scope text already covers
   it, a one-sentence amendment to such a row, a proposed new row with size
   and placement, or removal. Where an existing row does not cover a
   finding, the document says so.
-- [ ] It cross-references `docs/TEXT_GATE_INVENTORY.md` (task 073) instead of
+- [x] It cross-references `docs/TEXT_GATE_INVENTORY.md` (task 073) instead of
   repeating its entries.
-- [ ] No file changes outside `docs/RULE_ENFORCEMENT_INVENTORY.md` and this
+- [x] No file changes outside `docs/RULE_ENFORCEMENT_INVENTORY.md` and this
   task's records: the task record, its handoff, and its archive under
   `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -62,9 +62,9 @@ the instructions an agent always reads.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/074.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/074.json`, which only
   the installed `meridian task close 074` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
