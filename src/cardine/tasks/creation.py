@@ -18,7 +18,6 @@ from cardine.shared.layout import names
 from cardine.tasks.contract import resolve_task_contract
 from cardine.tasks.identity import resolve_project_locations, resolve_task_identity, task_identity_context, _authority_matches
 from cardine.tasks.state import TaskStateInvalid, state_path, validate_task_state
-from cardine.tasks.status import _dependencies
 
 
 def _safe_path(root: Path, path: Path) -> Path:
@@ -125,7 +124,7 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
         # Resolve once from the identity and the complete proposed record.
         contract = resolve_task_contract(root, canonical, text=text, identity=identity)
         try:
-            _dependencies(text)
+            validate_dependencies(root, canonical, contract)
             state = {'version': 1, 'task_id': canonical, 'workflow': 'single',
                      'status': 'queued', 'transitions': [], 'contract': contract}
             validate_task_state(state, canonical, 'single')
@@ -168,3 +167,19 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
                     path.unlink(missing_ok=True)
         return {'id': canonical, 'record': entry['paths'][0], 'state': entry['paths'][1],
                 'recovered': False}
+
+
+def validate_dependencies(root, task_id, contract):
+    """Creation and explicit updates reject unknown, unregistered dependencies."""
+    from cardine.tasks.state import read_task_state
+    for dependency in contract["dependencies"]:
+        if dependency == task_id:
+            raise CardineError(f"task cannot depend on itself: {task_id}")
+        try:
+            identity = resolve_task_identity(root, dependency, "existing", allow_archived_queue_links=True)
+            if identity.canonical_id != dependency:
+                raise CardineError(f"use canonical dependency ID {identity.canonical_id}")
+            read_task_state(root, dependency, 'single',
+                            stop_factory=lambda code, detail, **kwargs: CardineError(detail))
+        except CardineError as error:
+            raise CardineError(f"unknown or invalid dependency {dependency}: {error}") from error

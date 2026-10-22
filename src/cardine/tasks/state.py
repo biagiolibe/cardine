@@ -118,6 +118,18 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
         from cardine.shared.project import parse_project_declaration
         from cardine.shared.errors import CardineError
         contract = state["contract"]
+        from cardine.tasks.contract import HUMAN_CONTRACT_FIELDS, frozen_human_fields
+        if any(key in contract for key in HUMAN_CONTRACT_FIELDS):
+            try:
+                human = frozen_human_fields(state)
+            except CardineError as error:
+                raise TaskStateInvalid(str(error)) from error
+            for path in [human["recordPath"], *human["deliverables"]]:
+                if (Path(path).is_absolute() or ".." in Path(path).parts
+                        or "\\" in path or Path(path).as_posix() != path or path == "."):
+                    _invalid("contract path", "normalized project-relative path", path)
+            if task_id in human["dependencies"]:
+                _invalid("contract.dependencies", "other task IDs", task_id)
         try:
             parse_project_declaration({"version": 1, "preset": contract["preset"],
                                        "taskDefaults": contract["options"], "ci": contract["ci"],
@@ -125,6 +137,18 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
                                        "validationScoping": contract["validationScoping"]})
         except CardineError as error:
             raise TaskStateInvalid(f"contract: {error}") from error
+    if state.get("contract_history"):
+        from cardine.tasks.contract import contract_hash
+        previous_revision = None
+        for index, revision in enumerate(state["contract_history"]):
+            at = datetime.fromisoformat(revision["at"].replace("Z", "+00:00"))
+            if previous_revision is not None:
+                previous_at = datetime.fromisoformat(previous_revision["at"].replace("Z", "+00:00"))
+                if at < previous_at or revision["before"] != previous_revision["after"]:
+                    _invalid(f"contract_history[{index}]", "chronological connected revisions", revision)
+            previous_revision = revision
+        if previous_revision["after"] != contract_hash(state.get("contract")):
+            _invalid("contract_history", "last revision matches current contract", previous_revision["after"])
     # Integration reads policy from the snapshot, without consulting prose.
     if review_required is None:
         review_required = review_is_required(state)

@@ -334,6 +334,12 @@ def build_parser() -> CardineArgumentParser:
     new.add_argument("--recover", action="store_true", help="safely recover the journaled interrupted pair")
     new.add_argument("--project", type=Path, default=Path.cwd())
     new.add_argument("--format", choices=("json",), default="json")
+    contract_task = task_sub.add_parser("contract", help="explicitly revise a frozen task contract")
+    contract_sub = contract_task.add_subparsers(dest="task_contract_command", required=True)
+    contract_update = contract_sub.add_parser("update", help="revalidate the record and atomically update its snapshot and history")
+    contract_update.add_argument("task_id")
+    contract_update.add_argument("--project", type=Path, default=Path.cwd())
+    contract_update.add_argument("--format", choices=("json",), default="json")
     transition = task_sub.add_parser("transition", help="apply a tracked task-state transition")
     transition.add_argument("task_id")
     transition.add_argument("status")
@@ -765,6 +771,9 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                         text = "Category: Quick\n" + text
                 print(json.dumps(create_task(project_root, arguments.task_id, text,
                                              recover=arguments.recover), sort_keys=True))
+            elif arguments.task_command == "contract":
+                from cardine.tasks.contract_update import update_task_contract
+                print(json.dumps(update_task_contract(project_root, arguments.task_id), sort_keys=True))
             elif arguments.task_command == "transition":
                 print(json.dumps(transition_task_state(project_root, arguments.task_id, arguments.status,
                     cancellation_authority=arguments.cancellation_authority, reason=arguments.reason), sort_keys=True))

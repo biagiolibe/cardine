@@ -122,6 +122,7 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         if diff_id not in references and diff_id not in validation["baseline"]:
             references.append(diff_id)
     return {
+        **resolve_human_fields(project_root, identity, text, task_class),
         "preset": configuration["preset"], "class": task_class,
         "projectDigest": "sha256:" + hashlib.sha256(
             json.dumps(declaration, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -130,6 +131,63 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         "ci": deepcopy(configuration.get("ci", "none")),
         "validationScoping": deepcopy(configuration.get("validationScoping", [])),
     }
+
+
+def contract_hash(contract):
+    if contract is None:
+        return None
+    encoded = json.dumps(contract, sort_keys=True, separators=(",", ":")).encode('utf-8')
+    return 'sha256:' + hashlib.sha256(encoded).hexdigest()
+
+
+# These fields are creation input. Readers migrate separately in task 080.
+HUMAN_CONTRACT_FIELDS = ("dependencies", "title", "priority", "phase", "origin",
+                         "deliverables", "authority", "recordPath")
+
+
+def resolve_human_fields(project_root, identity, text, task_class):
+    """Parse human intent once; absent optional labels have explicit empty values."""
+    from cardine.tasks.status import _dependencies
+    from cardine.shared.authority import authority_entries
+    try:
+        dependencies = _dependencies(text)
+    except ValueError as error:
+        raise CardineError(str(error)) from error
+    heading = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
+    deliverable = _contract_field(text, "Deliverable") or ""
+    paths = []
+    if task_class == "spike":
+        for match in re.finditer(r"`(docs/[^`]+)`|(?<!\S)(docs/[^\s`]+)", deliverable):
+            path = (match.group(1) or match.group(2).rstrip(".,;")).split("#", 1)[0]
+            paths.append(path)
+    for path in paths:
+        if ".." in Path(path).parts:
+            raise CardineError(f"unsafe spike deliverable path: {path}")
+    return {
+        "dependencies": dependencies,
+        "title": _contract_field(text, "Title") or (heading.group(1).strip() if heading else identity.canonical_id),
+        "priority": _contract_field(text, "Priority") or "",
+        "phase": _contract_field(text, "Phase") or "",
+        "origin": _contract_field(text, "Origin") or "",
+        "deliverables": list(dict.fromkeys(paths)),
+        "authority": list(dict.fromkeys(authority_entries(text))),
+        "recordPath": identity.task_path.relative_to(Path(project_root).resolve()).as_posix(),
+    }
+
+
+def frozen_human_fields(state):
+    """Require a complete snapshot without ever recovering missing intent from prose.
+
+    Old snapshots remain structurally readable by the pre-080 readers. Audit
+    diagnoses them, and this accessor is the strict boundary for new consumers.
+    Only an explicit contract update may complete them.
+    """
+    contract = state.get("contract", {})
+    missing = [key for key in HUMAN_CONTRACT_FIELDS if key not in contract]
+    if missing:
+        raise CardineError("incomplete contract snapshot (missing " + ", ".join(missing)
+                           + f"); run cardine task contract update {state['task_id']}")
+    return {key: contract[key] for key in HUMAN_CONTRACT_FIELDS}
 
 
 def profile_digest(project_root: Path) -> str:

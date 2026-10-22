@@ -254,10 +254,10 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
-      "adoptionRecord": "067-execution-boundaries"
+      "adoptionRecord": "079-contract-snapshot-human-fields"
     },
     "task-identity-policy": {
       "requiredVersion": 1,
