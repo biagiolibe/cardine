@@ -19,13 +19,13 @@ read and regenerate status. This closes work item 7.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SS7 is implemented as the design of the plan's sections
+- [x] The scope of row SS7 is implemented as the design of the plan's sections
   "Duplicates to remove", "Generated status contract", "Startability and
   totals", "Creation and stable records", and "Consumers and the Meridian
   boundary" describes it. A file the row missed but that the same change
   needs is in scope; the handoff lists it.
-- [ ] Every test that row SS7 lists under "Tests" exists and passes.
-- [ ] The product console and `src/cardine/hosts/briefing.py` take preset,
+- [x] Every test that row SS7 lists under "Tests" exists and passes.
+- [x] The product console and `src/cardine/hosts/briefing.py` take preset,
   totals, and startable IDs from the status service, also when queue files
   are empty. The console offers resume for in-progress tasks without
   calling them startable.
@@ -33,21 +33,21 @@ read and regenerate status. This closes work item 7.
   (the plan's static search) finds hits only under `cardine.legacy` and in
   tests of that path; the handoff gives the search command and lists every
   remaining hit with its reason.
-- [ ] `hooks/queue-briefing.sh` and the other frozen hook files stay
+- [x] `hooks/queue-briefing.sh` and the other frozen hook files stay
   unchanged; the live hook comes from the installed plugin.
-- [ ] The handoff names, for work items 8, 9, and 10, what this work item
+- [x] The handoff names, for work items 8, 9, and 10, what this work item
   leaves to each, following the plan's "Boundaries for later work".
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. Its Meridian-shaped records stay as they are: `Status:` lines,
   archive moves to `tasks/done/`, hand-maintained `tasks/QUEUE.md`,
   `tasks/QUEUE_ARCHIVE.md`, and `PROJECT_PLAN.md`. The task changes
   product code, product templates, and tests only; it edits none of those
   repository records except its own task record, handoff, and archive.
   `python3 scripts/check_repository.py` still passes on them.
-- [ ] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
+- [x] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
   still returns this repository's tasks with the same IDs and states, and
   the legacy fixture assertions are not weakened.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -56,21 +56,21 @@ read and regenerate status. This closes work item 7.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/070.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/070.json`, which only
   the installed `meridian task close 070` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every known-violation entry of `tests/test_text_gates.py` (task 078) that
+- [x] Every known-violation entry of `tests/test_text_gates.py` (task 078) that
   this task removes is deleted from its table, and the test passes. If task
   069 left the prose fallback of entry T-26 of `docs/TEXT_GATE_INVENTORY.md`,
   this task removes it, and it moves the parsers that the inventory lists
   under `cardine.legacy` into that package.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
