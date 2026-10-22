@@ -58,13 +58,17 @@ whitespace validation plus inspection of the requested sentence.
 ## Define the bounded task
 
 **Host step — task creation:** normally `/meridian-task` or the Lean Delivery
-skill helps write this contract. We write its exact result below, registering
-the queue row and the plan entry that integration still projects. The candidate
-policy is deliberately limited to this documentation exercise.
+skill helps write this contract. We write its exact result below and register it
+with `cardine task new`, which publishes the record together with its validated
+`queued` state. The queue and the plan's status region are generated views;
+`cardine status --write` renders them from that state. The candidate policy is
+deliberately limited to this documentation exercise.
 
 ```bash
+export RECORD="$(mktemp)"
 python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 Path(".cardine/project.json").write_text(json.dumps({
     "version": 1, "preset": "lean", "taskIdentity": {"mode": "opaque"},
@@ -74,12 +78,11 @@ Path(".cardine/project.json").write_text(json.dumps({
 }) + "\n")
 Path("TECH_DESIGN.md").write_text("# Technical design\n\nMarkdown documentation; Git for version control.\n")
 Path("README.md").write_text("# Walkthrough\n")
-Path("tasks/001-purpose.md").write_text("""# Task 001 — Add the purpose sentence
+Path(os.environ["RECORD"]).write_text("""# Task 001 — Add the purpose sentence
 
 > **ID**: `001`
 Priority: P1
 Estimate: 15m
-Status: queued
 
 ## Objective
 
@@ -105,32 +108,27 @@ Application code and other tasks.
 
 None.
 """)
-# The templates ship generated status views without task rows. Until the
-# integration projection stops reading rows, register the ones it still needs.
-queue = Path("tasks/QUEUE.md")
-queue.write_text(queue.read_text() + """
-## 🏃 Active Queue
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 001 | Add the purpose sentence | 🔴 P1 | none | 001-purpose.md |
-""")
-plan = Path("PROJECT_PLAN.md")
-plan.write_text(plan.read_text() + "\n- `[ ]` 001 — Add the purpose sentence\n")
 PY
+cardine task new 001 --record "$RECORD" --project .
 cardine execution reconcile 001 --apply --project .
+cardine status --write --project .
 git add .
 git commit -m "Initialize the documentation project and task 001"
 git push -u origin main
 ```
 
+Both files are generated from the task's state, so they list the task as queued
+and startable:
+
 ```text checked=tasks/QUEUE.md
-| `[ ]` | 001 | Add the purpose sentence | 🔴 P1 | none |
+| queued | 001 | Task 001 — Add the purpose sentence | - | - | true |
 ```
 
 ```text checked=PROJECT_PLAN.md
-- `[ ]` 001 — Add the purpose sentence
+| queued | 001 | Task 001 — Add the purpose sentence |
 ```
+
+Read the same facts with `cardine status`; it never writes a file.
 
 ## Execute in the returned worktree
 
@@ -151,7 +149,7 @@ python3 - <<'PY'
 from pathlib import Path
 assert "This project demonstrates Lean Delivery." in Path("README.md").read_text()
 PY
-git add README.md tasks/001-purpose.md .cardine/tasks/001.json
+git add README.md tasks/001.md .cardine/tasks/001.json
 git commit -m "Add the project purpose sentence"
 ```
 
@@ -172,7 +170,7 @@ import subprocess
 from pathlib import Path
 prepared = json.loads((Path(os.environ["HOME"]) / "prepared.json").read_text())
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-record = Path("tasks/001-purpose.md")
+record = Path("tasks/001.md")
 record.write_text(record.read_text().replace("- [ ]", "- [x]"))
 Path("tasks/handoffs").mkdir(exist_ok=True)
 Path("tasks/handoffs/001.md").write_text(f"""## Completion Report — 001
@@ -193,7 +191,7 @@ Path("tasks/handoffs/001.md").write_text(f"""## Completion Report — 001
 - Blockers/deviations: none.
 """)
 PY
-git add tasks/001-purpose.md tasks/handoffs/001.md
+git add tasks/001.md tasks/handoffs/001.md
 git commit -m "Record verified completion of task 001"
 cardine task close 001 --project .
 cd "$PRIMARY"
@@ -239,5 +237,5 @@ state; nothing was archived or moved:
 - Acceptance criteria: all met.
 ```
 
-The completed contract stays at `tasks/001-purpose.md`. For an application,
+The completed contract stays at `tasks/001.md`. For an application,
 replace the minimal gate with its real checks before assigning a source task.

@@ -182,3 +182,14 @@ class Snapshot:
     git_changes: int
     tasks: tuple[Task, ...]
     done_count: int
+    preset: str = ""
+    totals: tuple[tuple[str, int], ...] = ()
+
+    @property
+    def open_count(self) -> int:
+        """Open tasks: from the status totals when present, else the listed tasks."""
+        if not self.totals:
+            return sum(not task.cleanup_pending for task in self.tasks)
+        totals = dict(self.totals)
+        return (totals["queued"] + totals["in_progress"] + totals["in_review"]
+                + sum(task.lifecycle == "closing" for task in self.tasks))

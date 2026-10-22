@@ -21,10 +21,9 @@ from typing import Callable
 
 from cardine.console.models import Snapshot, Task
 from cardine.lifecycle.execution import delivery_readiness
-from cardine.shared.console_workflow import (
+from cardine.shared.console_workflow import ConsoleError, ID_PATTERN
+from cardine.legacy.console_workflow import (
     BranchFacts,
-    ConsoleError,
-    ID_PATTERN,
     PROFILES,
     Profile,
     QueueRow,

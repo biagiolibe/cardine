@@ -15,7 +15,7 @@ from task_contract_support import contract_record, VALIDATION
 from cardine.integration import merge
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.shared.constants import WORKFLOW_MODES
-from cardine.shared.console_workflow import PROFILES
+from cardine.legacy.console_workflow import PROFILES
 from cardine.lifecycle import commands, execution
 from cardine.review.verdict import record_review_verdict
 from cardine.shared.authority import adr_list, adr_show

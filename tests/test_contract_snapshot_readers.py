@@ -15,9 +15,7 @@ from cardine.tasks.preflight import check_dependencies
 from cardine.tasks.contract_snapshot import read_human_contract
 from cardine.shared.errors import CardineStop
 from cardine.shared.authority import context_authority
-from cardine.shared.console_workflow import heading_title, QueueRow
 from cardine.shared.flow import _flow_origin
-from cardine.console.snapshot import _task_path
 from project_config_support import write_project_config
 from task_contract_support import contract_record, VALIDATION
 
@@ -68,11 +66,11 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         self.assertEqual((row['phase'], row['dependencies'], row['startable']), ('N1', ['002'], False))
         self.assertEqual(_flow_origin(self.root, '001'), 'maintenance')
         state = json.loads((self.root / '.cardine/tasks/001.json').read_text())
-        self.assertEqual(heading_title(state), 'Task 001 — Contract fixture')
+        self.assertEqual(state['contract']['title'], 'Task 001 — Contract fixture')
+        self.assertEqual(row['title'], state['contract']['title'])
         self.assertEqual(read_human_contract(self.root, '001')['deliverables'], ['docs/result.md'])
         self.assertEqual(read_human_contract(self.root, 'task-001')['deliverables'], ['docs/result.md'])
-        queue_row = QueueRow('001', '', '', (), '', '', None)
-        self.assertEqual(_task_path(self.root, self.root / 'tasks/QUEUE.md', queue_row, None), (self.record, None))
+        self.assertEqual(self.root / row['record'], self.record)
 
     def test_start_dependency_check_ignores_added_and_removed_prose_dependencies(self):
         self.edit()

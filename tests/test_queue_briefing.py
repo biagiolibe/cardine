@@ -13,6 +13,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from task_state_support import write_task
 from installation_fixture import copy_hook, hook_environment, run_host_briefing
 from project_config_support import write_project_config
 
@@ -415,7 +416,7 @@ class QueueBriefingTest(unittest.TestCase):
         self.assertIn("[Meridian Governed Queue]", result.stdout)
         self.assertIn("In progress: TASK-100", result.stdout)
 
-    def test_preset_adapter_retains_hook_payload_counts_and_startable_logic(self) -> None:
+    def test_preset_adapter_replaces_hook_counts_with_state_facts(self) -> None:
         write_project_config(self.project, "lean")
         self.write_language_policy("Italian")
         self.write_queue(
@@ -423,18 +424,28 @@ class QueueBriefingTest(unittest.TestCase):
             "| 2 | TASK-002 | P1 | QUEUED | REQUIRED | TASK-001 | 002.md |\n"
             "| 3 | TASK-003 | P1 | QUEUED | REQUIRED | TASK-004 | 003.md |\n"
         )
+        write_task(self.project, "TASK-001", "done")
+        write_task(self.project, "TASK-002", "in_progress", "TASK-001")
+        write_task(self.project, "TASK-003", "queued", "TASK-004")
+        write_task(self.project, "TASK-005", "queued")
         for host in ("claude", "codex"):
             with self.subTest(host=host):
                 original = run_host_briefing(self.project, host, adapt=False)
                 adapted = run_host_briefing(self.project, host)
                 self.assertEqual(original.returncode, 0, original.stderr)
                 self.assertEqual(adapted.returncode, 0, adapted.stderr)
-                self.assertIn("Queued (startable): TASK-002", adapted.stdout)
-                self.assertIn("Blocked on dependencies: TASK-003", adapted.stdout)
-                self.assertIn("Accepted: 1", adapted.stdout)
-                self.assertEqual(adapted.stdout, "Preset: lean\n" + original.stdout.replace(
-                    # MERIDIAN-INSTALLATION-CHECK
-                    "[Meridian Governed Queue]\n", ""))
+                self.assertIn("Queued (startable): TASK-002", original.stdout)
+                self.assertNotIn("Queued (startable)", adapted.stdout)
+                self.assertNotIn("Accepted:", adapted.stdout)
+                self.assertEqual(adapted.stdout.splitlines()[:6], [
+                    "Preset: lean",
+                    "Tasks: queued=2, in_progress=1, in_review=0, done=1, cancelled=0, total=4",
+                    "Startable: TASK-005",
+                    "In progress: TASK-002",
+                    "Diagnostics: 1; run cardine status",  # TASK-003 names a missing dependency
+                    # MERIDIAN-INSTALLATION-CHECK: heading emitted by the frozen copied hook.
+                    "[Meridian Language Policy]",
+                ])
 
 
 if __name__ == "__main__":

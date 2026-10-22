@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v3 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v4 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
@@ -31,8 +31,8 @@ use their canonical ID. Spike deliverables name project-relative `docs/` paths.
 Edit the record and run `cardine task contract update <ID> --project .` to
 revalidate and atomically revise the snapshot with state history. Audit reports
 record drift and older incomplete snapshots with this command; it never fills
-missing fields from prose. Existing readers migrate separately; until then,
-the known text-reader violations remain documented in the inventory.
+missing fields from prose. Status, dependencies, and startability are read from
+state with `cardine status`; a record carries no status line.
 
 `Manual verification rationale` is checked before the evidence-availability
 probe, not after: a missing rationale, or one naming a property assertable at

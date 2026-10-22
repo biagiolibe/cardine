@@ -59,7 +59,7 @@ When documents conflict, the first applicable document wins:
 Implementation never resolves a conflict silently: update the lower-precedence document or record an ADR.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=task-lifecycle v1 -->
+<!-- CARDINE:BEGIN capability=task-lifecycle v2 -->
 ## Task lifecycle
 
 ```text
@@ -77,11 +77,18 @@ verified landing. Only a landed standard task, or a landed spike whose outcome
 is `ANSWERED`, satisfies a dependency. `INCONCLUSIVE` and `cancelled` never do.
 `done` and `cancelled` are terminal; reopening is a new task.
 
-The tracked `.cardine/tasks/<TASK-ID>.json` file is the only status and review-verdict authority. Use `cardine task transition <TASK-ID> <STATUS>` for lifecycle transitions and `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED` for review. Never edit a status or verdict by hand, including the JSON file, record projection, or review attempt heading. Commands update their human-readable projections; agents never load state files as startup context. Adopt open legacy tasks explicitly with `cardine task state import --project <path> --format json`, inspect the evidence, then repeat with `--apply`. Terminal legacy tasks need no file. A task branch never edits the
-queue, the queue archive, or the plan: `cardine worktree integrate stage`
-applies the queue's status on the merged candidate tree, and in-progress state
-is derived from the task branch, its registered worktree, and its unarchived
-record.
+The tracked `.cardine/tasks/<TASK-ID>.json` file is the only status and review-verdict authority. Use `cardine task transition <TASK-ID> <STATUS>` for lifecycle transitions and `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED` for review. Never edit a status or verdict by hand, including the JSON file, record projection, or review attempt heading. Commands update their human-readable projections; agents never load state files as startup context. Adopt open legacy tasks explicitly with `cardine task state import --project <path> --format json`, inspect the evidence, then repeat with `--apply`. Terminal legacy tasks need no file.
+
+Read status from state, never from the queue or the plan: `cardine status`
+lists the preset, the totals for all five statuses, and each open task with its
+dependencies, blockers, and whether it is startable (`--all` adds terminal
+tasks; `--format json` returns the versioned model that the console and the
+per-turn briefing read). Only a `queued` task whose
+dependencies are all satisfied is startable; `in_progress` and `in_review`
+tasks are resumed, never started again. The queue file and the plan's status
+region are generated views of that model. Regenerate them with `cardine status
+--write`; never edit them. A stale or hand-edited view changes no task, and
+`cardine audit` reports it.
 <!-- CARDINE:END -->
 
 <!-- CARDINE:BEGIN capability=execution-assets v1 -->
@@ -172,7 +179,7 @@ Before switching from worktree prepare/check to execution start, consult the
 [command location table](docs/WORKTREE_LIFECYCLE.md#command-locations).
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v1 -->
+<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v2 -->
 `Proceed with <TASK-ID>` runs `cardine worktree prepare <task-id> --project
 <primary-checkout> --format json` before
 starting a worker. The coordinator passes the returned branch and absolute
@@ -185,8 +192,8 @@ After check and minimal metadata/contract resolution, run
 `cardine execution start <TASK-ID> --project <task-worktree>` before
 substantive authority/source analysis, advisor consultation, or implementation.
 Only explicit Resume passes `--resume` after status/diff inspection and sole
-writer confirmation, except when the record is already archived:
-skip execution start, commit staged closure records, then run worktree advance. Start records the first `queued -> in_progress` transition once for either
+writer confirmation, except when `cardine task close` already succeeded:
+skip execution start, then run worktree advance. Start records the first `queued -> in_progress` transition once for either
 preset and preserves the resolved task contract. Read-only review/status never starts.
 Absolute paths are runtime launch inputs only. A handoff or other tracked
 record that names the worktree uses the `handoff_worktree` value returned by
@@ -205,7 +212,7 @@ and the diff, confirm sole writer ownership, then run `cardine execution start
 Stops and denials; never treat an unrelated check error as accepted dirt.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=git-workflow v1 -->
+<!-- CARDINE:BEGIN capability=git-workflow v2 -->
 ## Git workflow
 
 ### Authority of `Proceed with`
@@ -247,7 +254,7 @@ conflict; or work on another task.
 - For `Review: required`, the reviewer-integrator must never push the task branch. When it requests changes, it runs `cardine review verdict <TASK-ID> CHANGES_REQUESTED --body <review-evidence>` on the clean reviewed HEAD, then creates a local review-handoff commit containing only the state file, review record, and task record projection; it does not edit implementation artifacts. The implementer resolves that record, creates the next implementation commit, and, only to obtain `T1_CI`, pushes the branch once for the next review attempt. After `APPROVE`, run `cardine review verdict <TASK-ID> APPROVE --body <review-evidence>` on the clean reviewed HEAD and commit its state file and projections on the task branch.
 - For `Review: not_required`, the implementer commits validation evidence and proceeds to closure and integration; status remains `in_progress` until landing writes `done`. Neither path rebases, amends, cherry-picks, or force-pushes reviewed task commits.
 - Final integration is serialized in the primary checkout through `cardine worktree integrate stage`. That command verifies accepted evidence, owns the lease and prescribed no-commit merge, and returns the deterministic decision and candidate tree without running project code. Run the selected bounded or full gate separately in the ordinary sandbox, bind successful evidence to that tree, and call `integrate finalize`; call `integrate abort` after failure. Stale or mismatched evidence is `BLOCKED EVIDENCE_MISMATCH`; missing or incomplete evidence is `BLOCKED EVIDENCE_INCOMPLETE`.
-- Task branches never edit the project's queue, queue archive, or plan (`cardine locations` resolves them). They edit only their own task record, its exact archive, its review record, its handoff, and its own `.cardine/tasks/<TASK-ID>.json` state file. `integrate stage` applies queue and plan status and phase archival once on the merged candidate tree. A shared-governance conflict aborts integration; never choose one task's state over another.
+- Task branches edit only their own task record, its review record, its handoff, and its own `.cardine/tasks/<TASK-ID>.json` state file; they do not regenerate the queue or the plan's status region. `integrate stage` regenerates those generated views once on the merged candidate tree and stages them with the landed state. A failed regeneration is reported as a stale view with `cardine status --write`; it never undoes the landed state. A shared-file conflict aborts integration; never choose one task's state over another.
 - Only after successful validated integration and any required `main` push, use `cardine worktree cleanup`. Failure, requested changes, cancellation, or blocked integration retains both; exceptional cleanup remains explicitly authorized and outside the bounded command.
 - `Accept <TASK-ID>` runs `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on the clean reviewed HEAD, commits the state file and projections, and continues at C6 under the `Proceed with` authority. A manual merge is never permitted.
 - A forge approval cannot be supplied by the same identity that authored the PR. If an external approval is required but unavailable, leave the PR open and report `BLOCKED REVIEW_REQUIRED`.
@@ -289,7 +296,7 @@ guardrail, including a repeated recovery failure.
 
 ### Closure
 
-Close a validated task with `cardine worktree advance`. After validation, commit the completed task record and handoff, then run `cardine task close <TASK-ID>` in the clean task worktree. It stages the exact record archive and state file without committing and leaves the status `in_progress` until landing writes `done`; commit these closure records together. Never edit status or verdict fields by hand. On explicit Resume, if the record is already archived, skip `cardine execution start --resume`: commit any staged closure records, then run `cardine worktree advance` with the validation evidence. After verifying the
+Close a validated task with `cardine worktree advance`. After validation, commit the completed task record and handoff, then run `cardine task close <TASK-ID>` in the clean task worktree. It verifies the committed record and handoff, leaves the record at its path, and leaves the status `in_progress` until landing writes `done`. Never edit status or verdict fields by hand. On explicit Resume, if `cardine task close` already succeeded, skip `cardine execution start --resume` and run `cardine worktree advance` with the validation evidence. After verifying the
 acceptance criteria, running validation, and committing the completion record
 and handoff, run `cardine worktree advance <TASK-ID> --project
 <primary-checkout> --format json` from the primary checkout, giving each result

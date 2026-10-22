@@ -20,7 +20,7 @@
       "adoptionRecord": "068-adr-list-discovery"
     },
     "bounded-worktree-lifecycle": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -92,7 +92,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "git-workflow": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -254,7 +254,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "079-contract-snapshot-human-fields"
@@ -266,7 +266,7 @@
       "adoptionRecord": "049-task-identity-policy"
     },
     "task-lifecycle": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -284,7 +284,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "task-worktree-integration": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -338,7 +338,7 @@
       "adoptionRecord": "070-worktree-template-delivery"
     },
     "worktree-lifecycle": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "068-adr-list-discovery"

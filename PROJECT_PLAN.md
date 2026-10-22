@@ -114,7 +114,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 069 — Keep task records stable through close and landing (single source SS6).
 - `[x]` 073 — Inventory the product gates that read text (decision 13).
 - `[x]` 072 — Remove the delivery commit gate.
-- `[ ]` 070 — Switch the console and the briefing to the status service (single source SS7).
+- `[x]` 070 — Switch the console and the briefing to the status service (single source SS7).
 - `[x]` 074 — Inventory the template rules and their enforcement (decision 14).
 - `[x]` 075 — Map what an agent can forge among the artifacts gates trust (decision 14).
 - `[x]` 076 — Review every stop the tool could resolve itself (decision 14).

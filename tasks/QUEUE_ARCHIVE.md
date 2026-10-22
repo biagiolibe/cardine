@@ -214,3 +214,20 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 13 and 14.
 | `[x]` | 079 | Freeze the remaining human contract fields in the snapshot (N1, part 1) | 🔴 P1 | 077, 078 | [079](done/079-contract-snapshot-human-fields.md) |
 | `[x]` | 080 | Read the human contract fields from the snapshot (N1, part 2) | 🔴 P1 | 079 | [080](done/080-readers-use-contract-snapshot.md) |
 | `[x]` | 081 | Allow every task record in the identifier guard by pattern | 🔴 P1 | — | [081](done/081-identifier-guard-record-pattern.md) |
+
+### Phase 20 — Single source of task state: implementation
+
+Authority: `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 7 and decision 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 064 | Extract the installation snapshot path (single source SS1) | 🔴 P1 | 061 | [064](done/064-legacy-installation-snapshot.md) |
+| `[x]` | 065 | Build the task status service and cardine status (single source SS2) | 🔴 P1 | 064 | [065](done/065-task-status-service.md) |
+| `[x]` | 066 | Create the task record and its state together (single source SS3) | 🔴 P1 | 065 | [066](done/066-paired-task-creation.md) |
+| `[x]` | 067 | Generate the queue and the plan status region (single source SS4) | 🔴 P1 | 066 | [067](done/067-generated-status-views.md) |
+| `[x]` | 068 | Remove the product prose status gates (single source SS5) | 🔴 P1 | 067 | [068](done/068-remove-prose-status-gates.md) |
+| `[x]` | 071 | Report the stop detail in worktree advance output | 🔴 P1 | 066 | [071](done/071-advance-stop-detail.md) |
+| `[x]` | 069 | Keep task records stable through close and landing (single source SS6) | 🔴 P1 | 068, 071 | [069](done/069-stable-records-through-landing.md) |
+| `[x]` | 073 | Inventory the product gates that read text (decision 13) | 🔴 P1 | — | [073](done/073-text-gate-inventory.md) |
+| `[x]` | 072 | Remove the delivery commit gate | 🔴 P1 | 073 | [072](done/072-remove-delivery-commit-gate.md) |
+| `[x]` | 070 | Switch the console and the briefing to the status service (single source SS7) | 🔴 P1 | 080 | [070](done/070-status-consumers.md) |

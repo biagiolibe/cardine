@@ -61,7 +61,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         audit = self.run_cli("audit")
         # This legacy lock fixture has no capabilityProfiles; audit reports
         # UNVERIFIED for that declaration independently of marker integrity.
-        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v3 matches the released text", audit.stdout)
+        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v4 matches the released text", audit.stdout)
         self.assertNotIn("FAIL           marker-integrity", audit.stdout)
         self.assertNotIn("DRIFT", audit.stdout)
         repeated = self.run_cli("upgrade", "--check")
@@ -110,7 +110,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_blueprint = (self.project / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-blueprint v3", upgraded_blueprint)
+        self.assertIn("capability=task-blueprint v4", upgraded_blueprint)
         self.assertIn("Classification: NOT_APPLICABLE", upgraded_blueprint)
         self.assertIn("Classification: REQUIRED", upgraded_blueprint)
         self.assertIn("Project-owned task note.", upgraded_blueprint)
@@ -600,7 +600,7 @@ worktree before the branch only after validated integration succeeds.
         for relative in paths:
             upgraded = (self.project / relative).read_text(encoding="utf-8")
             self.assertIn(f"CARDINE:BEGIN capability=git-workflow v{self.baseline_version('single', relative, 'git-workflow')}", upgraded)
-            self.assertIn("Task branches never edit the project's queue", upgraded)
+            self.assertIn("Task branches edit only their own task record", upgraded)
         self.assertIn("Consumer-owned closure note.", agents.read_text(encoding="utf-8"))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.2.4")
@@ -772,9 +772,9 @@ worktree before the branch only after validated integration succeeds.
         for relative in paths:
             self.assertNotEqual(previous[relative], current[relative], relative)
             previous[relative] = previous[relative].replace(
-                "Only explicit Resume passes `--resume` after status/diff inspection and sole\nwriter confirmation, except when the record is already archived:\nskip execution start, commit staged closure records, then run worktree advance.", ""
+                "Only explicit Resume passes `--resume` after status/diff inspection and sole\nwriter confirmation, except when `cardine task close` already succeeded:\nskip execution start, then run worktree advance.", ""
             ).replace("Only explicit Resume adds `--resume` after\n  status/diff inspection.", "")
-            previous[relative] = re.sub(r" On explicit Resume, if the record is already archived.*?with the validation evidence\.", "", previous[relative])
+            previous[relative] = re.sub(r" On explicit Resume, if `cardine task close` already succeeded.*?with the validation evidence\.", "", previous[relative])
             self.assertNotIn("--resume", previous[relative])
             (workflow / relative).write_text(previous[relative], encoding="utf-8")
         for path in workflow.rglob("*"):
@@ -803,7 +803,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("`--resume` is allowed only for that directive", upgraded)
         self.assertIn("Consumer-owned resume note.", upgraded)
         lifecycle = (self.project / "docs/WORKTREE_LIFECYCLE.md").read_text(encoding="utf-8")
-        self.assertIn("capability=worktree-lifecycle v1", lifecycle)
+        self.assertIn(f"capability=worktree-lifecycle v{self.baseline_version('single', 'docs/WORKTREE_LIFECYCLE.md', 'worktree-lifecycle')}", lifecycle)
         self.assertIn("Only a Resume directive adds `--resume`", lifecycle)
 
     def test_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules(self) -> None:

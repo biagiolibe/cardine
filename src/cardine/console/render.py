@@ -320,6 +320,8 @@ def _draw_header(screen, state: ConsoleState, palette: dict[str, int],
     summary = snapshot.git_summary if snapshot else "unknown"
     framework = _header_framework_label(state.framework, width, project_name, branch)
     left = f"Project command center  {framework}  {project_name}  {branch}"
+    if snapshot and snapshot.preset:
+        left += f"  {snapshot.preset}"
     _put(screen, 0, 1, left, width - 2, palette["text"])
     ahead = re.search(r"\[ahead (\d+)", snapshot.branch) if snapshot else None
     local = f"↑ {ahead.group(1)} local · " if ahead else ""

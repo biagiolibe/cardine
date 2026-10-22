@@ -36,7 +36,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
         pairs = dict(marker_pairs((ROOT / "templates/single/docs/LIFECYCLE_ORCHESTRATION.md").read_text()))
         self.assertEqual(pairs["lifecycle-orchestration"], 1)
         pairs = dict(marker_pairs((ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()))
-        self.assertEqual(pairs["bounded-worktree-lifecycle"], 1)
+        self.assertEqual(pairs["bounded-worktree-lifecycle"], 2)
         check_repository.check_capability_required_versions(ROOT)
         text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
         self.assertIn("queued -> in_progress", text)
@@ -108,7 +108,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
                 locked = cli("lock", "--mode", mode)
                 self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
                 path = project / "PROJECT_WORKFLOW.md"
-                text = path.read_text().replace("capability=git-workflow v1 -->", "capability=git-workflow v1 -->\nTampered policy.", 1)
+                text = path.read_text().replace("capability=git-workflow v2 -->", "capability=git-workflow v2 -->\nTampered policy.", 1)
                 path.write_text(text)
                 fixture.migration("001-synthetic-policy", "2.1.0", capability="git-workflow", version=17,
                                   content="Updated canonical policy.", paths=("PROJECT_WORKFLOW.md",), mode=mode)

@@ -19,8 +19,8 @@
   },
   "templates/single/PROJECT_WORKFLOW.md": {
     "bounded-worktree-lifecycle": {
-      "sha256": "d1e409654bb68f18c6b0d6acac45578161edbadc377cb846e5c27f9ad9809f49",
-      "version": 1
+      "sha256": "77cd9c0889ff57898171e36b01e532a5305896529e6e8ae3d7644360ffa8346b",
+      "version": 2
     },
     "codex-worktree-access": {
       "sha256": "ed58a5c6af82dd649570b68c38216a290272aabe96a5001a908c4def59976185",
@@ -39,8 +39,8 @@
       "version": 1
     },
     "git-workflow": {
-      "sha256": "a789d125a68a9be4a6e13df9d4ec22d823c8fe8ba6491f3a023e812333547b6f",
-      "version": 1
+      "sha256": "469eee993b63509420348d1690b75617f92232fe81835dbb0615c7a05402209a",
+      "version": 2
     },
     "review-policy": {
       "sha256": "fd1e33245126c97f148085442a69bd3a44dc8329c0f18b6993a6b114a794d499",
@@ -55,8 +55,8 @@
       "version": 1
     },
     "task-lifecycle": {
-      "sha256": "89f5b15638fc63b930672296764adaf80e09dead5478ece796431f1411e22a01",
-      "version": 1
+      "sha256": "761c7d61beb58844f591f152bd55dfa3f27afae71c22f6cbbe7231acd38abe14",
+      "version": 2
     },
     "validation-scoping": {
       "sha256": "e96c1d406eb517daa36e43819dedddc16bb9574b080115d3961fa1c4edac8f2c",
@@ -165,8 +165,8 @@
       "version": 1
     },
     "task-worktree-integration": {
-      "sha256": "24623e5e763e6f5207bb041968c25f8b5f35d997c1e3eea430d888a94686e9c1",
-      "version": 1
+      "sha256": "65f48db6bf1cfc3e9b2007b6623786bc953a44e6a2a1f91de94be1bafa7143cb",
+      "version": 2
     }
   },
   "templates/single/docs/LIFECYCLE_ORCHESTRATION.md": {
@@ -203,8 +203,8 @@
       "version": 1
     },
     "worktree-lifecycle": {
-      "sha256": "fa85e5cfc0df79443bf1109e6505e083c319564cd5f25633492c0685f76cd9f8",
-      "version": 1
+      "sha256": "d754b393116ce3b77f3349f3eda5c2cd1d733419fb87068ec5a6499c57e2d334",
+      "version": 2
     }
   },
   "templates/single/docs/workflows/IMPLEMENTATION.md": {
@@ -291,8 +291,8 @@
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "fbfaeafea88abf886ac76b4cc16cf7c642696195eb15f8190d147c969f7c3e33",
-      "version": 3
+      "sha256": "6a95b83290a38ca0bd42a2fdcceb0430355cc83201870326a86e5193845decb4",
+      "version": 4
     }
   }
 }
