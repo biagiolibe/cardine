@@ -171,6 +171,38 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.assertEqual(passed.returncode, 0, passed.stderr)
         self.assertIn("Execution contract:", passed.stdout)
 
+    def blueprint_contract_section(self) -> str:
+        blueprint = (Path(__file__).resolve().parents[1] / "templates/single/tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
+        match = re.search(r"^## Execution contract — resolved\n.*?(?=^## )", blueprint, re.MULTILINE | re.DOTALL)
+        self.assertIsNotNone(match)
+        return match.group(0)
+
+    def test_blueprint_execution_commands_line_equals_the_generated_line(self) -> None:
+        (self.project / "docs").mkdir()
+        (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
+        write_state(self.project, "TASK-021")
+        (self.project / "tasks/TASK-021.md").write_text("## Validation\n- `check`: `true`\n", encoding="utf-8")
+        generated = owner_tasks_preflight.execution_contract(self.project, "TASK-021").splitlines()
+        template_lines = [line for line in self.blueprint_contract_section().splitlines() if line.startswith("- Execution commands:")]
+        self.assertEqual(template_lines, [owner_tasks_contract.EXECUTION_COMMANDS_LINE])
+        self.assertEqual(generated[-1], template_lines[0])
+
+    def test_a_record_from_the_product_blueprint_passes_preflight_without_regenerating(self) -> None:
+        (self.project / "docs").mkdir()
+        (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
+        write_state(self.project, "TASK-022")
+        section = self.blueprint_contract_section().replace(
+            "<generated profile digest>", owner_tasks_contract.profile_digest(self.project)
+        ).replace("<generated IDs>", "check")
+        (self.project / "tasks/TASK-022.md").write_text(
+            "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n- `check`: `true`\n\n"
+            "## Host impact\n\nClassification: NOT_APPLICABLE\nRationale: This task changes only application behavior.\n\n"
+            + section,
+            encoding="utf-8",
+        )
+        passed = self.run_cli("execution", "preflight", "TASK-022")
+        self.assertEqual(passed.returncode, 0, passed.stderr)
+
     def test_execution_preflight_uses_spike_shape(self) -> None:
         (self.project / "docs").mkdir(exist_ok=True)
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
@@ -298,13 +330,13 @@ Evidence plan:
             encoding="utf-8",
         )
         legacy_contract = owner_tasks_preflight.execution_contract(self.project, "TASK-014").replace(
-            "- Execution commands: `required via meridian execution`", ""
+            owner_tasks_contract.EXECUTION_COMMANDS_LINE, ""
         )
         task.write_text(task.read_text(encoding="utf-8").replace("## Completion", legacy_contract + "\n\n## Completion"), encoding="utf-8")
         blocked = self.run_cli("execution", "preflight", "TASK-014")
         self.assertNotEqual(blocked.returncode, 0)
         self.assertIn("BLOCKED EXECUTION_CONTRACT_UNRESOLVED:", blocked.stderr)
-        self.assertIn("`required via meridian execution`", blocked.stderr)
+        self.assertIn("`required via cardine execution`", blocked.stderr)
         preview = self.run_cli("execution", "reconcile", "TASK-014")
         self.assertEqual(preview.returncode, 0, preview.stderr)
         self.assertIn("rerun with --apply", preview.stdout)
