@@ -1,54 +1,47 @@
-# Task 072 — Give the delivery commit field a literal form
+# Task 072 — Remove the delivery commit gate
 
 > **ID**: `072`
-> **Category**: Bug
+> **Category**: Refactor
 > **Priority**: 🔴 P1
 > **Estimate**: ~2h
 > **Assigned to**: unassigned
-> **Session**: Defect triage, 2026-10-22
+> **Session**: Rescoped from task 073, 2026-10-22
 > **Origin**: maintenance
 
 ## Objective
 
-**Suspended on 2026-10-22.** Decision 13 of `docs/ADR_CARDINE_1_0.md`
-forbids gates on agent-written text, and this task as written makes such a
-gate easier to satisfy instead of removing it. Task 073 redefines its scope or
-recommends cancelling it; do not start it before the coordinator rewrites
-this record from that inventory.
+Implement the rescoped task 072 of `docs/TEXT_GATE_INVENTORY.md`, section
+"Task 072", under decision 13 of `docs/ADR_CARDINE_1_0.md`.
 
-`cardine execution ready-check` and `execution deliver` stop with
-`EVIDENCE_INCOMPLETE` when the handoff's `Current task commit` describes the
-coming delivery commit in the agent's own words. `_delivery_current_commit` in
-`src/cardine/lifecycle/execution.py` accepts a full SHA, a value containing
-`Deliver <TASK-ID> for review`, or a value containing both the HEAD subject
-and the branch. The completion report template only says that the field may
-use "a descriptive form that identifies the commit by subject and branch", so
-the exact subject that delivery will create is learned only from the failure.
-Each stop costs a correction commit, a new delivery, and a new session.
-
-The defect recurred twice on Meridian 1.4.1 in a governed project, and Cardine
-inherited the same check and template text. Make the delivery form literal and
-copyable, and make the stop say exactly what to write.
+`delivery_readiness` rejects a delivery when the handoff's `Current task
+commit` line does not match one of three text forms. The inventory verified
+that this check adds no fact: every fact the line claims is already proved
+from Git and command results, and no other product code reads the handoff's
+commit fields. Remove the gate and the fields, so that no agent has to write a
+commit description and no wording can stop a delivery.
 
 ## Acceptance Criteria
 
-- [ ] The completion report template of `templates/single/docs/` gives, for a
-  review-required task, the literal line to copy: ``- Current task commit:
-  the task commit `Deliver <TASK-ID> for review` on branch `<task-branch>`
-  (created by delivery; see `git log -1 <task-branch>`)``, and says that
-  delivery creates that subject. The general descriptive form stays for
-  the other cases.
-- [ ] When `_delivery_current_commit` rejects a value, the
-  `EVIDENCE_INCOMPLETE` detail contains the exact line to write, with the
-  real task ID and branch filled in, and the value it found.
-- [ ] The accepted forms do not widen: a description that names an earlier
-  commit, the validated base `main` commit, or no identifiable commit is
-  still rejected. Tests cover the literal form, an own-words description
-  of the coming delivery (rejected, with the copyable line in the detail),
-  a full SHA, and the base commit.
+- [ ] `_delivery_current_commit` and its call in `delivery_readiness`
+  (`src/cardine/lifecycle/execution.py`) are deleted, with their tests. A
+  delivery whose handoff has no commit fields, or any text in them, passes
+  when the Git and evidence facts hold.
+- [ ] The tests that remain prove that delivery still rejects the cases those
+  facts cover: no committed implementation after the prepared base, an
+  uncommitted handoff, missing or stale validation evidence, and later
+  commits that change more than the handoff.
+- [ ] `templates/single/docs/COMPLETION_REPORT_TEMPLATE.md` no longer has the
+  `Implementation commit`, `Validated task commit`, `Validated base main
+  commit`, and `Current task commit` lines or the paragraph on the
+  descriptive form; `templates/single/docs/workflows/REVIEW.md` no longer
+  has the commit-field steps. No template asks an agent to write `Deliver
+  <TASK-ID> for review`; Cardine alone creates that subject.
 - [ ] The template change follows the pre-1.0 rule of task 031: the owning
   capability's version rises and its baseline is rewritten, with no
   migration and no `VERSION` change.
+- [ ] The `Branch`, `Worktree`, and ``Base `main` commit`` check of
+  `src/cardine/worktree/checkout.py` (inventory entry T-23) and the stored
+  delivery commit (row RE3) stay out of scope; the handoff says so.
 - [ ] This repository's own `docs/COMPLETION_REPORT_TEMPLATE.md` is a frozen
   copy of the installed Meridian and stays unchanged.
 - [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
@@ -75,22 +68,18 @@ copyable, and make the stop say exactly what to write.
 
 | File | Role |
 |------|------|
-| `src/cardine/lifecycle/execution.py` | `_delivery_current_commit` and the readiness gate. |
-| `templates/single/docs/COMPLETION_REPORT_TEMPLATE.md` | Product template text for the commit fields. |
-| `capabilities/catalog-v1.json`, `capabilities/marker-baselines.json` | Capability version and baseline of the changed template. |
-| `docs/RUN_ENGINE_PLAN.md` | Row RE3: the engine owns evidence and handoff writes. |
+| `docs/TEXT_GATE_INVENTORY.md` | Authority: section "Task 072" and entries T-22, TPL-04, TPL-05, TPL-08. |
+| `src/cardine/lifecycle/execution.py` | `_delivery_current_commit` and `delivery_readiness`. |
+| `templates/single/docs/COMPLETION_REPORT_TEMPLATE.md`, `templates/single/docs/workflows/REVIEW.md` | Template text to remove. |
+| `capabilities/catalog-v1.json`, `capabilities/marker-baselines.json` | Capability version and baseline. |
 
 ## Technical Context
 
-- The self-referential field exists because a committed handoff cannot name
-  its own commit. Work item 8 makes the engine own delivery and evidence
-  writes (`docs/RUN_ENGINE_PLAN.md`, row RE3), and the commit fields should
-  then be derived rather than written by the agent; `PROJECT_PLAN.md` records
-  that as a deferred item for work item 8. This task is the bounded fix until
-  then.
 - Meridian 1.4.x receives fixes only for blocking defects (ADR decision 10).
-  This defect has a workaround, writing the literal `Deliver <TASK-ID> for
-  review` subject, so it gets no Meridian fix.
+  Contoso works around the defect by writing the literal `Deliver <TASK-ID>
+  for review` subject.
+- Task 070 (single source SS7) edits `templates/single/` too. Run this task
+  before 070 starts, or after 070 integrates; never at the same time.
 - If `worktree advance` stops because another task holds the integration lease
   in the primary checkout, that is not a decision for the developer: wait
   until the other integration finalizes or aborts, then rerun the same
@@ -98,12 +87,12 @@ copyable, and make the stop say exactly what to write.
 
 ## Out of scope
 
-Removing or deriving the commit fields (work item 8); changing other handoff
-fields; any Meridian release.
+The handoff checks of row N3 of the inventory, the work item 8 engine, and any
+Meridian release.
 
 ## Dependencies
 
-- **Depends on**: 067, 073
+- **Depends on**: 073
 - **Blocks**: —
 
 ## Developer decisions given in advance

@@ -35,7 +35,6 @@ the named work item finds it on `main`.
 | Rename this repository's managed copy of `CONTEXT_BUDGET_POLICY.md`; the templates are renamed by row SW5 of `docs/SINGLE_WORKFLOW_PLAN.md` | Work item 10 | `tasks/handoffs/035.md`, `docs/SINGLE_WORKFLOW_PLAN.md` |
 | Delete `MERIDIAN_ROOT`, `bin/`, `scripts/upgrade_project.sh`, and the old release scripts instead of keeping them renamed | Decision 9 and work item 12 | `docs/RENAME_PLAN.md`, choice 6 |
 | Add `cardine init` (decision 8), replacing the copy steps of the init slash command that task 055 rewrites | Work item 9 | Task 055 record |
-| Derive the handoff commit fields (`Implementation commit`, `Validated task commit`, `Current task commit`) from the engine's delivery and evidence records instead of agent-written text | Work item 8 | Task 072 record; Contoso defect report, 2026-10-22 |
 | The governed skills route `Accept` to `docs/workflows/LIFECYCLE.md`, which the single template set no longer installs | Work item 9 | `tasks/handoffs/055.md` |
 
 ## Active Delivery
@@ -113,5 +112,8 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 071 — Report the stop detail in worktree advance output.
 - `[ ]` 069 — Keep task records stable through close and landing (single source SS6).
 - `[x]` 073 — Inventory the product gates that read text (decision 13).
-- `[ ]` 072 — Give the delivery commit field a literal form.
+- `[ ]` 072 — Remove the delivery commit gate.
 - `[ ]` 070 — Switch the console and the briefing to the status service (single source SS7).
+- `[ ]` 074 — Inventory the template rules and their enforcement (decision 14).
+- `[ ]` 075 — Map what an agent can forge among the artifacts gates trust (decision 14).
+- `[ ]` 076 — Review every stop the tool could resolve itself (decision 14).
