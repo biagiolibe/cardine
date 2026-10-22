@@ -83,8 +83,6 @@ class ExecutionBoundariesTest(unittest.TestCase):
         identity.handoff_path.write_text('## Completion Report — 001\n\n' + '\n'.join(
             '- ' + field + ': ' + ('none' if field in ('Validation skips', 'Isolated exploration') else 'complete')
             for field in owner_tasks_contract.HANDOFF_FIELDS) + '\n')
-        with identity.handoff_path.open('a') as report:
-            report.write('- Current task commit: `Deliver 001 for review`\n')
         self.commit('Finalize handoff')
         return identity
 
@@ -250,26 +248,37 @@ class ExecutionBoundariesTest(unittest.TestCase):
     def test_later_state_file_change_is_rejected_even_if_reverted(self):
         self.reject_later_change('.cardine/tasks/001.json')
 
-    def test_current_commit_field_is_checked_before_first_delivery(self):
+    def test_delivery_ignores_commit_fields_in_the_handoff(self):
         identity = self.implemented()
         report = identity.handoff_path
         original = report.read_text()
         base = self.git('rev-parse', 'main')
-        cases = ('', f'- Current task commit: `{base}`\n',
-                 '- Current task commit: the task commit (see git log -1 task-001)\n')
+        owner_lifecycle_execution.delivery_readiness(self.worker, '001')
+        cases = (f'- Current task commit: `{base}`\n',
+                 '- Current task commit: the task commit (see git log -1 task-001)\n',
+                 '- Implementation commit: not a SHA\n- Validated task commit: ???\n')
         for field in cases:
             with self.subTest(field=field):
-                report.write_text(original.replace('- Current task commit: `Deliver 001 for review`\n', field))
-                self.commit('Malformed handoff fixture')
-                head = self.git('rev-parse', 'HEAD')
-                for action in (owner_lifecycle_execution.delivery_readiness, owner_lifecycle_commands.execution_deliver):
-                    with self.assertRaises(shared_errors.CardineStop) as caught:
-                        action(self.worker, '001')
-                    self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
-                    self.assertIn('Current task commit', str(caught.exception))
-                    self.assertIn('subject', str(caught.exception))
-                    self.assertEqual(self.git('rev-parse', 'HEAD'), head)
-                    self.assertEqual(self.state()['status'], 'in_progress')
+                report.write_text(original + field)
+                self.commit('Handoff fixture')
+                owner_lifecycle_execution.delivery_readiness(self.worker, '001')
+        owner_lifecycle_commands.execution_deliver(self.worker, '001')
+        self.assertEqual(self.state()['status'], 'in_review')
+
+    def test_delivery_without_committed_implementation_is_rejected(self):
+        owner_lifecycle_commands.execution_start(self.worker, '001')
+        owner_tasks_recording.run_validation(self.worker, '001', 'check')
+        identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
+        identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
+        identity.handoff_path.write_text('## Completion Report — 001\n\n' + '\n'.join(
+            '- ' + field + ': ' + ('none' if field in ('Validation skips', 'Isolated exploration') else 'complete')
+            for field in owner_tasks_contract.HANDOFF_FIELDS) + '\n')
+        self.commit('Handoff without implementation')
+        for action in (owner_lifecycle_execution.delivery_readiness, owner_lifecycle_commands.execution_deliver):
+            with self.assertRaises(shared_errors.CardineStop) as caught:
+                action(self.worker, '001')
+            self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
+            self.assertIn('committed implementation change', str(caught.exception))
 
     def test_dirty_incomplete_stale_and_direct_transition_cannot_deliver(self):
         owner_lifecycle_commands.execution_start(self.worker, '001')

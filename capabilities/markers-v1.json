@@ -110,7 +110,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "implementer-reviewer-handoff": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -278,7 +278,7 @@
       "adoptionRecord": "067-execution-boundaries"
     },
     "task-worktree-handoff": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
@@ -308,7 +308,7 @@
       "adoptionRecord": null
     },
     "task-worktree-review-procedure": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"

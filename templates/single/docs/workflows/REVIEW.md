@@ -2,7 +2,7 @@
 
 Use this procedure only for `Review <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v1 -->
+<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v2 -->
 ## Mandatory task-worktree preflight
 
 After `APPROVE`, `Review <TASK-ID>` has the `Proceed with` authority for C6 through C10, including the single plain `git push origin main` and cleanup, with the same prohibitions.
@@ -15,33 +15,26 @@ implementation files, or any implementation diff:
    <primary-checkout> --format json`. A blocked result
    stops before any other read; never use host automatic worktree isolation.
 2. Resolve the canonical completion-handoff location and read only that
-   handoff. Obtain its `handoff_worktree` value (relative to the worktree root), task branch, current task
-   commit, validated task commit, and validated base `main` commit. Confirm
-   that the implementer session has stopped. A missing field, missing handoff,
-   or active or unconfirmed implementer is `BLOCKED EVIDENCE_INCOMPLETE`.
+   handoff. Obtain its `handoff_worktree` value (relative to the worktree root)
+   and task branch. Confirm that the implementer session has stopped. A missing
+   field, missing handoff, or active or unconfirmed implementer is
+   `BLOCKED EVIDENCE_INCOMPLETE`.
 3. Confirm that the successful check result and handoff name the same path,
    branch, HEAD, base, clean state, and repository. As an additional bounded
    check, run `git worktree list
    --porcelain` and locate exactly one registered entry whose normalized
    absolute path equals the `handoff_worktree` value resolved against the
    worktree root at runtime. The entry must record the handoff branch
-   as `refs/heads/<task-branch>` and its `HEAD`. A full-SHA current task commit
-   field must equal that `HEAD`. The handoff may describe the final delivery commit by its known subject
-   `Deliver <TASK-ID> for review`, rather than a not-yet-existent SHA.
-   For a descriptive current task commit field,
-   resolve it to the registered task branch `HEAD` and confirm its stated
-   subject matches `git log -1 --format=%s <task-branch>`; treat that resolved
-   value as `HEAD` for this comparison. Do not infer the task worktree from
-   the session's initial current directory. If the path is absent, unregistered,
-   duplicated, disagrees with the handoff, names a different commit, or has a
-   mismatched subject, return `BLOCKED WRONG_WORKTREE`.
+   as `refs/heads/<task-branch>` and its `HEAD`. Do not infer the task worktree
+   from the session's initial current directory. If the path is absent,
+   unregistered, duplicated, or disagrees with the handoff, return
+   `BLOCKED WRONG_WORKTREE`.
 4. Root additional read-only Git checks in the recorded path with `git -C
    <absolute-task-worktree> ...`. Verify its absolute top level, symbolic
-   branch, `HEAD`, and empty `git status --short`; verify that the validated
-   task and base commits exist; then verify that the base is an ancestor of
-   the validated task commit and the validated task commit is an ancestor of
-   current task `HEAD`. A missing commit, detached or mismatched branch,
-   mismatched `HEAD`, dirty worktree, or failed ancestry check is `BLOCKED WRONG_WORKTREE`.
+   branch, `HEAD`, and empty `git status --short`; verify that the base commit
+   exists and is an ancestor of `HEAD`. A missing commit, detached or
+   mismatched branch, mismatched `HEAD`, dirty worktree, or failed ancestry
+   check is `BLOCKED WRONG_WORKTREE`.
 
 5. Run read-only `cardine execution ready-check <TASK-ID> --project .`
    in the verified worktree. Require a committed in_review delivery
@@ -62,8 +55,8 @@ task-worktree path and every Git command uses `git -C
 the task checkout. Review never runs concurrently with an implementer.
 
 After approval, on the clean reviewed HEAD run `cardine review verdict <TASK-ID> APPROVE --body <review-evidence>`. The command binds approval to HEAD and writes the state file, review heading, and task Status projection. Commit those three artifacts on the task branch, then use the serialized integration transaction in `PROJECT_WORKFLOW.md`. Never edit a status or verdict by hand.
-The validated task commit must remain an ancestor of task `HEAD`, with only
-permitted lifecycle records in the intervening diff. Current `main` may have
+The commit covered by the validation evidence must remain an ancestor of task
+`HEAD`, with only permitted lifecycle records in the intervening diff. Current `main` may have
 advanced; reuse evidence, run the bounded gate, select full validation, or
 return `BLOCKED EVIDENCE_MISMATCH` only through that transaction's deterministic decision.
 Independent review, acceptance evidence, and forge gates remain mandatory.
@@ -99,13 +92,12 @@ accepting evidence.
 For `Review <TASK-ID>`, do not edit implementation artifacts to remedy findings. Prepare the evidence as a command argument outside the tracked review record so the reviewed worktree stays clean. Record each verdict with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD. Never edit a status or verdict by hand. When changes are requested, commit only the state file, task record projection, and review record locally; leave machine status `in_progress` with the retained requested-changes verdict for the implementer. For a blocking verdict, record and commit only the same governance outputs and report the blocker. Findings with priority and evidence form the bounded remediation scope. Do not push these commits. For `APPROVE`, commit the same three outputs with the required reviewer-integrator author override after the required ancestry check. A reviewer never edits the queue, queue archive, or plan; `integrate stage` applies their status.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=implementer-reviewer-handoff v1 -->
+<!-- CARDINE:BEGIN capability=implementer-reviewer-handoff v2 -->
 ## Implementer-to-reviewer handoff
 
 After validation, create the task commit and, only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, push the task branch. The completion handoff must record the branch name,
-`handoff_worktree` value (relative to the worktree root, never an absolute path), implementation and current task commits,
-validated task and base `main` commits, successful validation evidence, and
-declared integration surface. Stop the implementer and leave the registered
+`handoff_worktree` value (relative to the worktree root, never an absolute path),
+successful validation evidence, and declared integration surface. Stop the implementer and leave the registered
 task worktree clean before starting the fresh reviewer session. This durable
 handoff transfers sequential ownership of that worktree; implementation and
 review never overlap.
