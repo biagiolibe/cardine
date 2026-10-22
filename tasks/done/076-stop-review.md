@@ -20,39 +20,39 @@ next action.
 
 ## Acceptance Criteria
 
-- [ ] `docs/STOP_REVIEW.md` exists, in English, names the `main` commit it was
+- [x] `docs/STOP_REVIEW.md` exists, in English, names the `main` commit it was
   taken on, and gives the commands it used, so that it can be repeated.
-- [ ] It examines all codes of `capabilities/stop-codes-v1.json`. For each
+- [x] It examines all codes of `capabilities/stop-codes-v1.json`. For each
   guardrail it answers what the person brings: authority, a decision, or
   information. A guardrail with no answer is proposed as recoverable,
   waiting, or failing work, with the resolution the tool performs or the
   next action it returns.
-- [ ] It proposes merging codes that differ only in wording or emitter, and
+- [x] It proposes merging codes that differ only in wording or emitter, and
   removing codes that no emitter raises, consistently with the split of
   mixed codes in row RE2.
-- [ ] It analyses every `blocked` entry of this repository's
+- [x] It analyses every `blocked` entry of this repository's
   `.git/meridian-journal.jsonl` and every stop pasted in the coordinator's
   task handoffs under `tasks/handoffs/`: the code, the situation, and
   whether the tool could have resolved it. For `WRONG_WORKTREE` and the
   integration lease it describes the behavior that replaces the stop:
   location resolution by the tool (decision 6) and a bounded wait for
   another task's integration.
-- [ ] It covers rule 4 of decision 14 for stops: which recoveries are not
+- [x] It covers rule 4 of decision 14 for stops: which recoveries are not
   idempotent today, and the interruption points where rerunning the same
   command does not converge.
-- [ ] It gives the expected count of guardrail codes after the proposals, and
+- [x] It gives the expected count of guardrail codes after the proposals, and
   the journal counts this repository would have had with them.
-- [ ] Every finding that needs a change has a destination: a named row of
+- [x] Every finding that needs a change has a destination: a named row of
   `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` (SS6, SS7) or
   `docs/RUN_ENGINE_PLAN.md` (RE1 to RE7) whose scope text already covers
   it, a one-sentence amendment to such a row, a proposed new row with size
   and placement, or removal. Where an existing row does not cover a
   finding, the document says so.
-- [ ] It cross-references `docs/TEXT_GATE_INVENTORY.md` (task 073) instead of
+- [x] It cross-references `docs/TEXT_GATE_INVENTORY.md` (task 073) instead of
   repeating its entries.
-- [ ] No file changes outside `docs/STOP_REVIEW.md` and this task's records:
+- [x] No file changes outside `docs/STOP_REVIEW.md` and this task's records:
   the task record, its handoff, and its archive under `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -61,9 +61,9 @@ next action.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/076.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/076.json`, which only
   the installed `meridian task close 076` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
