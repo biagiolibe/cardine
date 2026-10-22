@@ -34,7 +34,6 @@ the named work item finds it on `main`.
 | The queue briefing drops every queued task when a title contains an apostrophe (`xargs: unterminated quote`); add a regression test | Work item 9 | Coordinator finding, 2026-10-19 |
 | Rename this repository's managed copy of `CONTEXT_BUDGET_POLICY.md`; the templates are renamed by row SW5 of `docs/SINGLE_WORKFLOW_PLAN.md` | Work item 10 | `tasks/handoffs/035.md`, `docs/SINGLE_WORKFLOW_PLAN.md` |
 | Delete `MERIDIAN_ROOT`, `bin/`, `scripts/upgrade_project.sh`, and the old release scripts instead of keeping them renamed | Decision 9 and work item 12 | `docs/RENAME_PLAN.md`, choice 6 |
-| Add `cardine task new`, which creates the task record and its state file together (decision 4); task 053 provides the contract resolver it calls | Work item 7 | Task 053 record |
 | Add `cardine init` (decision 8), replacing the copy steps of the init slash command that task 055 rewrites | Work item 9 | Task 055 record |
 | The governed skills route `Accept` to `docs/workflows/LIFECYCLE.md`, which the single template set no longer installs | Work item 9 | `tasks/handoffs/055.md` |
 
