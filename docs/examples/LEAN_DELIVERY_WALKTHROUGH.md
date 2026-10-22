@@ -58,8 +58,8 @@ whitespace validation plus inspection of the requested sentence.
 ## Define the bounded task
 
 **Host step — task creation:** normally `/meridian-task` or the Lean Delivery
-skill helps write this contract. We write its exact result below, reconciling
-the template's `001` row and adding a recognizable plan entry. The candidate
+skill helps write this contract. We write its exact result below, registering
+the queue row and the plan entry that integration still projects. The candidate
 policy is deliberately limited to this documentation exercise.
 
 ```bash
@@ -105,10 +105,18 @@ Application code and other tasks.
 
 None.
 """)
+# The templates ship generated status views without task rows. Until the
+# integration projection stops reading rows, register the ones it still needs.
 queue = Path("tasks/QUEUE.md")
-queue.write_text(queue.read_text().replace("Initial setup", "Add the purpose sentence").replace("001-setup.md", "001-purpose.md"))
+queue.write_text(queue.read_text() + """
+## 🏃 Active Queue
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 001 | Add the purpose sentence | 🔴 P1 | none | 001-purpose.md |
+""")
 plan = Path("PROJECT_PLAN.md")
-plan.write_text(plan.read_text().replace("- `[ ]` Initial project setup", "- `[ ]` 001 — Add the purpose sentence"))
+plan.write_text(plan.read_text() + "\n- `[ ]` 001 — Add the purpose sentence\n")
 PY
 cardine execution reconcile 001 --apply --project .
 git add .

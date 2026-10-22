@@ -98,12 +98,11 @@ The script then:
 1. creates the branch `meridian-upgrade-<version>`;
 2. runs `meridian upgrade --apply`;
 3. runs `meridian setup --apply`;
-4. aligns the queue usage text with `scripts/align_queue.py`;
-5. runs `meridian audit` and stops on any `FAIL` row (`UNVERIFIED` and
+4. runs `meridian audit` and stops on any `FAIL` row (`UNVERIFIED` and
    `ADVISORY` rows do not stop it);
-6. checks that the manifest `frameworkVersion` is the new version;
-7. runs each `--validate` command in the project;
-8. commits on the branch, leaving `.claude/settings.local.json` uncommitted.
+5. checks that the manifest `frameworkVersion` is the new version;
+6. runs each `--validate` command in the project;
+7. commits on the branch, leaving `.claude/settings.local.json` uncommitted.
 
 If a step fails after the branch exists, nothing is committed and the script
 prints the commands that discard the attempt and return to `main`.
@@ -132,22 +131,16 @@ the updated workflow text and settings.
 | `--meridian-root <path>` | Framework to upgrade from; defaults to the `meridian` on `PATH`. |
 | `--branch <name>` | Branch name instead of `meridian-upgrade-<version>`. |
 | `--skip-setup` | Do not run `meridian setup`; it may also change machine-level settings such as the Codex profile and skill links. |
-| `--skip-queue` | Do not align the queue usage text. |
+| `--skip-queue` | Accepted and ignored: the script no longer touches the queue. |
 | `--allow-untagged` | Accept a framework checkout that is not at its release tag. |
 
-## Aligning only the queue
+## The queue
 
-The queue is not a managed file, so `meridian upgrade` never changes it. To
-align its usage text without upgrading, run the aligner directly. It finds the
-queue through `meridian locations`, so a queue outside `tasks/QUEUE.md` (for
-example `docs/TASK_QUEUE.md`) is handled:
-
-```bash
-python3 scripts/align_queue.py /path/to/project --meridian "$FW/bin/meridian"
-python3 scripts/align_queue.py /path/to/project --meridian "$FW/bin/meridian" --apply
-```
-
-It never stages or commits, and a second run reports `no change`.
+The queue is a generated view, not a managed file: neither `meridian upgrade`
+nor the upgrade script edits it. Regenerate it, together with the plan's
+generated status region, with `cardine status --write`.
+`python3 scripts/align_queue.py /path/to/project` only reports where the
+declared queue lives and never writes.
 
 ## Recovering a manual upgrade
 
@@ -156,11 +149,10 @@ uncommitted changes, the script refuses the dirty tree. Finish by hand instead:
 
 ```bash
 git -C /path/to/project switch -c meridian-upgrade-<version>
-python3 scripts/align_queue.py /path/to/project --meridian "$FW/bin/meridian" --apply
 "$FW/bin/meridian" audit --project /path/to/project
 ```
 
-Run the project's validation, commit on the branch, and continue with step 6.
+Run the project's validation, commit on the branch, and continue with step 5.
 
 ## Updating Meridian
 
