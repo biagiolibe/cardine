@@ -19,42 +19,42 @@ defense that closes it.
 
 ## Acceptance Criteria
 
-- [ ] `docs/FORGERY_INVENTORY.md` exists, in English, names the `main` commit
+- [x] `docs/FORGERY_INVENTORY.md` exists, in English, names the `main` commit
   it was taken on, and gives the commands it used, so that it can be
   repeated.
-- [ ] It lists every file or Git object that a product gate, verdict, status,
+- [x] It lists every file or Git object that a product gate, verdict, status,
   or stop trusts: task state and its contract snapshot, execution
   evidence, integration evidence and lease, the project configuration
   (`.cardine/project.json`), review verdicts, operation journals and
   receipts, generated views, and any other found. For each it gives the
   gates that read it, where it lives (task worktree, primary checkout,
   `.git`, `main`), and who can write it.
-- [ ] For each artifact it describes the concrete attack of a strong agent
+- [x] For each artifact it describes the concrete attack of a strong agent
   with ordinary file and Git access on the task branch, for example a
   hand-written queued state, a state edited to `in_review`, a contract
   changed from `review: required` to `not_required`, evidence with
   invented exit codes, or a configuration that disables CI, and says
   whether today's code detects it, with the test that proves it or the
   absence of one.
-- [ ] It proposes a defense for each undetected attack, such as an operation
+- [x] It proposes a defense for each undetected attack, such as an operation
   receipt outside the worktree, comparing the contract with the copy on
   `main`, binding evidence to digests that Cardine computed, or refusing a
   write path. It states which defense also covers a weak agent's honest
   mistake, such as the Contoso hand-written state.
-- [ ] It names the attacks that stay possible by design, for example an agent
+- [x] It names the attacks that stay possible by design, for example an agent
   with the developer's own authority, and why they are out of scope.
-- [ ] Every finding that needs a change has a destination: a named row of
+- [x] Every finding that needs a change has a destination: a named row of
   `docs/SINGLE_SOURCE_OF_TRUTH_PLAN.md` (SS6, SS7) or
   `docs/RUN_ENGINE_PLAN.md` (RE1 to RE7) whose scope text already covers
   it, a one-sentence amendment to such a row, a proposed new row with size
   and placement, or removal. Where an existing row does not cover a
   finding, the document says so.
-- [ ] It cross-references `docs/TEXT_GATE_INVENTORY.md` (task 073) instead of
+- [x] It cross-references `docs/TEXT_GATE_INVENTORY.md` (task 073) instead of
   repeating its entries.
-- [ ] No file changes outside `docs/FORGERY_INVENTORY.md` and this task's
+- [x] No file changes outside `docs/FORGERY_INVENTORY.md` and this task's
   records: the task record, its handoff, and its archive under
   `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -63,9 +63,9 @@ defense that closes it.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/075.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/075.json`, which only
   the installed `meridian task close 075` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
