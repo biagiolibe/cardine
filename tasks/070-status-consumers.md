@@ -65,6 +65,11 @@ read and regenerate status. This closes work item 7.
 - [ ] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
+- [ ] Every known-violation entry of `tests/test_text_gates.py` (task 078) that
+  this task removes is deleted from its table, and the test passes. If task
+  069 left the prose fallback of entry T-26 of `docs/TEXT_GATE_INVENTORY.md`,
+  this task removes it, and it moves the parsers that the inventory lists
+  under `cardine.legacy` into that package.
 - [ ] Every command under Validation passes.
 
 ## Relevant Files
@@ -96,7 +101,7 @@ repository, and every frozen file.
 
 ## Dependencies
 
-- **Depends on**: 069
+- **Depends on**: 080
 - **Blocks**: work item 8
 
 ## Developer decisions given in advance

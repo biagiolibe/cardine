@@ -93,7 +93,7 @@ Meridian release.
 ## Dependencies
 
 - **Depends on**: 073
-- **Blocks**: —
+- **Blocks**: 078
 
 ## Developer decisions given in advance
 

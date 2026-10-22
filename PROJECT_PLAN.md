@@ -117,3 +117,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 074 — Inventory the template rules and their enforcement (decision 14).
 - `[ ]` 075 — Map what an agent can forge among the artifacts gates trust (decision 14).
 - `[ ]` 076 — Review every stop the tool could resolve itself (decision 14).
+- `[ ]` 077 — Use one product name in the execution contract line.
+- `[ ]` 078 — Add the text gate static guard as a ratchet (decision 13).
+- `[ ]` 079 — Freeze the remaining human contract fields in the snapshot (N1, part 1).
+- `[ ]` 080 — Read the human contract fields from the snapshot (N1, part 2).
