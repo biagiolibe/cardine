@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from cardine.shared.errors import CardineError
-from cardine.shared.errors import CardineStop
 from pathlib import Path
 from cardine.tasks.state import TaskStateInvalid
 from cardine.lifecycle.execution import _execution_worktree
@@ -12,7 +11,6 @@ from cardine.lifecycle.execution import delivery_readiness
 from cardine.templates.mode import detect_mode
 from cardine.shared.git import git_output
 from cardine.tasks.state import machine
-import re
 from cardine.shared.text import read_task_field
 from cardine.tasks.state import read_task_state
 from cardine.tasks.identity import resolve_task_identity
@@ -23,7 +21,7 @@ from cardine.tasks.state import validate_task_state, review_is_required
 
 
 def transition_task_state(project_root: Path, task_id: str, status: str, *, cancellation_authority: str = "", reason: str = "") -> dict[str, object]:
-    """Apply one validated machine transition and update the record projection."""
+    """Apply one validated machine transition without changing the task record."""
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
@@ -32,13 +30,7 @@ def transition_task_state(project_root: Path, task_id: str, status: str, *, canc
     review_required = None
     try:
         path = state_path(project_root, task_id)
-        try:
-            state = read_task_state(project_root, task_id, workflow, spike=spike, review_required=review_required, stop_factory=stop_error)
-        except CardineStop as error:
-            if error.code != "TASK_STATE_MISSING":
-                raise
-            state = {"version": 1, "task_id": task_id, "workflow": workflow,
-                     "status": "queued", "transitions": []}
+        state = read_task_state(project_root, task_id, workflow, spike=spike, review_required=review_required, stop_factory=stop_error)
         review_required = review_is_required(state)
         if "contract" not in state:
             from cardine.tasks.contract import resolve_task_contract
@@ -71,10 +63,7 @@ def transition_task_state(project_root: Path, task_id: str, status: str, *, canc
         raise stop_error("TASK_STATE_INVALID", str(error), task_id=task_id, project=project_root) from error
     if status == "in_review":
         delivery_readiness(project_root, task_id)
-    projection = re.sub(r"^Status:[^\n]*", f"Status: {status}", record, flags=re.MULTILINE)
     _write_json_atomic(path, state)
-    if projection != record:
-        identity.task_path.write_text(projection, encoding="utf-8")
     return state
 
 

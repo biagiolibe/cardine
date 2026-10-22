@@ -488,6 +488,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
             encoding="utf-8",
         )
+        from task_contract_support import write_state
+        write_state(self.primary, "056", "done", review_required=False)
         owner_integration_projections._apply_task_completion_rows(self.primary, identity)
         archive = self.primary / "tasks/QUEUE_ARCHIVE.md"
         self.assertEqual(queue.read_text(encoding="utf-8"), "\n")

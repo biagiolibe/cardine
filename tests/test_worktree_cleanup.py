@@ -133,7 +133,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         state = {"version": 1, "task_id": "056", "workflow": "single",
                  "status": "queued", "transitions": []}
         path = self.primary / ".cardine/tasks/056.json"
-        path.parent.mkdir(parents=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(state), encoding="utf-8")
         self.git("add", ".cardine/tasks/056.json")
         self.git("commit", "-m", "track queued state")
@@ -279,8 +279,8 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             ),
             encoding="utf-8",
         )
-        with self.assertRaisesRegex(shared_errors.CardineError, "queue link for task 056"):
-            owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
+        resolved = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
+        self.assertEqual(resolved.task_path, identity.task_path)
         recovered = owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertEqual(recovered["status"], "aborted")
         self.assertFalse(lease_path.exists())

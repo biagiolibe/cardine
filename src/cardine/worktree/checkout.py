@@ -15,7 +15,6 @@ from cardine.shared.journal import append_journal_line
 from cardine.shared.jsonio import _read_json_object
 from cardine.shared.jsonio import _write_json_atomic
 from cardine.shared.models import ResolvedTaskIdentity
-from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.stops.render import stop_resume
 from cardine.tasks.identity import resolve_task_identity
@@ -382,7 +381,12 @@ def registered_worktree_task_states(project_root: Path) -> list[dict[str, str]]:
         record = worktree / identity.task_path.relative_to(primary)
         if not record.is_file():
             continue
-        status = read_task_field(record.read_text(encoding="utf-8"), "Status") or "in_progress"
+        from cardine.tasks.state import read_task_state
+        from cardine.templates.mode import detect_mode
+        try:
+            status = read_task_state(worktree, identity.canonical_id, detect_mode(worktree), stop_factory=stop_error)["status"]
+        except CardineError:
+            continue
         states.append({"task_id": identity.canonical_id, "status": status})
     return states
 

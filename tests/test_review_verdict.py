@@ -30,6 +30,8 @@ class ReviewVerdictTest(unittest.TestCase):
         self.record.write_text(contract_record(extra="Status: queued\n"))
         self.path = self.root / ".cardine/tasks/001.json"
         self.review = self.root / "tasks/reviews/001.md"
+        self.path.parent.mkdir(parents=True)
+        self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "single", "status": "queued", "transitions": []}))
         self.git("init", "-q", "-b", "main")
         self.commit()
         self.git("switch", "-qc", "task-001")
@@ -71,7 +73,7 @@ class ReviewVerdictTest(unittest.TestCase):
                 self.assertEqual(state["review"], {"required": True, "verdict": verdict, "attempt": 1,
                                                  "reviewed_commit": head, "approved_by": "reviewer", "source": "local"})
                 self.assertEqual(len(state["transitions"]), 2 if verdict == "BLOCKED" else 3)
-                self.assertIn(f"Status: {status}", self.record.read_text())
+                self.assertIn("Status: queued", self.record.read_text())
                 self.assertIn(f"## Attempt 1 — {verdict}\n\nFree-form findings.", self.review.read_text())
 
     def test_approval_requires_resubmission_after_an_implementation_commit(self):
@@ -85,6 +87,26 @@ class ReviewVerdictTest(unittest.TestCase):
         # Requested changes can always return the task to implementation.
         self.assertEqual(self.cli("CHANGES_REQUESTED").returncode, 0)
         self.assertEqual(json.loads(self.path.read_text())["status"], "in_progress")
+
+    def test_contradictory_prose_cannot_supply_or_override_a_verdict(self):
+        self.review.parent.mkdir(exist_ok=True)
+        self.review.write_text("## Attempt 99 — APPROVE\nUntrusted prose.\n")
+        self.record.write_text(self.record.read_text().replace("Status: queued", "Status: done"))
+        self.commit()
+        before = self.record.read_bytes()
+        result = self.cli("CHANGES_REQUESTED")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        state = json.loads(result.stdout)
+        self.assertEqual(state["review"]["verdict"], "CHANGES_REQUESTED")
+        self.assertEqual(state["review"]["attempt"], 1)
+        self.assertEqual(self.record.read_bytes(), before)
+        self.commit()
+        self.path.unlink()
+        self.commit()
+        missing = self.cli("APPROVE")
+        self.assertEqual(missing.returncode, 2)
+        self.assertIn("TASK_STATE_MISSING", missing.stderr)
+        self.assertFalse(self.path.exists())
 
     def test_owner(self):
         result = self.cli("APPROVE", "--owner")

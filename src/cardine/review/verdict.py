@@ -19,7 +19,6 @@ from datetime import datetime
 from datetime import timezone
 from pathlib import Path
 import json
-import re
 
 def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, owner: bool = False,
                           body: str = "") -> dict[str, object]:
@@ -67,12 +66,10 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
             except (CardineStop, ValueError, KeyError, IndexError):
                 projected = None
             expected = {path: json.dumps(projected, indent=2, sort_keys=True) + "\n"}
-            for target in (identity.task_path, identity.review_path):
+            for target in (identity.review_path,):
                 old = _run_git(project_root, "show", f"HEAD:{target.relative_to(project_root)}")
                 text = old.stdout if old.returncode == 0 else ""
-                expected[target] = (_review_attempt_text(text, previous["attempt"], verdict, body)
-                                    if target == identity.review_path else
-                                    re.sub(r"^Status:[^\n]*", f"Status: {state['status']}", text, flags=re.MULTILINE))
+                expected[target] = _review_attempt_text(text, previous["attempt"], verdict, body)
             changed = _run_git(project_root, "diff", "--name-only", "HEAD", "-z").stdout.split("\0")
             untracked = _run_git(project_root, "ls-files", "--others", "--exclude-standard", "-z").stdout.split("\0")
             names = {name for name in changed + untracked if name}
@@ -111,12 +108,9 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         invalid(str(error))
     review_text = identity.review_path.read_text(encoding="utf-8") if identity.review_path.exists() else ""
     projection = _review_attempt_text(review_text, state["review"]["attempt"], verdict, body)
-    record_projection = re.sub(r"^Status:[^\n]*", f"Status: {state['status']}", record, flags=re.MULTILINE)
     _write_json_atomic(path, state)
     identity.review_path.parent.mkdir(parents=True, exist_ok=True)
     identity.review_path.write_text(projection, encoding="utf-8")
-    if record_projection != record:
-        identity.task_path.write_text(record_projection, encoding="utf-8")
     return state
 
 

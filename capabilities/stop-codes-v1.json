@@ -340,20 +340,6 @@
       "resolution": "guardrail"
     },
     {
-      "code": "QUEUE_STATUS_MISMATCH",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`; `cardine execution investigate`",
-      "human_decision": false,
-      "resume": "change only the document the message says this actor may change so the statuses are accepted, then rerun cardine execution preflight {task_id} --project .",
-      "kind": "stop",
-      "summary": "the task record status disagrees with its queue row",
-      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_locations_and_preflight_use_the_declared_queue",
-      "resolution": "failing-work"
-    },
-    {
       "code": "EXECUTION_EVIDENCE_ARGUMENTS",
       "class": "tool",
       "workflows": [

@@ -18,7 +18,6 @@ from cardine.tasks.contract import verify_host_impact_completion_evidence
 from cardine.tasks.evidence import require_named_validation_commands
 from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
-from cardine.tasks.identity import resolve_project_locations
 from cardine.tasks.identity import resolve_task_identity
 from pathlib import Path
 import re
@@ -109,49 +108,17 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
             + ", ".join(required) + "; missing: " + ", ".join(missing),
             task_id=task_id,
         )
-    status = read_task_field(text, "Status")
+    from cardine.tasks.state import read_task_state
+    from cardine.templates.mode import detect_mode
+    status = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)["status"]
     on_task_branch = current_branch(project_root) == identity.branch_name
     open_statuses = TASK_BRANCH_OPEN_STATUSES if on_task_branch else ("queued", "in_progress")
     if status not in open_statuses:
         raise stop_error(
             "TASK_STATUS_REJECTED",
-            f"rule: preflight runs only on an open task; field checked: Status in {task_name}; "
+            f"rule: preflight runs only on an open task; field checked: validated task state for {task_name}; "
             f"accepted: {', '.join(open_statuses)}; found: {status or 'missing'}",
         )
-    queue = project_root / resolve_project_locations(project_root).queue
-    if queue.is_file():
-        header = next((line for line in queue.read_text(encoding="utf-8").splitlines() if line.startswith("| Order |")), "")
-        columns = [value.strip() for value in header.strip("|").split("|")]
-        if "ID" in columns and "Status" in columns:
-            for line in queue.read_text(encoding="utf-8").splitlines():
-                if not re.match(r"^\|\s*\d+\s*\|", line):
-                    continue
-                values = [value.strip() for value in line.strip("|").split("|")]
-                if len(values) == len(columns) and values[columns.index("ID")] == identity.canonical_id:
-                    queued_status = values[columns.index("Status")]
-                    # A task branch never edits the queue, so its row stays queued while the record moves.
-                    if queued_status != status and not (on_task_branch and queued_status == "queued"):
-                        queue_name = queue.relative_to(project_root).as_posix()
-                        permitted = (
-                            f"on task branch {identity.branch_name} the actor may change only {task_name}, "
-                            f"and the queue row stays queued"
-                            if on_task_branch
-                            else f"the actor may change {task_name} and {queue_name} together through the lifecycle"
-                        )
-                        accepted = (
-                            f"equal values, or queue queued with task {', '.join(TASK_BRANCH_OPEN_STATUSES)}"
-                            if on_task_branch
-                            else "equal values"
-                        )
-                        raise stop_error(
-                            "QUEUE_STATUS_MISMATCH",
-                            f"rule: the task record and its queue row must agree; sources checked: Status in "
-                            f"{task_name} and the Status column of row {identity.canonical_id} in "
-                            f"{queue_name}; accepted: {accepted}; "
-                            f"found: task {status}, queue {queued_status}; {permitted}",
-                            task_id=task_id,
-                        )
-                    break
     return f"Execution contract: {task_file.relative_to(project_root)}"
 
 
@@ -159,13 +126,15 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
     """Refresh only a nonterminal task's generated execution-contract block."""
     task_file = find_task_file(project_root, task_id)
     text = task_file.read_text(encoding="utf-8")
-    status = read_task_field(text, "Status") or "missing"
+    from cardine.tasks.state import read_task_state
+    from cardine.templates.mode import detect_mode
+    status = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)["status"]
     if status in ("done", "cancelled"):
         return f"Execution reconciliation skipped for terminal task {task_id} ({status})"
     if status not in ("queued", "in_progress"):
         raise stop_error(
             "TASK_STATUS_REJECTED",
-            f"rule: reconcile refreshes only an open task; field checked: Status in "
+            f"rule: reconcile refreshes only an open task; field checked: validated task state for "
             f"{task_file.relative_to(project_root).as_posix()}; accepted: queued, in_progress "
             f"(terminal tasks are skipped); found: {status}",
         )

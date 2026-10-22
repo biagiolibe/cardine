@@ -50,6 +50,10 @@ class LeanWalkthroughTest(unittest.TestCase):
 
     def test_walkthrough_closes_and_pushes_the_first_task(self):
         document = (ROOT / "docs/examples/LEAN_DELIVERY_WALKTHROUGH.md").read_text()
+        # SS5 requires registered state. Keep replaying this legacy prose-created
+        # fixture through the explicit importer until SS7 updates the walkthrough.
+        document = document.replace("cardine execution reconcile 001 --apply --project .",
+            "cardine task state import 001 --apply --project .\ncardine execution reconcile 001 --apply --project .")
         result = self.run_document(document)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         for action in ("run-candidate-validation", "push", "none"):

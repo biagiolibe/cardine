@@ -14,13 +14,66 @@ from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.identity import _authority_matches
 from cardine.tasks.identity import resolve_task_identity
-from cardine.tasks.identity import task_identity_context
 from cardine.tasks.state import TaskStateInvalid
 from cardine.tasks.state import machine
 from cardine.tasks.state import state_path
 from cardine.tasks.state import validate_task_state
 from cardine.templates.mode import detect_mode
 from cardine.tasks.contract import resolve_task_contract
+
+from cardine.shared.models import TaskIdentityContext
+from cardine.tasks.identity import (_task_authorities, _TaskAuthority, _clean_queue_id,
+    read_task_identity_policy, resolve_project_locations)
+
+
+def legacy_identity_context(project_root: Path) -> TaskIdentityContext:
+    """Read queue identity evidence only for explicit import and installation snapshots."""
+    project_root = project_root.resolve()
+    locations = resolve_project_locations(project_root)
+    task_paths = {key: set(value.task_paths) for key, value in _task_authorities(project_root, locations).items()}
+    queue_links = {}
+    queue_counts = {}
+    queue_path = (project_root / locations.queue).resolve()
+    if queue_path.is_file():
+        lines = queue_path.read_text(encoding="utf-8").splitlines()
+        headers: list[str] | None = None
+        for line in lines:
+            if not line.lstrip().startswith("|"):
+                headers = None
+                continue
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if "ID" in cells:
+                headers = cells
+                continue
+            if headers is None or len(cells) != len(headers) or set("".join(cells)) <= {"-", ":"}:
+                continue
+            canonical, inline_link = _clean_queue_id(cells[headers.index("ID")])
+            if not canonical or canonical in ("ID", "[ID]"):
+                continue
+            queue_counts[canonical] = queue_counts.get(canonical, 0) + 1
+            link_value = inline_link
+            for heading in ("Task file", "File"):
+                if heading in headers:
+                    _label, candidate = _clean_queue_id(cells[headers.index(heading)])
+                    link_value = candidate or link_value
+            if link_value and "://" not in link_value and not link_value.startswith("#"):
+                resolved = (queue_path.parent / link_value.split("#", 1)[0]).resolve()
+                if project_root.resolve() not in (resolved, *resolved.parents):
+                    raise CardineError(f"queue task link escapes the project: {link_value}")
+                queue_links.setdefault(canonical, set()).add(resolved)
+
+    identities = set(task_paths) | set(queue_counts)
+    authorities = {
+        canonical: _TaskAuthority(
+            canonical,
+            tuple(sorted(task_paths.get(canonical, set()))),
+            tuple(sorted(queue_links.get(canonical, set()))),
+            queue_counts.get(canonical, 0),
+        )
+        for canonical in identities
+    }
+
+    return TaskIdentityContext(read_task_identity_policy(project_root), locations, authorities)
 
 
 def import_task_states(
@@ -37,7 +90,7 @@ def import_task_states(
     """
     project_root = project_root.resolve()
     workflow = detect_mode(project_root)
-    context = task_identity_context(project_root)
+    context = legacy_identity_context(project_root)
     queue_path = project_root / context.locations.queue
     rows: dict[str, list[dict[str, object]]] = {}
     for found in _queue_task_rows(queue_path.read_text(encoding="utf-8")):

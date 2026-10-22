@@ -79,19 +79,20 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
             changed = set(git_output(project_root, "diff", "HEAD", "--name-only").splitlines())
             untracked = set(git_output(project_root, "ls-files", "--others", "--exclude-standard").splitlines())
             prior_record = _run_git(project_root, "show", f"HEAD:{identity.task_path.relative_to(project_root)}")
-            expected_record = re.sub(r"^Status:[^\n]*", "Status: in_progress", prior_record.stdout, flags=re.MULTILINE)
+            expected_record = prior_record.stdout
             state = _execution_state(project_root, task_id)
             previous = _run_git(project_root, "show", f"HEAD:{state_path(project_root, task_id).relative_to(project_root)}")
             if previous.returncode:
-                original = {"version": 1, "task_id": task_id, "workflow": detect_mode(project_root), "status": "queued", "transitions": []}
-            else:
-                original = json.loads(previous.stdout)
+                raise stop_error("TASK_STATE_MISSING", "repeated start requires registered state at HEAD",
+                                 task_id=task_id, project=project_root)
+            original = read_task_state(project_root, task_id, detect_mode(project_root),
+                                       text=previous.stdout, stop_factory=stop_error)
             expected_state = dict(original)
             if "contract" not in original and "contract" in state:
                 expected_state["contract"] = state["contract"]
             if original["status"] == "queued" and state["transitions"]:
                 expected_state.update(status="in_progress", transitions=original["transitions"] + [state["transitions"][-1]])
-            # A repeated start tolerates only the exact command-owned projection.
+            # A repeated start tolerates only the exact command-owned state update.
             if (changed | untracked <= owned and prior_record.returncode == 0
                     and identity.task_path.read_text(encoding="utf-8") == expected_record
                     and state == expected_state):

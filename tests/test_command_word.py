@@ -28,6 +28,8 @@ class CommandWordTest(unittest.TestCase):
         entries = json.loads((ROOT / "capabilities/stop-codes-v1.json").read_text())["stops"]
         # Snapshot of code, human_decision, and resolution at 84673a18828b50ec34ce712b009e9cf2b524184e.
         baseline = json.loads((ROOT / "tests/fixtures/stop-decisions-before-047.json").read_text())
+        # SS5 removes the obsolete prose-agreement gate; every remaining decision is preserved.
+        baseline.pop("QUEUE_STATUS_MISMATCH")
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []
