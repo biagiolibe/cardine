@@ -15,9 +15,6 @@ import subprocess
 from cardine.tasks.evidence import validation_commands
 
 
-EVIDENCE_EVENT_KINDS = ("diagnostic", "captures", "expansions")
-
-
 def record_validation(project_root: Path, task_id: str, command_id: str, command: str, status: int,
                       binding: dict[str, str] | None = None) -> None:
     path = project_root / names().execution_evidence_path
@@ -55,88 +52,3 @@ def run_validation(project_root: Path, task_id: str, command_id: str) -> int:
     record_validation(project_root, task_id, command_id, command, completed.returncode, binding)
     print(f"Validation {task_id}/{command_id}: exit {completed.returncode}")
     return completed.returncode
-
-
-def record_execution_event(
-    project_root: Path,
-    task_id: str,
-    kind: str,
-    gap: str,
-    criterion: str | None,
-    artifact: str | None,
-) -> str:
-    """Record an evidence gap and its provenance without self-reported counters."""
-    if not gap.strip():
-        raise stop_error(
-            "EXECUTION_EVIDENCE_ARGUMENTS",
-            f"rule: evidence is recorded with the gap that justifies it; option checked: --gap; "
-            f"accepted: a non-empty string; found: {gap!r}",
-        )
-    if kind == "captures" and (not criterion or not artifact):
-        absent = [name for name, value in (("--criterion", criterion), ("--artifact", artifact)) if not value]
-        raise stop_error(
-            "EXECUTION_EVIDENCE_ARGUMENTS",
-            "rule: captures need provenance; options checked: --criterion and --artifact; "
-            "accepted: both non-empty; missing: " + ", ".join(absent),
-        )
-    path = project_root / names().execution_evidence_path
-    state: dict[str, object] = {}
-    if path.is_file():
-        try:
-            state = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as error:
-            raise CardineError(f"invalid execution evidence state: {path}") from error
-    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
-    events = list(state.get(canonical_id, []))
-    event: dict[str, object] = {"kind": kind, "gap": gap}
-    if criterion:
-        event["criterion"] = criterion
-    if artifact:
-        event["artifact"] = artifact
-    events.append(event)
-    state[canonical_id] = events
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return f"Evidence {task_id}: {kind} recorded"
-
-
-def record_investigation(
-    project_root: Path,
-    task_id: str,
-    question: str,
-    scope: int,
-    sources: list[str],
-    finding: str,
-) -> str:
-    """Record a bounded exploration without making a host or worker normative."""
-    empty = [option for option, present in (("--question", question.strip()), ("--source", sources), ("--finding", finding.strip())) if not present]
-    if empty:
-        raise stop_error(
-            "EXECUTION_EVIDENCE_ARGUMENTS",
-            "rule: an investigation records its question, sources, and finding; options checked: --question, --source, "
-            "--finding; accepted: a non-empty value for each; found: missing or empty " + ", ".join(empty),
-            resume="rerun cardine execution investigate with --question, --source, and --finding",
-        )
-    if scope < 1:
-        raise stop_error("EXECUTION_EVIDENCE_ARGUMENTS", "--scope must be an integer of 1 or more")
-    execution_preflight(project_root, task_id)
-    path = project_root / names().execution_evidence_path
-    state: dict[str, object] = {}
-    if path.is_file():
-        try:
-            state = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as error:
-            raise CardineError(f"invalid execution evidence state: {path}") from error
-    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
-    events = list(state.get(canonical_id, []))
-    events.append({
-        "kind": "investigation",
-        "question": question,
-        "scope": scope,
-        "sources": sources,
-        "finding": finding,
-    })
-    state[canonical_id] = events
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return f"Investigation {task_id}: recorded"

@@ -40,13 +40,13 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn(("review-remediation-record", "1"), self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")))
         self.assertIn(("lifecycle-orchestration", "1"), self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")))
         implementation = self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"))
-        for pair in (("execution-command-gate", "1"), ("validation-scoping", "1"), ("spike-routing", "1"), ("host-impact-routing", "1")):
+        for pair in (("execution-command-gate", "2"), ("validation-scoping", "1"), ("spike-routing", "1"), ("host-impact-routing", "1")):
             self.assertIn(pair, implementation)
 
     def test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing(self) -> None:
         blueprint = (self.WORKFLOW / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
         implementation = (self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
-        self.assertIn(("task-blueprint", "4"), self.marker_pairs(blueprint))
+        self.assertIn(("task-blueprint", "5"), self.marker_pairs(blueprint))
         self.assertIn("Classification: NOT_APPLICABLE", blueprint)
         self.assertIn("Rationale:", blueprint)
         self.assertIn("Classification: REQUIRED", blueprint)
@@ -86,7 +86,7 @@ class CapabilityMarkerTest(unittest.TestCase):
                 ("queue-briefing", "1"),
                 ("authority-excerpt", "1"),
                 ("read-guard", "1"),
-                ("isolated-exploration", "1"),
+                ("isolated-exploration", "2"),
                 ("minimal-read-only-status", "1"),
                 ("validation-scoping", "1"),
                 ("evidence-tiers", "1"),
@@ -120,7 +120,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         ]
         texts = {path: (self.WORKFLOW / path).read_text(encoding="utf-8") for path in paths}
 
-        self.assertIn(("task-blueprint", "4"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
+        self.assertIn(("task-blueprint", "5"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
         self.assertIn(
             ("lifecycle-orchestration", "1"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
         )
@@ -242,7 +242,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_whole_file_baseline_capabilities_each_carry_one_marker(self) -> None:
         expectations = {
             "LANGUAGE_POLICY.md": ("language-policy", "1"),
-            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "4"),
+            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "5"),
             "docs/CODE_ORGANIZATION.md": ("code-organization", "1"),
             "docs/AUDIT_PROMPT_READ_ONLY.md": ("audit-prompt", "1"),
         }

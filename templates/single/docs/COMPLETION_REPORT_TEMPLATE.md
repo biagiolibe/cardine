@@ -20,7 +20,7 @@ Candidate validation declaration: `<declared fragments per REUSE/BOUNDED/FULL | 
 - Validation skips: `<none | test name — test-reported reason; reported by `command`>`
 - Manual verification: `<none | screenshot path — view checked — result>`
 - Acceptance criteria: `<all met | list criterion IDs/status>`
-- Isolated exploration: `<none | question(s) recorded through cardine execution investigate>`
+- Isolated exploration: `<none | question(s), sources, and distilled finding(s)>`
 - Rule discrepancies: `<none | rule, command result, and what was followed>` (optional)
 - Blockers/deviations: `<none | concrete issue, scope expansion, or context expansion and reason>`
 ```

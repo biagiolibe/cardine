@@ -36,7 +36,7 @@ from cardine.tasks.contract import check_handoff, default_handoff_path
 from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
 from cardine.tasks.importer import import_task_states
 from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check, reconcile_execution_contract
-from cardine.tasks.recording import EVIDENCE_EVENT_KINDS, record_execution_event, record_investigation, run_validation
+from cardine.tasks.recording import run_validation
 from cardine.tasks.state import state_path
 from cardine.tasks.transitions import close_task, transition_task_state
 from cardine.templates.audit import retired_text_advisories, run_audit
@@ -446,22 +446,6 @@ def build_parser() -> CardineArgumentParser:
     validate.add_argument("task_id")
     validate.add_argument("validation_id")
     validate.add_argument("--project", type=Path, default=Path.cwd())
-    evidence = execution_sub.add_parser("evidence", help="record the gap and one diagnostic, capture, or expansion")
-    evidence.add_argument("task_id")
-    evidence.add_argument("kind", choices=EVIDENCE_EVENT_KINDS)
-    evidence.add_argument("--gap", required=True)
-    evidence.add_argument("--criterion")
-    evidence.add_argument("--artifact")
-    evidence.add_argument("--project", type=Path, default=Path.cwd())
-    investigate = execution_sub.add_parser(
-        "investigate", help="record a bounded, isolated exploration and its distilled finding"
-    )
-    investigate.add_argument("task_id")
-    investigate.add_argument("--question", required=True)
-    investigate.add_argument("--scope", required=True, type=int)
-    investigate.add_argument("--source", action="append", required=True)
-    investigate.add_argument("--finding", required=True)
-    investigate.add_argument("--project", type=Path, default=Path.cwd())
 
     hook = subparsers.add_parser("hook", help="run a Cardine host hook entry point")
     hook_sub = hook.add_subparsers(dest="hook_command", required=True)
@@ -837,16 +821,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 print(execution_preflight(project_root, arguments.task_id))
             elif arguments.execution_command == "validate":
                 return run_validation(project_root, arguments.task_id, arguments.validation_id)
-            elif arguments.execution_command == "evidence":
-                print(record_execution_event(
-                    project_root, arguments.task_id, arguments.kind, arguments.gap,
-                    arguments.criterion, arguments.artifact,
-                ))
-            elif arguments.execution_command == "investigate":
-                print(record_investigation(
-                    project_root, arguments.task_id, arguments.question, arguments.scope,
-                    arguments.source, arguments.finding,
-                ))
             elif arguments.execution_command == "ready-check":
                 if state_path(project_root, arguments.task_id).exists():
                     result = delivery_readiness(project_root, arguments.task_id)

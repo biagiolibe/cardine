@@ -126,12 +126,6 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.remediation_project("task-007", "in_progress")
         validated = self.run_cli("execution", "validate", "TASK-007", "check")
         self.assertEqual(validated.returncode, 0, validated.stderr)
-        investigated = self.run_cli(
-            "execution", "investigate", "TASK-007", "--question", "q", "--source", "tasks/TASK-007.md",
-            "--finding", "f",
-        )
-        self.assertNotIn("QUEUE_STATUS_MISMATCH", investigated.stderr)
-        self.assertNotIn("TASK_STATUS_REJECTED", investigated.stderr)
         report = self.project / "ready.md"
         report.write_text("## Completion Report — TASK-007\n", encoding="utf-8")
         ready = self.run_cli("execution", "ready-check", "TASK-007", str(report))
@@ -421,7 +415,7 @@ Evidence plan:
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("in_review gate passed", result.stdout)
 
-    def test_handoff_rejects_fabricated_validation_and_requires_recorded_investigation(self) -> None:
+    def test_handoff_rejects_fabricated_validation(self) -> None:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-013.md").write_text(
@@ -444,23 +438,6 @@ Evidence plan:
         self.assertIn("BLOCKED HANDOFF_VALIDATION_EVIDENCE_MISSING:", fabricated.stderr)
 
         self.assertEqual(self.run_cli("execution", "validate", "TASK-013", "probe").returncode, 0)
-        investigated = self.run_cli(
-            "execution", "investigate", "TASK-013", "--question", "Which API owns the value?",
-            "--scope", "2", "--source", "vendor/api.rs", "--finding", "Window owns the value.",
-        )
-        self.assertEqual(investigated.returncode, 0, investigated.stderr)
-        self.assertIn("Investigation TASK-013: recorded", investigated.stdout)
-        missing_question = self.run_cli("execution", "handoff-check", "TASK-013", str(report))
-        self.assertNotEqual(missing_question.returncode, 0)
-        self.assertIn("BLOCKED HANDOFF_EXPLORATION_MISMATCH:", missing_question.stderr)
-        self.assertIn("found: `none` with 1 recorded", missing_question.stderr)
-        report.write_text(
-            report.read_text(encoding="utf-8").replace(
-                "- Isolated exploration: none",
-                "- Isolated exploration: Which API owns the value? — Window owns the value.",
-            ),
-            encoding="utf-8",
-        )
         self.assertEqual(self.run_cli("execution", "handoff-check", "TASK-013", str(report)).returncode, 0)
 
     def test_handoff_accepts_report_with_or_without_rule_discrepancies(self) -> None:
@@ -638,18 +615,6 @@ Evidence plan:
             "resume: rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the "
             "blocked cardine execution command",
         )
-        self.assertEqual(
-            self.blocked_line(self.run_cli("execution", "evidence", "TASK-020", "diagnostic", "--gap", " ")),
-            "BLOCKED EXECUTION_EVIDENCE_ARGUMENTS: rule: evidence is recorded with the gap that justifies it; option "
-            "checked: --gap; accepted: a non-empty string; found: ' '; resume: rerun the cardine execution evidence "
-            "command with the missing options",
-        )
-        self.assertIn(
-            "missing: --artifact",
-            self.blocked_line(self.run_cli(
-                "execution", "evidence", "TASK-020", "captures", "--gap", "g", "--criterion", "AC-1",
-            )),
-        )
 
     def test_handoff_gates_report_coded_actionable_stops(self) -> None:
         self.write_task("TASK-021", "in_progress")
@@ -713,7 +678,7 @@ Evidence plan:
             self.blocked_line(check()),
         )
 
-    def test_handoff_isolated_exploration_and_durable_evidence_gates(self) -> None:
+    def test_handoff_durable_validation_ignores_legacy_events(self) -> None:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-022.md").write_text(
@@ -744,44 +709,20 @@ Evidence plan:
             "TASK-022 <validation-id> --project . for each listed ID, then rerun the handoff check",
         )
         self.assertEqual(self.run_cli("execution", "validate", "TASK-022", "probe").returncode, 0)
-        for accepted in ("none", "None", "none needed", "No isolated exploration was needed", "no"):
-            with self.subTest(accepted=accepted):
-                write(accepted)
-                self.assertEqual(check().returncode, 0, accepted)
-        write("explored the API")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "BLOCKED HANDOFF_EXPLORATION_MISMATCH: rule: with no recorded investigation the report must say there was "
-            "none; field checked: Isolated exploration against .cardine/execution-evidence.json; accepted: `none`, "
-            "or text starting with `none` or `no`; found: 'explored the API'; expected `none` (or record the "
-            "investigation); resume: correct the Isolated exploration field or record the investigation with cardine "
-            "execution investigate TASK-022, then rerun the handoff check",
-        )
-        write("nothing")
-        self.assertIn("found: 'nothing'", self.blocked_line(check()))
-        self.assertEqual(
-            self.run_cli(
-                "execution", "investigate", "TASK-022", "--question", "Which API?", "--scope", "2",
-                "--source", "a.rs", "--finding", "The window API.",
-            ).returncode,
-            0,
-        )
-        write("none")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "BLOCKED HANDOFF_EXPLORATION_MISMATCH: rule: recorded investigations must be reported; field checked: "
-            "Isolated exploration against .cardine/execution-evidence.json; accepted: a summary of each recorded "
-            "investigation; found: `none` with 1 recorded; resume: correct the Isolated exploration field or record "
-            "the investigation with cardine execution investigate TASK-022, then rerun the handoff check",
-        )
-        write("Which API?")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "BLOCKED HANDOFF_EXPLORATION_SUMMARY_MISSING: rule: the report must contain each recorded question and "
-            "finding; source checked: .cardine/execution-evidence.json; accepted: the exact question and finding "
-            "text; missing the question or finding of: Which API?; resume: add each listed question and finding to "
-            "the report, then rerun cardine execution handoff-check TASK-022 <report> --project .",
-        )
+        legacy = self.project / ".cardine/execution-evidence.json"
+        state = json.loads(legacy.read_text())
+        state["TASK-022"].extend([
+            {"kind": "investigation", "question": "old question", "scope": 2, "finding": "old finding"},
+            {"kind": "captures", "gap": "old gap", "criterion": "AC-1", "artifact": "old.png"},
+        ])
+        legacy.write_text(json.dumps(state))
+        for summary in ("none", "Explored the API", "A finding without an event"):
+            with self.subTest(summary=summary):
+                write(summary)
+                self.assertEqual(check().returncode, 0, summary)
+        state["TASK-022"] = [entry for entry in state["TASK-022"] if "kind" in entry]
+        legacy.write_text(json.dumps(state))
+        self.assertIn("HANDOFF_VALIDATION_EVIDENCE_MISSING", self.blocked_line(check()))
 
     def test_validation_runs_only_a_declared_literal_command_and_records_status(self) -> None:
         (self.project / "docs").mkdir()
@@ -807,57 +748,10 @@ Evidence plan:
             "there first",
         )
 
-    def test_evidence_requires_a_gap_and_capture_provenance(self) -> None:
-        self.write_task("TASK-011", "in_progress")
-        missing = self.run_cli("execution", "evidence", "TASK-011", "captures", "--gap", "text is perceptual")
-        self.assertNotEqual(missing.returncode, 0)
-        self.assertIn("BLOCKED EXECUTION_EVIDENCE_ARGUMENTS:", missing.stderr)
-        self.assertIn("missing: --criterion, --artifact", missing.stderr)
-        recorded = self.run_cli(
-            "execution", "evidence", "TASK-011", "captures", "--gap", "text is perceptual",
-            "--criterion", "AC-4", "--artifact", "/tmp/capture.png",
-        )
-        self.assertEqual(recorded.returncode, 0, recorded.stderr)
-        evidence = json.loads((self.project / ".cardine/execution-evidence.json").read_text(encoding="utf-8"))
-        self.assertEqual(evidence["TASK-011"][0]["criterion"], "AC-4")
-        self.assertEqual(evidence["TASK-011"][0]["artifact"], "/tmp/capture.png")
-        other = self.run_cli(
-            "execution", "evidence", "TASK-011", "captures", "--gap", "second criterion",
-            "--criterion", "AC-5", "--artifact", "/tmp/second.png",
-        )
-        self.assertEqual(other.returncode, 0, other.stderr)
-        self.assertNotIn("count", evidence["TASK-011"][0])
-        self.assertNotIn("cap", evidence["TASK-011"][0])
-
-
-    def test_evidence_has_no_capture_cap_or_budget_ledger(self) -> None:
-        self.write_task("TASK-011", "in_progress")
-        for index in range(4):
-            recorded = self.run_cli(
-                "execution", "evidence", "TASK-011", "captures", "--gap", "rendered property",
-                "--criterion", "AC-1", "--artifact", f"capture-{index}.png",
-            )
-            self.assertEqual(recorded.returncode, 0, recorded.stderr)
-        events = json.loads((self.project / ".cardine/execution-evidence.json").read_text())["TASK-011"]
-        self.assertEqual(len(events), 4)
-        self.assertTrue(all("count" not in event and "cap" not in event for event in events))
-        self.assertFalse((self.project / ".cardine/budget.json").exists())
-
     def test_budget_command_is_removed(self) -> None:
         rejected = self.run_cli("budget", "show", "TASK-011")
         self.assertEqual(rejected.returncode, 2, rejected.stderr)
         self.assertIn("invalid choice: 'budget'", rejected.stderr)
-
-    def test_investigation_arguments_name_the_missing_options(self) -> None:
-        self.write_task("TASK-406", "in_progress")
-        result = self.run_cli("execution", "investigate", "TASK-406", "--question", " ", "--scope", "1", "--source", "x", "--finding", "")
-        self.assertEqual(
-            self.blocked_line(result),
-            "BLOCKED EXECUTION_EVIDENCE_ARGUMENTS: rule: an investigation records its question, sources, and finding; "
-            "options checked: --question, --source, --finding; accepted: a non-empty value for each; found: missing or "
-            "empty --question, --finding; resume: rerun cardine execution investigate with --question, --source, and "
-            "--finding",
-        )
 
     def test_uncoded_command_refusal_reports_command_refused(self) -> None:
         refused = self.run_cli("task", "identity", "check", "TASK-404", "--format", "json")
@@ -870,13 +764,25 @@ Evidence plan:
         self.assertNotIn("BLOCKED:", refused.stderr)
 
     def test_operating_system_failure_reports_os_access_failed(self) -> None:
+        (self.project / "docs").mkdir()
+        (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n")
         self.write_task("TASK-405", "in_progress")
+        task = self.project / "tasks/TASK-405.md"
+        task.write_text(task.read_text() + "\n## Authority\n\n## Expected code surface\n\n## Validation\n\n- `probe`: `printf ok`\n")
+        self.append_contract("TASK-405")
         (self.project / ".cardine").mkdir(exist_ok=True)
         (self.project / ".cardine/execution-evidence.json").mkdir()
-        failed = self.run_cli("execution", "evidence", "TASK-405", "diagnostic", "--gap", "missing output")
+        failed = self.run_cli("execution", "validate", "TASK-405", "probe")
         line = self.blocked_line(failed)
         self.assertTrue(line.startswith("BLOCKED OS_ACCESS_FAILED: "), line)
         self.assertTrue(
             line.endswith("; resume: fix the access problem that the detail names, then rerun the same cardine command"),
             line,
         )
+
+    def test_self_reported_evidence_commands_are_removed(self) -> None:
+        for command in ("evidence", "investigate"):
+            with self.subTest(command=command):
+                result = self.run_cli("execution", command, "TASK-011")
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(f"invalid choice: '{command}'", result.stderr)

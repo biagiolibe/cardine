@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v4 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v5 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
@@ -168,18 +168,6 @@ Run source/build validation only through `cardine execution validate <TASK-ID>
 <validation-id> --project .`. The command is deliberately stored in this task:
 the runner executes no agent-supplied shell text and records its exit status in
 `.cardine/execution-evidence.json` for the completion handoff.
-
-Before a diagnostic, capture, or context expansion, record its
-specific evidence gap with `cardine execution evidence <TASK-ID>
-<diagnostic|captures|expansions> --gap <reason> --project .`. A capture also
-requires its acceptance-criterion ID and artifact path; the command stores
-the durable evidence record.
-
-Before a broad or uncertain-yield exploration outside the task's initial
-authority, record the question, bounded scope, source paths, and distilled
-finding with `cardine execution investigate <TASK-ID> --question <question>
---scope <units> --source <path> --finding <finding> --project .`. This works
-with any host or worker arrangement; it preserves the investigation provenance.
 
 ## Execution contract — resolved
 
