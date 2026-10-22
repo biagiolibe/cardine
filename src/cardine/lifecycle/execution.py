@@ -8,7 +8,6 @@ from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
-from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.contract import execution_entries
 from cardine.tasks.evidence import validation_commands
@@ -86,10 +85,8 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
                 raise stop_error("TASK_STATE_MISSING", "repeated start requires registered state at HEAD",
                                  task_id=task_id, project=project_root)
             original = read_task_state(project_root, task_id, detect_mode(project_root),
-                                       text=previous.stdout, stop_factory=stop_error)
+                                       text=previous.stdout, stop_factory=stop_error, require_contract=True)
             expected_state = dict(original)
-            if "contract" not in original and "contract" in state:
-                expected_state["contract"] = state["contract"]
             if original["status"] == "queued" and state["transitions"]:
                 expected_state.update(status="in_progress", transitions=original["transitions"] + [state["transitions"][-1]])
             # A repeated start tolerates only the exact command-owned state update.
@@ -106,11 +103,8 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
 
 
 def _execution_state(project_root: Path, task_id: str) -> dict[str, object]:
-    record = find_task_file(project_root, task_id).read_text(encoding="utf-8")
     return read_task_state(project_root, task_id, detect_mode(project_root),
-                           spike=(read_task_field(record, "Class") or "").lower() == "spike",
-                           review_required=None,
-                           stop_factory=stop_error)
+                           stop_factory=stop_error, require_contract=True)
 
 
 def _execution_owned_paths(project_root: Path, task_id: str) -> set[str]:

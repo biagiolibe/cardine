@@ -141,6 +141,11 @@ class MachineTaskStateTest(unittest.TestCase):
         self.record.write_text(contract_record(spike=True, extra="Review: NOT_REQUIRED\nStatus: queued\n"))
         freeze_record(self.root, "001", self.record)
         self.assertEqual(self.cli("in_progress").returncode, 0)
+        self.git("switch", "-qc", "task-001")
+        (self.root / "docs").mkdir()
+        (self.root / "docs/result.md").write_text("Answer to the research question.\n")
+        self.git("add", ".")
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Deliver spike result")
         for outcome in ("ANSWERED", "INCONCLUSIVE"):
             state = owner_tasks_transitions.record_spike_outcome(self.root, "001", outcome)
             self.assertEqual(state["status"], "in_progress")
@@ -221,6 +226,7 @@ class MachineTaskStateTest(unittest.TestCase):
 
     def test_invalid_existing_schema_history_and_identity_write_nothing(self):
         good = self.state(steps=("in_progress", "done"))
+        good["contract"] = self.read()["contract"]
         cases = []
         for field, value in (("version", True), ("task_id", "002"), ("workflow", "unknown"), ("status", "UNKNOWN"), ("extra", 1)):
             changed = copy.deepcopy(good)
@@ -272,6 +278,7 @@ class MachineTaskStateTest(unittest.TestCase):
                                    "reviewed_commit": None, "approved_by": None}
                 self.record.write_text(contract_record(extra="Review: REQUIRED\n"))
                 self.write(state)
+                freeze_record(self.root, "001", self.record)
                 before = self.path.read_bytes()
                 denied = self.cli("cancelled")
                 self.assertEqual(denied.returncode, 2, denied.stderr)

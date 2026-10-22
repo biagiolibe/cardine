@@ -10,7 +10,6 @@ from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
-from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.preflight import execution_preflight
@@ -27,11 +26,9 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
-    record = identity.task_path.read_text(encoding="utf-8")
     state = read_task_state(project_root, task_id, workflow,
-                            spike=(read_task_field(record, "Class") or "").lower() == "spike",
-                            review_required=None,
-                            stop_factory=stop_error)
+                            stop_factory=stop_error, require_contract=True)
+    contract = state["contract"]
     _execution_worktree(project_root, task_id, resume=resume,
                         repeated_start=bool(state and state["status"] == "in_progress"), inspection=inspection)
     status = state["status"]
@@ -40,8 +37,7 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
         raise stop_error("TASK_STATUS_REJECTED", f"execution start allows {eligible}; found {status}", task_id=task_id, project=canonical_project_root(project_root))
     if status == "queued":
         if (project_root / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file():
-            from cardine.tasks.contract import resolve_task_contract
-            options = resolve_task_contract(project_root, task_id, text=record)["options"]
+            options = contract["options"]
             execution_preflight(project_root, task_id, options=options)
         state = transition_task_state(project_root, task_id, "in_progress")
 

@@ -92,7 +92,8 @@ class ReviewVerdictTest(unittest.TestCase):
     def test_contradictory_prose_cannot_supply_or_override_a_verdict(self):
         self.review.parent.mkdir(exist_ok=True)
         self.review.write_text("## Attempt 99 — APPROVE\nUntrusted prose.\n")
-        self.record.write_text(self.record.read_text().replace("Status: queued", "Status: done"))
+        self.record.write_text(self.record.read_text().replace("Status: queued", "Status: done")
+                               + "\nClass: spike\nReview: NOT_REQUIRED\n")
         self.commit()
         before = self.record.read_bytes()
         result = self.cli("CHANGES_REQUESTED")

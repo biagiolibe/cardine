@@ -91,3 +91,89 @@ class ContractSnapshotReadersTest(unittest.TestCase):
             self.assertFalse(codex_read_guard.is_exempt(self.root / 'docs/edited.md', self.root))
         self.record.unlink()
         self.assertEqual(context_authority(self.root, '001'), before)
+
+    def test_class_and_review_edits_do_not_change_start_or_review_policy(self):
+        from cardine.tasks.transitions import transition_task_state
+        from cardine.review.verdict import record_review_verdict
+        from cardine.tasks.preflight import execution_contract, execution_preflight
+        record = self.root / 'tasks/002.md'
+        (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
+        record.write_text(record.read_text() + execution_contract(self.root, '002') + '\n')
+        execution_preflight(self.root, '002')
+        record.write_text(record.read_text() + '\nClass: spike\nReview: required\nDeliverable: docs/edited.md\n')
+        execution_preflight(self.root, '002')
+        self.git('switch', '-qc', 'task-002')
+        state = transition_task_state(self.root, '002', 'in_progress')
+        self.assertEqual(state['contract']['class'], 'standard')
+        self.assertEqual(state['contract']['options']['review'], 'not_required')
+        with self.assertRaises(CardineStop) as caught:
+            record_review_verdict(self.root, '002', 'APPROVE')
+        self.assertIn('required-review task', str(caught.exception))
+
+    def test_answered_requires_every_committed_frozen_deliverable(self):
+        from cardine.tasks.transitions import transition_task_state, record_spike_outcome
+        text = contract_record('003', spike=True).replace('docs/result.md', 'docs/a.md, docs/b.md')
+        create_task(self.root, '003', text)
+        self.git('add', '.')
+        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Create spike')
+        self.git('switch', '-qc', 'task-003')
+        transition_task_state(self.root, '003', 'in_progress')
+        record = self.root / 'tasks/003.md'
+        record.write_text(text.replace('Class: spike', 'Class: standard').replace('docs/b.md', 'docs/edited.md'))
+        path = self.root / '.cardine/tasks/003.json'
+        self.assertEqual(json.loads(path.read_text())['contract']['deliverables'], ['docs/a.md', 'docs/b.md'])
+        before = path.read_bytes()
+        (self.root / 'docs/a.md').write_text('First answer\n')
+        (self.root / 'docs/b.md').write_text('Second answer\n')
+        with self.assertRaises(CardineStop):
+            record_spike_outcome(self.root, '003', 'ANSWERED')
+        self.assertEqual(path.read_bytes(), before)
+        self.git('add', 'docs/a.md')
+        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'First deliverable')
+        with self.assertRaises(CardineStop) as caught:
+            record_spike_outcome(self.root, '003', 'ANSWERED')
+        self.assertIn('docs/b.md', str(caught.exception))
+        self.assertEqual(path.read_bytes(), before)
+        self.git('add', 'docs/b.md')
+        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Second deliverable')
+        self.assertEqual(record_spike_outcome(self.root, '003', 'ANSWERED')['outcome'], 'ANSWERED')
+        self.git('switch', 'main')
+        with self.assertRaises(CardineStop) as caught:
+            record_spike_outcome(self.root, '003', 'ANSWERED')
+        self.assertIn('task branch', str(caught.exception))
+        self.assertEqual(record_spike_outcome(self.root, '003', 'INCONCLUSIVE')['outcome'], 'INCONCLUSIVE')
+
+    def test_spike_landing_paths_use_snapshot_even_after_class_and_deliverable_edits(self):
+        from cardine.integration.merge import _spike_disallowed_paths
+        identity = resolve_task_identity(self.root, '001', 'existing')
+        state = json.loads((self.root / '.cardine/tasks/001.json').read_text())
+        base = self.git('rev-parse', 'HEAD').stdout.decode().strip()
+        self.record.write_text(self.before.replace('Class: spike', 'Class: standard')
+                               .replace('docs/result.md', 'docs/edited.md'))
+        (self.root / 'docs/result.md').write_text('Frozen deliverable\n')
+        (self.root / 'docs/edited.md').write_text('Undeclared deliverable\n')
+        self.git('add', '.')
+        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Deliver spike')
+        self.assertEqual(_spike_disallowed_paths(self.root, identity, base, 'HEAD', state), ('docs/edited.md',))
+
+    def test_missing_snapshot_stops_without_backfill_or_record_resolution(self):
+        from cardine.tasks.transitions import transition_task_state
+        from cardine.lifecycle.commands import execution_start
+        from cardine.lifecycle.execution import _execution_state
+        from cardine.tasks.preflight import execution_preflight
+        path = self.root / '.cardine/tasks/002.json'
+        state = json.loads(path.read_text())
+        del state['contract']
+        path.write_text(json.dumps(state))
+        before = path.read_bytes()
+        with patch('cardine.lifecycle.commands._execution_location', return_value={}), \
+             patch('cardine.tasks.contract.resolve_task_contract', side_effect=AssertionError('record resolution')):
+            for action in (lambda: transition_task_state(self.root, '002', 'in_progress'),
+                           lambda: execution_start(self.root, '002'),
+                           lambda: _execution_state(self.root, '002'),
+                           lambda: execution_preflight(self.root, '002')):
+                with self.subTest(action=action), self.assertRaises(CardineStop) as caught:
+                    action()
+                self.assertEqual(caught.exception.code, 'TASK_STATE_MISSING')
+                self.assertIn('resume: cardine task contract update 002', str(caught.exception))
+                self.assertEqual(path.read_bytes(), before)

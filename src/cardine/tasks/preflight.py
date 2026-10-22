@@ -49,6 +49,10 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
     """
     identity = resolve_task_identity(project_root, task_id, "existing")
     task_file = identity.task_path
+    from cardine.tasks.state import read_task_state
+    from cardine.templates.mode import detect_mode
+    state = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error, require_contract=True)
+    contract = state["contract"]
     text = task_file.read_text(encoding="utf-8")
     require_named_validation_commands(text)
     validate_host_impact_declaration(text)
@@ -77,12 +81,7 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
             f"{task_name}; expected: `{EXECUTION_COMMANDS_VALUE}`; found: no such line",
             task_id=task_id,
         )
-    if options is None:
-        from cardine.tasks.state import read_task_state, state_path
-        from cardine.templates.mode import detect_mode
-        if state_path(project_root, task_id).exists():
-            snapshot = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)
-            options = snapshot.get("contract", {}).get("options")
+    options = contract["options"]
     required_headings = tuple(heading for heading in PREFLIGHT_HEADINGS
                               if heading != "Authority" or options is None or options["authorityRequired"])
     missing = [
@@ -90,7 +89,7 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
         for heading in required_headings
         if not re.search(rf"^## {re.escape(heading)}\s*$", text, re.MULTILINE)
     ]
-    if (read_task_field(text, "Class") or "").lower() == "spike":
+    if contract["class"] == "spike":
         missing.extend(field for field in SPIKE_PREFLIGHT_FIELDS if not read_task_field(text, field))
     elif options is None or options["expectedCodeSurfaceRequired"]:
         missing.extend(
@@ -99,7 +98,7 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
             if not re.search(rf"^## {re.escape(heading)}\s*$", text, re.MULTILINE)
         )
     if missing:
-        is_spike = (read_task_field(text, "Class") or "").lower() == "spike"
+        is_spike = contract["class"] == "spike"
         required = [f"## {heading}" for heading in PREFLIGHT_HEADINGS] + (
             list(SPIKE_PREFLIGHT_FIELDS) if is_spike else [f"## {heading}" for heading in NORMAL_PREFLIGHT_HEADINGS]
         )
@@ -110,9 +109,7 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
             + ", ".join(required) + "; missing: " + ", ".join(missing),
             task_id=task_id,
         )
-    from cardine.tasks.state import read_task_state
-    from cardine.templates.mode import detect_mode
-    status = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)["status"]
+    status = state["status"]
     on_task_branch = current_branch(project_root) == identity.branch_name
     open_statuses = TASK_BRANCH_OPEN_STATUSES if on_task_branch else ("queued", "in_progress")
     if status not in open_statuses:
@@ -130,7 +127,7 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
     text = task_file.read_text(encoding="utf-8")
     from cardine.tasks.state import read_task_state
     from cardine.templates.mode import detect_mode
-    status = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error)["status"]
+    status = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error, require_contract=True)["status"]
     if status in ("done", "cancelled"):
         return f"Execution reconciliation skipped for terminal task {task_id} ({status})"
     if status not in ("queued", "in_progress"):
@@ -184,6 +181,6 @@ def check_dependencies(project_root: Path, task_id: str, record: str) -> None:
         shown = _run_git(primary, "show", f"main:{path.as_posix()}")
         if shown.returncode:
             raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} has no landed state", task_id=task_id, project=project_root)
-        state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error)
+        state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error, require_contract=True)
         if not dependency_satisfied(state):
             raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} is not a landed successful result", task_id=task_id, project=project_root)
