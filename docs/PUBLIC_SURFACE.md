@@ -1,5 +1,15 @@
 # Public surface and stability
 
+Create a task with `cardine task new <ID> --record <proposal.md> --project <root>`.
+The UTF-8 proposal supplies the complete record, including explicit Options and
+Review overrides. `--quick` selects the minimal contract: ID, objective,
+acceptance criteria, named validation (or `none`), and dependencies, plus any
+fields required by the resolved project options. The command publishes the
+record and its frozen queued state together without editing generated views.
+If an interrupted pair is reported, rerun the command with `--recover` and the
+same proposal. Recovery preserves a complete pair and rolls back a partial
+pair only when its bytes match the creation journal; changed files are refused.
+
 The compatibility promise starts at **1.3.0**. The governing decisions are in
 [Public Surface and Stability](ADR_PUBLIC_SURFACE_AND_STABILITY.md); release
 and deprecation rules are in [CONTRIBUTING.md](../CONTRIBUTING.md#versioning-and-deprecation).
@@ -66,6 +76,7 @@ including command containers and nested subcommands.
 | `cardine review` | Stable |
 | `cardine review verdict` | Stable |
 | `cardine task` | Stable |
+| `cardine task new` | Stable |
 | `cardine task transition` | Stable |
 | `cardine task outcome` | Stable |
 | `cardine task close` | Stable |

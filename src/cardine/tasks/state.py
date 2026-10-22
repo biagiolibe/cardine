@@ -172,10 +172,18 @@ def read_task_state(project_root, task_id, workflow, *, spike=False, review_requ
     try:
         path = state_path(project_root, task_id)
         if text is None:
+            journal = Path(project_root) / names().project_directory / "task-creation.lock"
+            if journal.exists():
+                raise stop_factory("TASK_STATE_INVALID",
+                                   f"interrupted or active task creation: {journal}; retry or use task new --recover",
+                                   task_id=task_id, project=project_root)
             try:
                 text = path.read_text(encoding="utf-8")
             except FileNotFoundError:
                 raise stop_factory("TASK_STATE_MISSING", f"state file: allowed existing {path}; found missing",
+                                   task_id=task_id, project=project_root)
+            if journal.exists():
+                raise stop_factory("TASK_STATE_INVALID", f"task creation changed during read: {journal}; retry",
                                    task_id=task_id, project=project_root)
         try:
             state = json.loads(text)

@@ -61,7 +61,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         audit = self.run_cli("audit")
         # This legacy lock fixture has no capabilityProfiles; audit reports
         # UNVERIFIED for that declaration independently of marker integrity.
-        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v1 matches the released text", audit.stdout)
+        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v2 matches the released text", audit.stdout)
         self.assertNotIn("FAIL           marker-integrity", audit.stdout)
         self.assertNotIn("DRIFT", audit.stdout)
         repeated = self.run_cli("upgrade", "--check")
@@ -77,7 +77,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         blueprint = self.framework / "templates/single/tasks/TASK_BLUEPRINT.md"
         current = blueprint.read_text(encoding="utf-8")
         declaration = current.split("\n## Host impact\n", 1)[1].split("\n## Expected code surface\n", 1)[0]
-        previous = current.replace("capability=task-blueprint v1", "capability=task-blueprint v11", 1)
+        previous = current.replace("capability=task-blueprint v2", "capability=task-blueprint v11", 1)
         previous = previous.replace("\n## Host impact\n" + declaration, "", 1)
 
         installed_baseline = self.project / ".cardine/baselines/1.1.39"
@@ -110,7 +110,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_blueprint = (self.project / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-blueprint v1", upgraded_blueprint)
+        self.assertIn("capability=task-blueprint v2", upgraded_blueprint)
         self.assertIn("Classification: NOT_APPLICABLE", upgraded_blueprint)
         self.assertIn("Classification: REQUIRED", upgraded_blueprint)
         self.assertIn("Project-owned task note.", upgraded_blueprint)

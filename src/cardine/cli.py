@@ -326,6 +326,13 @@ def build_parser() -> CardineArgumentParser:
 
     task = subparsers.add_parser("task", help="inspect task records and identities")
     task_sub = task.add_subparsers(dest="task_command", required=True)
+    new = task_sub.add_parser("new", help="atomically create a task record and queued state")
+    new.add_argument("task_id")
+    new.add_argument("--record", type=Path, required=True, help="complete proposed UTF-8 record")
+    new.add_argument("--quick", action="store_true", help="use the minimal quick-task contract")
+    new.add_argument("--recover", action="store_true", help="safely recover the journaled interrupted pair")
+    new.add_argument("--project", type=Path, default=Path.cwd())
+    new.add_argument("--format", choices=("json",), default="json")
     transition = task_sub.add_parser("transition", help="apply a tracked task-state transition")
     transition.add_argument("task_id")
     transition.add_argument("status")
@@ -740,7 +747,19 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             print(json.dumps(record_review_verdict(project_root, arguments.task_id, arguments.verdict,
                                                    owner=arguments.owner, body=arguments.body), sort_keys=True))
         elif arguments.command == "task":
-            if arguments.task_command == "transition":
+            if arguments.task_command == "new":
+                from cardine.tasks.creation import create_task
+                from cardine.tasks.contract import _contract_field
+                text = arguments.record.read_text(encoding="utf-8")
+                if arguments.quick:
+                    category = _contract_field(text, "Category")
+                    if category and category.lower() != "quick":
+                        raise CardineError("--quick conflicts with record Category")
+                    if not category:
+                        text = "Category: Quick\n" + text
+                print(json.dumps(create_task(project_root, arguments.task_id, text,
+                                             recover=arguments.recover), sort_keys=True))
+            elif arguments.task_command == "transition":
                 print(json.dumps(transition_task_state(project_root, arguments.task_id, arguments.status,
                     cancellation_authority=arguments.cancellation_authority, reason=arguments.reason), sort_keys=True))
             elif arguments.task_command == "outcome":

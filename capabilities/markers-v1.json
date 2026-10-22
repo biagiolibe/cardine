@@ -254,7 +254,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"

@@ -59,14 +59,15 @@ def task_contract_options(text: str) -> dict[str, object]:
     return options
 
 
-def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None = None) -> dict[str, object]:
+def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None = None,
+                          identity=None) -> dict[str, object]:
     """Build the creation snapshot reused by work item 7's task-new adapter.
 
     This function never writes state or revises an existing snapshot. Category:
     Quick selects the minimal registered record; its class remains standard.
     Policy is preset -> project defaults -> explicit task Options/Review.
     """
-    identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
+    identity = identity or resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     if text is None:
         text = identity.task_path.read_text(encoding="utf-8")
     if _contract_field(text, "ID") != identity.canonical_id:

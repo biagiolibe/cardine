@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v1 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v2 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
@@ -9,7 +9,6 @@
 > **Session**: [conversation ID or temporal reference]
 > **Origin**: [optional: capability / friction / maintenance / release]
 
-Status: queued
 Class: [omit for a standard task / SPIKE]
 Review: [omit to inherit the project default / required / not_required]
 Options: [omit, or a JSON object with any `taskDefaults` key, for example `{"authorityRequired": true}`]
