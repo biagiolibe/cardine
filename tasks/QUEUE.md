@@ -43,3 +43,13 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 083 | Remove the self-reported evidence counters (RX1) | 🔴 P1 | — | [083](done/083-remove-self-reported-counters.md) |
 | `[ ]` | 084 | Read class, review policy, and deliverables from the snapshot (N2a) | 🔴 P1 | 083 | [084](084-read-class-review-deliverables.md) |
 | `[ ]` | 085 | Read validation commands, host impact, and locations from frozen inputs (N2b) | 🔴 P1 | 084 | [085](085-read-validation-and-locations.md) |
+| `[ ]` | 086 | Add the pure run resolver and output envelope (RE1a) | 🔴 P1 | 085 | [086](086-resolver-and-output.md) |
+| `[ ]` | 087 | Write and verify operation receipts (RE1b) | 🔴 P1 | 086 | [087](087-operation-receipts.md) |
+| `[ ]` | 088 | Make state readers and preparation require receipts (RE1c) | 🔴 P1 | 087 | [088](088-receipt-gated-readers.md) |
+| `[ ]` | 089 | Classify worktree, state, lease, and cleanup stops by cause (RE2a) | 🔴 P1 | 088 | [089](089-stop-causes-lifecycle.md) |
+| `[ ]` | 090 | Consolidate the approval, configuration, and workflow codes (RE2b) | 🔴 P1 | 089 | [090](090-consolidate-policy-codes.md) |
+| `[ ]` | 091 | Classify self-update, upgrade, and host stops by cause (RE2c) | 🔴 P1 | 090 | [091](091-stop-causes-nonrun.md) |
+| `[ ]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](092-typed-outcome-dispatch.md) |
+| `[ ]` | 093 | Enforce the expected surface and record delivery identity (RE3a) | 🔴 P1 | 092 | [093](093-scope-and-delivery.md) |
+| `[ ]` | 094 | Run task validation in the engine with a retry limit (RE3b) | 🔴 P1 | 093 | [094](094-engine-validation.md) |
+| `[ ]` | 095 | Remove the handoff and report gates (N3) | 🔴 P1 | 094 | [095](095-remove-handoff-gates.md) |

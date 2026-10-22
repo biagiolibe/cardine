@@ -128,3 +128,13 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 083 — Remove the self-reported evidence counters (RX1).
 - `[ ]` 084 — Read class, review policy, and deliverables from the snapshot (N2a).
 - `[ ]` 085 — Read validation commands, host impact, and locations from frozen inputs (N2b).
+- `[ ]` 086 — Add the pure run resolver and output envelope (RE1a).
+- `[ ]` 087 — Write and verify operation receipts (RE1b).
+- `[ ]` 088 — Make state readers and preparation require receipts (RE1c).
+- `[ ]` 089 — Classify worktree, state, lease, and cleanup stops by cause (RE2a).
+- `[ ]` 090 — Consolidate the approval, configuration, and workflow codes (RE2b).
+- `[ ]` 091 — Classify self-update, upgrade, and host stops by cause (RE2c).
+- `[ ]` 092 — Dispatch typed outcomes through one renderer (RE2d).
+- `[ ]` 093 — Enforce the expected surface and record delivery identity (RE3a).
+- `[ ]` 094 — Run task validation in the engine with a retry limit (RE3b).
+- `[ ]` 095 — Remove the handoff and report gates (N3).
