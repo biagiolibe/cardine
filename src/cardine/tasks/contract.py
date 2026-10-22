@@ -148,8 +148,12 @@ def contract_digest(text: str) -> str | None:
     return match.group(1) if match else None
 
 
+EXECUTION_COMMANDS_VALUE = "required via cardine execution"
+EXECUTION_COMMANDS_LINE = f"- Execution commands: `{EXECUTION_COMMANDS_VALUE}`"
+
+
 def contract_requires_execution_commands(text: str) -> bool:
-    return "- Execution commands: `required via meridian execution`" in text
+    return EXECUTION_COMMANDS_LINE in text
 
 
 PREFLIGHT_HEADINGS = ("Authority", "Validation")
