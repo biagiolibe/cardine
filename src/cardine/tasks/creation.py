@@ -16,7 +16,7 @@ import tempfile
 from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
 from cardine.tasks.contract import resolve_task_contract
-from cardine.tasks.identity import resolve_project_locations, resolve_task_identity, _authority_matches
+from cardine.tasks.identity import resolve_project_locations, resolve_task_identity, task_identity_context, _authority_matches
 from cardine.tasks.state import TaskStateInvalid, state_path, validate_task_state
 from cardine.tasks.status import _dependencies
 
@@ -112,12 +112,14 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
             result = _recover(root, journal, task_id)
             if result is not None:
                 return result
-        identity = resolve_task_identity(root, task_id, 'new', check_queue_links=False)
+        context = task_identity_context(root)
+        identity = resolve_task_identity(root, task_id, 'new', check_queue_links=False, context=context)
         canonical = identity.canonical_id
         record = _safe_path(root, identity.task_path)
         state_file = _safe_path(root, state_path(root, canonical))
         states = {path.stem: None for path in state_file.parent.glob('*.json')}
-        if (record.exists() or _authority_matches(states, canonical)
+        if (record.exists() or _authority_matches(context.authorities, canonical)
+                or _authority_matches(states, canonical)
                 or any(item.casefold() == canonical.casefold() for item in states)):
             raise CardineError(f'task ID already exists: {canonical}')
         # Resolve once from the identity and the complete proposed record.

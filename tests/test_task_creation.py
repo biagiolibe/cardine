@@ -119,6 +119,16 @@ class TaskCreationTest(unittest.TestCase):
                 self.create()
             self.assertEqual(list(Path(outside).iterdir()), [])
 
+    def test_dangling_record_symlink_is_existing_identity(self):
+        self.record.parent.mkdir()
+        target = self.record.parent / 'target.txt'
+        self.record.symlink_to(target)
+        with self.assertRaisesRegex(CardineError, 'already exists'):
+            self.create()
+        self.assertFalse(target.exists())
+        self.assertTrue(self.record.is_symlink())
+        self.assertFalse(self.state.exists())
+
     def test_failure_at_each_publication_boundary_rolls_back(self):
         link = os.link
         for failed_path in (self.lock, self.record, self.state):
