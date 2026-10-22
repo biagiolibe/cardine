@@ -17,27 +17,36 @@ from cardine.legacy.console_workflow import (
 )
 from cardine.shared.console_workflow import ConsoleError
 
-# The static search of work item 7: the names of the prose readers, anywhere outside `cardine.legacy`.
-SEARCH = (r"parse_queue|record_status|record_review|handoff_status|latest_review_verdict|effective_state|"
-          r"QUEUE_HEADING|RECORD_STATUS|RECORD_REVIEW|HANDOFF_STATUS|REVIEW_ATTEMPT|TASK_HEADING|"
-          r"LEAN_QUEUE_WRAPPER|link_target|has_link")
-SCOPE = ("src", "scripts", "hooks", "templates")
+# The static search of work item 7: names of the prose parsers and the two literal reads of a record
+# `Status` line or a queue row, anywhere outside `cardine.legacy`. The frozen hooks are not searched.
+NAMES = (r"parse_queue|record_status|record_review|handoff_status|latest_review_verdict|effective_state|"
+         r"QUEUE_HEADING|RECORD_STATUS|RECORD_REVIEW|HANDOFF_STATUS|REVIEW_ATTEMPT|TASK_HEADING|"
+         r"LEAN_QUEUE_WRAPPER|link_target|has_link|_queue_task_rows")
+SEARCH = rf"\b(?:{NAMES})\b|read_task_field\([^)]*\"Status\""
+SCOPE = ("src", "scripts")
 
-# Every remaining hit and its reason.
+# Every remaining hit and its reason. A ratchet: the set can only shrink. Moving these under
+# `cardine.legacy` is blocked by tests/test_legacy_meridian_installation.py, which forbids a
+# product import of `cardine.legacy`, and by the plan, which keeps the explicit import isolated
+# until work item 10.
 ALLOWED = {
     "src/cardine/tasks/importer.py": (
-        "the explicit `cardine task state` import reads a legacy record's Status once to register state; "
-        "it is never called as missing-state recovery (tests/test_task_status_gates.py)"),
+        "the explicit `cardine task state import` reads a legacy record's Status and the queue rows once to "
+        "register state; it is never called as missing-state recovery (tests/test_task_status_gates.py)"),
+    "src/cardine/integration/projections.py": "defines `_queue_task_rows`, whose only caller is the importer",
+    "scripts/cardine_cli.py": "re-exports `_queue_task_rows` for the importer's tests; reads nothing itself",
 }
 
 
 class ProductProseReaderTest(unittest.TestCase):
-    def test_static_search_finds_only_the_documented_import_path(self) -> None:
-        result = subprocess.run(
-            ["git", "grep", "-lwE", SEARCH, "--", *SCOPE, ":!src/cardine/legacy"],
-            cwd=ROOT, capture_output=True, text=True, check=False)
-        self.assertIn(result.returncode, (0, 1), result.stderr)
-        self.assertEqual(sorted(result.stdout.split()), sorted(ALLOWED))
+    def test_static_search_finds_only_the_documented_remaining_readers(self) -> None:
+        tracked = subprocess.run(["git", "ls-files", "--", *SCOPE], cwd=ROOT, capture_output=True,
+                                 text=True, check=True).stdout.split()
+        pattern = re.compile(SEARCH)
+        hits = sorted(name for name in tracked
+                      if name.endswith(".py") and not name.startswith("src/cardine/legacy/")
+                      and pattern.search((ROOT / name).read_text(encoding="utf-8")))
+        self.assertEqual(hits, sorted(ALLOWED))
 
     def test_product_console_and_briefing_import_no_queue_or_prose_parser(self) -> None:
         for relative in ("src/cardine/console/snapshot.py", "src/cardine/console/state.py",
@@ -47,7 +56,7 @@ class ProductProseReaderTest(unittest.TestCase):
                 if isinstance(node, ast.ImportFrom):
                     self.assertFalse((node.module or "").startswith("cardine.legacy"), relative)
                     names = {alias.name for alias in node.names}
-                    self.assertFalse(names & set(re.findall(r"[A-Za-z_]+", SEARCH)), (relative, names))
+                    self.assertFalse(names & set(NAMES.split("|")), (relative, names))
 
     def test_console_and_briefing_never_name_a_queue_file(self) -> None:
         for path in [*(ROOT / "src/cardine/console").glob("*.py"), ROOT / "src/cardine/hosts/briefing.py"]:

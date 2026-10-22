@@ -82,8 +82,8 @@ The tracked `.cardine/tasks/<TASK-ID>.json` file is the only status and review-v
 Read status from state, never from the queue or the plan: `cardine status`
 lists the preset, the totals for all five statuses, and each open task with its
 dependencies, blockers, and whether it is startable (`--all` adds terminal
-tasks; `--format json` returns the versioned model that the console, the
-per-turn briefing, and the run engine read). Only a `queued` task whose
+tasks; `--format json` returns the versioned model that the console and the
+per-turn briefing read). Only a `queued` task whose
 dependencies are all satisfied is startable; `in_progress` and `in_review`
 tasks are resumed, never started again. The queue file and the plan's status
 region are generated views of that model. Regenerate them with `cardine status

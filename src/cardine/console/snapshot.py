@@ -514,8 +514,9 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         if facts and facts.state is not None and order.index(status) < order.index(row["status"]):
             mismatch = f"main {row['status']}, {facts.branch} {status}"
         lifecycle = LIFECYCLE[status]
-        if status == "queued" and facts and facts.exists and facts.worktree_available:
-            # A prepared canonical worktree means work began; resume is offered, never start.
+        if status == "queued" and row["startable"] and facts and facts.exists and facts.worktree_available:
+            # A prepared canonical worktree of a startable task means work began: resume is
+            # offered, never start. Unmet dependencies keep the task blocked whatever the worktree.
             lifecycle, source = "in_progress", f"branch {facts.branch}"
         if state_error:
             status, lifecycle, source, mismatch = "STATE_ERROR", "in_progress", "task state", state_error
@@ -591,4 +592,5 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         git_summary="clean" if len(status_lines) == 1 else f"{len(status_lines) - 1} changed paths",
         git_changes=len(status_lines) - 1, tasks=tuple(tasks),
         done_count=totals["done"] + totals["cancelled"] - closing_count,
+        preset=preset, totals=tuple(totals.items()),
     )

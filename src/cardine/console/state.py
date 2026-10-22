@@ -137,9 +137,11 @@ def one_shot(state: ConsoleState) -> str:
     lines = [
         (f"CARDINE | {state.framework.label} | {snapshot.project} | {snapshot.branch}"
          f" | {snapshot.git_summary}"),
-        (f"Updated: {stamp} | Open: {sum(not task.cleanup_pending for task in snapshot.tasks)}"
-         f" | Done: {snapshot.done_count}"),
+        f"Updated: {stamp} | Open: {snapshot.open_count} | Done: {snapshot.done_count}",
     ]
+    if snapshot.totals:
+        lines.append(f"Preset: {snapshot.preset} | Totals: "
+                     + ", ".join(f"{key}={value}" for key, value in snapshot.totals))
     for task in snapshot.tasks:
         objective = " ".join(task.objective)
         lines.append(f"{task.task_id} [{task.readiness}] {task.title}")

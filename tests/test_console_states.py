@@ -69,6 +69,14 @@ class BranchStateTest(support.StateConsoleFixture):
         # The status service keeps the state-only answer; the worktree is a display fact.
         self.assertTrue(load_task_status(self.project)["tasks"][0]["startable"])
 
+    def test_prepared_worktree_never_overrides_unmet_dependencies(self) -> None:
+        self.setup_project({"001": "queued", "002": "queued"}, deps={"002": "001"})
+        self.worktree("task-002")
+        task = self.load()["002"]
+        self.assertEqual((task.readiness, task.lifecycle), ("BLOCKED: 001", "todo"))
+        self.assertIsNone(task.launch_command)
+        self.assertFalse(task.is_resume)
+
     def test_closure_status_is_shown_in_the_detail_pane(self) -> None:
         self.setup_project({"001": "queued"})
         self.worktree("task-001")
@@ -287,6 +295,18 @@ class StateAuthorityTest(support.StateConsoleFixture):
         self.assertEqual(snapshot.done_count, 3)
         self.assertEqual(snapshot.tasks[0].readiness, "READY")
         self.assertEqual(load_task_status(self.project)["totals"]["total"], 4)
+
+    def test_one_shot_prints_preset_and_the_status_totals(self) -> None:
+        self.setup_project({"001": "done", "002": "queued", "003": "in_progress", "004": "queued"})
+        self.write(self.project, ".cardine/tasks/005.json", "{")
+        state = owner_console_state.ConsoleState(self.project)
+        state.refresh()
+        output = owner_console_state.one_shot(state)
+        self.assertEqual(state.snapshot.preset, "lean")
+        self.assertIn("Preset: lean | Totals: queued=2, in_progress=1, in_review=0, done=1, cancelled=0, total=4", output)
+        # The invalid state is listed as an error, but it is neither open nor counted.
+        self.assertIn("Open: 3 | Done: 1", output)
+        self.assertEqual(dict(state.snapshot.totals), load_task_status(self.project)["totals"])
 
     def test_no_queue_or_archive_file_is_needed(self) -> None:
         self.setup_project({"001": "queued"})
