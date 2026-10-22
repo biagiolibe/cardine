@@ -10,6 +10,12 @@
 
 ## Objective
 
+**Suspended on 2026-10-22.** Decision 13 of `docs/ADR_CARDINE_1_0.md`
+forbids gates on agent-written text, and this task as written makes such a
+gate easier to satisfy instead of removing it. Task 073 redefines its scope or
+recommends cancelling it; do not start it before the coordinator rewrites
+this record from that inventory.
+
 `cardine execution ready-check` and `execution deliver` stop with
 `EVIDENCE_INCOMPLETE` when the handoff's `Current task commit` describes the
 coming delivery commit in the agent's own words. `_delivery_current_commit` in
@@ -85,9 +91,6 @@ copyable, and make the stop say exactly what to write.
 - Meridian 1.4.x receives fixes only for blocking defects (ADR decision 10).
   This defect has a workaround, writing the literal `Deliver <TASK-ID> for
   review` subject, so it gets no Meridian fix.
-- Task 070 (single source SS7) also edits `templates/single/` and the
-  capability baseline; it waits for this task. Task 068 can run at the same
-  time.
 - If `worktree advance` stops because another task holds the integration lease
   in the primary checkout, that is not a decision for the developer: wait
   until the other integration finalizes or aborts, then rerun the same
@@ -100,8 +103,8 @@ fields; any Meridian release.
 
 ## Dependencies
 
-- **Depends on**: 067
-- **Blocks**: 070
+- **Depends on**: 067, 073
+- **Blocks**: —
 
 ## Developer decisions given in advance
 

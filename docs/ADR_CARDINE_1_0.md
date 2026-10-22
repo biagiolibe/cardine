@@ -19,7 +19,9 @@ no feature to the 1.0 scope. On 2026-10-19 the developer split work item 5 in
 two, reset the capability marker versions at the marker rename, and placed the
 move of this repository to Cardine after work items 8, 9, and 10. On
 2026-10-20 the developer moved the Cardine names of skills, slash commands,
-the plugin, and the Codex rules from work item 5b to work item 9.*
+the plugin, and the Codex rules from work item 5b to work item 9. Decision
+13, gates that read facts instead of prose, was proposed and accepted on
+2026-10-22.*
 
 ## Context
 
@@ -496,6 +498,62 @@ repository's own lifecycle runs on the installed Meridian 1.4.0 until
 digests, and the checkout's upgrade damages them, so neither change reaches
 the stops of that lifecycle.
 
+### 13. Gates read facts, not prose
+
+A gate, a verdict, a status, or a stop must rest on something an agent cannot
+get wrong by wording it differently, and cannot get right by copying a string.
+Free text checked by pattern fails both ways: it blocks correct work written
+in other words, and it passes a copied phrase that is not true. It also breaks
+whenever a template, a procedure, or a model changes.
+
+The evidence, as of 2026-10-22:
+
+- On Contoso, two consecutive tasks stopped with `EVIDENCE_INCOMPLETE` because
+  the handoff's `Current task commit` described the coming delivery commit in
+  the agent's words instead of the literal `Deliver <TASK-ID> for review`.
+  One description was wrong, the other was right; both cost a correction
+  commit, a new delivery, and a new session.
+- On Contoso, integration stopped with `TASK_STATE_INVALID` because the
+  transition read the review policy from the record's prose and integration
+  read it from the state file.
+- In `src/cardine` on that date, 23 calls read fields from Markdown records,
+  about a dozen regular expressions read handoff lines and queue checkboxes,
+  and 8 code paths accept validation exit codes that the agent reports on the
+  command line.
+
+A gate may read only three sources:
+
+1. The task state file and its contract snapshot, written by the CLI.
+2. Git objects and references.
+3. The results of commands that Cardine executed itself: exit codes, digests,
+   and the files those commands wrote.
+
+Human intent enters through the task contract. `cardine task new` reads it
+once, validates it against a schema, and freezes it in the state file
+(decision 4, task 053). After creation the Markdown record describes the
+work; no gate parses it again.
+
+Text that an agent writes, such as handoffs, reports, and checkboxes, is an
+explanation for people. No gate reads it, no verdict or status is derived from
+it, and its wording never causes a stop. No template asks an agent to write a
+literal string so that a gate can find it. Evidence an agent declares, such as
+an exit code passed as an option, is not evidence; the engine of work item 8
+runs validation itself.
+
+Text that Cardine installs and manages, such as marker blocks and their
+digests, is checked byte for byte. There the text is the product, and an
+integrity check is the right gate.
+
+The reader of an installed Meridian under `cardine.legacy` keeps its prose
+parsing until work item 10, because it serves the coordinator of this
+repository. No product command calls it.
+
+One check keeps this true: a static test lists every product read of record,
+handoff, report, queue, or plan text and fails on a new one outside the
+contract creation path, the integrity checks, and `cardine.legacy`. A planning
+task inventories the current reads and assigns each to work item 7, work item
+8, removal, or the integrity class before the work item 8 tasks are written.
+
 ## Work items to 0.9
 
 Most items are one or more tasks of 2–3 hours. Item 3 is mechanical and
@@ -566,7 +624,9 @@ surfaces only and leave those files unchanged.
    stop, recoverable states return the next action or are resolved by the
    engine, and failing work iterates within the retry limit. Rebuild the
    console on this engine. Build integration around the landing mode, with
-   `direct` as its only 1.0 mode (decision 11).
+   `direct` as its only 1.0 mode (decision 11). It applies decision 13: the
+   engine runs validation and records the delivered commit itself, so no gate
+   reads agent-written text or agent-reported exit codes.
 9. Hosts: setup and doctor for Claude Code and Codex, two skills, user-level
    hooks, with one Python implementation of each hook (decision 7). The
    skills, slash commands, plugin, and Codex rules file and profile are
