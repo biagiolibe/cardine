@@ -26,8 +26,8 @@ SEARCH = rf"\b(?:{NAMES})\b|read_task_field\([^)]*\"Status\""
 SCOPE = ("src", "scripts")
 
 # Every remaining hit and its reason. A ratchet: the set can only shrink. Moving these under
-# `cardine.legacy` is blocked by tests/test_legacy_meridian_installation.py, which forbids a
-# product import of `cardine.legacy`, and by the plan, which keeps the explicit import isolated
+# `cardine.legacy` is blocked by the import-graph test of the installation snapshot, which forbids
+# a product import of `cardine.legacy`, and by the plan, which keeps the explicit import isolated
 # until work item 10.
 ALLOWED = {
     "src/cardine/tasks/importer.py": (
