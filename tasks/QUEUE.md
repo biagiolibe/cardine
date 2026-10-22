@@ -56,7 +56,7 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decisions 13 and 14.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 074 | Inventory the template rules and their enforcement (decision 14) | 🔴 P1 | — | [074](074-rule-enforcement-inventory.md) |
+| `[x]` | 074 | Inventory the template rules and their enforcement (decision 14) | 🔴 P1 | — | [074](done/074-rule-enforcement-inventory.md) |
 | `[ ]` | 075 | Map what an agent can forge among the artifacts gates trust (decision 14) | 🔴 P1 | — | [075](075-forgery-inventory.md) |
 | `[ ]` | 076 | Review every stop the tool could resolve itself (decision 14) | 🔴 P1 | — | [076](076-stop-review.md) |
 | `[x]` | 077 | Use one product name in the execution contract line | 🔴 P1 | 073 | [077](done/077-execution-contract-product-name.md) |
