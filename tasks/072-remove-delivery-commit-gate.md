@@ -22,29 +22,29 @@ commit description and no wording can stop a delivery.
 
 ## Acceptance Criteria
 
-- [ ] `_delivery_current_commit` and its call in `delivery_readiness`
+- [x] `_delivery_current_commit` and its call in `delivery_readiness`
   (`src/cardine/lifecycle/execution.py`) are deleted, with their tests. A
   delivery whose handoff has no commit fields, or any text in them, passes
   when the Git and evidence facts hold.
-- [ ] The tests that remain prove that delivery still rejects the cases those
+- [x] The tests that remain prove that delivery still rejects the cases those
   facts cover: no committed implementation after the prepared base, an
   uncommitted handoff, missing or stale validation evidence, and later
   commits that change more than the handoff.
-- [ ] `templates/single/docs/COMPLETION_REPORT_TEMPLATE.md` no longer has the
+- [x] `templates/single/docs/COMPLETION_REPORT_TEMPLATE.md` no longer has the
   `Implementation commit`, `Validated task commit`, `Validated base main
   commit`, and `Current task commit` lines or the paragraph on the
   descriptive form; `templates/single/docs/workflows/REVIEW.md` no longer
   has the commit-field steps. No template asks an agent to write `Deliver
   <TASK-ID> for review`; Cardine alone creates that subject.
-- [ ] The template change follows the pre-1.0 rule of task 031: the owning
+- [x] The template change follows the pre-1.0 rule of task 031: the owning
   capability's version rises and its baseline is rewritten, with no
   migration and no `VERSION` change.
-- [ ] The `Branch`, `Worktree`, and ``Base `main` commit`` check of
+- [x] The `Branch`, `Worktree`, and ``Base `main` commit`` check of
   `src/cardine/worktree/checkout.py` (inventory entry T-23) and the stored
   delivery commit (row RE3) stay out of scope; the handoff says so.
-- [ ] This repository's own `docs/COMPLETION_REPORT_TEMPLATE.md` is a frozen
+- [x] This repository's own `docs/COMPLETION_REPORT_TEMPLATE.md` is a frozen
   copy of the installed Meridian and stays unchanged.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -53,16 +53,16 @@ commit description and no wording can stop a delivery.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/072.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/072.json`, which only
   the installed `meridian task close 072` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
