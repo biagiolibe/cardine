@@ -124,6 +124,21 @@ class HumanContractSnapshotTest(unittest.TestCase):
                 update_task_contract(self.root, '001')
             self.assertEqual(self.path.read_bytes(), before)
 
+    def test_cli_rejects_inconsistent_revision_without_traceback_or_state_write(self):
+        state = self.create()
+        state['review'] = {'required': False, 'verdict': None, 'attempt': 1,
+                           'reviewed_commit': None, 'approved_by': None}
+        self.path.write_text(json.dumps(state))
+        before = self.path.read_bytes()
+        self.record.write_text(self.record.read_text().replace('## Objective', 'Review: required\n## Objective'))
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
+                                 'task', 'contract', 'update', '001', '--project', str(self.root)],
+                                text=True, capture_output=True)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn('review.required', result.stderr)
+        self.assertNotIn('Traceback', result.stderr)
+        self.assertEqual(self.path.read_bytes(), before)
+
     def test_atomic_replacement_failure_keeps_snapshot_and_history_together(self):
         self.create()
         before = self.path.read_bytes()

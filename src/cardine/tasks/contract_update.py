@@ -9,7 +9,7 @@ from cardine.shared.jsonio import _write_json_atomic
 from cardine.tasks.contract import contract_hash, resolve_task_contract
 from cardine.tasks.creation import _creation_lock, _safe_path, validate_dependencies
 from cardine.tasks.identity import resolve_task_identity
-from cardine.tasks.state import read_task_state, state_path, validate_task_state
+from cardine.tasks.state import TaskStateInvalid, read_task_state, state_path, validate_task_state
 
 
 def update_task_contract(project_root: Path, task_id: str) -> dict:
@@ -45,7 +45,10 @@ def update_task_contract(project_root: Path, task_id: str) -> dict:
             'changedFields': sorted(key for key in set(previous or {}) | set(contract)
                                     if (previous or {}).get(key) != contract.get(key)),
         })
-        validate_task_state(state, task_id, 'single')
+        try:
+            validate_task_state(state, task_id, 'single')
+        except TaskStateInvalid as error:
+            raise CardineError(str(error)) from error
         # Refuse a concurrent editor rather than accepting a different record.
         if record.read_text(encoding='utf-8') != text:
             raise CardineError('task record changed during contract update; retry')
