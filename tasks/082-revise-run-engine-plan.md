@@ -21,44 +21,44 @@ RE rows now exceed 3 hours.
 
 ## Acceptance Criteria
 
-- [ ] A new section **Trust boundary** states how work item 8 applies decision
+- [x] A new section **Trust boundary** states how work item 8 applies decision
   14 rule 2 as amended: which row writes operation receipts and binds them
   to inputs and outputs, which gates reject an artifact no receipt covers,
   how the engine launches the implementer and the reviewer with distinct
   host profiles (and which row does it), what work item 9 must install on
   both hosts, and the declared limit. It does not claim authenticity
   against an agent that bypasses the host permissions.
-- [ ] The section **Ordered implementation tasks** is replaced by one table in
+- [x] The section **Ordered implementation tasks** is replaced by one table in
   which every row has: a label, at most 3 hours of work, its scope and
   files, its tests, its dependencies, the known-violation entries of
   `tests/test_text_gates.py` it deletes, its effect boundaries for rule 4
   of decision 14 with the interruption test for each, and the other rows
   that share a file with it. Rows that share a file are never parallel;
   the shared ratchet table counts as a shared file.
-- [ ] Every amendment is either folded into a row or rejected with a reason:
+- [x] Every amendment is either folded into a row or rejected with a reason:
   A-RE1-1 to A-RE7-1 and RX1, TR1, TR2 of 074; F-A to F-D and the RE
   amendments of 075 (F-E and row FI1 are deferred after 1.0 by the
   developer); A1 to A8 and SR1 of 076; N3 and the RE3, RE5, RE6 amendments
   of 073 (T-38 to T-44). A table maps each amendment ID to its row.
-- [ ] Where the inventories disagree, the plan states one choice and why. At
+- [x] Where the inventories disagree, the plan states one choice and why. At
   least: the review stop codes (074 emits `REVIEW_REQUIRED` and
   `REVIEW_LOOP_EXHAUSTED` from facts; 076 merges `REVIEW_REQUIRED` and
   `REVIEW_STALE` into `REVIEW_NOT_APPROVED`), the retry code name
   (A-RE3-1), and the evidence handling that 073 and 075 both amend in RE3
   and RE5.
-- [ ] The closure of the static guard is corrected: the last row asserts that
+- [x] The closure of the static guard is corrected: the last row asserts that
   the known-violation table holds only entries assigned to work item 9
   (T-46, T-47) and work item 10 (T-27, T-31, and any other the plan
   names), not that it is empty.
-- [ ] The two work item 8 items in the Deferred Items of `PROJECT_PLAN.md` (a
+- [x] The two work item 8 items in the Deferred Items of `PROJECT_PLAN.md` (a
   runnable `EVIDENCE_INCOMPLETE` recovery, and the split of mixed
   guardrail codes) are each mapped to a row.
-- [ ] Rows RX1, N2a, and N2b, which tasks 083 to 085 implement, appear as
+- [x] Rows RX1, N2a, and N2b, which tasks 083 to 085 implement, appear as
   completed or in progress inputs, not as new rows.
-- [ ] No file changes outside `docs/RUN_ENGINE_PLAN.md` and this task's
+- [x] No file changes outside `docs/RUN_ENGINE_PLAN.md` and this task's
   records: the task record, its handoff, and its archive under
   `tasks/done/`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -67,9 +67,9 @@ RE rows now exceed 3 hours.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/082.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/082.json`, which only
   the installed `meridian task close 082` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -141,3 +141,16 @@ revalidation in the same turn; do not stop to report the fix.
 This task changes documentation only. Under the validation-scoping rule of
 `PROJECT_WORKFLOW.md`, it skips the test suites and records that skip in the
 handoff. It still runs the identifier guard, which scans documentation.
+
+## Completion evidence
+
+- Revised `docs/RUN_ENGINE_PLAN.md` with the amended host trust boundary,
+  serial implementation rows of at most three hours, effect/retry proofs,
+  ratchet ownership and exhaustive amendment dispositions.
+- Implementation validated at `35171385434d9743a155a983c8adf40b4edef9d3`;
+  base main `fd6d0a3bd7c30e87702b80467120f805b151cec7`.
+- All five required commands passed; the identifier guard ran three tests.
+  Full implementation suites were omitted under the documentation-only scope.
+- No product code, frozen governance, host configuration or unrelated record
+  changed. Lifecycle state is written only by installed Meridian closure.
+- Detailed results: `tasks/handoffs/082.md`.
