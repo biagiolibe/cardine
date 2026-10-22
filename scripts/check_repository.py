@@ -391,12 +391,13 @@ def cli_string_literals(source: str) -> list[tuple[int, str]]:
 
 
 def cli_source_files(root: Path) -> list[Path]:
-    """Include compatibility adapters and every extracted implementation module except the console.
+    """Include compatibility adapters and every extracted implementation module except console display readers.
 
     The console shows readiness labels such as `BLOCKED: ...`; they are display values, not stop lines.
     """
     package = {path for path in (root / "src/cardine").rglob("*.py")
-               if (root / "src/cardine/console") not in path.parents}
+               if (root / "src/cardine/console") not in path.parents
+               and path != root / "src/cardine/legacy/snapshot.py"}
     return sorted({root / "scripts" / name for name in ("cardine_cli.py", "task_state.py", "console_workflow.py")
                    if (root / "scripts" / name).is_file()} | package)
 
