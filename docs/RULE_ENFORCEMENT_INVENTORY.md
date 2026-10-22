@@ -18,18 +18,19 @@ either, it names the task and does not plan the defense.
 
 ## Summary
 
-- **Size.** The single template set is 21,367 words in 28 files. An agent told
+- **Size.** The single template set is 21,367 words in 23 files. An agent told
   `Proceed with <ID>` reads 7,220 words before it starts; the smallest role
   reads 4,432. The proposed budget is 1,100 words for what every task reads,
   1,400 for any role at start, and 5,600 for the whole set. The actions below
   reach 5,534 words in total and 1,111 to 1,336 per role at start
   (see "Word budget").
-- **Entries.** 232 rules, one entry each: 30 `enforce`, 33 `one line`, 39
-  `advice`, 116 `delete`, 14 `moved`. A gate is named for 167 of them and none
-  for 65. 49 of the deletions name an engine row, because `cardine run` returns
-  the next action, resolves the directory, runs validation, and lands.
-- **Rules with harm and no gate** (the 10 `enforce` entries with no
-  enforcement at all, and the gaps in 20 more): an implementer can approve its
+- **Entries.** 268 rules, one entry each: 31 `enforce`, 38 `one line`, 40
+  `advice`, 145 `delete`, 14 `moved`. A gate or host rule is named for 146 of
+  them, 30 repeat another entry's gate, and 74 have none. 55 of the deletions
+  name an engine row, because `cardine run` returns the next action, resolves
+  the directory, runs validation, and lands.
+- **Rules with harm and no gate** (the 12 `enforce` entries with no
+  enforcement at all, and the gaps in 19 more): an implementer can approve its
   own work, because `review verdict` never identifies the caller and `--owner`
   is a flag (PW-21, PW-46, RV-17, HX-04); a hand-written state file passes every
   gate (PW-10, PW-53); the agent counts validation failures and declares exit
@@ -41,7 +42,7 @@ either, it names the task and does not plan the defense.
   registry entry says it must not (CX-01); `INTEGRATION_POLICY.md` tells the
   agent to run `git push origin --delete`, which both hosts refuse (CX-10); and
   the repository check pins template prose that this document proposes to
-  delete (CX-13). Thirteen contradictions in all.
+  delete (CX-13). Fifteen contradictions in all.
 - **Destinations.** Existing rows RE1 to RE6, SS6, and N2 cover most findings.
   Nine one-sentence amendments close the rest (A-RE1-1 to A-RE7-1). Three new
   rows: RX1 (remove the counters decision 5 removed), TR1 (rewrite the
@@ -131,7 +132,10 @@ Word counts are from R1. "Always" means every task of every role (router,
 workflow, language policy). "Role" means the routed procedure of one trigger.
 "Phase" means a document the routed procedure reads at a named phase
 (`capability=phase-reads`). "Demand" means no routed procedure makes the agent
-read it. The router read set is what `cardine context size` reports (R3).
+read it. In the terms of the task contract, Always is what an agent reads on
+every task, Role and Phase together are what it reads on some tasks, and
+Demand is what it reads only on demand. The router read set is what `cardine
+context size` reports (R3).
 
 | File | Words | Read class | By whom |
 |------|------:|------------|---------|
@@ -515,31 +519,67 @@ no host was run.
 | HX-06 | `claude.py` 13-60 | The Claude allow list: 45 entries, including `git commit -m:*` (which matches `--amend`), `git switch:*`, `git add:*`, `git push origin main`, `git merge --ff-only:*`, `cardine worktree` and `execution` commands. It lacks `cardine run`, `status`, `review`, `task` | G19 | a Stable command prompts on Claude Code, and the unattended run waits for a person | enforce | 0 | H9: derive the allow list from the Stable surface; drop the push and merge entries once RE6 lands |
 | HX-07 | `.codex/hooks.json` | Run the read guard on Bash and the stop audit on Stop | G17 (Bash reads only), G16 (journals, never blocks) | none: both are advisory; there is no per-turn briefing on Codex | one line | 0 | H9 |
 | HX-08 | `hooks/hooks.json`, `queue-briefing.sh`, `read-guard.sh`, `stop-audit.sh` | The Claude plugin prints the briefing each turn, guards large `Read` calls, and journals unbacked stops | G18. The scripts call `bin/meridian`, parse `tasks/QUEUE.md` rows (`[/]` checkbox rows and `\| Order \| ID \|` tables, `read-guard.sh:128-150`), and print `[Meridian ...]` headings. After SS4 the queue is generated with a different shape, and after SS7 the briefing reads the status service | the briefing and the active-task exemption can report a wrong or empty state (decision 6, work item 6 regression) | enforce | 0 | SS7 for the briefing; H9 for one Python implementation per hook (decision 7) |
-| HX-09 | `skills/meridian-lean-delivery*/SKILL.md` | Lean skills: statuses `[ ]`, `[/]`, `[x]` in `tasks/QUEUE.md`; mark `[x]` and archive after validation; ask the developer for `opaque` or `milestone`; `meridian task close`; `meridian execution start` ordering | NONE: skill text | an agent follows `[x]` and archive steps that the single lifecycle removed (CX-05, CX-12) | delete | 0 | H9 (two skills under Cardine names, each a few lines around `cardine run`) |
-| HX-10 | `skills/meridian-governed-sdd*/SKILL.md` | Governed skills: workflow-mode lock for `GOVERNED_SDD`, forbid Lean actions, route bootstrap, tech design, upgrade, review, owner acceptance, audit with `$MERIDIAN_ROOT` | NONE: skill text | an agent selects a Governed mode that decision 3 removed (CX-12) | delete | 0 | H9 |
-| HX-11 | `commands/meridian-init.md`, `meridian-task.md`, `meridian-audit.md`, `meridian-upgrade.md` | Slash commands that bootstrap a project, create a task and update `QUEUE.md` and `PROJECT_PLAN.md`, audit, upgrade | the underlying CLI commands (`setup`, `task new`, `audit`, `upgrade`) | `meridian-task` tells the agent to edit the queue and plan by hand; both are generated after SS4 (CX-05) | enforce | 0 | H9 (slash commands call `cardine task new` and `cardine status --write`) |
-| HX-12 | `commands/meridian-adopt.md` | A slash command for `adopt` | the command does not exist (R4) | none: dead text | delete | 0 | W10 rebuilds `adopt` |
-| HX-13 | `hosts/briefing.py` 23-30 | Print the configured preset above the hook payload and drop the legacy queue headings | `render_briefing` | — | one line | 0 | SS7 (070) |
+| HX-09 | `skills/meridian-lean-delivery/SKILL.md` 6-10 | Use the Lean skill for `LEAN_DELIVERY` projects, not for `GOVERNED_SDD` | NONE: skill text; the single lifecycle has no mode marker | none to state or history: the skill chooses a mode decision 3 removed | delete | 0 | H9 |
+| HX-10 | lean skill 12-17 | Read the language policy, workflow, and router; the workflow is the mode lock; local rules override global ones; unreadable authority: `BLOCKED` without mutation | repeats PW-01, PW-02, PW-04 | — | delete | 0 | H9 (DU-01) |
+| HX-11 | lean skill 19-24 | States `[ ]`, `[/]`, `[x]` in `tasks/QUEUE.md`; only the assigned task; verify and mark `[x]`; keep a failing task `[/]` and unarchived | NONE: no gate reads checkboxes; the state file does (G25) | an agent edits checkbox statuses and archives that the single lifecycle removed (CX-05, CX-12) | delete | 0 | H9 (a skill around `cardine run`) |
+| HX-12 | lean skill 26-30 | Proportional scope; a quick task only when small and reversible; follow project Git conventions; a review is read-only unless a fix is authorized | repeats PW-06, RV-14 | — | delete | 0 | H9 (DU) |
+| HX-13 | lean skill 32-37 | Ask the developer for `opaque` or `milestone`, never choose, pass it to `meridian setup --apply --task-identity` | the `--task-identity` flag records it (`cli.py:195-199`); repeats HX-33 | — | delete | 0 | H9 |
+| HX-14 | lean skill 39 | After validation commit the record and handoff, run `meridian task close`, commit closure; if the record is archived and the state DONE, skip start and run `worktree advance` | G05; the archive special case is obsolete after SS6 | — | delete | 0 | RE1, RE3 (CX-07) |
+| HX-15 | lean skill 41-43 | Consult the command-location table before `execution start` | NONE | none | delete | 0 | RE1 |
+| HX-16 | lean skill 45-54 | A Lean start "adds no IN_PROGRESS to machine state" and preserves worktree-derived progress | G03 records `queued -> in_progress` for either preset (PW-29) | an agent expects a state that G03 writes (CX-14) | delete | 0 | RE1 |
+| HX-17 | `skills/meridian-governed-sdd/SKILL.md` 8-10 | Read the workflow documents, also `docs/CONTEXT_BUDGET_POLICY.md` and the execution evidence profile, before acting | repeats PW-01; `CONTEXT_BUDGET_POLICY.md` is not in the template set (CX-15) | none | delete | 0 | H9 |
+| HX-18 | governed skill 12-18 | The workflow is a mode marker; Lean actions are forbidden; `$MERIDIAN_ROOT` names the template source, and if unset stop and ask the user for the path | NONE; the product reads `CARDINE_ROOT` (`cli.py:95`, `setup.py:233`) | an agent stops to ask for a path the product no longer uses (CX-12, CX-15) | delete | 0 | H9 |
+| HX-19 | governed skill 22 | Bootstrap: choose identity, copy the governed overlay, `lock --mode governed-sdd`, then `setup --apply --task-identity` after consent | `lock --mode` accepts only `single` (`cli.py:135`): the instructed command is refused | the bootstrap fails on its second command (CX-15) | delete | 0 | H9 |
+| HX-20 | governed skill 23 | Tech design: ADRs first, atomic tasks with explicit fields; read `.meridian/task-identity.json`; milestone IDs from `task identity next` | G22 (`task new`); the identity declaration moved to `.cardine/project.json` | an agent reads a file the product no longer writes (CX-15) | delete | 0 | H9 (call `cardine task new`, task 066) |
+| HX-21 | governed skill 24-25 | Implement only the requested task; confirm the mode lock before a branch; `Run lifecycle` follows `LIFECYCLE_ORCHESTRATION.md` | repeats RT-02, LO-01 | — | delete | 0 | RE4 (DU) |
+| HX-22 | governed skill 26 | Check an upgrade before applying; apply only a conflict-free plan; never hand-copy prompts or edit baselines | `upgrade` applies nothing on a conflict; G26 detects edits | — | delete | 0 | H9 (repeats HX-45) |
+| HX-23 | governed skill 27 | Project conversion is unavailable until work item 10 | n/a | none | delete | 0 | W10 |
+| HX-24 | governed skill 28-29 | Review with `CODE_REVIEW_PROMPT.md`; record `CHANGES_REQUESTED` and commit only the review-handoff files; owner acceptance follows `docs/workflows/LIFECYCLE.md` | repeats RV-14, PW-46; `docs/workflows/LIFECYCLE.md` is not in the template set (CX-15) | — | delete | 0 | H9 (DU-11) |
+| HX-25 | governed skill 30-32 | Audit is a read-only comparison; keep domain architecture in the project, not in the generic assets | NONE | none | delete | 0 | H9 (repeats AP-01, CO-03) |
+| HX-26 | governed skill 36 | Apply the context budget policy and evidence profile; start with the task; run the profile's literal commands | repeats CR-02, CR-11 | — | delete | 0 | H9 (DU) |
+| HX-27 | governed skill 38-42 | Spike branch roles: the deliverable on the canonical branch, a throwaway probe branch never merged or pushed | repeats TB-03 | — | delete | 0 | H9 (DU) |
+| HX-28 | governed skill 44 | State changes and verdicts only through commands; never edit by hand; legacy adoption with `task state import` | repeats PW-10, PW-12, RV-09 | — | delete | 0 | H9 (DU-14) |
+| HX-29 | governed skill 46-48 | Consult the command-location table | NONE | none | delete | 0 | RE1 |
+| HX-30 | governed skill 50-65 | Execution boundaries: reconcile, start, deliver last, stop writing | repeats IM-05, IM-08 | — | delete | 0 | RE1, RE3 |
+| HX-31 | `skills/meridian-lean-delivery-claude-code/SKILL.md` 8-50 | The Claude Code counterpart of HX-09 to HX-16 with `CLAUDE.md` in place of `AGENTS.md`: ranges 8-11, 13-19, 21-27, 29-33, 35, 37-39, 41-50 | as HX-09 to HX-16 | as HX-09 to HX-16 | delete | 0 | H9 (duplicate; one skill per host around `cardine run`) |
+| HX-32 | `skills/meridian-governed-sdd-claude-code/SKILL.md` 8-65 | The Claude Code counterpart of HX-17 to HX-30: ranges 8-17, 19-31, 33-35, 37-41, 43, 45-47, 49-65. Lines 12-17 bootstrap through `/meridian-init` with mode `governed-sdd` and `templates/workflows/governed-sdd/`, which no longer exist; line 28 names a `READY_FOR_...` status | as HX-17 to HX-30 | an agent follows a mode, a template directory, and a status that are gone (CX-12, CX-15) | delete | 0 | H9 (duplicate) |
+| HX-33 | `commands/meridian-init.md` 5-32 | Ask for project name, preset, task-identity mode (no default), validation commands, and conversation language; the repository language is always English | the answers are written to `.cardine/project.json`, which the CLI validates on every read (`schemas/project-v1.schema.json`) | none to state or history: the choice is recorded in the configuration and editable | advice | 0 | H9 |
+| HX-34 | init 34-39 | Copy every file of `templates/single/`; merge `README.md`, `.gitignore`, `.claudeignore`; never overwrite a workflow document without showing its diff and getting confirmation | NONE: the agent copies files by hand; the host prompts for writes only where its permission mode does | a customized workflow document is overwritten | enforce | 0 | H9: a CLI command copies the set and refuses to overwrite (no row) |
+| HX-35 | init 41-58 | Write `.cardine/project.json` from the answers: preset, identity, validation commands, baseline, candidate outcomes, `ci` | the CLI validates it on read; a malformed file is refused | — | one line | 0 | H9 |
+| HX-36 | init 60-66 | Replace `[Project Name]` and `[Data]`; create `tasks/done/`; fill `CLAUDE.md` commands | NONE. The templates use `[Date]`, and SS6 stops using `tasks/done/` | an empty archive directory and a placeholder that matches nothing (CX-15) | delete | 0 | H9; SS6 |
+| HX-37 | init 68-90 | Run `cardine lock` and `setup --check`; run `setup --apply` only after explicit confirmation; never edit user or Codex configuration implicitly | `setup --apply` prompts on both hosts (it is in no allow list) | — | one line | 0 | H9 |
+| HX-38 | init 92-95 | Confirm; point to `/meridian-task` | NONE | none | delete | 0 | H9 |
+| HX-39 | `commands/meridian-task.md` 7-23 | Workflow-mode gate: read `PROJECT_WORKFLOW.md`; `GOVERNED_SDD` and `LEAN_DELIVERY` take different task steps | NONE; `scripts/check_repository.py:160-175` requires `GOVERNED_SDD` and `BLOCKED` in this file (CX-13) | an agent follows a mode that decision 3 removed (CX-12) | delete | 0 | H9 |
+| HX-40 | task 27-43 | Read `.meridian/task-identity.json`, derive the next ID from files in `tasks/`, or run `task identity next` for milestone mode | `task identity next` exists (`cli.py:368`); the file path is the pre-1.0 location | the agent derives an ID by listing files instead of the resolver (CX-15) | delete | 0 | H9 (call `cardine task new`, task 066) |
+| HX-41 | task 45-57 | Gather title, category, priority, and objective; create the record by hand from the blueprint | `cardine task new` creates record and state together (G22); a hand-made record has no state and every lifecycle command refuses it | — | delete | 0 | H9 |
+| HX-42 | task 59-61 | Add a row to the "Active Queue" of `tasks/QUEUE.md` and to "SECTION 2 — BACKLOG" of `PROJECT_PLAN.md` by hand | G23 generates both (SS4); the plan template no longer has that section | an agent edits generated views (CX-05) | delete | 0 | SS4; H9 |
+| HX-43 | task 63-66 | Delegate with `claude "$(cat tasks/NNN-kebab-title.md)"` | NONE | the delegated session starts in the primary checkout with no `Proceed with`, worktree, or state; its edits fail only at `integrate stage` (`PRIMARY_DIRTY`) | enforce | 0 | RE1 (`cardine run` is the launch); H9 |
+| HX-44 | `commands/meridian-audit.md` 5-37 | Run `meridian audit --mode governed-sdd`; read PASS, FAIL, SKIP; the command checks capability markers only | G26; `audit --mode` accepts only `single` (`cli.py:164`) | the instructed command is refused (CX-15) | delete | 0 | H9 |
+| HX-45 | `commands/meridian-upgrade.md` 5-28 | Check an upgrade; apply only when there is no conflict and the developer authorizes; never resolve markers or edit baselines | `upgrade` applies nothing on a conflict; G26 | — | one line | 0 | H9 |
+| HX-46 | upgrade 30-37 | When `docs/workflows/ENTRY_ROUTER.md` exists, `AGENTS.md` and `CLAUDE.md` are derived outputs | the router file and its generator were removed by work item 4 | none: text for a file the set no longer has (CX-15) | delete | 0 | H9 |
+| HX-47 | upgrade 39-57 | `--owner-reconciled` registers a baseline without checking files; use it only after reconciling by hand, never to skip that | CLI flag; `upgrade --apply` prompts on both hosts (PRM) | — | one line | 0 | H9 |
+| HX-48 | `commands/meridian-adopt.md` 5-7 | Conversion is unavailable until work item 10 | n/a | none | one line | 0 | W10 rebuilds `adopt` |
+| HX-49 | `src/cardine/hosts/briefing.py` 23-30 | Print the configured preset above the hook payload and drop the legacy queue headings | `render_briefing` | — | one line | 0 | SS7 (070) |
 
 
 ## Rules `cardine run` makes unnecessary
 
 `cardine run` returns the next action as JSON, resolves the primary checkout and
 the task worktree, and returns only commands that run unchanged (decision 6,
-`docs/RUN_ENGINE_PLAN.md`). The 49 `delete` entries below name an engine row;
-the other `delete` entries are duplicates, obsolete after SS4 to SS6, or retired
-with the text gates (N3).
+`docs/RUN_ENGINE_PLAN.md`). The 55 `delete` entries below name an engine row;
+the other `delete` entries are duplicates, obsolete after SS4 to SS6, retired
+with the text gates (N3), or host skills that work item 9 rebuilds.
 
 | Engine row | Entries the engine makes unnecessary | Why |
 |------------|--------------------------------------|-----|
-| RE1 (resolution, output, writer lock) | PW-27, PW-29, PW-38, PW-39, IM-01, IM-02, IM-05, LO-03, WL-01 | location, order of commands, and one writer are resolved by the engine; 8 of the 15 recorded stops are `WRONG_WORKTREE` |
+| RE1 (resolution, output, writer lock) | PW-27, PW-29, PW-38, PW-39, IM-01, IM-02, IM-05, LO-03, WL-01, HX-15, HX-16, HX-29 | location, order of commands, and one writer are resolved by the engine; 8 of the 15 recorded stops are `WRONG_WORKTREE` |
 | RE1, RE2 (recoverable states) | PW-28, IM-03, IM-04, IM-06, RV-12 | `prepare`, `check`, and `start` are step 2; the stop lists name recoverable codes |
 | RE1, RE2, RE3 | IM-09 | stop lists plus delivery |
-| RE1, RE3 | LO-05 | continuing while state permits, and validation failure as iteration |
+| RE1, RE3 | LO-05, HX-14, HX-30 | continuing while state permits, validation failure as iteration, and the closure and delivery sequence |
 | RE1, RE4 | RV-02, RM-01, LO-04 | the review and remediation worker receive the directory in `work.worktree` |
 | RE3 (validation, retry, surface) | PW-40, PW-56, IM-14, EE-03 | the engine runs validation, bounds output, records skips and results |
 | RE3, RE4 | TB-13 | completion steps are engine steps |
-| RE4 (review routing, cancel, abort) | PW-18, PW-22, PW-37, PW-41, PW-42, RV-03, RV-05, RV-07, RV-08, RV-09, RM-03, IP-02 | roles, reviewer preflight, verdict commits, and requested changes are work requests |
+| RE4 (review routing, cancel, abort) | PW-18, PW-22, PW-37, PW-41, PW-42, RV-03, RV-05, RV-07, RV-08, RV-09, RM-03, IP-02, HX-21 | roles, reviewer preflight, verdict commits, and requested changes are work requests |
 | RE4, RE7 | LO-01 | `Run lifecycle` is `cardine run` |
 | RE5 (direct landing) | PW-43, PW-44, PW-47, RV-10, RV-13, LO-07, IP-03, IP-04 | stage, candidate, finalize, abort, and the forge parts that 1.0 rejects |
 | RE5, RE6 | PW-34, IP-05 | merge and push by the engine |
@@ -551,19 +591,21 @@ with the text gates (N3).
 
 | ID | Where | What conflicts | Destination |
 |----|-------|----------------|-------------|
-| CX-01 | IM-04, IM-09, IM-11, RV-03, RV-12, LO-05, WL-01 | Seven passages tell the agent to stop on codes whose registry entry has `human_decision: false` (`EVIDENCE_INCOMPLETE`, `EVIDENCE_MISMATCH`, `MAIN_BEHIND_ORIGIN`, `VALIDATION_FAILED`, `ACCEPTANCE_UNMET`, `CANDIDATE_VALIDATION_FAILED`, `HOST_IMPACT_DECLARATION_INVALID`) and WL-01 makes Resume a ritual. PW-48 to PW-51 and decisions 12 and 14 say the opposite. Decision 12 counts 5 of the 7 early Cardine stops as recoverable states or failing work | RE1, RE2, RE3 |
+| CX-01 | IM-04, IM-09, IM-11, RV-03, RV-12, LO-05, WL-01 | Seven passages tell the agent to stop on codes whose registry entry has `human_decision: false` (`EVIDENCE_INCOMPLETE`, `EVIDENCE_MISMATCH`, `MAIN_BEHIND_ORIGIN`, `VALIDATION_FAILED`, `ACCEPTANCE_UNMET`, `CANDIDATE_VALIDATION_FAILED`, `HOST_IMPACT_DECLARATION_INVALID`) and WL-01 makes Resume a ritual. PW-48 to PW-51 and decisions 12 and 14 say the opposite. This is the cause of 5 of the 7 early Cardine stops | RE1, RE2, RE3 |
 | CX-02 | LO-07 (line 85) | Sends the reader to `PROJECT_WORKFLOW.md` for the material-interaction comparison; that comparison is at `INTEGRATION_POLICY.md:38-47` | RE5; TR2 |
 | CX-03 | LO-10 (lines 116-118) | Defines the integration transaction by pointing to the file that contains the sentence | TR1 |
 | CX-04 | PW-07 (line 55) | Lists the queue as an authority for execution scope, dependencies, and review policy; decision 4 and SS4 make it a generated view and the state file the source | TR1 |
-| CX-05 | PW-13, PW-30, RV-09, IP-07, WL-06, AP-02, HX-09, HX-11 | Describe `Status:` projections, queue and plan status applied by `integrate stage`, archive moves, and phase archival that SS4 to SS6 remove | SS6 and SS4 remove the code; A-SS7-1 removes the sentences; TR1, TR2 |
+| CX-05 | PW-13, PW-30, RV-09, IP-07, WL-06, AP-02, HX-11, HX-14, HX-42 | Describe `Status:` projections, queue and plan status applied by `integrate stage`, archive moves, and phase archival that SS4 to SS6 remove | SS6 and SS4 remove the code; A-SS7-1 removes the sentences; TR1, TR2 |
 | CX-06 | PW-19, CP-03 | An agent is told to record status in the record, or to confirm review policy and `in_review` in the record, while PW-10 makes the state file the only authority; Contoso failed on exactly this | N2 (080); TR1 |
 | CX-07 | PW-29, PW-30 | A resume special case keyed to an archived record, which SS6 stops producing | SS6 |
 | CX-08 | OP-07, `meridian.rules` 35-37, IM-14, CR-07, TB-10, EE-02, PW-26, WL-10 | Name commands that are gone or retired: `adopt` and `finalize-adoption` (R4 finds `adopt` mechanically), `budget`, the `execution evidence` kinds and `investigate --scope` that decision 5 lists as removed (`cli.py:443-458`, `tasks/recording.py:18,103-135`), and the deprecated `codex worktree-path` | RX1 for the counters; TR2; W10 for `adopt` |
 | CX-09 | IP-05 | Tells the agent to run `git merge --no-ff --no-commit`, while PW-46 and CP-06 forbid a manual merge | RE5 |
 | CX-10 | IP-09 | Tells the agent to run `git push origin --delete`, which both hosts refuse (HX-05) | RE6 |
 | CX-11 | HX-02, HX-03 | The template rules file names `meridian` commands and this repository's own test commands, and duplicates the Codex user-rules block (HX-04) | H9 |
-| CX-12 | OP-09, HX-09, HX-10 | A single-lifecycle set still carries Governed SDD and `LEAN_DELIVERY` vocabulary, and `scripts/check_repository.py:160-175` pins `GOVERNED_SDD` in `commands/meridian-task.md` | H9; TR2 |
-| CX-13 | PW-04, RT-01, OP-01 | `scripts/check_repository.py:150-170` fails unless five files contain `BLOCKED WORKFLOW_UNREADABLE` and the cookbook contains "This non-normative cookbook". Deleting PW-04 or RT-01 without changing the check fails the repository gate | TR1, TR2 change the check in the same row |
+| CX-12 | OP-09, HX-09, HX-11, HX-18, HX-32, HX-39 | A single-lifecycle set still carries Governed SDD and `LEAN_DELIVERY` vocabulary, and `scripts/check_repository.py:160-175` pins `GOVERNED_SDD` in `commands/meridian-task.md` | H9; TR2 |
+| CX-13 | PW-04, RT-01, OP-01, HX-39 | `scripts/check_repository.py:150-175` fails unless five files contain `BLOCKED WORKFLOW_UNREADABLE`, the cookbook contains "This non-normative cookbook", and `commands/meridian-task.md` contains `GOVERNED_SDD`. Deleting PW-04 or RT-01 without changing the check fails the repository gate | TR1, TR2 change the check in the same row |
+| CX-14 | HX-16, HX-11 against PW-08, PW-29 | The Lean skill says a Lean start adds no `IN_PROGRESS` to machine state and that status is `[ ]`, `[/]`, `[x]`; the template says start records `queued -> in_progress` for either preset and the state file holds the status | H9 |
+| CX-15 | HX-17, HX-19, HX-20, HX-24, HX-36, HX-40, HX-44, HX-46 | Stale references: `docs/CONTEXT_BUDGET_POLICY.md`, `docs/workflows/LIFECYCLE.md`, and `docs/workflows/ENTRY_ROUTER.md` are not in the template set; `lock --mode governed-sdd` and `audit --mode governed-sdd` are refused (`cli.py:135,164` accept only `single`); `.meridian/task-identity.json` and `$MERIDIAN_ROOT` are the pre-1.0 names (`.cardine/project.json`, `CARDINE_ROOT`); `/meridian-init` replaces `[Data]` where the templates say `[Date]` | H9 |
 
 ### Duplicated rules
 
@@ -693,7 +735,7 @@ The margin is small by design: TR1 measures the real words, and the static
 guard it adds fails above the budget. The 100,000-byte ceilings of
 `CONTEXT_READING_POLICY.md:199-206` become the byte column above.
 
-The figures hold only if the enforce rows land. The 30 `enforce` entries become
+The figures hold only if the enforce rows land. The 31 `enforce` entries become
 one-line statements (`Keep` 0 to 30 words each) after their gate exists; until
 then a rule that causes harm stays in prose, which is the state rule 1 forbids.
 That ordering is why TR1 follows RE6.
@@ -701,10 +743,10 @@ That ordering is why TR1 follows RE6.
 ## Destinations
 
 A row covers a finding only when its scope text says so. An entry can name
-several destinations. Counted from the `Destination` column of the 232 entries
-(the self-check script prints them): TR1 40 and TR2 42; RE1 to RE7 111 (RE1 27,
-RE2 9, RE3 21, RE4 32, RE5 11, RE6 10, RE7 1); SS4 to SS7 17; N1 to N3 26 and
-tasks 072, 080 four; tasks 075 and 076 nine; H9 17; RX1 3; W10 4.
+several destinations. Counted from the `Destination` column of the 268 entries
+(the self-check script prints them): TR1 40 and TR2 42; RE1 to RE7 120 (RE1 33,
+RE2 9, RE3 23, RE4 33, RE5 11, RE6 10, RE7 1); SS4 to SS7 19; N1 to N3 26 and
+tasks 072, 080 four; tasks 075 and 076 nine; H9 46; RX1 3; W10 5; task 070 one.
 
 ### Existing rows that already cover the finding
 
@@ -742,7 +784,7 @@ None of the following is a queue entry or authorization to start work.
 | **TR1** | Rewrite the always-read template set to the budget | ~3h | `AGENTS.md`, `CLAUDE.md`, `PROJECT_WORKFLOW.md`, `docs/workflows/{IMPLEMENTATION,REVIEW,REMEDIATION}.md`, `LIFECYCLE_ORCHESTRATION.md`, `CONTEXT_READING_POLICY.md`; fold `CODE_REVIEW_PROMPT.md` and `INTEGRATION_POLICY.md` into `REVIEW.md`; set the `check_repository.py` ceilings to the budget; update the prose-pinning checks of CX-13; fix defect 1; add a guard that fails above the budget, on a template command missing from the argparse tree (R4), and on a stop listed as a stop whose `human_decision` is false; bump capability versions and the marker baseline | After RE6 (the text points at `run`, `review`, `cancel`, and landing), before RE7 |
 | **TR2** | Condense the reference documents | ~3h | `WORKTREE_LIFECYCLE.md`, `TASK_BLUEPRINT.md`, `COMPLETION_REPORT_TEMPLATE.md`, `EXECUTION_EVIDENCE_PROFILE.md`, `REVIEW_RECORD_TEMPLATE.md`, `AUDIT_PROMPT_READ_ONLY.md`, `OPERATOR_PROMPTS.md`, `CODE_ORGANIZATION.md` to the section budget; delete the two folded documents | After TR1 and after N3 (the handoff stops being a gate) |
 
-The host findings (HG-01 to HG-04 and HX-01 to HX-13) belong to work item 9. No
+The host findings (HG-01 to HG-04 and HX-01 to HX-49) belong to work item 9. No
 row covers them, and this document does not plan the item.
 
 ## Cross-references
@@ -789,14 +831,28 @@ for eid, lines, rule, enf, harm, action, keep, dest in entries:
     if action == "enforce" and not ROWS.search(dest): errors.append(f"{eid}: no row")
     if action in {"delete", "moved"} and keep: errors.append(f"{eid}: keeps words")
     if action in {"one line", "advice"} and keep == 0 and not eid.startswith(("HX-", "WL-09", "MS-")): errors.append(f"{eid}: keeps none")
+import collections
+GATE = re.compile(r"\bG\d\d\b|HOST:|CLI|PRM|\.py|`(cardine|execution|task|review|worktree)")
+def kind(enf):
+    if enf.startswith(("NONE", "REM")): return "none"
+    if enf.startswith(("repeats", "as HX")): return "repeats another entry"
+    return "gate or host rule named" if GATE.search(enf) else "other"
 print(len(entries), "entries;", len(errors), "errors"); [print(e) for e in errors]
+print(dict(collections.Counter(e[5] for e in entries)))
+print(dict(collections.Counter(kind(e[3]) for e in entries)))
+print("enforce:", dict(collections.Counter(kind(e[3]) for e in entries if e[5] == "enforce")))
+dests = collections.Counter(t for e in entries for t in re.findall(r"RE[1-7]|SS[4-7]|\bN[1-3]\b|TR[12]|RX1|\bH9\b|\bW10\b|\b0[78][0-9]\b", e[7]))
+print(dict(sorted(dests.items())))
+print("keep by prefix:", dict(sorted(collections.Counter({k: sum(int(e[6].split()[0]) for e in entries if e[0].startswith(k + "-")) for k in sorted({e[0].split("-")[0] for e in entries})}).items())))
 sys.exit(bool(errors))
 ```
 
-Result on this commit: 232 entries; 0 errors. Action counts: enforce 30, one line
-33, advice 39, delete 116, moved 14. Enforcement: a gate named for 167 entries
-and none for 65; of the 30 `enforce` entries, 10 have no gate at all and 20 have
-a gate with a gap that the entry names.
+Result on this commit: 268 entries; 0 errors. Action counts: enforce 31, one
+line 38, advice 40, delete 145, moved 14. Enforcement cell: a gate or host rule
+named for 146 entries, a repeat of another entry's gate for 30, none for 74, and
+18 that say `n/a` or name the stop that makes the rule moot. Of the 31 `enforce`
+entries, 12 have no gate at all and 19 have a gate with a gap that the entry
+names.
 
 ## Limits of this inventory
 
@@ -810,5 +866,5 @@ a gate with a gap that the entry names.
   Codex `execpolicy check` ran, and no probe was made.
 - The measured read sets use the AGENTS.md route that `cardine context size`
   selects first.
-- Asset words for the skills and commands are counted (section "Files") but are
-  not part of the template budget.
+- Asset words for the skills and commands are counted ("Files and when an
+  agent reads them") but are not part of the template budget.
