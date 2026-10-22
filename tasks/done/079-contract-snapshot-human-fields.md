@@ -19,27 +19,27 @@ T-18, T-36). Add those fields to the snapshot and write them at creation; task
 
 ## Acceptance Criteria
 
-- [ ] `schemas/task-state-v1.schema.json` and the contract snapshot gain
+- [x] `schemas/task-state-v1.schema.json` and the contract snapshot gain
   `dependencies`, `title`, `priority`, `phase`, `origin`, `deliverables`
   (for spikes), `authority` citations, and the stable record path.
   `cardine task new` resolves them once from the record and validates them
   with the rest of the contract before publishing.
-- [ ] A person changes a frozen field after creation through one CLI command
+- [x] A person changes a frozen field after creation through one CLI command
   that revalidates the record, rewrites the snapshot atomically, and
   records the change in the state history. Editing the record alone
   changes no gate; audit reports the drift and names that command.
-- [ ] The handling of a snapshot created before this task, without the new
+- [x] The handling of a snapshot created before this task, without the new
   fields, is stated and tested: a diagnostic with the command that
   completes it, never a fallback to record prose.
-- [ ] Tests cover creation with every field, a dependency on an unknown ID, a
+- [x] Tests cover creation with every field, a dependency on an unknown ID, a
   record edited after creation (no gate changes, audit reports drift), the
   update command, and an older snapshot.
-- [ ] No reader is switched in this task; the known-violation table of task
+- [x] No reader is switched in this task; the known-violation table of task
   078 is unchanged.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -48,16 +48,16 @@ T-18, T-36). Add those fields to the snapshot and write them at creation; task
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/079.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/079.json`, which only
   the installed `meridian task close 079` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -123,3 +123,10 @@ revalidation in the same turn; do not stop to report the fix.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Completion evidence
+
+- Implemented in `51558c17f65a8f46cfd48222f94af9cb59500559` (including the preceding implementation and correction commits).
+- All required validation passed, including the clean-clone suite: 1318 tests, no failures, errors, or skips.
+- See `tasks/handoffs/079.md` for exact commands, coverage accounting, migration behavior, and integration scope.
+- Existing readers and all 102 known text-reader violations remain unchanged for task 080 and the other assigned removal tasks.

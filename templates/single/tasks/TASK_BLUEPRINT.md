@@ -1,12 +1,13 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v2 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v3 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
 > **Estimate**: [~1h / ~2h / etc.]
 > **Assigned to**: [agent or owner / unassigned]
 > **Session**: [conversation ID or temporal reference]
+> **Phase**: [optional delivery phase]
 > **Origin**: [optional: capability / friction / maintenance / release]
 
 Class: [omit for a standard task / SPIKE]
@@ -21,6 +22,17 @@ The CLI writes the resolved options into the task's state file when the task is
 created; a later change to the project defaults never alters an open task. A
 quick task (`Category: Quick`) is a minimal registered record with an
 objective, acceptance criteria, validation, and dependencies.
+
+Creation also freezes dependencies (canonical registered task IDs), title,
+priority, phase, origin, spike deliverable paths, Authority citations, and the
+stable record path. Omitted optional labels become empty strings; omitted
+citations and deliverables become empty arrays. Quick tasks without a title
+use their canonical ID. Spike deliverables name project-relative `docs/` paths.
+Edit the record and run `cardine task contract update <ID> --project .` to
+revalidate and atomically revise the snapshot with state history. Audit reports
+record drift and older incomplete snapshots with this command; it never fills
+missing fields from prose. Existing readers migrate separately; until then,
+the known text-reader violations remain documented in the inventory.
 
 `Manual verification rationale` is checked before the evidence-availability
 probe, not after: a missing rationale, or one naming a property assertable at

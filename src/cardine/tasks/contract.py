@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 
 from cardine.shared.errors import CardineError
+from cardine.tasks.contract_fields import HUMAN_CONTRACT_FIELDS, contract_hash, frozen_human_fields
 from cardine.stops.render import stop_error
 from cardine.tasks.evidence import validation_commands
 from cardine.tasks.identity import find_task_file
@@ -122,6 +123,7 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         if diff_id not in references and diff_id not in validation["baseline"]:
             references.append(diff_id)
     return {
+        **resolve_human_fields(project_root, identity, text, task_class),
         "preset": configuration["preset"], "class": task_class,
         "projectDigest": "sha256:" + hashlib.sha256(
             json.dumps(declaration, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -129,6 +131,36 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         "options": options, "validation": validation,
         "ci": deepcopy(configuration.get("ci", "none")),
         "validationScoping": deepcopy(configuration.get("validationScoping", [])),
+    }
+
+
+def resolve_human_fields(project_root, identity, text, task_class):
+    """Parse human intent once; absent optional labels have explicit empty values."""
+    from cardine.tasks.status import _dependencies
+    from cardine.shared.authority import authority_entries
+    try:
+        dependencies = _dependencies(text)
+    except ValueError as error:
+        raise CardineError(str(error)) from error
+    heading = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
+    deliverable = _contract_field(text, "Deliverable") or ""
+    paths = []
+    if task_class == "spike":
+        for match in re.finditer(r"`(docs/[^`]+)`|(?<!\S)(docs/[^\s`]+)", deliverable):
+            path = (match.group(1) or match.group(2).rstrip(".,;")).split("#", 1)[0]
+            paths.append(path)
+    for path in paths:
+        if ".." in Path(path).parts:
+            raise CardineError(f"unsafe spike deliverable path: {path}")
+    return {
+        "dependencies": dependencies,
+        "title": _contract_field(text, "Title") or (heading.group(1).strip() if heading else identity.canonical_id),
+        "priority": _contract_field(text, "Priority") or "",
+        "phase": _contract_field(text, "Phase") or "",
+        "origin": _contract_field(text, "Origin") or "",
+        "deliverables": list(dict.fromkeys(paths)),
+        "authority": list(dict.fromkeys(authority_entries(text))),
+        "recordPath": identity.task_path.relative_to(Path(project_root).resolve()).as_posix(),
     }
 
 

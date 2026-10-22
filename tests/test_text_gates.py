@@ -21,7 +21,7 @@ NAMED_READERS = frozenset({
     "validation_commands", "require_named_validation_commands", "contract_digest",
     "record_status", "record_review", "handoff_status", "latest_review_verdict",
     "parse_queue", "_queue_task_rows", "_governed_completion_row", "check_handoff",
-    "authority_entries", "context_authority", "resolve_task_contract",
+    "authority_entries", "context_authority", "resolve_task_contract", "resolve_human_fields",
     # Inventory readers with generic path parameters still need protection.
     "threshold_for", "final_message",
 })
@@ -179,8 +179,9 @@ def scan(root: Path) -> set[Key]:
     return findings
 
 
-# Exactly decision 13's three permanent classes. Function and key exemptions
-# are deliberately narrow: a runtime call to a creation helper is a violation.
+# Creation includes an explicitly requested contract revision. The diagnostic
+# exception reads prose only to report drift; it cannot affect a gate. Function
+# and key exemptions stay narrow: a runtime call to a creation helper violates it.
 ALLOWLIST = {
     "contract-creation": {
         "files": {"src/cardine/tasks/creation.py"},
@@ -188,14 +189,23 @@ ALLOWLIST = {
             ("src/cardine/tasks/contract.py", "_contract_field"),
             ("src/cardine/tasks/contract.py", "task_contract_options"),
             ("src/cardine/tasks/contract.py", "resolve_task_contract"),
+            ("src/cardine/tasks/contract.py", "resolve_human_fields"),
+            ("src/cardine/tasks/contract_update.py", "update_task_contract"),
             ("src/cardine/cli.py", "_run_cli.task_new"),
         },
-        "keys": set(),
+        "keys": {
+            ("src/cardine/tasks/contract_update.py", "<module>", "named-reader", "resolve_task_contract"),
+        },
     },
     "managed-text-integrity": {
         "files": {"src/cardine/templates/**", "src/cardine/hosts/codex.py"},
         "functions": set(),
         "keys": {
+            # Snapshot/record integrity diagnostics are advisory only. Exact
+            # keys keep every other runtime read in this module prohibited.
+            ("src/cardine/tasks/audit.py", "audit_task_state_projections", "disk-text", "read_text:record"),
+            ("src/cardine/tasks/audit.py", "<module>", "named-reader", "resolve_human_fields"),
+            ("src/cardine/tasks/audit.py", "audit_task_state_projections", "named-reader", "resolve_human_fields"),
             ("src/cardine/tasks/preflight.py", "<module>", "named-reader", "contract_digest"),
             ("src/cardine/tasks/preflight.py", "execution_preflight", "named-reader", "contract_digest"),
         },
@@ -440,6 +450,9 @@ class TextGateScannerTest(unittest.TestCase):
                          {"scripts/codex_read_guard.py", "scripts/stop_audit.py"})
 
     def test_allowlist_has_only_three_classes_and_creation_is_branch_scoped(self):
+        self.assertFalse(allowed(("src/cardine/tasks/audit.py", "runtime", "disk-text", "read_text:record")))
+        self.assertFalse(allowed(("src/cardine/tasks/audit.py", "audit_task_state_projections", "named-reader", "read_task_field")))
+        self.assertFalse(allowed(("src/cardine/tasks/contract_update.py", "runtime", "named-reader", "resolve_human_fields")))
         self.assertEqual(set(ALLOWLIST), {"contract-creation", "managed-text-integrity", "legacy"})
         root = self.tree({
             "src/cardine/cli.py":
