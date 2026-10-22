@@ -77,6 +77,8 @@ including command containers and nested subcommands.
 | `cardine review verdict` | Stable |
 | `cardine task` | Stable |
 | `cardine task new` | Stable |
+| `cardine task contract` | Stable |
+| `cardine task contract update` | Stable |
 | `cardine task transition` | Stable |
 | `cardine task outcome` | Stable |
 | `cardine task close` | Stable |
