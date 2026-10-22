@@ -20,35 +20,35 @@ once on the candidate.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row SS6 is implemented as the design of the plan's sections
+- [x] The scope of row SS6 is implemented as the design of the plan's sections
   "Duplicates to remove", "Generated status contract", "Startability and
   totals", "Creation and stable records", and "Consumers and the Meridian
   boundary" describes it. A file the row missed but that the same change
   needs is in scope; the handoff lists it.
-- [ ] Every test that row SS6 lists under "Tests" exists and passes.
-- [ ] Product `task close` and landing leave the record at its path. Closure
+- [x] Every test that row SS6 lists under "Tests" exists and passes.
+- [x] Product `task close` and landing leave the record at its path. Closure
   gates use state and the committed handoff and evidence, not the archive
   path. Only verified landing writes `done`; cancellation writes its
   reason and history in state and keeps the record.
-- [ ] `integrate stage` writes the landed state and regenerates the views of
+- [x] `integrate stage` writes the landed state and regenerates the views of
   row SS4 once on the candidate tree; `integrate abort` restores state and
   views together. The product projection mutation route and phase archival
   are removed. A failed view write reports the stale view and the
   regeneration command and undoes no committed transition.
-- [ ] The integration evidence declarations of
+- [x] The integration evidence declarations of
   `src/cardine/integration/evidence.py` demand no archive move and no
   hand-maintained status edit. Exact-commit review gates still hold.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. Its Meridian-shaped records stay as they are: `Status:` lines,
   archive moves to `tasks/done/`, hand-maintained `tasks/QUEUE.md`,
   `tasks/QUEUE_ARCHIVE.md`, and `PROJECT_PLAN.md`. The task changes
   product code, product templates, and tests only; it edits none of those
   repository records except its own task record, handoff, and archive.
   `python3 scripts/check_repository.py` still passes on them.
-- [ ] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
+- [x] `cardine.legacy.meridian_installation.load_meridian_snapshot(Path("."))`
   still returns this repository's tasks with the same IDs and states, and
   the legacy fixture assertions are not weakened.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -57,16 +57,16 @@ once on the candidate.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/069.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/069.json`, which only
   the installed `meridian task close 069` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
