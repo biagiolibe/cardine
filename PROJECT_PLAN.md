@@ -124,7 +124,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 079 — Freeze the remaining human contract fields in the snapshot (N1, part 1).
 - `[x]` 080 — Read the human contract fields from the snapshot (N1, part 2).
 - `[x]` 081 — Allow every task record in the identifier guard by pattern.
-- `[ ]` 082 — Revise the run engine plan with the inventories and the trust boundary.
+- `[x]` 082 — Revise the run engine plan with the inventories and the trust boundary.
 - `[ ]` 083 — Remove the self-reported evidence counters (RX1).
 - `[ ]` 084 — Read class, review policy, and deliverables from the snapshot (N2a).
 - `[ ]` 085 — Read validation commands, host impact, and locations from frozen inputs (N2b).
