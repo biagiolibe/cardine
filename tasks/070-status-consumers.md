@@ -29,7 +29,7 @@ read and regenerate status. This closes work item 7.
   totals, and startable IDs from the status service, also when queue files
   are empty. The console offers resume for in-progress tasks without
   calling them startable.
-- [ ] A `git grep` for product readers of record status lines and queue rows
+- [x] A `git grep` for product readers of record status lines and queue rows
   (the plan's static search) finds hits only under `cardine.legacy` and in
   tests of that path; the handoff gives the search command and lists every
   remaining hit with its reason.
