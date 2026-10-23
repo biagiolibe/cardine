@@ -109,7 +109,7 @@ Other rows of the plan, work items 9 and 10, the installation surface
 
 ## Dependencies
 
-- **Depends on**: 093
+- **Depends on**: 096
 - **Blocks**: 095
 
 ## Developer decisions given in advance

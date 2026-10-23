@@ -51,5 +51,6 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[ ]` | 091 | Classify self-update, upgrade, and host stops by cause (RE2c) | 🔴 P1 | 090 | [091](091-stop-causes-nonrun.md) |
 | `[ ]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](092-typed-outcome-dispatch.md) |
 | `[ ]` | 093 | Enforce the expected surface and record delivery identity (RE3a) | 🔴 P1 | 092 | [093](093-scope-and-delivery.md) |
-| `[ ]` | 094 | Run task validation in the engine with a retry limit (RE3b) | 🔴 P1 | 093 | [094](094-engine-validation.md) |
+| `[ ]` | 096 | Store execution evidence in one file per task | 🔴 P1 | 093 | [096](096-per-task-execution-evidence.md) |
+| `[ ]` | 094 | Run task validation in the engine with a retry limit (RE3b) | 🔴 P1 | 096 | [094](094-engine-validation.md) |
 | `[ ]` | 095 | Remove the handoff and report gates (N3) | 🔴 P1 | 094 | [095](095-remove-handoff-gates.md) |
