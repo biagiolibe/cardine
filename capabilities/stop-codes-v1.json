@@ -657,7 +657,7 @@
       "resume": "cardine task transition {task_id} <STATUS> --project {project} --format json",
       "kind": "stop",
       "summary": "a `cardine task transition` was interrupted before it finished; rerunning the identical command replays its recorded operation",
-      "test": "tests.test_run_recovery.RunRecoveryTest.test_interrupted_state_operation_is_recoverable_and_corrupt_intent_is_not",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_interrupted_transition_is_recoverable_at_every_boundary",
       "resolution": "recoverable"
     },
     {
