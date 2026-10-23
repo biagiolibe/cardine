@@ -7,12 +7,11 @@ from pathlib import Path
 from cardine.shared.git import _run_git
 from cardine.tasks.preflight import execution_preflight
 from cardine.lifecycle.execution import execution_source_digest
-from cardine.tasks.identity import find_task_file
 import json
 from cardine.tasks.identity import resolve_task_identity
 from cardine.stops.render import stop_error
 import subprocess
-from cardine.tasks.evidence import validation_commands
+from cardine.tasks.evidence import frozen_validation_commands
 
 
 def record_validation(project_root: Path, task_id: str, command_id: str, command: str, status: int,
@@ -35,13 +34,12 @@ def record_validation(project_root: Path, task_id: str, command_id: str, command
 def run_validation(project_root: Path, task_id: str, command_id: str) -> int:
     """Execute only the task-declared literal command and retain its outcome."""
     execution_preflight(project_root, task_id)
-    text = find_task_file(project_root, task_id).read_text(encoding="utf-8")
-    commands = validation_commands(text)
+    commands = frozen_validation_commands(project_root, task_id)
     if command_id not in commands:
         available = ", ".join(sorted(commands)) or "none"
         raise stop_error(
             "VALIDATION_ID_UNDECLARED",
-            f"rule: only a task-declared validation ID runs; field checked: Validation in the {task_id} record; "
+            f"rule: only a task-declared validation ID runs; field checked: validation.commands in the {task_id} frozen contract; "
             f"accepted: {available}; found: {command_id!r}",
         )
     command = commands[command_id]

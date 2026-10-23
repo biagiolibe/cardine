@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cardine_cli_support import CLI, ROOT
 import io
+from project_config_support import write_project_config
 from task_contract_support import freeze_record
 import json
 import re
@@ -26,6 +27,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.project = Path(self.temporary.name) / "project"
         (self.project / "tasks").mkdir(parents=True)
+        write_project_config(self.project)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -35,6 +37,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         identity = self.project / ".cardine/task-identity.json"
         identity.parent.mkdir(parents=True, exist_ok=True)
         identity.write_text(json.dumps(declaration), encoding="utf-8")
+        write_project_config(self.project, taskIdentity={"mode": mode})
 
     def add_task(self, task_id: str, relative: str | None = None) -> Path:
         path = self.project / (relative or f"tasks/{task_id}.md")
@@ -126,6 +129,9 @@ class TaskIdentityResolverTest(unittest.TestCase):
             "`artifacts/reviews/<TASK-ID>.md`.\n<!-- CARDINE:END -->\n",
             encoding="utf-8",
         )
+        write_project_config(self.project, taskIdentity={"mode": "milestone"}, locations={
+            "queue": "docs/TASK_QUEUE.md", "taskRoots": ["tasks", "docs/tasks"],
+            "handoffRoot": "artifacts/handoffs", "reviewRoot": "artifacts/reviews"})
         task = self.add_task("M8-API-011", "docs/tasks/M8/M8-API-011.md")
         self.write_queue([("M8-API-011", "tasks/M8/M8-API-011.md")], "docs/TASK_QUEUE.md")
         resolved = owner_tasks_identity.resolve_task_identity(self.project, "M8-API-011", "existing")
@@ -136,7 +142,8 @@ class TaskIdentityResolverTest(unittest.TestCase):
 
     def test_policy_and_authority_fail_closed(self) -> None:
         identity = self.project / ".cardine/task-identity.json"
-        identity.parent.mkdir(parents=True)
+        (self.project / ".cardine/project.json").unlink()
+        identity.parent.mkdir(parents=True, exist_ok=True)
         malformed = (
             "{",
             json.dumps({"version": True, "mode": "opaque"}),
@@ -148,7 +155,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
             with self.subTest(declaration=declaration):
                 identity.write_text(declaration, encoding="utf-8")
                 with self.assertRaises(shared_errors.CardineError):
-                    owner_tasks_identity.resolve_task_identity(self.project, "TASK-001", "new")
+                    owner_tasks_identity.read_task_identity_policy(self.project)
 
     def test_ambiguity_collisions_mixed_case_and_traversal_are_rejected(self) -> None:
         self.declare()
@@ -345,6 +352,9 @@ class ProjectDeclarationTest(unittest.TestCase):
         path.write_text(json.dumps(declaration), encoding="utf-8")
 
     def test_defaults_partial_full_and_invalid_declarations(self) -> None:
+        with self.assertRaisesRegex(shared_errors.CardineError, "cardine setup --apply"):
+            owner_tasks_identity.resolve_project_locations(self.project)
+        self.write({"version": 1, "preset": "lean"})
         defaults = owner_tasks_identity.resolve_project_locations(self.project)
         self.assertEqual(defaults.queue, Path("tasks/QUEUE.md"))
         self.write({"version": 1, "preset": "lean", "locations": {"queue": "docs/QUEUE.md"}})
@@ -375,17 +385,13 @@ class ProjectDeclarationTest(unittest.TestCase):
         self.write({"version": 1, "preset": "lean", "locations": {"queue": "docs/QUEUE.md"}})
         self.assertEqual(owner_tasks_identity.resolve_project_locations(self.project).queue, Path("docs/QUEUE.md"))
 
-    def test_legacy_location_warning_is_emitted_once_per_process(self) -> None:
+    def test_workflow_prose_cannot_supply_missing_configuration(self) -> None:
         (self.project / "PROJECT_WORKFLOW.md").write_text(
-            "<!-- CARDINE:BEGIN capability=execution-assets v2 -->\n<!-- CARDINE:END -->\n"
             "Task files live at `legacy/tasks/<TASK-ID>.md`; queue is `legacy/QUEUE.md`.\n",
             encoding="utf-8",
         )
-        output = io.StringIO()
-        with redirect_stderr(output):
+        with self.assertRaisesRegex(shared_errors.CardineError, "cardine setup --apply"):
             owner_tasks_identity.resolve_project_locations(self.project)
-            owner_tasks_identity.resolve_project_locations(self.project)
-        self.assertEqual(output.getvalue().count("DEPRECATED: resolve canonical locations"), 1)
 
     def test_linked_worktree_reads_primary_declaration(self) -> None:
         subprocess.run(("git", "init", str(self.project)), check=True, capture_output=True, text=True)

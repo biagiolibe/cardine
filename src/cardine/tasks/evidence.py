@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from cardine.stops.render import stop_error
 import re
+from pathlib import Path
 
 
 def validation_commands(text: str) -> dict[str, str]:
@@ -33,3 +34,20 @@ def require_named_validation_commands(text: str) -> None:
             "accepted form: - `validation-id`: `literal command`; found: "
             + "; ".join(repr(line) for line in unnamed or entries),
         )
+
+
+def frozen_execution_contract(project_root: Path, task_id: str) -> dict:
+    """Require execution inputs frozen at creation, never recover them from prose."""
+    from cardine.tasks.state import read_task_state
+    state = read_task_state(project_root, task_id, "single", stop_factory=stop_error, require_contract=True)
+    contract = state["contract"]
+    if "hostImpact" not in contract:
+        from cardine.shared.errors import CardineError
+        raise CardineError(f"incomplete contract snapshot (missing hostImpact); run cardine task contract update {task_id}")
+    return contract
+
+
+def frozen_validation_commands(project_root: Path, task_id: str) -> dict[str, str]:
+    """Read frozen baseline commands; candidate-only checks run at integration."""
+    validation = frozen_execution_contract(project_root, task_id)["validation"]
+    return {key: validation["commands"][key] for key in validation["baseline"]}

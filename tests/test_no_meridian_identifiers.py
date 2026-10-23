@@ -141,7 +141,7 @@ ALLOWLIST = (
     ),
     Allowance(
         5, "10",
-        r"src/cardine/legacy/(?:" + OLD + r"_installation|snapshot)\.py",
+        r"src/cardine/legacy/(?:" + OLD + r"_installation|" + OLD + r"_locations|snapshot)\.py",
     ),
     Allowance(
         5, "10",

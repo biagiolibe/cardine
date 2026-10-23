@@ -1,6 +1,7 @@
 """Context-local project names and storage readers."""
 
 from __future__ import annotations
+from project_config_support import write_project_config
 
 from contextvars import Context
 from dataclasses import FrozenInstanceError, replace
@@ -103,6 +104,8 @@ class LayoutTest(unittest.TestCase):
         self.assertIsNone(project.read_project_declaration(self.root))
 
     def test_execution_evidence_writes_and_reads_selected_directory(self):
+        write_project_config(self.root)
+        self.write_json(OTHER_NAMES.project_declaration_path, {"version": 1, "preset": "lean"})
         self.assertEqual(contract.execution_entries(self.root, "042"), [])
         with use(OTHER_NAMES):
             recording.record_validation(self.root, "042", "unit", "python3 -m unittest", 0)
@@ -120,6 +123,7 @@ class LayoutTest(unittest.TestCase):
         self.assertEqual(candidate_validation_declaration(self.root), ("undeclared", {}))
 
     def test_lifecycle_directory_lease_and_state_change_together(self):
+        write_project_config(self.root)
         resolved = identity.resolve_task_identity(self.root, "042", "existing")
         default = storage._lifecycle_paths(self.root, resolved)
         self.assertEqual(default, (self.root / ".git/cardine-worktrees/042.json",
@@ -221,10 +225,11 @@ class LayoutTest(unittest.TestCase):
         self.assertFalse((self.root / PRODUCT_NAMES.manifest_path).exists())
 
     def test_console_identity_cache_observes_context_switch(self):
+        write_project_config(self.root)
         cache = IdentityCache()
         default = cache.resolve(self.root, "042")
         with use(OTHER_NAMES):
-            self.write_json(OTHER_NAMES.task_identity_path, {"version": 1, "mode": "milestone"})
+            self.write_json(OTHER_NAMES.project_declaration_path, {"version": 1, "preset": "lean", "taskIdentity": {"mode": "milestone"}})
             self.assertEqual(cache.resolve(self.root, "042").mode, "milestone")
         self.assertEqual(cache.resolve(self.root, "042"), default)
 

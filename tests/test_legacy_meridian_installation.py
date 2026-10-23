@@ -23,7 +23,7 @@ from cardine.console.snapshot import load_snapshot
 from cardine.shared.constants import CAPABILITY_MARKER, MARKED_BLOCK
 from cardine.shared.layout import ProjectNames, names, use
 from cardine.shared.snapshot_adapters import execution_assets_adapter
-from cardine.tasks.identity import resolve_project_locations
+from cardine.legacy.meridian_locations import resolve_meridian_locations as resolve_project_locations
 from cardine.tasks.state import read_task_state
 from cardine.templates.catalog import load_capability_catalog
 from cardine.templates.audit import profile_doctor

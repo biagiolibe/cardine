@@ -1,6 +1,7 @@
 """Regression tests for `cardine adr show`, `cardine adr list`, and `cardine context authority`."""
 
 from __future__ import annotations
+from project_config_support import write_project_config
 
 from task_contract_support import freeze_record
 import json
@@ -35,6 +36,7 @@ class AuthorityExcerptTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.project = Path(self.temporary.name) / "project"
         (self.project / "tasks").mkdir(parents=True)
+        write_project_config(self.project)
         (self.project / "docs").mkdir(parents=True)
         (self.project / "docs/ARCHITECTURE_DECISIONS.md").write_text(ADR_LOG, encoding="utf-8")
 
@@ -77,6 +79,7 @@ class AuthorityExcerptTest(unittest.TestCase):
         self.assertIn("ARCHITECTURE_DECISIONS.md", result.stderr)
 
     def test_adr_show_resolves_a_non_default_adr_log_path(self) -> None:
+        write_project_config(self.project, locations={"adrLog": "docs/DECISIONS.md"})
         (self.project / "docs/DECISIONS.md").write_text(
             "## ADR-0001 — Custom log\nBody.\n", encoding="utf-8"
         )

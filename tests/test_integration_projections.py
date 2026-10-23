@@ -141,6 +141,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "## Validation\n\n- `probe`: `test -f docs/answer.md`\n",
             encoding="utf-8",
         )
+        freeze_record(self.primary, "056", task)
         task.write_text(task.read_text(encoding="utf-8") + "\n" +
                         owner_tasks_preflight.execution_contract(self.primary, "056") + "\n", encoding="utf-8")
         freeze_record(self.primary, "056", task)

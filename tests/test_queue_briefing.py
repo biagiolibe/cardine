@@ -220,6 +220,7 @@ class QueueBriefingTest(unittest.TestCase):
         self.assertIn("Accepted: 1", result.stdout)
 
     def test_resolves_a_projects_declared_queue_location(self) -> None:
+        write_project_config(self.project, locations={"queue": "docs/TASK_QUEUE.md"})
         """The consumer project A-shaped customization: an annotated paragraph right
         after execution-assets' CARDINE:END, still inside the section,
         naming a different queue path than the tasks/QUEUE.md default."""

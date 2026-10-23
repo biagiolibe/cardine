@@ -380,6 +380,35 @@
         "recordPath": {
           "type": "string",
           "minLength": 1
+        },
+        "hostImpact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "classification",
+            "profiles"
+          ],
+          "properties": {
+            "classification": {
+              "enum": [
+                null,
+                "NOT_APPLICABLE",
+                "REQUIRED"
+              ]
+            },
+            "profiles": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "enum": [
+                  "enforced",
+                  "advisory",
+                  "unsupported",
+                  "unverified"
+                ]
+              }
+            }
+          }
         }
       }
     },

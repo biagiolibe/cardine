@@ -378,9 +378,6 @@ def registered_worktree_task_states(project_root: Path) -> list[dict[str, str]]:
                 or lifecycle.get("branch") != identity.branch_name
                 or worktrees.get(worktree) != identity.branch_name):
             continue
-        record = worktree / identity.task_path.relative_to(primary)
-        if not record.is_file():
-            continue
         from cardine.tasks.state import read_task_state
         from cardine.templates.mode import detect_mode
         try:

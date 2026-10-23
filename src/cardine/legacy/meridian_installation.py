@@ -133,6 +133,9 @@ def load_meridian_snapshot(project: Path) -> Snapshot:
     """Build an installation snapshot under the frozen Meridian names."""
     state_token = state_adapter.set(snapshot_task_state)
     status_token = status_adapter.set(lambda value: MERIDIAN_STATUSES.get(value, value))
+    from cardine.shared.snapshot_adapters import locations_adapter
+    from cardine.legacy.meridian_locations import resolve_meridian_locations
+    locations_token = locations_adapter.set(resolve_meridian_locations)
     assets_token = execution_assets_adapter.set(read_meridian_execution_assets)
     try:
         with use(MERIDIAN_INSTALLATION_NAMES):
@@ -141,3 +144,4 @@ def load_meridian_snapshot(project: Path) -> Snapshot:
         state_adapter.reset(state_token)
         status_adapter.reset(status_token)
         execution_assets_adapter.reset(assets_token)
+        locations_adapter.reset(locations_token)

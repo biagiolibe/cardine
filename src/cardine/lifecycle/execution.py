@@ -10,7 +10,7 @@ from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
 from cardine.stops.render import stop_error
 from cardine.tasks.contract import execution_entries
-from cardine.tasks.evidence import validation_commands
+from cardine.tasks.evidence import frozen_validation_commands
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.preflight import readiness_check
@@ -73,12 +73,8 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
     if errors == ["dirty-worktree"] and (resume or repeated_start):
         if repeated_start and not resume:
             identity = resolve_task_identity(project_root, task_id, "existing")
-            owned = {state_path(project_root, identity.canonical_id).relative_to(project_root).as_posix(),
-                     identity.task_path.relative_to(project_root).as_posix()}
             changed = set(git_output(project_root, "diff", "HEAD", "--name-only").splitlines())
             untracked = set(git_output(project_root, "ls-files", "--others", "--exclude-standard").splitlines())
-            prior_record = _run_git(project_root, "show", f"HEAD:{identity.task_path.relative_to(project_root)}")
-            expected_record = prior_record.stdout
             state = _execution_state(project_root, task_id)
             previous = _run_git(project_root, "show", f"HEAD:{state_path(project_root, task_id).relative_to(project_root)}")
             if previous.returncode:
@@ -90,8 +86,7 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
             if original["status"] == "queued" and state["transitions"]:
                 expected_state.update(status="in_progress", transitions=original["transitions"] + [state["transitions"][-1]])
             # A repeated start tolerates only the exact command-owned state update.
-            if (changed | untracked <= owned and prior_record.returncode == 0
-                    and identity.task_path.read_text(encoding="utf-8") == expected_record
+            if (changed | untracked <= {state_path(project_root, identity.canonical_id).relative_to(project_root).as_posix()}
                     and state == expected_state):
                 errors = []
         else:
@@ -172,7 +167,6 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
     identity = resolve_task_identity(project_root, task_id, "existing")
     task_id = identity.canonical_id
     state = _execution_state(project_root, task_id)
-    record = identity.task_path.read_text(encoding="utf-8")
     if (not review_is_required(state)
             or state["status"] not in ("in_progress", "in_review")):
         raise stop_error("TASK_STATUS_REJECTED", f"delivery requires a review-required task; found {state['status']}", task_id=task_id, project=canonical_project_root(project_root))
@@ -198,7 +192,7 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
         raise stop_error("EVIDENCE_INCOMPLETE", "final handoff must be committed", task_id=task_id, project=canonical_project_root(project_root))
     digest = execution_source_digest(project_root, task_id)
     entries = execution_entries(project_root, task_id)
-    commands = validation_commands(record)
+    commands = frozen_validation_commands(project_root, task_id)
     if not commands:
         raise stop_error("EVIDENCE_INCOMPLETE", "delivery needs declared completed validation evidence", task_id=task_id, project=canonical_project_root(project_root))
     for command_id, command in commands.items():

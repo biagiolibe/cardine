@@ -177,3 +177,92 @@ class ContractSnapshotReadersTest(unittest.TestCase):
                 self.assertEqual(caught.exception.code, 'TASK_STATE_MISSING')
                 self.assertIn('resume: cardine task contract update 002', str(caught.exception))
                 self.assertEqual(path.read_bytes(), before)
+
+    def test_validation_and_heading_edits_cannot_change_runtime_gates(self):
+        from cardine.tasks.preflight import execution_contract, execution_preflight
+        from cardine.tasks.evidence import frozen_validation_commands
+        from cardine.tasks.contract import verify_execution_evidence
+        from cardine.tasks.recording import run_validation
+        (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
+        record = self.root / 'tasks/002.md'
+        record.write_text(record.read_text() + execution_contract(self.root, '002') + '\n')
+        before = frozen_validation_commands(self.root, '002')
+        record.write_text(record.read_text().replace('## Validation', '## Removed validation')
+                          .replace('## Authority', '## Removed authority')
+                          .replace('## Expected code surface', '## Removed surface')
+                          + '\n## Validation\n- `injected`: `exit 99`\n')
+        execution_preflight(self.root, '002')
+        self.assertEqual(frozen_validation_commands(self.root, '002'), before)
+        with self.assertRaises(CardineStop) as caught:
+            verify_execution_evidence(self.root, '002', '')
+        self.assertIn('task-check', str(caught.exception))
+        with self.assertRaises(CardineStop) as caught:
+            run_validation(self.root, '002', 'injected')
+        self.assertEqual(caught.exception.code, 'VALIDATION_ID_UNDECLARED')
+        self.assertEqual(run_validation(self.root, '002', 'task-check'), 0)
+        verify_execution_evidence(self.root, '002', '')
+
+    def test_host_declaration_is_frozen_and_missing_snapshot_never_backfills(self):
+        from cardine.tasks.preflight import execution_contract, execution_preflight
+        from cardine.tasks.evidence import frozen_execution_contract
+        from cardine.shared.errors import CardineError
+        text = contract_record('003') + "\n## Host impact\nClassification: NOT_APPLICABLE\nRationale: No host changes.\n"
+        create_task(self.root, '003', text)
+        (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
+        record = self.root / 'tasks/003.md'
+        record.write_text(text + execution_contract(self.root, '003') + '\n')
+        record.write_text(record.read_text().replace('NOT_APPLICABLE', 'INVALID').replace('Rationale:', 'Removed:'))
+        execution_preflight(self.root, '003')
+        self.assertEqual(frozen_execution_contract(self.root, '003')['hostImpact'],
+                         {'classification': 'NOT_APPLICABLE', 'profiles': {}})
+        path = self.root / '.cardine/tasks/003.json'
+        state = json.loads(path.read_text())
+        del state['contract']['hostImpact']
+        path.write_text(json.dumps(state))
+        before = path.read_bytes()
+        with self.assertRaisesRegex(CardineError, 'cardine task contract update 003'):
+            execution_preflight(self.root, '003')
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_creation_rejects_invalid_execution_inputs_atomically(self):
+        from cardine.shared.errors import CardineError
+        invalid = [contract_record('003').replace('## Validation', '## Missing'),
+                   contract_record('003').replace("- `task-check`: `python3 -c 'pass'`", '- `unnamed`'),
+                   contract_record('003') + '\n## Host impact\nClassification: REQUIRED\n']
+        for text in invalid:
+            with self.subTest(text=text), self.assertRaises(CardineError):
+                create_task(self.root, '003', text)
+            self.assertFalse((self.root / 'tasks/003.md').exists())
+            self.assertFalse((self.root / '.cardine/tasks/003.json').exists())
+
+    def test_host_profile_table_edits_cannot_remove_required_evidence(self):
+        from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check
+        from cardine.tasks.evidence import frozen_execution_contract
+        text = contract_record('003') + """
+## Host impact
+Classification: REQUIRED
+Policy outcome: Require evidence for the enforced profile.
+
+| Profile | Before | Intended after | Activation preconditions | Fallback |
+|---|---|---|---|---|
+| Test host | advisory | enforced | Activate explicitly. | Report unavailable. |
+
+- Static: parser checks
+- Host execution: fixture invocation
+- Manual activation: explicit activation
+"""
+        create_task(self.root, '003', text)
+        (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
+        record = self.root / 'tasks/003.md'
+        record.write_text(text + execution_contract(self.root, '003') + '\n')
+        record.write_text(record.read_text().replace('| enforced |', '| advisory |'))
+        execution_preflight(self.root, '003')
+        self.assertEqual(frozen_execution_contract(self.root, '003')['hostImpact']['profiles'],
+                         {'Test host': 'enforced'})
+        with self.assertRaises(CardineStop) as caught:
+            readiness_check(self.root, '003', self.root / 'missing-report.md')
+        self.assertEqual(caught.exception.code, 'HOST_IMPACT_EVIDENCE_MISSING')
+        record.write_text(record.read_text().replace('## Host impact', '## Removed host impact'))
+        with self.assertRaises(CardineStop) as caught:
+            readiness_check(self.root, '003', self.root / 'missing-report.md')
+        self.assertEqual(caught.exception.code, 'HOST_IMPACT_EVIDENCE_MISSING')

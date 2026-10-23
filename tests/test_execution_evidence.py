@@ -42,6 +42,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
 
     def append_contract(self, task_id: str) -> None:
         write_state(self.project, task_id)
+        self.freeze_pending_states()
         path = self.project / "tasks" / f"{task_id}.md"
         path.write_text(path.read_text(encoding="utf-8") + "\n" + owner_tasks_preflight.execution_contract(self.project, task_id) + "\n", encoding="utf-8")
 
@@ -89,7 +90,9 @@ class ExecutionEvidenceTest(unittest.TestCase):
             "Task files live under `docs/tasks/<milestone>/`; queue is `docs/TASK_QUEUE.md`.\n\n## Roles\n",
             encoding="utf-8",
         )
+        write_project_config(self.project, "governed", locations={"queue": "docs/TASK_QUEUE.md", "taskRoots": ["tasks", "docs/tasks"]})
         nested_task = self.project / "docs/tasks/M19/TASK-007.md"
+        freeze_record(self.project, "TASK-007", nested_task)
         nested_task.write_text(
             nested_task.read_text(encoding="utf-8") + "\n" + owner_tasks_preflight.execution_contract(self.project, "TASK-007") + "\n",
             encoding="utf-8",
@@ -187,6 +190,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         write_state(self.project, "TASK-021")
         (self.project / "tasks/TASK-021.md").write_text("## Validation\n- `check`: `true`\n", encoding="utf-8")
+        self.freeze_pending_states()
         generated = owner_tasks_preflight.execution_contract(self.project, "TASK-021").splitlines()
         template_lines = [line for line in self.blueprint_contract_section().splitlines() if line.startswith("- Execution commands:")]
         self.assertEqual(template_lines, [owner_tasks_contract.EXECUTION_COMMANDS_LINE])
@@ -230,9 +234,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
                     re.sub(rf"^{field}:.*\n", "", text, flags=re.MULTILINE), encoding="utf-8"
                 )
                 blocked = self.run_cli("execution", "preflight", "TASK-018")
-                self.assertNotEqual(blocked.returncode, 0)
-                self.assertIn("BLOCKED TASK_RECORD_INCOMPLETE:", blocked.stderr)
-                self.assertIn(f"missing: {field}", blocked.stderr)
+                self.assertEqual(blocked.returncode, 0, blocked.stderr)
                 task.write_text(text, encoding="utf-8")
 
     def test_execution_preflight_validates_host_impact_declarations(self) -> None:
@@ -248,12 +250,9 @@ class ExecutionEvidenceTest(unittest.TestCase):
 
         task.write_text(task.read_text(encoding="utf-8").replace("Rationale: This task changes only application behavior.\n", ""), encoding="utf-8")
         missing_rationale = self.run_cli("execution", "preflight", "TASK-019")
-        self.assertNotEqual(missing_rationale.returncode, 0)
-        self.assertEqual(
-            self.blocked_line(missing_rationale),
-            "BLOCKED HOST_IMPACT_DECLARATION_INVALID: NOT_APPLICABLE declaration is missing Rationale; resume: correct "
-            "the task's Host impact declaration as the detail names, then rerun the blocked cardine execution command",
-        )
+        self.assertEqual(missing_rationale.returncode, 0, missing_rationale.stderr)
+        with self.assertRaisesRegex(shared_errors.CardineError, "missing Rationale"):
+            owner_tasks_contract.validate_host_impact_declaration(task.read_text())
 
         required = """Classification: REQUIRED
 Policy outcome: The lifecycle gate validates host-impact evidence.
@@ -273,13 +272,9 @@ Evidence plan:
 
         task.write_text(task.read_text(encoding="utf-8").replace("- Host execution: fixture command\n", ""), encoding="utf-8")
         missing_evidence = self.run_cli("execution", "preflight", "TASK-019")
-        self.assertNotEqual(missing_evidence.returncode, 0)
-        self.assertEqual(
-            self.blocked_line(missing_evidence),
-            "BLOCKED HOST_IMPACT_DECLARATION_INVALID: REQUIRED declaration is missing Host execution evidence plan; "
-            "resume: correct the task's Host impact declaration as the detail names, then rerun the blocked cardine "
-            "execution command",
-        )
+        self.assertEqual(missing_evidence.returncode, 0, missing_evidence.stderr)
+        with self.assertRaisesRegex(shared_errors.CardineError, "missing Host execution"):
+            owner_tasks_contract.validate_host_impact_declaration(task.read_text())
 
     def test_ready_check_requires_evidence_only_for_enforced_host_profiles(self) -> None:
         (self.project / "docs").mkdir(exist_ok=True)
@@ -334,6 +329,7 @@ Evidence plan:
             "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n\n## Completion\n",
             encoding="utf-8",
         )
+        self.freeze_pending_states()
         legacy_contract = owner_tasks_preflight.execution_contract(self.project, "TASK-014").replace(
             owner_tasks_contract.EXECUTION_COMMANDS_LINE, ""
         )
@@ -381,12 +377,13 @@ Evidence plan:
             encoding="utf-8",
         )
 
-        reconcile = self.run_cli("execution", "reconcile", "TASK-017")
-        self.assertNotEqual(reconcile.returncode, 0)
-        self.assertIn("BLOCKED VALIDATION_ENTRY_FORMAT:", reconcile.stderr)
-        preflight = self.run_cli("execution", "preflight", "TASK-017")
-        self.assertNotEqual(preflight.returncode, 0)
-        self.assertIn("BLOCKED VALIDATION_ENTRY_FORMAT:", preflight.stderr)
+        with self.assertRaisesRegex(shared_errors.CardineError, "VALIDATION_ENTRY_FORMAT"):
+            owner_tasks_contract.require_named_validation_commands(task.read_text())
+        task.write_text(task.read_text().replace("- `cargo fmt --check`", "- `check`: `true`"))
+        self.append_contract("TASK-017")
+        task.write_text(task.read_text().replace("- `check`: `true`", "- `cargo fmt --check`"))
+        self.assertEqual(self.run_cli("execution", "reconcile", "TASK-017").returncode, 0)
+        self.assertEqual(self.run_cli("execution", "preflight", "TASK-017").returncode, 0)
 
     def test_reconcile_preserves_terminal_task_history(self) -> None:
         (self.project / "docs").mkdir()
@@ -592,13 +589,7 @@ Evidence plan:
         )
         task.write_text(body.replace("## Expected code surface\n\n", ""), encoding="utf-8")
         self.append_contract("TASK-020")
-        self.assertEqual(
-            self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
-            "BLOCKED TASK_RECORD_INCOMPLETE: rule: a normal task record must contain its required headings; source "
-            "checked: tasks/TASK-020.md; accepted: ## Authority, ## Validation, ## Expected code surface; missing: "
-            "## Expected code surface; resume: add the listed sections or fields to the task record, then rerun "
-            "cardine execution preflight TASK-020 --project .",
-        )
+        self.assertEqual(self.run_cli("execution", "preflight", "TASK-020").returncode, 0)
         task.write_text(body.replace("queued", "ACCEPTED"), encoding="utf-8")
         self.append_contract("TASK-020")
         write_state(self.project, "TASK-020", "in_review", review_required=True)
@@ -619,13 +610,9 @@ Evidence plan:
         )
         write_state(self.project, "TASK-020")
         task.write_text(body + "\n- `cargo fmt --check`\n", encoding="utf-8")
-        self.assertEqual(
-            self.blocked_line(self.run_cli("execution", "reconcile", "TASK-020")),
-            "BLOCKED VALIDATION_ENTRY_FORMAT: rule: every entry in the task's ## Validation section must be a named "
-            "literal command; accepted form: - `validation-id`: `literal command`; found: '- `cargo fmt --check`'; "
-            "resume: rewrite each listed Validation entry as - `validation-id`: `literal command`, then rerun the "
-            "blocked cardine execution command",
-        )
+        self.assertEqual(self.run_cli("execution", "reconcile", "TASK-020").returncode, 0)
+        with self.assertRaisesRegex(shared_errors.CardineError, "VALIDATION_ENTRY_FORMAT"):
+            owner_tasks_contract.require_named_validation_commands(task.read_text())
 
     def test_handoff_gates_report_coded_actionable_stops(self) -> None:
         self.write_task("TASK-021", "in_progress")
@@ -754,7 +741,7 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(missing),
             "BLOCKED VALIDATION_ID_UNDECLARED: rule: only a task-declared validation ID runs; field checked: "
-            "Validation in the TASK-010 record; accepted: probe; found: 'not-declared'; resume: rerun cardine "
+            "validation.commands in the TASK-010 frozen contract; accepted: probe; found: 'not-declared'; resume: rerun cardine "
             "execution validate with a validation ID listed in the task's Validation section, or declare the command "
             "there first",
         )

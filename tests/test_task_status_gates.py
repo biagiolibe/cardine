@@ -25,6 +25,7 @@ class TaskStatusGateTest(unittest.TestCase):
         (self.root / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n")
         self.record = self.root / "tasks/001.md"
         self.record.write_text(contract_record(extra="Status: cancelled\n"))
+        freeze_record(self.root, "001")
         self.record.write_text(self.record.read_text() + "\n" + preflight.execution_contract(self.root, "001") + "\n")
         self.path = write_state(self.root)
         freeze_record(self.root, "001")
