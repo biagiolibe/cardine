@@ -10,6 +10,7 @@ import unittest
 from installation_fixture import run_host_briefing
 from project_config_support import write_project_config
 from task_state_support import write_task
+from task_contract_support import seal_state
 from test_queue_briefing import GOVERNED_HEADER
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,12 +42,15 @@ class SingleWorkflowBriefingTest(unittest.TestCase):
                 self.assertNotIn("[Meridian Lean Delivery Queue]", result.stdout)
 
     def test_empty_queue_with_closed_phases_still_reports_state_totals_on_both_hosts(self):
+        write_project_config(self.project, "lean")
         write_task(self.project, "001", "done")
         write_task(self.project, "002", "queued", "001")
         write_task(self.project, "003", "in_progress")
         for preset in ("lean", "governed"):
             with self.subTest(preset=preset):
                 write_project_config(self.project, preset)
+                for task_id in ("001", "002", "003"):
+                    seal_state(self.project, task_id)
                 self.write_queue("# Task Execution Queue\n\nNo open phases.\n")
                 (self.project / "tasks/QUEUE_ARCHIVE.md").write_text(
                     GOVERNED_HEADER + "| 1 | TASK-001 | P1 | ACCEPTED | REQUIRED | — | done/001.md |\n",

@@ -226,7 +226,7 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         del state['contract']['hostImpact']
         path.write_text(json.dumps(state))
         before = path.read_bytes()
-        with self.assertRaisesRegex(CardineError, 'cardine task contract update 003'):
+        with self.assertRaisesRegex(CardineError, 'changed contract is not covered'):
             execution_preflight(self.root, '003')
         self.assertEqual(path.read_bytes(), before)
 

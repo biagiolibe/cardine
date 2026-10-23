@@ -73,12 +73,12 @@ class TaskStateLookupTest(unittest.TestCase):
              mock.patch.object(owner_worktree_checkout, "canonical_project_root", return_value=self.root), \
              mock.patch.object(owner_tasks_identity, "_task_authorities", side_effect=counted):
             states = owner_worktree_checkout.registered_worktree_task_states(self.root)
-            self.assertEqual(states, [{"task_id": "001", "status": "in_progress"}])
+            self.assertEqual(states, [])  # Unsigned F09 registration is not authority.
             self.assertEqual(calls, 1)
 
             calls = 0
             active = owner_worktree_checkout.active_worktree_task(self.worker)
-            self.assertEqual(active["task_id"], "001")
+            self.assertIsNone(active)
             self.assertEqual(calls, 1)
 
 

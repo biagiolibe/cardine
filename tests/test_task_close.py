@@ -6,7 +6,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import freeze_record
+from task_contract_support import freeze_record, seal_state
 from unittest import mock
 
 import test_execution_boundaries as boundaries
@@ -104,6 +104,7 @@ class TaskCloseTest(unittest.TestCase):
         state['transitions'].append(dict(state['transitions'][-1], **{'from': 'in_progress', 'to': 'done'}))
         state['status'] = 'done'
         path.write_text(json.dumps(state))
+        seal_state(self.worker, '001')
         self.commit('Already done')
         self.refused('TASK_STATUS_REJECTED')
         path = cardine_cli.state_path(self.worker, '001')
@@ -126,6 +127,7 @@ class TaskCloseTest(unittest.TestCase):
     def test_governed_refusal_names_transition_command(self):
         write_project_config(self.primary, "governed")
         write_project_config(self.worker, "governed")
+        seal_state(self.worker, '001')
         self.commit('Select Governed')
         # The existing task keeps its original policy after a preset switch.
         result = owner_tasks_transitions.close_task(self.worker, '001')

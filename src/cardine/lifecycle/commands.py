@@ -26,6 +26,22 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
+    from cardine.lifecycle.receipts import pending_operation, _intent_path, _load_intent
+    if pending_operation(project_root, task_id):
+        # Reconcile only this start's exact owned transaction, never arbitrary dirt.
+        intent_path = _intent_path(project_root, task_id)
+        intent = _load_intent(intent_path)
+        owned = {intent_path.relative_to(project_root).as_posix()}
+        for name, item in intent['files'].items():
+            owned.update((name, item['staged']))
+        owned.add(intent_path.with_name(f'.{task_id}.guard').relative_to(project_root).as_posix())
+        changed = set(git_output(project_root, 'diff', 'HEAD', '--name-only').splitlines())
+        changed.update(git_output(project_root, 'ls-files', '--others', '--exclude-standard').splitlines())
+        if (set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']
+                or changed - owned):
+            raise stop_error('WRONG_WORKTREE', 'start recovery has foreign changes or identity mismatch',
+                             task_id=task_id, project=canonical_project_root(project_root))
+        transition_task_state(project_root, task_id, 'in_progress')
     state = read_task_state(project_root, task_id, workflow,
                             stop_factory=stop_error, require_contract=True)
     contract = state["contract"]

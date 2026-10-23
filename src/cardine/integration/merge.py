@@ -309,12 +309,16 @@ def stage_task_integration(
     try:
         from datetime import datetime, timezone
         import copy
+        previous_state = copy.deepcopy(task_state)
         task_state = copy.deepcopy(task_state)
         task_state["transitions"].append({"from": "in_progress", "to": "done", "commit": task_commit,
                                           "at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")})
         task_state["status"] = "done"
         path = state_path(project_root, identity.canonical_id)
-        _write_json_atomic(path, task_state)
+        from cardine.lifecycle.receipts import task_lock, write_operation
+        with task_lock(project_root, identity.canonical_id):
+            write_operation(project_root, identity.canonical_id, task_state,
+                            kind='landing_state', previous=previous_state)
         staged_state = _run_git(project_root, "add", "--", path.relative_to(project_root).as_posix())
         if staged_state.returncode:
             raise CardineError(staged_state.stderr.strip() or "could not stage landed task state")

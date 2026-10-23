@@ -227,7 +227,8 @@ def run_preview_cli(argv: list[str]) -> int:
     """
     import argparse
     from cardine.shared.layout import names
-    from cardine.tasks.state import validate_task_state
+    from cardine.tasks.state import read_task_state
+    from cardine.stops.render import stop_error
 
     class InvocationParser(argparse.ArgumentParser):
         def error(self, message):
@@ -239,8 +240,8 @@ def run_preview_cli(argv: list[str]) -> int:
     try:
         args = parser.parse_args(argv)
         locations = resolve_run_locations(args.task_id, args.project)
-        state = json.loads((locations.primary / names().tasks_path / f"{locations.task_id}.json").read_text())
-        validate_task_state(state, locations.task_id, "single", spike="outcome" in state)
+        state = read_task_state(locations.primary, locations.task_id, "single",
+                                stop_factory=stop_error, require_contract=True)
         if "contract" not in state:
             raise CardineError("missing frozen contract; preview cannot import task prose")
         # Progress verification is deliberately not inferred from editable JSON.

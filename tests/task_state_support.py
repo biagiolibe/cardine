@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from task_contract_support import freeze_record
+from task_contract_support import freeze_record, seal_state
 
 AT = "2026-10-11T12:00:00Z"
 
@@ -67,3 +67,4 @@ def set_state(root: Path, task_id: str, status: str, *, verdict: str | None = No
     state = build_state(task_id, status, verdict=verdict, required=required)
     state["contract"] = contract
     state_file.write_text(json.dumps(state), encoding="utf-8")
+    seal_state(root, task_id)

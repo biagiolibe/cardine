@@ -45,6 +45,8 @@ class TaskStateAuditTest(unittest.TestCase):
         self.path = self.project / ".cardine/tasks/001.json"
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "single",
                                          "status": "queued", "transitions": []}))
+        from task_contract_support import freeze_record
+        freeze_record(self.project, '001')
 
     def test_audit_pass_and_drift_are_one_read_only_row_per_state(self):
         before = {p: p.read_bytes() for p in self.project.rglob("*") if p.is_file()}
@@ -52,7 +54,7 @@ class TaskStateAuditTest(unittest.TestCase):
         self.assertEqual(len([r for r in rows if r.identity == "task-state"]), 1)
         self.assertEqual(rows[0].status, "PASS")
         self.assertEqual(before, {p: p.read_bytes() for p in before})
-        (self.project / "tasks/001.md").write_text("# Task 001 — Task\nStatus: ACCEPTED\n")
+        (self.project / "tasks/001.md").write_text("# Task 001 — Changed\nStatus: ACCEPTED\n")
         (self.project / "tasks/QUEUE.md").write_text(
             "| ID | Status | File |\n|---|---|---|\n| 001 | in_progress | [001](001.md) |\n")
         before = {p: p.read_bytes() for p in before}
@@ -65,7 +67,7 @@ class TaskStateAuditTest(unittest.TestCase):
         contracts = [row for row in rows if row.identity == "task-contract"]
         self.assertEqual(len(contracts), 1)
         self.assertEqual(contracts[0].status, "ADVISORY")
-        self.assertIn("incomplete contract snapshot", contracts[0].detail)
+        self.assertIn("contract drift", contracts[0].detail)
         self.assertIn("cardine task contract update 001", contracts[0].detail)
         self.assertIn(".cardine/tasks/001.json", rows[0].detail)
         self.assertIn("cardine status --write", generated[0].detail)
@@ -95,5 +97,7 @@ class TaskStateAuditTest(unittest.TestCase):
             "status": "done", "transitions": [{"from": before, "to": after, "commit": "a" * 40,
                                                 "at": "2026-10-11T12:00:00Z"}
                                                for before, after in (("queued", "in_progress"), ("in_progress", "done"))]}))
+        from task_contract_support import freeze_record
+        freeze_record(self.project, '001', self.project / 'tasks/done/001.md')
         rows = owner_tasks_audit.audit_task_state_projections(self.project, "single")
         self.assertEqual(rows[0].status, "PASS")

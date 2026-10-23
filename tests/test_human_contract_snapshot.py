@@ -40,7 +40,7 @@ class HumanContractSnapshotTest(unittest.TestCase):
         before = self.path.read_bytes()
         rows = audit_task_state_projections(self.root, 'single')
         self.assertEqual(self.path.read_bytes(), before)
-        return '\n'.join(row.detail for row in rows if row.identity == 'task-contract')
+        return '\n'.join(row.detail for row in rows if row.identity == 'task-contract' or row.status == 'FAIL')
 
     def test_creation_freezes_every_field_and_registered_dependency(self):
         create_task(self.root, '002', contract_record('002'))
@@ -97,23 +97,23 @@ class HumanContractSnapshotTest(unittest.TestCase):
         validate_task_state(state, '001', 'single')
         with self.assertRaisesRegex(CardineError, 'cardine task contract update 001'):
             frozen_human_fields(state)
-        self.assertIn('incomplete contract snapshot', self.audit())
+        self.assertIn('missing completed operation receipt', self.audit())
         result = subprocess.run([sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
                                  'task', 'contract', 'update', '001', '--project', str(self.root)],
                                 text=True, capture_output=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(json.loads(result.stdout)['updated'])
-        self.assertIn('recordPath', frozen_human_fields(self.read()))
-        self.assertEqual(self.read()['contract_history'][0]['before'], contract_hash(state['contract']))
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn('missing completed operation receipt', result.stderr)
+        self.assertEqual(json.loads(self.path.read_text()), state)
 
     def test_sparse_state_upgrade_is_explicit(self):
         state = self.create()
         state.pop('run')  # Explicit legacy-upgrade fixture, not a forged current receipt.
         del state['contract']
         self.path.write_text(json.dumps(state))
-        self.assertIn('incomplete contract snapshot', self.audit())
-        update_task_contract(self.root, '001')
-        self.assertIsNone(self.read()['contract_history'][0]['before'])
+        self.assertIn('missing completed operation receipt', self.audit())
+        with self.assertRaisesRegex(CardineError, 'missing completed operation receipt'):
+            update_task_contract(self.root, '001')
+        self.assertEqual(json.loads(self.path.read_text()), state)
 
     def test_invalid_record_or_unknown_dependency_update_preserves_snapshot_and_history(self):
         self.create()
@@ -138,7 +138,7 @@ class HumanContractSnapshotTest(unittest.TestCase):
                                  'task', 'contract', 'update', '001', '--project', str(self.root)],
                                 text=True, capture_output=True)
         self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertIn('review.required', result.stderr)
+        self.assertIn('missing completed operation receipt', result.stderr)
         self.assertNotIn('Traceback', result.stderr)
         self.assertEqual(self.path.read_bytes(), before)
 

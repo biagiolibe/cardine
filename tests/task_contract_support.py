@@ -56,6 +56,7 @@ def write_state(root, task_id="001", status="queued", *, review_required=None):
             record = None
         if record is not None:
             freeze_record(root, task_id, record)
+    seal_state(root, task_id)
     return path
 
 
@@ -102,7 +103,63 @@ def freeze_record(root, task_id, record=None, *, spike=None):
                     "validation": validation, "hostImpact": host, "ci": "none", "validationScoping": [], **human}
         if state.get("review", {}).get("required") or state["status"] == "in_review":
             contract["options"]["review"] = "required"
+    if 'review' in state:
+        contract['options']['review'] = 'required' if state['review']['required'] else 'not_required'
     state["contract"] = contract
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state))
-    return state
+    return seal_state(root, task_id)
+
+
+def seal_state(root, task_id, *, artifacts=False):
+    """Explicit fixture authority: publish deliberately constructed state via receipts.
+
+    Only fixtures call this adapter; product readers never authorize imported JSON.
+    Call after Git/policy setup, and again only when deliberately changing fixture
+    inputs, never while exercising an uncovered-edit rejection.
+    """
+    import json
+    from pathlib import Path
+    from cardine.lifecycle import receipts
+    from cardine.tasks.state import state_path
+    root = root.resolve()
+    path = state_path(root, task_id)
+    state = json.loads(path.read_bytes())
+    state.pop('run', None)
+    from cardine.tasks.state_core import TaskStateInvalid, validate_task_state
+    try:
+        validate_task_state(state, task_id, 'single')
+    except TaskStateInvalid:
+        return state  # Deliberately invalid fixtures stay raw; readers must refuse them.
+    from cardine.shared.layout import names
+    if names().project_directory != '.cardine':
+        return state  # Historical installation diagnostics do not gain authority.
+    if not (root / '.cardine/project.json').exists():
+        from project_config_support import write_project_config
+        write_project_config(root, validation=VALIDATION)
+    primary = Path(receipts.observed_authority(root)['project']).resolve()
+    from cardine.shared.errors import CardineError
+    try:
+        observed = receipts.require_authority(primary)
+    except CardineError:
+        observed = receipts.observed_authority(primary)
+        authority_path = primary / '.cardine/receipt-authority.json'
+        if authority_path.exists():
+            old = json.loads(authority_path.read_bytes())
+            if old.get('accepted_main'):
+                observed['accepted_main'] = old['accepted_main']
+        receipts.authorize_project(primary, accepted=observed)
+    if observed['common']:
+        for operation_path in (Path(observed['common']) / 'cardine-worktrees').glob('*.preparation'):
+            operation = receipts._load_intent(operation_path)
+            if operation['binding']['task_id'] == task_id and operation['result'] == 'verified':
+                operation['authority'] = observed
+                receipts._save_intent(operation_path, operation)
+    files = {}
+    if artifacts and 'contract' in state:
+        record = root / state['contract']['recordPath']
+        if record.is_file():
+            files[record.relative_to(root).as_posix()] = record.read_bytes()
+    path.unlink()
+    with receipts.task_lock(root, task_id):
+        return receipts.write_operation(root, task_id, state, kind='fixture', files=files)

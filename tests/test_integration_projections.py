@@ -22,7 +22,7 @@ from cardine.worktree import storage as owner_worktree_storage
 from cardine.tasks import contract as owner_tasks_contract
 
 import worktree_support as support
-from task_contract_support import freeze_record
+from task_contract_support import freeze_record, seal_state
 
 
 class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
@@ -77,6 +77,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         state["contract"]["options"]["review"] = "required"
         state.setdefault("review", {}).update(required=True, verdict="APPROVE", reviewed_commit=validated, approved_by="owner")
         state_path.write_text(json.dumps(state))
+        seal_state(task_worktree, '056')
         self.git("add", ".cardine/tasks/056.json", cwd=task_worktree)
         self.git("add", "tasks/reviews/056.md", cwd=task_worktree)
         self.git("commit", "-m", "docs: accept 056", cwd=task_worktree)
@@ -162,6 +163,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         state = json.loads(state_path.read_text())
         state["outcome"] = "ANSWERED"
         state_path.write_text(json.dumps(state))
+        seal_state(worktree, '056')
         ledger = worktree / owner_tasks_contract.EXECUTION_EVIDENCE_PATH
         evidence_bytes = ledger.read_bytes()
         entry = json.loads(evidence_bytes)["056"][0]

@@ -136,6 +136,8 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         path = self.primary / ".cardine/tasks/056.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(state), encoding="utf-8")
+        from task_contract_support import seal_state
+        seal_state(self.primary, '056')
         self.git("add", ".cardine/tasks/056.json")
         self.git("commit", "-m", "track queued state")
         with self.assertRaisesRegex(shared_errors.CardineError, "nonterminal tracked task state"):
@@ -144,6 +146,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
                      "at": "2026-10-17T00:00:00Z", "commit": self.base}
                      for before, after in (("queued", "in_progress"), ("in_progress", "done"))])
         path.write_text(json.dumps(state), encoding="utf-8")
+        seal_state(self.primary, '056')
         with self.assertRaisesRegex(shared_errors.CardineError, "primary checkout must be clean"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.git("add", ".cardine/tasks/056.json")

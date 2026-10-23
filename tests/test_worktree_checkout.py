@@ -288,31 +288,18 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(state_path.read_text(encoding="utf-8").count('"other"'), 1)
 
 
-    def test_resume_with_missing_state_derives_from_git_and_repairs_later(self) -> None:
+    def test_resume_with_missing_state_requires_covered_registration(self) -> None:
         prepared, worktree = self.dirty_worktree()
         state_directory = self.primary / ".git/cardine-worktrees"
         next(state_directory.glob("*.json")).unlink()
-        with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")):
-            resumed = self.resume()
-        self.assertEqual(list(state_directory.glob("*.json")), [])
-        self.assertEqual(resumed["base_commit"], prepared["base_commit"])
-        self.assertEqual(resumed["base_commit_source"], "derived")
-        self.assertEqual(resumed["state"], "missing")
-        self.assertNotIn("started_at", resumed)
-        self.assertEqual((resumed["resumed"], resumed["dirty"], resumed["branch"]), (True, True, "task-056"))
-        self.assertEqual(
-            resumed["state_repair"],
-            f"cardine worktree prepare 056 --project {self.primary.resolve()} --format json",
-        )
-        with self.assertRaisesRegex(shared_errors.CardineError, "dirty and was retained"):
+        before = self.snapshot(worktree)
+        with self.assertRaisesRegex(shared_errors.CardineError, "missing covered lifecycle registration"):
+            self.resume()
+        self.assertEqual(before, self.snapshot(worktree))
+        with self.assertRaisesRegex(shared_errors.CardineError, "missing covered lifecycle registration"):
             self.prepare()
-        self.git("checkout", "--", "README.md", cwd=worktree)
-        (worktree / "new.txt").unlink()
-        repaired = self.prepare()
-        self.assertEqual(repaired["base_commit"], prepared["base_commit"])
-        self.assertEqual(len(list(state_directory.glob("*.json"))), 1)
-        self.assertNotIn("state", self.resume())
-
+        self.assertEqual(list(state_directory.glob("*.json")), [])
+        self.assertEqual(Path(prepared["worktree"]), worktree)
 
     def test_resume_counts_renames_and_clean_worktrees(self) -> None:
         prepared = self.prepare()
@@ -360,7 +347,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.git("commit", "--allow-empty", "-m", "advance", cwd=worktree)
         self.assertTrue(self.resume()["dirty"])
         self.git("worktree", "remove", "--force", str(worktree))
-        with self.assertRaisesRegex(shared_errors.CardineError, "partial task state"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "nothing to resume"):
             self.resume()
         self.git("branch", "-D", "task-056")
         collision = Path(str(prepared["worktree"]))

@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION, write_state, freeze_record
+from task_contract_support import contract_record, VALIDATION, write_state, freeze_record, seal_state
 from unittest import mock
 from cardine import cli as owner_cli
 from cardine.tasks import transitions as owner_tasks_transitions
@@ -41,6 +41,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "config", "maintenance.auto", "false"], cwd=self.project, check=True)
         self.worktree_root = self.root / "worktrees"
         self.worktree_root.mkdir()
+        self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
         if not seed:
             return
         (self.project / "tasks").mkdir()
@@ -62,6 +65,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         return remote
 
     def tearDown(self) -> None:
+        self.environment.stop()
         self.temporary.cleanup()
 
     def run_cli(self, *arguments: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -171,7 +175,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "worktree", "prepare", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
         )
-        self.assertNotIn("started_at", json.loads(preserved.stdout))
+        self.assertEqual(preserved.returncode, 2, preserved.stderr)
+        self.assertIn('worktree preparation receipt', preserved.stderr)
+        self.assertEqual(json.loads(state_path.read_text()), legacy)
 
     def test_handoff_worktree_value_is_root_relative_and_legacy_absolute_is_accepted(self) -> None:
         prepared = self.run_cli(
@@ -337,6 +343,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 '{"version": 1, "state": "none"}\n', encoding="utf-8"
             )
             write_project_config(self.project, "lean", validation=VALIDATION)
+            seal_state(self.project, "056")  # Fixture authority for the policy this commit changes.
             (self.project / "tasks").mkdir(exist_ok=True)
             (self.project / "tasks/QUEUE.md").write_text(
                 "| Status | ID | Title | Priority | Depends | Task |\n"
@@ -346,7 +353,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             )
             (self.project / "PROJECT_PLAN.md").write_text("- `[ ]` 056 — Fixture task.\n", encoding="utf-8")
             subprocess.run(
-                ["git", "add", "unpushed.txt", ".cardine/candidate-validation.json", ".cardine/project.json",
+                ["git", "add", "unpushed.txt", ".cardine/candidate-validation.json", ".cardine/project.json", ".cardine/tasks/056.json", ".cardine/receipt-authority.json",
                  "tasks/QUEUE.md", "PROJECT_PLAN.md"],
                 cwd=self.project, check=True,
             )
@@ -560,30 +567,25 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
     def test_integrate_stage_reports_undeclared_validation_commands_through_the_registry(self) -> None:
-        # Only a pre-contract fixture consults the mutable candidate declaration.
+        # Receipt-gated preparation rejects unsigned pre-contract inputs before
+        # staging. Retain the Internal diagnostic's registered rendering contract.
+        from cardine.integration.evidence import undeclared_validation_commands_error
+        error = undeclared_validation_commands_error(self.project, {})
+        self.assertEqual(error.code, 'UNDECLARED_VALIDATION_COMMANDS')
+        self.assertIn('Task validation commands: none recorded.', str(error))
+        self.assertIn('resume: write declared candidate validation fragments', str(error))
+
+    def test_integrate_stage_refuses_unsigned_precontract_state(self) -> None:
         path = self.project / ".cardine/tasks/056.json"
         state = json.loads(path.read_text())
         del state["contract"]
         path.write_text(json.dumps(state))
-        subprocess.run(["git", "add", str(path)], cwd=self.project, check=True)
-        subprocess.run(["git", "commit", "-m", "legacy declaration fixture"],
-                       cwd=self.project, check=True, capture_output=True)
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
-        (self.project / ".cardine/candidate-validation.json").write_text(
-            '{"version": 1, "state": "undeclared"}\n', encoding="utf-8"
-        )
-        subprocess.run(["git", "add", ".cardine/candidate-validation.json"], cwd=self.project, check=True)
-        subprocess.run(["git", "commit", "-m", "undeclare"], cwd=self.project, check=True, capture_output=True)
-        result = self.run_cli(*self._stage_args(evidence_path))
+        before = path.read_bytes()
+        result = self.run_cli('worktree', 'prepare', '056', '--project', str(self.project),
+                              '--worktree-root', str(self.worktree_root), '--format', 'json')
         self.assertEqual(result.returncode, 2)
-        self.assertEqual(
-            result.stderr.strip(),
-            "BLOCKED UNDECLARED_VALIDATION_COMMANDS: no project choice is recorded at "
-            ".cardine/candidate-validation.json. Task validation commands: none recorded. Proposed declaration: "
-            '{"state": "undeclared", "version": 1}; resume: write declared candidate validation fragments or '
-            "state none in .cardine/candidate-validation.json, then rerun the interrupted cardine worktree "
-            "integrate step",
-        )
+        self.assertIn('TASK_STATE_MISSING', result.stderr)
+        self.assertEqual(path.read_bytes(), before)
 
     def test_integrate_stage_reports_an_integration_conflict_through_the_registry(self) -> None:
         evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
@@ -877,7 +879,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def _staged_at_c7(self) -> None:
         self._advance_ready_task()
         staged = json.loads(self._advance(*self._passing()).stdout)
-        self.assertEqual(staged["step"], "C7")
+        self.assertEqual(staged["step"], "C7", staged)
 
     def _main_subject(self) -> str:
         return subprocess.run(

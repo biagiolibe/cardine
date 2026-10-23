@@ -144,6 +144,6 @@ def check_dependencies(project_root: Path, task_id: str, record: str) -> None:
         shown = _run_git(primary, "show", f"main:{path.as_posix()}")
         if shown.returncode:
             raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} has no landed state", task_id=task_id, project=project_root)
-        state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error, require_contract=True)
+        state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error, require_contract=True, artifact_ref="main")
         if not dependency_satisfied(state):
             raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} is not a landed successful result", task_id=task_id, project=project_root)

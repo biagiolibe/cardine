@@ -59,16 +59,21 @@ def _sync_directory(path):
 
 def _durable(path, content):
     """Replace bytes and fsync both data and directory, without following links."""
-    from cardine.tasks.state import write_state_bytes
+    from cardine.tasks.state_core import write_state_bytes
     write_state_bytes(path, content)
 
 
 @contextmanager
 def task_lock(root, task_id):
     root = Path(root).resolve()
-    from cardine.tasks.state import state_path
+    from cardine.tasks.state_core import state_path
     state_path(root, task_id)  # Validate the ID before constructing lock paths.
-    path = safe_path(root, f'{names().tasks_path}/.{task_id}.guard')
+    common = _git(root, 'rev-parse', '--git-common-dir')
+    if common:
+        common = (root / common).resolve()
+        path = safe_path(common, f'cardine-operations/{task_id}.guard')
+    else:
+        path = safe_path(root, f'{names().tasks_path}/.{task_id}.guard')
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('a') as handle:
         try:
@@ -96,8 +101,8 @@ def observed_authority(root):
                     and '__pycache__' not in p.parts and p.suffix != '.pyc'})
     runtime_digest = digest(encoded({str(p.relative_to(runtime)): digest(p.read_bytes()) for p in files}))
     common = _git(root, 'rev-parse', '--git-common-dir')
-    primary = _git(root, 'worktree', 'list', '--porcelain')
-    primary = primary.splitlines()[0].removeprefix('worktree ') if primary else str(root)
+    from cardine.shared.git import primary_project_root
+    primary = str(primary_project_root(root))
     common = str((root / common).resolve()) if common else None
     policy = safe_path(root, str(names().project_declaration_path))
     from cardine.worktree.storage import resolve_worktree_root
@@ -144,22 +149,38 @@ def authorize_project(root, *, accepted, new=False):
 
 
 def require_authority(root):
-    path = safe_path(root, f'{names().project_directory}/receipt-authority.json')
+    observed = observed_authority(root)
+    primary = Path(observed['project']).resolve()
+    path = safe_path(primary, f'{names().project_directory}/receipt-authority.json')
     try:
         accepted = json.loads(path.read_bytes())
     except (OSError, ValueError) as error:
         raise CardineError('developer reauthorization required: missing receipt authority') from error
-    observed = observed_authority(root)
+    # A linked task checkout uses the primary's authorization only after Git
+    # proves membership; its own policy/runtime still have to match.
+    if root != primary:
+        from cardine.shared.git import canonical_git_common_dir
+        if observed['common'] != str(canonical_git_common_dir(primary)):
+            raise CardineError('foreign project/common-directory authority')
+        observed['root'] = str(primary)
     # Advancing main is ordinary delivery; it cannot replace the accepted base.
     if (not isinstance(accepted, dict) or set(accepted) != set(observed)
             or any(accepted.get(key) != observed[key] for key in observed if key != 'accepted_main')):
         raise CardineError('developer reauthorization required: project/runtime/policy changed')
     base, main = accepted['accepted_main'], observed['accepted_main']
     if base != main:
-        result = subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor',
-                                 str(base), str(main)], capture_output=True)
-        if not base or not main or result.returncode:
-            raise CardineError('developer reauthorization required: accepted main history changed')
+        if base is None and main:
+            # Explicit acceptance of an unborn project pins policy bytes. Its
+            # first main history must retain that policy; no task JSON grants it.
+            policy = subprocess.run(['git', '-C', str(primary), 'show',
+                                     f'{main}:{names().project_declaration_path}'], capture_output=True)
+            if policy.returncode or digest(policy.stdout) != accepted['policy']:
+                raise CardineError('developer reauthorization required: initial main policy changed')
+        else:
+            result = subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor',
+                                     str(base), str(main)], capture_output=True)
+            if not base or not main or result.returncode:
+                raise CardineError('developer reauthorization required: accepted main history changed')
     return accepted
 
 
@@ -167,14 +188,14 @@ def _receipt_hash(receipt):
     return digest(encoded({k: v for k, v in receipt.items() if k != 'digest'}))
 
 
-def verify_receipts(root, state, *, artifacts=True, portable=False):
+def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref=None, artifact_names=None):
     """Verify chaining and current coverage against independently accepted policy.
 
     Portable verification still requires explicit local authorization. It relaxes
     original root identity only, never runtime/policy or artifact coverage.
     """
     root = Path(root).resolve()
-    from cardine.tasks.state import validate_task_state
+    from cardine.tasks.state_core import validate_task_state
     validate_task_state(state, state['task_id'], 'single')
     accepted = require_authority(root)
     receipts = state.get('run', {}).get('receipts', [])
@@ -206,10 +227,16 @@ def verify_receipts(root, state, *, artifacts=True, portable=False):
         raise CardineError('changed state is not covered by an operation receipt')
     if artifacts:
         for name, expected in coverage.items():
-            if name == state_name:
+            if name == state_name or (artifact_names is not None and name not in artifact_names):
                 continue
             path = safe_path(root, name)
-            if not path.is_file() or digest(path.read_bytes()) != expected:
+            if artifact_ref is None:
+                content = path.read_bytes() if path.is_file() else None
+            else:
+                shown = subprocess.run(['git', '-C', str(root), 'show', f'{artifact_ref}:{name}'],
+                                       capture_output=True)
+                content = shown.stdout if shown.returncode == 0 else None
+            if content is None or digest(content) != expected:
                 raise CardineError(f'changed or missing receipt artifact: {name}')
     return latest
 
@@ -242,7 +269,7 @@ def _save_intent(path, value):
 
 
 def _finish(root, task_id, intent_path, intent):
-    from cardine.tasks.state import state_path, validate_task_state
+    from cardine.tasks.state_core import state_path, validate_task_state
     if intent['task_id'] != task_id or intent['authority'] != require_authority(root):
         raise CardineError('intent identity or accepted policy changed')
     state = intent['state']
@@ -303,10 +330,10 @@ def _finish(root, task_id, intent_path, intent):
             raise CardineError('state changed before result receipt')
         if state['run']['receipts'][-1]['source'] != _git(root, 'rev-parse', 'HEAD'):
             raise CardineError('operation source changed before result receipt')
-        verify_receipts(root, state)
+        verify_receipts(root, state, artifact_names=outputs)
         _durable(path, final_bytes)
         boundary('after_result_receipt')
-    verify_receipts(root, state)
+    verify_receipts(root, state, artifact_names=outputs)
     for item in outputs.values():
         safe_path(root, item['staged']).unlink(missing_ok=True)
     intent_path.unlink()
@@ -330,7 +357,7 @@ def reauthorize_task(root, task_id):
     Local policy must already have been explicitly accepted. No missing receipt,
     changed artifact or changed policy is imported, and no host role is claimed.
     """
-    from cardine.tasks.state import state_path
+    from cardine.tasks.state_core import state_path
     root = Path(root).resolve()
     with task_lock(root, task_id):
         if pending_operation(root, task_id):
@@ -344,7 +371,7 @@ def reauthorize_task(root, task_id):
 
 def write_operation(root, task_id, state, *, kind, files=None, previous=None):
     """Caller holds task_lock. Persist intent, stage exact bytes, publish result."""
-    from cardine.tasks.state import state_path
+    from cardine.tasks.state_core import state_path
     root = Path(root).resolve()
     intent_path = _intent_path(root, task_id)
     if intent_path.exists():

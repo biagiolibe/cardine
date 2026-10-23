@@ -19,6 +19,7 @@ class TaskStatusGateTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
+        subprocess.run(["git", "init", "-q", "-b", "main", str(self.root)], check=True)
         write_project_config(self.root, "lean", validation=VALIDATION)
         (self.root / "tasks").mkdir()
         (self.root / "docs").mkdir()
@@ -31,7 +32,6 @@ class TaskStatusGateTest(unittest.TestCase):
         freeze_record(self.root, "001")
         self.queue = self.root / "tasks/QUEUE.md"
         self.queue.write_text("| Order | ID | Status | File |\n|---|---|---|---|\n| 1 | 001 | done | [001](missing.md) |\n")
-        subprocess.run(["git", "init", "-q", "-b", "main", str(self.root)], check=True)
         subprocess.run(["git", "-C", str(self.root), "add", "."], check=True)
         subprocess.run(["git", "-C", str(self.root), "-c", "user.name=Test", "-c", "user.email=test@example.test",
                         "commit", "-qm", "Fixture"], check=True)
