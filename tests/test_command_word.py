@@ -33,6 +33,9 @@ class CommandWordTest(unittest.TestCase):
         # RX1 retires stops owned exclusively by the deleted self-report commands.
         for code in ("EXECUTION_EVIDENCE_ARGUMENTS", "HANDOFF_EXPLORATION_MISMATCH", "HANDOFF_EXPLORATION_SUMMARY_MISSING"):
             baseline.pop(code)
+        # RE2a splits nonhuman recoverable causes out of mixed guardrail codes.
+        for code in ("WORKTREE_RELOCATE", "LEASE_INTERRUPTED", "TASK_STATE_INTERRUPTED", "CLEANUP_PARTIAL"):
+            baseline[code] = {"human_decision": False, "resolution": "recoverable"}
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []

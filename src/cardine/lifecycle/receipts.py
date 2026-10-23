@@ -63,17 +63,21 @@ def _durable(path, content):
     write_state_bytes(path, content)
 
 
-@contextmanager
-def task_lock(root, task_id):
+def guard_path(root, task_id):
+    """Locate the task's writer guard without creating it."""
     root = Path(root).resolve()
     from cardine.tasks.state_core import state_path
     state_path(root, task_id)  # Validate the ID before constructing lock paths.
     common = _git(root, 'rev-parse', '--git-common-dir')
     if common:
         common = (root / common).resolve()
-        path = safe_path(common, f'cardine-operations/{task_id}.guard')
-    else:
-        path = safe_path(root, f'{names().tasks_path}/.{task_id}.guard')
+        return safe_path(common, f'cardine-operations/{task_id}.guard')
+    return safe_path(root, f'{names().tasks_path}/.{task_id}.guard')
+
+
+@contextmanager
+def task_lock(root, task_id):
+    path = guard_path(root, task_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('a') as handle:
         try:
@@ -84,6 +88,21 @@ def task_lock(root, task_id):
             yield
         finally:
             fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def operation_live(root, task_id):
+    """Read-only probe: True while another process holds this task's writer guard."""
+    path = guard_path(root, task_id)
+    try:
+        with path.open('rb') as handle:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return True
+            fcntl.flock(handle, fcntl.LOCK_UN)
+    except FileNotFoundError:
+        return False
+    return False
 
 
 def _git(root, *args):
@@ -262,6 +281,18 @@ def _load_intent(path):
         return value
     except (OSError, ValueError, KeyError, TypeError) as error:
         raise CardineError(f'invalid operation intent: {error}') from error
+
+
+def owned_intent(root, task_id):
+    """Read-only: True when the interrupted operation's intent is intact and names this task.
+
+    The digest detects uncovered edits of the file; it does not prove authorship.
+    """
+    path = _intent_path(root, task_id)
+    try:
+        return _load_intent(path).get('task_id') == task_id
+    except CardineError:
+        return False
 
 
 def _save_intent(path, value):

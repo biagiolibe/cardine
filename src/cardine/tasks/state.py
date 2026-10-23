@@ -27,7 +27,10 @@ def read_task_state(project_root, task_id, workflow, *, spike=False, review_requ
                 raise TaskStateInvalid(str(error)) from error
             intent = path.with_name(f'.{task_id}.intent.json')
             if intent.exists():
-                raise stop_factory("TASK_STATE_INVALID", "interrupted or active task creation/revision; replay identical command",
+                from cardine.lifecycle.receipts import owned_intent, operation_live
+                owned = owned_intent(project_root, task_id) and not operation_live(project_root, task_id)
+                raise stop_factory("TASK_STATE_INTERRUPTED" if owned else "TASK_STATE_INVALID",
+                                   "interrupted or active task creation/revision; replay identical command",
                                    task_id=task_id, project=project_root)
             journal = Path(project_root) / names().project_directory / "task-creation.lock"
             if journal.exists():

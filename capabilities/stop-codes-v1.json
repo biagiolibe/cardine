@@ -96,6 +96,22 @@
       "resolution": "guardrail"
     },
     {
+      "code": "WORKTREE_RELOCATE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C4",
+      "emitter": "`cardine execution start/deliver/ready-check`; `cardine task close` when `--project` names a checkout other than the task's registered worktree",
+      "human_decision": false,
+      "resume": "cardine worktree check {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "the command was given a project other than the task's registered worktree; rerun the identical command there",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_project_selection_routes_to_the_registered_worktree",
+      "resolution": "recoverable"
+    },
+    {
       "code": "EVIDENCE_INCOMPLETE",
       "class": "tool",
       "workflows": [
@@ -158,6 +174,22 @@
       "summary": "an integration lease is already held",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_a_held_lease_through_the_registry",
       "resolution": "guardrail"
+    },
+    {
+      "code": "LEASE_INTERRUPTED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree integrate stage`; `cardine worktree cleanup` when the retained lease names this task and project and no other writer is live",
+      "human_decision": false,
+      "resume": "cardine worktree integrate abort {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "an integration lease recorded by this task's own interrupted operation is retained and no staged merge exists",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_owned_interrupted_lease_recovers_and_foreign_ownership_stays_held",
+      "resolution": "recoverable"
     },
     {
       "code": "INTEGRATION_CONFLICT",
@@ -252,6 +284,22 @@
       "summary": "cleanup preconditions are not met",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_cleanup_reports_blocked_cleanup_through_the_registry",
       "resolution": "guardrail"
+    },
+    {
+      "code": "CLEANUP_PARTIAL",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C10",
+      "emitter": "`cardine worktree cleanup` when a removal step failed without a denied-access condition",
+      "human_decision": false,
+      "resume": "cardine worktree cleanup {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "cleanup removed part of the task's worktree, branch or lifecycle file and can be rerun unchanged",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_partial_cleanup_reruns_and_denied_access_stays_blocked",
+      "resolution": "recoverable"
     },
     {
       "code": "UNDECLARED_VALIDATION_COMMANDS",
@@ -596,6 +644,21 @@
       "summary": "a task state field or transition history is invalid",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_invalid_stop",
       "resolution": "guardrail"
+    },
+    {
+      "code": "TASK_STATE_INTERRUPTED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "shared task-state reader when an intact operation intent that names this task is pending",
+      "human_decision": false,
+      "resume": "rerun the identical interrupted cardine command for task {task_id} in {project}; it replays its recorded operation",
+      "kind": "stop",
+      "summary": "a task-state write recorded by this task's own operation was interrupted before it finished",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_interrupted_state_operation_is_recoverable_and_corrupt_intent_is_not",
+      "resolution": "recoverable"
     },
     {
       "code": "REVIEW_NOT_APPROVED",

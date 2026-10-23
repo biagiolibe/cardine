@@ -26,6 +26,7 @@ from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.decision import decide_integration_validation
 from cardine.templates.mode import detect_mode
 from cardine.shared.authority import find_adr_log
+from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.git import git_output
 from cardine.worktree.checkout import inspect_task_worktree
 import os
@@ -36,6 +37,9 @@ from cardine.tasks.identity import resolve_task_identity
 import shlex
 import shutil
 from cardine.tasks.state import state_path
+from cardine.stops.causes import cleanup_branch_stop_code
+from cardine.stops.causes import lease_stop_code
+from cardine.stops.causes import main_ahead_of_origin
 from cardine.stops.render import stop_error
 from cardine.tasks import status_render
 from cardine.integration.evidence import undeclared_validation_commands_error
@@ -178,7 +182,7 @@ def stage_task_integration(
         raise CardineError(f"staged integration state is mismatched or stale at {integration_path}")
     if lease_path.exists():
         raise stop_error(
-            "LEASE_HELD",
+            lease_stop_code(project_root, identity, lease_path),
             f"an interrupted integration lease is retained at {lease_path}; use `cardine worktree integrate abort`",
             task_id=identity.canonical_id, project=project_root,
         )
@@ -490,7 +494,12 @@ def cleanup_task_worktree(
     branch_commit = _branch_commit(project_root, identity.branch_name)
     absent_or_empty = not expected.exists() or (expected.is_dir() and not any(expected.iterdir()))
     if lease_path.exists() or integration_path.exists() or _merge_head_path(project_root).exists():
-        raise stop_error("CLEANUP_BLOCKED", "cleanup is blocked while an integration lease or staged merge is active", task_id=identity.canonical_id, project=project_root)
+        blocked = "CLEANUP_BLOCKED"
+        if lease_path.exists() and not integration_path.exists() and (
+            lease_stop_code(project_root, identity, lease_path) == "LEASE_INTERRUPTED"
+        ):
+            blocked = "LEASE_INTERRUPTED"
+        raise stop_error(blocked, "cleanup is blocked while an integration lease or staged merge is active", task_id=identity.canonical_id, project=project_root)
     if (
         registered is None
         and absent_or_empty
@@ -544,7 +553,10 @@ def cleanup_task_worktree(
         if remote_main.returncode != 0 or _run_git(
             project_root, "merge-base", "--is-ancestor", "main", "refs/remotes/origin/main"
         ).returncode != 0:
-            raise stop_error("CLEANUP_BLOCKED", "local main is not proven pushed to origin/main", task_id=identity.canonical_id, project=project_root)
+            raise stop_error(
+                "PUSH_PENDING" if main_ahead_of_origin(project_root) else "CLEANUP_BLOCKED",
+                "local main is not proven pushed to origin/main", task_id=identity.canonical_id, project=project_root,
+            )
     if registered is not None:
         removed = _run_git(project_root, "worktree", "remove", str(expected))
         if removed.returncode != 0:
@@ -560,7 +572,8 @@ def cleanup_task_worktree(
         deleted = _run_git(project_root, "branch", "-d", identity.branch_name)
         if deleted.returncode != 0:
             raise stop_error(
-                "CLEANUP_BLOCKED", deleted.stderr.strip() or "non-force branch deletion failed", task_id=identity.canonical_id, project=project_root
+                cleanup_branch_stop_code(project_root, identity.branch_name, task_commit, canonical_git_common_dir(project_root)),
+                deleted.stderr.strip() or "non-force branch deletion failed", task_id=identity.canonical_id, project=project_root
             )
     _remove_owned_file(lifecycle_state_path)
     result = {"version": 1, "task_id": identity.canonical_id, "status": "cleaned"}
