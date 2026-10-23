@@ -74,7 +74,11 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         (self.primary / ".cardine/candidate-validation.json").unlink()
         self.git("add", ".cardine/candidate-validation.json")
         self.git("commit", "-m", "remove declaration")
-        with self.assertRaisesRegex(shared_errors.CardineError, "UNDECLARED_VALIDATION_COMMANDS"):
+        # Exercise the stop branch directly: modern task fixtures freeze candidate
+        # commands and no longer fall back to the mutable project declaration.
+        with mock.patch.object(owner_integration_merge, "candidate_validation_declaration",
+                               return_value=("undeclared", {})), self.assertRaisesRegex(
+                                   shared_errors.CardineError, "UNDECLARED_VALIDATION_COMMANDS"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
@@ -203,7 +207,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
     def test_stage_completes_rows_after_main_registration_advance(self) -> None:
         freeze_record(self.primary, "056", self.primary / "tasks/056-lifecycle.md")
         self.git("add", ".")
-        self.git("commit", "-m", "freeze fixture contract")
+        self.git("commit", "--allow-empty", "-m", "freeze fixture contract")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()
         prepared = self.prepare()
         task_worktree = Path(str(prepared["worktree"]))

@@ -75,11 +75,14 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.state_file = self.worker / ".cardine/tasks/056.json"
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state_file.write_text(json.dumps(state))
+        frozen = freeze_record(self.worker, "056", self.worker / "tasks/056-lifecycle.md")
+        frozen["contract"]["options"]["review"] = "required" if required else "not_required"
+        self.state_file.write_text(json.dumps(frozen))
         self.commit()
 
     def commit(self):
         self.git("add", ".", cwd=self.worker)
-        self.git("commit", "-m", "record task evidence", cwd=self.worker)
+        self.git("commit", "--allow-empty", "-m", "record task evidence", cwd=self.worker)
 
     def evidence(self, validated=None):
         head = self.git("rev-parse", "HEAD", cwd=self.worker).stdout.strip()
@@ -127,7 +130,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         validation = self.root / "candidate.json"
         validation.write_text(json.dumps({"candidate_tree": staged["candidate_tree"], "passed": True,
-                                         "scope": "bounded", "commands": ["git diff --check", "scripts/check_repository.py"]}))
+                                         "scope": "bounded", "commands": ["git diff --check", "scripts/check_repository.py", "python3 -c 'pass'"]}))
         owner_integration_merge.finalize_task_integration("056", validation, self.primary)
         self.assertEqual((self.primary / "feature.txt").read_text(), "approved code\n")
 

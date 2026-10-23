@@ -14,7 +14,7 @@ from pathlib import Path
 import cardine.shared.errors as shared_errors
 from cardine.tasks import contract as owner_tasks_contract
 from cardine.tasks import preflight as owner_tasks_preflight
-from task_contract_support import write_state
+from task_contract_support import write_state, freeze_record
 from project_config_support import write_project_config
 
 
@@ -45,7 +45,17 @@ class ExecutionEvidenceTest(unittest.TestCase):
         path = self.project / "tasks" / f"{task_id}.md"
         path.write_text(path.read_text(encoding="utf-8") + "\n" + owner_tasks_preflight.execution_contract(self.project, task_id) + "\n", encoding="utf-8")
 
+    def freeze_pending_states(self):
+        # Legacy-shaped records still exercise the deferred prose gates, while
+        # runtime policy always starts from a fixture snapshot.
+        from cardine.tasks.identity import find_task_file
+        for path in (self.project / '.cardine/tasks').glob('*.json'):
+            state = json.loads(path.read_text())
+            if 'contract' not in state:
+                freeze_record(self.project, path.stem, find_task_file(self.project, path.stem))
+
     def contract_ready_check(self, task_id, report):
+        self.freeze_pending_states()
         try:
             output = owner_tasks_preflight.readiness_check(self.project.resolve(), task_id, report)
             return subprocess.CompletedProcess([], 0, output, "")
@@ -53,6 +63,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
             return subprocess.CompletedProcess([], 2, "", str(error))
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+        self.freeze_pending_states()
         return subprocess.run(
             [sys.executable, str(CLI), *arguments, "--project", str(self.project)],
             text=True,

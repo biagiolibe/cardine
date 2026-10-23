@@ -92,6 +92,19 @@ def machine(workflow=None, spike=False, review_required=True):
             for status, targets in STATE_MACHINE.items()}
 
 
+def require_contract_snapshot(state, project_root):
+    """Refuse implicit upgrades; only an explicit contract update reads the record."""
+    if "contract" not in state:
+        from cardine.stops.render import stop_error
+        import shlex
+        task_id = state["task_id"]
+        raise stop_error("TASK_STATE_MISSING",
+                         f"missing contract snapshot; run cardine task contract update {task_id}",
+                         task_id=task_id, project=project_root,
+                         resume=f"cardine task contract update {shlex.quote(task_id)} --project {shlex.quote(str(project_root))}")
+    return state["contract"]
+
+
 def review_is_required(state):
     """Read frozen task policy; sparse pre-contract snapshots retain their default."""
     options = state.get("contract", {}).get("options", {})
@@ -191,7 +204,7 @@ def state_path(project_root, task_id):
 
 
 def read_task_state(project_root, task_id, workflow, *, spike=False, review_required=None, stop_factory,
-                    text=None):
+                    text=None, require_contract=False):
     """Read one state file (or its Git snapshot), returning state or a registered stop."""
     try:
         path = state_path(project_root, task_id)
@@ -213,6 +226,11 @@ def read_task_state(project_root, task_id, workflow, *, spike=False, review_requ
             state = json.loads(text)
         except json.JSONDecodeError as error:
             _invalid("state", "valid JSON", str(error))
+        if require_contract and isinstance(state, dict) and "contract" not in state:
+            _validate_schema(state, json.loads(SCHEMA_PATH.read_text(encoding="utf-8")))
+            if state["task_id"] != task_id:
+                _invalid("task_id", [task_id], state["task_id"])
+            require_contract_snapshot(state, project_root)
         return validate_task_state(state, task_id, workflow, spike=spike, review_required=review_required)
     except (OSError, UnicodeError) as error:
         raise stop_factory("TASK_STATE_INVALID", f"state file: allowed readable UTF-8 JSON; found {error}",

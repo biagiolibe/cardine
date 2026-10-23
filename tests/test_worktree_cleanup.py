@@ -76,7 +76,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
                 "candidate_tree": staged["candidate_tree"],
                 "passed": True,
                 "scope": "bounded",
-                "commands": ["git diff --check", "python3 scripts/check_repository.py"],
+                "commands": ["git diff --check", "python3 scripts/check_repository.py", "python3 -c 'pass'"],
             }),
             encoding="utf-8",
         )
@@ -131,7 +131,8 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         with self.assertRaisesRegex(shared_errors.CardineError, "tracked task state on main must be done"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         state = {"version": 1, "task_id": "056", "workflow": "single",
-                 "status": "queued", "transitions": []}
+                 "status": "queued", "transitions": [],
+                 "contract": json.loads((self.primary / ".cardine/tasks/056.json").read_text())["contract"]}
         path = self.primary / ".cardine/tasks/056.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(state), encoding="utf-8")

@@ -74,9 +74,11 @@ class ExecutionBoundariesTest(unittest.TestCase):
             action()
         self.assertEqual(caught.exception.code, code)
 
-    def implemented(self):
+    def implemented(self, *, deliverable=False):
         owner_lifecycle_commands.execution_start(self.worker, '001')
         (self.worker / 'feature.txt').write_text('implementation\n')
+        if deliverable:
+            (self.worker / 'docs/result.md').write_text('Answer to the research question.\n')
         owner_tasks_recording.run_validation(self.worker, '001', 'check')
         self.commit('Implement feature and validation')
         identity = owner_tasks_identity.resolve_task_identity(self.worker, '001', 'existing')
@@ -101,6 +103,18 @@ class ExecutionBoundariesTest(unittest.TestCase):
         task = project_console.load_snapshot(self.primary).tasks[0]
         self.assertEqual(task.status, 'in_progress')
         self.assertEqual(task.started_at, state['transitions'][0]['at'])
+
+    def test_start_uses_frozen_class_and_options_without_resolving_record(self):
+        record = self.worker / self.record
+        record.write_text(record.read_text().replace('Class: standard', 'Class: spike')
+                          .replace('Review: REQUIRED', 'Review: NOT_REQUIRED'))
+        self.commit('Edit record after creation')
+        with mock.patch.object(owner_tasks_contract, 'resolve_task_contract',
+                               side_effect=AssertionError('implicit contract resolution')):
+            result = owner_lifecycle_commands.execution_start(self.worker, '001')
+        self.assertEqual(result['status'], 'in_progress')
+        self.assertEqual(result['state']['contract']['class'], 'standard')
+        self.assertEqual(result['state']['contract']['options']['review'], 'required')
 
     def test_resume_preserves_history_and_requires_explicit_dirty_authorization(self):
         owner_lifecycle_commands.execution_start(self.worker, '001')
@@ -340,7 +354,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                           + "\nQuestion: Can this probe answer the question?\nTimebox: 1h\nDeliverable: docs/result.md\n")
         freeze_record(self.worker, '001', record)
         self.commit('Declare Lean review-required spike')
-        self.implemented()
+        self.implemented(deliverable=True)
         owner_tasks_transitions.record_spike_outcome(self.worker, '001', 'ANSWERED')
         self.commit('Record research result')
         # The outcome is metadata and does not waive the task's required review.

@@ -17,7 +17,6 @@ from cardine.shared.models import TaskIdentityContext
 from cardine.shared.models import TaskIdentityPolicy
 from cardine.shared.project import _safe_project_path
 from cardine.shared.project import read_project_declaration
-from cardine.shared.text import read_task_field
 from cardine.shared import project as shared_project
 from dataclasses import dataclass
 from pathlib import Path

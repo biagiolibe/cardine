@@ -21,7 +21,7 @@ def contract_record(task_id="001", *, extra="", spike=False):
 
 
 def write_state(root, task_id="001", status="queued", *, review_required=None):
-    """Register explicit machine state for lifecycle fixtures."""
+    """Register fixture state, preserving or initially freezing its policy."""
     import json
     path = root / ".cardine/tasks" / f"{task_id}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -36,11 +36,26 @@ def write_state(root, task_id="001", status="queued", *, review_required=None):
             transition.update(authority="owner", reason="Fixture cancelled")
         transitions.append(transition)
         current = target
+    previous = json.loads(path.read_text()) if path.exists() else {}
     state = {"version": 1, "task_id": task_id, "workflow": "single", "status": status, "transitions": transitions}
+    if "contract" in previous:
+        from copy import deepcopy
+        state["contract"] = deepcopy(previous["contract"])
+        if review_required is not None:
+            state["contract"]["options"]["review"] = "required" if review_required else "not_required"
     if review_required is not None:
         state["review"] = {"required": review_required, "verdict": None, "attempt": 1,
                            "reviewed_commit": None, "approved_by": None}
     path.write_text(json.dumps(state))
+    if "contract" not in state:
+        from cardine.shared.errors import CardineError
+        from cardine.tasks.identity import find_task_file
+        try:
+            record = find_task_file(root, task_id)
+        except CardineError:
+            record = None
+        if record is not None:
+            freeze_record(root, task_id, record)
     return path
 
 

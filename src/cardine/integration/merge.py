@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from cardine.tasks.state import require_contract_snapshot
+
 from cardine.shared.layout import names
 
 from cardine.integration.decision import IntegrationValidationOutcome
@@ -28,7 +30,6 @@ from cardine.shared.git import git_output
 from cardine.worktree.checkout import inspect_task_worktree
 import os
 import re
-from cardine.shared.text import read_task_field
 from cardine.tasks.state import read_task_state
 from cardine.tasks.identity import resolve_project_locations
 from cardine.tasks.identity import resolve_task_identity
@@ -41,13 +42,12 @@ from cardine.integration.evidence import undeclared_validation_commands_error
 
 
 def _spike_disallowed_paths(
-    project_root: Path, identity: ResolvedTaskIdentity, validated_base: str, validated_task: str
+    project_root: Path, identity: ResolvedTaskIdentity, validated_base: str, validated_task: str, state: dict
 ) -> tuple[str, ...]:
     """Return changed paths a SPIKE task is not allowed to integrate."""
     record_path = identity.task_path
-    shown = _run_git(project_root, "show", f"{validated_task}:{record_path.relative_to(project_root)}")
-    task_record = shown.stdout if shown.returncode == 0 else ""
-    if (read_task_field(task_record, "Class") or "").lower() != "spike":
+    contract = require_contract_snapshot(state, project_root)
+    if contract["class"] != "spike":
         return ()
     allowed = {
         str(record_path.relative_to(project_root)),
@@ -57,12 +57,8 @@ def _spike_disallowed_paths(
         names().execution_evidence_path.as_posix(),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
     }
-    deliverable = read_task_field(task_record, "Deliverable") or ""
-    allowed.update(
-        match.split("#", 1)[0]
-        for match in re.findall(r"`(docs/[^`]+)`", deliverable)
-        if match.split("#", 1)[0]
-    )
+    from cardine.tasks.contract_fields import frozen_human_fields
+    allowed.update(frozen_human_fields(state)["deliverables"])
     changed = tuple(filter(None, git_output(
         project_root, "diff", "--name-only", validated_base, validated_task
     ).splitlines()))
@@ -88,16 +84,12 @@ def _integration_task_state(
             task_id=identity.canonical_id, project=project_root,
         )
     workflow = detect_mode(project_root)
-    record = identity.task_path.relative_to(project_root)
-    snapshot = _run_git(project_root, "show", f"{task_commit}:{record.as_posix()}")
-    record_text = snapshot.stdout if snapshot.returncode == 0 else ""
-    spike = (read_task_field(record_text, "Class") or "").lower() == "spike"
     state = read_task_state(
-        project_root, identity.canonical_id, workflow, spike=spike, review_required=None,
+        project_root, identity.canonical_id, workflow,
         stop_factory=lambda code, detail, **context: stop_error(code, f"{relative}: {detail}", **context),
-        text=shown.stdout,
+        text=shown.stdout, require_contract=True,
     )
-    spike = state.get("contract", {}).get("class", "spike" if spike else "standard") == "spike"
+    spike = state["contract"]["class"] == "spike"
     review = state.get("review", {})
     from cardine.tasks.state import review_is_required
     required = review_is_required(state)
@@ -122,7 +114,7 @@ def _integration_task_state(
                 task_id=identity.canonical_id, project=project_root,
             )
         allowed = {
-            record.as_posix(),
+            identity.task_path.relative_to(project_root).as_posix(),
             identity.handoff_path.relative_to(project_root).as_posix(),
             identity.review_path.relative_to(project_root).as_posix(),
             relative.as_posix(), names().execution_evidence_path.as_posix(),
@@ -259,7 +251,7 @@ def stage_task_integration(
         project_root, "diff", "--name-only", validated_base, validated_task
     ).splitlines()))
     disallowed_spike_paths = _spike_disallowed_paths(
-        project_root, identity, validated_base, validated_task
+        project_root, identity, validated_base, validated_task, task_state
     )
     if disallowed_spike_paths:
         raise CardineError(
@@ -531,10 +523,9 @@ def cleanup_task_worktree(
             if shown.returncode != 0:
                 raise CardineError("missing tracked task state")
             workflow = detect_mode(project_root)
-            spike = (read_task_field(identity.task_path.read_text(encoding="utf-8"), "Class") or "").lower() == "spike"
             state = read_task_state(
-                project_root, identity.canonical_id, workflow, spike=spike, review_required=None,
-                stop_factory=stop_error, text=shown.stdout,
+                project_root, identity.canonical_id, workflow,
+                stop_factory=stop_error, require_contract=True, text=shown.stdout,
             )
             terminal = ("done",)
             if state["status"] not in terminal:

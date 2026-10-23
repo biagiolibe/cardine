@@ -11,7 +11,7 @@ import unittest
 
 import test_execution_boundaries as boundaries
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, freeze_record
 from cardine.integration import merge
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.shared.constants import WORKFLOW_MODES
@@ -127,6 +127,8 @@ class SingleWorkflowParityTest(unittest.TestCase):
             with self.subTest(preset=preset):
                 f = self.project(preset, review='not_required', spike=True)
                 commands.execution_start(f.worker, '001')
+                (f.worker / 'docs/result.md').write_text('Research result.\n')
+                f.commit('Commit spike deliverable')
                 for outcome in ('ANSWERED', 'INCONCLUSIVE'):
                     state = record_spike_outcome(f.worker, '001', outcome)
                     self.assertEqual(state['status'], 'in_progress')
@@ -185,6 +187,9 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 path = f.primary / '.cardine/tasks/002.json'
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(state))
+                dependency = f.primary / 'tasks/002.md'
+                dependency.write_text(contract_record('002', extra='Review: not_required\n'))
+                freeze_record(f.primary, '002', dependency)
                 # A file on disk is insufficient until main commits it.
                 self.stop('TASK_STATUS_REJECTED', lambda: check_dependencies(f.worker, '001', record))
                 f.git('add', '.', cwd=f.primary)

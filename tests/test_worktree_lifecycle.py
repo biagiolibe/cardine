@@ -559,6 +559,14 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
     def test_integrate_stage_reports_undeclared_validation_commands_through_the_registry(self) -> None:
+        # Only a pre-contract fixture consults the mutable candidate declaration.
+        path = self.project / ".cardine/tasks/056.json"
+        state = json.loads(path.read_text())
+        del state["contract"]
+        path.write_text(json.dumps(state))
+        subprocess.run(["git", "add", str(path)], cwd=self.project, check=True)
+        subprocess.run(["git", "commit", "-m", "legacy declaration fixture"],
+                       cwd=self.project, check=True, capture_output=True)
         evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
         (self.project / ".cardine/candidate-validation.json").write_text(
             '{"version": 1, "state": "undeclared"}\n', encoding="utf-8"

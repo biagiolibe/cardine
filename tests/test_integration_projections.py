@@ -22,6 +22,7 @@ from cardine.worktree import storage as owner_worktree_storage
 from cardine.tasks import contract as owner_tasks_contract
 
 import worktree_support as support
+from task_contract_support import freeze_record
 
 
 class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
@@ -73,6 +74,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         )
         state_path = task_worktree / ".cardine/tasks/056.json"
         state = json.loads(state_path.read_text())
+        state["contract"]["options"]["review"] = "required"
         state.setdefault("review", {}).update(required=True, verdict="APPROVE", reviewed_commit=validated, approved_by="owner")
         state_path.write_text(json.dumps(state))
         self.git("add", ".cardine/tasks/056.json", cwd=task_worktree)
@@ -141,6 +143,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         )
         task.write_text(task.read_text(encoding="utf-8") + "\n" +
                         owner_tasks_preflight.execution_contract(self.primary, "056") + "\n", encoding="utf-8")
+        freeze_record(self.primary, "056", task)
         queue = self.primary / "tasks/QUEUE.md"
         queue.write_text(queue.read_text(encoding="utf-8").replace("NOT_REQUIRED", "SPIKE"), encoding="utf-8")
         self.git("add", "-A")
@@ -186,7 +189,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         candidate = self.root / "candidate-validation.json"
         candidate.write_text(json.dumps({
             "candidate_tree": staged["candidate_tree"], "passed": True, "scope": "bounded",
-            "commands": ["git diff --check", "python3 scripts/check_repository.py"],
+            "commands": ["git diff --check", "python3 scripts/check_repository.py", "test -f docs/answer.md"],
         }), encoding="utf-8")
         owner_integration_merge.finalize_task_integration("056", candidate, self.primary)
         self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
@@ -200,6 +203,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         task = worktree / "tasks/056-lifecycle.md"
         task.write_text(task.read_text(encoding="utf-8") +
                         "\nClass: SPIKE\nDeliverable: `docs/answer.md`\n", encoding="utf-8")
+        state = freeze_record(worktree, "056", task)
         paths = [".cardine/execution-evidence.json", ".cardine/execution-evidence-extra.json",
                  ".cardine/other.json", "docs/answer.md", "docs/undeclared.md", "source.py",
                  "tasks/reviews/056.md", "tasks/reviews/057.md"]
@@ -211,7 +215,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.git("commit", "-m", "exercise exact spike path boundary", cwd=worktree)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
-        self.assertEqual(set(owner_integration_merge._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit)), {
+        self.assertEqual(set(owner_integration_merge._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit, state)), {
             ".cardine/execution-evidence-extra.json", ".cardine/other.json", "docs/undeclared.md", "source.py",
             "tasks/reviews/057.md",
         })
@@ -219,7 +223,14 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.git("add", "tasks/056-lifecycle.md", cwd=worktree)
         self.git("commit", "-m", "exercise normal task path behavior", cwd=worktree)
         commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
-        self.assertEqual(owner_integration_merge._spike_disallowed_paths(self.primary.resolve(), identity, self.base, commit), ())
+        # The edited Class line cannot lift the frozen spike boundary.
+        self.assertIn("source.py", owner_integration_merge._spike_disallowed_paths(
+            self.primary.resolve(), identity, self.base, commit, state))
+        from copy import deepcopy
+        standard = deepcopy(state)
+        standard["contract"]["class"] = "standard"
+        self.assertEqual(owner_integration_merge._spike_disallowed_paths(
+            self.primary.resolve(), identity, self.base, commit, standard), ())
 
 
     def test_governed_stage_blocks_a_spike_source_change_before_a_lease(self) -> None:
@@ -232,6 +243,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         state = json.loads(state_path.read_text())
         state["outcome"] = "ANSWERED"
         state_path.write_text(json.dumps(state))
+        freeze_record(self.primary, "056", task)
         self.git("add", "tasks/056-lifecycle.md", ".cardine/tasks/056.json")
         self.git("commit", "-m", "declare spike task")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()

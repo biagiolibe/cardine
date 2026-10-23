@@ -126,7 +126,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 081 — Allow every task record in the identifier guard by pattern.
 - `[x]` 082 — Revise the run engine plan with the inventories and the trust boundary.
 - `[x]` 083 — Remove the self-reported evidence counters (RX1).
-- `[ ]` 084 — Read class, review policy, and deliverables from the snapshot (N2a).
+- `[x]` 084 — Read class, review policy, and deliverables from the snapshot (N2a).
 - `[ ]` 085 — Read validation commands, host impact, and locations from frozen inputs (N2b).
 - `[ ]` 086 — Add the pure run resolver and output envelope (RE1a).
 - `[ ]` 087 — Write and verify operation receipts (RE1b).

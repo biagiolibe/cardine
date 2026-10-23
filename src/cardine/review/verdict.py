@@ -7,7 +7,6 @@ from cardine.shared.git import _run_git
 from cardine.shared.git import current_branch
 from cardine.shared.git import git_output
 from cardine.shared.jsonio import _write_json_atomic
-from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.state import TaskStateInvalid
@@ -27,8 +26,6 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
     identity = resolve_task_identity(project_root, task_id, "existing")
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
-    record = identity.task_path.read_text(encoding="utf-8")
-    spike = (read_task_field(record, "Class") or "").lower() == "spike"
     required = None
     path = state_path(project_root, task_id)
     head = git_output(project_root, "rev-parse", "HEAD")
@@ -41,8 +38,8 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         invalid(f"branch: allowed {identity.branch_name!r}; found {current_branch(project_root)!r}")
     if verdict not in {"APPROVE", "CHANGES_REQUESTED", "BLOCKED"}:
         invalid(f"verdict: allowed APPROVE, CHANGES_REQUESTED, BLOCKED; found {verdict!r}")
-    state = read_task_state(project_root, task_id, workflow, spike=spike,
-                            review_required=required, stop_factory=stop_error)
+    state = read_task_state(project_root, task_id, workflow,
+                            review_required=required, stop_factory=stop_error, require_contract=True)
     from cardine.tasks.state import review_is_required
     if not review_is_required(state):
         invalid("review requires a required-review task")
@@ -59,8 +56,8 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         original = _run_git(project_root, "show", f"HEAD:{path.relative_to(project_root)}")
         if original.returncode == 0:
             try:
-                baseline = read_task_state(project_root, task_id, workflow, spike=spike,
-                                           review_required=required, stop_factory=stop_error, text=original.stdout)
+                baseline = read_task_state(project_root, task_id, workflow,
+                                           review_required=required, stop_factory=stop_error, require_contract=True, text=original.stdout)
                 projected = _review_verdict_projection(baseline, verdict, head, approved_by,
                                                       state["transitions"][-1]["at"])
             except (CardineStop, ValueError, KeyError, IndexError):
@@ -103,7 +100,7 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
     at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     state = _review_verdict_projection(state, verdict, head, approved_by, at)
     try:
-        validate_task_state(state, task_id, workflow, spike=spike, review_required=required)
+        validate_task_state(state, task_id, workflow, review_required=required)
     except TaskStateInvalid as error:
         invalid(str(error))
     review_text = identity.review_path.read_text(encoding="utf-8") if identity.review_path.exists() else ""

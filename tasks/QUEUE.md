@@ -41,7 +41,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 |--------|----|-------|----------|------------|------|
 | `[x]` | 082 | Revise the run engine plan with the inventories and the trust boundary | 🔴 P1 | — | [082](done/082-revise-run-engine-plan.md) |
 | `[x]` | 083 | Remove the self-reported evidence counters (RX1) | 🔴 P1 | — | [083](done/083-remove-self-reported-counters.md) |
-| `[ ]` | 084 | Read class, review policy, and deliverables from the snapshot (N2a) | 🔴 P1 | 083 | [084](084-read-class-review-deliverables.md) |
+| `[x]` | 084 | Read class, review policy, and deliverables from the snapshot (N2a) | 🔴 P1 | 083 | [084](done/084-read-class-review-deliverables.md) |
 | `[ ]` | 085 | Read validation commands, host impact, and locations from frozen inputs (N2b) | 🔴 P1 | 084 | [085](085-read-validation-and-locations.md) |
 | `[ ]` | 086 | Add the pure run resolver and output envelope (RE1a) | 🔴 P1 | 085 | [086](086-resolver-and-output.md) |
 | `[ ]` | 087 | Write and verify operation receipts (RE1b) | 🔴 P1 | 086 | [087](087-operation-receipts.md) |
