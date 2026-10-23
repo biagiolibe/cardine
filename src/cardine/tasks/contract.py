@@ -102,8 +102,11 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         raise stop_error("TASK_RECORD_INCOMPLETE", "task contract missing required fields: " + ", ".join(missing), task_id=task_id)
     host_profiles = validate_host_impact_declaration(text)
     host_section = host_impact_section(text)
+    profiles = dict(host_profiles)
+    # Repeated profile rows must retain every enforced evidence obligation.
+    profiles.update((profile, status) for profile, status in host_profiles if status == "enforced")
     host_impact = {"classification": host_impact_field(host_section, "Classification") if host_section else None,
-                   "profiles": {profile: status for profile, status in host_profiles}}
+                   "profiles": profiles}
     require_named_validation_commands(text)
     validation = deepcopy(configuration.get("validation"))
     project_validation_commands(configuration)  # Absent is not explicit empty.

@@ -249,6 +249,7 @@ Policy outcome: Require evidence for the enforced profile.
 | Profile | Before | Intended after | Activation preconditions | Fallback |
 |---|---|---|---|---|
 | Test host | advisory | enforced | Activate explicitly. | Report unavailable. |
+| Test host | advisory | advisory | Alternate invocation. | Report unavailable. |
 
 - Static: parser checks
 - Host execution: fixture invocation
