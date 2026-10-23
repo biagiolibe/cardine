@@ -30,7 +30,7 @@ class TaskCreationTest(unittest.TestCase):
         write_project_config(self.root, 'lean', validation=deepcopy(VALIDATION))
         self.record = self.root / 'tasks/001.md'
         self.state = self.root / '.cardine/tasks/001.json'
-        self.lock = self.root / '.cardine/task-creation.lock'
+        self.lock = self.root / '.cardine/tasks/.001.intent.json'
         self.text = contract_record()
 
     def create(self, **kwargs):
@@ -129,43 +129,45 @@ class TaskCreationTest(unittest.TestCase):
         self.assertTrue(self.record.is_symlink())
         self.assertFalse(self.state.exists())
 
-    def test_failure_at_each_publication_boundary_rolls_back(self):
-        link = os.link
-        for failed_path in (self.lock, self.record, self.state):
-            def fail(source, target):
-                if Path(target) == failed_path:
+    def test_failure_at_each_publication_boundary_retains_replayable_intent(self):
+        from cardine.lifecycle import receipts
+        for point in ('after_intent', 'after_staged_pair', 'after_state_replace'):
+            def fail(name):
+                if name == point:
                     raise OSError('injected publication failure')
-                return link(source, target)
-            with self.subTest(path=failed_path), patch('cardine.tasks.creation.os.link', side_effect=fail):
+            with self.subTest(point=point), patch.object(receipts, 'boundary', side_effect=fail):
                 with self.assertRaisesRegex(OSError, 'injected'):
                     self.create()
-            self.assert_no_pair()
+            self.assertTrue(self.lock.exists())
+            self.assertTrue(self.create()['recovered'])
+            self.assertFalse(self.lock.exists())
+            self.record.unlink()
+            self.state.unlink()
 
     def test_second_publication_conflict_preserves_unrelated_file(self):
-        link = os.link
-        def conflict(source, target):
-            if Path(target) == self.state:
+        from cardine.lifecycle import receipts
+        def conflict(name):
+            if name == 'before_state_replace':
                 self.state.write_text('unrelated')
-            return link(source, target)
-        with patch('cardine.tasks.creation.os.link', side_effect=conflict):
-            with self.assertRaises(FileExistsError):
+        with patch.object(receipts, 'boundary', side_effect=conflict):
+            with self.assertRaisesRegex(CardineError, 'immediately before replacement'):
                 self.create()
-        self.assertFalse(self.record.exists())
+        before = self.record.read_bytes()
+        with self.assertRaisesRegex(CardineError, 'changed (file|staged bytes)'):
+            self.create()
+        self.assertEqual(self.record.read_bytes(), before)
         self.assertEqual(self.state.read_text(), 'unrelated')
-        self.assertFalse(self.lock.exists())
+        self.assertTrue(self.lock.exists())
 
-    def test_failed_rollback_keeps_journal_for_explicit_recovery(self):
-        link, unlink = os.link, Path.unlink
+    def test_failed_publication_keeps_intent_for_exact_recovery(self):
+        from cardine.lifecycle import receipts
+        link = os.link
         def fail_publish(source, target):
-            if Path(target) == self.state:
-                raise OSError('second publication failed')
+            if Path(target) == self.record:
+                raise OSError('publication failed')
             return link(source, target)
-        def fail_rollback(path, *args, **kwargs):
-            if path == self.record:
-                raise OSError('rollback failed')
-            return unlink(path, *args, **kwargs)
-        with patch('cardine.tasks.creation.os.link', side_effect=fail_publish), patch.object(Path, 'unlink', fail_rollback):
-            with self.assertRaisesRegex(OSError, 'rollback failed'):
+        with patch.object(receipts.os, 'link', side_effect=fail_publish):
+            with self.assertRaisesRegex(OSError, 'publication failed'):
                 self.create()
         self.assertTrue(self.lock.exists())
         self.create(recover=True)
@@ -180,7 +182,7 @@ class TaskCreationTest(unittest.TestCase):
                 entered.set()
                 self.assertTrue(release.wait(10))
             return link(source, target)
-        with patch('cardine.tasks.creation.os.link', side_effect=pause), ThreadPoolExecutor() as pool:
+        with patch('cardine.lifecycle.receipts.os.link', side_effect=pause), ThreadPoolExecutor() as pool:
             first = pool.submit(self.create)
             try:
                 self.assertTrue(entered.wait(10))
@@ -196,22 +198,15 @@ class TaskCreationTest(unittest.TestCase):
 
     def interrupt(self, complete=False):
         # Simulate a process exit, bypassing Python rollback/finally handlers.
-        script = '''
-import os, sys
-from pathlib import Path
-from cardine.tasks.creation import create_task
-link = os.link
-root = Path(sys.argv[1])
-def interrupt(source, target):
-    target = Path(target)
-    if target == root / '.cardine/tasks/001.json':
-        if sys.argv[2] == 'complete':
-            link(source, target)
-        os._exit(77)
-    return link(source, target)
-os.link = interrupt
-create_task(root, '001', Path(sys.argv[3]).read_text())
-'''
+        script = '\n'.join([
+            'import os, sys', 'from pathlib import Path',
+            'from cardine.tasks.creation import create_task',
+            'from cardine.lifecycle import receipts',
+            "point = 'after_result_receipt' if sys.argv[2] == 'complete' else 'before_state_replace'",
+            'def interrupt(name):', '    if name == point: os._exit(77)',
+            'receipts.boundary = interrupt',
+            "create_task(Path(sys.argv[1]), '001', Path(sys.argv[3]).read_text())",
+        ])
         proposal = self.root / 'proposal.txt'
         proposal.write_text(self.text)
         environment = {**os.environ, 'PYTHONPATH': str(ROOT / 'src')}
@@ -220,14 +215,12 @@ create_task(root, '001', Path(sys.argv[3]).read_text())
         self.assertEqual(result.returncode, 77)
         self.assertTrue(self.lock.exists())
 
-    def test_interrupted_partial_pair_requires_safe_explicit_recovery(self):
+    def test_interrupted_partial_pair_replays_identical_command(self):
         self.interrupt()
         self.assertTrue(self.record.exists())
         self.assertFalse(self.state.exists())
-        with self.assertRaisesRegex(CardineError, '--recover'):
-            self.create()
         self.assertTrue(load_task_status(self.root)['diagnostics'])
-        self.create(recover=True)
+        self.create()
         self.assertFalse(self.lock.exists())
         self.assertEqual(load_task_status(self.root)['totals']['queued'], 1)
 
@@ -240,7 +233,7 @@ create_task(root, '001', Path(sys.argv[3]).read_text())
         self.state.unlink()
         self.interrupt()
         self.record.write_text('changed')
-        with self.assertRaisesRegex(CardineError, 'changed file'):
+        with self.assertRaisesRegex(CardineError, 'changed (file|staged bytes)'):
             self.create(recover=True)
         self.assertEqual(self.record.read_text(), 'changed')
         self.assertTrue(self.lock.exists())

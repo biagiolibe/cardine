@@ -129,7 +129,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 084 — Read class, review policy, and deliverables from the snapshot (N2a).
 - `[x]` 085 — Read validation commands, host impact, and locations from frozen inputs (N2b).
 - `[x]` 086 — Add the pure run resolver and output envelope (RE1a).
-- `[ ]` 087 — Write and verify operation receipts (RE1b).
+- `[x]` 087 — Write and verify operation receipts (RE1b).
 - `[ ]` 088 — Make state readers and preparation require receipts (RE1c).
 - `[ ]` 089 — Classify worktree, state, lease, and cleanup stops by cause (RE2a).
 - `[ ]` 090 — Consolidate the approval, configuration, and workflow codes (RE2b).

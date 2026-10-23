@@ -1,17 +1,9 @@
-"""Validated paired publication with an exclusive writer and explicit recovery.
-
-The journal is also the reader barrier. Hard links publish staged bytes without
-replacing an existing path; the journal survives an interrupted rollback.
-"""
+"""Receipt-covered paired publication with exclusive writers and exact replay."""
 from __future__ import annotations
 
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager
 import fcntl
-import hashlib
-import json
-import os
 from pathlib import Path
-import tempfile
 
 from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
@@ -47,126 +39,64 @@ def _creation_lock(root: Path):
             fcntl.flock(handle, fcntl.LOCK_UN)
 
 
-def _digest(content: bytes) -> str:
-    return hashlib.sha256(content).hexdigest()
-
-
-def _recover(root: Path, journal: Path, task_id: str):
-    try:
-        entry = json.loads(journal.read_text(encoding='utf-8'))
-        if entry['id'] != task_id:
-            raise ValueError(f"interrupted task is {entry['id']}, not {task_id}")
-        identity = resolve_task_identity(root, task_id, 'new', check_queue_links=False)
-        paths = [identity.task_path, state_path(root, identity.canonical_id)]
-        expected = [str(path.relative_to(root)) for path in paths]
-        if entry['paths'] != expected or len(entry['digests']) != 2:
-            raise ValueError('journal paths do not match the task identity')
-        present = []
-        for path, digest in zip(paths, entry['digests']):
-            _safe_path(root, path)
-            if path.exists():
-                if _digest(path.read_bytes()) != digest:
-                    raise ValueError(f'recovery refuses changed file {path}')
-                present.append(path)
-        # Staged bytes can survive a killed writer; remove only exact owned files.
-        staged = entry.get('staged', [])
-        if len(staged) != 2:
-            raise ValueError('journal must name both staged files')
-        for name, destination, digest in zip(staged, paths, entry['digests']):
-            path = _safe_path(root, root / name)
-            if path.parent != destination.parent or not path.name.startswith('.task-new-'):
-                raise ValueError(f'unsafe staged path {path}')
-            if path.exists() and _digest(path.read_bytes()) != digest:
-                raise ValueError(f'recovery refuses changed staged file {path}')
-        for name in staged:
-            (root / name).unlink(missing_ok=True)
-        if len(present) == 2:
-            validate_task_state(json.loads(paths[1].read_text()), identity.canonical_id, 'single')
-            journal.unlink()
-            return {'id': identity.canonical_id, 'record': expected[0], 'state': expected[1],
-                    'recovered': True}
-        for path in present:
-            path.unlink()
-        journal.unlink()
-    except (KeyError, TypeError, ValueError) as error:
-        raise CardineError(f'cannot recover task pair from {journal}: {error}') from error
-    return None
-
-
 def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = False) -> dict:
-    """Create one complete record and its frozen queued state, or publish neither.
+    """Publish a receipt-covered record/state pair; identical interrupted calls replay.
 
-    --recover accepts only the exact journaled bytes. A complete interrupted
-    pair is retained; a partial pair is removed before retrying validation.
+    ``recover`` remains a compatibility spelling. Durable intent, rather than the
+    best-effort journal, owns the exact staged pair and never removes foreign work.
     """
+    from cardine.lifecycle.receipts import (authorize_project, observed_authority,
+        pending_operation, replay_operation, require_authority, task_lock, write_operation)
     root = Path(project_root).resolve()
     with _creation_lock(root) as journal:
+        if journal.exists():
+            raise CardineError('legacy creation journal is not receipt authority; resolve it explicitly')
         locations = resolve_project_locations(root)
         for directory in locations.task_roots:
             _safe_path(root, root / directory)
-        if journal.exists():
-            if not recover:
-                raise CardineError(f'interrupted task pair: {journal.read_text()}; '
-                                   f'run cardine task new {task_id} --recover with the same record')
-            result = _recover(root, journal, task_id)
-            if result is not None:
-                return result
         context = task_identity_context(root)
         identity = resolve_task_identity(root, task_id, 'new', check_queue_links=False, context=context)
         canonical = identity.canonical_id
         record = _safe_path(root, identity.task_path)
         state_file = _safe_path(root, state_path(root, canonical))
-        states = {path.stem: None for path in state_file.parent.glob('*.json')}
-        if (record.exists() or _authority_matches(context.authorities, canonical)
-                or _authority_matches(states, canonical)
-                or any(item.casefold() == canonical.casefold() for item in states)):
-            raise CardineError(f'task ID already exists: {canonical}')
-        # Resolve once from the identity and the complete proposed record.
-        contract = resolve_task_contract(root, canonical, text=text, identity=identity)
-        try:
-            validate_dependencies(root, canonical, contract)
-            state = {'version': 1, 'task_id': canonical, 'workflow': 'single',
-                     'status': 'queued', 'transitions': [], 'contract': contract}
-            validate_task_state(state, canonical, 'single')
-        except (ValueError, TaskStateInvalid) as error:
-            raise CardineError(str(error)) from error
-        contents = [text.encode('utf-8'), (json.dumps(state, indent=2, sort_keys=True) + '\n').encode()]
-        paths = [record, state_file]
-        entry = {'id': task_id, 'paths': [str(path.relative_to(root)) for path in paths],
-                 'digests': [_digest(content) for content in contents]}
-        # Every temporary file is on the same filesystem as its destination.
-        with ExitStack() as cleanup, tempfile.TemporaryDirectory(prefix='task-creation-', dir=journal.parent) as staging:
-            staged = []
-            for path, content in zip(paths, contents):
-                path.parent.mkdir(parents=True, exist_ok=True)
-                with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.task-new-', delete=False) as handle:
-                    staged.append(Path(handle.name))
-                    cleanup.callback(Path(handle.name).unlink, missing_ok=True)
-                    handle.write(content)
-                    handle.flush()
-                    os.fsync(handle.fileno())
-            published = []
+        with task_lock(root, canonical):
+            if pending_operation(root, canonical):
+                # Do not replay a different proposal under an interrupted task ID.
+                from cardine.lifecycle.receipts import _intent_path, _load_intent
+                import base64
+                intent = _load_intent(_intent_path(root, canonical))
+                name = str(record.relative_to(root))
+                proposal = intent['files'].get(name, {}).get('content')
+                if proposal is None or base64.b64decode(proposal) != text.encode('utf-8'):
+                    raise CardineError('changed creation input; replay requires the identical record')
+                replay_operation(root, canonical, kind='creation')
+                return {'id': canonical, 'record': name,
+                        'state': str(state_file.relative_to(root)), 'recovered': True}
+            states = {path.stem: None for path in state_file.parent.glob('*.json')}
+            if (record.exists() or _authority_matches(context.authorities, canonical)
+                    or _authority_matches(states, canonical)
+                    or any(item.casefold() == canonical.casefold() for item in states)):
+                raise CardineError(f'task ID already exists: {canonical}')
+            contract = resolve_task_contract(root, canonical, text=text, identity=identity)
             try:
-                entry['staged'] = [str(path.relative_to(root)) for path in staged]
-                manifest = Path(staging) / 'journal.json'
-                manifest.write_text(json.dumps(entry), encoding='utf-8')
-                os.link(manifest, journal)
-                try:
-                    for source, destination in zip(staged, paths):
-                        os.link(source, destination)
-                        published.append(destination)
-                except BaseException:
-                    for destination in reversed(published):
-                        destination.unlink()
-                    raise
-                finally:
-                    if len(published) == 2 or not any(path.exists() for path in published):
-                        journal.unlink()
-            finally:
-                for path in staged:
-                    path.unlink(missing_ok=True)
-        return {'id': canonical, 'record': entry['paths'][0], 'state': entry['paths'][1],
-                'recovered': False}
+                validate_dependencies(root, canonical, contract)
+                state = {'version': 1, 'task_id': canonical, 'workflow': 'single',
+                         'status': 'queued', 'transitions': [], 'contract': contract}
+                validate_task_state(state, canonical, 'single')
+            except (ValueError, TaskStateInvalid) as error:
+                raise CardineError(str(error)) from error
+            authority = root / names().project_directory / 'receipt-authority.json'
+            if not authority.exists():
+                # Only a new empty project may pin its policy on creation. Existing
+                # portable/legacy states require explicit developer acceptance.
+                if states:
+                    raise CardineError('developer reauthorization required for existing task states')
+                authorize_project(root, accepted=observed_authority(root), new=True)
+            require_authority(root)
+            write_operation(root, canonical, state, kind='creation',
+                            files={str(record.relative_to(root)): text.encode('utf-8')})
+            return {'id': canonical, 'record': str(record.relative_to(root)),
+                    'state': str(state_file.relative_to(root)), 'recovered': False}
 
 
 def validate_dependencies(root, task_id, contract):

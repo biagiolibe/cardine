@@ -20,15 +20,28 @@ def update_task_contract(project_root: Path, task_id: str) -> dict:
     here solely to support an explicit upgrade, never an implicit prose fallback.
     """
     root = Path(project_root).resolve()
-    with _creation_lock(root) as journal:
+    identity = resolve_task_identity(root, task_id, 'existing', allow_archived_queue_links=True)
+    task_id = identity.canonical_id
+    from cardine.lifecycle.receipts import task_lock
+    with task_lock(root, task_id), _creation_lock(root) as journal:
         if journal.exists():
             raise CardineError('interrupted task creation; use cardine task new --recover first')
-        identity = resolve_task_identity(root, task_id, 'existing', allow_archived_queue_links=True)
-        task_id = identity.canonical_id
+        from cardine.lifecycle.receipts import pending_operation, replay_operation
+        if pending_operation(root, task_id):
+            recovered = replay_operation(root, task_id, kind='contract_revision')
+            return {'id': task_id, 'updated': True, 'state': str(state_path(root, task_id).relative_to(root)),
+                    'revision': len(recovered.get('contract_history', []))}
         path = _safe_path(root, state_path(root, task_id))
         record = _safe_path(root, identity.task_path)
         state = read_task_state(root, task_id, 'single',
                                 stop_factory=lambda code, detail, **kw: CardineError(detail))
+        if 'run' in state:
+            from cardine.lifecycle.receipts import verify_receipts
+            # The record is the explicit proposal; the previous state must still
+            # match its receipt. Output coverage is replaced by this revision.
+            verify_receipts(root, state, artifacts=False)
+        from copy import deepcopy
+        previous_state = deepcopy(state)
         previous = state.get('contract')
         record_path = record.relative_to(root).as_posix()
         if previous and previous.get('recordPath', record_path) != record_path:
@@ -52,6 +65,13 @@ def update_task_contract(project_root: Path, task_id: str) -> dict:
         # Refuse a concurrent editor rather than accepting a different record.
         if record.read_text(encoding='utf-8') != text:
             raise CardineError('task record changed during contract update; retry')
-        _write_json_atomic(path, state)
+        if 'run' in state:
+            from cardine.lifecycle.receipts import write_operation
+            write_operation(root, task_id, state, kind='contract_revision', previous=previous_state,
+                            files={record_path: text.encode('utf-8')})
+        else:
+            # The legacy explicit-upgrade adapter is retired by the RE1c reader
+            # migration; it does not confer receipt authority on imported state.
+            _write_json_atomic(path, state)
         return {'id': task_id, 'updated': True, 'state': str(path.relative_to(root)),
                 'revision': len(state['contract_history'])}
