@@ -82,11 +82,11 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
     if task_class not in ("standard", "spike"):
         raise CardineError("task Class must be standard or spike")
     quick = (_contract_field(text, "Category") or "").lower() == "quick"
-    required = ["Dependencies"]
+    required = ["Dependencies", "Validation"]
     if task_class == "spike":
         required.extend(SPIKE_PREFLIGHT_FIELDS)
     else:
-        required.extend(("Objective", "Acceptance Criteria", "Validation"))
+        required.extend(("Objective", "Acceptance Criteria"))
     if not quick:
         required.extend(("Priority", "Estimate", "Out of scope"))
         if not (_contract_field(text, "Relevant Files") or _contract_field(text, "Technical Context")):

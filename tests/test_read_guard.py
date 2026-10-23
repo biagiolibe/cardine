@@ -101,6 +101,7 @@ class ReadGuardTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_allows_the_active_tasks_own_file_over_the_threshold(self) -> None:
+        write_project_config(self.project)
         (self.project / "tasks/QUEUE.md").write_text(
             GOVERNED_HEADER + "| 1 | TASK-002 | P0 | IN_PROGRESS | — |\n", encoding="utf-8"
         )

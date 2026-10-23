@@ -455,6 +455,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         # Exercise a relative file write in the actual validation subprocess.
         record = self.worker / self.record
         record.write_text(record.read_text().replace('`true`', '`pwd > validation-directory.txt`'))
+        freeze_record(self.worker, "001", record)
         self.commit('Declare directory validation')
         self.assertEqual(owner_tasks_recording.run_validation(self.worker, '001', 'check'), 0)
         self.assertEqual((self.worker / 'validation-directory.txt').read_text().strip(), str(self.worker))

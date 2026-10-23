@@ -33,6 +33,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.project = self.root / "project"
         self.project.mkdir()
+        write_project_config(self.project, validation=VALIDATION)
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
         subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=self.project, check=True)
         subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=self.project, check=True)

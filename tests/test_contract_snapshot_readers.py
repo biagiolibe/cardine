@@ -227,6 +227,7 @@ class ContractSnapshotReadersTest(unittest.TestCase):
     def test_creation_rejects_invalid_execution_inputs_atomically(self):
         from cardine.shared.errors import CardineError
         invalid = [contract_record('003').replace('## Validation', '## Missing'),
+                   contract_record('003', spike=True).replace('## Validation', '## Missing'),
                    contract_record('003').replace("- `task-check`: `python3 -c 'pass'`", '- `unnamed`'),
                    contract_record('003') + '\n## Host impact\nClassification: REQUIRED\n']
         for text in invalid:

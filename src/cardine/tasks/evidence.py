@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def validation_commands(text: str) -> dict[str, str]:
-    """Read named, literal validation commands from one task's Validation block."""
+    """Parse creation input; runtime consumers read frozen_validation_commands."""
     section = re.search(r"^## Validation\s*$\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     if section is None:
         return {}
@@ -20,7 +20,7 @@ def validation_commands(text: str) -> dict[str, str]:
 
 
 def require_named_validation_commands(text: str) -> None:
-    """Reject free-form Validation entries that the execution runner cannot run."""
+    """Reject free-form Validation entries when creating or revising a contract."""
     section = re.search(r"^## Validation\s*$\n(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     if section is None:
         return

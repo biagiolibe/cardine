@@ -1,6 +1,7 @@
 """Tests for the read-only external validation evidence verifier."""
 
 from __future__ import annotations
+from project_config_support import write_project_config
 
 import json
 import subprocess
@@ -24,6 +25,7 @@ class ValidationEvidenceTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.project = Path(self.temporary.name) / "project"
         self.project.mkdir()
+        write_project_config(self.project)
         (self.project / "tasks").mkdir()
         (self.project / "tasks/113-evidence.md").write_text(
             "> **ID**: `113`\n", encoding="utf-8"
