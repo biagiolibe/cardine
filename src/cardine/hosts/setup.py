@@ -31,7 +31,6 @@ from cardine.shared.project import parse_project_declaration
 from cardine.shared.project import read_project_declaration
 from cardine.tasks.identity import parse_task_identity_policy
 from cardine.tasks.identity import read_task_identity_policy
-from cardine.tasks.identity import resolve_project_locations
 from cardine.worktree.storage import _read_user_configuration
 from cardine.worktree.storage import resolve_worktree_root
 from collections.abc import Mapping
@@ -132,16 +131,15 @@ def plan_setup(
                     "project": proposed_project_identity(project_root),
                 }
         else:
-            locations = resolve_project_locations(project_root)
             project_declaration_state = "advisory-missing"
             project_declaration_proposal = {
                 "version": 1,
                 "preset": "lean",
                 "project": proposed_project_identity(project_root),
                 "locations": {
-                    "queue": str(locations.queue), "taskRoots": [str(root) for root in locations.task_roots],
-                    "reviewRoot": str(locations.review_root), "handoffRoot": str(locations.handoff_root),
-                    "adrLog": str(locations.adr_log), "plan": str(locations.plan),
+                    "queue": "tasks/QUEUE.md", "taskRoots": ["tasks"],
+                    "reviewRoot": "tasks/reviews", "handoffRoot": "tasks/handoffs",
+                    "adrLog": "docs/ARCHITECTURE_DECISIONS.md", "plan": "PROJECT_PLAN.md",
                 },
             }
             parse_project_declaration(project_declaration_proposal)

@@ -220,6 +220,7 @@ class QueueBriefingTest(unittest.TestCase):
         self.assertIn("Accepted: 1", result.stdout)
 
     def test_resolves_a_projects_declared_queue_location(self) -> None:
+        write_project_config(self.project, locations={"queue": "docs/TASK_QUEUE.md"})
         """The consumer project A-shaped customization: an annotated paragraph right
         after execution-assets' CARDINE:END, still inside the section,
         naming a different queue path than the tasks/QUEUE.md default."""
@@ -250,6 +251,7 @@ class QueueBriefingTest(unittest.TestCase):
     def test_accepts_a_governed_queue_without_optional_review_column(self) -> None:
         """consumer project A's established queue omits `Review`; lifecycle parsing
         must use the required named columns rather than fall back to Lean."""
+        write_project_config(self.project, locations={"queue": "docs/TASK_QUEUE.md"})
         queue = self.project / "docs/TASK_QUEUE.md"
         queue.parent.mkdir(parents=True, exist_ok=True)
         queue.write_text(

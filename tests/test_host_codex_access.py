@@ -1,6 +1,7 @@
 """Framework CLI regression tests for host codex access."""
 
 from __future__ import annotations
+from project_config_support import write_project_config
 
 from cardine_cli_support import CLI, ROOT
 import shutil
@@ -109,6 +110,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
     def repository(self, name: str, remote: str | None = None) -> Path:
         path = self.root / name
         path.mkdir()
+        write_project_config(path)
         subprocess.run(["git", "init", "-b", "main"], cwd=path, check=True, capture_output=True)
         subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=path, check=True)
         subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=path, check=True)

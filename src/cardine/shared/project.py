@@ -9,7 +9,7 @@ from cardine.shared.git import primary_project_root
 from pathlib import Path
 import json
 
-
+# Compatibility export; canonical location resolution no longer emits warnings.
 _LEGACY_LOCATION_WARNING_PROJECTS: set[Path] = set()
 
 

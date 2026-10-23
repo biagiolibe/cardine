@@ -10,6 +10,8 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
+import shutil
 from pathlib import Path
 
 
@@ -109,10 +111,21 @@ def check_changelog_fragments(root: Path = ROOT) -> None:
 
 def check_template_context_sizes() -> None:
     """Keep the shipped role startup sets below their documented ceilings."""
-    project = single_template_root(ROOT)
+    temporary = tempfile.TemporaryDirectory()
+    try:
+        project = Path(temporary.name) / "project"
+        shutil.copytree(single_template_root(ROOT), project)
+        (project / ".cardine").mkdir(exist_ok=True)
+        (project / ".cardine/project.json").write_text(json.dumps({"version": 1, "preset": "governed"}))
+        _check_template_context_sizes(project)
+    finally:
+        temporary.cleanup()
+
+
+def _check_template_context_sizes(project: Path) -> None:
     policy = project / cardine_cli.CONTEXT_SIZE_POLICY_PATH
     if not policy.is_file():
-        fail(f"context-size policy is missing: {policy.relative_to(ROOT)}")
+        fail(f"context-size policy is missing: {policy.relative_to(project)}")
     rows = {
         role: int(ceiling)
         for found_workflow, role, ceiling in re.findall(

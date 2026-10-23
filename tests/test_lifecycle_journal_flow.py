@@ -1,6 +1,7 @@
 """Framework CLI regression tests for lifecycle journal flow."""
 
 from __future__ import annotations
+from project_config_support import write_project_config
 
 from cardine_cli_support import CLI, ROOT
 from task_contract_support import freeze_record
@@ -23,6 +24,7 @@ class LifecycleJournalTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.project = self.root / "project"
         self.project.mkdir()
+        write_project_config(self.project)
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
         subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=self.project, check=True)
         subprocess.run(["git", "config", "user.email", "cardine@example.invalid"], cwd=self.project, check=True)
@@ -194,9 +196,10 @@ class FlowReportTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.project = Path(self.temporary.name) / "project"
         self.project.mkdir()
+        write_project_config(self.project)
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
         (self.project / "tasks" / "done").mkdir(parents=True)
-        (self.project / ".cardine").mkdir()
+        (self.project / ".cardine").mkdir(exist_ok=True)
         self.journal = self.project / ".git" / "cardine-journal.jsonl"
         self.records: list[str] = []
         self.now = datetime(2026, 10, 5, tzinfo=timezone.utc)

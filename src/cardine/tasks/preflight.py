@@ -4,21 +4,15 @@ from __future__ import annotations
 
 from cardine.shared.git import TASK_BRANCH_OPEN_STATUSES
 from cardine.shared.git import current_branch
-from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.contract import EXECUTION_COMMANDS_LINE
 from cardine.tasks.contract import EXECUTION_COMMANDS_VALUE
-from cardine.tasks.contract import NORMAL_PREFLIGHT_HEADINGS
-from cardine.tasks.contract import PREFLIGHT_HEADINGS
-from cardine.tasks.contract import SPIKE_PREFLIGHT_FIELDS
 from cardine.tasks.contract import check_handoff
 from cardine.tasks.contract import contract_digest
 from cardine.tasks.contract import contract_requires_execution_commands
 from cardine.tasks.contract import profile_digest
-from cardine.tasks.contract import validate_host_impact_declaration
 from cardine.tasks.contract import verify_host_impact_completion_evidence
-from cardine.tasks.evidence import require_named_validation_commands
-from cardine.tasks.evidence import validation_commands
+from cardine.tasks.evidence import frozen_execution_contract, frozen_validation_commands
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_task_identity
 from pathlib import Path
@@ -27,10 +21,7 @@ import re
 
 def execution_contract(project_root: Path, task_id: str) -> str:
     """Render the profile-derived execution block placed in a task at design time."""
-    task = find_task_file(project_root, task_id)
-    text = task.read_text(encoding="utf-8")
-    require_named_validation_commands(text)
-    commands = ", ".join(validation_commands(text)) or "none"
+    commands = ", ".join(frozen_validation_commands(project_root, task_id)) or "none"
     return "\n".join((
         "## Execution contract — resolved",
         "",
@@ -52,10 +43,8 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
     from cardine.tasks.state import read_task_state
     from cardine.templates.mode import detect_mode
     state = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error, require_contract=True)
-    contract = state["contract"]
+    frozen_execution_contract(project_root, task_id)
     text = task_file.read_text(encoding="utf-8")
-    require_named_validation_commands(text)
-    validate_host_impact_declaration(text)
     expected_digest = profile_digest(project_root)
     recorded_digest = contract_digest(text)
     task_name = task_file.relative_to(project_root).as_posix()
@@ -79,34 +68,6 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
             "EXECUTION_CONTRACT_UNRESOLVED",
             f"rule: the contract must require execution commands; field checked: `- Execution commands` in "
             f"{task_name}; expected: `{EXECUTION_COMMANDS_VALUE}`; found: no such line",
-            task_id=task_id,
-        )
-    options = contract["options"]
-    required_headings = tuple(heading for heading in PREFLIGHT_HEADINGS
-                              if heading != "Authority" or options is None or options["authorityRequired"])
-    missing = [
-        f"## {heading}"
-        for heading in required_headings
-        if not re.search(rf"^## {re.escape(heading)}\s*$", text, re.MULTILINE)
-    ]
-    if contract["class"] == "spike":
-        missing.extend(field for field in SPIKE_PREFLIGHT_FIELDS if not read_task_field(text, field))
-    elif options is None or options["expectedCodeSurfaceRequired"]:
-        missing.extend(
-            f"## {heading}"
-            for heading in NORMAL_PREFLIGHT_HEADINGS
-            if not re.search(rf"^## {re.escape(heading)}\s*$", text, re.MULTILINE)
-        )
-    if missing:
-        is_spike = contract["class"] == "spike"
-        required = [f"## {heading}" for heading in PREFLIGHT_HEADINGS] + (
-            list(SPIKE_PREFLIGHT_FIELDS) if is_spike else [f"## {heading}" for heading in NORMAL_PREFLIGHT_HEADINGS]
-        )
-        raise stop_error(
-            "TASK_RECORD_INCOMPLETE",
-            f"rule: a {'SPIKE' if is_spike else 'normal'} task record must contain its required headings"
-            f"{' and fields' if is_spike else ''}; source checked: {task_name}; accepted: "
-            + ", ".join(required) + "; missing: " + ", ".join(missing),
             task_id=task_id,
         )
     status = state["status"]
@@ -162,7 +123,9 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
 def readiness_check(project_root: Path, task_id: str, report: Path) -> str:
     """Combine execution and handoff gates before a task enters review."""
     execution_preflight(project_root, task_id)
-    verify_host_impact_completion_evidence(find_task_file(project_root, task_id).read_text(encoding="utf-8"))
+    verify_host_impact_completion_evidence(
+        find_task_file(project_root, task_id).read_text(encoding="utf-8"),
+        profiles=frozen_execution_contract(project_root, task_id)["hostImpact"]["profiles"])
     check_handoff(project_root, task_id, report)
     return f"in_review gate passed for {task_id}"
 

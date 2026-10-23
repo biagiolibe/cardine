@@ -86,10 +86,20 @@ def freeze_record(root, task_id, record=None, *, spike=None):
             config = resolve_project_configuration(root)
         except CardineError:
             config = {"preset": "lean", "taskDefaults": preset_task_defaults("lean")}
+        from cardine.tasks.evidence import validation_commands
+        from cardine.tasks.contract import host_impact_section, host_impact_field, validate_host_impact_declaration
+        from copy import deepcopy
+        validation = deepcopy(config.get("validation", VALIDATION))
+        task_commands = validation_commands(text)
+        validation["commands"].update(task_commands)
+        validation["baseline"].extend(key for key in task_commands if key not in validation["baseline"])
+        section = host_impact_section(text)
+        host = {"classification": host_impact_field(section, "Classification") if section else None,
+                "profiles": dict(validate_host_impact_declaration(text))}
         contract = {"class": "spike" if spike else "standard", "preset": config["preset"],
                     "projectDigest": "sha256:" + "0" * 64,
                     "options": {**config["taskDefaults"], **task_contract_options(text)},
-                    "validation": config.get("validation", VALIDATION), "ci": "none", "validationScoping": [], **human}
+                    "validation": validation, "hostImpact": host, "ci": "none", "validationScoping": [], **human}
         if state.get("review", {}).get("required") or state["status"] == "in_review":
             contract["options"]["review"] = "required"
     state["contract"] = contract

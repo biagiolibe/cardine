@@ -82,11 +82,11 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
     if task_class not in ("standard", "spike"):
         raise CardineError("task Class must be standard or spike")
     quick = (_contract_field(text, "Category") or "").lower() == "quick"
-    required = ["Dependencies"]
+    required = ["Dependencies", "Validation"]
     if task_class == "spike":
         required.extend(SPIKE_PREFLIGHT_FIELDS)
     else:
-        required.extend(("Objective", "Acceptance Criteria", "Validation"))
+        required.extend(("Objective", "Acceptance Criteria"))
     if not quick:
         required.extend(("Priority", "Estimate", "Out of scope"))
         if not (_contract_field(text, "Relevant Files") or _contract_field(text, "Technical Context")):
@@ -99,8 +99,14 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         required.append("Expected code surface")
     missing = [field for field in required if not _contract_field(text, field)]
     if missing:
-        raise CardineError("task contract missing required fields: " + ", ".join(missing))
-    validate_host_impact_declaration(text)
+        raise stop_error("TASK_RECORD_INCOMPLETE", "task contract missing required fields: " + ", ".join(missing), task_id=task_id)
+    host_profiles = validate_host_impact_declaration(text)
+    host_section = host_impact_section(text)
+    profiles = dict(host_profiles)
+    # Repeated profile rows must retain every enforced evidence obligation.
+    profiles.update((profile, status) for profile, status in host_profiles if status == "enforced")
+    host_impact = {"classification": host_impact_field(host_section, "Classification") if host_section else None,
+                   "profiles": profiles}
     require_named_validation_commands(text)
     validation = deepcopy(configuration.get("validation"))
     project_validation_commands(configuration)  # Absent is not explicit empty.
@@ -128,7 +134,7 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         "projectDigest": "sha256:" + hashlib.sha256(
             json.dumps(declaration, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest(),
-        "options": options, "validation": validation,
+        "options": options, "validation": validation, "hostImpact": host_impact,
         "ci": deepcopy(configuration.get("ci", "none")),
         "validationScoping": deepcopy(configuration.get("validationScoping", [])),
     }
@@ -320,12 +326,12 @@ def validate_host_impact_declaration(text: str) -> list[tuple[str, str]]:
     )
 
 
-def verify_host_impact_completion_evidence(text: str) -> None:
+def verify_host_impact_completion_evidence(text: str, *, profiles=None) -> None:
     """Require profile-specific durable evidence for each enforced claim."""
     section = host_impact_section(text)
     if section is None:
-        return
-    enforced_profiles = [profile for profile, state in validate_host_impact_declaration(text) if state == "enforced"]
+        section = ""
+    enforced_profiles = [profile for profile, state in (validate_host_impact_declaration(text) if profiles is None else profiles.items()) if state == "enforced"]
     if not enforced_profiles:
         return
     evidence = {
@@ -385,9 +391,9 @@ def verify_validation_skips(report_text: str, task_id: str) -> None:
 
 def verify_execution_evidence(project_root: Path, task_id: str, report_text: str) -> None:
     """Require report claims to be backed by durable, task-declared evidence."""
-    task_text = find_task_file(project_root, task_id).read_text(encoding="utf-8")
+    from cardine.tasks.evidence import frozen_validation_commands
     entries = execution_entries(project_root, task_id)
-    commands = validation_commands(task_text)
+    commands = frozen_validation_commands(project_root, task_id)
     missing_validations = [
         command_id for command_id, command in commands.items()
         if not any(

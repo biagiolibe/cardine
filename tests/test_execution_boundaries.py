@@ -43,6 +43,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         text = contract_record(extra="Status: queued\nClass: standard\nReview: REQUIRED\n")
         text = text.replace("- `task-check`: `python3 -c 'pass'`", "- `check`: `true`")
         (self.primary / self.record).write_text(text)
+        freeze_record(self.primary, "001", self.primary / self.record)
         text += owner_tasks_preflight.execution_contract(self.primary, '001') + '\n'
         (self.primary / self.record).write_text(text)
         write_state(self.primary)
@@ -58,6 +59,18 @@ class ExecutionBoundariesTest(unittest.TestCase):
         prepared = owner_worktree_checkout.prepare_task_worktree('001', None, self.primary)
         self.worker = Path(prepared['worktree'])
         os.chdir(self.worker)
+
+    def test_delivery_uses_frozen_validation_after_record_edits(self):
+        self.implemented()
+        record = self.worker / self.record
+        record.write_text(record.read_text().replace('## Validation', '## Removed validation')
+                          .replace('## Authority', '## Removed authority')
+                          .replace('## Expected code surface', '## Removed surface')
+                          + '\n## Validation\n- `injected`: `exit 99`\n'
+                          + '\n## Host impact\nClassification: INVALID\n')
+        self.commit('Edit human record after validation')
+        result = owner_lifecycle_execution.delivery_readiness(self.worker, '001')
+        self.assertEqual(result['task_id'], '001')
 
     def git(self, *args, cwd=None):
         return subprocess.run(['git', *args], cwd=cwd or self.worker, check=True, capture_output=True, text=True).stdout.strip()
@@ -442,6 +455,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         # Exercise a relative file write in the actual validation subprocess.
         record = self.worker / self.record
         record.write_text(record.read_text().replace('`true`', '`pwd > validation-directory.txt`'))
+        freeze_record(self.worker, "001", record)
         self.commit('Declare directory validation')
         self.assertEqual(owner_tasks_recording.run_validation(self.worker, '001', 'check'), 0)
         self.assertEqual((self.worker / 'validation-directory.txt').read_text().strip(), str(self.worker))

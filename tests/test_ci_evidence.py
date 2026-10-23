@@ -1,6 +1,7 @@
 """Tests for exact-commit GitHub Actions validation evidence."""
 
 from __future__ import annotations
+from project_config_support import write_project_config
 
 import contextlib
 import io
@@ -28,6 +29,7 @@ class CiEvidenceTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.project = Path(self.temporary.name) / "project"
         self.project.mkdir()
+        write_project_config(self.project)
         (self.project / "tasks").mkdir()
         (self.project / "tasks/114-evidence.md").write_text(
             "> **ID**: `114`\n", encoding="utf-8"
