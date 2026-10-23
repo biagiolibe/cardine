@@ -31,6 +31,11 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.primary = self.root / "project"
         self.primary.mkdir()
+        from unittest.mock import patch
+        self.worktree_root = self.root / "worktrees"
+        self.environment = patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
         self.git("init", "-b", "main")
         self.git("config", "user.name", "Cardine Test")
         self.git("config", "user.email", "cardine@example.invalid")
@@ -191,7 +196,8 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
             str(item.relative_to(worktree)): item.read_bytes()
             for item in sorted(worktree.iterdir()) if item.is_file()
         }
-        state = next((self.primary / ".git/cardine-worktrees").glob("*.json")).read_text(encoding="utf-8")
+        state = {item.name: item.read_bytes()
+                 for item in sorted((self.primary / ".git/cardine-worktrees").glob("*"))}
         return index.read_bytes(), files, state
 
 
@@ -223,6 +229,7 @@ class GovernedCompletionRowsFixture(unittest.TestCase):
             encoding="utf-8",
         )
         (self.primary / "PROJECT_PLAN.md").unlink()
+        freeze_record(self.primary, "056", self.primary / "tasks/056-lifecycle.md")
         self.git("add", "-A")
         self.git("commit", "-m", "configure governed fixture")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()

@@ -1,0 +1,229 @@
+"""Schema validation and complete-history state machines for tracked task state.
+
+Pure state validation and durable byte publication; receipt readers live in state.
+This module has no dependency on the CLI; the CLI supplies its registered stop factory.
+"""
+
+from __future__ import annotations
+
+from cardine.shared.layout import names
+
+import json
+import re
+import os
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+
+STATUSES = ("queued", "in_progress", "in_review", "done", "cancelled")
+STATE_MACHINE = {
+    "queued": ("in_progress", "cancelled"),
+    "in_progress": ("in_review", "done", "cancelled"),
+    "in_review": ("in_progress", "cancelled"),
+    "done": (), "cancelled": (),
+}
+SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas/task-state-v1.schema.json"
+
+
+class TaskStateInvalid(ValueError):
+    """An invalid field or transition, including its expected and found values."""
+
+
+def _invalid(field, allowed, found):
+    raise TaskStateInvalid(f"{field}: allowed {allowed}; found {found!r}")
+
+
+def _validate_schema(value, schema, field="state"):
+    """Validate the JSON Schema keywords used by the dependency-free v1 schema."""
+    if "anyOf" in schema:
+        for choice in schema["anyOf"]:
+            try:
+                _validate_schema(value, choice, field)
+                return
+            except TaskStateInvalid:
+                pass
+        _invalid(field, schema["anyOf"], value)
+    types = {"object": dict, "array": list, "string": str, "integer": int,
+             "boolean": bool, "null": type(None)}
+    kind = schema.get("type")
+    if kind and type(value) is not types[kind]:
+        _invalid(field, kind, value)
+    if "enum" in schema and value not in schema["enum"]:
+        _invalid(field, schema["enum"], value)
+    if kind == "object":
+        for name in schema.get("required", []):
+            if name not in value:
+                _invalid(f"{field}.{name}", "required field", "missing")
+        properties = schema.get("properties", {})
+        for name, item in value.items():
+            if "propertyNames" in schema:
+                _validate_schema(name, schema["propertyNames"], f"{field} key")
+            if name not in properties:
+                additional = schema.get("additionalProperties", False)
+                if not isinstance(additional, dict):
+                    _invalid(f"{field}.{name}", sorted(properties), item)
+                _validate_schema(item, additional, f"{field}.{name}")
+            else:
+                _validate_schema(item, properties[name], f"{field}.{name}")
+    elif kind == "array":
+        if schema.get("uniqueItems") and any(item in value[:index] for index, item in enumerate(value)):
+            _invalid(field, "unique items", value)
+        for index, item in enumerate(value):
+            _validate_schema(item, schema["items"], f"{field}[{index}]")
+    elif kind == "string":
+        if len(value) < schema.get("minLength", 0):
+            _invalid(field, f"length >= {schema['minLength']}", value)
+        if len(value) > schema.get("maxLength", len(value)):
+            _invalid(field, f"length <= {schema['maxLength']}", value)
+        if "pattern" in schema and re.search(schema["pattern"], value) is None:
+            _invalid(field, schema["pattern"], value)
+        if schema.get("format") == "date-time":
+            try:
+                datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                _invalid(field, "ISO-8601 UTC timestamp", value)
+    elif kind == "integer" and value < schema.get("minimum", value):
+        _invalid(field, f">= {schema['minimum']}", value)
+
+
+def machine(workflow=None, spike=False, review_required=True):
+    """Presets and task classes share one machine; only review policy gates review."""
+    return {status: tuple(target for target in targets
+                          if target != "in_review" or review_required)
+            for status, targets in STATE_MACHINE.items()}
+
+
+def require_contract_snapshot(state, project_root):
+    """Refuse implicit upgrades; only an explicit contract update reads the record."""
+    if "contract" not in state:
+        from cardine.stops.render import stop_error
+        import shlex
+        task_id = state["task_id"]
+        raise stop_error("TASK_STATE_MISSING",
+                         f"missing contract snapshot; run cardine task contract update {task_id}",
+                         task_id=task_id, project=project_root,
+                         resume=f"cardine task contract update {shlex.quote(task_id)} --project {shlex.quote(str(project_root))}")
+    return state["contract"]
+
+
+def review_is_required(state):
+    """Read frozen task policy; sparse pre-contract snapshots retain their default."""
+    options = state.get("contract", {}).get("options", {})
+    if "review" in options:
+        return options["review"] == "required"
+    return state.get("review", {}).get("required", True)
+
+
+def dependency_satisfied(state):
+    """Only landed results unblock dependents; an inconclusive spike never does."""
+    task_class = state.get("contract", {}).get("class")
+    if task_class is None:
+        task_class = "spike" if "outcome" in state else "standard"
+    return (state["status"] == "done"
+            and (task_class != "spike" or state.get("outcome") == "ANSWERED"))
+
+
+def validate_task_state(state, task_id, workflow, *, spike=False, review_required=None):
+    """Validate history; review_required=None selects the snapshot's review policy."""
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    _validate_schema(state, schema)
+    if "contract" in state:
+        # Cross-reference checks cannot be expressed by the local JSON Schema.
+        from cardine.shared.project import parse_project_declaration
+        from cardine.shared.errors import CardineError
+        contract = state["contract"]
+        from cardine.tasks.contract_fields import HUMAN_CONTRACT_FIELDS, frozen_human_fields
+        if any(key in contract for key in HUMAN_CONTRACT_FIELDS):
+            try:
+                human = frozen_human_fields(state)
+            except CardineError as error:
+                raise TaskStateInvalid(str(error)) from error
+            for path in [human["recordPath"], *human["deliverables"]]:
+                if (Path(path).is_absolute() or ".." in Path(path).parts
+                        or "\\" in path or Path(path).as_posix() != path or path == "."):
+                    _invalid("contract path", "normalized project-relative path", path)
+            if task_id in human["dependencies"]:
+                _invalid("contract.dependencies", "other task IDs", task_id)
+        try:
+            parse_project_declaration({"version": 1, "preset": contract["preset"],
+                                       "taskDefaults": contract["options"], "ci": contract["ci"],
+                                       "validation": contract["validation"],
+                                       "validationScoping": contract["validationScoping"]})
+        except CardineError as error:
+            raise TaskStateInvalid(f"contract: {error}") from error
+    if state.get("contract_history"):
+        from cardine.tasks.contract_fields import contract_hash
+        previous_revision = None
+        for index, revision in enumerate(state["contract_history"]):
+            at = datetime.fromisoformat(revision["at"].replace("Z", "+00:00"))
+            if previous_revision is not None:
+                previous_at = datetime.fromisoformat(previous_revision["at"].replace("Z", "+00:00"))
+                if at < previous_at or revision["before"] != previous_revision["after"]:
+                    _invalid(f"contract_history[{index}]", "chronological connected revisions", revision)
+            previous_revision = revision
+        if previous_revision["after"] != contract_hash(state.get("contract")):
+            _invalid("contract_history", "last revision matches current contract", previous_revision["after"])
+    # Integration reads policy from the snapshot, without consulting prose.
+    if review_required is None:
+        review_required = review_is_required(state)
+    if state["task_id"] != task_id:
+        _invalid("task_id", [task_id], state["task_id"])
+    if "contract" in state:
+        review_required = review_is_required(state)
+        spike = state["contract"]["class"] == "spike"
+        if "review" in state and state["review"]["required"] != review_required:
+            _invalid("review.required", [review_required], state["review"]["required"])
+    if "outcome" in state and not spike:
+        _invalid("outcome", "spike tasks only", state["outcome"])
+    states = machine(workflow, spike, review_required)
+    current = "queued"
+    previous_at = None
+    for index, transition in enumerate(state["transitions"]):
+        at = datetime.fromisoformat(transition["at"].replace("Z", "+00:00"))
+        if previous_at is not None and at < previous_at:
+            _invalid(f"transitions[{index}].at", "chronological timestamp", transition["at"])
+        previous_at = at
+        if transition["from"] != current:
+            _invalid(f"transitions[{index}].from", [current], transition["from"])
+        if transition["to"] not in states[current]:
+            _invalid(f"transitions[{index}].to", list(states[current]), transition["to"])
+        if transition["to"] == "cancelled" and not all(
+                str(transition.get(field, "")).strip() for field in ("authority", "reason")):
+            _invalid(f"transitions[{index}]", "cancellation authority and reason", transition)
+        current = transition["to"]
+    if state["status"] not in states:
+        _invalid("status", list(states), state["status"])
+    if state["status"] != current:
+        _invalid("status", [current], state["status"])
+    return state
+
+
+def state_path(project_root, task_id):
+    if not isinstance(task_id, str) or not task_id or re.search(r"[/\\\s]", task_id) or task_id in {".", ".."}:
+        _invalid("task_id", "one safe task ID", task_id)
+    return Path(project_root) / names().tasks_path / f"{task_id}.json"
+
+
+def write_state_bytes(path, content):
+    """Durable same-filesystem replacement used by the operation writer."""
+    path = Path(path)
+    if path.is_symlink():
+        raise TaskStateInvalid(f'refusing symlink state output: {path}')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f'.{path.name}.', dir=path.parent)
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+

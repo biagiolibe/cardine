@@ -59,8 +59,10 @@ def repair_task_worktree_base(
         )
     old_base = state["base_commit"]
     if not unchanged:
+        from cardine.worktree.preparation import repair_preparation
+        before = dict(state)
         state.update(base_commit=head, task_commit=head)
-        _write_json_atomic(state_path, state)
+        repair_preparation(project, identity, before, state)
     return {
         "version": 1, "task_id": identity.canonical_id, "repaired": not unchanged,
         "previous_base_commit": old_base, "base_commit": head,
@@ -69,7 +71,23 @@ def repair_task_worktree_base(
     }
 
 
-def prepare_task_worktree(
+def prepare_task_worktree(task_id, worktree_root, supplied_project=None, base="main", resume=False):
+    from cardine.worktree.preparation import preparation_lock, _path
+    project = _verified_lifecycle_project(supplied_project)
+    identity = resolve_task_identity(project, task_id, "existing")
+    if resume and not _path(project, identity).exists():
+        raise CardineError("nothing to resume: missing owned preparation receipt")
+    from cardine.lifecycle.receipts import task_lock
+    with task_lock(project, identity.canonical_id), preparation_lock(project, identity):
+        try:
+            return _prepare_task_worktree(task_id, worktree_root, supplied_project, base, resume)
+        except CardineError as error:
+            if getattr(error, 'code', None):
+                raise
+            raise stop_error('WRONG_WORKTREE', str(error), task_id=identity.canonical_id, project=project) from error
+
+
+def _prepare_task_worktree(
     task_id: str,
     worktree_root: Path | None,
     supplied_project: Path | None = None,
@@ -83,15 +101,13 @@ def prepare_task_worktree(
     identity = resolve_task_identity(project_root, task_id, "existing")
     path = _task_worktree_path_for_identity(project_root, root, identity)
     state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
+    from cardine.worktree.preparation import prepare_owned_pair, publish_preparation
+    base_commit = git_output(project_root, "rev-parse", "--verify", f"{base}^{{commit}}")
+    operation = prepare_owned_pair(project_root, root, identity, path, base_commit, resume=resume)
     records = _git_worktrees(project_root)
     registered = next((item for item in records if Path(item["worktree"]).resolve() == path), None)
     branch_commit = _branch_commit(project_root, identity.branch_name)
-    if (registered is None) != (branch_commit is None):
-        raise CardineError(
-            f"partial task state retained for {identity.canonical_id}; branch and canonical worktree must both exist or both be absent"
-        )
-    base_commit = git_output(project_root, "rev-parse", "--verify", f"{base}^{{commit}}")
-    created = False
+    created = operation.get("result") != "verified"
     prior: dict[str, object] = {}
     dirty_summary: dict[str, int] | None = None
     state_missing = False
@@ -165,13 +181,15 @@ def prepare_task_worktree(
         "handoff": str(identity.handoff_path),
     }
     if created:
-        state["started_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        saved = operation.get("lifecycle")
+        state["started_at"] = (saved["started_at"] if saved else
+                               datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
     elif "started_at" in prior:
         # Keep a pre-existing value byte-for-byte; malformed values are handled
         # as unavailable by the read-only console rather than rewritten.
         state["started_at"] = prior["started_at"]
-    if not resume:
-        _write_json_atomic(state_path, state)
+    if not resume or operation.get("result") != "verified":
+        publish_preparation(project_root, identity, operation, state)
     result: dict[str, object] = {
         **state,
         "handoff_worktree": handoff_worktree_value(root, path),
@@ -243,6 +261,11 @@ def inspect_task_worktree(
             if not clean:
                 errors.append("dirty-worktree")
     if state:
+        from cardine.worktree.preparation import verify_preparation
+        try:
+            verify_preparation(project_root, root, identity, expected, state)
+        except (CardineError, KeyError, TypeError) as error:
+            errors.append("preparation-receipt-mismatch")
         if state.get("task_id") != identity.canonical_id:
             errors.append("state-task-mismatch")
         if state.get("project") != str(project_root) or state.get("worktree") != str(expected):
@@ -340,6 +363,11 @@ def active_worktree_task(directory: Path) -> dict[str, object] | None:
             continue
         if state_path.name != f"{identity.artifact_stem}.json" or identity.branch_name != branch or state.get("task_id") != identity.canonical_id:
             continue
+        from cardine.worktree.preparation import verify_preparation
+        try:
+            verify_preparation(primary, Path(str(state.get('worktree_root', ''))), identity, current, state)
+        except (CardineError, KeyError, TypeError):
+            continue
         archived = identity.task_path.parent / "done" / identity.task_path.name
         exempt = [identity.task_path, archived, identity.handoff_path, identity.review_path,
                   primary / names().tasks_path / f"{identity.canonical_id}.json"]
@@ -380,7 +408,9 @@ def registered_worktree_task_states(project_root: Path) -> list[dict[str, str]]:
             continue
         from cardine.tasks.state import read_task_state
         from cardine.templates.mode import detect_mode
+        from cardine.worktree.preparation import verify_preparation
         try:
+            verify_preparation(primary, Path(str(lifecycle.get('worktree_root', ''))), identity, worktree, lifecycle)
             status = read_task_state(worktree, identity.canonical_id, detect_mode(worktree), stop_factory=stop_error)["status"]
         except CardineError:
             continue

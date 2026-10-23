@@ -34,7 +34,7 @@ def update_task_contract(project_root: Path, task_id: str) -> dict:
         path = _safe_path(root, state_path(root, task_id))
         record = _safe_path(root, identity.task_path)
         state = read_task_state(root, task_id, 'single',
-                                stop_factory=lambda code, detail, **kw: CardineError(detail))
+                                stop_factory=lambda code, detail, **kw: CardineError(detail), artifacts=False)
         if 'run' in state:
             from cardine.lifecycle.receipts import verify_receipts
             # The record is the explicit proposal; the previous state must still

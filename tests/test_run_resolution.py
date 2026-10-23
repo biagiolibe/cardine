@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from cardine.lifecycle.engine import resolve_run, render_output, resolve_run_locations
 from cardine.lifecycle.model import Guardrail, RunFacts
 from cardine.shared.errors import CardineError
-from task_contract_support import contract_record, write_state
+from task_contract_support import contract_record, seal_state, write_state
 
 
 class RunResolutionTests(unittest.TestCase):
@@ -72,6 +72,9 @@ class RunLocationTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name).resolve()
         self.root = self.base / 'consumer ; $(touch SENTINEL)'
+        environment = patch.dict('os.environ', {'CARDINE_WORKTREE_ROOT': str(self.base / 'worktrees')})
+        environment.start()
+        self.addCleanup(environment.stop)
         self.make_project(self.root)
 
     def git(self, root, *args):
@@ -89,6 +92,9 @@ class RunLocationTests(unittest.TestCase):
         write_state(root)
         self.git(root, 'add', '.')
         self.git(root, 'commit', '-m', 'Fixture')
+        seal_state(root, '001')  # Preview reads only receipted state.
+        self.git(root, 'add', '.')
+        self.git(root, 'commit', '-m', 'Receipt fixture state')
 
     def test_primary_linked_nested_and_unrelated_cwd(self):
         linked = self.base / 'linked checkout'

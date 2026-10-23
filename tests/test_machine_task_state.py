@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION, freeze_record
+from task_contract_support import contract_record, VALIDATION, freeze_record, seal_state
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +34,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
+        self.git("init", "-q", "-b", "main")
         write_project_config(self.root, "lean", validation=VALIDATION)
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
@@ -42,7 +43,6 @@ class MachineTaskStateTest(unittest.TestCase):
         self.path = task_state.state_path(self.root, "001")
         self.write(self.state())
         freeze_record(self.root, "001", self.record)
-        self.git("init", "-q", "-b", "main")
         self.git("add", ".")
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Initial")
 
@@ -175,24 +175,22 @@ class MachineTaskStateTest(unittest.TestCase):
         self.write(self.state())
         freeze_record(self.root, "001", self.record)
         before = self.path.read_bytes(), self.record.read_bytes()
-        real_replace = cardine_cli.os.replace
-        calls = []
-
-        def replace(source, destination):
-            self.assertEqual(self.path.read_bytes(), before[0])
-            self.assertEqual(Path(source).parent, self.path.parent)
-            self.assertEqual(json.loads(Path(source).read_text())["status"], "in_progress")
-            calls.append(destination)
-            real_replace(source, destination)
-
-        with mock.patch.object(cardine_cli.os, "replace", side_effect=OSError("replacement failed")):
+        from cardine.lifecycle import receipts
+        write = receipts._durable
+        def fail_state(path, content):
+            if path == self.path:
+                raise OSError("replacement failed")
+            return write(path, content)
+        with mock.patch.object(receipts, "_durable", side_effect=fail_state):
             with self.assertRaises(OSError):
                 owner_tasks_transitions.transition_task_state(self.root, "001", "in_progress")
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
-        self.assertEqual(list(self.path.parent.iterdir()), [self.path])
-        with mock.patch.object(cardine_cli.os, "replace", side_effect=replace):
-            owner_tasks_transitions.transition_task_state(self.root, "001", "in_progress")
-        self.assertEqual(calls, [self.path])
+        self.assertTrue(receipts.pending_operation(self.root, "001"))
+        state = owner_tasks_transitions.transition_task_state(self.root, "001", "in_progress")
+        receipts.verify_receipts(self.root, state)
+        self.assertEqual(len(state["transitions"]), 1)
+        self.assertFalse(receipts.pending_operation(self.root, "001"))
+        self.assertEqual(list(self.path.parent.glob("*.stage")), [])
 
     def test_missing_stop(self):
         self.path.unlink()
@@ -207,7 +205,8 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertFalse(self.path.exists())
         recovered = run_recovery(resume_from(str(caught.exception)), self.root)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
-        self.assertEqual(self.read()["status"], "queued")
+        with self.assertRaisesRegex(shared_errors.CardineStop, "missing completed operation receipt"):
+            self.read()  # Legacy import is diagnostic, never operation authority.
 
     def test_invalid_stop(self):
         self.write(self.state())
@@ -264,10 +263,18 @@ class MachineTaskStateTest(unittest.TestCase):
             task_state.validate_task_state(state, "001", "single")
 
     def test_reader_never_enumerates_state_directory(self):
-        self.write(self.state())
-        with mock.patch.object(Path, "iterdir", side_effect=AssertionError("scan")), \
-             mock.patch.object(Path, "glob", side_effect=AssertionError("scan")), \
-             mock.patch.object(Path, "rglob", side_effect=AssertionError("scan")):
+        from functools import wraps
+        methods = {name: getattr(Path, name) for name in ("iterdir", "glob", "rglob")}
+        def bounded(name):
+            @wraps(methods[name])
+            def call(path, *args, **kwargs):
+                if path == self.path.parent:
+                    raise AssertionError("state directory scan")
+                return methods[name](path, *args, **kwargs)
+            return call
+        with mock.patch.object(Path, "iterdir", bounded("iterdir")), \
+             mock.patch.object(Path, "glob", bounded("glob")), \
+             mock.patch.object(Path, "rglob", bounded("rglob")):
             self.assertEqual(self.read()["status"], "queued")
 
     def test_cancellation_requires_authority_and_reason_from_each_open_state(self):
@@ -306,6 +313,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.write(current)
         for preset in ("lean", "governed"):
             write_project_config(self.root, preset, validation=VALIDATION)
+            seal_state(self.root, "001")
             for task_class, status, outcome, satisfied in (
                     ("standard", "queued", None, False),
                     ("standard", "in_progress", None, False),
@@ -326,6 +334,7 @@ class MachineTaskStateTest(unittest.TestCase):
                 if status == "cancelled":
                     state["transitions"][-1].update(authority="owner", reason="Cancelled")
                 dependency_path.write_text(json.dumps(state))
+                seal_state(self.root, "002")
                 self.git("add", ".")
                 self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "--allow-empty", "-qm", "Dependency result")
                 with self.subTest(preset=preset, task_class=task_class, status=status, outcome=outcome):

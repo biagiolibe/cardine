@@ -9,7 +9,7 @@ from unittest import mock
 import shlex
 from pathlib import Path
 from project_config_support import write_project_config
-from task_contract_support import freeze_record
+from task_contract_support import freeze_record, seal_state
 
 from tests import worktree_support as fixtures
 
@@ -28,6 +28,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         fixtures.GovernedCompletionRowsFixture.setUp(self)
         path = self.primary / ".cardine/tasks/056.json"
         path.unlink()
+        path.with_name(".056.guard").unlink(missing_ok=True)
         path.parent.rmdir()
 
     def tearDown(self):
@@ -44,11 +45,18 @@ class TaskIntegrationStateTest(unittest.TestCase):
         elif spike:
             (self.primary / "tasks/056-lifecycle.md").write_text(
                 "# Task 056\n\n> **ID**: `056`\nClass: SPIKE\nStatus: in_progress\n")
+        freeze_record(self.primary, "056", self.primary / "tasks/056-lifecycle.md")
         self.git("add", ".")
         self.git("commit", "--allow-empty", "-m", "configure task")
         self.base = self.git("rev-parse", "HEAD").stdout.strip()
         prepared = owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
         self.worker = Path(prepared["worktree"])
+        # Preparation consumes a valid state; these tests independently exercise
+        # missing-state integration, so remove it from the implementation fixture.
+        fixture_state = self.worker / '.cardine/tasks/056.json'
+        fixture_state.unlink()
+        fixture_state.with_name('.056.guard').unlink(missing_ok=True)
+        fixture_state.parent.rmdir()
         if not spike:
             (self.worker / "feature.txt").write_text("approved code\n")
         self.git("add", ".", cwd=self.worker)
@@ -78,6 +86,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         frozen = freeze_record(self.worker, "056", self.worker / "tasks/056-lifecycle.md")
         frozen["contract"]["options"]["review"] = "required" if required else "not_required"
         self.state_file.write_text(json.dumps(frozen))
+        seal_state(self.worker, "056")
         self.commit()
 
     def commit(self):
@@ -162,6 +171,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         state = json.loads(self.state_file.read_text())
         del state["review"]
         self.state_file.write_text(json.dumps(state))
+        seal_state(self.worker, '056')
         self.commit()
         self.assert_stop("REVIEW_NOT_APPROVED", "found None")
 
@@ -227,6 +237,10 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.git("worktree", "remove", "--force", str(self.worker))
                 self.git("branch", "-D", "task-056")
                 self.git("reset", "--hard", self.base)
+                identity = owner_tasks_identity.resolve_task_identity(self.primary, '056', 'existing')
+                lifecycle, _, _ = owner_worktree_storage._lifecycle_paths(self.primary, identity)
+                lifecycle.unlink(missing_ok=True)
+                lifecycle.with_suffix('.preparation').unlink(missing_ok=True)
 
     def test_other_task_state_invalidates_approval(self):
         self.start()
@@ -308,7 +322,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
         self.assertEqual((self.primary / "tasks/QUEUE.md").read_bytes(), queue)
-        self.assertFalse((self.primary / ".cardine/tasks/056.json").exists())
+        self.assertEqual(json.loads((self.primary / ".cardine/tasks/056.json").read_text())["status"], "queued")
         self.assertEqual(self.git("status", "--porcelain").stdout, "")
         self.assertEqual(self.git("rev-parse", "HEAD^{tree}").stdout, before_tree)
 

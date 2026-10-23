@@ -6,6 +6,7 @@ from project_config_support import write_project_config
 from cardine_cli_support import CLI, ROOT
 from task_contract_support import freeze_record
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,11 @@ class LifecycleJournalTest(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.project = self.root / "project"
         self.project.mkdir()
+        from unittest.mock import patch
+        self.worktree_root = self.root / 'worktrees'
+        self.environment = patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
         write_project_config(self.project)
         subprocess.run(["git", "init", "-b", "main"], cwd=self.project, check=True, capture_output=True)
         subprocess.run(["git", "config", "user.name", "Cardine Test"], cwd=self.project, check=True)
@@ -33,6 +39,7 @@ class LifecycleJournalTest(unittest.TestCase):
         (self.project / "tasks/QUEUE.md").write_text(
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n", encoding="utf-8"
         )
+        freeze_record(self.project, "056", self.project / "tasks/056-lifecycle.md")
         subprocess.run(["git", "add", "."], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "initial"], cwd=self.project, check=True, capture_output=True)
         self.worktree_root = self.root / "worktrees"
@@ -40,6 +47,7 @@ class LifecycleJournalTest(unittest.TestCase):
         self.journal = self.project / ".git" / "cardine-journal.jsonl"
 
     def tearDown(self) -> None:
+        self.environment.stop()
         self.temporary.cleanup()
 
     def lifecycle(

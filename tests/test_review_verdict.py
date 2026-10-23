@@ -23,6 +23,7 @@ class ReviewVerdictTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
+        self.git("init", "-q", "-b", "main")
         write_project_config(self.root, "governed", validation=VALIDATION)
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
@@ -33,7 +34,6 @@ class ReviewVerdictTest(unittest.TestCase):
         self.path.parent.mkdir(parents=True)
         self.path.write_text(json.dumps({"version": 1, "task_id": "001", "workflow": "single", "status": "queued", "transitions": []}))
         freeze_record(self.root, "001")
-        self.git("init", "-q", "-b", "main")
         self.commit()
         self.git("switch", "-qc", "task-001")
         for status in ("in_progress", "in_review"):
@@ -195,25 +195,27 @@ class ReviewVerdictTest(unittest.TestCase):
 
     def test_atomic_write_contains_review_and_transition_and_failure_changes_nothing(self):
         before = self.snapshot()
-        real_replace = cardine_cli.os.replace
-        replacements = []
+        from cardine.lifecycle import receipts
+        write = receipts._durable
+        def fail_state(path, content):
+            if path == self.path:
+                state = json.loads(content)
+                self.assertEqual(state['status'], 'in_progress')
+                self.assertEqual(state['review']['verdict'], 'APPROVE')
+                self.assertEqual(state['transitions'][-1]['to'], 'in_progress')
+                raise OSError('write failed')
+            return write(path, content)
+        with mock.patch.object(receipts, '_durable', side_effect=fail_state):
+            with self.assertRaisesRegex(OSError, 'write failed'):
+                owner_review_verdict.record_review_verdict(self.root, '001', 'APPROVE')
+        self.assertEqual(self.path.read_bytes(), before[str(self.path.relative_to(self.root))])
+        state = owner_review_verdict.record_review_verdict(self.root, '001', 'APPROVE')
+        self.assertEqual(state['review']['attempt'], 1)
+        self.assertEqual(state['status'], 'in_progress')
+        self.assertEqual(state['transitions'][-1]['to'], 'in_progress')
+        self.assertIn('APPROVE', self.review.read_text())
+        receipts.verify_receipts(self.root, state)
 
-        def replace(source, destination):
-            self.assertEqual(self.snapshot(), before)
-            state = json.loads(Path(source).read_text())
-            self.assertEqual(state["status"], "in_progress")
-            self.assertEqual(state["review"]["verdict"], "APPROVE")
-            self.assertEqual(state["transitions"][-1]["to"], "in_progress")
-            replacements.append(destination)
-            real_replace(source, destination)
-
-        with mock.patch.object(cardine_cli.os, "replace", side_effect=OSError("write failed")):
-            with self.assertRaises(OSError):
-                owner_review_verdict.record_review_verdict(self.root, "001", "APPROVE")
-        self.assertEqual(self.snapshot(), before)
-        with mock.patch.object(cardine_cli.os, "replace", side_effect=replace):
-            owner_review_verdict.record_review_verdict(self.root, "001", "APPROVE")
-        self.assertEqual(replacements, [self.path])
 
 
 if __name__ == "__main__":

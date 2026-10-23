@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from project_config_support import write_project_config
+from task_contract_support import seal_state
 from task_state_support import set_state, write_task
 from cardine.shared.layout import names
 from cardine.console import models as owner_console_models
@@ -179,6 +180,12 @@ class StateConsoleFixture(RepoCase):
         for task_id, status in tasks.items():
             self.add(task_id, status, (deps or {}).get(task_id, "none"))
         self.commit(self.project, "initial")
+        from cardine.lifecycle import receipts
+        # Fixture authority: accept the first main so readers never replay policy history.
+        receipts.authorize_project(self.project, accepted=receipts.observed_authority(self.project))
+        for task_id in tasks:
+            seal_state(self.project, task_id)
+        self.commit(self.project, "receipt fixture authority")
 
     def branch_state(self, worktree: Path, task_id: str, status: str, *, verdict: str | None = None,
                      commit: bool = True) -> None:

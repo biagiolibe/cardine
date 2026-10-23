@@ -11,7 +11,7 @@ import unittest
 
 import test_execution_boundaries as boundaries
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION, freeze_record
+from task_contract_support import contract_record, VALIDATION, freeze_record, seal_state
 from cardine.integration import merge
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.shared.constants import WORKFLOW_MODES
@@ -53,6 +53,7 @@ class SingleWorkflowParityTest(unittest.TestCase):
         state = json.loads(state_path.read_text())
         state['contract'] = resolve_task_contract(fixture.worker, '001')
         state_path.write_text(json.dumps(state))
+        seal_state(fixture.worker, '001')
         fixture.commit('Configure parity fixture')
         return fixture
 
@@ -175,6 +176,7 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 snapshot = json.loads(task_path.read_text())
                 snapshot['contract']['dependencies'] = ['002']
                 task_path.write_text(json.dumps(snapshot))
+                seal_state(f.worker, '001')
                 self.stop('TASK_STATUS_REJECTED', lambda: check_dependencies(f.worker, '001', record))
                 state = {'version': 1, 'task_id': '002', 'workflow': 'single', 'status': 'done',
                          'transitions': [

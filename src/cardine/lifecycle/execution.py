@@ -85,6 +85,13 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
             expected_state = dict(original)
             if original["status"] == "queued" and state["transitions"]:
                 expected_state.update(status="in_progress", transitions=original["transitions"] + [state["transitions"][-1]])
+            if original["status"] == "queued" and state["transitions"]:
+                from cardine.lifecycle.receipts import digest, encoded
+                operation = 'transition:' + digest(encoded(dict(target='in_progress')))
+                chain = state.get('run', {}).get('receipts', [])
+                old_chain = original.get('run', {}).get('receipts', [])
+                if chain and chain[:-1] == old_chain and chain[-1]['kind'] == operation:
+                    expected_state['run'] = state['run']
             # A repeated start tolerates only the exact command-owned state update.
             if (changed | untracked <= {state_path(project_root, identity.canonical_id).relative_to(project_root).as_posix()}
                     and state == expected_state):

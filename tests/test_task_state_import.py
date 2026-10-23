@@ -66,7 +66,9 @@ class TaskStateImportTest(unittest.TestCase):
         self.assertFalse((self.root / ".cardine/tasks").exists())
         self.assertEqual(self.cli("001", "--apply").returncode, 0)
         path = self.root / proposal["path"]
-        state = task_state.read_task_state(self.root, "001", "single", stop_factory=owner_stops_render.stop_error)
+        with self.assertRaises(CardineStop):
+            task_state.read_task_state(self.root, "001", "single", stop_factory=owner_stops_render.stop_error)
+        state = task_state.validate_task_state(json.loads((self.root / '.cardine/tasks/001.json').read_text()), '001', 'single')
         self.assertEqual(state["transitions"][0]["commit"], self.git("rev-parse", "HEAD"))
         self.assertEqual(state["status"], "in_progress")
         original = path.read_bytes()
@@ -144,7 +146,9 @@ class TaskStateImportTest(unittest.TestCase):
         self.add_task("002", "`[x]`").unlink()
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
-        state = task_state.read_task_state(self.root, "001", "single", stop_factory=owner_stops_render.stop_error)
+        with self.assertRaises(CardineStop):
+            task_state.read_task_state(self.root, "001", "single", stop_factory=owner_stops_render.stop_error)
+        state = task_state.validate_task_state(json.loads((self.root / '.cardine/tasks/001.json').read_text()), '001', 'single')
         self.assertEqual(state["status"], "in_progress")
         self.assertEqual(len(state["transitions"]), 1)
         self.assertEqual(json.loads(result.stdout)["tasks"][1]["action"], "skip-terminal")
@@ -155,6 +159,10 @@ class TaskStateImportTest(unittest.TestCase):
         result = self.cli("--apply")
         self.assertEqual(result.returncode, 0, result.stderr)
         for task_id, spike in (("001", True), ("002", False)):
+            from task_contract_support import seal_state
+            # Explicit fixture acceptance isolates machine legality from the
+            # import adapter, whose unsigned output cannot authorize a gate.
+            seal_state(self.root, task_id)
             state = task_state.read_task_state(self.root, task_id, "single", spike=spike,
                                                review_required=None, stop_factory=owner_stops_render.stop_error)
             self.assertFalse(state["review"]["required"])

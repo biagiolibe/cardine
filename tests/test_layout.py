@@ -140,7 +140,7 @@ class LayoutTest(unittest.TestCase):
             with patch.object(checkout, "_git_worktrees", return_value=[{
                 "worktree": str(self.root), "branch": "refs/heads/task-042",
             }]):
-                self.assertEqual(len(checkout.registered_worktree_task_states(self.root)), 1)
+                self.assertEqual(len(checkout.registered_worktree_task_states(self.root)), 0)  # No preparation receipt.
         self.assertEqual(storage._lifecycle_paths(self.root, resolved), default)
         self.assertEqual(checkout.registered_worktree_task_states(self.root), [])
 

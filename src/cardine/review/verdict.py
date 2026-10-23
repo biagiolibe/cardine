@@ -19,8 +19,25 @@ from datetime import timezone
 from pathlib import Path
 import json
 
+def _with_verdict_receipt(function):
+    from functools import wraps
+    @wraps(function)
+    def execute(project_root, task_id, verdict, *, owner=False, body=""):
+        from cardine.lifecycle.receipts import task_lock, pending_operation, replay_operation, digest, encoded
+        project_root = Path(project_root).resolve()
+        identity = resolve_task_identity(project_root, task_id, "existing")
+        task_id = identity.canonical_id
+        operation = 'review_verdict:' + digest(encoded(dict(verdict=verdict, owner=owner, body=body)))
+        with task_lock(project_root, task_id):
+            if pending_operation(project_root, task_id):
+                return replay_operation(project_root, task_id, kind=operation)
+            return function(project_root, task_id, verdict, owner=owner, body=body, operation=operation)
+    return execute
+
+
+@_with_verdict_receipt
 def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, owner: bool = False,
-                          body: str = "") -> dict[str, object]:
+                          body: str = "", operation=None) -> dict[str, object]:
     """Bind a review and its transition to HEAD, with prose as a projection only."""
     project_root = project_root.resolve()
     identity = resolve_task_identity(project_root, task_id, "existing")
@@ -40,6 +57,8 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         invalid(f"verdict: allowed APPROVE, CHANGES_REQUESTED, BLOCKED; found {verdict!r}")
     state = read_task_state(project_root, task_id, workflow,
                             review_required=required, stop_factory=stop_error, require_contract=True)
+    from copy import deepcopy
+    previous_state = deepcopy(state)
     from cardine.tasks.state import review_is_required
     if not review_is_required(state):
         invalid("review requires a required-review task")
@@ -60,6 +79,7 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
                                            review_required=required, stop_factory=stop_error, require_contract=True, text=original.stdout)
                 projected = _review_verdict_projection(baseline, verdict, head, approved_by,
                                                       state["transitions"][-1]["at"])
+                projected['run'] = state['run']
             except (CardineStop, ValueError, KeyError, IndexError):
                 projected = None
             expected = {path: json.dumps(projected, indent=2, sort_keys=True) + "\n"}
@@ -105,10 +125,9 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         invalid(str(error))
     review_text = identity.review_path.read_text(encoding="utf-8") if identity.review_path.exists() else ""
     projection = _review_attempt_text(review_text, state["review"]["attempt"], verdict, body)
-    _write_json_atomic(path, state)
-    identity.review_path.parent.mkdir(parents=True, exist_ok=True)
-    identity.review_path.write_text(projection, encoding="utf-8")
-    return state
+    from cardine.lifecycle.receipts import write_operation
+    return write_operation(project_root, task_id, state, kind=operation, previous=previous_state,
+                           files={identity.review_path.relative_to(project_root).as_posix(): projection.encode()})
 
 
 def _review_verdict_projection(state, verdict, head, approved_by, at):
