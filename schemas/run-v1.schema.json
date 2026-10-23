@@ -1,0 +1,378 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "task_id",
+    "project",
+    "outcome",
+    "step",
+    "action",
+    "next",
+    "stop",
+    "work",
+    "evidence",
+    "diagnostics",
+    "retry_after_seconds"
+  ],
+  "properties": {
+    "version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "project": {
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "progress",
+        "next",
+        "waiting",
+        "iterate",
+        "blocked",
+        "done"
+      ]
+    },
+    "step": {
+      "enum": [
+        "contract",
+        "worktree",
+        "implementation",
+        "validation",
+        "review",
+        "candidate",
+        "landing",
+        null
+      ]
+    },
+    "action": {
+      "type": "string"
+    },
+    "next": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "command",
+            "argv",
+            "reason"
+          ],
+          "properties": {
+            "command": {
+              "type": "string"
+            },
+            "argv": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "stop": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "resolution",
+            "human_decision",
+            "detail",
+            "resume",
+            "resume_argv"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "resolution": {
+              "const": "guardrail"
+            },
+            "human_decision": {
+              "const": true
+            },
+            "detail": {
+              "type": "string"
+            },
+            "resume": {
+              "type": "string"
+            },
+            "resume_argv": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "work": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "role",
+            "worktree",
+            "contract_digest",
+            "expected_surface",
+            "acceptance_references",
+            "validation_references",
+            "delivery_receipt_requirements"
+          ],
+          "properties": {
+            "role": {
+              "enum": [
+                "implementer",
+                "reviewer"
+              ]
+            },
+            "worktree": {
+              "type": "string"
+            },
+            "contract_digest": {
+              "type": "string"
+            },
+            "expected_surface": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "acceptance_references": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "validation_references": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "delivery_receipt_requirements": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "path",
+          "identity"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "retry_after_seconds": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cardine.dev/schemas/run-v1.schema.json",
+  "title": "Cardine run output v1",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "blocked"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "stop": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "resolution",
+              "human_decision",
+              "detail",
+              "resume",
+              "resume_argv"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "resolution": {
+                "const": "guardrail"
+              },
+              "human_decision": {
+                "const": true
+              },
+              "detail": {
+                "type": "string"
+              },
+              "resume": {
+                "type": "string"
+              },
+              "resume_argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "stop": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "done"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "next": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "outcome": {
+            "not": {
+              "const": "done"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "next": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "command",
+              "argv",
+              "reason"
+            ],
+            "properties": {
+              "command": {
+                "type": "string"
+              },
+              "argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "project": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "not": {
+              "const": "waiting"
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "retry_after_seconds": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ]
+}

@@ -74,6 +74,17 @@ class ShowVersionAction(argparse.Action):
 
 
 def main() -> int:
+    # Pure run previews must not create best-effort journal entries.
+    preview_args = sys.argv[1:]
+    if preview_args[:1] == ["--framework-root"]:
+        preview_args = preview_args[2:]
+    elif preview_args and preview_args[0].startswith("--framework-root="):
+        preview_args = preview_args[1:]
+    review_preview = (preview_args[:1] == ["review"] and len(preview_args) > 1
+                      and preview_args[1] != "verdict" and not preview_args[1].startswith("-"))
+    if preview_args[:1] == ["run"] or review_preview:
+        from cardine.lifecycle.engine import run_preview_cli
+        return run_preview_cli(preview_args[1:])
     if sys.argv[1:2] == ["hook"]:
         try:
             Path.cwd()
@@ -100,6 +111,9 @@ def build_parser() -> CardineArgumentParser:
         help="print the framework SemVer, including prerelease and build metadata",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    run = subparsers.add_parser("run", help="preview the next bounded lifecycle step (read-only)")
+    run.add_argument("task_id")
+    run.add_argument("--project", type=Path)
 
     self_check = subparsers.add_parser(
         "self-check", help="inspect this Cardine installation"
@@ -315,7 +329,8 @@ def build_parser() -> CardineArgumentParser:
     validation_check.add_argument("--commit")
     validation_check.add_argument("--format", choices=("json",), required=True)
 
-    review = subparsers.add_parser("review", help="record commit-bound task reviews")
+    review = subparsers.add_parser("review", help="preview independent review or record commit-bound verdicts",
+                                  epilog="cardine review <ID> --project <root> provides a read-only run preview.")
     review_sub = review.add_subparsers(dest="review_command", required=True)
     verdict = review_sub.add_parser("verdict", help="record a verdict and its task-state transition")
     verdict.add_argument("task_id")
