@@ -38,7 +38,10 @@ def require_named_validation_commands(text: str) -> None:
 
 def frozen_execution_contract(project_root: Path, task_id: str) -> dict:
     """Require execution inputs frozen at creation, never recover them from prose."""
-    from cardine.tasks.state import read_task_state
+    from cardine.tasks.state import read_task_state, state_path
+    from cardine.tasks.identity import resolve_task_identity
+    if not state_path(project_root, task_id).exists():
+        task_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     state = read_task_state(project_root, task_id, "single", stop_factory=stop_error, require_contract=True)
     contract = state["contract"]
     if "hostImpact" not in contract:

@@ -187,6 +187,8 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         record = self.root / 'tasks/002.md'
         record.write_text(record.read_text() + execution_contract(self.root, '002') + '\n')
         before = frozen_validation_commands(self.root, '002')
+        self.assertEqual(frozen_validation_commands(self.root, 'task-002'), before)
+        self.assertEqual(execution_contract(self.root, 'task-002'), execution_contract(self.root, '002'))
         record.write_text(record.read_text().replace('## Validation', '## Removed validation')
                           .replace('## Authority', '## Removed authority')
                           .replace('## Expected code surface', '## Removed surface')
