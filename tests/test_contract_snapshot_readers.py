@@ -29,6 +29,11 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         write_project_config(self.root, validation=deepcopy(VALIDATION))
+        # Pin a real main before receipt creation; a later git-init changes the
+        # project/common-directory authority and correctly requires acceptance.
+        subprocess.run(['git', 'init', '-q', '-b', 'main', str(self.root)], check=True)
+        self.git('add', '.')
+        self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Fixture policy')
         create_task(self.root, '002', contract_record('002').replace('P1', 'P2'))
         text = contract_record(extra='Phase: N1\nOrigin: maintenance\n', spike=True)
         text = text.replace('## Dependencies\nnone', '## Dependencies\n002')
@@ -39,7 +44,6 @@ class ContractSnapshotReadersTest(unittest.TestCase):
             (self.root / f'docs/{filename}.md').write_text('## Source\n' + 'body\n' * 500)
         self.record = self.root / 'tasks/001.md'
         self.before = self.record.read_text()
-        subprocess.run(['git', 'init', '-q', '-b', 'main', str(self.root)], check=True)
         self.git('add', '.')
         self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Fixture')
 

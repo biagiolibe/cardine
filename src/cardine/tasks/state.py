@@ -10,6 +10,8 @@ from cardine.shared.layout import names
 
 import json
 import re
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
@@ -203,12 +205,38 @@ def state_path(project_root, task_id):
     return Path(project_root) / names().tasks_path / f"{task_id}.json"
 
 
+def write_state_bytes(path, content):
+    """Durable same-filesystem replacement used by the operation writer."""
+    path = Path(path)
+    if path.is_symlink():
+        raise TaskStateInvalid(f'refusing symlink state output: {path}')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f'.{path.name}.', dir=path.parent)
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
 def read_task_state(project_root, task_id, workflow, *, spike=False, review_required=None, stop_factory,
                     text=None, require_contract=False):
     """Read one state file (or its Git snapshot), returning state or a registered stop."""
     try:
         path = state_path(project_root, task_id)
         if text is None:
+            intent = path.with_name(f'.{task_id}.intent.json')
+            if intent.exists():
+                raise stop_factory("TASK_STATE_INVALID", "interrupted or active task creation/revision; replay identical command",
+                                   task_id=task_id, project=project_root)
             journal = Path(project_root) / names().project_directory / "task-creation.lock"
             if journal.exists():
                 raise stop_factory("TASK_STATE_INVALID",
@@ -219,7 +247,7 @@ def read_task_state(project_root, task_id, workflow, *, spike=False, review_requ
             except FileNotFoundError:
                 raise stop_factory("TASK_STATE_MISSING", f"state file: allowed existing {path}; found missing",
                                    task_id=task_id, project=project_root)
-            if journal.exists():
+            if journal.exists() or intent.exists():
                 raise stop_factory("TASK_STATE_INVALID", f"task creation changed during read: {journal}; retry",
                                    task_id=task_id, project=project_root)
         try:

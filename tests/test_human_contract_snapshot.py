@@ -90,6 +90,7 @@ class HumanContractSnapshotTest(unittest.TestCase):
 
     def test_older_snapshot_diagnoses_missing_fields_and_cli_completes_it(self):
         state = self.create()
+        state.pop('run')  # Explicitly simulate a pre-receipt legacy snapshot.
         for field in HUMAN_CONTRACT_FIELDS:
             del state['contract'][field]
         self.path.write_text(json.dumps(state))
@@ -107,6 +108,7 @@ class HumanContractSnapshotTest(unittest.TestCase):
 
     def test_sparse_state_upgrade_is_explicit(self):
         state = self.create()
+        state.pop('run')  # Explicit legacy-upgrade fixture, not a forged current receipt.
         del state['contract']
         self.path.write_text(json.dumps(state))
         self.assertIn('incomplete contract snapshot', self.audit())
@@ -126,6 +128,7 @@ class HumanContractSnapshotTest(unittest.TestCase):
 
     def test_cli_rejects_inconsistent_revision_without_traceback_or_state_write(self):
         state = self.create()
+        state.pop('run')  # Exercise legacy schema policy checks independently of receipts.
         state['review'] = {'required': False, 'verdict': None, 'attempt': 1,
                            'reviewed_commit': None, 'approved_by': None}
         self.path.write_text(json.dumps(state))
