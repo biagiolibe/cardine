@@ -87,7 +87,7 @@
         "governed-sdd"
       ],
       "step": "C4",
-      "emitter": "`cardine worktree closure-status`; `cardine worktree check`; `cardine worktree prepare` on a mismatched lifecycle state file; `cardine execution start/deliver/ready-check`; `cardine task close` (project mismatches override the default resume with the original invocation targeting the registered worktree)",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree check`; `cardine worktree prepare` on a mismatched lifecycle state file; `cardine execution start/deliver/ready-check` and `cardine task close` when no task worktree is registered",
       "human_decision": true,
       "resume": "cardine worktree prepare {task_id} --project {project} --format json",
       "kind": "stop",
@@ -171,7 +171,7 @@
       "human_decision": true,
       "resume": "cardine worktree integrate abort {task_id} --project {project} --format json",
       "kind": "stop",
-      "summary": "an integration lease is already held",
+      "summary": "an integration lease is held by another task, a live writer, or without an ownership proof",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_a_held_lease_through_the_registry",
       "resolution": "guardrail"
     },
@@ -246,7 +246,7 @@
         "governed-sdd"
       ],
       "step": "C9",
-      "emitter": "`cardine worktree closure-status`",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree cleanup` when origin/main is a proper ancestor of local main",
       "human_decision": false,
       "resume": "git push origin main",
       "kind": "status",
@@ -281,7 +281,7 @@
       "human_decision": true,
       "resume": "rerun cardine worktree cleanup {task_id} --project {project} --format json after the named condition clears",
       "kind": "stop",
-      "summary": "cleanup preconditions are not met",
+      "summary": "cleanup preconditions are not met, or the failure is an unmerged, unpushed, denied or foreign state",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_cleanup_reports_blocked_cleanup_through_the_registry",
       "resolution": "guardrail"
     },
@@ -641,7 +641,7 @@
       "resume": "fix the named state field, then cardine task transition {task_id} <STATUS> --project {project} --format json",
       "tool_hint": "cardine task transition",
       "kind": "stop",
-      "summary": "a task state field or transition history is invalid",
+      "summary": "a task state field, transition history or pending operation is invalid, corrupt, foreign or not replayable by one command",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_invalid_stop",
       "resolution": "guardrail"
     },
@@ -652,11 +652,11 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "shared task-state reader when an intact operation intent that names this task is pending",
+      "emitter": "shared task-state reader when an intact operation intent is a plain `cardine task transition` and no other writer is live",
       "human_decision": false,
-      "resume": "rerun the identical interrupted cardine command for task {task_id} in {project}; it replays its recorded operation",
+      "resume": "cardine task transition {task_id} <STATUS> --project {project} --format json",
       "kind": "stop",
-      "summary": "a task-state write recorded by this task's own operation was interrupted before it finished",
+      "summary": "a `cardine task transition` was interrupted before it finished; rerunning the identical command replays its recorded operation",
       "test": "tests.test_run_recovery.RunRecoveryTest.test_interrupted_state_operation_is_recoverable_and_corrupt_intent_is_not",
       "resolution": "recoverable"
     },

@@ -39,6 +39,10 @@ FAMILY = frozenset({
     "LEASE_INTERRUPTED", "TASK_STATE_INTERRUPTED", "CLEANUP_PARTIAL", "PUSH_PENDING",
 })
 EMITTING_CALLS = frozenset({"stop_error", "stop_factory", "stop_resume", "format_stop"})
+POINTS = ("before_intent", "after_intent", "before_staged_pair", "after_staged_pair",
+          "before_state_replace", "after_state_replace", "before_result_receipt", "after_result_receipt")
+RESIDUE_POINTS = frozenset(POINTS[1:])
+STAGE_KILL_POINTS = ("before_merge", "after_merge", *POINTS, "after_views")
 SPLIT = {"WORKTREE_RELOCATE", "LEASE_INTERRUPTED", "TASK_STATE_INTERRUPTED", "CLEANUP_PARTIAL"}
 
 
@@ -145,7 +149,7 @@ class RunRecoveryTest(unittest.TestCase):
         for code, entry in load_stop_registry().items():
             if entry["class"] == "judgment":
                 with self.subTest(code=code):
-                    self.assertIn(code, shipped + (ROOT / "capabilities/stop-codes-v1.json").read_text())
+                    self.assertIn(code, shipped)
 
     # WORKTREE_RELOCATE ------------------------------------------------------------
 
@@ -226,63 +230,177 @@ class RunRecoveryTest(unittest.TestCase):
         self.addCleanup(lambda: merge_head.unlink(missing_ok=True))
         self.assertEqual(causes.lease_stop_code(self.project, self.identity(), lease), "LEASE_HELD")
 
+    def test_foreign_merge_with_an_owned_lease_is_never_aborted(self) -> None:
+        self._stage_ready_task_with_origin(local_ahead=True)
+        self.enter_project()
+        self.git("checkout", "-q", "-b", "other")
+        (self.project / "other.txt").write_text("other\n", encoding="utf-8")
+        self.git("add", "other.txt")
+        self.git("commit", "-q", "-m", "other work")
+        self.git("checkout", "-q", "main")
+        self.git("checkout", "-q", "-b", "diverged")
+        (self.project / "diverged.txt").write_text("diverged\n", encoding="utf-8")
+        self.git("add", "diverged.txt")
+        self.git("commit", "-q", "-m", "diverged work")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "--no-ff", "--no-commit", "other")  # a foreign merge at the lease's main commit
+        lease = self.lease()
+        merge_head = owner_storage._merge_head_path(self.project)
+        self.assertTrue(merge_head.is_file())
+        self.assertEqual(causes.lease_stop_code(self.project, self.identity(), lease), "LEASE_HELD")
+        status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
+                              "--worktree-root", str(self.worktree_root), "--format", "json")
+        self.assertEqual(json.loads(status.stdout)["stop_reason"], "LEASE_HELD")
+        self.assertTrue(merge_head.is_file())  # nothing aborted the foreign merge
+
+    def kill_stage(self, point: str, evidence: Path) -> None:
+        script = (
+            "import os, sys\nfrom pathlib import Path\nfrom cardine.integration import merge\n"
+            "from cardine.lifecycle import receipts\npoint = sys.argv[1]\nreal = merge._run_git\n"
+            "def git(project, *args, **kwargs):\n"
+            "    if args[:3] == ('merge', '--no-ff', '--no-commit'):\n"
+            "        if point == 'before_merge': os._exit(77)\n"
+            "        result = real(project, *args, **kwargs)\n"
+            "        if point == 'after_merge': os._exit(77)\n"
+            "        return result\n"
+            "    return real(project, *args, **kwargs)\n"
+            "merge._run_git = git\n"
+            "views = merge._regenerate_status_views\n"
+            "def regenerated(project):\n    views(project)\n    os._exit(77)\n"
+            "if point == 'after_views': merge._regenerate_status_views = regenerated\n"
+            "def stop(name):\n    if name == point: os._exit(77)\n"
+            "if point in %r: receipts.boundary = stop\n"
+            "merge.stage_task_integration('056', Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))\n" % (POINTS,))
+        self.kill_writer(script, point, str(self.worktree_root), str(evidence), str(self.project))
+
+    def assert_stage_kill_recovers(self, point: str) -> None:
+        evidence = self._stage_ready_task_with_origin(local_ahead=True)
+        self.enter_project()
+        head = self.git("rev-parse", "HEAD")
+        self.kill_stage(point, evidence)
+        status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
+                              "--worktree-root", str(self.worktree_root), "--format", "json")
+        self.assertEqual(json.loads(status.stdout)["stop_reason"], "LEASE_INTERRUPTED")
+        residue = sorted(line[3:] for line in self.git("status", "--porcelain").splitlines() if line.startswith("??"))
+        recovered = run_recovery(json.loads(status.stdout)["resume"], self.project, self.worktree_root)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD"), head)  # no commit was made
+        _state, lease, integration = owner_storage._lifecycle_paths(self.project, self.identity())
+        self.assertFalse(lease.exists() or integration.exists())
+        restaged = self.run_cli(*self._stage_args(evidence))
+        if point in RESIDUE_POINTS:
+            # Engine-owned landing residue is preserved, not guessed away; its replay is RE5a's.
+            self.assertTrue(restaged.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), restaged.stderr)
+            self.assertEqual(sorted(line[3:] for line in self.git("status", "--porcelain").splitlines()
+                                    if line.startswith("??")), residue)
+        else:
+            self.assertEqual(restaged.returncode, 0, restaged.stderr)
+            state = json.loads((self.project / ".cardine/tasks/056.json").read_text())
+            landing = [item for item in state["run"]["receipts"] if item["kind"] == "landing_state"]
+            self.assertEqual(len(landing), 1)  # exactly one landing receipt after recovery
+            self.assertEqual(self.git("rev-parse", "HEAD"), head)
+
     # TASK_STATE_INTERRUPTED -------------------------------------------------------
 
-    def interrupted_creation(self, root: Path) -> Path:
-        write_project_config(root, "lean", validation=deepcopy(VALIDATION))
-        (root / "proposal.txt").write_text(contract_record(), encoding="utf-8")
-        script = (
-            "import os, sys\nfrom pathlib import Path\n"
-            "from cardine.lifecycle import receipts\nfrom cardine.tasks.creation import create_task\n"
-            "def stop(name):\n    if name == 'after_intent': os._exit(77)\n"
-            "receipts.boundary = stop\nroot = Path(sys.argv[1])\n"
-            "create_task(root, '001', (root / 'proposal.txt').read_text())\n"
-        )
-        killed = subprocess.run([sys.executable, "-c", script, str(root)], capture_output=True, text=True,
-                                env={**os.environ, "PYTHONPATH": str(ROOT / "src")})
+    def kill_writer(self, script: str, *arguments: str) -> None:
+        killed = subprocess.run([sys.executable, "-c", script, *arguments], cwd=self.project, capture_output=True,
+                                text=True, env={**os.environ, "PYTHONPATH": str(ROOT / "src")})
         self.assertEqual(killed.returncode, 77, killed.stderr)
-        return receipts._intent_path(root, "001")
 
-    def read_state(self, root: Path) -> CardineStop | None:
+    def kill_transition(self, point: str) -> None:
+        self.kill_writer(
+            "import os, sys\nfrom pathlib import Path\nfrom cardine.lifecycle import receipts\n"
+            "from cardine.tasks.transitions import transition_task_state\n"
+            "def stop(name):\n    if name == sys.argv[2]: os._exit(77)\n"
+            "receipts.boundary = stop\n"
+            "transition_task_state(Path(sys.argv[1]), '056', 'in_progress', cancellation_authority='', reason='')\n", str(self.project), point)
+
+    def read_state(self, root: Path, task_id: str = "056") -> CardineStop | None:
         try:
-            read_task_state(root, "001", "lean", stop_factory=stop_error)
+            read_task_state(root, task_id, "lean", stop_factory=stop_error)
         except CardineStop as error:
             return error
         return None
 
-    def test_interrupted_state_operation_is_recoverable_and_corrupt_intent_is_not(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory).resolve()
-            intent = self.interrupted_creation(root)
-            stop = self.read_state(root)
-            self.assertEqual(stop.code, "TASK_STATE_INTERRUPTED")
-            self.assertIn("rerun the identical interrupted cardine command for task 001", str(stop))
-            before = intent.read_bytes()
-            self.assertEqual(self.read_state(root).code, "TASK_STATE_INTERRUPTED")
-            self.assertEqual(intent.read_bytes(), before)  # reading never touched the operation
-            create_task(root, "001", (root / "proposal.txt").read_text())  # the identical command converges
-            self.assertIsNone(self.read_state(root))
-            self.assertFalse(intent.exists())
+    def queue_task_state(self) -> None:
+        self.enter_project()
+        write_state(self.project, "056", "queued", review_required=False)
+        seal_state(self.project, "056")
+        self.git("add", ".cardine/tasks/056.json")
+        self.git("commit", "-m", "queued task state")
 
-    def test_foreign_corrupt_or_live_state_operation_stays_invalid(self) -> None:
-        for label in ("corrupt bytes", "other task", "live writer"):
-            with self.subTest(label), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory).resolve()
-                intent = self.interrupted_creation(root)
+    def test_interrupted_transition_is_recoverable_at_every_boundary(self) -> None:
+        self.queue_task_state()
+        for point in POINTS:
+            with self.subTest(point=point):
+                self.kill_transition(point)
+                intent = receipts._intent_path(self.project, "056")
+                stop = self.read_state(self.project)
+                if not intent.exists():
+                    self.assertIsNone(stop)  # killed before the intent: nothing pending, state intact
+                    self.git("reset", "--hard", "-q")
+                    continue
+                self.assertEqual(stop.code, "TASK_STATE_INTERRUPTED", str(stop))
+                before = intent.read_bytes()
+                self.assertEqual(str(self.read_state(self.project)), str(stop))  # reading is pure
+                self.assertEqual(intent.read_bytes(), before)
+                recovered = run_recovery(resume_from(str(stop)), self.project, self.worktree_root)
+                self.assertEqual(recovered.returncode, 0, recovered.stderr)
+                state = json.loads((self.project / ".cardine/tasks/056.json").read_text())
+                self.assertEqual(state["status"], "in_progress")
+                self.assertEqual([item["to"] for item in state["transitions"]], ["in_progress"])
+                kinds = [item["kind"] for item in state["run"]["receipts"]]
+                self.assertEqual(sum(kind.startswith("transition:") for kind in kinds), 1)  # one receipt, no retry
+                self.assertFalse(intent.exists())
+                self.assertIsNone(self.read_state(self.project))
+                self.git("reset", "--hard", "-q")
+                self.git("clean", "-fdq")
+
+    def test_foreign_corrupt_live_or_unreplayable_state_operation_stays_invalid(self) -> None:
+        self.queue_task_state()
+        self.kill_transition("after_intent")
+        intent = receipts._intent_path(self.project, "056")
+        original = intent.read_bytes()
+        value = receipts._load_intent(intent)
+        handle = None
+        for label in ("corrupt bytes", "other task", "other command kind", "live writer"):
+            with self.subTest(label):
+                intent.write_bytes(original)
                 if label == "corrupt bytes":
                     intent.write_bytes(b"{")
                 elif label == "other task":
-                    value = receipts._load_intent(intent)
-                    receipts._save_intent(intent, dict(value, task_id="002"))
+                    receipts._save_intent(intent, dict(value, task_id="057"))
+                elif label == "other command kind":
+                    changed = deepcopy(value)
+                    changed["state"]["run"]["receipts"][-1]["kind"] = "landing_state"
+                    receipts._save_intent(intent, changed)
                 else:
-                    handle = receipts.guard_path(root, "001")
-                    handle.parent.mkdir(parents=True, exist_ok=True)
-                    live = handle.open("a")
-                    fcntl.flock(live, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    self.addCleanup(live.close)
+                    handle = self.hold_writer()
                 before = intent.read_bytes()
-                self.assertEqual(self.read_state(root).code, "TASK_STATE_INVALID")
+                self.assertEqual(self.read_state(self.project).code, "TASK_STATE_INVALID")
                 self.assertEqual(intent.read_bytes(), before)
+        handle.close()
+
+    def test_interrupted_creation_has_no_single_replay_command_and_stays_invalid(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            write_project_config(root, "lean", validation=deepcopy(VALIDATION))
+            (root / "proposal.txt").write_text(contract_record(), encoding="utf-8")
+            killed = subprocess.run(
+                [sys.executable, "-c",
+                 "import os, sys\nfrom pathlib import Path\nfrom cardine.lifecycle import receipts\n"
+                 "from cardine.tasks.creation import create_task\n"
+                 "def stop(name):\n    if name == 'after_intent': os._exit(77)\n"
+                 "receipts.boundary = stop\nroot = Path(sys.argv[1])\n"
+                 "create_task(root, '001', (root / 'proposal.txt').read_text())\n", str(root)],
+                capture_output=True, text=True, env={**os.environ, "PYTHONPATH": str(ROOT / "src")})
+            self.assertEqual(killed.returncode, 77, killed.stderr)
+            intent = receipts._intent_path(root, "001")
+            before = intent.read_bytes()
+            self.assertEqual(self.read_state(root, "001").code, "TASK_STATE_INVALID")
+            self.assertEqual(intent.read_bytes(), before)
+            create_task(root, "001", (root / "proposal.txt").read_text())  # the identical command still converges
+            self.assertIsNone(self.read_state(root, "001"))
 
     # CLEANUP_PARTIAL, PUSH_PENDING ------------------------------------------------
 
@@ -455,6 +573,16 @@ class RunRecoveryTest(unittest.TestCase):
         result = self.run_cli(*self._stage_args(evidence))
         self.assertTrue(result.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), result.stderr)
         self.assertEqual((self.project / "foreign.txt").read_text(), "dirt\n")
+
+
+def _stage_kill_test(point: str):
+    def test(self: RunRecoveryTest) -> None:
+        self.assert_stage_kill_recovers(point)
+    return test
+
+
+for _point in STAGE_KILL_POINTS:
+    setattr(RunRecoveryTest, f"test_stage_killed_at_{_point}_recovers_the_owned_lease", _stage_kill_test(_point))
 
 
 if __name__ == "__main__":

@@ -39,7 +39,11 @@ def lease_stop_code(project_root: Path, identity: ResolvedTaskIdentity, lease_pa
         or operation_live(project_root, identity.canonical_id)
     ):
         return "LEASE_HELD"
-    if _merge_head_path(project_root).exists() and git_output(project_root, "rev-parse", "HEAD") != lease.get("main_commit"):
+    if _merge_head_path(project_root).exists() and (
+        git_output(project_root, "rev-parse", "HEAD") != lease.get("main_commit")
+        or git_output(project_root, "rev-parse", "MERGE_HEAD") != git_output(
+            project_root, "rev-parse", f"refs/heads/{identity.branch_name}")
+    ):
         return "LEASE_HELD"
     return "LEASE_INTERRUPTED"
 
@@ -97,7 +101,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/integration/merge.py", "cleanup_task_worktree", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "LEASE_HELD"): ("guardrail", "exclusive-create race or foreign or live lease"),
-    ("src/cardine/integration/merge.py", "stage_task_integration", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt; no engine-owned dirt exists before a lease"),
+    ("src/cardine/integration/merge.py", "stage_task_integration", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt; owned landing residue (intent and stage files) is preserved and its replay belongs to RE5a"),
     ("src/cardine/legacy/snapshot.py", "_read_console_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/lifecycle/closure.py", "advance_task_closure", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/lifecycle/closure.py", "advance_task_closure", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
@@ -116,8 +120,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/tasks/preflight.py", "check_dependencies", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
     ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
     ("src/cardine/tasks/preflight.py", "reconcile_execution_contract", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
-    ("src/cardine/tasks/state.py", "read_task_state", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
-    ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INTERRUPTED"): ("split", "intact intent naming this task and no live writer"),
+    ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INTERRUPTED"): ("split", "intact plain transition intent and no live writer"),
     ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/tasks/transitions.py", "close_task", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/tasks/transitions.py", "close_task", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
@@ -127,7 +130,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/worktree/checkout.py", "prepare_task_worktree", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
     ("src/cardine/worktree/checkout.py", "repair_task_worktree_base", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
     ("src/cardine/worktree/closure_status.py", "closure_status", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
-    ("src/cardine/worktree/closure_status.py", "closure_status", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt; no engine-owned dirt exists before a lease"),
+    ("src/cardine/worktree/closure_status.py", "closure_status", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt; owned landing residue (intent and stage files) is preserved and its replay belongs to RE5a"),
     ("src/cardine/worktree/closure_status.py", "closure_status", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
     ("src/cardine/worktree/closure_status.py", "closure_status", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
     ("src/cardine/worktree/closure_status.py", "closure_status.report", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),

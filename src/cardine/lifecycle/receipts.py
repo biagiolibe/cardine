@@ -283,16 +283,24 @@ def _load_intent(path):
         raise CardineError(f'invalid operation intent: {error}') from error
 
 
-def owned_intent(root, task_id):
-    """Read-only: True when the interrupted operation's intent is intact and names this task.
+def interrupted_transition(root, task_id):
+    """Read-only: the target status when an intact intent is a plain, replayable transition.
 
-    The digest detects uncovered edits of the file; it does not prove authorship.
+    Only the exact command `task transition <id> <status>` is recognised, by
+    recomputing its operation kind. Other writers (creation, revisions, landing)
+    return None because no single command that replays them can be derived. The
+    digest detects uncovered edits of the file; it does not prove authorship.
     """
-    path = _intent_path(root, task_id)
     try:
-        return _load_intent(path).get('task_id') == task_id
-    except CardineError:
-        return False
+        intent = _load_intent(_intent_path(root, task_id))
+        status = intent['state']['status']
+        kind = intent['state']['run']['receipts'][-1]['kind']
+        plain = dict(target=status, cancellation_authority='', reason='')  # the CLI's default options
+        if intent['task_id'] == task_id and kind == 'transition:' + digest(encoded(plain)):
+            return status
+    except (CardineError, KeyError, IndexError, TypeError):
+        pass
+    return None
 
 
 def _save_intent(path, value):
