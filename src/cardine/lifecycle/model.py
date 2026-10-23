@@ -32,7 +32,7 @@ class Guardrail:
 class WorkRequest:
     role: str
     worktree: Path
-    contract_digest: str
+    snapshot_digest: str
     expected_surface: tuple[str, ...]
     acceptance_references: tuple[str, ...]
     validation_references: tuple[str, ...]
@@ -43,7 +43,7 @@ class WorkRequest:
             raise ValueError("work requires a known role and absolute worktree")
 
     def as_json(self):
-        return dict(role=self.role, worktree=str(self.worktree), contract_digest=self.contract_digest,
+        return dict(role=self.role, worktree=str(self.worktree), contract_digest=self.snapshot_digest,
                     expected_surface=list(self.expected_surface),
                     acceptance_references=list(self.acceptance_references),
                     validation_references=list(self.validation_references),
