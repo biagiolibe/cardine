@@ -18,28 +18,28 @@ after creation.
 
 ## Acceptance Criteria
 
-- [ ] The `Class` reads of entry T-13, the `Review` reads of entry T-14 that
+- [x] The `Class` reads of entry T-13, the `Review` reads of entry T-14 that
   remain, and the deliverables read of entry T-16
   (`integration/merge.py::_spike_disallowed_paths`) use
   `state["contract"]`. `tasks/importer.py` keeps its reads as the
   documented legacy route (entry T-31).
-- [ ] Entry T-02: `transition_task_state` no longer backfills a missing
+- [x] Entry T-02: `transition_task_state` no longer backfills a missing
   contract and `execution_start` no longer re-resolves options. A task
   whose state has no contract snapshot gets a diagnostic naming the
   command that completes it, and no gate falls back to the record.
-- [ ] Amendment A-N2-1 of `docs/RULE_ENFORCEMENT_INVENTORY.md`: `task outcome
+- [x] Amendment A-N2-1 of `docs/RULE_ENFORCEMENT_INVENTORY.md`: `task outcome
   ANSWERED` requires every frozen deliverable path to be changed on the
   task branch.
-- [ ] Tests prove that a record edited after creation, with a different
+- [x] Tests prove that a record edited after creation, with a different
   `Class`, `Review`, or deliverable, changes no gate.
-- [ ] Every row of the known-violation table of `tests/test_text_gates.py` for
+- [x] Every row of the known-violation table of `tests/test_text_gates.py` for
   entries T-02, T-13, T-14, and T-16 that this task removes is deleted,
   and the test passes. The handoff lists the deleted rows and any row of
   those entries that remains, with its destination.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -48,16 +48,16 @@ after creation.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/084.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/084.json`, which only
   the installed `meridian task close 084` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -123,3 +123,16 @@ revalidation in the same turn; do not stop to report the fix.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Completion
+
+Implemented and verified on 2026-10-23. Class, review policy and spike landing
+deliverables use the frozen contract; missing snapshots require explicit
+contract update. ANSWERED requires all frozen deliverables in the committed
+task-branch diff. Both full suites passed 1,289 tests with one named host-only
+skip. Coverage grew by five tests; no existing test was removed.
+
+Validation evidence, deleted ratchet rows, remaining legacy destinations,
+fixture repairs and an unassigned creation-parser follow-up requirement are
+recorded in `tasks/handoffs/084.md`. Installed Meridian 1.4.1 owns closure;
+the frozen local workflow and host configuration were not changed.
