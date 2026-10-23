@@ -97,6 +97,19 @@ class RunPreviewConsumerTests(fixtures.RunLocationTests):
                                 env=environment, text=True, capture_output=True, check=True)
         self.assertEqual(first.stdout, second.stdout)
         self.assertEqual(first.stderr + second.stderr, '')
+        review = resolve_run(RunFacts('001', self.root, 'in_progress', contract_ready=True,
+                                     worktree_ready=True, implementation_delivered=True,
+                                     validation_passed=True))
+        reviewed = subprocess.run(review['next']['command'], shell=True, cwd=self.base,
+                                  env=environment, text=True, capture_output=True, check=True)
+        # The adapter cannot bless caller-supplied progress: absent verified
+        # receipts, both commands safely return the contract-check preview.
+        self.assertEqual(reviewed.stdout, first.stdout)
+        self.assertEqual(reviewed.stderr, '')
+        global_option = subprocess.run(['cardine', '--framework-root', str(ROOT), 'run', '001',
+                                       '--project', str(self.root)], cwd=self.base, env=environment,
+                                      text=True, capture_output=True, check=True)
+        self.assertEqual(global_option.stdout, first.stdout)
         self.assertFalse((self.base / 'SENTINEL').exists())
         after = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
         self.assertEqual(before, after)
