@@ -17,34 +17,34 @@ record status reads that remain, and the location fallback to
 
 ## Acceptance Criteria
 
-- [ ] Entry T-15: every after-creation reader of the `## Validation` commands
+- [x] Entry T-15: every after-creation reader of the `## Validation` commands
   (`tasks/evidence.py`, `tasks/preflight.py`,
   `tasks/contract.py::verify_execution_evidence`,
   `lifecycle/execution.py::delivery_readiness`,
   `tasks/recording.py::run_validation`) uses the frozen contract. If the
   snapshot lacks a field these readers need, `cardine task new` adds it at
   creation, as task 079 did.
-- [ ] Entry T-03: the host impact declaration is validated at creation and
+- [x] Entry T-03: the host impact declaration is validated at creation and
   frozen; `execution_preflight` reads the frozen value. Entry T-06: the
   second read of the required headings is removed, since creation already
   requires them.
-- [ ] Entry T-07 at `worktree/checkout.py::registered_worktree_task_states`
+- [x] Entry T-07 at `worktree/checkout.py::registered_worktree_task_states`
   and `lifecycle/execution.py:82`: status comes from state, not from the
   record.
-- [ ] Entry T-45: `resolve_project_locations` reads `.cardine/project.json`
+- [x] Entry T-45: `resolve_project_locations` reads `.cardine/project.json`
   only; the prose fallback to `PROJECT_WORKFLOW.md` and its `DEPRECATED`
   message are removed. A project without the configuration gets a
   diagnostic naming the command that writes it.
-- [ ] Tests prove that editing the record's Validation section, host impact
+- [x] Tests prove that editing the record's Validation section, host impact
   table, or headings after creation changes no gate.
-- [ ] Every row of the known-violation table of `tests/test_text_gates.py` for
+- [x] Every row of the known-violation table of `tests/test_text_gates.py` for
   entries T-03, T-06, T-07, T-15, and T-45 that this task removes is
   deleted, and the test passes. The handoff lists the deleted rows and any
   row of those entries that remains, with its destination.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -53,16 +53,16 @@ record status reads that remain, and the location fallback to
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/085.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/085.json`, which only
   the installed `meridian task close 085` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -128,3 +128,7 @@ revalidation in the same turn; do not stop to report the fix.
 - `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+## Completion
+
+Implemented and validated in `fcb9f6958fccc15888c7e02bcf02c35403cb971e`. See `tasks/handoffs/085.md` for exact commands, coverage, ratchet rows, and the named host-only validation skip. Installed Meridian owns closure and integration records.
