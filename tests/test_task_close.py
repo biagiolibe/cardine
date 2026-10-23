@@ -71,7 +71,7 @@ class TaskCloseTest(unittest.TestCase):
         self.refused('WRONG_WORKTREE')
         os.chdir(self.primary)
         before = self.git('status', '--porcelain', cwd=self.primary)
-        self.assert_stop('WRONG_WORKTREE', lambda: owner_tasks_transitions.close_task(self.primary, '001'))
+        self.assert_stop('WORKTREE_RELOCATE', lambda: owner_tasks_transitions.close_task(self.primary, '001'))
         self.assertEqual(self.git('status', '--porcelain', cwd=self.primary), before)
 
     def test_missing_and_uncommitted_handoff_refuse(self):

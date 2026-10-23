@@ -193,7 +193,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.state()['status'], 'queued')
         self.assertEqual(self.state()['transitions'], [])
         os.chdir(self.primary)
-        self.assert_stop('WRONG_WORKTREE', lambda: owner_lifecycle_commands.execution_start(self.primary, '001'))
+        self.assert_stop('WORKTREE_RELOCATE', lambda: owner_lifecycle_commands.execution_start(self.primary, '001'))
         self.assertEqual(json.loads((self.primary / '.cardine/tasks/001.json').read_text())['status'], 'queued')
 
     def test_lean_start_is_read_only_and_preserves_machine(self):
@@ -500,7 +500,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
                               + (f'resolved project={project.resolve()}; ' if project != project.resolve() else '')
                               + f'expected worktree={self.worker}; --project does not name the canonical task worktree')
                     resume = shlex.join(['cardine', *command, '--project', str(self.worker)])
-                    self.assertEqual(result.stderr.strip(), f'BLOCKED WRONG_WORKTREE: {detail}; resume: {resume}')
+                    self.assertEqual(result.stderr.strip(), f'BLOCKED WORKTREE_RELOCATE: {detail}; resume: {resume}')
         self.assertEqual(self.state()['status'], 'queued')
         self.assertEqual(self.state()['transitions'], [])
         self.assertEqual(self.git('status', '--porcelain'), '')

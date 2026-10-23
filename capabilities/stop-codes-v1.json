@@ -87,13 +87,29 @@
         "governed-sdd"
       ],
       "step": "C4",
-      "emitter": "`cardine worktree closure-status`; `cardine worktree check`; `cardine worktree prepare` on a mismatched lifecycle state file; `cardine execution start/deliver/ready-check`; `cardine task close` (project mismatches override the default resume with the original invocation targeting the registered worktree)",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree check`; `cardine worktree prepare` on a mismatched lifecycle state file; `cardine execution start/deliver/ready-check` and `cardine task close` when no task worktree is registered",
       "human_decision": true,
       "resume": "cardine worktree prepare {task_id} --project {project} --format json",
       "kind": "stop",
       "summary": "the task worktree, branch, or lifecycle state is missing or does not match",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_closure_status_covers_lifecycle_states_without_mutation",
       "resolution": "guardrail"
+    },
+    {
+      "code": "WORKTREE_RELOCATE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C4",
+      "emitter": "`cardine execution start/deliver/ready-check`; `cardine task close` when `--project` names a checkout other than the task's registered worktree",
+      "human_decision": false,
+      "resume": "cardine worktree check {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "the command was given a project other than the task's registered worktree; rerun the identical command there",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_project_selection_routes_to_the_registered_worktree",
+      "resolution": "recoverable"
     },
     {
       "code": "EVIDENCE_INCOMPLETE",
@@ -155,9 +171,25 @@
       "human_decision": true,
       "resume": "cardine worktree integrate abort {task_id} --project {project} --format json",
       "kind": "stop",
-      "summary": "an integration lease is already held",
+      "summary": "an integration lease is held by another task, a live writer, or without an ownership proof",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_a_held_lease_through_the_registry",
       "resolution": "guardrail"
+    },
+    {
+      "code": "LEASE_INTERRUPTED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree integrate stage`; `cardine worktree cleanup` when the retained lease names this task and project and no other writer is live",
+      "human_decision": false,
+      "resume": "cardine worktree integrate abort {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "an integration lease recorded by this task's own interrupted operation is retained and no staged merge exists",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_owned_interrupted_lease_recovers_and_foreign_ownership_stays_held",
+      "resolution": "recoverable"
     },
     {
       "code": "INTEGRATION_CONFLICT",
@@ -214,7 +246,7 @@
         "governed-sdd"
       ],
       "step": "C9",
-      "emitter": "`cardine worktree closure-status`",
+      "emitter": "`cardine worktree closure-status`; `cardine worktree cleanup` when origin/main is a proper ancestor of local main",
       "human_decision": false,
       "resume": "git push origin main",
       "kind": "status",
@@ -249,9 +281,25 @@
       "human_decision": true,
       "resume": "rerun cardine worktree cleanup {task_id} --project {project} --format json after the named condition clears",
       "kind": "stop",
-      "summary": "cleanup preconditions are not met",
+      "summary": "cleanup preconditions are not met, or the failure is an unmerged, unpushed, denied or foreign state",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_cleanup_reports_blocked_cleanup_through_the_registry",
       "resolution": "guardrail"
+    },
+    {
+      "code": "CLEANUP_PARTIAL",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C10",
+      "emitter": "`cardine worktree cleanup` when a removal step failed without a denied-access condition",
+      "human_decision": false,
+      "resume": "cardine worktree cleanup {task_id} --project {project} --format json",
+      "kind": "stop",
+      "summary": "cleanup removed part of the task's worktree, branch or lifecycle file and can be rerun unchanged",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_partial_cleanup_reruns_and_denied_access_stays_blocked",
+      "resolution": "recoverable"
     },
     {
       "code": "UNDECLARED_VALIDATION_COMMANDS",
@@ -593,9 +641,24 @@
       "resume": "fix the named state field, then cardine task transition {task_id} <STATUS> --project {project} --format json",
       "tool_hint": "cardine task transition",
       "kind": "stop",
-      "summary": "a task state field or transition history is invalid",
+      "summary": "a task state field, transition history or pending operation is invalid, corrupt, foreign or not replayable by one command",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_invalid_stop",
       "resolution": "guardrail"
+    },
+    {
+      "code": "TASK_STATE_INTERRUPTED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "shared task-state reader when an intact operation intent is a plain `cardine task transition` and no other writer is live",
+      "human_decision": false,
+      "resume": "cardine task transition {task_id} <STATUS> --project {project} --format json",
+      "kind": "stop",
+      "summary": "a `cardine task transition` was interrupted before it finished; rerunning the identical command replays its recorded operation",
+      "test": "tests.test_run_recovery.RunRecoveryTest.test_interrupted_transition_is_recoverable_at_every_boundary",
+      "resolution": "recoverable"
     },
     {
       "code": "REVIEW_NOT_APPROVED",

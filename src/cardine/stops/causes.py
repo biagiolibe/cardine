@@ -1,0 +1,137 @@
+"""Pure cause classification for worktree, state, lease and cleanup stops.
+
+Each classifier only reads. It returns the registered code of the cause it can
+prove, and the caller's original guardrail code for anything ambiguous, corrupt,
+foreign or denied. A proof here is a fact measured on this checkout (an intact
+lease naming this task and project, an idle writer guard, a writable Git
+directory); it is not authorship proof and never grants authority.
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from cardine.shared.errors import CardineError
+from cardine.shared.git import _run_git
+from cardine.shared.git import git_output
+from cardine.shared.jsonio import _read_json_object
+from cardine.shared.models import ResolvedTaskIdentity
+from cardine.worktree.storage import _merge_head_path
+
+
+def lease_stop_code(project_root: Path, identity: ResolvedTaskIdentity, lease_path: Path) -> str:
+    """`LEASE_INTERRUPTED` for this task's own idle lease, else `LEASE_HELD`.
+
+    A lease held by another task, an unreadable or mismatched lease, a live
+    writer, or a staged merge that no longer matches the lease stays a
+    guardrail: existence alone proves neither liveness nor permission to abort.
+    """
+    from cardine.lifecycle.receipts import operation_live
+    try:
+        lease = _read_json_object(lease_path, "integration lease")
+    except CardineError:
+        return "LEASE_HELD"
+    if (
+        lease.get("task_id") != identity.canonical_id
+        or lease.get("branch") != identity.branch_name
+        or lease.get("project") != str(project_root)
+        or operation_live(project_root, identity.canonical_id)
+    ):
+        return "LEASE_HELD"
+    if _merge_head_path(project_root).exists() and (
+        git_output(project_root, "rev-parse", "HEAD") != lease.get("main_commit")
+        or git_output(project_root, "rev-parse", "MERGE_HEAD") != git_output(
+            project_root, "rev-parse", f"refs/heads/{identity.branch_name}")
+    ):
+        return "LEASE_HELD"
+    return "LEASE_INTERRUPTED"
+
+
+def cleanup_branch_stop_code(
+    project_root: Path, branch: str, task_commit: str | None, common_dir: Path,
+) -> str:
+    """`CLEANUP_PARTIAL` when the worktree is gone and only a merged branch remains.
+
+    The worktree removal already happened, so rerunning the identical cleanup is
+    the next effect, not a repeat. An unmerged or reused branch, a primary
+    checkout off main, or an unwritable Git directory stays `CLEANUP_BLOCKED`.
+    """
+    if task_commit is None or not os.access(common_dir, os.W_OK | os.X_OK):
+        return "CLEANUP_BLOCKED"
+    if git_output(project_root, "branch", "--show-current") != "main":
+        return "CLEANUP_BLOCKED"
+    if _run_git(project_root, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}").stdout.strip() != task_commit:
+        return "CLEANUP_BLOCKED"
+    if _run_git(project_root, "merge-base", "--is-ancestor", task_commit, "main").returncode != 0:
+        return "CLEANUP_BLOCKED"
+    return "CLEANUP_PARTIAL"
+
+
+def main_ahead_of_origin(project_root: Path) -> bool:
+    """True only when origin/main is a proper ancestor of local main (a push is pending)."""
+    remote = _run_git(project_root, "rev-parse", "--verify", "--quiet", "refs/remotes/origin/main")
+    if remote.returncode != 0:
+        return False
+    main = git_output(project_root, "rev-parse", "main")
+    return remote.stdout.strip() != main and _run_git(
+        project_root, "merge-base", "--is-ancestor", "refs/remotes/origin/main", "main",
+    ).returncode == 0
+
+
+# Executable inventory of every emitter of the worktree, state, lease, order and
+# cleanup stop families: (file, function, code) -> (disposition, reason). A test
+# scans the source with the same rules and fails on any emitter missing here.
+# `split` means the emitter classifies a recoverable cause, `guardrail` keeps the
+# real authority negative, `passthrough` forwards a code chosen elsewhere, and
+# `deferred` names the later row that owns the audit.
+EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/cli.py", "_run_cli", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/cli.py", "_run_cli", "COMMAND_REFUSED"): ("deferred", "RE2c audits host and OS catches"),
+    ("src/cardine/cli.py", "_run_cli", "OS_ACCESS_FAILED"): ("deferred", "RE2c audits host and OS catches"),
+    ("src/cardine/cli.py", "_run_cli", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/console/snapshot.py", "_read_console_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/hosts/codex.py", "plan_codex_user_rules", "COMMAND_REFUSED"): ("deferred", "RE2c audits host and OS catches"),
+    ("src/cardine/integration/evidence.py", "candidate_validation_declaration", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/integration/merge.py", "_integration_task_state", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/integration/merge.py", "_integration_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "CLEANUP_BLOCKED"): ("guardrail", "unmerged, unpushed, denied or foreign state"),
+    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "LEASE_INTERRUPTED"): ("split", "own idle lease: abort is the exact owned recovery"),
+    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
+    ("src/cardine/integration/merge.py", "stage_task_integration", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/integration/merge.py", "stage_task_integration", "LEASE_HELD"): ("guardrail", "exclusive-create race or foreign or live lease"),
+    ("src/cardine/integration/merge.py", "stage_task_integration", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt; owned landing residue (intent and stage files) is preserved and its replay belongs to RE5a"),
+    ("src/cardine/legacy/snapshot.py", "_read_console_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/lifecycle/closure.py", "advance_task_closure", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/lifecycle/closure.py", "advance_task_closure", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
+    ("src/cardine/lifecycle/closure.py", "advance_task_closure.result", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/lifecycle/commands.py", "execution_start", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
+    ("src/cardine/lifecycle/commands.py", "execution_start", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/lifecycle/execution.py", "_execution_location", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/lifecycle/execution.py", "_execution_location", "WORKTREE_RELOCATE"): ("split", "project names another checkout than the registered task worktree"),
+    ("src/cardine/lifecycle/execution.py", "_execution_location", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/lifecycle/execution.py", "_execution_worktree", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/lifecycle/execution.py", "delivery_readiness", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
+    ("src/cardine/lifecycle/execution.py", "delivery_readiness", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/release/update.py", "run_self_update.refuse", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/review/verdict.py", "record_review_verdict.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/tasks/importer.py", "import_task_states.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/tasks/preflight.py", "check_dependencies", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
+    ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
+    ("src/cardine/tasks/preflight.py", "reconcile_execution_contract", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
+    ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INTERRUPTED"): ("split", "intact plain transition intent and no live writer"),
+    ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/tasks/transitions.py", "close_task", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/tasks/transitions.py", "close_task", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
+    ("src/cardine/tasks/transitions.py", "record_spike_outcome", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
+    ("src/cardine/tasks/transitions.py", "transition_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/worktree/checkout.py", "_prepare_task_worktree", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/worktree/checkout.py", "prepare_task_worktree", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/worktree/checkout.py", "repair_task_worktree_base", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/worktree/closure_status.py", "closure_status", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/worktree/closure_status.py", "closure_status", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt; owned landing residue (intent and stage files) is preserved and its replay belongs to RE5a"),
+    ("src/cardine/worktree/closure_status.py", "closure_status", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
+    ("src/cardine/worktree/closure_status.py", "closure_status", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
+    ("src/cardine/worktree/closure_status.py", "closure_status.report", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+}

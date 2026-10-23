@@ -1,6 +1,7 @@
 """Receipt-gated state readers; pure validation remains separately reusable."""
 from pathlib import Path
 import json
+import shlex
 from cardine.shared.layout import names
 from cardine.tasks.state_core import (
     STATUSES, STATE_MACHINE, SCHEMA_PATH, TaskStateInvalid, _invalid, _validate_schema,
@@ -27,6 +28,13 @@ def read_task_state(project_root, task_id, workflow, *, spike=False, review_requ
                 raise TaskStateInvalid(str(error)) from error
             intent = path.with_name(f'.{task_id}.intent.json')
             if intent.exists():
+                from cardine.lifecycle.receipts import interrupted_transition, operation_live
+                target = None if operation_live(project_root, task_id) else interrupted_transition(project_root, task_id)
+                if target is not None:
+                    raise stop_factory(
+                        "TASK_STATE_INTERRUPTED", "interrupted task transition; replay the identical command",
+                        resume=f"cardine task transition {task_id} {target} --project {shlex.quote(str(project_root))} --format json",
+                        task_id=task_id, project=project_root)
                 raise stop_factory("TASK_STATE_INVALID", "interrupted or active task creation/revision; replay identical command",
                                    task_id=task_id, project=project_root)
             journal = Path(project_root) / names().project_directory / "task-creation.lock"

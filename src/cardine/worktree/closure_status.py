@@ -15,6 +15,7 @@ from cardine.worktree.storage import _verified_lifecycle_project
 from cardine.shared.git import git_output
 from cardine.worktree.checkout import inspect_task_worktree
 from cardine.tasks.identity import resolve_task_identity
+from cardine.stops.causes import lease_stop_code
 from cardine.stops.render import stop_resume
 
 
@@ -60,10 +61,11 @@ def closure_status(
         )
 
     if lease_path.exists() and not integration_path.exists():
+        lease_code = lease_stop_code(project_root, identity, lease_path)
         return report(
             "C6",
-            "LEASE_HELD",
-            stop_resume("LEASE_HELD", task_id=identity.canonical_id, project=project),
+            lease_code,
+            stop_resume(lease_code, task_id=identity.canonical_id, project=project),
         )
     if integration_path.exists():
         return report("C7", None, "run the selected candidate validation")
