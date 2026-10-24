@@ -81,10 +81,15 @@ class ReviewVerdictTest(unittest.TestCase):
         (self.root / "feature.txt").write_text("changed after submission\n")
         self.commit()
         before = self.snapshot()
-        result = self.cli("APPROVE")
-        self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertIn("REVIEW_STALE", result.stderr)
-        self.assertEqual(self.snapshot(), before)
+        messages = []
+        for _ in range(2):
+            result = self.cli("APPROVE")
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("REVIEW_NOT_APPROVED", result.stderr)
+            self.assertIn("cause: stale", result.stderr)
+            messages.append(result.stderr)
+            self.assertEqual(self.snapshot(), before)
+        self.assertEqual(*messages)
         # Requested changes can always return the task to implementation.
         self.assertEqual(self.cli("CHANGES_REQUESTED").returncode, 0)
         self.assertEqual(json.loads(self.path.read_text())["status"], "in_progress")

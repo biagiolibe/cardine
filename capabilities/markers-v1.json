@@ -38,7 +38,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "code-review-prompt": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -92,7 +92,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "git-workflow": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -134,7 +134,7 @@
       "adoptionRecord": "013-language-policy-v2"
     },
     "lifecycle-orchestration": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -272,7 +272,7 @@
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "task-worktree-boundary": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -308,7 +308,7 @@
       "adoptionRecord": null
     },
     "task-worktree-review-procedure": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -320,7 +320,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "workflow-mode-lock": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "064-closure-text-uses-advance"

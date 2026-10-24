@@ -148,7 +148,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.write_state()
         (self.worker / "feature.txt").write_text("changed after review\n")
         self.commit()
-        self.assert_stop("REVIEW_STALE", "feature.txt")
+        self.assert_stop("REVIEW_NOT_APPROVED", "feature.txt")
 
     def test_reverted_implementation_commit_still_invalidates_approval(self):
         self.start()
@@ -157,12 +157,12 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.commit()
         (self.worker / "feature.txt").write_text("approved code\n")
         self.commit()
-        self.assert_stop("REVIEW_STALE", "feature.txt")
+        self.assert_stop("REVIEW_NOT_APPROVED", "feature.txt")
 
     def test_missing_verdict_stop(self):
         self.start()
         self.write_state(verdict=None)
-        self.assert_stop("REVIEW_NOT_APPROVED", "review.verdict expected APPROVE; found None")
+        self.assert_stop("REVIEW_NOT_APPROVED", "cause: missing;")
 
     def test_absent_review_and_rejected_verdict_stop(self):
         self.start()
@@ -202,7 +202,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_nonancestor_review_stop(self):
         self.start()
         self.write_state(reviewed="f" * 40)
-        self.assert_stop("REVIEW_STALE", "review.reviewed_commit expected ancestor")
+        self.assert_stop("REVIEW_NOT_APPROVED", "review.reviewed_commit expected ancestor")
 
     def test_only_own_governance_changes_preserve_approval(self):
         self.start()
@@ -232,7 +232,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.write_state()
                 change()
                 self.commit()
-                error = self.assert_stop("REVIEW_STALE", "offending paths")
+                error = self.assert_stop("REVIEW_NOT_APPROVED", "offending paths")
                 self.assertNotIn(".cardine/tasks/056.json", str(error).split("offending paths:")[1].split(";")[0])
                 self.git("worktree", "remove", "--force", str(self.worker))
                 self.git("branch", "-D", "task-056")
@@ -247,7 +247,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.write_state()
         (self.worker / ".cardine/tasks/057.json").write_text("{}\n")
         self.commit()
-        self.assert_stop("REVIEW_STALE", ".cardine/tasks/057.json")
+        self.assert_stop("REVIEW_NOT_APPROVED", ".cardine/tasks/057.json")
 
     def test_schema_valid_but_impossible_history_stops(self):
         self.start()

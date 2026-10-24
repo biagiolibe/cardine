@@ -80,18 +80,18 @@ class BranchStateTest(support.StateConsoleFixture):
     def test_closure_status_is_shown_in_the_detail_pane(self) -> None:
         self.setup_project({"001": "queued"})
         self.worktree("task-001")
-        report = {"stop_reason": "REVIEW_REQUIRED", "resume": "After approval, continue at C4"}
+        report = {"stop_reason": "REVIEW_NOT_APPROVED", "resume": "After approval, continue at C4"}
         with mock.patch.object(owner_console_snapshot, "closure_status", return_value=(report, False)):
             task = self.load()["001"]
-        self.assertEqual(task.closure_stop_reason, "REVIEW_REQUIRED")
+        self.assertEqual(task.closure_stop_reason, "REVIEW_NOT_APPROVED")
         self.assertEqual(task.closure_resume, "After approval, continue at C4")
         lines = [value for value, _ in owner_console_render._detail_lines(task, 60, PALETTE)]
-        self.assertIn("Closure stop: REVIEW_REQUIRED", lines)
+        self.assertIn("Closure stop: REVIEW_NOT_APPROVED", lines)
         self.assertIn("Resume: After approval, continue at C4", lines)
 
     def test_every_closure_stop_is_rendered_without_special_cases(self) -> None:
         reasons = (
-            "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "REVIEW_REQUIRED", "WRONG_WORKTREE",
+            "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "REVIEW_NOT_APPROVED", "WRONG_WORKTREE",
             "EVIDENCE_INCOMPLETE", "PRIMARY_DIRTY", "MAIN_BEHIND_ORIGIN", "LEASE_HELD",
             "INTEGRATION_CONFLICT", "CANDIDATE_VALIDATION_FAILED", "EVIDENCE_MISMATCH",
             "PUSH_PENDING", "PUSH_REJECTED", "CLEANUP_BLOCKED",

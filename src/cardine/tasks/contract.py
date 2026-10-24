@@ -195,13 +195,20 @@ def resolve_human_fields(project_root, identity, text, task_class):
 
 def profile_digest(project_root: Path) -> str:
     profile = project_root / "docs" / "EXECUTION_EVIDENCE_PROFILE.md"
-    if not profile.is_file():
-        raise stop_error(
-            "EXECUTION_PROFILE_MISSING",
-            "rule: the execution contract derives from the project profile; source checked: "
-            "docs/EXECUTION_EVIDENCE_PROFILE.md; expected: the file exists; found: no such file",
-        )
-    return hashlib.sha256(profile.read_bytes()).hexdigest()
+    if profile.is_file():
+        return hashlib.sha256(profile.read_bytes()).hexdigest()
+    # An installed, validated project policy can resolve the same contract
+    # without generating files or changing host configuration. Invalid policy
+    # still fails at the configuration parser; it is never repaired here.
+    declaration = read_project_declaration(project_root)
+    if declaration is not None and declaration.get("validation", {}).get("commands"):
+        project_validation_commands(declaration)
+        policy = json.dumps(declaration["validation"], sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(("project-validation-v1:" + policy).encode()).hexdigest()
+    raise stop_error(
+        "UNDECLARED_VALIDATION_COMMANDS",
+        "cause: execution-profile; no docs/EXECUTION_EVIDENCE_PROFILE.md or installed validation policy",
+    )
 
 
 def contract_digest(text: str) -> str | None:

@@ -65,21 +65,6 @@
       "resolution": "failing-work"
     },
     {
-      "code": "REVIEW_REQUIRED",
-      "class": "judgment",
-      "workflows": [
-        "lean-delivery",
-        "governed-sdd"
-      ],
-      "step": "C3",
-      "emitter": "a review the task or the developer declared as required",
-      "human_decision": true,
-      "resume": "obtain the independent review, then continue at C4",
-      "kind": "stop",
-      "summary": "a required independent review is outstanding",
-      "resolution": "guardrail"
-    },
-    {
       "code": "WRONG_WORKTREE",
       "class": "tool",
       "workflows": [
@@ -309,11 +294,11 @@
         "governed-sdd"
       ],
       "step": "C6",
-      "emitter": "`cardine worktree integrate stage`; `cardine worktree integrate finalize`",
+      "emitter": "task execution profile resolution; integration candidate validation policy",
       "human_decision": true,
-      "resume": "write declared candidate validation fragments or state none in .cardine/candidate-validation.json, then rerun the interrupted cardine worktree integrate step",
+      "resume": "declare the missing execution or candidate validation policy, then rerun the interrupted command",
       "kind": "stop",
-      "summary": "the project has not declared its candidate validation commands",
+      "summary": "validation policy is absent; execution-profile and candidate causes retain their source detail",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_undeclared_validation_commands_through_the_registry",
       "resolution": "guardrail"
     },
@@ -330,20 +315,6 @@
       "summary": "the task has no current resolved execution contract",
       "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
       "resolution": "recoverable"
-    },
-    {
-      "code": "EXECUTION_PROFILE_MISSING",
-      "class": "tool",
-      "workflows": [
-        "governed-sdd"
-      ],
-      "emitter": "`cardine execution contract`; `cardine execution reconcile`; `cardine execution preflight`; `cardine execution ready-check`; `cardine execution validate`",
-      "human_decision": true,
-      "resume": "add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked cardine execution command",
-      "kind": "stop",
-      "summary": "the execution evidence profile that the contract derives from is missing",
-      "test": "tests.test_execution_evidence.ExecutionEvidenceTest.test_execution_gates_report_coded_actionable_stops",
-      "resolution": "guardrail"
     },
     {
       "code": "VALIDATION_ENTRY_FORMAT",
@@ -559,31 +530,17 @@
       "resolution": "guardrail"
     },
     {
-      "code": "WORKFLOW_UNREADABLE",
-      "class": "judgment",
-      "workflows": [
-        "lean-delivery",
-        "governed-sdd"
-      ],
-      "emitter": "agent judgment before the first mutation: a local workflow document cannot be read or contradicts another",
-      "human_decision": true,
-      "resume": "ask the developer to restore or reconcile the workflow documents, then restart from the same command",
-      "kind": "stop",
-      "summary": "a required workflow document is missing, unreadable, or contradicts another before any mutation",
-      "resolution": "guardrail"
-    },
-    {
       "code": "RULE_CONFLICT",
       "class": "judgment",
       "workflows": [
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "agent judgment: a gate contradicts another rule, or an authority is in conflict",
+      "emitter": "agent judgment: conflicting authorities or missing/unreadable required policy",
       "human_decision": true,
-      "resume": "report both rules and ask the developer which governs; never write false state to satisfy a gate",
+      "resume": "report the conflicting rules or missing policy source and ask the developer to restore or reconcile authority, then rerun the interrupted command",
       "kind": "stop",
-      "summary": "a gate seems to contradict another rule or authority, so neither can be followed without breaking the other",
+      "summary": "cause conflict or missing-policy: required authority cannot be resolved",
       "resolution": "guardrail"
     },
     {
@@ -667,29 +624,13 @@
         "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "cardine worktree integrate stage",
+      "emitter": "required-review judgments; review verdict and integration state checks",
       "human_decision": true,
-      "resume": "cardine review verdict {task_id} APPROVE --project {project} --format json",
+      "resume": "obtain independent review of the current task commit, then rerun the interrupted command",
       "tool_hint": "cardine review verdict",
       "kind": "stop",
-      "summary": "a required review verdict is absent or not APPROVE",
+      "summary": "cause missing or stale: independent approval for the current implementation is unavailable",
       "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_missing_verdict_stop",
-      "resolution": "guardrail"
-    },
-    {
-      "code": "REVIEW_STALE",
-      "class": "tool",
-      "workflows": [
-        "lean-delivery",
-        "governed-sdd"
-      ],
-      "emitter": "cardine worktree integrate stage",
-      "human_decision": true,
-      "resume": "review the current task commit, then cardine review verdict {task_id} APPROVE --project {project} --format json",
-      "tool_hint": "cardine review verdict",
-      "kind": "stop",
-      "summary": "the reviewed commit is not an ancestor or code changed after approval",
-      "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_stale_review_stop",
       "resolution": "guardrail"
     },
     {
@@ -775,6 +716,36 @@
       "kind": "stop",
       "summary": "self-update Git operation or final verification failed",
       "resolution": "guardrail"
+    },
+    {
+      "code": "TASK_STEP_PENDING",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "task preflight and dependency resolution",
+      "human_decision": false,
+      "resume": "cardine run {task_id} --project {project}",
+      "kind": "stop",
+      "summary": "the valid task is at another lifecycle step; resolve its next step without changing state",
+      "test": "tests.test_run_recovery.PolicyRecoveryTest.test_pending_dependencies_keep_failed_results_as_guardrails",
+      "resolution": "recoverable"
+    },
+    {
+      "code": "DEPENDENCY_PENDING",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "task preflight and dependency resolution",
+      "human_decision": false,
+      "resume": "cardine run {task_id} --project {project}",
+      "kind": "stop",
+      "summary": "a declared dependency has not landed yet; wait for its delivery without changing the contract",
+      "test": "tests.test_run_recovery.PolicyRecoveryTest.test_pending_dependencies_keep_failed_results_as_guardrails",
+      "resolution": "recoverable"
     }
   ]
 }

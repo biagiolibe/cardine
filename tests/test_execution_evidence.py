@@ -152,7 +152,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.assertEqual(mismatch.returncode, 0, mismatch.stderr)
         write_state(self.project, "TASK-007", "done")
         rejected = self.run_cli("execution", "preflight", "TASK-007")
-        self.assertIn("TASK_STATUS_REJECTED", rejected.stderr)
+        self.assertIn("TASK_STEP_PENDING", rejected.stderr)
         self.assertIn("found: done", rejected.stderr)
 
     def test_outside_the_task_branch_the_record_and_queue_must_still_agree(self) -> None:
@@ -167,7 +167,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
         self.write_task("TASK-008", "queued")
         missing = self.run_cli("execution", "preflight", "TASK-008")
         self.assertNotEqual(missing.returncode, 0)
-        self.assertIn("BLOCKED EXECUTION_PROFILE_MISSING:", missing.stderr)
+        self.assertIn("BLOCKED UNDECLARED_VALIDATION_COMMANDS:", missing.stderr)
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-008.md").write_text(
@@ -558,10 +558,9 @@ Evidence plan:
         self.write_task("TASK-020", "queued")
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
-            "BLOCKED EXECUTION_PROFILE_MISSING: rule: the execution contract derives from the project profile; "
-            "source checked: docs/EXECUTION_EVIDENCE_PROFILE.md; expected: the file exists; found: no such file; "
-            "resume: add docs/EXECUTION_EVIDENCE_PROFILE.md to the project, then rerun the blocked cardine "
-            "execution command",
+            "BLOCKED UNDECLARED_VALIDATION_COMMANDS: cause: execution-profile; no "
+            "docs/EXECUTION_EVIDENCE_PROFILE.md or installed validation policy; "
+            "resume: declare the missing execution or candidate validation policy, then rerun the interrupted command",
         )
         (self.project / "docs").mkdir()
         profile = self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md"
@@ -593,19 +592,16 @@ Evidence plan:
         task.write_text(body.replace("queued", "ACCEPTED"), encoding="utf-8")
         self.append_contract("TASK-020")
         write_state(self.project, "TASK-020", "in_review", review_required=True)
-        accepted = (
-            "resume: bring the task to queued or in_progress through its lifecycle, then rerun the blocked "
-            "cardine execution command"
-        )
+        accepted = f"resume: cardine run TASK-020 --project {self.project.resolve()}"
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
-            "BLOCKED TASK_STATUS_REJECTED: rule: preflight runs only on an open task; field checked: validated task state for "
+            "BLOCKED TASK_STEP_PENDING: rule: preflight runs only on an open task; field checked: validated task state for "
             "tasks/TASK-020.md; accepted: queued, in_progress; found: in_review; " + accepted,
         )
         task.write_text(body.replace("queued", "DRAFT"), encoding="utf-8")
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "reconcile", "TASK-020")),
-            "BLOCKED TASK_STATUS_REJECTED: rule: reconcile refreshes only an open task; field checked: validated task state for "
+            "BLOCKED TASK_STEP_PENDING: rule: reconcile refreshes only an open task; field checked: validated task state for "
             "tasks/TASK-020.md; accepted: queued, in_progress (terminal tasks are skipped); found: in_review; " + accepted,
         )
         write_state(self.project, "TASK-020")

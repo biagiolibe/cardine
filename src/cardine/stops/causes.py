@@ -86,6 +86,11 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/tasks/preflight.py", "check_dependencies", "DEPENDENCY_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
+    ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STEP_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
+    ("src/cardine/tasks/preflight.py", "reconcile_execution_contract", "TASK_STEP_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
+    ("src/cardine/tasks/preflight.py", "check_dependencies", "<dynamic>"): ("passthrough", "valid task order and pending dependencies are nonhuman; cancelled or failed results retain guardrails"),
+    ("src/cardine/tasks/preflight.py", "execution_preflight", "<dynamic>"): ("passthrough", "valid task order and pending dependencies are nonhuman; cancelled or failed results retain guardrails"),
     ("src/cardine/cli.py", "_run_cli", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/cli.py", "_run_cli", "COMMAND_REFUSED"): ("deferred", "RE2c audits host and OS catches"),
     ("src/cardine/cli.py", "_run_cli", "OS_ACCESS_FAILED"): ("deferred", "RE2c audits host and OS catches"),
@@ -117,9 +122,8 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/release/update.py", "run_self_update.refuse", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/review/verdict.py", "record_review_verdict.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/tasks/importer.py", "import_task_states.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
-    ("src/cardine/tasks/preflight.py", "check_dependencies", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
-    ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
-    ("src/cardine/tasks/preflight.py", "reconcile_execution_contract", "TASK_STATUS_REJECTED"): ("deferred", "RE2b owns preflight status causes"),
+    ("src/cardine/tasks/preflight.py", "check_dependencies", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),
+    ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),
     ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INTERRUPTED"): ("split", "intact plain transition intent and no live writer"),
     ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/tasks/transitions.py", "close_task", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),

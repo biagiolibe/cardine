@@ -38,7 +38,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         for name in ("AGENTS.md", "CLAUDE.md"):
             self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "1")])
         self.assertIn(("review-remediation-record", "1"), self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")))
-        self.assertIn(("lifecycle-orchestration", "1"), self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")))
+        self.assertIn(("lifecycle-orchestration", "2"), self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")))
         implementation = self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"))
         for pair in (("execution-command-gate", "2"), ("validation-scoping", "1"), ("spike-routing", "1"), ("host-impact-routing", "1")):
             self.assertIn(pair, implementation)
@@ -71,7 +71,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertEqual(
             self.marker_pairs(text),
             [
-                ("lifecycle-orchestration", "1"),
+                ("lifecycle-orchestration", "2"),
                 ("task-worktree-lifecycle", "1"),
                 ("owner-acceptance-workflow", "1"),
                 ("rejected-attempt-restart", "1"),
@@ -122,7 +122,7 @@ class CapabilityMarkerTest(unittest.TestCase):
 
         self.assertIn(("task-blueprint", "5"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
         self.assertIn(
-            ("lifecycle-orchestration", "1"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
+            ("lifecycle-orchestration", "2"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
         )
         self.assertNotIn(
             "reasoning-budget-contract", dict(self.marker_pairs(texts["docs/CONTEXT_READING_POLICY.md"]))
@@ -171,7 +171,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         code_review_prompt = (self.WORKFLOW / "docs/CODE_REVIEW_PROMPT.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(code_review_prompt),
-            [("code-review-prompt", "1")],
+            [("code-review-prompt", "2")],
         )
 
         completion_report = (self.WORKFLOW / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
@@ -271,7 +271,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn(("review-mode-boundary", "1"), review)
         self.assertIn(("implementer-reviewer-handoff", "2"), review)
         self.assertIn(("reviewer-integrator-identity", "1"), review)
-        self.assertIn(("task-worktree-review-procedure", "2"), review)
+        self.assertIn(("task-worktree-review-procedure", "3"), review)
 
     def test_review_preflight_fails_closed_before_substantive_inspection(self) -> None:
         review = (self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")

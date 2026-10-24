@@ -101,7 +101,7 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 f.commit('Record approval')
                 (f.worker / 'feature.txt').write_text('changed after approval\n')
                 f.commit('Change implementation')
-                self.stop('REVIEW_STALE', lambda: merge._integration_task_state(
+                self.stop('REVIEW_NOT_APPROVED', lambda: merge._integration_task_state(
                     f.primary, resolve_task_identity(f.primary, '001', 'existing'),
                     f.git('rev-parse', 'HEAD'), f.worker, require_tracked=True))
 
@@ -177,7 +177,7 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 snapshot['contract']['dependencies'] = ['002']
                 task_path.write_text(json.dumps(snapshot))
                 seal_state(f.worker, '001')
-                self.stop('TASK_STATUS_REJECTED', lambda: check_dependencies(f.worker, '001', record))
+                self.stop('DEPENDENCY_PENDING', lambda: check_dependencies(f.worker, '001', record))
                 state = {'version': 1, 'task_id': '002', 'workflow': 'single', 'status': 'done',
                          'transitions': [
                              {'from': 'queued', 'to': 'in_progress', 'commit': f.git('rev-parse', 'HEAD'),
@@ -193,7 +193,7 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 dependency.write_text(contract_record('002', extra='Review: not_required\n'))
                 freeze_record(f.primary, '002', dependency)
                 # A file on disk is insufficient until main commits it.
-                self.stop('TASK_STATUS_REJECTED', lambda: check_dependencies(f.worker, '001', record))
+                self.stop('DEPENDENCY_PENDING', lambda: check_dependencies(f.worker, '001', record))
                 f.git('add', '.', cwd=f.primary)
                 f.git('commit', '-qm', 'Land dependency', cwd=f.primary)
                 check_dependencies(f.worker, '001', record)

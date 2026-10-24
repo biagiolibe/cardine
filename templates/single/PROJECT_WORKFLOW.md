@@ -1,6 +1,6 @@
 # Workflow — [Project Name]
 
-<!-- CARDINE:BEGIN capability=workflow-mode-lock v1 -->
+<!-- CARDINE:BEGIN capability=workflow-mode-lock v2 -->
 ## Workflow lock
 
 The presence of this file selects the single Cardine lifecycle. Before any file
@@ -14,7 +14,7 @@ The configured preset in `.cardine/project.json` supplies option defaults
 request such as “update the queue” changes only the authorized record and never
 authorizes a different workflow. If the local workflow documents or the project
 configuration are absent, contradictory, or cannot be read before a mutation,
-return `BLOCKED WORKFLOW_UNREADABLE` without changing files or Git state.
+return `BLOCKED RULE_CONFLICT` without changing files or Git state.
 <!-- CARDINE:END -->
 
 ## Preset and options
@@ -212,7 +212,7 @@ and the diff, confirm sole writer ownership, then run `cardine execution start
 Stops and denials; never treat an unrelated check error as accepted dirt.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=git-workflow v2 -->
+<!-- CARDINE:BEGIN capability=git-workflow v3 -->
 ## Git workflow
 
 ### Authority of `Proceed with`
@@ -242,7 +242,7 @@ worktree; bypassing a required independent review; resolving a textual
 conflict; or work on another task.
 
 - `Review: required` is a gate, not a request for authorization: after C3,
-  stop at `REVIEW_REQUIRED`. A fresh reviewer-integrator must approve before
+  stop at `REVIEW_NOT_APPROVED`. A fresh reviewer-integrator must approve before
   continuing at C4, and performs C6 through C10 after approval.
 - `Review: not_required` tasks proceed through C10 after their validation and
   completion handoff and closure records. No reviewer session is required.
@@ -257,7 +257,7 @@ conflict; or work on another task.
 - Task branches edit only their own task record, its review record, its handoff, and its own `.cardine/tasks/<TASK-ID>.json` state file; they do not regenerate the queue or the plan's status region. `integrate stage` regenerates those generated views once on the merged candidate tree and stages them with the landed state. A failed regeneration is reported as a stale view with `cardine status --write`; it never undoes the landed state. A shared-file conflict aborts integration; never choose one task's state over another.
 - Only after successful validated integration and any required `main` push, use `cardine worktree cleanup`. Failure, requested changes, cancellation, or blocked integration retains both; exceptional cleanup remains explicitly authorized and outside the bounded command.
 - `Accept <TASK-ID>` runs `cardine review verdict <TASK-ID> APPROVE --owner --body <owner-evidence>` on the clean reviewed HEAD, commits the state file and projections, and continues at C6 under the `Proceed with` authority. A manual merge is never permitted.
-- A forge approval cannot be supplied by the same identity that authored the PR. If an external approval is required but unavailable, leave the PR open and report `BLOCKED REVIEW_REQUIRED`.
+- A forge approval cannot be supplied by the same identity that authored the PR. If an external approval is required but unavailable, leave the PR open and report `BLOCKED REVIEW_NOT_APPROVED`.
 
 ### Stops and denials
 

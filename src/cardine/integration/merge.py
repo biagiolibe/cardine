@@ -108,13 +108,13 @@ def _integration_task_state(
     if required:
         if review.get("verdict") != "APPROVE":
             raise stop_error(
-                "REVIEW_NOT_APPROVED", f"{relative}: review.verdict expected APPROVE; found {review.get('verdict')!r}",
+                "REVIEW_NOT_APPROVED", f"cause: missing; {relative}: review.verdict expected APPROVE; found {review.get('verdict')!r}",
                 task_id=identity.canonical_id, project=project_root,
             )
         reviewed = review.get("reviewed_commit")
         if not reviewed or _run_git(project_root, "merge-base", "--is-ancestor", str(reviewed), task_commit).returncode != 0:
             raise stop_error(
-                "REVIEW_STALE", f"{relative}: review.reviewed_commit expected ancestor of {task_commit}; found {reviewed!r}",
+                "REVIEW_NOT_APPROVED", "cause: stale; " + f"{relative}: review.reviewed_commit expected ancestor of {task_commit}; found {reviewed!r}",
                 task_id=identity.canonical_id, project=project_root,
             )
         allowed = {
@@ -127,7 +127,7 @@ def _integration_task_state(
         offending = sorted(set(filter(None, changed)) - allowed)
         if offending:
             raise stop_error(
-                "REVIEW_STALE", f"{relative}: expected only task governance paths after {reviewed}; offending paths: {', '.join(offending)}",
+                "REVIEW_NOT_APPROVED", "cause: stale; " + f"{relative}: expected only task governance paths after {reviewed}; offending paths: {', '.join(offending)}",
                 task_id=identity.canonical_id, project=project_root,
             )
     return state

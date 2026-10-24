@@ -22,10 +22,11 @@ import re
 def execution_contract(project_root: Path, task_id: str) -> str:
     """Render the profile-derived execution block placed in a task at design time."""
     commands = ", ".join(frozen_validation_commands(project_root, task_id)) or "none"
+    source = "docs/EXECUTION_EVIDENCE_PROFILE.md" if (project_root / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file() else ".cardine/project.json"
     return "\n".join((
         "## Execution contract — resolved",
         "",
-        "- Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`",
+        f"- Profile source: `{source}`",
         f"- Profile revision: `sha256:{profile_digest(project_root)}`",
         f"- Validation IDs: {commands}",
         EXECUTION_COMMANDS_LINE,
@@ -75,9 +76,10 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
     open_statuses = TASK_BRANCH_OPEN_STATUSES if on_task_branch else ("queued", "in_progress")
     if status not in open_statuses:
         raise stop_error(
-            "TASK_STATUS_REJECTED",
+            "TASK_STEP_PENDING" if status != "cancelled" else "TASK_STATUS_REJECTED",
             f"rule: preflight runs only on an open task; field checked: validated task state for {task_name}; "
             f"accepted: {', '.join(open_statuses)}; found: {status or 'missing'}",
+            task_id=task_id, project=project_root,
         )
     return f"Execution contract: {task_file.relative_to(project_root)}"
 
@@ -93,10 +95,11 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
         return f"Execution reconciliation skipped for terminal task {task_id} ({status})"
     if status not in ("queued", "in_progress"):
         raise stop_error(
-            "TASK_STATUS_REJECTED",
+            "TASK_STEP_PENDING",
             f"rule: reconcile refreshes only an open task; field checked: validated task state for "
             f"{task_file.relative_to(project_root).as_posix()}; accepted: queued, in_progress "
             f"(terminal tasks are skipped); found: {status}",
+            task_id=task_id, project=project_root,
         )
     generated = execution_contract(project_root, task_id)
     section = re.compile(
@@ -143,7 +146,7 @@ def check_dependencies(project_root: Path, task_id: str, record: str) -> None:
         path = state_path(project_root, dependency).relative_to(project_root)
         shown = _run_git(primary, "show", f"main:{path.as_posix()}")
         if shown.returncode:
-            raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} has no landed state", task_id=task_id, project=project_root)
+            raise stop_error("DEPENDENCY_PENDING", f"dependency {dependency} has no landed state", task_id=task_id, project=project_root)
         state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error, require_contract=True, artifact_ref="main")
         if not dependency_satisfied(state):
-            raise stop_error("TASK_STATUS_REJECTED", f"dependency {dependency} is not a landed successful result", task_id=task_id, project=project_root)
+            raise stop_error("TASK_STATUS_REJECTED" if state["status"] in ("done", "cancelled") else "DEPENDENCY_PENDING", f"dependency {dependency} is not a landed successful result", task_id=task_id, project=project_root)

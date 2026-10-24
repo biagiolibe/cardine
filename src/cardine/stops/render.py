@@ -30,7 +30,7 @@ def stop_resume(code: str, **fields: object) -> str:
     entry = load_stop_registry().get(code)
     if entry is None:
         raise InternalStopError(f"unregistered stop code: {code}")
-    if code == "MAIN_BEHIND_ORIGIN" and fields.get("project"):
+    if code in {"MAIN_BEHIND_ORIGIN", "TASK_STEP_PENDING", "DEPENDENCY_PENDING"} and fields.get("project"):
         fields["project"] = shlex.quote(str(fields["project"]))
     if code == "TASK_STATE_MISSING" and fields.get("project") and fields.get("task_id"):
         fields["project"] = shlex.quote(str(_task_state_recovery_project(

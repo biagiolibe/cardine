@@ -2,7 +2,7 @@
 
 Use this procedure for `Run lifecycle <TASK-ID>`, `Accept <TASK-ID>`, and `Restart rejected <TASK-ID>` after the entry-point router has applied its always-loaded invariants. A task whose resolved review option is `not_required` needs no reviewer session; the orchestration then runs only the implementer steps and the integration.
 
-<!-- CARDINE:BEGIN capability=lifecycle-orchestration v1 -->
+<!-- CARDINE:BEGIN capability=lifecycle-orchestration v2 -->
 `Run lifecycle <TASK-ID>` authorizes an orchestrator to carry one dependency-ready
 task through implementation, independent review, requested-change remediation,
 acceptance, and `main` integration without further developer prompts. It does
@@ -93,7 +93,7 @@ These reuse
 rules do not weaken independent review, acceptance evidence, or forge gates,
 and do not fabricate an external approval. If the
 forge requires an approval from a distinct authorized identity, leave the PR
-open and report `BLOCKED REVIEW_REQUIRED` unless that independent identity has actually
+open and report `BLOCKED REVIEW_NOT_APPROVED` unless that independent identity has actually
 approved it.
 
 ## Token discipline

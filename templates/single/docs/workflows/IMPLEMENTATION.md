@@ -2,7 +2,7 @@
 
 Use this procedure only for `Proceed with <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- CARDINE:BEGIN capability=task-worktree-boundary v1 -->
+<!-- CARDINE:BEGIN capability=task-worktree-boundary v2 -->
 Order of operations: before `prepare`, read only the router read set
 (`AGENTS.md` or `CLAUDE.md`, `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`, and
 this procedure); read no task material and mutate nothing. Apart from the
@@ -74,7 +74,7 @@ then finalize and commit the completion handoff. For Review: required, run
 `cardine execution deliver <TASK-ID> --project .` as the final delivery step.
 It commits only state and owned projections and reports the clean committed
 HEAD. Stop writing immediately after successful delivery. `Review: required` then stops at
-`REVIEW_REQUIRED`; it is a gate, not a request for authorization. Leave the
+`REVIEW_NOT_APPROVED`; it is a gate, not a request for authorization. Leave the
 clean worktree for the fresh reviewer-integrator, who resumes C4 through C10
 after approval. `Review: not_required` proceeds through C10. The remaining
 stops are `ACCEPTANCE_UNMET`, `VALIDATION_FAILED`, `WRONG_WORKTREE`,

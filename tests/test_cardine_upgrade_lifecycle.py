@@ -198,7 +198,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
-            "capability=task-worktree-boundary v1",
+            "capability=task-worktree-boundary v2",
             (self.project / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"),
         )
         report = (self.project / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
@@ -226,7 +226,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
             for relative in changed_paths
         }
         previous_versions = {
-            "git-workflow": (8, 2),
+            "git-workflow": (8, 3),
             "lifecycle-orchestration": (7, 4),
             "task-worktree-review": (4, 1),
             "task-worktree-integration": (3, 1),
@@ -312,7 +312,7 @@ local task branch. For `Review: NOT_REQUIRED`, the implementer performs the
 same acceptance commit and main integration after validation. Owner acceptance
 is status-only and does not automatically integrate the branch.
 <!-- CARDINE:END -->"""
-        legacy_preflight = """<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v2 -->
+        legacy_preflight = """<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v3 -->
 This block supersedes the checkout, ancestry, integration, and cleanup steps in
 the legacy handoff block above. The completion handoff also records the
 absolute task-worktree path and current task commit. Stop the implementer and
@@ -353,7 +353,7 @@ worktree before the branch only after validated integration succeeds.
         )
         previous["docs/LIFECYCLE_ORCHESTRATION.md"] = previous[
             "docs/LIFECYCLE_ORCHESTRATION.md"
-        ].replace("capability=lifecycle-orchestration v10", "capability=lifecycle-orchestration v5")
+        ].replace("capability=lifecycle-orchestration v20", "capability=lifecycle-orchestration v5")
 
         for relative, text in previous.items():
             (workflow / relative).write_text(text, encoding="utf-8")
@@ -379,7 +379,7 @@ worktree before the branch only after validated integration succeeds.
 
         upgraded = review.read_text(encoding="utf-8")
         self.assertIn("capability=implementer-reviewer-handoff v2", upgraded)
-        self.assertIn("capability=task-worktree-review-procedure v2", upgraded)
+        self.assertIn("capability=task-worktree-review-procedure v3", upgraded)
         self.assertIn("Consumer-owned review note.", upgraded)
         self.assertNotIn("uses that same primary checkout", upgraded)
         self.assertNotIn("git switch <task-branch>", upgraded)
@@ -452,7 +452,7 @@ worktree before the branch only after validated integration succeeds.
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
-        self.assertIn("capability=task-worktree-boundary v1", implementation.read_text(encoding="utf-8"))
+        self.assertIn("capability=task-worktree-boundary v2", implementation.read_text(encoding="utf-8"))
         self.assertIn("**Manually triggered.**", implementation.read_text(encoding="utf-8"))
         upgraded_workflow = project_workflow.read_text(encoding="utf-8")
         self.assertIn(f"capability=bounded-worktree-lifecycle v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'bounded-worktree-lifecycle')}", upgraded_workflow)
@@ -512,7 +512,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertNotIn("Current task commit", upgraded_report)
         self.assertIn("Consumer-owned handoff note.", upgraded_report)
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-worktree-review-procedure v2", upgraded_review)
+        self.assertIn("capability=task-worktree-review-procedure v3", upgraded_review)
         self.assertIn("base commit exists and is an ancestor of `HEAD`", " ".join(upgraded_review.split()))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.55")
@@ -622,7 +622,7 @@ worktree before the branch only after validated integration succeeds.
                 flags=re.DOTALL,
             ),
             "docs/workflows/IMPLEMENTATION.md": re.sub(
-                r"\n<!-- CARDINE:BEGIN capability=task-worktree-boundary v1 -->.*?<!-- CARDINE:END -->\n",
+                r"\n<!-- CARDINE:BEGIN capability=task-worktree-boundary v2 -->.*?<!-- CARDINE:END -->\n",
                 "\n",
                 current["docs/workflows/IMPLEMENTATION.md"],
                 flags=re.DOTALL,
@@ -664,9 +664,9 @@ worktree before the branch only after validated integration succeeds.
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
         self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", upgraded_workflow)
         self.assertIn("Review: required` is a gate, not a request for authorization", upgraded_workflow)
-        self.assertIn("capability=task-worktree-boundary v1", upgraded_implementation)
-        self.assertIn("REVIEW_REQUIRED`; it is a gate", upgraded_implementation)
-        self.assertIn("capability=task-worktree-review-procedure v2", upgraded_review)
+        self.assertIn("capability=task-worktree-boundary v2", upgraded_implementation)
+        self.assertIn("REVIEW_NOT_APPROVED`; it is a gate", upgraded_implementation)
+        self.assertIn("capability=task-worktree-review-procedure v3", upgraded_review)
         self.assertIn("reviewer-integrator performs C6 through C10", upgraded_review)
         self.assertIn("Consumer-owned closure note.", upgraded_implementation)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))

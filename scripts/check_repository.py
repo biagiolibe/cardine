@@ -176,7 +176,7 @@ def check_language_policy() -> None:
     )
     for name in workflow_lock_files:
         text = (ROOT / name).read_text(encoding="utf-8")
-        if "BLOCKED WORKFLOW_UNREADABLE" not in text:
+        if "BLOCKED RULE_CONFLICT" not in text:
             fail(f"workflow lock is incomplete: {name}")
 
     lean_mode_lock_files = (

@@ -1,6 +1,6 @@
 # [Project Name]
 
-Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORKFLOW.md` is the source of operational rules. If either is missing or contradictory, return `BLOCKED WORKFLOW_UNREADABLE`. The shared rules below are generated from `AGENTS.md`.
+Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORKFLOW.md` is the source of operational rules. If either is missing or contradictory, return `BLOCKED RULE_CONFLICT`. The shared rules below are generated from `AGENTS.md`.
 
 ## Commands
 

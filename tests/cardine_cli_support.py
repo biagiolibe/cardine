@@ -139,7 +139,7 @@ class CardineCliFixtureMixin:
             "",
         ))
         previous_implementation = re.sub(
-            r"<!-- CARDINE:BEGIN capability=task-worktree-boundary v1 -->.*?<!-- CARDINE:END -->\n",
+            r"<!-- CARDINE:BEGIN capability=task-worktree-boundary v2 -->.*?<!-- CARDINE:END -->\n",
             legacy_implementation,
             current_implementation,
             count=1,
