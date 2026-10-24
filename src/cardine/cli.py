@@ -31,7 +31,7 @@ from cardine.shared.paths import SCRIPTS_ROOT
 from cardine.shared.project import read_project_declaration
 from cardine.shared.usage import format_usage_report, usage_report
 from cardine.stops.registry import load_stop_registry
-from cardine.stops.render import format_stop, stop_error
+from cardine.stops.render import emit_diagnostic, outcome_for_code, format_stop, stop_error
 from cardine.tasks.contract import check_handoff, default_handoff_path
 from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
 from cardine.tasks.importer import import_task_states
@@ -672,9 +672,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                         task_id=arguments.task_id,
                         project=project_root,
                     )
-                    journal.stopped(mismatch.code)
-                    print(mismatch, file=sys.stderr)
-                    return 2
+                    return emit_diagnostic(mismatch, journal)
             elif arguments.worktree_command == "evidence":
                 recorded = (record_task_evidence(
                     arguments.task_id,
@@ -711,7 +709,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 else:
                     print(f"{report['step']}; resume: {report['resume'] or 'none'}")
                 if not ready:
-                    return 2
+                    return 2 if outcome_for_code(str(report["stop_reason"])) == "blocked" else 0
             elif arguments.worktree_command == "advance":
                 advanced, blocked = advance_task_closure(
                     arguments.task_id,
@@ -727,7 +725,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 print(json.dumps(advanced, sort_keys=True))
                 if blocked:
                     journal.stopped(str(advanced["stop_code"]))
-                    return 2
+                    return 2 if outcome_for_code(str(advanced["stop_code"])) == "blocked" else 0
             elif arguments.worktree_command == "integrate":
                 if arguments.integrate_command == "stage":
                     result = stage_task_integration(
@@ -900,23 +898,17 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 detail = detail.replace(f"--project={project_root};",
                                         f"--project={arguments.project}; resolved project={project_root};", 1)
             error = stop_error(error.code, detail, resume=shlex.join(("cardine", *rerun)))
-        journal.stopped(error.code)
-        print(error, file=sys.stderr)
-        return 2
+        return emit_diagnostic(error, journal)
     except CardineError as error:
         refused = stop_error("COMMAND_REFUSED", str(error))
-        journal.stopped(refused.code)
-        print(refused, file=sys.stderr)
-        return 2
+        return emit_diagnostic(refused, journal)
     except OSError as error:
         from cardine.stops.nonrun import diagnostic_invocation, os_stop_code
         code = os_stop_code(error, diagnostic=diagnostic_invocation(arguments))
         failed = stop_error(code, str(error), **(
             {"resume": shlex.join(("cardine", *sys.argv[1:]))} if code != "OS_ACCESS_FAILED" else {}
         ))
-        journal.stopped(failed.code)
-        print(failed, file=sys.stderr)
-        return 2
+        return emit_diagnostic(failed, journal)
     return 0
 
 

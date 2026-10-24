@@ -144,7 +144,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
         queue = (self.primary / "tasks/QUEUE.md").read_bytes()
         with self.assertRaises(shared_errors.CardineStop) as caught:
             self.stage()
-        self.assertTrue(str(caught.exception).startswith(f"BLOCKED {code}:"), str(caught.exception))
+        from cardine.stops.render import outcome_for_code
+        prefix = {"blocked": "BLOCKED", "next": "NEXT", "iterate": "ITERATE"}[outcome_for_code(code)]
+        self.assertTrue(str(caught.exception).startswith(f"{prefix} {code}:"), str(caught.exception))
         self.assertIn(detail, str(caught.exception))
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, integration = owner_worktree_storage._lifecycle_paths(self.primary, identity)

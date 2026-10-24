@@ -14,12 +14,14 @@ class InternalStopError(Exception):
 
 
 class CardineStop(CardineError):
-    """A registered stop; its message is the complete `BLOCKED <CODE>: ...` line."""
+    """A registered diagnostic carrying typed cause and recovery metadata."""
 
     def __init__(self, code: str, line: str, *, render: Callable[[], str] | None = None) -> None:
         super().__init__(line)
         self.code = code
         self._render = render
+        self.detail: str | None = None
+        self.resume: Callable[[], str] | None = None
 
     def __str__(self) -> str:
         return self._render() if self._render is not None else super().__str__()

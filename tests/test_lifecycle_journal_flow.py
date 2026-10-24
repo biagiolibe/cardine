@@ -74,6 +74,25 @@ class LifecycleJournalTest(unittest.TestCase):
             return []
         return [json.loads(line) for line in self.journal.read_text(encoding="utf-8").splitlines()]
 
+    def test_new_diagnostics_keep_resolution_without_rewriting_history(self) -> None:
+        self.lifecycle('prepare', '--format', 'json')
+        historical = self.journal.read_bytes()
+        for code, outcome, resolution in [('LEASE_INTERRUPTED', 'next', 'recoverable'),
+                                           ('VALIDATION_FAILED', 'iterate', 'failing-work'),
+                                           ('RULE_CONFLICT', 'blocked', 'guardrail')]:
+            entry = owner_shared_journal.LifecycleJournalEntry()
+            import argparse
+            entry.begin(argparse.Namespace(command='worktree', worktree_command='check',
+                                            task_id='056', project=self.project))
+            entry.stopped(code)
+            from contextlib import chdir
+            with chdir(self.project):
+                entry.write(2 if outcome == 'blocked' else 0)
+            line = self.lines()[-1]
+            self.assertEqual((line['result'], line['resolution'], line['stop_code']),
+                             (outcome, resolution, code))
+            self.assertTrue(self.journal.read_bytes().startswith(historical))
+
     def test_prepare_resume_is_marked_in_the_journal(self) -> None:
         self.assertEqual(self.lifecycle("prepare", "--format", "json").returncode, 0)
         self.assertEqual(self.lifecycle("prepare", "--resume", "--format", "json").returncode, 0)

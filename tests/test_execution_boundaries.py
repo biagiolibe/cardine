@@ -495,12 +495,12 @@ class ExecutionBoundariesTest(unittest.TestCase):
                     result = subprocess.run([sys.executable, str(script), *command,
                                              '--project=' + str(project)], cwd=self.worker,
                                             capture_output=True, text=True)
-                    self.assertEqual(result.returncode, 2, result.stdout)
+                    self.assertEqual(result.returncode, 0, result.stdout)
                     detail = (f'cwd={self.worker}; --project={project}; '
                               + (f'resolved project={project.resolve()}; ' if project != project.resolve() else '')
                               + f'expected worktree={self.worker}; --project does not name the canonical task worktree')
                     resume = shlex.join(['cardine', *command, '--project', str(self.worker)])
-                    self.assertEqual(result.stderr.strip(), f'BLOCKED WORKTREE_RELOCATE: {detail}; resume: {resume}')
+                    self.assertEqual(result.stderr.strip(), f'NEXT WORKTREE_RELOCATE: {detail}; resume: {resume}')
         self.assertEqual(self.state()['status'], 'queued')
         self.assertEqual(self.state()['transitions'], [])
         self.assertEqual(self.git('status', '--porcelain'), '')

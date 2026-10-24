@@ -95,14 +95,14 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
                    "056", "--project", str(self.primary), "--worktree-root", str(self.worktree_root),
                    "--format", "json"]
         checked = subprocess.run(command, cwd=worktree, text=True, capture_output=True, check=False)
-        self.assertEqual(checked.returncode, 2)
+        self.assertEqual(checked.returncode, 0)
         self.assertEqual(checked.stderr.strip(),
-                         "BLOCKED STALE_WORKTREE_BASE: worktree check reported: stale-base-record; resume: "
+                         "NEXT STALE_WORKTREE_BASE: worktree check reported: stale-base-record; resume: "
                          + str(report["resume"]))
         self.assertEqual(before, self.snapshot(worktree))
         self.assertEqual(self.resume()["base_commit"], self.base)
         self.assertEqual(before, self.snapshot(worktree))
-        with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED STALE_WORKTREE_BASE:"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "NEXT STALE_WORKTREE_BASE:"):
             self.prepare()
         closure, _ = owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)
         self.assertEqual(closure["stop_reason"], "STALE_WORKTREE_BASE")
@@ -154,7 +154,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         before = evidence_path.read_bytes()
         os.chdir(self.primary)
         self.assertEqual(owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C5")
-        with self.assertRaisesRegex(shared_errors.CardineError, "BLOCKED EVIDENCE_MISMATCH:"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "NEXT EVIDENCE_MISMATCH:"):
             owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(evidence_path.read_bytes(), before)
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())

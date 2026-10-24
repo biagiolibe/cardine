@@ -80,7 +80,7 @@ class NonrunCausesTest(unittest.TestCase):
             argv = ['cardine', 'codex', 'configure', '--check', '--config', '/tmp/a b;input.toml']
             with patch.object(sys, 'argv', argv), patch.object(cli, 'plan_codex_configuration',
                     side_effect=OSError(number, 'injected')), contextlib.redirect_stderr(stderr):
-                self.assertEqual(cli._run_cli(LifecycleJournalEntry()), 2)
+                self.assertEqual(cli._run_cli(LifecycleJournalEntry()), 2 if number == errno.EACCES else 0)
             self.assertIn(code, stderr.getvalue())
             if number != errno.EACCES:
                 self.assertIn("--config '/tmp/a b;input.toml'", stderr.getvalue())

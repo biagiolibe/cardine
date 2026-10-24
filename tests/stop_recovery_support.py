@@ -26,4 +26,4 @@ def run_recovery(command: str, cwd: Path, worktree_root: Path | None = None) -> 
 
 
 def resume_from(stderr: str) -> str:
-    return next(line.split("; resume: ", 1)[1] for line in stderr.splitlines() if line.startswith("BLOCKED "))
+    return next(line.split("; resume: ", 1)[1] for line in stderr.splitlines() if line.startswith(("BLOCKED ", "NEXT ", "ITERATE ")))

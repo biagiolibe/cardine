@@ -61,7 +61,9 @@ class ExecutionEvidenceTest(unittest.TestCase):
             output = owner_tasks_preflight.readiness_check(self.project.resolve(), task_id, report)
             return subprocess.CompletedProcess([], 0, output, "")
         except shared_errors.CardineError as error:
-            return subprocess.CompletedProcess([], 2, "", str(error))
+            from cardine.stops.render import outcome_for_code
+            code = 2 if not isinstance(error, shared_errors.CardineStop) or outcome_for_code(error.code) == "blocked" else 0
+            return subprocess.CompletedProcess([], code, "", str(error))
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         self.freeze_pending_states()
@@ -301,10 +303,10 @@ Evidence plan:
             encoding="utf-8",
         )
         missing = self.contract_ready_check("TASK-020", report)
-        self.assertNotEqual(missing.returncode, 0)
+        self.assertEqual(missing.returncode, 0)
         self.assertEqual(
             self.blocked_line(missing),
-            "BLOCKED HOST_IMPACT_EVIDENCE_MISSING: enforced profile is missing Completion evidence: Cardine CLI / "
+            "ITERATE HOST_IMPACT_EVIDENCE_MISSING: enforced profile is missing Completion evidence: Cardine CLI / "
             "direct / project; resume: add a Completion evidence entry for each listed profile to the task's Host "
             "impact section, then rerun the blocked cardine execution command",
         )
@@ -335,8 +337,8 @@ Evidence plan:
         )
         task.write_text(task.read_text(encoding="utf-8").replace("## Completion", legacy_contract + "\n\n## Completion"), encoding="utf-8")
         blocked = self.run_cli("execution", "preflight", "TASK-014")
-        self.assertNotEqual(blocked.returncode, 0)
-        self.assertIn("BLOCKED EXECUTION_CONTRACT_UNRESOLVED:", blocked.stderr)
+        self.assertEqual(blocked.returncode, 0)
+        self.assertIn("NEXT EXECUTION_CONTRACT_UNRESOLVED:", blocked.stderr)
         self.assertIn("`required via cardine execution`", blocked.stderr)
         preview = self.run_cli("execution", "reconcile", "TASK-014")
         self.assertEqual(preview.returncode, 0, preview.stderr)
@@ -442,8 +444,8 @@ Evidence plan:
             encoding="utf-8",
         )
         fabricated = self.run_cli("execution", "handoff-check", "TASK-013", str(report))
-        self.assertNotEqual(fabricated.returncode, 0)
-        self.assertIn("BLOCKED HANDOFF_VALIDATION_EVIDENCE_MISSING:", fabricated.stderr)
+        self.assertEqual(fabricated.returncode, 0)
+        self.assertIn("ITERATE HANDOFF_VALIDATION_EVIDENCE_MISSING:", fabricated.stderr)
 
         self.assertEqual(self.run_cli("execution", "validate", "TASK-013", "probe").returncode, 0)
         self.assertEqual(self.run_cli("execution", "handoff-check", "TASK-013", str(report)).returncode, 0)
@@ -514,8 +516,8 @@ Evidence plan:
             encoding="utf-8",
         )
         rejected = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertNotEqual(rejected.returncode, 0)
-        self.assertIn("BLOCKED HANDOFF_VALIDATION_FAILING:", rejected.stderr)
+        self.assertEqual(rejected.returncode, 0)
+        self.assertIn("ITERATE HANDOFF_VALIDATION_FAILING:", rejected.stderr)
         self.assertIn("a failing validation needs a named skip", rejected.stderr)
 
         report.write_text(
@@ -526,7 +528,7 @@ Evidence plan:
             encoding="utf-8",
         )
         named_skip_failure = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertNotEqual(named_skip_failure.returncode, 0)
+        self.assertEqual(named_skip_failure.returncode, 0)
         self.assertIn("a named skip does not make a failing validation pass", named_skip_failure.stderr)
 
         report.write_text(
@@ -534,12 +536,13 @@ Evidence plan:
             encoding="utf-8",
         )
         absent = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertNotEqual(absent.returncode, 0)
+        self.assertEqual(absent.returncode, 0)
         self.assertIn("Validation skips", absent.stderr)
 
     def blocked_line(self, result: subprocess.CompletedProcess[str]) -> str:
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        return next(line for line in result.stderr.splitlines() if line.startswith("BLOCKED "))
+        line = next(line for line in result.stderr.splitlines() if line.startswith(("BLOCKED ", "NEXT ", "ITERATE ")))
+        self.assertEqual(result.returncode, 2 if line.startswith("BLOCKED ") else 0, result.stdout + result.stderr)
+        return line
 
     def test_unresolved_contract_recovery_runs_unchanged(self) -> None:
         write_state(self.project, "TASK-020")
@@ -548,7 +551,7 @@ Evidence plan:
         (self.project / "tasks/TASK-020.md").write_text(
             "Status: queued\n\n## Authority\n\n## Expected code surface\n\n## Validation\n", encoding="utf-8")
         stopped = self.run_cli("execution", "preflight", "TASK-020")
-        self.assertIn("BLOCKED EXECUTION_CONTRACT_UNRESOLVED:", self.blocked_line(stopped))
+        self.assertIn("NEXT EXECUTION_CONTRACT_UNRESOLVED:", self.blocked_line(stopped))
         recovered = run_recovery(resume_from(stopped.stderr), self.project)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
         retried = self.run_cli("execution", "preflight", "TASK-020")
@@ -573,7 +576,7 @@ Evidence plan:
         resume = "resume: cardine execution reconcile TASK-020 --apply --project ."
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
-            "BLOCKED EXECUTION_CONTRACT_UNRESOLVED: rule: a task needs a resolved execution contract; field "
+            "NEXT EXECUTION_CONTRACT_UNRESOLVED: rule: a task needs a resolved execution contract; field "
             f"checked: `- Profile revision` in tasks/TASK-020.md; expected: sha256:{digest}; found: no such line; "
             + resume,
         )
@@ -582,7 +585,7 @@ Evidence plan:
         changed = owner_tasks_contract.profile_digest(self.project)
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
-            "BLOCKED EXECUTION_CONTRACT_UNRESOLVED: rule: the resolved contract must match the current profile; "
+            "NEXT EXECUTION_CONTRACT_UNRESOLVED: rule: the resolved contract must match the current profile; "
             "field checked: `- Profile revision` in tasks/TASK-020.md against docs/EXECUTION_EVIDENCE_PROFILE.md; "
             f"expected: sha256:{changed}; found: sha256:{digest}; " + resume,
         )
@@ -595,13 +598,13 @@ Evidence plan:
         accepted = f"resume: cardine run TASK-020 --project {self.project.resolve()}"
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "preflight", "TASK-020")),
-            "BLOCKED TASK_STEP_PENDING: rule: preflight runs only on an open task; field checked: validated task state for "
+            "NEXT TASK_STEP_PENDING: rule: preflight runs only on an open task; field checked: validated task state for "
             "tasks/TASK-020.md; accepted: queued, in_progress; found: in_review; " + accepted,
         )
         task.write_text(body.replace("queued", "DRAFT"), encoding="utf-8")
         self.assertEqual(
             self.blocked_line(self.run_cli("execution", "reconcile", "TASK-020")),
-            "BLOCKED TASK_STEP_PENDING: rule: reconcile refreshes only an open task; field checked: validated task state for "
+            "NEXT TASK_STEP_PENDING: rule: reconcile refreshes only an open task; field checked: validated task state for "
             "tasks/TASK-020.md; accepted: queued, in_progress (terminal tasks are skipped); found: in_review; " + accepted,
         )
         write_state(self.project, "TASK-020")
@@ -632,7 +635,7 @@ Evidence plan:
         resume = "then rerun cardine execution handoff-check TASK-021 <report> --project ."
         self.assertEqual(
             self.blocked_line(check()),
-            f"BLOCKED HANDOFF_REPORT_MISSING: rule: the handoff check reads a completion report; source checked: "
+            f"ITERATE HANDOFF_REPORT_MISSING: rule: the handoff check reads a completion report; source checked: "
             f"{report}; expected: an existing file; found: no such file; resume: write the completion report, "
             "then run cardine execution handoff-check TASK-021 <report> --project .",
         )
@@ -640,28 +643,28 @@ Evidence plan:
         write(Validation=None)
         self.assertEqual(
             self.blocked_line(check()),
-            "BLOCKED HANDOFF_FIELDS_MISSING: rule: every required field needs a non-empty value; source checked: "
+            "ITERATE HANDOFF_FIELDS_MISSING: rule: every required field needs a non-empty value; source checked: "
             "report.md; accepted form: `- <Field>: <value>`; required: " + required + "; missing: Validation; "
             "resume: add each missing field as `- <Field>: <value>`, " + resume,
         )
         report.write_text(report.read_text(encoding="utf-8") + "- Validation (commands): `x` exit 0\n", encoding="utf-8")
         self.assertEqual(
             self.blocked_line(check()),
-            "BLOCKED HANDOFF_FIELD_FORMAT: rule: a required field's name must be followed directly by the colon; "
+            "ITERATE HANDOFF_FIELD_FORMAT: rule: a required field's name must be followed directly by the colon; "
             "source checked: report.md; accepted form: `- <Field>: <value>`; found: `- Validation (commands):` "
             "(expected `- Validation: <value>`); resume: rewrite each listed field as `- <Field>: <value>`, " + resume,
         )
         write("TASK-099")
         self.assertEqual(
             self.blocked_line(check()),
-            "BLOCKED HANDOFF_TASK_MISMATCH: rule: the report must identify its task; source checked: report.md; "
+            "ITERATE HANDOFF_TASK_MISMATCH: rule: the report must identify its task; source checked: report.md; "
             "accepted: `Completion Report — TASK-021`; found: `Completion Report — TASK-099`; resume: correct "
             "the report heading to name this task, " + resume,
         )
         write(Validation="`x` exit 1")
         self.assertEqual(
             self.blocked_line(check()),
-            "BLOCKED HANDOFF_VALIDATION_FAILING: rule: a failing validation needs a named skip; field checked: "
+            "ITERATE HANDOFF_VALIDATION_FAILING: rule: a failing validation needs a named skip; field checked: "
             "Validation; accepted: no `exit <non-zero>`; found: `exit 1` with Validation skips: none; resume: fix "
             "the failing validation and report its passing result, " + resume,
         )
@@ -697,7 +700,7 @@ Evidence plan:
         write("none")
         self.assertEqual(
             self.blocked_line(check()),
-            "BLOCKED HANDOFF_VALIDATION_EVIDENCE_MISSING: rule: every declared validation needs a successful durable "
+            "ITERATE HANDOFF_VALIDATION_EVIDENCE_MISSING: rule: every declared validation needs a successful durable "
             "record; source checked: .cardine/execution-evidence.json for TASK-022; accepted: an entry with the "
             "declared id and command and exitStatus 0; missing for: probe; resume: run cardine execution validate "
             "TASK-022 <validation-id> --project . for each listed ID, then rerun the handoff check",
@@ -733,10 +736,10 @@ Evidence plan:
         evidence = json.loads((self.project / ".cardine/execution-evidence.json").read_text(encoding="utf-8"))
         self.assertEqual(evidence["TASK-010"][0]["id"], "probe")
         missing = self.run_cli("execution", "validate", "TASK-010", "not-declared")
-        self.assertNotEqual(missing.returncode, 0)
+        self.assertEqual(missing.returncode, 0)
         self.assertEqual(
             self.blocked_line(missing),
-            "BLOCKED VALIDATION_ID_UNDECLARED: rule: only a task-declared validation ID runs; field checked: "
+            "ITERATE VALIDATION_ID_UNDECLARED: rule: only a task-declared validation ID runs; field checked: "
             "validation.commands in the TASK-010 frozen contract; accepted: probe; found: 'not-declared'; resume: rerun cardine "
             "execution validate with a validation ID listed in the task's Validation section, or declare the command "
             "there first",
