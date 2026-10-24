@@ -641,11 +641,11 @@
         "governed-sdd"
       ],
       "emitter": "cardine self-update",
-      "human_decision": true,
-      "resume": "inspect the framework checkout, then rerun cardine self-update --check",
+      "human_decision": false,
+      "resume": "use the owning plugin-manager operation printed in the diagnostic",
       "kind": "stop",
-      "summary": "plugin cache is owned by the plugin manager",
-      "resolution": "guardrail"
+      "summary": "route this checkout to its plugin-manager owner; no update or host-write consent is granted",
+      "resolution": "recoverable"
     },
     {
       "code": "SELF_UPDATE_DIRTY",
@@ -686,21 +686,7 @@
       "human_decision": true,
       "resume": "inspect the framework checkout, then rerun cardine self-update --check",
       "kind": "stop",
-      "summary": "target is not a matching published release tag",
-      "resolution": "guardrail"
-    },
-    {
-      "code": "SELF_UPDATE_NON_FF",
-      "class": "command-exit",
-      "workflows": [
-        "lean-delivery",
-        "governed-sdd"
-      ],
-      "emitter": "cardine self-update",
-      "human_decision": true,
-      "resume": "inspect the framework checkout, then rerun cardine self-update --check",
-      "kind": "stop",
-      "summary": "stable cannot fast-forward",
+      "summary": "target is not a matching published release tag or stable cannot fast-forward",
       "resolution": "guardrail"
     },
     {
@@ -745,6 +731,62 @@
       "kind": "stop",
       "summary": "a declared dependency has not landed yet; wait for its delivery without changing the contract",
       "test": "tests.test_run_recovery.PolicyRecoveryTest.test_pending_dependencies_keep_failed_results_as_guardrails",
+      "resolution": "recoverable"
+    },
+    {
+      "code": "SELF_UPDATE_INPUT_INVALID",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "non-run cause classification",
+      "human_decision": false,
+      "resume": "correct --to to v<version>, then rerun cardine self-update --check",
+      "kind": "status",
+      "summary": "target argument is not a release tag",
+      "resolution": "failing-work"
+    },
+    {
+      "code": "OS_PATH_MISSING",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "non-run cause classification",
+      "human_decision": false,
+      "resume": "restore the missing input, then rerun the same read-only check",
+      "kind": "status",
+      "summary": "a required path is missing during an explicit read-only check",
+      "resolution": "failing-work"
+    },
+    {
+      "code": "OS_PATH_BUSY",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "non-run cause classification",
+      "human_decision": false,
+      "resume": "rerun the same read-only check",
+      "kind": "status",
+      "summary": "a path is temporarily busy during an explicit read-only check",
+      "resolution": "recoverable"
+    },
+    {
+      "code": "UPGRADE_OUTPUT_PENDING",
+      "class": "command-exit",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "non-run cause classification",
+      "human_decision": false,
+      "resume": "cardine upgrade --check --project {project}",
+      "kind": "status",
+      "summary": "known generated upgrade output is absent; planning requires no new decision",
       "resolution": "recoverable"
     }
   ]

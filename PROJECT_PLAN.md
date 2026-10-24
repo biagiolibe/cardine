@@ -137,7 +137,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 097 — Add focused development runs to the test runner.
 - `[x]` 098 — Build heavy lifecycle test fixtures once per class.
 - `[x]` 099 — Keep the test failure record writable in the sandbox.
-- `[ ]` 091 — Classify self-update, upgrade, and host stops by cause (RE2c).
+- `[x]` 091 — Classify self-update, upgrade, and host stops by cause (RE2c).
 - `[ ]` 092 — Dispatch typed outcomes through one renderer (RE2d).
 - `[ ]` 093 — Enforce the expected surface and record delivery identity (RE3a).
 - `[ ]` 096 — Store execution evidence in one file per task.

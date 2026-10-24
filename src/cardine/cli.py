@@ -909,7 +909,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
         print(refused, file=sys.stderr)
         return 2
     except OSError as error:
-        failed = stop_error("OS_ACCESS_FAILED", str(error))
+        from cardine.stops.nonrun import diagnostic_invocation, os_stop_code
+        code = os_stop_code(error, diagnostic=diagnostic_invocation(arguments))
+        failed = stop_error(code, str(error), **(
+            {"resume": shlex.join(("cardine", *sys.argv[1:]))} if code != "OS_ACCESS_FAILED" else {}
+        ))
         journal.stopped(failed.code)
         print(failed, file=sys.stderr)
         return 2
