@@ -455,7 +455,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "VALIDATION_RETRY_LIMIT", "WRONG_WORKTREE", "EVIDENCE_INCOMPLETE",
             "PRIMARY_DIRTY", "MAIN_BEHIND_ORIGIN", "LEASE_HELD", "INTEGRATION_CONFLICT",
             "CANDIDATE_VALIDATION_FAILED", "EVIDENCE_MISMATCH", "PUSH_PENDING", "PUSH_REJECTED", "CLEANUP_BLOCKED",
-            "UNDECLARED_VALIDATION_COMMANDS", "STALE_WORKTREE_BASE", "REVIEW_NOT_APPROVED", "REVIEW_STALE",
+            "UNDECLARED_VALIDATION_COMMANDS", "STALE_WORKTREE_BASE", "REVIEW_NOT_APPROVED",
             "WORKTREE_RELOCATE", "LEASE_INTERRUPTED", "CLEANUP_PARTIAL", "TASK_STEP_PENDING", "DEPENDENCY_PENDING",
         )
         gates = (
@@ -574,7 +574,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         error = undeclared_validation_commands_error(self.project, {})
         self.assertEqual(error.code, 'UNDECLARED_VALIDATION_COMMANDS')
         self.assertIn('Task validation commands: none recorded.', str(error))
-        self.assertIn('resume: write declared candidate validation fragments', str(error))
+        self.assertIn('resume: declare the missing execution or candidate validation policy', str(error))
 
     def test_integrate_stage_refuses_unsigned_precontract_state(self) -> None:
         path = self.project / ".cardine/tasks/056.json"

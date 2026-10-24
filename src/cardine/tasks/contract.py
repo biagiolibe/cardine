@@ -201,7 +201,7 @@ def profile_digest(project_root: Path) -> str:
     # without generating files or changing host configuration. Invalid policy
     # still fails at the configuration parser; it is never repaired here.
     declaration = read_project_declaration(project_root)
-    if declaration is not None and declaration.get("validation", {}).get("commands"):
+    if declaration is not None and declaration.get("validation") is not None:
         project_validation_commands(declaration)
         policy = json.dumps(declaration["validation"], sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(("project-validation-v1:" + policy).encode()).hexdigest()

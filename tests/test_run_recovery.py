@@ -631,6 +631,16 @@ class PolicyRecoveryTest(unittest.TestCase):
         validation["commands"]["check"] = "python3 changed.py"
         write_project_config(self.project, validation=validation)
         self.assertNotEqual(first, profile_digest(self.project))
+        # Explicitly declaring no commands is still a policy choice, not a
+        # missing source that needs a person's decision.
+        empty = {"commands": {}, "baseline": [],
+                 "candidate": {name: [] for name in ("REUSE", "BOUNDED", "FULL")}}
+        write_project_config(self.project, validation=empty)
+        before = self.snapshot()
+        explicit_none = profile_digest(self.project)
+        self.assertEqual(explicit_none, profile_digest(self.project))
+        self.assertEqual(before, self.snapshot())
+        self.assertNotEqual(first, explicit_none)
         config = self.project / ".cardine/project.json"
         config.write_text('{"version": 1, "preset": "foreign"}')
         before = self.snapshot()
