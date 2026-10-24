@@ -144,9 +144,11 @@ revalidation in the same turn; do not stop to report the fix.
 
 ## Validation
 
-- `python3 scripts/check_repository.py`
 - `meridian profile doctor meridian-self-hosting --project .`
 - `meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
-- `python3 scripts/run_tests.py --parallel`
 - `python3 scripts/run_tests.py --parallel --clean-clone`
 - `git diff --check`
+
+The clean-clone run executes `scripts/check_repository.py` and the parallel
+suite on a clone of the committed HEAD, so the task does not run them again
+in the worktree as counted validation.
