@@ -162,7 +162,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_missing_verdict_stop(self):
         self.start()
         self.write_state(verdict=None)
-        self.assert_stop("REVIEW_NOT_APPROVED", "cause: missing;")
+        error = self.assert_stop("REVIEW_NOT_APPROVED", "review.verdict expected APPROVE; found None")
+        self.assertIn("cause: missing;", str(error))
 
     def test_absent_review_and_rejected_verdict_stop(self):
         self.start()

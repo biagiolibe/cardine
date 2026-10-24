@@ -312,7 +312,7 @@ local task branch. For `Review: NOT_REQUIRED`, the implementer performs the
 same acceptance commit and main integration after validation. Owner acceptance
 is status-only and does not automatically integrate the branch.
 <!-- CARDINE:END -->"""
-        legacy_preflight = """<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v3 -->
+        legacy_preflight = """<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v2 -->
 This block supersedes the checkout, ancestry, integration, and cleanup steps in
 the legacy handoff block above. The completion handoff also records the
 absolute task-worktree path and current task commit. Stop the implementer and
@@ -353,7 +353,7 @@ worktree before the branch only after validated integration succeeds.
         )
         previous["docs/LIFECYCLE_ORCHESTRATION.md"] = previous[
             "docs/LIFECYCLE_ORCHESTRATION.md"
-        ].replace("capability=lifecycle-orchestration v20", "capability=lifecycle-orchestration v5")
+        ].replace("capability=lifecycle-orchestration v10", "capability=lifecycle-orchestration v5")
 
         for relative, text in previous.items():
             (workflow / relative).write_text(text, encoding="utf-8")
