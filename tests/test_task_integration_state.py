@@ -7,6 +7,9 @@ import sys
 import unittest
 from unittest import mock
 import shlex
+import shutil
+import tempfile
+from repository_template_support import RepositoryTemplate, authorize_copy
 from pathlib import Path
 from project_config_support import write_project_config
 from task_contract_support import freeze_record, seal_state
@@ -24,8 +27,35 @@ from cardine.integration import merge as owner_integration_merge
 
 
 class TaskIntegrationStateTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        def build(project):
+            fixture = cls()
+            try:
+                fixtures.GovernedCompletionRowsFixture.setUp(fixture)
+                shutil.copytree(fixture.primary, project)
+            finally:
+                fixtures.BoundedWorktreeLifecycleFixture.tearDown(fixture)
+                fixture.doCleanups()
+        cls.template = RepositoryTemplate(build)
+        cls.addClassCleanup(cls.template.cleanup)
+
     def setUp(self):
-        fixtures.GovernedCompletionRowsFixture.setUp(self)
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        self.primary = self.root / "project"
+        self.template.copy_to(self.primary)
+        self.worktree_root = self.root / "worktrees"
+        self.worktree_root.mkdir()
+        self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
+        authorize_copy(self.primary)
+        self.base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.previous_cwd = Path.cwd()
+        os.chdir(self.primary)
         path = self.primary / ".cardine/tasks/056.json"
         path.unlink()
         path.with_name(".056.guard").unlink(missing_ok=True)

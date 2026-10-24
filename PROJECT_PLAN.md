@@ -135,7 +135,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 089 — Classify worktree, state, lease, and cleanup stops by cause (RE2a).
 - `[x]` 090 — Consolidate the approval, configuration, and workflow codes (RE2b).
 - `[x]` 097 — Add focused development runs to the test runner.
-- `[ ]` 098 — Build heavy lifecycle test fixtures once per class.
+- `[x]` 098 — Build heavy lifecycle test fixtures once per class.
 - `[ ]` 091 — Classify self-update, upgrade, and host stops by cause (RE2c).
 - `[ ]` 092 — Dispatch typed outcomes through one renderer (RE2d).
 - `[ ]` 093 — Enforce the expected surface and record delivery identity (RE3a).
