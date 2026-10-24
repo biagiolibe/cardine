@@ -115,7 +115,7 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
             invalid("submission commit is not an ancestor of the review HEAD")
         changed = git_output(project_root, "log", "--format=", "--name-only", f"{submitted}..{head}").splitlines()
         if set(filter(None, changed)) - allowed:
-            raise stop_error("REVIEW_STALE", "implementation changed after submission; request changes and submit a new attempt",
+            raise stop_error("REVIEW_NOT_APPROVED", "cause: stale; " + "implementation changed after submission; request changes and submit a new attempt",
                              task_id=task_id, project=project_root)
     at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     state = _review_verdict_projection(state, verdict, head, approved_by, at)

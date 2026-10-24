@@ -132,7 +132,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 087 — Write and verify operation receipts (RE1b).
 - `[x]` 088 — Make state readers and preparation require receipts (RE1c).
 - `[x]` 089 — Classify worktree, state, lease, and cleanup stops by cause (RE2a).
-- `[ ]` 090 — Consolidate the approval, configuration, and workflow codes (RE2b).
+- `[x]` 090 — Consolidate the approval, configuration, and workflow codes (RE2b).
 - `[ ]` 091 — Classify self-update, upgrade, and host stops by cause (RE2c).
 - `[ ]` 092 — Dispatch typed outcomes through one renderer (RE2d).
 - `[ ]` 093 — Enforce the expected surface and record delivery identity (RE3a).

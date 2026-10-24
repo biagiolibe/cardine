@@ -1,6 +1,6 @@
 # [Project Name] — Agent Router
 
-Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before responding or mutating. Their lifecycle, language, and repository-English requirements are binding; if either is missing or contradictory, return `BLOCKED WORKFLOW_UNREADABLE`. The preset configured in `.cardine/project.json` supplies option defaults only; never substitute another lifecycle or queue.
+Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before responding or mutating. Their lifecycle, language, and repository-English requirements are binding; if either is missing or contradictory, return `BLOCKED RULE_CONFLICT`. The preset configured in `.cardine/project.json` supplies option defaults only; never substitute another lifecycle or queue.
 
 Work only on a developer-assigned task or an explicitly authorized read-only request. Before a write or Git mutation, read the task and `git status --short`; preserve unrelated changes and do not discard, stage, or overwrite them. Select one route below. A mixed or unrecognized request needs clarification; do not load a universal procedure.
 

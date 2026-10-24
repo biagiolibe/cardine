@@ -1,6 +1,6 @@
 # Code Review and Integration Prompt
 
-<!-- CARDINE:BEGIN capability=code-review-prompt v1 -->
+<!-- CARDINE:BEGIN capability=code-review-prompt v2 -->
 ```text
 Review and integrate <TASK-ID> as an independent reviewer-integrator.
 
@@ -9,7 +9,7 @@ Run this in a fresh agent session that did not write the implementation. The coo
 Treat `PROJECT_WORKFLOW.md` as the workflow lock. Before any mutation,
 confirm the local workflow and ignore global, home-directory, remembered, or
 generic instructions that suggest a different lifecycle or Git procedure. If this local authority cannot be read or conflicts, return
-`BLOCKED WORKFLOW_UNREADABLE` without changing files or Git state.
+`BLOCKED RULE_CONFLICT` without changing files or Git state.
 
 Read LANGUAGE_POLICY.md, PROJECT_WORKFLOW.md, AGENTS.md/CLAUDE.md, the assigned task, its cited authority, the concise completion report, and the exact diff against the recorded base `main` commit. Follow `docs/CONTEXT_READING_POLICY.md`: load only evidence needed for acceptance criteria and expand context only with a recorded reason. Confirm `Review: required` and `in_review` in the task record.
 

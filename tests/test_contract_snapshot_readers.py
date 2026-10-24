@@ -80,7 +80,7 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         self.edit()
         with self.assertRaises(CardineStop) as caught:
             check_dependencies(self.root, '001', self.record.read_text())
-        self.assertEqual(caught.exception.code, 'TASK_STATUS_REJECTED')
+        self.assertEqual(caught.exception.code, 'DEPENDENCY_PENDING')
         self.assertIn('002', str(caught.exception))
         check_dependencies(self.root, '002', '## Dependencies\n999\n')
 

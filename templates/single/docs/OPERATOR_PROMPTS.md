@@ -5,7 +5,7 @@ This non-normative cookbook provides focused prompts for starting Cardine chats.
 For a repository containing `PROJECT_WORKFLOW.md`, these prompts operate only
 under the lifecycle that `PROJECT_WORKFLOW.md` defines. They never authorize a fallback to
 any global/home-directory workflow instruction. If the local workflow files
-are missing or contradictory, the agent must return `BLOCKED WORKFLOW_UNREADABLE` before a mutation.
+are missing or contradictory, the agent must return `BLOCKED RULE_CONFLICT` before a mutation.
 
 Replace every `<PLACEHOLDER>` before sending a prompt. Use one workflow per chat. An implementation and its required review must use separate chats, except that `Run lifecycle <TASK-ID>` is a coordinator chat that delegates each role to a separate session. Before starting an implementation, remediation, or review, confirm the project's `docs/EXECUTION_EVIDENCE_PROFILE.md` is configured for the task's stack and evidence channels.
 

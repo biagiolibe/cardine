@@ -43,7 +43,7 @@ class TaskStatusGateTest(unittest.TestCase):
         write_state(self.root, status="done")
         with self.assertRaises(CardineStop) as caught:
             preflight.execution_preflight(self.root, "001")
-        self.assertEqual(caught.exception.code, "TASK_STATUS_REJECTED")
+        self.assertEqual(caught.exception.code, "TASK_STEP_PENDING")
 
     def test_reconcile_uses_state_for_terminal_and_open_tasks(self):
         self.assertNotIn("skipped", preflight.reconcile_execution_contract(self.root, "001", False))

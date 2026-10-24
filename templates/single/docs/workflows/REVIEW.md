@@ -2,7 +2,7 @@
 
 Use this procedure only for `Review <TASK-ID>` after the entry-point router has applied its always-loaded invariants.
 
-<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v2 -->
+<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v3 -->
 ## Mandatory task-worktree preflight
 
 After `APPROVE`, `Review <TASK-ID>` has the `Proceed with` authority for C6 through C10, including the single plain `git push origin main` and cleanup, with the same prohibitions.
@@ -68,12 +68,12 @@ cleanup; it also authorizes the first attempt's plain task-branch push, and
 task branch. `Proceed with` never authorizes tags, releases, force/deleting/mirroring pushes, history
 rewrites, forced worktree removal, bypassing this independent review, textual
 conflict resolution, or work on another task. This review is the gate:
-`Review: required` stops at `REVIEW_REQUIRED`, not to ask whether review may be
+`Review: required` stops at `REVIEW_NOT_APPROVED`, not to ask whether review may be
 skipped. After `APPROVE`, the reviewer-integrator performs C6 through C10.
 `Review: not_required` needs no reviewer and proceeds through C10.
 
 The closure stops are `ACCEPTANCE_UNMET`, `VALIDATION_FAILED`,
-`REVIEW_REQUIRED`, `WRONG_WORKTREE`, `EVIDENCE_INCOMPLETE`, `PRIMARY_DIRTY`,
+`REVIEW_NOT_APPROVED`, `WRONG_WORKTREE`, `EVIDENCE_INCOMPLETE`, `PRIMARY_DIRTY`,
 `MAIN_BEHIND_ORIGIN`, `LEASE_HELD`, `INTEGRATION_CONFLICT`,
 `CANDIDATE_VALIDATION_FAILED`, `EVIDENCE_MISMATCH`, `PUSH_REJECTED`, and
 `CLEANUP_BLOCKED`; each reports once with its resume command. A named,

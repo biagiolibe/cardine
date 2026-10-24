@@ -39,8 +39,8 @@
       "version": 1
     },
     "git-workflow": {
-      "sha256": "469eee993b63509420348d1690b75617f92232fe81835dbb0615c7a05402209a",
-      "version": 2
+      "sha256": "d50e46c8984666f58a7a61bc28678cc94bd5aaec6828735baa67dcef45a32dc4",
+      "version": 3
     },
     "review-policy": {
       "sha256": "fd1e33245126c97f148085442a69bd3a44dc8329c0f18b6993a6b114a794d499",
@@ -63,8 +63,8 @@
       "version": 1
     },
     "workflow-mode-lock": {
-      "sha256": "750a035d681e67321c85c2c7a3baf1a115b039b9d64cc55069f6b48c45f1984a",
-      "version": 1
+      "sha256": "0f42fa5713de30cc2ae01341b1184367020f8d3b6c22b91c86a31556ccf504d4",
+      "version": 2
     },
     "worktree-command-locations": {
       "sha256": "a7784fa1a78084ce884379510cbf1b13c6517fb18fb8f92dbb7b3eb1e1824a0b",
@@ -85,8 +85,8 @@
   },
   "templates/single/docs/CODE_REVIEW_PROMPT.md": {
     "code-review-prompt": {
-      "sha256": "3af294ed68a784823dcac3593fdc67268eab02065b4468fc6651de3c1c56de73",
-      "version": 1
+      "sha256": "bfe24e7a35129975e420bae193c9ac8eb3bdd6d3f029e72caae9d8342b9c3bca",
+      "version": 2
     }
   },
   "templates/single/docs/COMPLETION_REPORT_TEMPLATE.md": {
@@ -171,8 +171,8 @@
   },
   "templates/single/docs/LIFECYCLE_ORCHESTRATION.md": {
     "lifecycle-orchestration": {
-      "sha256": "d46aceec3d1b72b08e63cc1f272148ffbf589ebf8c036be109fe5759e109e58d",
-      "version": 1
+      "sha256": "b969d23cf31f8ae53cc968cf916140edf3c06689934a911c67f50e86623b649e",
+      "version": 2
     },
     "owner-acceptance-workflow": {
       "sha256": "32392826652d55fc1c27a7fa1fdf57fcc5907a30d421623f25e226fb4531260d",
@@ -233,8 +233,8 @@
       "version": 1
     },
     "task-worktree-boundary": {
-      "sha256": "8350c755a8a9a501239ff1ec88e3a47fb482aaac2366bb54ce631616f34545c6",
-      "version": 1
+      "sha256": "fbb87cc012ef53d3f0ee16838620da3dce080583ffda837bd1916e18ee74d1c0",
+      "version": 2
     },
     "validation-scoping": {
       "sha256": "d7e8db61f47099a632f3afe1e8728ee3303443b7ef0ac9f3077b0295386545c8",
@@ -285,8 +285,8 @@
       "version": 1
     },
     "task-worktree-review-procedure": {
-      "sha256": "70166bde10ab28f4a38fa050b6ddca126053f7e4d83aefdf813cf4d6f4ff91e5",
-      "version": 2
+      "sha256": "4db90310ff6ea482435091ca41b11b8dbcfafdd47ea850ed5db5abd8e160ad46",
+      "version": 3
     }
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {

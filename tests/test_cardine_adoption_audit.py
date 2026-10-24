@@ -24,7 +24,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.project / "docs/LIFECYCLE_ORCHESTRATION.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=lifecycle-orchestration v1", text)
+        self.assertIn("CARDINE:BEGIN capability=lifecycle-orchestration v2", text)
         edited = text.replace(
             "The orchestrator is a coordination-only role", "The orchestrator is a coordination-only role (edited without an upgrade)"
         )
@@ -35,7 +35,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
             "FAIL           marker-integrity — docs/LIFECYCLE_ORCHESTRATION.md: "
-            "capability=lifecycle-orchestration v1",
+            "capability=lifecycle-orchestration v2",
             audited.stdout,
         )
         self.assertIn("SUMMARY worst=FAIL", audited.stdout)
@@ -75,7 +75,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
             local = self.project / name
             local.write_text(
                 local.read_text(encoding="utf-8").replace(
-                    "CARDINE:BEGIN capability=lifecycle-orchestration v1",
+                    "CARDINE:BEGIN capability=lifecycle-orchestration v2",
                     "CARDINE:BEGIN capability=lifecycle-orchestration v99",
                 ),
                 encoding="utf-8",

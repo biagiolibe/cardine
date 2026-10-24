@@ -47,7 +47,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 087 | Write and verify operation receipts (RE1b) | 🔴 P1 | 086 | [087](done/087-operation-receipts.md) |
 | `[x]` | 088 | Make state readers and preparation require receipts (RE1c) | 🔴 P1 | 087 | [088](done/088-receipt-gated-readers.md) |
 | `[x]` | 089 | Classify worktree, state, lease, and cleanup stops by cause (RE2a) | 🔴 P1 | 088 | [089](done/089-stop-causes-lifecycle.md) |
-| `[ ]` | 090 | Consolidate the approval, configuration, and workflow codes (RE2b) | 🔴 P1 | 089 | [090](090-consolidate-policy-codes.md) |
+| `[x]` | 090 | Consolidate the approval, configuration, and workflow codes (RE2b) | 🔴 P1 | 089 | [090](done/090-consolidate-policy-codes.md) |
 | `[ ]` | 091 | Classify self-update, upgrade, and host stops by cause (RE2c) | 🔴 P1 | 090 | [091](091-stop-causes-nonrun.md) |
 | `[ ]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](092-typed-outcome-dispatch.md) |
 | `[ ]` | 093 | Enforce the expected surface and record delivery identity (RE3a) | 🔴 P1 | 092 | [093](093-scope-and-delivery.md) |

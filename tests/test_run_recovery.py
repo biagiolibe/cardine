@@ -37,6 +37,7 @@ FAMILY = frozenset({
     "WRONG_WORKTREE", "LEASE_HELD", "PRIMARY_DIRTY", "CLEANUP_BLOCKED", "TASK_STATE_INVALID",
     "TASK_STATUS_REJECTED", "COMMAND_REFUSED", "OS_ACCESS_FAILED", "WORKTREE_RELOCATE",
     "LEASE_INTERRUPTED", "TASK_STATE_INTERRUPTED", "CLEANUP_PARTIAL", "PUSH_PENDING",
+    "TASK_STEP_PENDING", "DEPENDENCY_PENDING",
 })
 EMITTING_CALLS = frozenset({"stop_error", "stop_factory", "stop_resume", "format_stop"})
 POINTS = ("before_intent", "after_intent", "before_staged_pair", "after_staged_pair",
@@ -587,3 +588,108 @@ for _point in STAGE_KILL_POINTS:
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PolicyRecoveryTest(unittest.TestCase):
+    """Pure policy resolution never creates approval, state or configuration."""
+
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.project = Path(self.temporary.name) / "project with spaces"
+        self.project.mkdir()
+        write_project_config(self.project)
+
+    def tearDown(self):
+        self.temporary.cleanup()
+
+    def snapshot(self):
+        return {p.relative_to(self.project).as_posix(): p.read_bytes()
+                for p in self.project.rglob("*") if p.is_file()}
+
+    def test_missing_policy_is_a_stable_authority_negative_without_writes(self):
+        from cardine.tasks.contract import profile_digest
+        before = self.snapshot()
+        messages = []
+        for _ in range(2):
+            with self.assertRaises(CardineStop) as caught:
+                profile_digest(self.project)
+            self.assertEqual(caught.exception.code, "UNDECLARED_VALIDATION_COMMANDS")
+            messages.append(str(caught.exception))
+            self.assertIn("cause: execution-profile", messages[-1])
+            self.assertEqual(before, self.snapshot())
+        self.assertEqual(*messages)
+
+    def test_installed_policy_resolves_without_installation_and_changes_invalidate_digest(self):
+        from cardine.tasks.contract import profile_digest
+        validation = {"commands": {"check": "python3 check.py"}, "baseline": ["check"],
+                      "candidate": {name: ["check"] for name in ("REUSE", "BOUNDED", "FULL")}}
+        write_project_config(self.project, validation=validation)
+        before = self.snapshot()
+        first = profile_digest(self.project)
+        self.assertEqual(first, profile_digest(self.project))
+        self.assertEqual(before, self.snapshot())
+        validation["commands"]["check"] = "python3 changed.py"
+        write_project_config(self.project, validation=validation)
+        self.assertNotEqual(first, profile_digest(self.project))
+        # Explicitly declaring no commands is still a policy choice, not a
+        # missing source that needs a person's decision.
+        empty = {"commands": {}, "baseline": [],
+                 "candidate": {name: [] for name in ("REUSE", "BOUNDED", "FULL")}}
+        write_project_config(self.project, validation=empty)
+        before = self.snapshot()
+        explicit_none = profile_digest(self.project)
+        self.assertEqual(explicit_none, profile_digest(self.project))
+        self.assertEqual(before, self.snapshot())
+        self.assertNotEqual(first, explicit_none)
+        with mock.patch.object(Path, "read_bytes", side_effect=PermissionError("policy access denied")):
+            with self.assertRaises(PermissionError):
+                profile_digest(self.project)
+        self.assertEqual(before, self.snapshot())
+        config = self.project / ".cardine/project.json"
+        config.write_text('{"version": 1, "preset": "foreign"}')
+        before = self.snapshot()
+        from cardine.shared.errors import CardineError
+        for _ in range(2):
+            with self.assertRaises(CardineError):
+                profile_digest(self.project)
+            self.assertEqual(before, self.snapshot())
+
+    def test_pending_dependencies_keep_failed_results_as_guardrails(self):
+        from cardine.tasks.preflight import check_dependencies
+        from cardine.tasks import contract_snapshot, state
+        from cardine.shared import git
+        from cardine.templates import mode
+        before = self.snapshot()
+        with mock.patch.object(contract_snapshot, "read_human_contract", return_value={"dependencies": ["dep"]}), \
+             mock.patch.object(git, "canonical_project_root", return_value=self.project), \
+             mock.patch.object(git, "_run_git", return_value=subprocess.CompletedProcess([], 0, "{}", "")) as git_run, \
+             mock.patch.object(mode, "detect_mode", return_value="lean-delivery"), \
+             mock.patch.object(state, "dependency_satisfied", return_value=False), \
+             mock.patch.object(state, "read_task_state") as reader:
+            for status, code in (("queued", "DEPENDENCY_PENDING"), ("in_progress", "DEPENDENCY_PENDING"),
+                                 ("in_review", "DEPENDENCY_PENDING"), ("cancelled", "TASK_STATUS_REJECTED"),
+                                 ("done", "TASK_STATUS_REJECTED")):
+                reader.return_value = {"status": status}
+                messages = []
+                for _ in range(2):
+                    with self.assertRaises(CardineStop) as caught:
+                        check_dependencies(self.project, "task", "")
+                    self.assertEqual(caught.exception.code, code)
+                    messages.append(str(caught.exception))
+                    self.assertEqual(before, self.snapshot())
+                self.assertEqual(*messages)
+
+            for listed_code, listed_paths, expected in (
+                (0, "", "DEPENDENCY_PENDING"),
+                (128, "", "TASK_STATUS_REJECTED"),
+                (0, ".cardine/tasks/dep.json\n", "TASK_STATUS_REJECTED"),
+            ):
+                for _ in range(2):
+                    git_run.side_effect = [
+                        subprocess.CompletedProcess([], 128, "", "object read failed"),
+                        subprocess.CompletedProcess([], listed_code, listed_paths, ""),
+                    ]
+                    with self.assertRaises(CardineStop) as caught:
+                        check_dependencies(self.project, "task", "")
+                    self.assertEqual(caught.exception.code, expected)
+                    self.assertEqual(before, self.snapshot())
