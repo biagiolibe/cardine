@@ -83,18 +83,3 @@ def enforce_scope(root, state, base, *, owned=()):
         if name not in owned and not any(_matches(name, pattern) for pattern in patterns):
             reject(f'path outside expected surface: {name}')
     return paths - set(owned)
-
-
-def enforce_execution_scope(root, task_id, *, base=None, state=None):
-    """Interactive legacy snapshots may omit the surface; frozen surfaces always bind."""
-    from cardine.lifecycle.execution import _execution_owned_paths, _execution_state
-    from cardine.worktree.checkout import inspect_task_worktree
-    from cardine.shared.git import canonical_project_root
-    state = state if state is not None else _execution_state(root, task_id)
-    if not state['contract'].get('expectedCodeSurface'):
-        return
-    if base is None:
-        inspection, _ = inspect_task_worktree(task_id, None, canonical_project_root(root),
-                                              require_effective_worktree=False)
-        base = str(inspection['base_commit'])
-    return enforce_scope(root, state, base, owned=_execution_owned_paths(root, task_id))

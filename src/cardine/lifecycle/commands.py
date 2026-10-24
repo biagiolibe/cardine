@@ -71,6 +71,7 @@ def execution_deliver(project_root: Path, task_id: str, *, implementation_only: 
     review path until N3/RE4 replace the old review/handoff gates.
     """
     if implementation_only is None:
+        _execution_location(project_root, task_id, command=('execution', 'deliver'))
         from cardine.lifecycle.delivery import _operation_path
         implementation_only = (_operation_path(project_root, task_id).exists()
                                or bool(_execution_state(project_root, task_id)['contract'].get('expectedCodeSurface')))

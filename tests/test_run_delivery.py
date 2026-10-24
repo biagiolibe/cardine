@@ -180,6 +180,23 @@ deliver_implementation(Path(sys.argv[1]), '001')
         self.assertIsNone(verify_delivery(self.worker, self.state(), self.base))
         self.assertEqual(self.deliver()['source'], source)
 
+    def test_progress_requires_the_canonical_worktree_and_completed_operation(self):
+        from cardine.lifecycle.engine import implementation_delivery, resolve_run_locations
+        locations = resolve_run_locations('001', self.worker)
+        self.kill('after_delivery_commit')
+        self.assertIsNone(implementation_delivery(locations))
+        result = self.deliver()
+        self.assertEqual(implementation_delivery(locations), result)
+        operation = _operation_path(self.worker, '001')
+        original = receipts._load_intent(operation)
+        receipts._save_intent(operation, dict(original, commit='0' * 40))
+        with self.assertRaisesRegex(CardineError, 'result identity'):
+            implementation_delivery(locations)
+        receipts._save_intent(operation, original)
+        self.git('switch', '-c', 'foreign-branch')
+        with self.assertRaisesRegex(CardineError, 'canonical task worktree'):
+            implementation_delivery(locations)
+
     def test_scope_is_rechecked_before_validation_and_review(self):
         from cardine.tasks.recording import run_validation
         (self.worker / 'foreign.txt').write_text('outside')
@@ -189,7 +206,7 @@ deliver_implementation(Path(sys.argv[1]), '001')
             run_validation(self.worker, '001', 'task-check')
         # The legacy review adapter has a review policy precondition. The same
         # frozen-surface checker used there and in candidate staging is pure.
-        from cardine.lifecycle.scope import enforce_execution_scope
+        from cardine.lifecycle.execution import enforce_execution_scope
         before = self.git('status', '--porcelain')
         for _ in range(2):
             with self.assertRaisesRegex(CardineError, 'outside expected surface'):
