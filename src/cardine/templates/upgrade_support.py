@@ -27,7 +27,7 @@ import tempfile
 def recorded_managed_digests(project_root: Path) -> dict[str, object]:
     try:
         recorded = json.loads((project_root / names().manifest_path).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (FileNotFoundError, json.JSONDecodeError):
         return {}
     digests = recorded.get("managedFiles") if isinstance(recorded, dict) else None
     return dict(digests) if isinstance(digests, dict) else {}

@@ -28,7 +28,7 @@ from cardine.shared.journal import LifecycleJournalEntry
 from cardine.shared.models import ManagedFile, PlanItem
 from cardine.stops.nonrun import NONRUN_CAUSES, diagnostic_invocation, os_stop_code
 from cardine.stops.registry import load_stop_registry
-from cardine.templates.upgrade_support import missing_generated_outputs, print_plan
+from cardine.templates.upgrade_support import missing_generated_outputs, print_plan, recorded_managed_digests
 import test_self_update as updater
 
 
@@ -349,3 +349,16 @@ upgrade.apply_plan(project,framework,manifest,plan,project/'.cardine/baselines/1
             self.assertIn("--framework-root '" + str(framework.resolve()) + "'", outputs[0])
             self.assertNotIn('UPGRADE_BLOCKED', outputs[0])
             self.assertFalse((project / 'AGENTS.md').exists())
+
+
+    def test_optional_upgrade_digest_reader_does_not_swallow_denied_access(self):
+        for number in (errno.EACCES, errno.EPERM, errno.EBUSY):
+            with patch.object(Path, 'read_text', side_effect=OSError(number, 'injected')):
+                for _ in range(2):
+                    with self.assertRaises(OSError) as error:
+                        recorded_managed_digests(Path('/tmp/disposable'))
+                    self.assertEqual(error.exception.errno, number)
+        for error in (FileNotFoundError(errno.ENOENT, 'missing'),
+                      json.JSONDecodeError('invalid optional metadata', '', 0)):
+            with patch.object(Path, 'read_text', side_effect=error):
+                self.assertEqual(recorded_managed_digests(Path('/tmp/disposable')), {})

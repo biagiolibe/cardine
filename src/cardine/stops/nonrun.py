@@ -59,3 +59,16 @@ NONRUN_CAUSES = {
     "OS_PATH_MISSING": ("failing-work", "ENOENT in an explicit read-only check; no write or deletion"),
     "OS_PATH_BUSY": ("recoverable", "EBUSY/ETXTBSY in an explicit read-only check; rerun that check, never apply"),
 }
+
+
+# OS-catch audit: optional/report-only absence is distinct from denied authority.
+# release/update.py: fetch_latest_release callers return UNKNOWN for unavailable
+# network or malformed responses, never accepting release identity; outer apply
+# catches retain unknown Git residue as SELF_UPDATE_VERIFY, OS denial as guarded.
+# plugin_marketplace_ref only reports unreadable settings and cannot update them.
+# templates/upgrade_support.py: recorded_managed_digests tolerates legacy absence
+# or malformed optional digests, but propagates all other OS errors to the CLI.
+# hosts/codex.py: the two OSError catches only suppress failed temporary/backup
+# cleanup while re-raising the original effect error; neither records success.
+# cli.py: the final uncoded CardineError remains COMMAND_REFUSED. The OS catch
+# uses diagnostic_invocation; it cannot infer retry authority from errno alone.
