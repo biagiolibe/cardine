@@ -146,7 +146,13 @@ def check_dependencies(project_root: Path, task_id: str, record: str) -> None:
         path = state_path(project_root, dependency).relative_to(project_root)
         shown = _run_git(primary, "show", f"main:{path.as_posix()}")
         if shown.returncode:
-            raise stop_error("DEPENDENCY_PENDING", f"dependency {dependency} has no landed state", task_id=task_id, project=project_root)
+            # A failed object read alone is not proof of absence: denied access
+            # or a corrupt object must retain the original authority negative.
+            listed = _run_git(primary, "ls-tree", "--name-only", "main", "--", path.as_posix())
+            missing = listed.returncode == 0 and not listed.stdout.strip()
+            raise stop_error("DEPENDENCY_PENDING" if missing else "TASK_STATUS_REJECTED",
+                             f"dependency {dependency} has no readable landed state",
+                             task_id=task_id, project=project_root)
         state = read_task_state(project_root, dependency, detect_mode(project_root), text=shown.stdout, stop_factory=stop_error, require_contract=True, artifact_ref="main")
         if not dependency_satisfied(state):
             raise stop_error("TASK_STATUS_REJECTED" if state["status"] in ("done", "cancelled") else "DEPENDENCY_PENDING", f"dependency {dependency} is not a landed successful result", task_id=task_id, project=project_root)

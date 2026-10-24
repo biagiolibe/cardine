@@ -641,6 +641,10 @@ class PolicyRecoveryTest(unittest.TestCase):
         self.assertEqual(explicit_none, profile_digest(self.project))
         self.assertEqual(before, self.snapshot())
         self.assertNotEqual(first, explicit_none)
+        with mock.patch.object(Path, "read_bytes", side_effect=PermissionError("policy access denied")):
+            with self.assertRaises(PermissionError):
+                profile_digest(self.project)
+        self.assertEqual(before, self.snapshot())
         config = self.project / ".cardine/project.json"
         config.write_text('{"version": 1, "preset": "foreign"}')
         before = self.snapshot()
@@ -658,7 +662,7 @@ class PolicyRecoveryTest(unittest.TestCase):
         before = self.snapshot()
         with mock.patch.object(contract_snapshot, "read_human_contract", return_value={"dependencies": ["dep"]}), \
              mock.patch.object(git, "canonical_project_root", return_value=self.project), \
-             mock.patch.object(git, "_run_git", return_value=subprocess.CompletedProcess([], 0, "{}", "")), \
+             mock.patch.object(git, "_run_git", return_value=subprocess.CompletedProcess([], 0, "{}", "")) as git_run, \
              mock.patch.object(mode, "detect_mode", return_value="lean-delivery"), \
              mock.patch.object(state, "dependency_satisfied", return_value=False), \
              mock.patch.object(state, "read_task_state") as reader:
@@ -674,3 +678,18 @@ class PolicyRecoveryTest(unittest.TestCase):
                     messages.append(str(caught.exception))
                     self.assertEqual(before, self.snapshot())
                 self.assertEqual(*messages)
+
+            for listed_code, listed_paths, expected in (
+                (0, "", "DEPENDENCY_PENDING"),
+                (128, "", "TASK_STATUS_REJECTED"),
+                (0, ".cardine/tasks/dep.json\n", "TASK_STATUS_REJECTED"),
+            ):
+                for _ in range(2):
+                    git_run.side_effect = [
+                        subprocess.CompletedProcess([], 128, "", "object read failed"),
+                        subprocess.CompletedProcess([], listed_code, listed_paths, ""),
+                    ]
+                    with self.assertRaises(CardineStop) as caught:
+                        check_dependencies(self.project, "task", "")
+                    self.assertEqual(caught.exception.code, expected)
+                    self.assertEqual(before, self.snapshot())

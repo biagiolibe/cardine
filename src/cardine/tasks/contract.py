@@ -195,8 +195,12 @@ def resolve_human_fields(project_root, identity, text, task_class):
 
 def profile_digest(project_root: Path) -> str:
     profile = project_root / "docs" / "EXECUTION_EVIDENCE_PROFILE.md"
-    if profile.is_file():
+    try:
         return hashlib.sha256(profile.read_bytes()).hexdigest()
+    except FileNotFoundError:
+        pass
+    # Access denial and unreadable existing policy propagate unchanged; only
+    # proven absence permits resolution from the installed project policy.
     # An installed, validated project policy can resolve the same contract
     # without generating files or changing host configuration. Invalid policy
     # still fails at the configuration parser; it is never repaired here.
