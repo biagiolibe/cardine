@@ -262,15 +262,21 @@ RETRY_COMMAND = "python3 scripts/run_tests.py --parallel --last-failed"
 
 
 def failure_record(source: Path = ROOT) -> Path:
-    """Resolve the per-worktree Git directory, never the shared common directory."""
-    result = git(source, "rev-parse", "--absolute-git-dir")
+    """Key a temporary record by the resolved worktree top-level path."""
+    result = git(source, "rev-parse", "--show-toplevel")
     if result.returncode:
         raise ValueError(result.stderr.strip())
-    return Path(result.stdout.strip()) / "cardine-last-failed.txt"
+    identity = str(Path(result.stdout.strip()).resolve())
+    digest = hashlib.sha256(os.fsencode(identity)).hexdigest()
+    return Path(tempfile.gettempdir()) / "cardine-test-failures" / f"{digest}.txt"
 
 
 def write_failures(record: Path, identifiers: Iterable[str]) -> None:
-    record.write_text("".join(identifier + "\n" for identifier in sorted(set(identifiers))), encoding="utf-8")
+    try:
+        record.parent.mkdir(parents=True, exist_ok=True)
+        record.write_text("".join(identifier + "\n" for identifier in sorted(set(identifiers))), encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        print(f"warning: cannot write failure record {record}: {error}; --last-failed is unavailable for this run", file=sys.stderr)
 
 
 def select_tests(tests: list[unittest.TestCase], modules: Sequence[str]) -> list[unittest.TestCase]:
@@ -450,7 +456,10 @@ def main(arguments: list[str] | None = None) -> int:
                 parser().error(str(error))
             label = "module:" + ",".join(options.module)
         elif options.last_failed:
-            recorded = record.read_text(encoding="utf-8").splitlines() if record.exists() else []
+            try:
+                recorded = record.read_text(encoding="utf-8").splitlines()
+            except (OSError, UnicodeError):
+                recorded = []
             available = {test.id() for test in tests}
             for missing in sorted(set(recorded) - available):
                 print(f"recorded test no longer exists; skipped: {missing}")

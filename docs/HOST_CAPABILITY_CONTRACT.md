@@ -383,7 +383,11 @@ used to scope those changes safely.
 
 
 For development, `python3 scripts/run_tests.py --parallel --last-failed`
-reruns the failing test IDs recorded in this worktree's Git directory.
+reruns the failing test IDs recorded under `tempfile.gettempdir()/cardine-test-failures/`.
+The filename hashes the resolved absolute worktree top-level path, keeping
+primary and linked worktrees separate. A record write failure prints a warning
+and leaves the test outcome unchanged; `--last-failed` is unavailable for that run.
+An unreadable record behaves as a missing record.
 `--parallel --module <name>` selects a module, `tests/test_name.py` path,
 class, or test ID; repeat `--module` to select their union. Unknown names
 are refused with nearby module suggestions. Partial runs print `PARTIAL`
