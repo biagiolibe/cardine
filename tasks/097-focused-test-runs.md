@@ -24,47 +24,47 @@ any path setup. The counted validation stays the full clean-clone run.
 
 ## Acceptance Criteria
 
-- [ ] `python3 scripts/run_tests.py --parallel` records the sorted IDs of the
+- [x] `python3 scripts/run_tests.py --parallel` records the sorted IDs of the
   tests that failed or errored in a file inside the current worktree's own
   Git directory (`git rev-parse --git-dir`), so two worktrees never share
   a record and nothing tracked changes. A run in which every test passes
   leaves an empty record. A `--clean-clone` run writes its record into the
   Git directory of the worktree it was started from.
-- [ ] `--parallel --last-failed` runs exactly the recorded IDs, sharded as a
+- [x] `--parallel --last-failed` runs exactly the recorded IDs, sharded as a
   full run is. A recorded ID that no longer exists is named in the output
   and skipped. When the run ends, the record keeps only the tests that
   still fail.
-- [ ] `--parallel --module <name>` can be given more than once. `<name>` is a
+- [x] `--parallel --module <name>` can be given more than once. `<name>` is a
   module name (`test_worktree_lifecycle`), its path
   (`tests/test_worktree_lifecycle.py`), a class, or a full test ID. The
   selection runs from any working directory, and the helpers under
   `tests/` import without any environment setup. An unknown name is
   refused with exit code 2 before any test runs, and the refusal names the
   closest existing modules.
-- [ ] A partial run cannot be mistaken for a full one. Its summary line starts
+- [x] A partial run cannot be mistaken for a full one. Its summary line starts
   with `PARTIAL` and states the selection, the number of tests run, and
   the full coverage total, for example `PARTIAL selection=last-failed
   ran=12 total=1367 failures=0 errors=0`. It never prints the full run's
   `coverage total=` line or its `OK` summary. `--clean-clone` combined
   with `--last-failed` or `--module` is refused with exit code 2, because
   a clean-clone run is always full.
-- [ ] The runner prints the next command itself. A failed full run ends with
+- [x] The runner prints the next command itself. A failed full run ends with
   `python3 scripts/run_tests.py --parallel --last-failed`. A partial run
   in which every selected test passes ends with `python3
   scripts/run_tests.py --parallel --clean-clone`. `--last-failed` with a
   missing or empty record, or with no recorded ID left, runs nothing,
   exits with code 2, and prints the full-run command.
-- [ ] Full runs are unchanged: shard assignment, the shard header, the
+- [x] Full runs are unchanged: shard assignment, the shard header, the
   coverage total and digest, `--shard`, `--list`, and the clean-clone
   output stay as they are.
-- [ ] `tests/test_run_tests.py` covers every behaviour above, including two
+- [x] `tests/test_run_tests.py` covers every behaviour above, including two
   worktrees that keep separate records, a record that shrinks as tests are
   fixed, a renamed test in the record, and each refused combination.
   Documentation that lists the runner's options names the new ones.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes `scripts/run_tests.py`, its tests, and
   documentation only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -73,16 +73,16 @@ any path setup. The counted validation stays the full clean-clone run.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/097.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/097.json`, which only
   the installed `meridian task close 097` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
