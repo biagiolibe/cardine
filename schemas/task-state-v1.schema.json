@@ -409,6 +409,14 @@
               }
             }
           }
+        },
+        "expectedCodeSurface": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -702,6 +710,39 @@
               "type": "null"
             }
           ]
+        },
+        "delivery": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source",
+            "sourceTree",
+            "base",
+            "sourceDigest",
+            "contractDigest"
+          ],
+          "properties": {
+            "source": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "sourceTree": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "base": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "sourceDigest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "contractDigest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
         }
       }
     }

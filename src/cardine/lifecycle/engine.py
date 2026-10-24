@@ -181,6 +181,25 @@ def resolve_run(facts: RunFacts) -> dict:
     return result("landing", "Finalize, push, verify and clean up delivery")
 
 
+def deliver_run_implementation(locations: RunLocations) -> dict:
+    """Bounded step-three adapter; validation and acceptance remain separate."""
+    from cardine.lifecycle.commands import execution_deliver
+    return execution_deliver(locations.worktree, locations.task_id, implementation_only=True)
+
+
+def implementation_delivery(locations: RunLocations) -> dict | None:
+    """Read verified step-three progress; no prose, writes or caller pass flags."""
+    from cardine.lifecycle.delivery import verify_delivery
+    from cardine.lifecycle.execution import _execution_location, _execution_owned_paths, _execution_state
+    from cardine.lifecycle.scope import enforce_scope
+    root = locations.worktree
+    inspection = _execution_location(root, locations.task_id)
+    state = _execution_state(root, locations.task_id)
+    base = str(inspection['base_commit'])
+    enforce_scope(root, state, base, owned=_execution_owned_paths(root, locations.task_id))
+    return verify_delivery(root, state, base)
+
+
 def resolve_run_locations(task_id: str, project: Path | None = None, *,
                           cwd: Path | None = None, registered_projects: Iterable[Path] = (),
                           worktree_root: Path | None = None) -> RunLocations:

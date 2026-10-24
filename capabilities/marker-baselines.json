@@ -291,8 +291,8 @@
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "7588d173ee940156dfeab401d46ea076147c09463ac1f79236df9a9a7ccd0a7b",
-      "version": 5
+      "sha256": "f84057d3e9c2b09cfb7073dd39e2b380dbd9da6a7a0bd25de0da2dd8e690d287",
+      "version": 6
     }
   }
 }

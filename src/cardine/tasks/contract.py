@@ -181,7 +181,9 @@ def resolve_human_fields(project_root, identity, text, task_class):
     for path in paths:
         if ".." in Path(path).parts:
             raise CardineError(f"unsafe spike deliverable path: {path}")
+    from cardine.lifecycle.scope import parse_surface
     return {
+        "expectedCodeSurface": parse_surface(text),
         "dependencies": dependencies,
         "title": _contract_field(text, "Title") or (heading.group(1).strip() if heading else identity.canonical_id),
         "priority": _contract_field(text, "Priority") or "",

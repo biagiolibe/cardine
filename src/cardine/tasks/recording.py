@@ -33,6 +33,8 @@ def record_validation(project_root: Path, task_id: str, command_id: str, command
 
 def run_validation(project_root: Path, task_id: str, command_id: str) -> int:
     """Execute only the task-declared literal command and retain its outcome."""
+    from cardine.lifecycle.scope import enforce_execution_scope
+    enforce_execution_scope(project_root, task_id)
     execution_preflight(project_root, task_id)
     commands = frozen_validation_commands(project_root, task_id)
     if command_id not in commands:
