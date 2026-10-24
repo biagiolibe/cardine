@@ -137,6 +137,29 @@ seconds and `--parallel` (8 workers) about 52 seconds. The signal CI and the pro
 candidate validation use the parallel command; the release gate keeps the
 sequential one.
 
+For focused development runs, use:
+
+```bash
+python3 scripts/run_tests.py --parallel --last-failed
+python3 scripts/run_tests.py --parallel --module test_run_tests
+python3 scripts/run_tests.py --parallel --module tests/test_run_tests.py --module test_other.Example.test_value
+```
+
+Every full parallel run stores sorted failing and erroring test IDs in
+`cardine-last-failed.txt` inside the current worktree's own Git directory.
+A passing run empties the record. Clean-clone validation updates the originating
+worktree's record. `--last-failed` reruns the recorded IDs and drops resolved
+or removed tests; removed IDs are named and skipped. A missing, empty, or
+entirely obsolete record runs nothing, exits 2, and prints the full command.
+`--module` accepts a module, path, qualified class, or full test ID, and can
+be repeated to select their union. Unknown names exit 2 with nearby modules.
+Both options require `--parallel`, are mutually exclusive, and reject
+`--clean-clone`. Partial summaries begin with `PARTIAL` and include the
+selection, tests run, and full coverage total. They never count as validation;
+a passing partial run prints `python3 scripts/run_tests.py --parallel
+--clean-clone` as the next command. Failed full runs print the `--last-failed`
+command instead.
+
 The check validates JSON metadata, Bash syntax, required public-repository files, and links between the repository's Markdown documents.
 
 A plain repository check never rewrites digests. See

@@ -380,3 +380,16 @@ This contract does not introduce a new task lifecycle, make Codex and Claude
 mechanically identical, distribute rules or hooks, change the current template
 set, or replace a task-specific acceptance criterion. It is the design record
 used to scope those changes safely.
+
+
+For development, `python3 scripts/run_tests.py --parallel --last-failed`
+reruns the failing test IDs recorded in this worktree's Git directory.
+`--parallel --module <name>` selects a module, `tests/test_name.py` path,
+class, or test ID; repeat `--module` to select their union. Unknown names
+are refused with nearby module suggestions. Partial runs print `PARTIAL`
+with the selection and full test count. They do not count as validation:
+finish with `python3 scripts/run_tests.py --parallel --clean-clone`.
+The full clean-clone run records failures in the originating worktree.
+`--last-failed` and `--module` require `--parallel`, are mutually exclusive,
+and cannot be combined with `--clean-clone`. An absent, empty, or entirely
+obsolete failure record runs no tests and exits with status 2.

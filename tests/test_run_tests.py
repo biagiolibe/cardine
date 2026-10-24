@@ -120,7 +120,8 @@ class ParallelTestRunnerTest(unittest.TestCase):
 
     def run_parallel(self, directory: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [sys.executable, str(SCRIPT), "--tests-directory", str(directory), *arguments],
+            [sys.executable, str(SCRIPT), "--tests-directory", str(directory),
+             "--failure-record", str(directory / "last-failed.txt"), *arguments],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -200,7 +201,9 @@ class ParallelTestRunnerTest(unittest.TestCase):
 
     def test_passing_run_prints_a_short_summary_and_is_repeatable(self) -> None:
         directory = self.make_suite(["pass"] * 6)
+        (directory / "last-failed.txt").write_text("obsolete\n")
         outputs = [self.run_parallel(directory, "--parallel", "3") for _ in range(3)]
+        self.assertEqual((directory / "last-failed.txt").read_text(), "")
         for result in outputs:
             self.assertEqual(result.returncode, 0)
             self.assertEqual(len(result.stdout.splitlines()), 2)
@@ -218,7 +221,7 @@ class ParallelTestRunnerTest(unittest.TestCase):
         self.assertNotIn("--- shard 2/4", result.stdout)
         self.assertLess(result.stdout.index("--- shard 3/4"), result.stdout.index("FAILED workers=4"))
         self.assertIn("failures=2", result.stdout)
-        self.assertLessEqual(len(result.stdout.splitlines()), 2 * (runner.FAILURE_LINES + 1) + 2)
+        self.assertLessEqual(len(result.stdout.splitlines()), 2 * (runner.FAILURE_LINES + 1) + 3)
         self.assertEqual(self.stable(outputs[0].stdout), self.stable(outputs[1].stdout))
 
     def test_bounded_output_keeps_the_tail(self) -> None:
@@ -466,3 +469,123 @@ class CleanCloneTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("--clean-clone requires --parallel", result.stderr)
+
+
+class FocusedTestRunnerTest(unittest.TestCase):
+    make_suite = ParallelTestRunnerTest.make_suite
+    run_parallel = ParallelTestRunnerTest.run_parallel
+
+    def test_failure_record_is_sorted_shrinks_and_clears(self) -> None:
+        directory = self.make_suite(["self.fail('broken')", "raise RuntimeError('broken')", "pass"])
+        first = self.run_parallel(directory, "--parallel", "2")
+        record = directory / "last-failed.txt"
+        identifiers = record.read_text().splitlines()
+        self.assertEqual(first.returncode, 1, first.stdout + first.stderr)
+        self.assertEqual(identifiers, sorted(identifiers))
+        self.assertEqual(len(identifiers), 2)
+        self.assertTrue(first.stdout.rstrip().endswith(runner.RETRY_COMMAND))
+        record.write_text(record.read_text() + "test_renamed.Example.test_old\n")
+        for number in (0, 1):
+            path = directory / f"test_generated_{number:02d}.py"
+            path.write_text(path.read_text().replace("self.fail('broken')", "pass").replace(
+                "raise RuntimeError('broken')", "self.assertTrue((__import__('pathlib').Path(__file__).parent / 'fixed').exists())"))
+            if number:
+                (directory / "fixed").touch()
+            result = self.run_parallel(directory, "--parallel", "2", "--last-failed")
+            self.assertEqual(result.returncode, 0 if number else 1, result.stdout + result.stderr)
+            self.assertEqual(len(record.read_text().splitlines()), 0 if number else 1)
+            self.assertIn(f"PARTIAL selection=last-failed ran={1 if number else 2} total=3", result.stdout)
+            if not number:
+                self.assertIn("skipped: test_renamed.Example.test_old", result.stdout)
+            self.assertNotIn("coverage total=", result.stdout)
+            self.assertNotRegex(result.stdout, r"(?m)^OK")
+        self.assertTrue(result.stdout.rstrip().endswith(runner.FULL_COMMAND))
+
+    def test_missing_empty_and_renamed_record_run_nothing(self) -> None:
+        directory = self.make_suite(["self.fail('must not run')"])
+        record = directory / "last-failed.txt"
+        for content in (None, "", "test_removed.Example.test_old\n"):
+            if content is not None:
+                record.write_text(content)
+            result = self.run_parallel(directory, "--parallel", "--last-failed")
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            self.assertIn("ran=0 total=1", result.stdout)
+            self.assertTrue(result.stdout.rstrip().endswith(runner.FULL_COMMAND))
+            self.assertNotIn("must not run", result.stdout)
+            self.assertEqual(record.read_text(), "")
+            if content:
+                self.assertIn("skipped: test_removed.Example.test_old", result.stdout)
+
+    def test_module_path_class_id_and_union_from_another_directory(self) -> None:
+        directory = self.make_suite(["pass", "pass", "self.fail('unselected')"])
+        (directory / "helper.py").write_text("VALUE = True\n")
+        path = directory / "test_generated_00.py"
+        path.write_text(path.read_text().replace("import os, signal, unittest", "import os, signal, unittest, helper"))
+        for name in ("test_generated_00", "tests/test_generated_00.py", "test_generated_00.GeneratedTest",
+                     "test_generated_00.GeneratedTest.test_value", "tests.test_generated_00"):
+            with self.subTest(name=name):
+                result = subprocess.run([sys.executable, str(SCRIPT), "--parallel", "2", "--module", name,
+                    "--module", "test_generated_01", "--module", name,
+                    "--tests-directory", str(directory), "--failure-record", str(directory / "record")],
+                    cwd=directory, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn("ran=2 total=3 failures=0 errors=0", result.stdout)
+                self.assertNotIn("coverage total=", result.stdout)
+                self.assertTrue(result.stdout.rstrip().endswith(runner.FULL_COMMAND))
+
+    def test_unknown_module_is_refused_before_tests_run(self) -> None:
+        directory = self.make_suite(["self.fail('must not run')"])
+        result = self.run_parallel(directory, "--parallel", "--module", "test_generatd_00")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unknown selection", result.stderr)
+        self.assertIn("closest modules: test_generated_00", result.stderr)
+        self.assertNotIn("must not run", result.stdout + result.stderr)
+
+    def test_invalid_selection_combinations(self) -> None:
+        cases = [
+            ["--parallel", "--clean-clone", "--last-failed"],
+            ["--parallel", "--clean-clone", "--module", "test_run_tests"],
+            ["--parallel", "--last-failed", "--module", "test_run_tests"],
+        ]
+        for mode in (["--list"], ["--shard", "1/1"]):
+            cases.extend([mode + ["--last-failed"], mode + ["--module", "test_run_tests"]])
+        for arguments in cases:
+            with self.subTest(arguments=arguments):
+                result = subprocess.run([sys.executable, str(SCRIPT), *arguments], text=True, capture_output=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("usage:", result.stderr)
+                self.assertEqual(result.stdout, "")
+
+    def test_worktrees_and_clean_clone_keep_records_in_the_origin_git_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch) / "main"
+            root.mkdir()
+            (root / ".gitignore").write_text("__pycache__/\n")
+            (root / "scripts").mkdir()
+            (root / "tests").mkdir()
+            shutil.copyfile(SCRIPT, root / "scripts/run_tests.py")
+            (root / "scripts/check_repository.py").write_text("pass\n")
+            (root / "tests/test_example.py").write_text(
+                "import unittest\nclass Example(unittest.TestCase):\n    def test_failure(self): self.fail('broken')\n")
+            for command in (["init", "-q", "-b", "main"], ["config", "user.name", "Test"],
+                            ["config", "user.email", "test@example.com"], ["add", "."], ["commit", "-qm", "fixture"]):
+                subprocess.run(["git", "-C", str(root), *command], check=True, capture_output=True)
+            linked = Path(scratch) / "linked"
+            subprocess.run(["git", "-C", str(root), "worktree", "add", "-qb", "task", str(linked)], check=True, capture_output=True)
+            records = [runner.failure_record(path) for path in (root, linked)]
+            self.assertNotEqual(*records)
+            for path, record in zip((root, linked), records):
+                result = subprocess.run([sys.executable, str(path / "scripts/run_tests.py"), "--parallel", "1"],
+                                        cwd=scratch, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(record.read_text(), "test_example.Example.test_failure\n")
+            records[0].write_text("primary sentinel\n")
+            records[1].write_text("old sentinel\n")
+            result = subprocess.run([sys.executable, str(linked / "scripts/run_tests.py"), "--parallel", "1", "--clean-clone"],
+                                    cwd=scratch, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertEqual(records[0].read_text(), "primary sentinel\n")
+            self.assertEqual(records[1].read_text(), "test_example.Example.test_failure\n")
+            self.assertIn("outcome=FAILED", result.stdout)
+            self.assertEqual(runner.git(root, "status", "--porcelain").stdout, "")
+            self.assertEqual(runner.git(linked, "status", "--porcelain").stdout, "")
