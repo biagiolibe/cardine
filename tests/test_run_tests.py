@@ -475,6 +475,28 @@ class FocusedTestRunnerTest(unittest.TestCase):
     make_suite = ParallelTestRunnerTest.make_suite
     run_parallel = ParallelTestRunnerTest.run_parallel
 
+    def test_unwritable_record_preserves_passing_and_failing_outcomes(self) -> None:
+        for body, expected in (("pass", 0), ("self.fail('broken')", 1)):
+            with self.subTest(expected=expected):
+                directory = self.make_suite([body])
+                record = directory / "last-failed.txt"
+                record.mkdir()
+                result = self.run_parallel(directory, "--parallel", "1")
+                self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                self.assertEqual(len(result.stderr.splitlines()), 1)
+                self.assertIn(str(record), result.stderr)
+                self.assertIn("Is a directory", result.stderr)
+                self.assertIn("--last-failed is unavailable for this run", result.stderr)
+
+    def test_unreadable_record_runs_no_tests(self) -> None:
+        directory = self.make_suite(["self.fail('must not run')"])
+        (directory / "last-failed.txt").mkdir()
+        result = self.run_parallel(directory, "--parallel", "--last-failed")
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("ran=0 total=1", result.stdout)
+        self.assertTrue(result.stdout.rstrip().endswith(runner.FULL_COMMAND))
+        self.assertNotIn("must not run", result.stdout + result.stderr)
+
     def test_failure_record_is_sorted_shrinks_and_clears(self) -> None:
         directory = self.make_suite(["self.fail('broken')", "raise RuntimeError('broken')", "pass"])
         first = self.run_parallel(directory, "--parallel", "2")
@@ -556,7 +578,7 @@ class FocusedTestRunnerTest(unittest.TestCase):
                 self.assertIn("usage:", result.stderr)
                 self.assertEqual(result.stdout, "")
 
-    def test_worktrees_and_clean_clone_keep_records_in_the_origin_git_directory(self) -> None:
+    def test_worktrees_and_clean_clone_keep_separate_temporary_records(self) -> None:
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch) / "main"
             root.mkdir()
@@ -574,6 +596,10 @@ class FocusedTestRunnerTest(unittest.TestCase):
             subprocess.run(["git", "-C", str(root), "worktree", "add", "-qb", "task", str(linked)], check=True, capture_output=True)
             records = [runner.failure_record(path) for path in (root, linked)]
             self.assertNotEqual(*records)
+            for record in records:
+                self.assertEqual(record.parent, Path(tempfile.gettempdir()) / "cardine-test-failures")
+                self.addCleanup(record.unlink, missing_ok=True)
+            self.assertEqual(runner.failure_record(root / "tests"), records[0])
             for path, record in zip((root, linked), records):
                 result = subprocess.run([sys.executable, str(path / "scripts/run_tests.py"), "--parallel", "1"],
                                         cwd=scratch, text=True, capture_output=True)
@@ -589,3 +615,22 @@ class FocusedTestRunnerTest(unittest.TestCase):
             self.assertIn("outcome=FAILED", result.stdout)
             self.assertEqual(runner.git(root, "status", "--porcelain").stdout, "")
             self.assertEqual(runner.git(linked, "status", "--porcelain").stdout, "")
+
+            # Exercise the same non-fatal write path through a clean clone.
+            blocked = Path(scratch) / "record-directory"
+            blocked.mkdir()
+            for body, expected in (("self.fail('broken')", 1), ("pass", 0)):
+                (linked / "tests/test_example.py").write_text(
+                    "import unittest\nclass Example(unittest.TestCase):\n"
+                    f"    def test_failure(self): {body}\n")
+                subprocess.run(["git", "-C", str(linked), "add", "."], check=True, capture_output=True)
+                subprocess.run(["git", "-C", str(linked), "commit", "--allow-empty", "-qm", "fixture outcome"],
+                               check=True, capture_output=True)
+                with mock.patch.object(runner, "failure_record", return_value=blocked), \
+                     mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as output, \
+                     mock.patch("sys.stderr", new_callable=__import__("io").StringIO) as errors:
+                    status = runner.run_clean_clone(1, linked)
+                self.assertEqual(status, expected, output.getvalue() + errors.getvalue())
+                self.assertEqual(len(errors.getvalue().splitlines()), 1)
+                self.assertIn(str(blocked), errors.getvalue())
+                self.assertIn("--last-failed is unavailable for this run", errors.getvalue())
