@@ -245,7 +245,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         handoff = self.worker / "tasks/handoffs/056.md"
         handoff.parent.mkdir()
         handoff.write_text("Completion evidence.\n")
-        (self.worker / ".cardine/execution-evidence.json").write_text("{}\n")
+        (self.worker / ".cardine/evidence").mkdir()
+        (self.worker / ".cardine/evidence/056.json").write_text("{}\n")
         self.commit()
         staged = self.stage()
         self.assertEqual(staged["landed_status"], "done")

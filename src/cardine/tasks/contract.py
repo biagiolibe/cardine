@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cardine.shared.layout import PRODUCT_NAMES, names
+from cardine.shared.layout import names
 
 import hashlib
 import json
@@ -250,9 +250,6 @@ HANDOFF_FIELDS = (
 )
 
 
-EXECUTION_EVIDENCE_PATH = PRODUCT_NAMES.execution_evidence_path
-
-
 HOST_IMPACT_STATES = ("enforced", "advisory", "unsupported", "unverified")
 
 
@@ -360,14 +357,14 @@ def verify_host_impact_completion_evidence(text: str, *, profiles=None) -> None:
 
 
 def execution_entries(project_root: Path, task_id: str) -> list[dict[str, object]]:
-    path = project_root / names().execution_evidence_path
+    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
+    path = project_root / names().execution_evidence_path(canonical_id)
     if not path.is_file():
         return []
     try:
         state = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
         raise CardineError(f"invalid execution evidence state: {path}") from error
-    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     entries = state.get(canonical_id, [])
     if not isinstance(entries, list) or not all(isinstance(entry, dict) for entry in entries):
         raise CardineError(f"invalid execution evidence entries for {task_id}: {path}")
@@ -405,7 +402,8 @@ def verify_validation_skips(report_text: str, task_id: str) -> None:
 def verify_execution_evidence(project_root: Path, task_id: str, report_text: str) -> None:
     """Require report claims to be backed by durable, task-declared evidence."""
     from cardine.tasks.evidence import frozen_validation_commands
-    entries = execution_entries(project_root, task_id)
+    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
+    entries = execution_entries(project_root, canonical_id)
     commands = frozen_validation_commands(project_root, task_id)
     missing_validations = [
         command_id for command_id, command in commands.items()
@@ -420,7 +418,7 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
         raise stop_error(
             "HANDOFF_VALIDATION_EVIDENCE_MISSING",
             f"rule: every declared validation needs a successful durable record; source checked: "
-            f"{names().execution_evidence_path.as_posix()} for {task_id}; accepted: an entry with the declared id and "
+            f"{names().execution_evidence_path(canonical_id).as_posix()} for {task_id}; accepted: an entry with the declared id and "
             f"command and exitStatus 0; missing for: " + ", ".join(missing_validations),
             task_id=task_id,
         )

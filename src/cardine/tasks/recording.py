@@ -4,7 +4,7 @@ from cardine.shared.layout import names
 
 from cardine.shared.errors import CardineError
 from pathlib import Path
-from cardine.shared.git import _run_git
+from cardine.shared.git import _run_git, current_branch
 from cardine.tasks.preflight import execution_preflight
 from cardine.lifecycle.execution import execution_source_digest
 import json
@@ -16,14 +16,23 @@ from cardine.tasks.evidence import frozen_validation_commands
 
 def record_validation(project_root: Path, task_id: str, command_id: str, command: str, status: int,
                       binding: dict[str, str] | None = None) -> None:
-    path = project_root / names().execution_evidence_path
+    identity = resolve_task_identity(project_root, task_id, "existing")
+    canonical_id = identity.canonical_id
+    branch = current_branch(project_root)
+    from cardine.worktree.checkout import active_worktree_task
+    active = active_worktree_task(project_root) if branch and branch != identity.branch_name else None
+    if branch != identity.branch_name and ((branch or "").startswith("task-") or active is not None):
+        raise stop_error("WRONG_WORKTREE", "validation evidence belongs to the current task branch",
+                         task_id=canonical_id, project=project_root)
+    path = project_root / names().execution_evidence_path(canonical_id)
+    if path.is_symlink() or path.parent.is_symlink():
+        raise CardineError(f"execution evidence path must not be a symbolic link: {path}")
     state: dict[str, object] = {}
     if path.is_file():
         try:
             state = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
             raise CardineError(f"invalid execution evidence state: {path}") from error
-    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     entries = list(state.get(canonical_id, []))
     entries.append({"id": command_id, "command": command, "exitStatus": status, **(binding or {})})
     state[canonical_id] = entries

@@ -37,7 +37,7 @@ Declared task authority
           (question, scope, sources, finding)
                     │
                     ▼
-          .meridian/execution-evidence.json
+          .cardine/evidence/<TASK-ID>.json
                     │
                     ▼
       completion handoff + ready-check cross-check
@@ -115,7 +115,7 @@ READY_FOR_REVIEW --> independent review --> APPROVE --> ACCEPTED/integration
 ```
 
 The wrapper records validation exit statuses and evidence provenance in
-`.meridian/execution-evidence.json`. A project upgrades its templates before using these
+`.cardine/evidence/<TASK-ID>.json`. A project upgrades its templates before using these
 gates, then backfills only non-terminal tasks with their resolved contracts.
 
 For a fully delegated required-review task, `Run lifecycle <TASK-ID>` adds a

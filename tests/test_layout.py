@@ -16,6 +16,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from cardine.shared.errors import CardineError
 from cardine.shared.layout import PRODUCT_NAMES, ProjectNames, names, use
 from cardine.console.snapshot import IdentityCache
 from cardine.templates import manifest, merge
@@ -111,9 +112,36 @@ class LayoutTest(unittest.TestCase):
             recording.record_validation(self.root, "042", "unit", "python3 -m unittest", 0)
             entries = contract.execution_entries(self.root, "042")
             self.assertEqual(entries, [{"id": "unit", "command": "python3 -m unittest", "exitStatus": 0}])
-            self.assertTrue((self.root / OTHER_NAMES.execution_evidence_path).is_file())
+            self.assertTrue((self.root / OTHER_NAMES.execution_evidence_path("042")).is_file())
         self.assertEqual(contract.execution_entries(self.root, "042"), [])
-        self.assertFalse((self.root / PRODUCT_NAMES.execution_evidence_path).exists())
+        self.assertFalse((self.root / PRODUCT_NAMES.execution_evidence_path("042")).exists())
+
+    def test_evidence_cannot_overwrite_another_task_from_a_task_branch(self):
+        write_project_config(self.root)
+        (self.root / "tasks/043-layout.md").write_text("# Task 043\n\n> **ID**: `043`\n")
+        recording.record_validation(self.root, "043", "unit", "true", 0)
+        other = self.root / names().execution_evidence_path("043")
+        before = other.read_bytes()
+        subprocess.run(["git", "checkout", "-b", "task-042"], cwd=self.root,
+                       check=True, capture_output=True)
+        with self.assertRaisesRegex(CardineError, "WRONG_WORKTREE"):
+            recording.record_validation(self.root, "043", "overwrite", "false", 1)
+        self.assertEqual(other.read_bytes(), before)
+        recording.record_validation(self.root, "042", "unit", "true", 0)
+        self.assertEqual(other.read_bytes(), before)
+
+    def test_evidence_rejects_traversal_and_links_to_another_task(self):
+        write_project_config(self.root)
+        with self.assertRaises(ValueError):
+            names().execution_evidence_path("../043")
+        other = self.root / names().execution_evidence_path("043")
+        other.parent.mkdir(parents=True)
+        other.write_text("{}\n")
+        own = self.root / names().execution_evidence_path("042")
+        own.symlink_to(other)
+        with self.assertRaisesRegex(CardineError, "symbolic link"):
+            recording.record_validation(self.root, "042", "unit", "true", 0)
+        self.assertEqual(other.read_text(), "{}\n")
 
     def test_candidate_validation_reads_selected_directory(self):
         self.write_json(OTHER_NAMES.candidate_validation_path, {"version": 1, "state": "none"})

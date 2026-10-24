@@ -27,33 +27,33 @@ cannot exist.
 
 ## Acceptance Criteria
 
-- [ ] Execution evidence lives in one file per task under the project
+- [x] Execution evidence lives in one file per task under the project
   directory, for example `.cardine/evidence/<TASK-ID>.json`, at a path
   resolved by the layout module from the canonical task ID. No product
   code reads or writes a shared evidence file, and no task writes another
   task's file.
-- [ ] Every product reader and writer uses the per-task path: recording, the
+- [x] Every product reader and writer uses the per-task path: recording, the
   evidence and contract checks, delivery readiness and owned paths,
   integration evidence and staging, and the console. The installation
   reader under `cardine.legacy` keeps reading the installed Meridian's
   shared file unchanged.
-- [ ] A test with two task branches created from the same `main`, each
+- [x] A test with two task branches created from the same `main`, each
   recording evidence, integrates them one after the other with `integrate
   stage` and `finalize`, and the second integration has no conflict. A
   test proves that a task cannot write or overwrite another task's
   evidence file.
-- [ ] A conflict in any other file still stops with `INTEGRATION_CONFLICT`, as
+- [x] A conflict in any other file still stops with `INTEGRATION_CONFLICT`, as
   before.
-- [ ] Product templates and documents that name the shared evidence file name
+- [x] Product templates and documents that name the shared evidence file name
   the per-task path. The template change follows the pre-1.0 rule of task
   031: the owning capability's version rises and its baseline is
   rewritten, with no migration and no `VERSION` change.
-- [ ] Every row of the known-violation table of `tests/test_text_gates.py`
+- [x] Every row of the known-violation table of `tests/test_text_gates.py`
   that this change makes stale is updated, and the test passes.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code, product templates, and tests
   only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -62,16 +62,16 @@ cannot exist.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/096.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/096.json`, which only
   the installed `meridian task close 096` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

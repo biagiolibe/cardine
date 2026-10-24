@@ -151,7 +151,7 @@ class DeliveryCache:
             if handoff is not None:
                 key = (names(), head, main_commit,
                        *(_stat_identity(path) for path in (
-                           handoff, state_path(worktree, task_id), worktree / names().execution_evidence_path,
+                           handoff, state_path(worktree, task_id), worktree / names().execution_evidence_path(identity.canonical_id),
                            lifecycle, common_dir / names().integration_lease_name,
                            common_dir / names().integration_state_name)))
         if key is not None:

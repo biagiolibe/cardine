@@ -254,10 +254,10 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 6,
+      "requiredVersion": 7,
       "retired": false,
       "required": true,
-      "adoptionRecord": "093-scope-and-delivery"
+      "adoptionRecord": "096-per-task-execution-evidence"
     },
     "task-identity-policy": {
       "requiredVersion": 1,
@@ -338,10 +338,10 @@
       "adoptionRecord": "070-worktree-template-delivery"
     },
     "worktree-lifecycle": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
-      "adoptionRecord": "068-adr-list-discovery"
+      "adoptionRecord": "096-per-task-execution-evidence"
     }
   }
 }

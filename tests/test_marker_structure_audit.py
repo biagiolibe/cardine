@@ -130,7 +130,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
 
     def test_lifecycle_and_remote_cleanup_are_managed_capabilities(self) -> None:
         text = self.read("docs/WORKTREE_LIFECYCLE.md")
-        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 2), ("worktree-lifecycle", 2)])
+        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 2), ("worktree-lifecycle", 3)])
         policy = self.read("docs/INTEGRATION_POLICY.md")
         self.assertIn(("remote-branch-cleanup", 1), templates_markers.marker_pairs(policy))
         self.assertNotIn("distinct authorized reviewer identity", policy)

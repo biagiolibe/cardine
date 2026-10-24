@@ -203,8 +203,8 @@
       "version": 2
     },
     "worktree-lifecycle": {
-      "sha256": "d754b393116ce3b77f3349f3eda5c2cd1d733419fb87068ec5a6499c57e2d334",
-      "version": 2
+      "sha256": "d10a01fbe8f35a4a41a4156c0f61f6251afc383bd7f648d7706ff9d230e26a56",
+      "version": 3
     }
   },
   "templates/single/docs/workflows/IMPLEMENTATION.md": {
@@ -291,8 +291,8 @@
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "f84057d3e9c2b09cfb7073dd39e2b380dbd9da6a7a0bd25de0da2dd8e690d287",
-      "version": 6
+      "sha256": "a026b2564229bff3ff06a3432a4d1c6b6fbdd0f8cd1c7b843c087a2d944f7cdc",
+      "version": 7
     }
   }
 }

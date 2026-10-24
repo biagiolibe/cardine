@@ -126,7 +126,7 @@ class InstallationTest(RepoCase):
         declared = {
             layout.manifest_path, layout.task_identity_path, layout.project_declaration_path,
             layout.context_size_config_path, layout.candidate_validation_path,
-            layout.execution_evidence_path, layout.flow_targets_path,
+            layout.execution_evidence_path("002"), layout.flow_targets_path,
             Path(".git") / layout.integration_lease_name,
             Path(".git") / layout.integration_state_name,
             Path(".git") / layout.journal_name, Path(".git") / layout.journal_rotated_name,

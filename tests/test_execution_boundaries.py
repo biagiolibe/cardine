@@ -272,7 +272,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.reject_later_change('tasks/001.md')
 
     def test_later_execution_evidence_change_is_rejected_even_if_reverted(self):
-        self.reject_later_change('.cardine/execution-evidence.json')
+        self.reject_later_change('.cardine/evidence/001.json')
 
     def test_later_state_file_change_is_rejected_even_if_reverted(self):
         self.reject_later_change('.cardine/tasks/001.json')
