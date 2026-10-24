@@ -16,7 +16,7 @@ ratchet keys, and interruption boundaries; this record adds no design.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row RE2b is implemented as its table cell describes it,
+- [x] The scope of row RE2b is implemented as its table cell describes it,
   with the design of the plan's sections "State and next-step resolution",
   "Invocation, locations and output contract", "Stops, recovery and
   bounded work", "Validation attempts", "Review and Stable commands",
@@ -26,34 +26,34 @@ ratchet keys, and interruption boundaries; this record adds no design.
   K, stops, `review/verdict.py`, `tasks/{contract,preflight}.py`. A file
   the row missed but that the same change needs is in scope; the handoff
   lists it.
-- [ ] The row's tests exist and pass: `test_stop_registry.py`,
+- [x] The row's tests exist and pass: `test_stop_registry.py`,
   `test_run_recovery.py`: last-emitter audit, missing policy versus
   resolvable installed profile.
-- [ ] It contributes to the deferred split of mixed guardrail codes of
+- [x] It contributes to the deferred split of mixed guardrail codes of
   `PROJECT_PLAN.md`, as the plan's "Stops, recovery and bounded work" and
   "Reconciled choices" assign it: safe subcases get nonhuman causes, and
   every real authority negative still refuses. A code is removed only
   after its last static, dynamic, or judgment emitter is replaced.
-- [ ] Ratchet: no new key appears in the known-violation table of
+- [x] Ratchet: no new key appears in the known-violation table of
   `tests/test_text_gates.py`, and the allowlist does not grow.
-- [ ] Rule 4 of decision 14: No new effects; repeated diagnostics stable;
+- [x] Rule 4 of decision 14: No new effects; repeated diagnostics stable;
   verify consolidation never records approval or rewrites invalid state.
   Each effect test kills the operation immediately before and after each
   listed boundary, runs the identical command again, and checks
   convergence without duplicate commits, verdicts, counters, or deletion
   of foreign work. Pure rows test repeated resolution with no writes.
-- [ ] Every effect this row performs or changes goes through the operation
+- [x] Every effect this row performs or changes goes through the operation
   receipts of row RE1b and has changed-input and foreign-owner negative
   tests.
-- [ ] Nothing in the change claims authenticity beyond the plan's "Trust
+- [x] Nothing in the change claims authenticity beyond the plan's "Trust
   boundary": no same-user receipt or hash is presented as proof of
   authorship, and real host configuration is never installed or changed.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. The task changes product code, product templates, and tests only;
   it never runs `cardine run` on this repository, installs or changes real
   host configuration, or writes to the real home directory.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -62,16 +62,16 @@ ratchet keys, and interruption boundaries; this record adds no design.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/090.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/090.json`, which only
   the installed `meridian task close 090` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
