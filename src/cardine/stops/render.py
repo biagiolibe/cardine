@@ -11,6 +11,8 @@ from cardine.stops.registry import load_stop_registry
 from cardine.tasks.identity import resolve_task_identity
 from pathlib import Path
 import shlex
+import json
+import sys
 
 
 def _task_state_recovery_project(project: Path, task_id: str) -> Path:
@@ -30,14 +32,12 @@ def stop_resume(code: str, **fields: object) -> str:
     entry = load_stop_registry().get(code)
     if entry is None:
         raise InternalStopError(f"unregistered stop code: {code}")
-    if code in {"MAIN_BEHIND_ORIGIN", "TASK_STEP_PENDING", "DEPENDENCY_PENDING"} and fields.get("project"):
-        fields["project"] = shlex.quote(str(fields["project"]))
     if code == "TASK_STATE_MISSING" and fields.get("project") and fields.get("task_id"):
-        fields["project"] = shlex.quote(str(_task_state_recovery_project(
+        fields["project"] = str(_task_state_recovery_project(
             Path(str(fields["project"])), str(fields["task_id"]),
-        )))
+        ))
     try:
-        return str(entry["resume"]).format(**fields)
+        return str(entry["resume"]).format(**{key: shlex.quote(str(value)) for key, value in fields.items()})
     except KeyError as error:
         raise InternalStopError(f"stop {code} resume template needs field {error}") from error
 
@@ -47,13 +47,47 @@ def format_stop(code: str, detail: str, *, resume: str | None = None, **fields: 
     resume_text = resume if resume is not None else stop_resume(code, **fields)
     if code not in load_stop_registry():
         raise InternalStopError(f"unregistered stop code: {code}")
-    return f"BLOCKED {code}: {detail}; resume: {resume_text}"
+    prefix = {"blocked": "BLOCKED", "next": "NEXT", "iterate": "ITERATE"}[outcome_for_code(code)]
+    return f"{prefix} {code}: {detail}; resume: {resume_text}"
 
 
 def stop_error(code: str, detail: str, **fields: object) -> CardineStop:
-    """Build the error for a registered stop; the CLI prints it unchanged and exits 2."""
-    if code == "TASK_STATE_MISSING":
-        # Missing state is also a normal legacy probe. Resolve Git recovery paths
-        # only when the stop is displayed, not when a caller catches that probe.
-        return CardineStop(code, detail, render=lambda: format_stop(code, detail, **fields))
-    return CardineStop(code, format_stop(code, detail, **fields))
+    """Build a typed diagnostic; lazy rendering never performs a lifecycle effect."""
+    recovery = lambda: str(fields["resume"]) if fields.get("resume") is not None else stop_resume(code, **fields)
+    error = CardineStop(code, detail, render=lambda: format_stop(code, detail, resume=recovery()))
+    error.detail = detail
+    error.resume = recovery
+    return error
+
+
+def outcome_for_code(code: str) -> str:
+    """Classify a registered diagnostic without granting repair authority."""
+    entry = load_stop_registry().get(code)
+    if entry is None:
+        raise InternalStopError(f"unregistered stop code: {code}")
+    return {"guardrail": "blocked", "recoverable": "next", "failing-work": "iterate"}[entry["resolution"]]
+
+
+def emit_diagnostic(error: CardineStop, journal=None) -> int:
+    """Render an Internal adapter diagnostic after its operation has finished."""
+    outcome = outcome_for_code(error.code)
+    if journal is not None:
+        journal.stopped(error.code)
+    print(error, file=sys.stderr)
+    return 2 if outcome == "blocked" else 0
+
+
+def render_run_output(result: dict, validate) -> str:
+    """Serialize a closed run response without writing diagnostics or state."""
+    validate(result)
+    return json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
+
+def emit_run(result: dict, validate) -> int:
+    """Emit the complete run envelope; diagnostics cannot advance operation state."""
+    text = render_run_output(result, validate)
+    stop = result["stop"]
+    print(text)
+    if stop is not None:
+        print(format_stop(stop["code"], stop["detail"], resume=stop["resume"]), file=sys.stderr)
+    return 2 if result["outcome"] == "blocked" else 0

@@ -157,8 +157,8 @@ class RunRecoveryTest(unittest.TestCase):
     def test_project_selection_routes_to_the_registered_worktree(self) -> None:
         worktree = self.prepare()
         result = self.run_cli("execution", "start", "056", "--project", str(self.project))
-        self.assertEqual(result.returncode, 2)
-        self.assertTrue(result.stderr.startswith("BLOCKED WORKTREE_RELOCATE:"), result.stderr)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(result.stderr.startswith("NEXT WORKTREE_RELOCATE:"), result.stderr)
         resume = resume_from(result.stderr)
         self.assertIn(f"--project {worktree}", resume)
         recovered = run_recovery(resume, self.project, self.worktree_root)
@@ -178,8 +178,8 @@ class RunRecoveryTest(unittest.TestCase):
         lease = self.lease()
         owned_bytes = lease.read_bytes()
         result = self.run_cli(*self._stage_args(evidence))
-        self.assertEqual(result.returncode, 2)
-        self.assertTrue(result.stderr.startswith("BLOCKED LEASE_INTERRUPTED:"), result.stderr)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(result.stderr.startswith("NEXT LEASE_INTERRUPTED:"), result.stderr)
         self.assertEqual(lease.read_bytes(), owned_bytes)  # classification wrote nothing
         again = self.run_cli(*self._stage_args(evidence))
         self.assertEqual(again.stderr, result.stderr)  # repeated resolution is stable
@@ -533,8 +533,8 @@ class RunRecoveryTest(unittest.TestCase):
     def test_unpushed_main_is_a_pending_push_and_diverged_main_is_blocked(self) -> None:
         self.landed_task(origin=True)
         result = self.run_cli(*self.cleanup_args())
-        self.assertEqual(result.returncode, 2)
-        self.assertTrue(result.stderr.startswith("BLOCKED PUSH_PENDING:"), result.stderr)
+        self.assertEqual(result.returncode, 0)
+        self.assertTrue(result.stderr.startswith("NEXT PUSH_PENDING:"), result.stderr)
         self.assertEqual(resume_from(result.stderr), "git push origin main")
         self.assertTrue((self.worktree_root / "").is_dir())
         pushed = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
@@ -561,7 +561,7 @@ class RunRecoveryTest(unittest.TestCase):
         worktree = self.landed_task()
         lease = self.lease()
         result = self.run_cli(*self.cleanup_args())
-        self.assertTrue(result.stderr.startswith("BLOCKED LEASE_INTERRUPTED:"), result.stderr)
+        self.assertTrue(result.stderr.startswith("NEXT LEASE_INTERRUPTED:"), result.stderr)
         self.assertTrue(worktree.is_dir())
         lease.write_text(json.dumps({"task_id": "057"}), encoding="utf-8")
         foreign = self.run_cli(*self.cleanup_args())

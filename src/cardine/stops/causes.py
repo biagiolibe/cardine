@@ -86,6 +86,8 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/lifecycle/engine.py", "diagnostic_result", "COMMAND_REFUSED"): ("guardrail", "unregistered or untyped diagnostic cannot authorize repair"),
+    ("src/cardine/lifecycle/engine.py", "run_preview_cli", "COMMAND_REFUSED"): ("guardrail", "unknown resolved-task failure has no safe ownership or recovery proof"),
     ("src/cardine/tasks/preflight.py", "check_dependencies", "DEPENDENCY_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
     ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STEP_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
     ("src/cardine/tasks/preflight.py", "reconcile_execution_contract", "TASK_STEP_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),

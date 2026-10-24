@@ -200,7 +200,7 @@ class MachineTaskStateTest(unittest.TestCase):
             "| ID | Status | Task file |\n|---|---|---|\n| 001 | queued | [001](001.md) |\n")
         with self.assertRaises(shared_errors.CardineStop) as caught:
             self.read()
-        self.assertTrue(str(caught.exception).startswith("BLOCKED TASK_STATE_MISSING:"))
+        self.assertTrue(str(caught.exception).startswith("NEXT TASK_STATE_MISSING:"))
         self.assertIn("cardine task state import 001", str(caught.exception))
         self.assertFalse(self.path.exists())
         recovered = run_recovery(resume_from(str(caught.exception)), self.root)
@@ -219,7 +219,7 @@ class MachineTaskStateTest(unittest.TestCase):
         self.assertEqual((self.path.read_bytes(), self.record.read_bytes()), before)
         self.path.unlink()
         result = self.cli("in_progress")
-        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("TASK_STATE_MISSING", result.stderr)
         self.assertFalse(self.path.exists())
 

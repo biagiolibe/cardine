@@ -52,7 +52,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 098 | Build heavy lifecycle test fixtures once per class | 🔴 P1 | 097 | [098](done/098-fixture-templates.md) |
 | `[x]` | 099 | Keep the test failure record writable in the sandbox | 🔴 P1 | 098 | [099](done/099-sandbox-failure-record.md) |
 | `[x]` | 091 | Classify self-update, upgrade, and host stops by cause (RE2c) | 🔴 P1 | 099 | [091](done/091-stop-causes-nonrun.md) |
-| `[ ]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](092-typed-outcome-dispatch.md) |
+| `[x]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](done/092-typed-outcome-dispatch.md) |
 | `[ ]` | 093 | Enforce the expected surface and record delivery identity (RE3a) | 🔴 P1 | 092 | [093](093-scope-and-delivery.md) |
 | `[ ]` | 096 | Store execution evidence in one file per task | 🔴 P1 | 093 | [096](096-per-task-execution-evidence.md) |
 | `[ ]` | 094 | Run task validation in the engine with a retry limit (RE3b) | 🔴 P1 | 096 | [094](094-engine-validation.md) |

@@ -110,6 +110,10 @@ def validate_output(value: dict) -> None:
     check(value, schema)
     if value["step"] is None and (value["next"] is not None or value["stop"] is not None):
         raise ValueError("unresolved invocation cannot fabricate a next command")
+    if value["stop"] is not None:
+        entry = load_stop_registry().get(value["stop"]["code"])
+        if not entry or entry["resolution"] != "guardrail" or entry["human_decision"] is not True:
+            raise ValueError("only registered human guardrails can block")
     if value["stop"] is not None and (value["next"]["command"] != value["stop"]["resume"]
                                        or value["next"]["argv"] != value["stop"]["resume_argv"]):
         raise ValueError("guardrail resume must equal next")
@@ -121,8 +125,8 @@ def validate_output(value: dict) -> None:
 
 def render_output(result: dict) -> str:
     """Stable byte representation; preview has no clock, journal or subprocess."""
-    validate_output(result)
-    return json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    from cardine.stops.render import render_run_output
+    return render_run_output(result, validate_output)
 
 
 def resolve_run(facts: RunFacts) -> dict:
@@ -237,18 +241,56 @@ def run_preview_cli(argv: list[str]) -> int:
     parser = InvocationParser(prog="cardine run")
     parser.add_argument("task_id")
     parser.add_argument("--project", type=Path)
+    from cardine.shared.errors import CardineStop
+    from cardine.stops.render import emit_run
+    locations = None
     try:
         args = parser.parse_args(argv)
         locations = resolve_run_locations(args.task_id, args.project)
+    except (CardineError, OSError, ValueError) as error:
+        result = envelope("", "", step=None, diagnostics=[dict(code="INVALID_INVOCATION", message=str(error))])
+        emit_run(result, validate_output)
+        return 64
+    try:
         state = read_task_state(locations.primary, locations.task_id, "single",
                                 stop_factory=stop_error, require_contract=True)
         if "contract" not in state:
             raise CardineError("missing frozen contract; preview cannot import task prose")
         # Progress verification is deliberately not inferred from editable JSON.
         result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
-    except (CardineError, OSError, ValueError) as error:
-        result = envelope("", "", step=None, diagnostics=[dict(code="INVALID_INVOCATION", message=str(error))])
-        print(render_output(result))
-        return 64
-    print(render_output(result))
-    return 0
+    except CardineStop as error:
+        result = diagnostic_result(locations, error)
+    except Exception as error:
+        # An unknown failure carries no ownership proof and must never suggest
+        # successful progress or an automatic repair inferred from its prose.
+        result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)))
+    return emit_run(result, validate_output)
+
+
+def diagnostic_result(locations: RunLocations, error, *, step: str = "contract") -> dict:
+    """Adapt a cause-classified error, preserving its exact recovery command."""
+    from cardine.stops.render import outcome_for_code
+    from cardine.stops.render import stop_error
+    if error.code not in load_stop_registry() or error.detail is None or error.resume is None:
+        error = stop_error("COMMAND_REFUSED", "unknown or untyped diagnostic: " + error.code)
+    detail = error.detail
+    outcome = outcome_for_code(error.code)
+    run_argv = ["cardine", "run", locations.task_id, "--project", str(locations.primary)]
+    resume_argv = shlex.split(error.resume()) if outcome == "next" else run_argv
+    # Historical advice is not an executable recovery. Keep it in diagnostics
+    # and re-enter the owned resolver; later rows implement its bounded step.
+    if not resume_argv or resume_argv[0] not in {"cardine", "git"}:
+        resume_argv = run_argv
+    next_command = command_reference(resume_argv, "Resolve " + error.code)
+    stop = None
+    if outcome == "blocked":
+        # Guardrails recheck the same task after the missing decision. Internal
+        # recoveries instead retain their cause-specific command unchanged.
+        next_command = command_reference(
+            ["cardine", "run", locations.task_id, "--project", str(locations.primary)],
+            "Recheck the guardrail after the required decision")
+        stop = dict(code=error.code, resolution="guardrail", human_decision=True,
+                    detail=detail, resume=next_command["command"], resume_argv=next_command["argv"])
+    return envelope(locations.task_id, str(locations.primary), step=step, outcome=outcome,
+                    next_command=next_command, stop=stop,
+                    diagnostics=[dict(code=error.code, message=detail)])

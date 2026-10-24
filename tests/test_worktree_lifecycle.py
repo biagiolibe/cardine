@@ -242,7 +242,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 *( () if text else ("--format", "json") ),
             )
             self.assertEqual(snapshot(self.project, worktree), before)
-            self.assertEqual(result.returncode, 2 if expected_reason else 0, result.stderr)
+            self.assertEqual(result.returncode, 2 if expected_reason and stops_registry.load_stop_registry()[expected_reason]["human_decision"] else 0, result.stderr)
             if text:
                 self.assertEqual(
                     result.stdout.strip(),
@@ -412,7 +412,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "--worktree-root", str(self.worktree_root), "--evidence", str(evidence_path),
             "--format", "json",
         )
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 0)
         self.assertIn("local main is behind the already fetched origin/main", result.stderr)
         local = subprocess.run(
             ["git", "rev-parse", "--short=12", "main"], cwd=self.project, check=True, capture_output=True, text=True
@@ -423,7 +423,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         ).stdout.strip()
         self.assertEqual(
             result.stderr.strip(),
-            "BLOCKED MAIN_BEHIND_ORIGIN: local main is behind the already fetched origin/main "
+            "NEXT MAIN_BEHIND_ORIGIN: local main is behind the already fetched origin/main "
             f"(local main {local}, origin/main {fetched}); resume: "
             f"git -C {shlex.quote(str(self.project.resolve()))} merge --ff-only origin/main",
         )
@@ -442,7 +442,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def test_stop_helper_formats_registered_codes_and_rejects_others(self) -> None:
         self.assertEqual(
             owner_stops_render.format_stop("PUSH_PENDING", "main is ahead"),
-            "BLOCKED PUSH_PENDING: main is ahead; resume: git push origin main",
+            "NEXT PUSH_PENDING: main is ahead; resume: git push origin main",
         )
         with self.assertRaises(shared_errors.InternalStopError):
             owner_stops_render.format_stop("NOT_A_REGISTERED_CODE", "detail", resume="x")
@@ -531,10 +531,10 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "worktree", "closure-status", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root),
         )
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 0)
         self.assertEqual(
             result.stdout.strip(),
-            "BLOCKED EVIDENCE_INCOMPLETE: machine evidence for the validated task commit is missing or "
+            "NEXT EVIDENCE_INCOMPLETE: machine evidence for the validated task commit is missing or "
             "incomplete; resume: record machine evidence",
         )
 
@@ -585,7 +585,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         before = path.read_bytes()
         result = self.run_cli('worktree', 'prepare', '056', '--project', str(self.project),
                               '--worktree-root', str(self.worktree_root), '--format', 'json')
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 0)
         self.assertIn('TASK_STATE_MISSING', result.stderr)
         self.assertEqual(path.read_bytes(), before)
 
@@ -614,10 +614,10 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "worktree", "integrate", "finalize", "056", "--project", str(self.project),
             "--evidence", str(validation), "--format", "json",
         )
-        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.returncode, 0)
         self.assertEqual(
             result.stderr.strip(),
-            "BLOCKED EVIDENCE_MISMATCH: candidate validation evidence is stale, mismatched, or failed; resume: "
+            "NEXT EVIDENCE_MISMATCH: candidate validation evidence is stale, mismatched, or failed; resume: "
             f"cardine worktree integrate abort 056 --project {self.project.resolve()} --format json",
         )
 
@@ -814,17 +814,20 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def test_advance_stops_on_failed_or_unaccepted_validation_without_recording(self) -> None:
         evidence_path = self._advance_ready_task()
         failed = self._advance("--accepted", "--validation-command", "check", "--validation-exit-code", "1")
-        self.assertEqual(failed.returncode, 2, failed.stderr)
+        self.assertEqual(failed.returncode, 0, failed.stderr)
         report = json.loads(failed.stdout)
         self.assertEqual((report["step"], report["action_required"], report["stop_code"]), ("C2", "run-validation", "VALIDATION_FAILED"))
         self.assertEqual(report["resume"], "fix the failure on the task branch and rerun the failing command")
         self.assertEqual(report["stop_detail"], "record machine evidence")
         unaccepted = self._advance("--validation-command", "check", "--validation-exit-code", "0")
-        self.assertEqual(unaccepted.returncode, 2, unaccepted.stderr)
+        self.assertEqual(unaccepted.returncode, 0, unaccepted.stderr)
         self.assertEqual(json.loads(unaccepted.stdout)["stop_code"], "ACCEPTANCE_UNMET")
         self.assertFalse(evidence_path.exists())
         blocked = [line for line in self._journal() if line["result"] == "blocked"]
-        self.assertEqual([line["stop_code"] for line in blocked], ["VALIDATION_FAILED", "ACCEPTANCE_UNMET"])
+        self.assertEqual(blocked, [])
+        diagnostics = [line for line in self._journal() if line["result"] == "iterate"]
+        self.assertEqual([(line["stop_code"], line["resolution"]) for line in diagnostics],
+                         [("VALIDATION_FAILED", "failing-work"), ("ACCEPTANCE_UNMET", "failing-work")])
         mismatch = self._advance("--validation-command", "check")
         self.assertNotEqual(mismatch.returncode, 0)
 
@@ -929,7 +932,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             *self._candidate("git diff --check", "python3 scripts/check_repository.py"),
             "--candidate-command", "python3 -m unittest discover", "--candidate-exit-code", "1",
         )
-        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual((report["step"], report["stop_code"]), ("C7", "CANDIDATE_VALIDATION_FAILED"))
         self.assertIn("aborted", report["resume"])
@@ -954,7 +957,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         (self.project / "late.txt").write_text("late\n", encoding="utf-8")
         subprocess.run(["git", "add", "late.txt"], cwd=self.project, check=True)
         result = self._advance(*self._all_candidate_commands())
-        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual((report["step"], report["stop_code"]), ("C8", "EVIDENCE_MISMATCH"))
         self.assertIn("integrate abort", report["resume"])

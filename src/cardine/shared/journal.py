@@ -76,14 +76,19 @@ class LifecycleJournalEntry:
             self.task = task
 
     def stopped(self, code: str | None) -> None:
-        self.blocked = True
         if code is not None and code in load_stop_registry():
             self.stop_code = code
+            self.blocked = load_stop_registry()[code]["resolution"] == "guardrail"
+        else:
+            self.blocked = True
 
     def write(self, exit_code: int) -> None:
         if self.command is None:
             return
-        if exit_code == 0:
+        if self.stop_code is not None:
+            from cardine.stops.render import outcome_for_code
+            outcome = outcome_for_code(self.stop_code)
+        elif exit_code == 0:
             outcome = "ok"
         elif self.blocked:
             outcome = "blocked"
@@ -99,7 +104,7 @@ class LifecycleJournalEntry:
         }
         if self.step is not None:
             line["step"] = self.step
-        if self.stop_code is not None and outcome == "blocked":
+        if self.stop_code is not None:
             line["stop_code"] = self.stop_code
             line["resolution"] = load_stop_registry()[self.stop_code]["resolution"]
         if self.resume:
