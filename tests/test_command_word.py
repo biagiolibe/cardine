@@ -41,6 +41,12 @@ class CommandWordTest(unittest.TestCase):
             baseline.pop(code)
         for code in ("TASK_STEP_PENDING", "DEPENDENCY_PENDING"):
             baseline[code] = {"human_decision": False, "resolution": "recoverable"}
+        # RE2c consolidates target ancestry and classifies safe non-run causes.
+        baseline.pop("SELF_UPDATE_NON_FF")
+        for code in ("SELF_UPDATE_PLUGIN_CACHE", "OS_PATH_BUSY", "UPGRADE_OUTPUT_PENDING"):
+            baseline[code] = {"human_decision": False, "resolution": "recoverable"}
+        for code in ("SELF_UPDATE_INPUT_INVALID", "OS_PATH_MISSING"):
+            baseline[code] = {"human_decision": False, "resolution": "failing-work"}
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []

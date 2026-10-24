@@ -131,13 +131,13 @@ class NonrunCausesTest(unittest.TestCase):
 
     def test_plugin_owner_route_is_stable_and_never_runs_manager(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory) / '.claude/plugins/cache/meridian/release'
+            root = Path(directory) / '.claude/plugins/cache/example/release'
             for _ in range(2):
                 with patch.object(updater.owner_release_update, 'git_output') as git:
                     with self.assertRaises(CardineStop) as error:
                         updater.owner_release_update.run_self_update(root, apply=True)
                     self.assertEqual(error.exception.code, 'SELF_UPDATE_PLUGIN_CACHE')
-                    self.assertTrue(str(error.exception).endswith('resume: /plugin marketplace update meridian'))
+                    self.assertTrue(str(error.exception).endswith('resume: ' + updater.owner_release_update.PLUGIN_UPDATE_COMMAND))
                     git.assert_not_called()
                 self.assertFalse(root.exists())
 

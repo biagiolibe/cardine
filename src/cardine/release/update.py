@@ -29,6 +29,9 @@ import shlex
 import subprocess
 import tempfile
 
+
+PLUGIN_UPDATE_COMMAND = "/plugin marketplace update meridian"
+
 def fetch_latest_release(
     installed_version: str,
     *,
@@ -71,12 +74,13 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
     """Plan in an isolated object store; mutate only the CLI checkout on apply."""
     root = framework_root.resolve()
 
-    def refuse(code: str, detail: str) -> None:
-        raise stop_error(code, detail)
+    def refuse(code: str, detail: str, **fields: object) -> None:
+        raise stop_error(code, detail, **fields)
 
     if any(root.parts[index:index + 2] == ("plugins", "cache")
            for index in range(len(root.parts) - 1)):
-        refuse("SELF_UPDATE_PLUGIN_CACHE", "plugin manager owns this checkout; use /plugin marketplace update meridian")
+        refuse("SELF_UPDATE_PLUGIN_CACHE", f"plugin manager owns this checkout; use {PLUGIN_UPDATE_COMMAND}",
+               resume=PLUGIN_UPDATE_COMMAND)
     if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
         refuse("SELF_UPDATE_INPUT_INVALID", "--to requires a release tag v<version>")
     try:

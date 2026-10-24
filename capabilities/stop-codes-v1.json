@@ -642,7 +642,7 @@
       ],
       "emitter": "cardine self-update",
       "human_decision": false,
-      "resume": "/plugin marketplace update meridian",
+      "resume": "use the owning plugin-manager operation printed in the diagnostic",
       "kind": "stop",
       "summary": "route this checkout to its plugin-manager owner; no update or host-write consent is granted",
       "resolution": "recoverable"
