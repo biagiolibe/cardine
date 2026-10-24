@@ -133,6 +133,12 @@ def validate_task_state(state, task_id, workflow, *, spike=False, review_require
         from cardine.shared.project import parse_project_declaration
         from cardine.shared.errors import CardineError
         contract = state["contract"]
+        if 'expectedCodeSurface' in contract:
+            from cardine.lifecycle.scope import normalize_surface
+            try:
+                normalize_surface(contract['expectedCodeSurface'])
+            except ValueError as error:
+                raise TaskStateInvalid(str(error)) from error
         from cardine.tasks.contract_fields import HUMAN_CONTRACT_FIELDS, frozen_human_fields
         if any(key in contract for key in HUMAN_CONTRACT_FIELDS):
             try:

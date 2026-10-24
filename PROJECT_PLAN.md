@@ -139,7 +139,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 099 — Keep the test failure record writable in the sandbox.
 - `[x]` 091 — Classify self-update, upgrade, and host stops by cause (RE2c).
 - `[x]` 092 — Dispatch typed outcomes through one renderer (RE2d).
-- `[ ]` 093 — Enforce the expected surface and record delivery identity (RE3a).
+- `[x]` 093 — Enforce the expected surface and record delivery identity (RE3a).
 - `[ ]` 096 — Store execution evidence in one file per task.
 - `[ ]` 094 — Run task validation in the engine with a retry limit (RE3b).
 - `[ ]` 095 — Remove the handoff and report gates (N3).

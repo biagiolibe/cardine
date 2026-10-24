@@ -63,7 +63,21 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
 
 
 
-def execution_deliver(project_root: Path, task_id: str) -> dict[str, object]:
+def execution_deliver(project_root: Path, task_id: str, *, implementation_only: bool | None = None) -> dict[str, object]:
+    """Frozen surfaces use pre-validation delivery; retain the legacy review adapter.
+
+    The run engine always selects implementation delivery, including the
+    missing-surface guardrail. Interactive legacy snapshots keep their existing
+    review path until N3/RE4 replace the old review/handoff gates.
+    """
+    if implementation_only is None:
+        _execution_location(project_root, task_id, command=('execution', 'deliver'))
+        from cardine.lifecycle.delivery import _operation_path
+        implementation_only = (_operation_path(project_root, task_id).exists()
+                               or bool(_execution_state(project_root, task_id)['contract'].get('expectedCodeSurface')))
+    if implementation_only:
+        from cardine.lifecycle.delivery import deliver_implementation
+        return deliver_implementation(project_root, task_id)
     result = delivery_readiness(project_root, task_id, allow_handoff_correction=True)
     task_id = str(result["task_id"])
     if result["status"] == "in_review":

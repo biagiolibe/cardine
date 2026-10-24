@@ -1,8 +1,8 @@
-"""Pure seven-step preview and read-only invocation location resolution.
+"""Pure seven-step preview, locations and bounded implementation adapters.
 
-No dispatcher effects are implemented here. Receipt readers/writers and effect
-dispatch belong to the subsequent run-engine rows. Resolution never interprets
-editable run metadata as verified progress.
+Preview remains read-only. The implementation adapters verify receipt-backed
+progress or perform one owned delivery for dispatcher composition. Resolution
+never interprets editable run metadata as verified progress.
 """
 from __future__ import annotations
 
@@ -179,6 +179,42 @@ def resolve_run(facts: RunFacts) -> dict:
             reason = "Review is not required; " + reason[0].lower() + reason[1:]
         return result("candidate", reason)
     return result("landing", "Finalize, push, verify and clean up delivery")
+
+
+def deliver_run_implementation(locations: RunLocations) -> dict:
+    """Bounded step-three adapter; validation and acceptance remain separate."""
+    from cardine.lifecycle.commands import execution_deliver
+    return execution_deliver(locations.worktree, locations.task_id, implementation_only=True)
+
+
+def implementation_delivery(locations: RunLocations) -> dict | None:
+    """Read verified step-three progress; no prose, writes or caller pass flags."""
+    from cardine.lifecycle.delivery import verify_delivery
+    from cardine.lifecycle.execution import _execution_location, _execution_owned_paths, _execution_state
+    from cardine.lifecycle.scope import enforce_scope
+    root = locations.worktree
+    inspection = _execution_location(root, locations.task_id)
+    if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
+        raise CardineError('implementation progress requires the canonical task worktree')
+    from cardine.lifecycle.delivery import _operation_path
+    from cardine.lifecycle.receipts import _load_intent, require_authority
+    operation = _operation_path(root, locations.task_id)
+    intent = None
+    if operation.exists():
+        intent = _load_intent(operation)
+        if (intent['task_id'] != locations.task_id or intent['root'] != str(root.resolve())
+                or intent['base'] != str(inspection['base_commit'])
+                or intent['authority'] != require_authority(root)):
+            raise CardineError('implementation progress has a foreign delivery operation')
+        if intent['result'] != 'verified':
+            return None  # The dispatcher must reconcile the owned operation first.
+    state = _execution_state(root, locations.task_id)
+    base = str(inspection['base_commit'])
+    enforce_scope(root, state, base, owned=_execution_owned_paths(root, locations.task_id))
+    result = verify_delivery(root, state, base)
+    if result is not None and intent is not None and result['commit'] != intent['commit']:
+        raise CardineError('implementation delivery result identity changed')
+    return result
 
 
 def resolve_run_locations(task_id: str, project: Path | None = None, *,

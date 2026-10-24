@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v5 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v6 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
@@ -117,14 +117,18 @@ invocation mode, and configuration layer that supplies the adapter.
 
 ## Expected code surface
 
-[Required when the resolved `expectedCodeSurfaceRequired` option is true;
-when supplied, it constrains the work in either case. When omitted, the
-Objective, the relevant files, and the out-of-scope clauses still bound the
-authorization; omission never grants permission for unrelated work.]
+[Required for unattended runs, even when interactive Lean work may omit it.
+List one normalized repository-relative path or glob per bullet, optionally
+in backticks. Replace the examples below with the authorized files. `*`
+matches one path segment; `**` matches nested segments. Absolute paths,
+parent traversal, and symlink escapes are rejected. Creation or an explicit
+contract update freezes these paths; editing this section later grants no
+additional authority. Keep preservation requirements and evidence in the
+out-of-scope and validation sections. CLI-owned state, evidence and views
+are separate from implementation files.]
 
-- Add or change: [exact module, file, documentation path, or bounded component.]
-- Preserve: [interfaces, invariants, and adjacent areas that must not change.]
-- Evidence needed: [tests, checks, manual inspection, or handoff evidence.]
+- `src/example/**`
+- `tests/test_example.py`
 
 ## Acceptance Criteria
 

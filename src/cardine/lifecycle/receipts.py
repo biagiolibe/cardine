@@ -31,8 +31,16 @@ def digest(content):
 
 
 def state_digest(state):
-    """Exclude the enclosing run ledger to avoid a self-referential digest."""
-    return digest(encoded({key: value for key, value in state.items() if key != 'run'}))
+    """Cover progress metadata while excluding the self-referential receipt chain.
+
+    Empty progress retains RE1b's digest for existing receipt-only states.
+    """
+    value = {key: item for key, item in state.items() if key != 'run'}
+    progress = {key: item for key, item in state.get('run', {}).items()
+                if key not in ('receipts', 'pending')}
+    if progress:
+        value['run'] = progress
+    return digest(encoded(value))
 
 
 def safe_path(root, relative):

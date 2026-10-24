@@ -229,6 +229,9 @@ def stage_task_integration(
         raise CardineError("accepted, successful task validation evidence is required")
     task_commit = str(inspection["task_commit"])
     task_state = _integration_task_state(project_root, identity, task_commit, Path(str(inspection["worktree"])))
+    from cardine.lifecycle.execution import enforce_execution_scope
+    enforce_execution_scope(Path(str(inspection["worktree"])), identity.canonical_id,
+                            state=task_state, base=str(inspection["base_commit"]))
     validated_task = str(evidence["validated_task_commit"])
     validated_base = str(evidence["validated_base_commit"])
     if validated_base != inspection["base_commit"]:

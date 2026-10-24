@@ -115,13 +115,13 @@ def _execution_owned_paths(project_root: Path, task_id: str) -> set[str]:
             (identity.task_path, identity.handoff_path, state_path(project_root, task_id))} | {names().execution_evidence_path.as_posix()}
 
 
-def execution_source_digest(project_root: Path, task_id: str) -> str:
+def execution_source_digest(project_root: Path, task_id: str, *, operation_paths=()) -> str:
     """Bind validation to source contents and modes, including unstaged files.
 
     Only the task's delivery-owned paths are excluded. Queue, plan, and other
     tasks remain part of the fingerprint. No index or Git object is written.
     """
-    owned = _execution_owned_paths(project_root, task_id)
+    owned = _execution_owned_paths(project_root, task_id) | set(operation_paths)
     paths = set(git_output(project_root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0"))
     entries = []
     for relative in sorted(paths - owned - {""}):
@@ -187,6 +187,7 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
                                                   inspection_directory=primary)
         if not valid or worktree["integration_active"] or Path(worktree["worktree"]).resolve() != project_root.resolve():
             raise stop_error("WRONG_WORKTREE", "delivery requires the clean canonical worktree", task_id=task_id, project=canonical_project_root(project_root))
+    enforce_execution_scope(project_root, task_id, state=state, base=str(worktree["base_commit"]))
     readiness_check(project_root, task_id, identity.handoff_path)
     head = git_output(project_root, "rev-parse", "HEAD")
     base = str(worktree["base_commit"])
@@ -220,3 +221,17 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
                              task_id=task_id, project=canonical_project_root(project_root))
     return {"task_id": task_id, "commit": head, "clean": True, "status": state["status"]}
 
+
+def enforce_execution_scope(root, task_id, *, base=None, state=None):
+    """Interactive legacy snapshots may omit the surface; frozen surfaces always bind."""
+    from cardine.lifecycle.scope import enforce_scope
+    from cardine.worktree.checkout import inspect_task_worktree
+    from cardine.shared.git import canonical_project_root
+    state = state if state is not None else _execution_state(root, task_id)
+    if not state['contract'].get('expectedCodeSurface'):
+        return
+    if base is None:
+        inspection, _ = inspect_task_worktree(task_id, None, canonical_project_root(root),
+                                              require_effective_worktree=False)
+        base = str(inspection['base_commit'])
+    return enforce_scope(root, state, base, owned=_execution_owned_paths(root, task_id))
