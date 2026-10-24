@@ -17,7 +17,14 @@ from cardine.shared.layout import ProjectNames, use
 from cardine.shared.snapshot_adapters import execution_assets_adapter, state_adapter, status_adapter
 
 
-MERIDIAN_INSTALLATION_NAMES = ProjectNames(
+class MeridianInstallationNames(ProjectNames):
+    """Keep the installed Meridian evidence ledger behind the legacy boundary."""
+
+    def execution_evidence_path(self, canonical_id: str) -> Path:
+        return Path(self.project_directory) / "execution-evidence.json"
+
+
+MERIDIAN_INSTALLATION_NAMES = MeridianInstallationNames(
     project_directory=".meridian",
     worktree_state_directory="meridian-worktrees",
     integration_lease_name="meridian-integration.lock",

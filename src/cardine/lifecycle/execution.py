@@ -112,7 +112,7 @@ def _execution_state(project_root: Path, task_id: str) -> dict[str, object]:
 def _execution_owned_paths(project_root: Path, task_id: str) -> set[str]:
     identity = resolve_task_identity(project_root, task_id, "existing")
     return {path.relative_to(project_root).as_posix() for path in
-            (identity.task_path, identity.handoff_path, state_path(project_root, task_id))} | {names().execution_evidence_path.as_posix()}
+            (identity.task_path, identity.handoff_path, state_path(project_root, task_id))} | {names().execution_evidence_path(identity.canonical_id).as_posix()}
 
 
 def execution_source_digest(project_root: Path, task_id: str, *, operation_paths=()) -> str:
@@ -152,7 +152,7 @@ def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, o
     if not commits:
         raise stop_error("EVIDENCE_INCOMPLETE", "in_review needs a committed delivery",
                          task_id=task_id, project=canonical_project_root(project_root))
-    delivery_paths = owned - {names().execution_evidence_path.as_posix(), report_path}
+    delivery_paths = owned - {names().execution_evidence_path(resolve_task_identity(project_root, task_id, "existing").canonical_id).as_posix(), report_path}
     later = []
     for index, commit in enumerate(commits):
         paths = set(git_output(project_root, "diff", "--name-only", f"{commit}^", commit).splitlines())

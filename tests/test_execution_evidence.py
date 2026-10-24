@@ -701,12 +701,12 @@ Evidence plan:
         self.assertEqual(
             self.blocked_line(check()),
             "ITERATE HANDOFF_VALIDATION_EVIDENCE_MISSING: rule: every declared validation needs a successful durable "
-            "record; source checked: .cardine/execution-evidence.json for TASK-022; accepted: an entry with the "
+            "record; source checked: .cardine/evidence/TASK-022.json for TASK-022; accepted: an entry with the "
             "declared id and command and exitStatus 0; missing for: probe; resume: run cardine execution validate "
             "TASK-022 <validation-id> --project . for each listed ID, then rerun the handoff check",
         )
         self.assertEqual(self.run_cli("execution", "validate", "TASK-022", "probe").returncode, 0)
-        legacy = self.project / ".cardine/execution-evidence.json"
+        legacy = self.project / ".cardine/evidence/TASK-022.json"
         state = json.loads(legacy.read_text())
         state["TASK-022"].extend([
             {"kind": "investigation", "question": "old question", "scope": 2, "finding": "old finding"},
@@ -733,7 +733,7 @@ Evidence plan:
         result = self.run_cli("execution", "validate", "TASK-010", "probe")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("validation-ok", result.stdout)
-        evidence = json.loads((self.project / ".cardine/execution-evidence.json").read_text(encoding="utf-8"))
+        evidence = json.loads((self.project / ".cardine/evidence/TASK-010.json").read_text(encoding="utf-8"))
         self.assertEqual(evidence["TASK-010"][0]["id"], "probe")
         missing = self.run_cli("execution", "validate", "TASK-010", "not-declared")
         self.assertEqual(missing.returncode, 0)
@@ -768,7 +768,7 @@ Evidence plan:
         task.write_text(task.read_text() + "\n## Authority\n\n## Expected code surface\n\n## Validation\n\n- `probe`: `printf ok`\n")
         self.append_contract("TASK-405")
         (self.project / ".cardine").mkdir(exist_ok=True)
-        (self.project / ".cardine/execution-evidence.json").mkdir()
+        (self.project / ".cardine/evidence/TASK-405.json").mkdir(parents=True)
         failed = self.run_cli("execution", "validate", "TASK-405", "probe")
         line = self.blocked_line(failed)
         self.assertTrue(line.startswith("BLOCKED OS_ACCESS_FAILED: "), line)

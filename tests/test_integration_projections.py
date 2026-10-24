@@ -164,7 +164,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         state["outcome"] = "ANSWERED"
         state_path.write_text(json.dumps(state))
         seal_state(worktree, '056')
-        ledger = worktree / owner_tasks_contract.EXECUTION_EVIDENCE_PATH
+        ledger = worktree / owner_tasks_contract.names().execution_evidence_path("056")
         evidence_bytes = ledger.read_bytes()
         entry = json.loads(evidence_bytes)["056"][0]
         self.assertEqual({key: entry[key] for key in ("id", "command", "exitStatus")},
@@ -181,21 +181,21 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "accepted": True, "validation_passed": True,
             "validated_task_commit": task_commit, "validated_base_commit": self.base,
             "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": [str(owner_tasks_contract.EXECUTION_EVIDENCE_PATH), "docs/answer.md", "tasks/056-lifecycle.md"],
+            "task_paths": [str(owner_tasks_contract.names().execution_evidence_path("056")), "docs/answer.md", "tasks/056-lifecycle.md"],
             "task_dependencies": [], "task_behavioral_surfaces": [],
             "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
         }), encoding="utf-8")
         staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
-        self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
-        self.assertEqual(self.git("show", f":{owner_tasks_contract.EXECUTION_EVIDENCE_PATH}").stdout.encode(), evidence_bytes)
+        self.assertEqual((self.primary / owner_tasks_contract.names().execution_evidence_path("056")).read_bytes(), evidence_bytes)
+        self.assertEqual(self.git("show", f":{owner_tasks_contract.names().execution_evidence_path('056')}").stdout.encode(), evidence_bytes)
         candidate = self.root / "candidate-validation.json"
         candidate.write_text(json.dumps({
             "candidate_tree": staged["candidate_tree"], "passed": True, "scope": "bounded",
             "commands": ["git diff --check", "python3 scripts/check_repository.py", "test -f docs/answer.md"],
         }), encoding="utf-8")
         owner_integration_merge.finalize_task_integration("056", candidate, self.primary)
-        self.assertEqual((self.primary / owner_tasks_contract.EXECUTION_EVIDENCE_PATH).read_bytes(), evidence_bytes)
+        self.assertEqual((self.primary / owner_tasks_contract.names().execution_evidence_path("056")).read_bytes(), evidence_bytes)
         self.assertEqual((self.primary / "docs/answer.md").read_bytes(), (worktree / "docs/answer.md").read_bytes())
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
 
@@ -207,7 +207,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         task.write_text(task.read_text(encoding="utf-8") +
                         "\nClass: SPIKE\nDeliverable: `docs/answer.md`\n", encoding="utf-8")
         state = freeze_record(worktree, "056", task)
-        paths = [".cardine/execution-evidence.json", ".cardine/execution-evidence-extra.json",
+        paths = [".cardine/evidence/056.json", ".cardine/execution-evidence-extra.json",
                  ".cardine/other.json", "docs/answer.md", "docs/undeclared.md", "source.py",
                  "tasks/reviews/056.md", "tasks/reviews/057.md"]
         for path in paths:

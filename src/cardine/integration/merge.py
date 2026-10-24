@@ -58,7 +58,7 @@ def _spike_disallowed_paths(
         str(identity.handoff_path.relative_to(project_root)),
         str(identity.review_path.relative_to(project_root)),
         str(find_adr_log(project_root).relative_to(project_root)),
-        names().execution_evidence_path.as_posix(),
+        names().execution_evidence_path(identity.canonical_id).as_posix(),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
     }
     from cardine.tasks.contract_fields import frozen_human_fields
@@ -121,7 +121,7 @@ def _integration_task_state(
             identity.task_path.relative_to(project_root).as_posix(),
             identity.handoff_path.relative_to(project_root).as_posix(),
             identity.review_path.relative_to(project_root).as_posix(),
-            relative.as_posix(), names().execution_evidence_path.as_posix(),
+            relative.as_posix(), names().execution_evidence_path(identity.canonical_id).as_posix(),
         }
         changed = git_output(project_root, "log", "--format=", "--name-only", f"{reviewed}..{task_commit}").splitlines()
         offending = sorted(set(filter(None, changed)) - allowed)

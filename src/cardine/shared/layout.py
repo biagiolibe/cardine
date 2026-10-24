@@ -49,9 +49,12 @@ class ProjectNames:
     def candidate_validation_path(self) -> Path:
         return Path(self.project_directory) / "candidate-validation.json"
 
-    @property
-    def execution_evidence_path(self) -> Path:
-        return Path(self.project_directory) / "execution-evidence.json"
+    def execution_evidence_path(self, canonical_id: str) -> Path:
+        """Return the exact evidence file for one resolved, portable task ID."""
+        import re
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", canonical_id):
+            raise ValueError(f"unsafe evidence task ID: {canonical_id!r}")
+        return Path(self.project_directory) / "evidence" / f"{canonical_id}.json"
 
     @property
     def flow_targets_path(self) -> Path:

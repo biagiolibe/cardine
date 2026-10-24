@@ -352,7 +352,7 @@ def _lifecycle_changes_after_validation(
         str(identity.handoff_path.relative_to(project_root)),
         str(identity.review_path.relative_to(project_root)),
         str(state_path(project_root, identity.canonical_id).relative_to(project_root)),
-        names().execution_evidence_path.as_posix(),
+        names().execution_evidence_path(identity.canonical_id).as_posix(),
     }
     output = _run_git(
         project_root,

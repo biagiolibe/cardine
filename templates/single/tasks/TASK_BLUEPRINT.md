@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v6 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v7 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
@@ -171,7 +171,7 @@ here; a task command supplements the baseline and never silently removes it.
 Run source/build validation only through `cardine execution validate <TASK-ID>
 <validation-id> --project .`. The command is deliberately stored in this task:
 the runner executes no agent-supplied shell text and records its exit status in
-`.cardine/execution-evidence.json` for the completion handoff.
+`.cardine/evidence/<TASK-ID>.json` for the completion handoff.
 
 ## Execution contract — resolved
 

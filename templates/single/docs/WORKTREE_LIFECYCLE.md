@@ -26,7 +26,7 @@ only after an explicit Resume directive.
 <!-- CARDINE:END -->
 
 
-<!-- CARDINE:BEGIN capability=worktree-lifecycle v2 -->
+<!-- CARDINE:BEGIN capability=worktree-lifecycle v3 -->
 Use the host-neutral `cardine worktree` namespace for task checkout lifecycle
 operations. Commands exit `0` on success, `2` when blocked, and `64` on usage
 errors. The root resolves from an explicit option, the environment, user
@@ -115,7 +115,7 @@ review option, including commit-bound approval when required, and becomes
 `done` only after validated landing. Its task diff may contain
 only its record or exact archive rename, handoff, ADR log, documentation paths
 named in its deliverable, changelog fragments, and the canonical
-`.cardine/execution-evidence.json` ledger produced by `cardine execution
+`.cardine/evidence/<TASK-ID>.json` ledger produced by `cardine execution
 validate`. This exact ledger path does not permit other `.cardine/` paths
 or relax validation evidence checks; another path blocks stage before a lease
 or merge.
