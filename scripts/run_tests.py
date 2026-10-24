@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import difflib
+import json
 import os
 import re
 import shutil
@@ -141,6 +143,12 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="with --parallel, validate a shallow clone of the committed HEAD instead of this working tree",
     )
+    selection = argument_parser.add_mutually_exclusive_group()
+    selection.add_argument("--last-failed", action="store_true", help="rerun the recorded failing tests")
+    selection.add_argument("--module", action="append", default=[], help="select a module, path, class, or test ID (repeatable)")
+    argument_parser.add_argument("--selection-file", type=Path, help=argparse.SUPPRESS)
+    argument_parser.add_argument("--failure-record", type=Path, help=argparse.SUPPRESS)
+    argument_parser.add_argument("--failed-output", type=Path, help=argparse.SUPPRESS)
     argument_parser.add_argument("--tests-directory", type=Path, default=TESTS_DIRECTORY, help=argparse.SUPPRESS)
     return argument_parser
 
@@ -163,7 +171,7 @@ def parse_shard_output(index: int, returncode: int, output: str) -> ShardResult:
     result = ShardResult(index, returncode, output)
     for line in output.splitlines():
         header = HEADER.match(line)
-        if header:
+        if header and result.header is None:
             result.header = (int(header[1]), int(header[2]), int(header[3]), int(header[4]), header[5])
         counts = RESULT.match(line)
         if counts:
@@ -249,20 +257,72 @@ def failure_report(output: str) -> str:
     return "\n".join(sections)
 
 
+FULL_COMMAND = "python3 scripts/run_tests.py --parallel --clean-clone"
+RETRY_COMMAND = "python3 scripts/run_tests.py --parallel --last-failed"
+
+
+def failure_record(source: Path = ROOT) -> Path:
+    """Resolve the per-worktree Git directory, never the shared common directory."""
+    result = git(source, "rev-parse", "--absolute-git-dir")
+    if result.returncode:
+        raise ValueError(result.stderr.strip())
+    return Path(result.stdout.strip()) / "cardine-last-failed.txt"
+
+
+def write_failures(record: Path, identifiers: Iterable[str]) -> None:
+    record.write_text("".join(identifier + "\n" for identifier in sorted(set(identifiers))), encoding="utf-8")
+
+
+def select_tests(tests: list[unittest.TestCase], modules: Sequence[str]) -> list[unittest.TestCase]:
+    identifiers = {test.id(): test for test in tests}
+    chosen = set()
+    existing = sorted({identifier.split(".")[0] for identifier in identifiers})
+    for name in modules:
+        normalized = name.replace("\\", "/").removeprefix("tests/").removeprefix("tests.")
+        if normalized.endswith(".py"):
+            normalized = normalized[:-3]
+        matches = {identifier for identifier in identifiers if identifier == normalized or identifier.startswith(normalized + ".")}
+        if not matches:
+            closest = difflib.get_close_matches(normalized.split(".")[0], existing, n=3, cutoff=0)
+            raise ValueError(f"unknown selection {name!r}; closest modules: {', '.join(closest)}")
+        chosen.update(matches)
+    return [test for test in tests if test.id() in chosen]
+
+
 def run_parallel(
     requested: int,
     tests_directory: Path = TESTS_DIRECTORY,
     command_for: Callable[[int, int, Path], Sequence[str]] = shard_command,
     environment: dict[str, str] | None = None,
+    selection: list[unittest.TestCase] | None = None,
+    selection_label: str = "",
+    record: Path | None = None,
 ) -> int:
     """Run the suite as concurrent shards and print one combined, ordered report."""
     tests = discover_tests(tests_directory)
+    full_total = len(tests)
+    if selection is not None:
+        tests = selection
     total, digest = coverage(tests)
     workers = max(1, min(requested or default_workers(), MAX_WORKERS, total))
     started = time.monotonic()
     scratch = Path(tempfile.mkdtemp(prefix="cardine-tests-"))
     try:
-        results = run_shards([command_for(i, workers, tests_directory) for i in range(1, workers + 1)], scratch, environment)
+        commands = [list(command_for(i, workers, tests_directory)) for i in range(1, workers + 1)]
+        if selection is not None:
+            selection_file = scratch / "selection.json"
+            selection_file.write_text(json.dumps([test.id() for test in tests]), encoding="utf-8")
+            for command in commands:
+                command.extend(["--selection-file", str(selection_file)])
+        failure_files = [scratch / f"failures-{i}.json" for i in range(workers)]
+        if record is not None:
+            for command, path in zip(commands, failure_files):
+                command.extend(["--failed-output", str(path)])
+        results = run_shards(commands, scratch, environment)
+        if record is not None:
+            identifiers = [identifier for path in failure_files if path.exists()
+                           for identifier in json.loads(path.read_text(encoding="utf-8"))]
+            write_failures(record, identifiers)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
     elapsed = time.monotonic() - started
@@ -292,11 +352,18 @@ def run_parallel(
         print(failure_report(result.output) if result.counts is not None else bounded(result.output))
     for problem in problems:
         print(f"problem: {problem}")
-    print(
-        f"{'OK' if ok else 'FAILED'} workers={workers} ran={ran} failures={failures} errors={errors} "
-        f"skipped={skipped} time={elapsed:.1f}s"
-    )
-    print(f"coverage total={total} digest={digest} shards={workers} selected={selected}", flush=True)
+    if selection is not None:
+        print(f"PARTIAL selection={selection_label} ran={ran} total={full_total} failures={failures} errors={errors}")
+        if ok:
+            print(FULL_COMMAND)
+    else:
+        print(
+            f"{'OK' if ok else 'FAILED'} workers={workers} ran={ran} failures={failures} errors={errors} "
+            f"skipped={skipped} time={elapsed:.1f}s"
+        )
+        print(f"coverage total={total} digest={digest} shards={workers} selected={selected}", flush=True)
+        if not ok:
+            print(RETRY_COMMAND)
     return 0 if ok else 1
 
 
@@ -332,6 +399,7 @@ def run_clean_clone(requested: int, source: Path = ROOT) -> int:
             print(f"clean-clone could not clone: {cloned.stderr.strip()}")
         else:
             parallel = ["--parallel"] + ([str(requested)] if requested else [])
+            parallel += ["--failure-record", str(failure_record(source))]
             steps = (["scripts/check_repository.py"], ["scripts/run_tests.py", *parallel])
             for step in steps:
                 finished = subprocess.run(
@@ -354,6 +422,9 @@ def run_clean_clone(requested: int, source: Path = ROOT) -> int:
 
 def main(arguments: list[str] | None = None) -> int:
     options = parser().parse_args(arguments)
+    partial = options.last_failed or bool(options.module)
+    if partial and (options.parallel is None or options.clean_clone):
+        parser().error("--last-failed and --module require --parallel and cannot be combined with --clean-clone")
     if options.clean_clone:
         if options.parallel is None:
             parser().error("--clean-clone requires --parallel")
@@ -368,8 +439,33 @@ def main(arguments: list[str] | None = None) -> int:
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
     if options.parallel is not None:
-        return run_parallel(options.parallel, options.tests_directory)
+        record = options.failure_record or failure_record()
+        tests = discover_tests(options.tests_directory)
+        selection = None
+        label = ""
+        if options.module:
+            try:
+                selection = select_tests(tests, options.module)
+            except ValueError as error:
+                parser().error(str(error))
+            label = "module:" + ",".join(options.module)
+        elif options.last_failed:
+            recorded = record.read_text(encoding="utf-8").splitlines() if record.exists() else []
+            available = {test.id() for test in tests}
+            for missing in sorted(set(recorded) - available):
+                print(f"recorded test no longer exists; skipped: {missing}")
+            selection = [test for test in tests if test.id() in recorded]
+            label = "last-failed"
+            if not selection:
+                write_failures(record, [])
+                print(f"PARTIAL selection=last-failed ran=0 total={len(tests)} failures=0 errors=0")
+                print(FULL_COMMAND)
+                return 2
+        return run_parallel(options.parallel, options.tests_directory, selection=selection, selection_label=label, record=record)
     tests = discover_tests(options.tests_directory)
+    if options.selection_file:
+        selected_ids = set(json.loads(options.selection_file.read_text(encoding="utf-8")))
+        tests = [test for test in tests if test.id() in selected_ids]
     total, digest = coverage(tests)
     if options.list:
         print(f"total={total} digest={digest}", flush=True)
@@ -386,6 +482,9 @@ def main(arguments: list[str] | None = None) -> int:
     # MERIDIAN-INSTALLATION-CHECK
     with reject_path_meridian() as result_class:
         outcome = unittest.TextTestRunner(verbosity=2, resultclass=result_class).run(unittest.TestSuite(selected))
+    if options.failed_output:
+        identifiers = {getattr(test, "test_case", test).id() for test, _ in outcome.failures + outcome.errors}
+        options.failed_output.write_text(json.dumps(sorted(identifiers)), encoding="utf-8")
     print(
         f"result ran={outcome.testsRun} failures={len(outcome.failures)} errors={len(outcome.errors)} "
         f"skipped={len(outcome.skipped)}",

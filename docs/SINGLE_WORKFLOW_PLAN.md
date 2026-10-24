@@ -413,3 +413,16 @@ without inventing additional states or a second template set.
   Meridian workflow detection moves into `cardine.legacy`, and
   `load_meridian_snapshot` keeps reading this repository until work item 10.
   Rename plan choice 5 states the same constraint.
+
+
+For development, `python3 scripts/run_tests.py --parallel --last-failed`
+reruns the failing test IDs recorded in this worktree's Git directory.
+`--parallel --module <name>` selects a module, `tests/test_name.py` path,
+class, or test ID; repeat `--module` to select their union. Unknown names
+are refused with nearby module suggestions. Partial runs print `PARTIAL`
+with the selection and full test count. They do not count as validation:
+finish with `python3 scripts/run_tests.py --parallel --clean-clone`.
+The full clean-clone run records failures in the originating worktree.
+`--last-failed` and `--module` require `--parallel`, are mutually exclusive,
+and cannot be combined with `--clean-clone`. An absent, empty, or entirely
+obsolete failure record runs no tests and exits with status 2.

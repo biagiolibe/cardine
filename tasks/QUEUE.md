@@ -48,7 +48,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 088 | Make state readers and preparation require receipts (RE1c) | 🔴 P1 | 087 | [088](done/088-receipt-gated-readers.md) |
 | `[x]` | 089 | Classify worktree, state, lease, and cleanup stops by cause (RE2a) | 🔴 P1 | 088 | [089](done/089-stop-causes-lifecycle.md) |
 | `[x]` | 090 | Consolidate the approval, configuration, and workflow codes (RE2b) | 🔴 P1 | 089 | [090](done/090-consolidate-policy-codes.md) |
-| `[ ]` | 097 | Add focused development runs to the test runner | 🔴 P1 | 090 | [097](097-focused-test-runs.md) |
+| `[x]` | 097 | Add focused development runs to the test runner | 🔴 P1 | 090 | [097](done/097-focused-test-runs.md) |
 | `[ ]` | 098 | Build heavy lifecycle test fixtures once per class | 🔴 P1 | 097 | [098](098-fixture-templates.md) |
 | `[ ]` | 091 | Classify self-update, upgrade, and host stops by cause (RE2c) | 🔴 P1 | 098 | [091](091-stop-causes-nonrun.md) |
 | `[ ]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](092-typed-outcome-dispatch.md) |
