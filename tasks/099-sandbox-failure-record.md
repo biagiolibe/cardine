@@ -25,32 +25,32 @@ than the suite itself.
 
 ## Acceptance Criteria
 
-- [ ] The failure record lives in the system temporary directory
+- [x] The failure record lives in the system temporary directory
   (`tempfile.gettempdir()`), in a Cardine-named subdirectory, in a file
   whose name is derived from the resolved absolute path of the worktree's
   top level. Two worktrees, including a primary checkout and a linked
   worktree of the same repository, never share a record. A `--clean-clone`
   run keys its record by the worktree it was started from. No file under
   the repository or its Git directory is written.
-- [ ] Failing to read or write the record never changes a run's outcome. A
+- [x] Failing to read or write the record never changes a run's outcome. A
   full or clean-clone run whose record cannot be written prints one
   warning line naming the path and the error, says that `--last-failed` is
   unavailable for this run, and exits with the code that the tests
   determined. A `--last-failed` run whose record cannot be read behaves as
   a missing record: it runs no tests, exits with code 2, and prints the
   full-run command.
-- [ ] `tests/test_run_tests.py` proves both behaviours: a record path that
+- [x] `tests/test_run_tests.py` proves both behaviours: a record path that
   cannot be written keeps exit code 0 for a passing suite and 1 for a
   failing one, and separate worktrees of one repository keep separate
   records in the temporary directory. The existing tests for sorting,
   shrinking, clearing, obsolete IDs, and refused combinations still pass.
-- [ ] The runner documentation in `docs/HOST_CAPABILITY_CONTRACT.md` and
+- [x] The runner documentation in `docs/HOST_CAPABILITY_CONTRACT.md` and
   `docs/SINGLE_WORKFLOW_PLAN.md` says where the record lives and that a
   write failure is only a warning.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes `scripts/run_tests.py`, its tests, and
   documentation only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -59,16 +59,16 @@ than the suite itself.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/099.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/099.json`, which only
   the installed `meridian task close 099` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
