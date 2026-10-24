@@ -20,6 +20,7 @@ from cardine.templates.migrations import capped_target_version
 from cardine.templates.migrations import migration_ids
 from pathlib import Path
 import json
+import shlex
 import tempfile
 
 
@@ -150,6 +151,12 @@ def print_plan(
         print(f"{item.action.upper():8} {item.file.target} — {item.detail}")
         for problem in item.problems:
             print(f"MISSING-ROUTER {problem}")
+    pending = missing_generated_outputs(project_root, plan)
+    if pending:
+        print(format_stop(
+            "UPGRADE_OUTPUT_PENDING", "missing generated output: " + ", ".join(pending),
+            resume=shlex.join(("cardine", "upgrade", "--check", "--project", str(project_root.resolve()))),
+        ))
     conflicts = sum(item.action == "conflict" for item in plan)
     edited_copies = sum(item.action == "edited-copy" for item in plan)
     router_blockers = sum(bool(item.problems) for item in plan)
@@ -180,3 +187,20 @@ def _unused_adoption_backup(path: Path, kind: str = "pre-adoption") -> Path:
             return candidate
         suffix += 1
 
+
+
+def missing_generated_outputs(project_root: Path, plan: list[PlanItem]) -> tuple[str, ...]:
+    """Identify absent generated outputs without treating project edits as ours.
+
+    A normal upgrade already regenerates these outputs. This diagnostic neither
+    writes them nor bypasses apply consent; invalid sources retain their error.
+    """
+    from cardine.templates.router import entry_router_outputs
+    candidates = [item for item in plan if item.action == "router"]
+    if not candidates or plan_has_blockers(plan):
+        return ()
+    outputs = entry_router_outputs(project_root)
+    return tuple(str(item.file.target) for item in candidates
+                 if item.file.target in outputs
+                 and not (project_root / item.file.target).exists()
+                 and not (project_root / item.file.target).is_symlink())

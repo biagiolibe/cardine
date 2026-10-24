@@ -120,12 +120,12 @@ class SelfUpdateTest(unittest.TestCase):
         self.git(self.root, 'config', 'user.email', 'test@example.com')
         self.git(self.root, 'config', 'user.name', 'Test')
         self.commit(self.root, '1.2.2')
-        self.assert_refused('SELF_UPDATE_NON_FF', apply=True)
+        self.assert_refused('SELF_UPDATE_TARGET', apply=True)
 
     def test_invalid_missing_and_mismatched_tags(self):
         self.detach()
         for tag in ('main', 'v1.9.9', '--upload-pack=bad'):
-            self.assert_refused('SELF_UPDATE_TARGET', apply=True, target_tag=tag)
+            self.assert_refused('SELF_UPDATE_TARGET' if tag == 'v1.9.9' else 'SELF_UPDATE_INPUT_INVALID', apply=True, target_tag=tag)
         self.git(self.remote, 'tag', 'v1.9.0')
         self.assert_refused('SELF_UPDATE_TARGET', apply=True, target_tag='v1.9.0')
 

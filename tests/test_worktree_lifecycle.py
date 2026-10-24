@@ -471,7 +471,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "HOST_IMPACT_DECLARATION_INVALID", "HOST_IMPACT_EVIDENCE_MISSING", "UPGRADE_BLOCKED",
             "RULE_CONFLICT", "SCOPE_CHANGE_REQUIRED",
             "REVIEW_LOOP_EXHAUSTED", "SELF_UPDATE_PLUGIN_CACHE", "SELF_UPDATE_DIRTY",
-            "SELF_UPDATE_BRANCH", "SELF_UPDATE_TARGET", "SELF_UPDATE_NON_FF", "SELF_UPDATE_VERIFY",
+            "SELF_UPDATE_BRANCH", "SELF_UPDATE_TARGET", "SELF_UPDATE_VERIFY",
+            "SELF_UPDATE_INPUT_INVALID", "OS_PATH_MISSING", "OS_PATH_BUSY", "UPGRADE_OUTPUT_PENDING",
         )
         self.assertEqual(set(registry), set(closure) | set(gates) | set(remaining))
         self.assertEqual(

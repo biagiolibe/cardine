@@ -15,6 +15,7 @@ from cardine.shared.errors import CardineError
 from cardine.shared.errors import CardineStop
 from cardine.shared.git import git_output
 from cardine.stops.render import stop_error
+from cardine.stops.nonrun import os_stop_code
 from http.client import HTTPException
 from pathlib import Path
 from urllib.error import HTTPError
@@ -73,8 +74,11 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
     def refuse(code: str, detail: str) -> None:
         raise stop_error(code, detail)
 
-    if "plugins/cache" in root.as_posix():
+    if any(root.parts[index:index + 2] == ("plugins", "cache")
+           for index in range(len(root.parts) - 1)):
         refuse("SELF_UPDATE_PLUGIN_CACHE", "plugin manager owns this checkout; use /plugin marketplace update meridian")
+    if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
+        refuse("SELF_UPDATE_INPUT_INVALID", "--to requires a release tag v<version>")
     try:
         if Path(git_output(root, "rev-parse", "--show-toplevel")).resolve() != root:
             raise CardineError("not the framework Git root")
@@ -88,10 +92,6 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         current = read_raw_version(root)
         if not branch and git_output(root, "rev-parse", "HEAD") != git_output(root, "rev-parse", f"refs/tags/v{current}^{{commit}}"):
             refuse("SELF_UPDATE_TARGET", "detached HEAD is not its VERSION release tag")
-        if target_tag is not None:
-            if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
-                refuse("SELF_UPDATE_TARGET", "--to requires a release tag v<version>")
-            parse_semver(target_tag[1:])
         print(f"Checkout: {root}")
         print(f"Current: {current}")
         try:
@@ -130,7 +130,7 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
                     refuse("SELF_UPDATE_TARGET", "origin/stable is not the target release tag")
                 ancestry = subprocess.run(["git", "-C", str(probe), "merge-base", "--is-ancestor", head, target], capture_output=True)
                 if ancestry.returncode:
-                    refuse("SELF_UPDATE_NON_FF", "stable cannot fast-forward to origin/stable")
+                    refuse("SELF_UPDATE_TARGET", "cause non-fast-forward: stable cannot fast-forward to origin/stable")
             if git_output(probe, "show", f"{target}:VERSION") != version:
                 refuse("SELF_UPDATE_TARGET", "release tag VERSION does not match the release")
             operation = (f"git fetch --tags origin; git merge --ff-only {target}"
@@ -155,7 +155,15 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         return 0
     except CardineStop:
         raise
-    except (CardineError, OSError) as error:
+    except OSError as error:
+        code = os_stop_code(error, diagnostic=not apply)
+        if code == "OS_ACCESS_FAILED":
+            refuse(code, f"self-update access failed: {error}; inspect checkout before retrying")
+        argv = ["cardine", "self-update", "--check"]
+        if target_tag is not None:
+            argv.extend(("--to", target_tag))
+        raise stop_error(code, str(error), resume=shlex.join(argv)) from error
+    except CardineError as error:
         refuse("SELF_UPDATE_VERIFY", f"Git operation failed: {error}; inspect checkout and retry cardine self-update --check")
 
 

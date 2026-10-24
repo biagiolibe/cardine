@@ -8,7 +8,7 @@ import cardine_cli_support  # Initialize the source import path.
 from cardine.stops.registry import load_stop_registry
 
 ROOT = Path(__file__).resolve().parents[1]
-RETIRED = {"REVIEW_REQUIRED", "REVIEW_STALE", "WORKFLOW_UNREADABLE", "EXECUTION_PROFILE_MISSING"}
+RETIRED = {"REVIEW_REQUIRED", "REVIEW_STALE", "WORKFLOW_UNREADABLE", "EXECUTION_PROFILE_MISSING", "SELF_UPDATE_NON_FF"}
 
 
 class StopRegistryTest(unittest.TestCase):
