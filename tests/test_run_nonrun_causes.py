@@ -22,13 +22,13 @@ from unittest.mock import patch
 from cardine_cli_support import ROOT
 from cardine import cli
 from cardine.hosts import codex
-from cardine.shared.constants import ENTRY_ROUTER_PATH
+from cardine.shared.constants import ENTRY_ROUTER_PATH, PROTOCOL_VERSION
 from cardine.shared.errors import CardineStop
 from cardine.shared.journal import LifecycleJournalEntry
 from cardine.shared.models import ManagedFile, PlanItem
 from cardine.stops.nonrun import NONRUN_CAUSES, diagnostic_invocation, os_stop_code
 from cardine.stops.registry import load_stop_registry
-from cardine.templates.upgrade_support import missing_generated_outputs
+from cardine.templates.upgrade_support import missing_generated_outputs, print_plan
 import test_self_update as updater
 
 
@@ -322,3 +322,30 @@ upgrade.apply_plan(project,framework,manifest,plan,project/'.cardine/baselines/1
                     self.assertEqual(snapshot, {p.relative_to(project): p.read_bytes()
                                                for p in project.rglob('*') if p.is_file()})
                     self.assertEqual((project / 'foreign').read_text(), 'preserve')
+
+
+    def test_generated_output_diagnostic_preserves_the_selected_framework(self):
+        with tempfile.TemporaryDirectory(prefix="nonrun source ") as directory:
+            root = Path(directory)
+            project = root / 'project'
+            framework = root / 'framework'
+            framework.mkdir()
+            (framework / 'VERSION').write_text('1.2.0\n')
+            (framework / 'migrations').mkdir()
+            source = project / ENTRY_ROUTER_PATH
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_text('# Consumer router\n')
+            plan = [PlanItem(ManagedFile(source, Path('AGENTS.md')), 'router', 'generated')]
+            manifest = {'protocolVersion': PROTOCOL_VERSION, 'workflowMode': 'single',
+                        'frameworkVersion': '1.1.0'}
+            outputs = []
+            for _ in range(2):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    print_plan(project, manifest, framework, plan)
+                outputs.append(output.getvalue())
+            self.assertEqual(outputs[0], outputs[1])
+            self.assertIn('UPGRADE_OUTPUT_PENDING', outputs[0])
+            self.assertIn("--framework-root '" + str(framework.resolve()) + "'", outputs[0])
+            self.assertNotIn('UPGRADE_BLOCKED', outputs[0])
+            self.assertFalse((project / 'AGENTS.md').exists())

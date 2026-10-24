@@ -155,7 +155,8 @@ def print_plan(
     if pending:
         print(format_stop(
             "UPGRADE_OUTPUT_PENDING", "missing generated output: " + ", ".join(pending),
-            resume=shlex.join(("cardine", "upgrade", "--check", "--project", str(project_root.resolve()))),
+            resume=shlex.join(("cardine", "--framework-root", str(framework_root.resolve()),
+                               "upgrade", "--check", "--project", str(project_root.resolve()))),
         ))
     conflicts = sum(item.action == "conflict" for item in plan)
     edited_copies = sum(item.action == "edited-copy" for item in plan)
