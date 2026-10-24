@@ -24,33 +24,33 @@ per class and gives each test its own copy, without weakening any test.
 
 ## Acceptance Criteria
 
-- [ ] Before any change, the handoff records the wall time of each of the six
+- [x] Before any change, the handoff records the wall time of each of the six
   modules, run with `python3 scripts/run_tests.py --parallel --module
   <module>`, and the time of one full parallel run. It records the same
   measurements after the change, on the same machine.
-- [ ] In each of the six modules, the part of the fixture that does not depend
+- [x] In each of the six modules, the part of the fixture that does not depend
   on the test is built once per class. That part covers the repository,
   its Git configuration, the project configuration, the frozen records,
   and the initial commit. Each test then gets its own copy in a fresh
   temporary directory, its own worktree root, and its own working
   directory, and still runs `prepare` itself. Worktrees and worktree
   registrations are never copied.
-- [ ] One helper under `tests/` builds and copies the template, and its own
+- [x] One helper under `tests/` builds and copies the template, and its own
   test proves three things: two copies are independent, a change in one
   does not reach the other, and a copy's HEAD tree, index, and Git
   configuration equal a fresh build.
-- [ ] Every test keeps every assertion. The six modules keep exactly the same
+- [x] Every test keeps every assertion. The six modules keep exactly the same
   test IDs: no test in them is added, removed, renamed, or skipped. The
   only new tests are the helper's own, which the handoff lists.
-- [ ] A module whose measured gain is under 10 percent is left unchanged, and
+- [x] A module whose measured gain is under 10 percent is left unchanged, and
   the handoff reports its numbers. The handoff states the total gain for
   the six modules and for the full run.
-- [ ] Each template lives in the temporary space of the process that built it
+- [x] Each template lives in the temporary space of the process that built it
   and is removed when its class finishes, so parallel shards never share a
   fixture path.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes test modules and test helpers only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -59,16 +59,16 @@ per class and gives each test its own copy, without weakening any test.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/098.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/098.json`, which only
   the installed `meridian task close 098` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -146,3 +146,13 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Completion evidence
+
+See `tasks/handoffs/098.md` for baseline, template trials, final timings, and
+clean-clone evidence. Only the integration-state module retained its template
+(13.50% measured module gain); the other five modules were restored under the
+explicit under-10-percent exception. All existing test IDs and bodies remain
+unchanged. The six-module total improved 1.39%, while the full parallel run
+regressed 8.87%; no overall suite speedup is claimed. The committed clean-clone
+run passed all 1376 tests with no skips, including three new helper tests.
