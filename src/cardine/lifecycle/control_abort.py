@@ -28,7 +28,8 @@ def _owned_landing_dirt(root, task_id):
     """Recognize exact CLI landing bytes; preserve its untracked recovery residue.
 
     Staging owns the pending landing transaction. Abort does not replay or erase
-    it: RE5 owns that reconciliation. No arbitrary primary edits are covered.
+    it; the next stage clears the exact owned residue (`integration.residue`).
+    No arbitrary primary edits are covered.
     """
     from cardine.tasks.state_core import state_path
     from cardine.tasks.state import read_task_state
@@ -95,6 +96,16 @@ def abort_owned(task_id, project, *, adapter=None):
                         or staged.get('branch') != identity.branch_name
                         or staged.get('project') != str(root))):
                     raise CardineError('foreign or unverified merge target')
+                if _owned_landing_dirt(root, task_id):
+                    # A kill inside the landing write leaves the tracked state edited beside the
+                    # staged merge, which `merge --abort` refuses. Restore it from the index,
+                    # only for exactly this verified landing intent, before the binding is taken.
+                    from cardine.tasks.state_core import state_path
+                    receipts.boundary('before_abort_landing_restore')
+                    restored = _run_git(root, 'checkout', '--', state_path(root, task_id).relative_to(root).as_posix())
+                    if restored.returncode:
+                        raise CardineError(restored.stderr.strip() or 'cannot restore owned landing state')
+                    receipts.boundary('after_abort_landing_restore')
                 if (git_output(root, 'diff', '--binary') and not _owned_landing_dirt(root, task_id)
                         or staged is not None and git_output(root, 'diff', '--cached', '--name-only', staged['candidate_tree'], '--')):
                     raise CardineError('foreign candidate changes must be preserved before abort')

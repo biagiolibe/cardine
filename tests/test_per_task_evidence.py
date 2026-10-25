@@ -7,7 +7,6 @@ import unittest
 import worktree_support as support
 from task_contract_support import contract_record, write_state
 from cardine.tasks.recording import record_validation
-from cardine.tasks.contract import execution_entries
 from cardine.worktree.checkout import prepare_task_worktree
 from cardine.integration.merge import stage_task_integration, finalize_task_integration
 from cardine.shared.errors import CardineError
@@ -16,7 +15,7 @@ from cardine.shared.errors import CardineError
 class PerTaskEvidenceIntegrationTest(support.BoundedWorktreeLifecycleFixture):
     def prepare_pair(self, *, conflict=False):
         record = self.primary / 'tasks/057-lifecycle.md'
-        record.write_text(contract_record('057'))
+        record.write_text(contract_record('057').replace('Change the documented deliverable only.', '- `**`'))
         write_state(self.primary, '057', 'in_progress', review_required=False)
         queue = self.primary / 'tasks/QUEUE.md'
         queue.write_text(queue.read_text() + '| `[ ]` | 057 | Second task |\n')
@@ -33,26 +32,17 @@ class PerTaskEvidenceIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             with self.assertRaisesRegex(CardineError, 'WRONG_WORKTREE'):
                 record_validation(worker, other_id, 'foreign', 'false', 1)
             self.assertFalse((worker / f'.cardine/evidence/{other_id}.json').exists())
-            record_validation(worker, task_id, 'probe', 'true', 0)
+            (worker / f'feature-{task_id}.txt').write_text(f'task {task_id}\n')
             if conflict:
                 (worker / 'README.md').write_text(f'Changed by {task_id}\n')
             self.git('add', '.', cwd=worker)
-            self.git('commit', '-m', f'record evidence for {task_id}', cwd=worker)
+            self.git('commit', '-m', f'implement {task_id}', cwd=worker)
+            self.measure(worker, task_id)
             workers[task_id] = worker
         return workers
 
     def stage(self, task_id, worker):
-        evidence = self.root / f'integration-{task_id}.json'
-        evidence.write_text(json.dumps({
-            'accepted': True, 'validation_passed': True,
-            'validated_task_commit': self.git('rev-parse', 'HEAD', cwd=worker).stdout.strip(),
-            'validated_base_commit': self.base,
-            'full_validation_required': False, 'interaction_assessment_complete': True,
-            'task_paths': [f'.cardine/evidence/{task_id}.json'],
-            'task_dependencies': [], 'task_behavioral_surfaces': [],
-            'main_advanced_dependencies': [], 'main_advanced_behavioral_surfaces': [],
-        }))
-        return stage_task_integration(task_id, self.worktree_root, evidence, self.primary)
+        return stage_task_integration(task_id, self.worktree_root, None, self.primary)
 
     def finalize(self, task_id, staged):
         self.git('diff', '--check')
@@ -74,7 +64,8 @@ class PerTaskEvidenceIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual((self.primary / '.cardine/evidence/056.json').read_bytes(), first)
         self.assertEqual((self.primary / '.cardine/evidence/057.json').read_bytes(), second)
         for task_id in ('056', '057'):
-            self.assertEqual(execution_entries(self.primary, task_id)[0]['id'], 'probe')
+            ledger = json.loads((self.primary / f'.cardine/evidence/{task_id}.json').read_text())
+            self.assertEqual(list(ledger), [task_id])
         self.assertFalse((self.primary / '.cardine/execution-evidence.json').exists())
 
     def test_conflict_in_another_file_still_stops_integration(self):

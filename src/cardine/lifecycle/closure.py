@@ -3,7 +3,6 @@ from __future__ import annotations
 from cardine.shared.layout import names
 
 from cardine.integration.evidence import candidate_validation_declaration
-from cardine.integration.evidence import record_task_evidence
 from cardine.integration.merge import _integration_task_state
 from cardine.integration.merge import abort_task_integration
 from cardine.integration.merge import cleanup_task_worktree
@@ -55,25 +54,22 @@ def _journal_advance_step(project_root: Path, command: str, task_id: str, step: 
 def advance_task_closure(
     task_id: str,
     worktree_root: Path | None,
-    validation_commands: list[str],
-    validation_exit_codes: list[int],
     *,
-    accepted: bool,
     supplied_project: Path | None = None,
     candidate_commands: list[str] | None = None,
     candidate_exit_codes: list[int] | None = None,
 ) -> tuple[dict[str, object], bool]:
     """Run the mechanical closure steps and return where the agent must act next.
 
-    It performs C5 (evidence), C6 (stage), C8 (finalize from the supplied
-    candidate validation results) and C10 (cleanup) when closure_status says
-    their preconditions hold. It never runs a command the agent supplied.
+    It performs C6 (stage), C8 (finalize from the supplied candidate
+    validation results) and C10 (cleanup) when closure_status says their
+    preconditions hold. C5 is satisfied only by the measured validation the
+    run engine recorded; no caller-supplied result or acceptance is read.
+    It never runs a command the agent supplied.
     The boolean is True when the result is a stop that the CLI reports with exit 2.
     """
     candidate_commands = candidate_commands or []
     candidate_exit_codes = candidate_exit_codes or []
-    if len(validation_commands) != len(validation_exit_codes):
-        raise CardineError("each --validation-command requires one --validation-exit-code")
     if len(candidate_commands) != len(candidate_exit_codes):
         raise CardineError("each --candidate-command requires one --candidate-exit-code")
     project_root = _verified_lifecycle_project(supplied_project)
@@ -81,7 +77,6 @@ def advance_task_closure(
         raise CardineError("worktree advance must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
     state_path, _lease_path, integration_path = _lifecycle_paths(project_root, identity)
-    evidence_path = state_path.with_suffix(".evidence.json")
     task = identity.canonical_id
     performed: list[str] = []
 
@@ -97,7 +92,7 @@ def advance_task_closure(
         blocked: bool = False,
     ) -> tuple[dict[str, object], bool]:
         if stop_code is not None and resume is None:
-            resume = stop_resume(stop_code, task_id=task, project=str(project_root), evidence=str(evidence_path))
+            resume = stop_resume(stop_code, task_id=task, project=str(project_root))
         # Status-only stops have no exception detail; keep the available reason,
         # or an empty string when closure-status supplied none.
         if stop_code is not None and stop_detail is None:
@@ -137,28 +132,7 @@ def advance_task_closure(
         if step == "C1":
             return result("C1", "run-validation", stop_code="ACCEPTANCE_UNMET")
         if step == "C5":
-            if not validation_commands:
-                return result("C5", "run-validation", stop_code="EVIDENCE_INCOMPLETE")
-            if any(exit_code != 0 for exit_code in validation_exit_codes):
-                return stopped("C2", "VALIDATION_FAILED")
-            if not accepted:
-                return stopped("C1", "ACCEPTANCE_UNMET")
-            record_task_evidence(
-                task,
-                worktree_root,
-                validation_commands,
-                validation_exit_codes,
-                accepted=True,
-                task_dependencies=[],
-                task_behavioral_surfaces=[],
-                main_advanced_dependencies=[],
-                main_advanced_behavioral_surfaces=[],
-                full_validation_required=False,
-                supplied_project=project_root,
-                require_effective_worktree=False,
-            )
-            performed.append("C5")
-            _journal_advance_step(project_root, "evidence", task, "C5")
+            return result("C5", "run-validation", stop_code="EVIDENCE_INCOMPLETE")
         elif step == "C6" and code is None:
             try:
                 inspection, ready = inspect_task_worktree(
@@ -172,7 +146,7 @@ def advance_task_closure(
                 return result("C6", "resolve", commands=[resume], stop_code=error.code,
                               stop_detail=error_detail(error), resume=resume, blocked=True)
             try:
-                staged = stage_task_integration(task, worktree_root, evidence_path, project_root)
+                staged = stage_task_integration(task, worktree_root, None, project_root)
             except CardineStop as error:
                 return stopped("C6", error.code, error_detail(error))
             performed.append("C6")

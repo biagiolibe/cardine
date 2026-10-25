@@ -78,6 +78,8 @@ Path(".cardine/project.json").write_text(json.dumps({
 }) + "\n")
 Path("TECH_DESIGN.md").write_text("# Technical design\n\nMarkdown documentation; Git for version control.\n")
 Path("README.md").write_text("# Walkthrough\n")
+import hashlib
+profile = hashlib.sha256(Path("docs/EXECUTION_EVIDENCE_PROFILE.md").read_bytes()).hexdigest()
 Path(os.environ["RECORD"]).write_text("""# Task 001 — Add the purpose sentence
 
 > **ID**: `001`
@@ -100,6 +102,10 @@ Add the project purpose to README.md.
 
 Application code and other tasks.
 
+## Expected code surface
+
+- `README.md`
+
 ## Validation
 
 - `whitespace`: `git diff --check`
@@ -107,10 +113,16 @@ Application code and other tasks.
 ## Dependencies
 
 None.
+
+## Execution contract — resolved
+
+- Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`
+- Profile revision: `sha256:""" + profile + """`
+- Validation IDs: whitespace
+- Execution commands: `required via cardine execution`
 """)
 PY
 cardine task new 001 --record "$RECORD" --project .
-cardine execution reconcile 001 --apply --project .
 cardine status --write --project .
 git add .
 git commit -m "Initialize the documentation project and task 001"
@@ -151,12 +163,15 @@ assert "This project demonstrates Lean Delivery." in Path("README.md").read_text
 PY
 git add README.md tasks/001.md .cardine/tasks/001.json
 git commit -m "Add the project purpose sentence"
+cardine execution deliver 001 --project .
 ```
 
 ## Record completion and close the task
 
-The handoff records actual validation, task/base commits, and the relative
-worktree identity. Queue and plan stay untouched on the task branch. Close
+The handoff records the task/base commits and the relative worktree identity.
+Validation is measured, not reported: `cardine run` executes the task's declared
+commands on the delivered source and records their actual exits as receipt-covered
+evidence, so write the handoff first and let the run append its measured section. Queue and plan stay untouched on the task branch. Close
 through the CLI; do not write machine status fields yourself. Closing verifies
 the committed record and handoff and writes nothing: the record stays at its
 path and the task stays `in_progress`. Only validated landing writes `done` and
@@ -170,8 +185,6 @@ import subprocess
 from pathlib import Path
 prepared = json.loads((Path(os.environ["HOME"]) / "prepared.json").read_text())
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-record = Path("tasks/001.md")
-record.write_text(record.read_text().replace("- [ ]", "- [x]"))
 Path("tasks/handoffs").mkdir(exist_ok=True)
 Path("tasks/handoffs/001.md").write_text(f"""## Completion Report — 001
 
@@ -191,11 +204,14 @@ Path("tasks/handoffs/001.md").write_text(f"""## Completion Report — 001
 - Blockers/deviations: none.
 """)
 PY
-git add tasks/001.md tasks/handoffs/001.md
+git add tasks/handoffs/001.md
 git commit -m "Record verified completion of task 001"
+cardine run 001 --project . > "$HOME/run.json"
+git add .cardine tasks
+git commit -m "Record measured validation of task 001"
 cardine task close 001 --project .
 cd "$PRIMARY"
-cardine worktree advance 001 --project . --accepted --validation-command "git diff --check" --validation-exit-code 0 --format json
+cardine worktree advance 001 --project . --format json
 ```
 
 For this unchanged base and declared policy, `advance` stages integration and
@@ -206,14 +222,14 @@ different action or `BLOCKED <CODE>`, follow that result and its resume command.
 
 ```bash
 git diff --check
-cardine worktree advance 001 --project . --accepted --candidate-command "git diff --check" --candidate-exit-code 0 --format json
+cardine worktree advance 001 --project . --candidate-command "git diff --check" --candidate-exit-code 0 --format json
 ```
 
 Successful finalization returns `action_required: push`.
 
 ```bash
 git push origin main
-cardine worktree advance 001 --project . --accepted --format json
+cardine worktree advance 001 --project . --format json
 cardine worktree cleanup 001 --project . --format json
 git status --short
 git worktree list --porcelain

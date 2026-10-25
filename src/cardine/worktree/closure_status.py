@@ -8,7 +8,9 @@ from cardine.shared.models import ResolvedTaskIdentity
 from cardine.worktree.storage import _branch_commit
 from cardine.worktree.storage import _effective_worktree_root
 from cardine.shared.git import _git_worktrees
-from cardine.integration.evidence import _integration_evidence
+from cardine.integration.evidence import measured_task_validation
+from cardine.integration.residue import landing_residue
+from cardine.shared.errors import CardineStop
 from cardine.worktree.storage import _lifecycle_paths
 from cardine.shared.jsonio import _read_json_object
 from cardine.shared.git import _run_git
@@ -104,7 +106,9 @@ def closure_status(
             stop_resume("PUSH_PENDING"),
         )
 
-    dirty_primary = git_output(project_root, "status", "--porcelain").splitlines()
+    owned_residue = (landing_residue(project_root, identity.canonical_id) or {}).get("paths", set())
+    dirty_primary = [line for line in git_output(project_root, "status", "--porcelain").splitlines()
+                     if line[3:] not in owned_residue]
     if dirty_primary:
         paths = [line[3:] for line in dirty_primary]
         listed = ", ".join(paths[:10])
@@ -116,24 +120,25 @@ def closure_status(
             "PRIMARY_DIRTY",
             f"{detail}; {stop_resume('PRIMARY_DIRTY')}",
         )
-    evidence_path = state_path.with_suffix(".evidence.json")
-    if evidence_path.is_file():
-        try:
-            evidence = _integration_evidence(evidence_path)
-        except CardineError:
-            evidence = None
-        if (
-            evidence is not None
-            and evidence["accepted"] is True
-            and evidence["validation_passed"] is True
-            and evidence["validated_task_commit"] == branch_commit
-            and evidence["validated_base_commit"] == state["base_commit"]
-        ):
-            return report(
-                "C6",
-                None,
-                f"cardine worktree integrate stage {identity.canonical_id} --project {project} "
-                f"--evidence {evidence_path} --format json",
-            )
+    try:
+        measured = measured_task_validation(Path(str(inspection["worktree"])), identity.canonical_id)
+    except CardineStop as error:
+        if error.code.startswith("TASK_STATE_"):
+            # The stage gate reports the exact state stop and its recovery.
+            return report("C6", None, f"cardine worktree integrate stage {identity.canonical_id} --project {project} --format json")
+        measured = None
+    except CardineError:
+        measured = None
+    if (
+        measured is not None
+        and measured["validated_base_commit"] == state["base_commit"]
+        and _run_git(project_root, "merge-base", "--is-ancestor",
+                     str(measured["validated_task_commit"]), branch_commit).returncode == 0
+    ):
+        return report(
+            "C6",
+            None,
+            f"cardine worktree integrate stage {identity.canonical_id} --project {project} --format json",
+        )
     return report("C5", "EVIDENCE_INCOMPLETE", stop_resume(
         "EVIDENCE_INCOMPLETE", task_id=identity.canonical_id, project=project))

@@ -35,16 +35,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual(staged["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
@@ -83,16 +75,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.git("add", ".cardine/tasks/056.json", cwd=task_worktree)
         self.git("add", "tasks/reviews/056.md", cwd=task_worktree)
         self.git("commit", "-m", "docs: accept 056", cwd=task_worktree)
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": validated, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
@@ -117,16 +101,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
@@ -141,6 +117,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "# Task 056\n\n> **ID**: `056`\n\nClass: spike\nReview: NOT_REQUIRED\nStatus: queued\n"
             "Question: Does the declared probe pass?\nTimebox: 1 iteration\n"
             "Deliverable: `docs/answer.md#result`\n\n## Authority\n\n"
+            "## Expected code surface\n\n- `docs/answer.md`\n\n"
             "## Validation\n\n- `probe`: `test -f docs/answer.md`\n",
             encoding="utf-8",
         )
@@ -156,38 +133,23 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         prepared = self.prepare()
         worktree = Path(str(prepared["worktree"]))
         (worktree / "docs/answer.md").write_text("# Result\n\nThe probe passes.\n", encoding="utf-8")
-        validated = subprocess.run(
-            [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "execution", "validate", "056", "probe",
-             "--project", str(worktree)], cwd=worktree, text=True, capture_output=True, check=False,
-        )
-        self.assertEqual(validated.returncode, 0, validated.stderr)
         state_path = worktree / ".cardine/tasks/056.json"
         state = json.loads(state_path.read_text())
         state["outcome"] = "ANSWERED"
         state_path.write_text(json.dumps(state))
         seal_state(worktree, '056')
+        task = worktree / "tasks/056-lifecycle.md"
+        task.write_text(task.read_text(encoding="utf-8").replace("Status: queued", "Status: done"), encoding="utf-8")
+        self.git("add", "-A", cwd=worktree)
+        self.git("commit", "-m", "answer spike", cwd=worktree)
+        self.measure(worktree)
         ledger = worktree / owner_tasks_contract.names().execution_evidence_path("056")
         evidence_bytes = ledger.read_bytes()
         entry = json.loads(evidence_bytes)["056"][0]
         self.assertEqual({key: entry[key] for key in ("id", "command", "exitStatus")},
                          {"id": "probe", "command": "test -f docs/answer.md", "exitStatus": 0})
-        self.assertEqual(entry["commit"], self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip())
         self.assertEqual(entry["sourceDigest"], owner_lifecycle_execution.execution_source_digest(worktree, "056"))
-        task = worktree / "tasks/056-lifecycle.md"
-        task.write_text(task.read_text(encoding="utf-8").replace("Status: queued", "Status: done"), encoding="utf-8")
-        self.git("add", "-A", cwd=worktree)
-        self.git("commit", "-m", "answer spike with durable evidence", cwd=worktree)
-        task_commit = self.git("rev-parse", "HEAD", cwd=worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": [str(owner_tasks_contract.names().execution_evidence_path("056")), "docs/answer.md", "tasks/056-lifecycle.md"],
-            "task_dependencies": [], "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual((self.primary / owner_tasks_contract.names().execution_evidence_path("056")).read_bytes(), evidence_bytes)
         self.assertEqual(self.git("show", f":{owner_tasks_contract.names().execution_evidence_path('056')}").stdout.encode(), evidence_bytes)
@@ -241,7 +203,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
     def test_governed_stage_blocks_a_spike_source_change_before_a_lease(self) -> None:
         task = self.primary / "tasks/056-lifecycle.md"
         task.write_text(
-            "# Task 056\n\n> **ID**: `056`\n\nClass: spike\nReview: NOT_REQUIRED\nStatus: done\nDeliverable: `docs/answer.md`\n",
+            "# Task 056\n\n> **ID**: `056`\n\nClass: spike\nReview: NOT_REQUIRED\nStatus: done\nDeliverable: `docs/answer.md`\n"
+            "\n## Expected code surface\n\n- `docs/answer.md`\n",
             encoding="utf-8",
         )
         state_path = self.primary / ".cardine/tasks/056.json"
@@ -257,18 +220,12 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         (task_worktree / "source.py").write_text("blocked\n", encoding="utf-8")
         self.git("add", "source.py", cwd=task_worktree)
         self.git("commit", "-m", "change source", cwd=task_worktree)
-        task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["source.py"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.CardineError, r"source.py"):
-            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        # The frozen surface stops the change before any measured attempt exists,
+        # so landing has no validation to consume and never reaches a lease.
+        with self.assertRaisesRegex(shared_errors.CardineError, r"SCOPE_CHANGE_REQUIRED.*source.py"):
+            self.measure(task_worktree)
+        with self.assertRaisesRegex(shared_errors.CardineError, r"SCOPE_CHANGE_REQUIRED.*source.py"):
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease, staged = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease.exists())

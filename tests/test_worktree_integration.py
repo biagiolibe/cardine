@@ -62,15 +62,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [], "validation_commands": ["pytest -q"],
-        }), encoding="utf-8")
+        self.measure(task_worktree)
         (self.primary / ".cardine/candidate-validation.json").unlink()
         self.git("add", ".cardine/candidate-validation.json")
         self.git("commit", "-m", "remove declaration")
@@ -79,7 +71,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         with mock.patch.object(owner_integration_merge, "candidate_validation_declaration",
                                return_value=("undeclared", {})), self.assertRaisesRegex(
                                    shared_errors.CardineError, "UNDECLARED_VALIDATION_COMMANDS"):
-            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         self.assertFalse(lease_path.exists())
@@ -94,16 +86,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         validation_path = self.root / "candidate-validation.json"
         validation_path.write_text(json.dumps({
             "candidate_tree": staged["candidate_tree"], "passed": True,
@@ -136,32 +120,6 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
-    def test_evidence_command_records_git_facts_without_running_validation(self) -> None:
-        prepared = self.prepare()
-        task_worktree = Path(str(prepared["worktree"]))
-        (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
-        self.git("add", "feature.txt", cwd=task_worktree)
-        self.git("commit", "-m", "implement task", cwd=task_worktree)
-        previous = Path.cwd()
-        try:
-            os.chdir(task_worktree)
-            recorded = owner_integration_evidence.record_task_evidence(
-                "056", self.worktree_root, ["python3 -m unittest"], [0],
-                accepted=True,
-                task_dependencies=[], task_behavioral_surfaces=[],
-                main_advanced_dependencies=[], main_advanced_behavioral_surfaces=[],
-                full_validation_required=False, supplied_project=self.primary,
-            )
-        finally:
-            os.chdir(previous)
-        evidence = json.loads(Path(str(recorded["evidence"])).read_text(encoding="utf-8"))
-        self.assertEqual(evidence["validated_task_commit"], self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip())
-        self.assertEqual(evidence["validated_base_commit"], self.base)
-        self.assertEqual(evidence["task_paths"], ["feature.txt"])
-        self.assertEqual(evidence["validation_commands"], ["python3 -m unittest"])
-        self.assertEqual(evidence["validation_exit_codes"], [0])
-
-
     def test_stage_recomputes_main_path_overlap_to_require_full_validation(self) -> None:
         (self.primary / "feature.txt").write_text("first\nmiddle\nlast\n", encoding="utf-8")
         self.git("add", "feature.txt")
@@ -176,15 +134,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         (self.primary / "feature.txt").write_text("first\nmiddle\nmain\n", encoding="utf-8")
         self.git("add", "feature.txt")
         self.git("commit", "-m", "advance main")
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": [], "task_dependencies": [], "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["decision"], "FULL")
         self.assertEqual(staged["main_advanced_paths"], ["feature.txt"])
         owner_integration_merge.abort_task_integration("056", self.primary)
@@ -200,15 +151,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         (self.primary / "independent.txt").write_text("main\n", encoding="utf-8")
         self.git("add", "independent.txt")
         self.git("commit", "-m", "advance main independently")
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [], "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["decision"], "BOUNDED")
         owner_integration_merge.abort_task_integration("056", self.primary)
 
@@ -238,17 +182,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         )
         self.git("add", "tasks/QUEUE.md", "PROJECT_PLAN.md")
         self.git("commit", "-m", "register tasks on main")
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
+        self.measure(task_worktree)
 
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["decision"], "BOUNDED")
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
         self.assertIn("cardine status --write", queue.read_text(encoding="utf-8"))
@@ -273,17 +209,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         queue.write_text(queue.read_text(encoding="utf-8") + unreadable, encoding="utf-8")
         self.git("add", "tasks/QUEUE.md")
         self.git("commit", "-m", "register unreadable section")
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
+        self.measure(task_worktree)
 
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertNotIn("archival", staged)
         self.assertEqual(staged["views"]["status"], "STALE")
         self.assertEqual(len(staged["warnings"]), 1)
@@ -311,17 +239,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": task_commit, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
+        self.measure(task_worktree)
 
-        owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertIn("| done | 056 |", plan.read_text(encoding="utf-8"))
         self.assertTrue(plan.read_text(encoding="utf-8").startswith("Narrative.\n"))
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
@@ -345,22 +265,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.git("add", "tasks/056-lifecycle.md", "tasks/handoffs/056.md", cwd=task_worktree)
         self.git("commit", "-m", "close task", cwd=task_worktree)
 
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True,
-            "validation_passed": True,
-            "validated_task_commit": validated_task,
-            "validated_base_commit": self.base,
-            "full_validation_required": False,
-            "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"],
-            "task_dependencies": [],
-            "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
+        self.measure(task_worktree)
 
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(staged["decision"], "REUSE")
         self.assertTrue((self.primary / "tasks/056-lifecycle.md").is_file())
         self.assertFalse((self.primary / "tasks/done").exists())
@@ -408,26 +315,17 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
-        validated_task = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
+        self.measure(task_worktree)
         archive = task_worktree / "tasks/done"
         archive.mkdir()
         self.git("mv", "tasks/056-lifecycle.md", "tasks/done/other.md", cwd=task_worktree)
         self.git("commit", "-am", "archive to wrong destination", cwd=task_worktree)
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": validated_task, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"], "task_dependencies": [],
-            "task_behavioral_surfaces": [], "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
         identity = owner_tasks_identity.resolve_task_identity(self.primary, "056", "existing")
         state_path, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         references = self.git("show-ref").stdout
         worktree_state = state_path.read_text(encoding="utf-8")
-        with self.assertRaisesRegex(shared_errors.CardineError, r"paths changed after validation: .*other.md"):
-            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        with self.assertRaisesRegex(shared_errors.CardineError, "EVIDENCE_INCOMPLETE"):
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)
         self.assertEqual(self.git("show-ref").stdout, references)
         self.assertEqual(state_path.read_text(encoding="utf-8"), worktree_state)
@@ -438,20 +336,19 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_missing_validation_evidence_is_blocked(self) -> None:
         decision = integration_decision.decide_integration_validation(
-            evidence_complete=False,
+            validation_measured=False,
             validated_task_commit="",
             current_task_commit="task",
             validated_base_commit=self.base,
             current_main_commit=self.base,
             validated_base_is_task_ancestor=True,
-            full_validation_required=False,
         )
         self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BLOCKED)
 
 
     def test_governance_only_commit_after_validation_keeps_evidence_current(self) -> None:
         decision = integration_decision.decide_integration_validation(
-            evidence_complete=True,
+            validation_measured=True,
             validated_task_commit="validated",
             current_task_commit="accepted",
             validated_base_commit=self.base,
@@ -459,28 +356,19 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             validated_base_is_task_ancestor=True,
             validated_task_is_current_ancestor=True,
             relevant_tree_unchanged_after_validation=True,
-            full_validation_required=False,
         )
         self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.REUSE)
 
 
-    def test_task_can_require_full_combined_tree_validation(self) -> None:
-        task = self.create_task("task-055")
-        task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: done"))
-        decision = self.validation_decision(task_commit, full_required=True)
-
-        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.FULL)
-        passed, invoked = self.run_candidate_gate("task-055", decision)
-        self.assertTrue(passed)
-        self.assertIn("complete baseline", invoked)
-
-
-    def test_unknown_advanced_main_interaction_is_blocked(self) -> None:
+    def test_unknown_advanced_main_independence_requires_full_validation(self) -> None:
         task = self.create_task("task-055")
         task_commit = self.commit_task(task, "task-055", ("Task 051: TODO", "Task 051: done"))
         (self.primary / "advance.txt").write_text("main change\n", encoding="utf-8")
         self.git("add", "advance.txt")
         self.git("commit", "-m", "advance main")
 
-        decision = self.validation_decision(task_commit, assessment_complete=False)
-        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.BLOCKED)
+        decision = self.validation_decision(task_commit, task_paths=())
+        self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.FULL)
+        passed, invoked = self.run_candidate_gate("task-055", decision)
+        self.assertTrue(passed)
+        self.assertIn("complete baseline", invoked)

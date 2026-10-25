@@ -100,6 +100,11 @@ class ModuleInventoryTest(unittest.TestCase):
             '_queue_archival_warnings',
             '_relink_archived_task_row',
             '_apply_task_completion_rows',
+            # Task 104 removes caller-declared integration evidence.
+            '_string_tuple',
+            '_bool_field',
+            '_integration_evidence',
+            'record_task_evidence',
             # Task 035 removes self-reported counters.
             'BUDGET_PATH',
             'BUDGET_STATE_NAME',

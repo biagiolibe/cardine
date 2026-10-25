@@ -43,31 +43,16 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(
-            json.dumps({
-                "accepted": True,
-                "validation_passed": True,
-                "validated_task_commit": task_commit,
-                "validated_base_commit": self.base,
-                "full_validation_required": False,
-                "interaction_assessment_complete": True,
-                "task_paths": ["feature.txt"],
-                "task_dependencies": [],
-                "task_behavioral_surfaces": ["feature behavior"],
-                "main_advanced_dependencies": [],
-                "main_advanced_behavioral_surfaces": [],
-            }),
-            encoding="utf-8",
-        )
+        self.measure(task_worktree)
+        task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
         staged = owner_integration_merge.stage_task_integration(
-            "056", self.worktree_root, evidence_path, self.primary
+            "056", self.worktree_root, None, self.primary
         )
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual(staged["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         self.assertEqual(
-            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary),
+            owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary),
             staged,
         )
         validation_path = self.root / "candidate-validation.json"
@@ -230,21 +215,9 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.git("add", "feature.txt", cwd=task_worktree)
         self.git("commit", "-m", "implement task", cwd=task_worktree)
         task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
-        evidence_path = self.root / "integration-evidence.json"
-        evidence_path.write_text(json.dumps({
-            "accepted": True,
-            "validation_passed": True,
-            "validated_task_commit": task_commit,
-            "validated_base_commit": self.base,
-            "full_validation_required": False,
-            "interaction_assessment_complete": True,
-            "task_paths": ["feature.txt"],
-            "task_dependencies": [],
-            "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
+        self.measure(task_worktree)
+        task_commit = self.git("rev-parse", "HEAD", cwd=task_worktree).stdout.strip()
+        owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         aborted = owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertEqual(aborted["status"], "aborted")
         self.assertEqual(self.git("rev-parse", "HEAD").stdout.strip(), self.base)

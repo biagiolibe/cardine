@@ -25,6 +25,25 @@ from project_config_support import write_project_config
 from task_contract_support import contract_record, VALIDATION, write_state, freeze_record
 
 
+def measure_task(fixture, worktree: Path, task_id: str = "056") -> None:
+    """Deliver and validate the committed task source through the real engine.
+
+    Landing consumes only this measured, receipt-verified attempt; a test never
+    declares results. Call it after the task worktree holds the implementation.
+    """
+    from cardine.lifecycle.engine import deliver_run_implementation, resolve_run_locations
+    from cardine.lifecycle.validation import run_task_validation
+    previous = Path.cwd()
+    os.chdir(worktree)
+    try:
+        deliver_run_implementation(resolve_run_locations(task_id, worktree))
+        run_task_validation(worktree, task_id)
+        fixture.git("add", ".", cwd=worktree)
+        fixture.git("commit", "-m", "Record measured validation", cwd=worktree)
+    finally:
+        os.chdir(previous)
+
+
 class BoundedWorktreeLifecycleFixture(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -46,7 +65,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         tasks = self.primary / "tasks"
         tasks.mkdir()
         (tasks / "056-lifecycle.md").write_text(
-            contract_record("056"), encoding="utf-8"
+            contract_record("056").replace("Change the documented deliverable only.", "- `**`"), encoding="utf-8"
         )
         (tasks / "QUEUE.md").write_text(
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
@@ -99,6 +118,10 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         return owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
 
 
+    def measure(self, worktree: Path, task_id: str = "056") -> None:
+        measure_task(self, worktree, task_id)
+
+
     def create_task(self, task_id: str) -> Path:
         worktree = self.root / f"project-{task_id}"
         self.git("worktree", "add", "-b", task_id, str(worktree), "main")
@@ -120,30 +143,18 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         *,
         validated_task_commit: str | None = None,
         current_main: str | None = None,
-        full_required: bool = False,
-        assessment_complete: bool = True,
         task_paths: tuple[str, ...] = ("feature.txt",),
         main_paths: tuple[str, ...] = (),
-        task_dependencies: tuple[str, ...] = (),
-        main_dependencies: tuple[str, ...] = (),
-        task_surfaces: tuple[str, ...] = (),
-        main_surfaces: tuple[str, ...] = (),
     ) -> integration_decision.IntegrationValidationDecision:
         return integration_decision.decide_integration_validation(
-            evidence_complete=True,
+            validation_measured=True,
             validated_task_commit=validated_task_commit or task_commit,
             current_task_commit=task_commit,
             validated_base_commit=self.base,
             current_main_commit=current_main or self.git("rev-parse", "main").stdout.strip(),
             validated_base_is_task_ancestor=True,
-            full_validation_required=full_required,
-            interaction_assessment_complete=assessment_complete,
             task_paths=task_paths,
             main_advanced_paths=main_paths,
-            task_dependencies=task_dependencies,
-            main_advanced_dependencies=main_dependencies,
-            task_behavioral_surfaces=task_surfaces,
-            main_advanced_behavioral_surfaces=main_surfaces,
         )
 
 
@@ -252,3 +263,7 @@ class GovernedCompletionRowsFixture(unittest.TestCase):
 
     def prepare(self) -> dict[str, object]:
         return owner_worktree_checkout.prepare_task_worktree("056", self.worktree_root, self.primary)
+
+
+    def measure(self, worktree: Path, task_id: str = "056") -> None:
+        measure_task(self, worktree, task_id)

@@ -88,30 +88,18 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         *,
         validated_task_commit: str | None = None,
         current_main: str | None = None,
-        full_required: bool = False,
-        assessment_complete: bool = True,
         task_paths: tuple[str, ...] = ("feature.txt",),
         main_paths: tuple[str, ...] = (),
-        task_dependencies: tuple[str, ...] = (),
-        main_dependencies: tuple[str, ...] = (),
-        task_surfaces: tuple[str, ...] = (),
-        main_surfaces: tuple[str, ...] = (),
     ) -> integration_decision.IntegrationValidationDecision:
         return integration_decision.decide_integration_validation(
-            evidence_complete=True,
+            validation_measured=True,
             validated_task_commit=validated_task_commit or task_commit,
             current_task_commit=task_commit,
             validated_base_commit=self.base,
             current_main_commit=current_main or self.git("rev-parse", "main").stdout.strip(),
             validated_base_is_task_ancestor=True,
-            full_validation_required=full_required,
-            interaction_assessment_complete=assessment_complete,
             task_paths=task_paths,
             main_advanced_paths=main_paths,
-            task_dependencies=task_dependencies,
-            main_advanced_dependencies=main_dependencies,
-            task_behavioral_surfaces=task_surfaces,
-            main_advanced_behavioral_surfaces=main_surfaces,
         )
 
     def run_candidate_gate(
@@ -222,9 +210,8 @@ class TaskWorktreeIsolationTest(unittest.TestCase):
         self.git("commit", "-m", "advance shared dependency")
         decision = self.validation_decision(
             task_commit,
-            main_paths=("dependency.lock",),
-            task_dependencies=("runtime",),
-            main_dependencies=("runtime",),
+            task_paths=("package.json",),
+            main_paths=("lib/package.json",),
         )
 
         self.assertEqual(decision.outcome, integration_decision.IntegrationValidationOutcome.FULL)

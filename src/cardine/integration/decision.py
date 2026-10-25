@@ -1,10 +1,17 @@
-"""Integration decision helpers extracted from the legacy CLI."""
+"""Integration validation scope, decided from measured results and Git facts."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+
+DEPENDENCY_MANIFESTS = frozenset({
+    "pyproject.toml", "setup.py", "setup.cfg", "poetry.lock", "uv.lock", "pipfile", "pipfile.lock",
+    "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "go.mod", "go.sum",
+    "cargo.toml", "cargo.lock", "gemfile", "gemfile.lock", "pom.xml", "build.gradle", "composer.json",
+    "composer.lock",
+})
 
 
 class IntegrationValidationOutcome(str, Enum):
@@ -27,35 +34,36 @@ def _paths_interact(left: str, right: str) -> bool:
     shortest = min(len(left_parts), len(right_parts))
     return left_parts[:shortest] == right_parts[:shortest]
 
+def is_dependency_manifest(path: str) -> bool:
+    name = Path(path).name.lower()
+    return name in DEPENDENCY_MANIFESTS or (name.startswith("requirements") and name.endswith(".txt"))
+
 def decide_integration_validation(
     *,
-    evidence_complete: bool,
+    validation_measured: bool,
     validated_task_commit: str,
     current_task_commit: str,
     validated_base_commit: str,
     current_main_commit: str,
     validated_base_is_task_ancestor: bool,
-    full_validation_required: bool,
     validated_task_is_current_ancestor: bool = False,
     relevant_tree_unchanged_after_validation: bool = False,
-    interaction_assessment_complete: bool = False,
     task_paths: tuple[str, ...] = (),
     main_advanced_paths: tuple[str, ...] = (),
-    task_dependencies: tuple[str, ...] = (),
-    main_advanced_dependencies: tuple[str, ...] = (),
-    task_behavioral_surfaces: tuple[str, ...] = (),
-    main_advanced_behavioral_surfaces: tuple[str, ...] = (),
+    pinned_paths: tuple[str, ...] = (),
 ) -> IntegrationValidationDecision:
-    """Choose the integration validation scope from durable evidence.
+    """Choose the integration validation scope from measured results and Git paths.
 
-    ``REUSE`` and ``BOUNDED`` both require the mandatory bounded gate after the
-    no-commit merge. ``REUSE`` means current ``main`` is the validated base;
-    ``BOUNDED`` records a deterministic independent-change comparison.
+    Every input is a measured or Git-derived fact; nothing is declared by a
+    caller. ``REUSE`` and ``BOUNDED`` both require the mandatory bounded gate
+    after the no-commit merge. ``REUSE`` means current ``main`` is the validated
+    base. ``BOUNDED`` needs a positive proof of independence; when that proof is
+    unavailable the scope is ``FULL``, never a smaller one.
     """
-    if not evidence_complete:
+    if not validation_measured:
         return IntegrationValidationDecision(
             IntegrationValidationOutcome.BLOCKED,
-            "validation evidence is missing or incomplete",
+            "measured task validation is missing or does not cover this source",
         )
     if validated_task_commit != current_task_commit and not (
         validated_task_is_current_ancestor and relevant_tree_unchanged_after_validation
@@ -69,37 +77,33 @@ def decide_integration_validation(
             IntegrationValidationOutcome.BLOCKED,
             "the validated base is not an ancestor of the task commit",
         )
-    if full_validation_required:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.FULL,
-            "the task explicitly requires full combined-tree validation",
-        )
     if current_main_commit == validated_base_commit:
         return IntegrationValidationDecision(
             IntegrationValidationOutcome.REUSE,
             "current main equals the validated base",
         )
-    if not interaction_assessment_complete:
-        return IntegrationValidationDecision(
-            IntegrationValidationOutcome.BLOCKED,
-            "independence from advanced main cannot be established",
-        )
-
-    path_interaction = any(
-        _paths_interact(task_path, main_path)
-        for task_path in task_paths
-        for main_path in main_advanced_paths
-    )
-    dependency_interaction = bool(set(task_dependencies) & set(main_advanced_dependencies))
-    behavioral_interaction = bool(
-        set(task_behavioral_surfaces) & set(main_advanced_behavioral_surfaces)
-    )
-    if path_interaction or dependency_interaction or behavioral_interaction:
+    if not task_paths:
         return IntegrationValidationDecision(
             IntegrationValidationOutcome.FULL,
-            "advanced main materially interacts with the declared task surface",
+            "the task changed no path, so independence from advanced main cannot be established",
+        )
+    if any(path in pinned_paths for path in main_advanced_paths):
+        return IntegrationValidationDecision(
+            IntegrationValidationOutcome.FULL,
+            "advanced main changed pinned policy",
+        )
+    if any(_paths_interact(task_path, main_path) for task_path in task_paths for main_path in main_advanced_paths):
+        return IntegrationValidationDecision(
+            IntegrationValidationOutcome.FULL,
+            "advanced main changed paths that the task also changed",
+        )
+    if (any(map(is_dependency_manifest, task_paths))
+            and any(map(is_dependency_manifest, main_advanced_paths))):
+        return IntegrationValidationDecision(
+            IntegrationValidationOutcome.FULL,
+            "task and advanced main both changed dependency manifests",
         )
     return IntegrationValidationDecision(
         IntegrationValidationOutcome.BOUNDED,
-        "advanced main is independent of the declared task surface",
+        "advanced main changed no path that the task changed",
     )
