@@ -59,11 +59,13 @@ def frozen_validation_commands(project_root: Path, task_id: str) -> dict[str, st
 def require_measured_ledger(project_root, task_id):
     """Verify actual writer coverage; a JSON entry alone grants no progress."""
     from cardine.lifecycle import receipts
-    from cardine.lifecycle.execution import _execution_state
+    from cardine.tasks.state import read_task_state
     from cardine.shared.layout import names
-    state = _execution_state(project_root, task_id)
+    state = read_task_state(project_root, task_id, 'single', stop_factory=stop_error, require_contract=True)
     name = names().execution_evidence_path(task_id).as_posix()
     path = receipts.safe_path(project_root, name)
+    if path.exists() and not path.is_file():
+        raise IsADirectoryError(str(path))
     covered = any(name in receipt['outputs'] for receipt in state.get('run', {}).get('receipts', []))
     if path.exists() and not covered:
         from cardine.shared.errors import CardineError

@@ -40,7 +40,6 @@ def record_validation(project_root: Path, task_id: str, command_id: str, command
     from cardine.tasks.evidence import require_measured_ledger
     with receipts.task_lock(project_root, canonical_id):
         previous = require_measured_ledger(project_root, canonical_id)
-        receipts.verify_receipts(project_root, previous)
         receipts.write_operation(project_root, canonical_id, previous, previous=previous,
             kind='validation-command', files={path.relative_to(project_root).as_posix(): receipts.encoded(state)})
 

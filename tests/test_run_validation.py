@@ -182,13 +182,16 @@ run_task_validation(Path(sys.argv[1]), '001')
 
     def test_changed_environment_before_rerun_invalidates_without_intermittence_or_count(self):
         self.configure({'one': 'exit 8'})
+        changed_environment = patch.dict(os.environ, {'CARDINE_CHANGED_DURING_ATTEMPT': 'yes'})
+        self.addCleanup(changed_environment.stop)
         def change(name):
             if name == 'after_validation_logs':
-                os.environ['CARDINE_CHANGED_DURING_ATTEMPT'] = 'yes'
-        with patch.dict(os.environ), patch.object(receipts, 'boundary', change):
+                changed_environment.start()
+        with patch.object(receipts, 'boundary', change):
             with self.assertRaises(CardineStop) as caught:
                 self.run_attempt()
             self.assertEqual(caught.exception.code, 'VALIDATION_FAILED')
+        changed_environment.stop()
         self.assertNotIn('validation', self.state()['run'])
         result = self.run_attempt()
         self.assertEqual(result['consecutiveFailures'], 1)
@@ -247,6 +250,14 @@ run_task_validation(Path(sys.argv[1]), '001')
             self.assertEqual(len(result[stream]), LOG_LIMIT)
             self.assertTrue(result[stream + 'Truncated'])
 
+    def test_exhausted_interrupted_publication_can_resume_after_authorized_budget_revision(self):
+        self.configure({'one': 'exit 7'}, limit=1)
+        with patch.dict(os.environ, {'PYTHONPATH': str(ROOT / 'src')}):
+            self.kill('after_validation_evidence')
+            self.assertEqual(self.state()['run']['validation']['consecutiveFailures'], 1)
+            self.configure({'one': 'true'}, limit=2)
+            self.assertEqual(self.run_attempt()['consecutiveFailures'], 0)
+
 
 def interrupted(point):
     def test(self):
@@ -292,6 +303,26 @@ def changed_input_and_owner(point):
 
 for _point in POINTS:
     setattr(RunValidationTest, 'test_negative_' + _point, changed_input_and_owner(_point))
+
+
+def interrupted_failure(point):
+    def test(self):
+        self.configure({'one': 'exit 7', 'two': 'exit 9'}, limit=1)
+        with patch.dict(os.environ, {'PYTHONPATH': str(ROOT / 'src')}):
+            self.kill(point)
+            for _ in range(2):
+                with self.assertRaises(CardineStop) as caught:
+                    self.run_attempt()
+                self.assertEqual(caught.exception.code, 'VALIDATION_RETRY_LIMIT')
+        state = self.state()
+        self.assertEqual(state['run']['validation']['consecutiveFailures'], 1)
+        self.assertEqual(len(state['run']['validation']['runs']), 2)
+        self.assertEqual(sum(r['kind'] == 'task-validation' for r in state['run']['receipts']), 1)
+    return test
+
+
+for _point in POINTS:
+    setattr(RunValidationTest, 'test_failed_replay_' + _point, interrupted_failure(_point))
 
 
 if __name__ == '__main__':

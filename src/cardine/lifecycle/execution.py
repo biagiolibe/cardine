@@ -9,6 +9,7 @@ from cardine.shared.git import _run_git
 from cardine.shared.git import canonical_project_root
 from cardine.shared.git import git_output
 from cardine.stops.render import stop_error
+from cardine.lifecycle.source import _execution_owned_paths, execution_source_digest
 from cardine.tasks.contract import execution_entries
 from cardine.tasks.evidence import frozen_validation_commands
 from cardine.tasks.identity import find_task_file
@@ -19,9 +20,7 @@ from cardine.tasks.state import state_path
 from cardine.templates.mode import detect_mode
 from cardine.worktree.checkout import inspect_task_worktree
 from pathlib import Path
-import hashlib
 import json
-import os
 import re
 import shlex
 
@@ -109,34 +108,6 @@ def _execution_state(project_root: Path, task_id: str) -> dict[str, object]:
                            stop_factory=stop_error, require_contract=True)
 
 
-def _execution_owned_paths(project_root: Path, task_id: str) -> set[str]:
-    identity = resolve_task_identity(project_root, task_id, "existing")
-    return {path.relative_to(project_root).as_posix() for path in
-            (identity.task_path, identity.handoff_path, state_path(project_root, task_id))} | {names().execution_evidence_path(identity.canonical_id).as_posix()}
-
-
-def execution_source_digest(project_root: Path, task_id: str, *, operation_paths=()) -> str:
-    """Bind validation to source contents and modes, including unstaged files.
-
-    Only the task's delivery-owned paths are excluded. Queue, plan, and other
-    tasks remain part of the fingerprint. No index or Git object is written.
-    """
-    owned = _execution_owned_paths(project_root, task_id) | set(operation_paths)
-    paths = set(git_output(project_root, "ls-files", "--cached", "--others", "--exclude-standard", "-z").split("\0"))
-    entries = []
-    for relative in sorted(paths - owned - {""}):
-        path = project_root / relative
-        if path.is_symlink():
-            entries.append((relative, "symlink", os.readlink(path)))
-        elif path.is_file():
-            entries.append((relative, bool(path.stat().st_mode & 0o111), hashlib.sha256(path.read_bytes()).hexdigest()))
-        elif path.is_dir():
-            # Gitlinks carry a commit identity; dirty nested trees cannot be delivered.
-            entries.append((relative, "gitlink", git_output(path, "rev-parse", "HEAD"),
-                            git_output(path, "status", "--porcelain")))
-    return hashlib.sha256(json.dumps(entries).encode()).hexdigest()
-
-
 def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, object], head: str,
                             owned: set[str], report_path: str) -> list[str]:
     """Check every post-delivery commit, including changes later reverted.
@@ -202,7 +173,7 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
     entries = execution_entries(project_root, task_id)
     commands = frozen_validation_commands(project_root, task_id)
     if state.get('run', {}).get('validation'):
-        from cardine.lifecycle.validation import verified_validation
+        from cardine.tasks.validation import verified_validation
         progress = verified_validation(project_root, task_id, state)
         if progress is None or progress['phase'] != 'passed':
             raise stop_error('EVIDENCE_INCOMPLETE', 'Current measured task validation is missing or failing',
