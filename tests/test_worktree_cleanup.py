@@ -70,9 +70,6 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         finalized = owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
         self.assertEqual(finalized["decision"], "REUSE")
         self.assertTrue((self.primary / "feature.txt").is_file())
-        # Candidate metadata is retained in the common operation receipt. Restore
-        # only the verified CLI state before exercising the existing cleanup gate.
-        self.git('restore', '.cardine/tasks/056.json', cwd=task_worktree)
         cleaned = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertEqual(cleaned["status"], "cleaned")
         self.assertTrue(task_worktree.is_dir())

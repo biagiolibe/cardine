@@ -16,7 +16,7 @@ from cardine.shared.errors import CardineError
 from cardine.shared.git import git_output, scoped_command, invalidate_facts
 from cardine.shared.jsonio import _read_json_object
 from cardine.tasks.identity import resolve_task_identity
-from cardine.tasks.validation import environment_identity
+from cardine.tasks.validation import environment_identity, failure_count
 from cardine.stops.render import stop_error
 from cardine.worktree.storage import _lifecycle_paths, _merge_head_path
 
@@ -50,22 +50,36 @@ def staged_inputs(locations, state, pending=None):
             or git_output(root, 'write-tree') != staged['candidate_tree']
             or git_output(root, 'diff', '--binary')):
         raise stop_error('EVIDENCE_MISMATCH', 'candidate tree or main changed', task_id=task_id, project=root)
+    # Candidate progress/counters may change, while lifecycle authority must
+    # still match the committed task staged under this lease (including review
+    # and cancellation). No later worker metadata can silently weaken it.
+    import json
+    from cardine.tasks.state import state_path
+    name = state_path(locations.worktree, task_id).relative_to(locations.worktree).as_posix()
+    committed = json.loads(git_output(locations.worktree, 'show', f'{staged["task_commit"]}:{name}'))
+    if {k: v for k, v in state.items() if k != 'run'} != {k: v for k, v in committed.items() if k != 'run'}:
+        raise stop_error('EVIDENCE_MISMATCH', 'task lifecycle authority changed after staging',
+                         task_id=task_id, project=root)
+    delivery = state.get('run', {}).get('delivery', {})
+    validation = state.get('run', {}).get('validation', {})
+    contract = receipts.digest(receipts.encoded(state['contract']))
+    source = source_digest(locations.worktree, task_id, pending)
+    if (source != delivery.get('sourceDigest') or delivery.get('contractDigest') != contract
+            or validation.get('phase') != 'passed'
+            or validation.get('inputs', {}).get('contractDigest') != contract):
+        raise stop_error('EVIDENCE_MISMATCH', 'task source or contract changed after staging',
+                         task_id=task_id, project=root)
     from cardine.shared.project import project_validation_commands
     commands = list(dict.fromkeys(['git diff --check', *project_validation_commands(state['contract'], staged['decision'])]))
     return dict(task_id=task_id, project=str(root), worker=str(locations.worktree),
         authority=receipts.require_authority(locations.worktree),
         primaryAuthority=receipts.require_authority(root),
-        contract=receipts.digest(receipts.encoded(state['contract'])),
-        source=staged['task_commit'], sourceDigest=source_digest(locations.worktree, task_id, pending),
+        contract=contract,
+        source=staged['task_commit'], sourceDigest=source,
         tree=staged['candidate_tree'], main=staged['main_commit'],
         lease=receipts.digest(lease_path.read_bytes()), staged=receipts.digest(staged_path.read_bytes()),
         commands=commands, environment=environment_identity(dict(os.environ)),
         worktreeStatus=git_output(root, 'status', '--porcelain', '--untracked-files=all'))
-
-
-def failure_count(state):
-    return max(state.get('run', {}).get(key, {}).get('consecutiveFailures', 0)
-               for key in ('validation', 'candidateValidation'))
 
 
 def require_budget(state, task_id, root):

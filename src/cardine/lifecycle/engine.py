@@ -410,17 +410,20 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     from cardine.integration.candidate import (operation_path, wait_for_lease,
         require_budget)
     from cardine.integration.landing import landing_for
+    from cardine.integration.finalize import finalization_aborted
     from cardine.lifecycle.control import operation_state
     from cardine.tasks.identity import resolve_task_identity
     from cardine.worktree.storage import _lifecycle_paths
     root, task_id = locations.primary, locations.task_id
+    if not locations.worktree.is_dir():
+        return None
     state, _ = operation_state(locations.worktree, task_id)
     strategy = landing_for(state['contract']['options']['landingMode'])
     identity = resolve_task_identity(root, task_id, 'existing')
     _, lease, staged = _lifecycle_paths(root, identity)
     final = operation_path(locations, 'finalize')
     argv = ['cardine', 'run', task_id, '--project', str(root)]
-    if final.exists():
+    if final.exists() and not finalization_aborted(locations):
         landed = strategy.finalize_landing(task_id, None, root)
         return envelope(task_id, str(root), step='landing', action='finalize',
             next_command=command_reference(argv, 'Push and clean up the landed task'),

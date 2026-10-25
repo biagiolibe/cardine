@@ -75,6 +75,9 @@ def commit_closure_records(locations):
             _git(root, 'add', '--', *saved['files'])
             receipts.boundary('after_closure_add')
             receipts.boundary('before_closure_commit')
+            for name, expected in saved['files'].items():
+                if receipts.digest(receipts.safe_path(root, name).read_bytes()) != expected:
+                    raise CardineError('closure output changed immediately before commit')
             _git(root, 'commit', '-m', f'Record {task_id} measured closure', '--', *saved['files'])
             receipts.boundary('after_closure_commit')
             head = git_output(root, 'rev-parse', 'HEAD')

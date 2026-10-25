@@ -172,7 +172,7 @@ def run_task_validation(root, task_id, *, context=None):
         environment = dict(os.environ)
         current = inputs(root, task_id, state, base, environment)
         previous = state.get('run', {}).get('validation', {})
-        from cardine.integration.candidate import failure_count
+        from cardine.tasks.validation import failure_count
         failures = failure_count(state)
         limit = state['contract']['options']['validationRetryLimit']
         if failures >= limit:

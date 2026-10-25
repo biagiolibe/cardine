@@ -364,6 +364,75 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
         with self.assertRaisesRegex(CardineError, 'closure output changed'):
             commit_closure_records(locations)
 
+    def test_finalize_preserves_changed_worker_metadata_after_commit(self):
+        self.ready()
+        self.run_candidate()
+        self.kill('after_finalize_commit', 'finalize')
+        path = state_path(self.worker, '056')
+        original = path.read_bytes()
+        path.write_bytes(original + b'\n')
+        foreign = path.read_bytes()
+        with self.assertRaisesRegex(CardineError, 'foreign worker output'):
+            self.finalize()
+        self.assertEqual(path.read_bytes(), foreign)
+        self.assertTrue(self.paths()[1].exists())
+        path.write_bytes(original)
+        result = self.finalize()
+        self.assertEqual(self.finalize(), result)
+        self.assertEqual(self.git('status', '--porcelain', cwd=self.worker).stdout, '')
+
+    def test_owned_abort_reconciles_a_pending_finalize_before_restage(self):
+        self.ready()
+        self.run_candidate()
+        self.kill('after_finalize_intent', 'finalize')
+        merge.abort_task_integration('056', self.primary)
+        locations = candidate.locations_for('056', self.primary)
+        from cardine.integration.finalize import finalization_aborted
+        with mock.patch.object(receipts, '_durable', side_effect=AssertionError('pure reconciliation wrote')):
+            self.assertTrue(finalization_aborted(locations))
+            self.assertTrue(finalization_aborted(locations))
+        from cardine.lifecycle.engine import run_validation_step, run_integration_step
+        result = run_validation_step(locations)
+        self.assertEqual(result['action'], 'validate-candidate')
+        landed = run_integration_step(locations)
+        self.assertEqual(landed['action'], 'finalize')
+        self.assertEqual(self.git('rev-list', '--count', '--merges', 'main').stdout.strip(), '1')
+        self.assertFalse(self.paths()[1].exists())
+
+    def test_final_commit_seam_rechecks_candidate_and_preserves_foreign_bytes(self):
+        self.ready()
+        self.run_candidate()
+        def change(name):
+            if name == 'before_finalize_commit':
+                (self.primary / 'foreign.txt').write_text('foreign')
+                self.git('add', 'foreign.txt')
+        with mock.patch.object(receipts, 'boundary', change), self.assertRaisesRegex(CardineError, 'candidate tree or main changed'):
+            self.finalize()
+        self.assertEqual(self.git('rev-parse', 'HEAD').stdout.strip(), self.base)
+        self.assertEqual((self.primary / 'foreign.txt').read_text(), 'foreign')
+        self.assertTrue(self.paths()[1].exists())
+
+    def test_worker_source_changed_after_staging_cannot_validate_or_land(self):
+        self.ready()
+        (self.worker / 'feature.txt').write_text('undelivered changes')
+        with self.assertRaisesRegex(CardineError, 'task source or contract changed'):
+            self.run_candidate()
+        self.assertEqual(self.git('rev-parse', 'HEAD').stdout.strip(), self.base)
+        self.assertEqual((self.worker / 'feature.txt').read_text(), 'undelivered changes')
+        self.assertTrue(self.paths()[1].exists())
+
+    def test_later_cancellation_cannot_land_a_previously_validated_candidate(self):
+        self.ready()
+        self.run_candidate()
+        from cardine.lifecycle.control import cancel_task
+        from control_support import adapter
+        cancel_task('056', self.primary, reason='Cancel before landing', adapter=adapter('developer'))
+        with self.assertRaisesRegex(CardineError, 'lifecycle authority changed'):
+            self.finalize()
+        self.assertEqual(self.git('rev-parse', 'HEAD').stdout.strip(), self.base)
+        self.assertEqual(json.loads(state_path(self.worker, '056').read_bytes())['status'], 'cancelled')
+        self.assertTrue(self.paths()[1].exists())
+
     def test_candidate_result_boundaries_replay_once(self):
         for label in ('candidate_intent', 'candidate_logs', 'candidate_result', 'intent',
                       'staged_pair', 'state_replace', 'result_receipt'):
@@ -385,7 +454,7 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
 
     def test_finalize_every_effect_boundary_returns_the_same_commit(self):
         for label in ('finalize_intent', 'finalize_commit', 'finalize_result',
-                      'finalize_json_unlink', 'finalize_lease_unlink'):
+                      'finalize_json_unlink', 'finalize_lease_unlink', 'finalize_worker_restore'):
             for prefix in ('before_', 'after_'):
                 point = prefix + label
                 with self.subTest(point=point):
@@ -397,6 +466,7 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
                         fixture.kill(point, 'finalize')
                         first = fixture.finalize()
                         self.assertEqual(fixture.finalize(), first)
+                        self.assertEqual(fixture.git('status', '--porcelain', cwd=fixture.worker).stdout, '')
                         self.assertEqual(fixture.git('rev-list', '--count', '--merges', 'main').stdout.strip(), '1')
                         self.assertFalse(fixture.paths()[1].exists() or fixture.paths()[2].exists())
                     finally:
@@ -413,7 +483,7 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
             self.run_candidate()
         lease.write_bytes(saved)
         (self.worker / 'feature.txt').write_text('changed')
-        with self.assertRaisesRegex(CardineError, 'inputs changed'):
+        with self.assertRaisesRegex(CardineError, 'inputs changed|source or contract changed'):
             self.run_candidate()
 
 

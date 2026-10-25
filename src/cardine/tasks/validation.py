@@ -99,3 +99,9 @@ def host_observations_complete(contract, progress):
                 or not entry.get('log') or observed.get('evidence') != entry.get('log')):
             return False
     return True
+
+
+def failure_count(state):
+    """The one measured retry allowance shared by task and candidate attempts."""
+    return max(state.get('run', {}).get(key, {}).get('consecutiveFailures', 0)
+               for key in ('validation', 'candidateValidation'))

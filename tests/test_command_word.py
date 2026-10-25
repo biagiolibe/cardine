@@ -52,6 +52,8 @@ class CommandWordTest(unittest.TestCase):
                      "HANDOFF_TASK_MISMATCH", "HANDOFF_VALIDATION_FAILING",
                      "HANDOFF_VALIDATION_EVIDENCE_MISSING", "HOST_IMPACT_EVIDENCE_MISSING"):
             baseline.pop(code)
+        # RE5b distinguishes a transient Git failure from a textual conflict.
+        baseline['GIT_OPERATION_FAILED'] = {'human_decision': False, 'resolution': 'recoverable'}
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []

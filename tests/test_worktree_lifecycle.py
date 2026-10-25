@@ -723,7 +723,10 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         finalized = self._advance()
         self.assertEqual(finalized.returncode, 0, finalized.stderr)
         self.assertEqual(json.loads(finalized.stdout)['action_required'], 'push')
-        measured = json.loads((worktree / '.cardine/tasks/056.json').read_bytes())['run']['candidateValidation']
+        from cardine.integration.candidate import operation_path, locations_for
+        from cardine.lifecycle import receipts
+        measured = receipts._load_intent(operation_path(locations_for('056', self.project)))['progress']
+        self.assertEqual(subprocess.check_output(['git', 'status', '--porcelain'], cwd=worktree, text=True), '')
         self.assertEqual([r['command'] for r in measured['runs'][0]], ['git diff --check', 'python3 scripts/check_repository.py'])
         self.assertTrue(all(r['exitStatus'] == 0 for r in measured['runs'][0]))
 
