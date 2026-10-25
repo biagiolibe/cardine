@@ -1,4 +1,5 @@
 """Real Git start/delivery boundaries and read-only console availability."""
+from control_support import issued_verdict
 import json
 import os
 import subprocess
@@ -344,7 +345,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         original = self.state()
         self.assert_stop('TASK_STATUS_REJECTED', lambda: owner_lifecycle_commands.execution_start(self.worker, '001'))
         self.assertEqual(self.state(), original)
-        owner_review_verdict.record_review_verdict(self.worker, '001', 'CHANGES_REQUESTED', body='Fix code')
+        issued_verdict(self.worker, '001', 'CHANGES_REQUESTED', body='Fix code')
         self.commit('Request changes')
         rejected = self.state()
         owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
@@ -352,7 +353,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         owner_tasks_recording.run_validation(self.worker, '001', 'check')
         self.commit('Renew evidence')
         owner_lifecycle_commands.execution_deliver(self.worker, '001')
-        owner_review_verdict.record_review_verdict(self.worker, '001', 'APPROVE', body='Approved')
+        issued_verdict(self.worker, '001', 'APPROVE', body='Approved')
         self.commit('Approve')
         approved = self.state()
         owner_lifecycle_commands.execution_start(self.worker, '001', resume=True)
@@ -377,7 +378,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.state()['contract']['options']['review'], 'required')
         owner_lifecycle_commands.execution_deliver(self.worker, '001')
         self.assertEqual(self.state()['status'], 'in_review')
-        owner_review_verdict.record_review_verdict(self.worker, '001', 'APPROVE')
+        issued_verdict(self.worker, '001', 'APPROVE')
         self.assertEqual(self.state()['status'], 'in_progress')
         self.assertEqual(self.state()['review']['verdict'], 'APPROVE')
         self.assertEqual(self.state()['outcome'], 'ANSWERED')

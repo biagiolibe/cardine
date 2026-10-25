@@ -32,6 +32,10 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         self.primary = self.root / "project"
         self.primary.mkdir()
         from unittest.mock import patch
+        from control_support import adapter
+        host = patch("cardine.lifecycle.control.host_adapter", return_value=adapter("coordinator"))
+        host.start()
+        self.addCleanup(host.stop)
         self.worktree_root = self.root / "worktrees"
         self.environment = patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
         self.environment.start()

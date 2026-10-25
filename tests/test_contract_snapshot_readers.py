@@ -98,7 +98,7 @@ class ContractSnapshotReadersTest(unittest.TestCase):
 
     def test_class_and_review_edits_do_not_change_start_or_review_policy(self):
         from cardine.tasks.transitions import transition_task_state
-        from cardine.review.verdict import record_review_verdict
+        from control_support import issued_verdict as record_review_verdict
         from cardine.tasks.preflight import execution_contract, execution_preflight
         record = self.root / 'tasks/002.md'
         (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')

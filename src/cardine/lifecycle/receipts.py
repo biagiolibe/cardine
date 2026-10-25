@@ -370,21 +370,24 @@ def _finish(root, task_id, intent_path, intent):
         intent['staged'] = True
         _save_intent(intent_path, intent)
         boundary('after_staged_pair')
-    # Creation publishes only absent paths; revisions replace only matched inputs.
-    for name, item in outputs.items():
-        if name == state_name:
-            continue
-        path = safe_path(root, name)
-        if path.exists() and digest(path.read_bytes()) == item['digest']:
-            continue
-        source = safe_path(root, item['staged'])
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if item['before'] is None:
-            invalidate_facts()
-            os.link(source, path)
-            _sync_directory(path.parent)
-        else:
-            _durable(path, source.read_bytes())
+    def publish_files():
+        for name, item in outputs.items():
+            if name == state_name:
+                continue
+            path = safe_path(root, name)
+            if path.exists() and digest(path.read_bytes()) == item['digest']:
+                continue
+            source = safe_path(root, item['staged'])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if item['before'] is None:
+                invalidate_facts()
+                os.link(source, path)
+                _sync_directory(path.parent)
+            else:
+                _durable(path, source.read_bytes())
+
+    if not intent.get('state_first'):
+        publish_files()
     path = state_path(root, task_id)
     # Replacing state and recording the verified result are separate boundaries.
     final_bytes = encoded(state)
@@ -394,8 +397,15 @@ def _finish(root, task_id, intent_path, intent):
         allowed = [outputs[state_name]['before'], digest(encoded(intent['pending_state'])), digest(final_bytes)]
         if current not in allowed:
             raise CardineError('state changed immediately before replacement')
+        if intent.get('state_first'):
+            boundary('before_review_state')
         _durable(path, encoded(intent['pending_state']))
         boundary('after_state_replace')
+        if intent.get('state_first'):
+            boundary('after_review_state')
+            boundary('before_review_projection')
+            publish_files()
+            boundary('after_review_projection')
         boundary('before_result_receipt')
         if path.read_bytes() != encoded(intent['pending_state']):
             raise CardineError('state changed before result receipt')
@@ -441,7 +451,7 @@ def reauthorize_task(root, task_id):
         return write_operation(root, task_id, state, kind='reauthorization', previous=state)
 
 
-def write_operation(root, task_id, state, *, kind, files=None, previous=None):
+def write_operation(root, task_id, state, *, kind, files=None, previous=None, state_first=False):
     """Caller holds task_lock. Persist intent, stage exact bytes, publish result."""
     from cardine.tasks.state_core import state_path
     root = Path(root).resolve()
@@ -484,7 +494,7 @@ def write_operation(root, task_id, state, *, kind, files=None, previous=None):
         staged[name] = dict(content=base64.b64encode(content).decode(), digest=digest(content),
                             before=inputs[name], staged=staged_name)
     intent = dict(task_id=task_id, authority=authority, state=state, pending_state=pending,
-                  files=staged, staged=False)
+                  files=staged, staged=False, state_first=state_first)
     boundary('before_intent')
     _save_intent(intent_path, intent)
     boundary('after_intent')

@@ -334,10 +334,18 @@ def build_parser() -> CardineArgumentParser:
     verdict = review_sub.add_parser("verdict", help="record a verdict and its task-state transition")
     verdict.add_argument("task_id")
     verdict.add_argument("verdict", choices=("APPROVE", "CHANGES_REQUESTED", "BLOCKED"))
+    verdict.add_argument("--request-id", help="issued independent review request identity")
     verdict.add_argument("--owner", action="store_true")
     verdict.add_argument("--body", default="", help="free-form review Markdown")
     verdict.add_argument("--project", type=Path, default=Path.cwd())
     verdict.add_argument("--format", choices=("json",), default="json")
+
+    for name in ('cancel', 'abort'):
+        control = subparsers.add_parser(name, help='host-authorized ' + name)
+        control.add_argument('task_id')
+        control.add_argument('--project', type=Path)
+        if name == 'cancel':
+            control.add_argument('--reason', required=True)
 
     task = subparsers.add_parser("task", help="inspect task records and identities")
     task_sub = task.add_subparsers(dest="task_command", required=True)
@@ -746,9 +754,15 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 )
                 journal.observe(cleaned)
                 print(json.dumps(cleaned, sort_keys=True))
+        elif arguments.command in ('cancel', 'abort'):
+            from cardine.lifecycle.control import cancel_task
+            from cardine.lifecycle.control_abort import abort_owned
+            result = (cancel_task(arguments.task_id, project_root, reason=arguments.reason)
+                      if arguments.command == 'cancel' else abort_owned(arguments.task_id, project_root))
+            print(json.dumps(result, sort_keys=True))
         elif arguments.command == "review":
             print(json.dumps(record_review_verdict(project_root, arguments.task_id, arguments.verdict,
-                                                   owner=arguments.owner, body=arguments.body), sort_keys=True))
+                                                   owner=arguments.owner, body=arguments.body, request_id=arguments.request_id), sort_keys=True))
         elif arguments.command == "task":
             if arguments.task_command == "new":
                 from cardine.tasks.creation import create_task

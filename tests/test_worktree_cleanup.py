@@ -257,7 +257,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         _task_state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         cardine_cli._write_json_atomic(
             lease_path,
-            {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary)},
+            {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary.resolve())},
             exclusive=True,
         )
         self.assertFalse(integration_path.exists())
@@ -273,7 +273,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         _task_state, lease_path, _integration_path = owner_worktree_storage._lifecycle_paths(self.primary, identity)
         cardine_cli._write_json_atomic(
             lease_path,
-            {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary)},
+            {"version": 1, "task_id": "056", "branch": "task-056", "project": str(self.primary.resolve())},
             exclusive=True,
         )
         queue = self.primary / "tasks/QUEUE.md"

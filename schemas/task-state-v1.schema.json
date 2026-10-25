@@ -1303,6 +1303,165 @@
               }
             }
           }
+        },
+        "reviewDecision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding", "principal"],
+          "properties": {
+            "binding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["task_id", "root", "contract", "source", "source_digest", "verdict", "body", "owner", "request_id"],
+              "properties": {
+                "task_id": {"type": "string"},
+                "root": {"type": "string"},
+                "contract": {"type": "string"},
+                "source": {"type": "string"},
+                "source_digest": {"type": "string"},
+                "verdict": {"enum": ["APPROVE", "CHANGES_REQUESTED", "BLOCKED"]},
+                "body": {"type": "string"},
+                "owner": {"type": "boolean"},
+                "request_id": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+              }
+            },
+            "principal": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["host", "profile", "session_id", "role"],
+              "properties": {
+                "host": {"type": "string", "minLength": 1},
+                "profile": {"type": "string", "minLength": 1},
+                "session_id": {"type": "string", "minLength": 1},
+                "role": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "cancellation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding", "principal"],
+          "properties": {
+            "binding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["task_id", "root", "contract", "source", "source_digest", "reason", "authority_label"],
+              "properties": {
+                "task_id": {"type": "string"},
+                "root": {"type": "string"},
+                "contract": {"type": "string"},
+                "source": {"type": "string"},
+                "source_digest": {"type": "string"},
+                "reason": {"type": "string", "minLength": 1},
+                "authority_label": {"type": "string"}
+              }
+            },
+            "principal": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["host", "profile", "session_id", "role"],
+              "properties": {
+                "host": {"type": "string", "minLength": 1},
+                "profile": {"type": "string", "minLength": 1},
+                "session_id": {"type": "string", "minLength": 1},
+                "role": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "ownedAbort": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["binding", "principal"],
+          "properties": {
+            "binding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["task_id", "root", "contract", "source", "source_digest", "project", "lease_digest", "staged_digest", "main", "merge", "snapshot", "authority"],
+              "properties": {
+                "task_id": {"type": "string"},
+                "root": {"type": "string"},
+                "contract": {"type": "string"},
+                "source": {"type": "string"},
+                "source_digest": {"type": "string"},
+                "project": {"type": "string"},
+                "lease_digest": {"type": "string"},
+                "staged_digest": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "main": {"type": "string"},
+                "merge": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "snapshot": {"type": "string"},
+                "authority": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["project", "common", "root", "runtime", "policy", "accepted_main", "worktree_root"],
+                  "properties": {
+                    "project": {"type": "string", "minLength": 1},
+                    "common": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+                    "root": {"type": "string", "minLength": 1},
+                    "runtime": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                    "policy": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                    "accepted_main": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+                    "worktree_root": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            },
+            "principal": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["host", "profile", "session_id", "role"],
+              "properties": {
+                "host": {"type": "string", "minLength": 1},
+                "profile": {"type": "string", "minLength": 1},
+                "session_id": {"type": "string", "minLength": 1},
+                "role": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        },
+        "reviewDecisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["binding", "principal"],
+            "properties": {
+              "binding": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["task_id", "root", "contract", "source", "source_digest", "verdict", "body", "owner", "request_id"],
+                "properties": {
+                  "task_id": {"type": "string"},
+                  "root": {"type": "string"},
+                  "contract": {"type": "string"},
+                  "source": {"type": "string"},
+                  "source_digest": {"type": "string"},
+                  "verdict": {"enum": ["APPROVE", "CHANGES_REQUESTED", "BLOCKED"]},
+                  "body": {"type": "string"},
+                  "owner": {"type": "boolean"},
+                  "request_id": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+                }
+              },
+              "principal": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["host", "profile", "session_id", "role"],
+                "properties": {
+                  "host": {"type": "string", "minLength": 1},
+                  "profile": {"type": "string", "minLength": 1},
+                  "session_id": {"type": "string", "minLength": 1},
+                  "role": {"type": "string", "minLength": 1}
+                }
+              }
+            }
+          }
+        },
+        "ownedAbortResult": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operation", "result"],
+          "properties": {"operation": {"type": "string", "minLength": 64, "maxLength": 64}, "result": {"type": "string", "enum": ["verified"]}}
         }
       }
     }

@@ -116,7 +116,7 @@ class TaskCloseTest(unittest.TestCase):
         record = self.identity.task_path
         before = record.read_bytes()
         state = owner_tasks_transitions.transition_task_state(
-            self.worker, '001', 'cancelled', cancellation_authority='owner', reason='superseded')
+            self.worker, '001', 'cancelled', adapter=__import__('control_support').adapter(), cancellation_authority='owner', reason='superseded')
         self.assertEqual(state['status'], 'cancelled')
         self.assertEqual(state['transitions'][-1]['reason'], 'superseded')
         self.assertEqual(state['transitions'][-1]['authority'], 'owner')
