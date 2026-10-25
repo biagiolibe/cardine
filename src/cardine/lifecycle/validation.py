@@ -132,9 +132,9 @@ def _publish(root, task_id, intent, state):
 def run_task_validation(root, task_id, *, context=None):
     """Execute one complete attempt, including at most one unchanged full rerun."""
     root = Path(root).resolve()
-    from cardine.lifecycle.engine import resolve_run_locations
-    context = context or resolve_run_locations(task_id, root)
+    from cardine.lifecycle.context import resolve_run_locations
     inspection = _execution_location(root, task_id, context=context)
+    context = context or resolve_run_locations(task_id, root)
     if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
         raise CardineError('validation requires the canonical task worktree')
     base = str(inspection['base_commit'])

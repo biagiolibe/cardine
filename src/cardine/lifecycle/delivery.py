@@ -74,9 +74,9 @@ def verify_delivery(root, state, base, *, context=None):
 def deliver_implementation(root, task_id, *, context=None):
     """One writer, durable intent, exact state-only commit, replay at every effect."""
     root = Path(root).resolve()
-    from cardine.lifecycle.engine import resolve_run_locations
-    context = context or resolve_run_locations(task_id, root)
+    from cardine.lifecycle.context import resolve_run_locations
     inspection = _execution_location(root, task_id, context=context, command=('execution', 'deliver'))
+    context = context or resolve_run_locations(task_id, root)
     if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
         raise CardineError('delivery worktree identity mismatch')
     base = str(inspection['base_commit'])

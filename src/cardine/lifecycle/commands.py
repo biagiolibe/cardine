@@ -23,9 +23,9 @@ from pathlib import Path
 @scoped_command
 def execution_start(project_root: Path, task_id: str, *, resume: bool = False, context=None) -> dict[str, object]:
     """Record the first legal start only after worktree and contract preflight."""
-    from cardine.lifecycle.engine import resolve_run_locations
-    context = context or resolve_run_locations(task_id, project_root)
+    from cardine.lifecycle.context import resolve_run_locations
     inspection = _execution_location(project_root, task_id, context=context)
+    context = context or resolve_run_locations(task_id, project_root)
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
@@ -74,10 +74,11 @@ def execution_deliver(project_root: Path, task_id: str, *, implementation_only: 
     missing-surface guardrail. Interactive legacy snapshots keep their existing
     review path until RE4 replaces role dispatch.
     """
-    from cardine.lifecycle.engine import resolve_run_locations
-    context = context or resolve_run_locations(task_id, project_root)
-    if implementation_only is None:
+    from cardine.lifecycle.context import resolve_run_locations
+    if context is None:
         _execution_location(project_root, task_id, command=('execution', 'deliver'))
+        context = resolve_run_locations(task_id, project_root)
+    if implementation_only is None:
         from cardine.lifecycle.delivery import _operation_path
         implementation_only = (_operation_path(project_root, task_id).exists()
                                or bool(_execution_state(project_root, task_id, context=context)['contract'].get('expectedCodeSurface')))
