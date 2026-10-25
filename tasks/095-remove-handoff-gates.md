@@ -16,7 +16,7 @@ ratchet keys, and interruption boundaries; this record adds no design.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row N3 is implemented as its table cell describes it, with
+- [x] The scope of row N3 is implemented as its table cell describes it, with
   the design of the plan's sections "State and next-step resolution",
   "Invocation, locations and output contract", "Stops, recovery and
   bounded work", "Validation attempts", "Review and Stable commands",
@@ -27,32 +27,32 @@ ratchet keys, and interruption boundaries; this record adds no design.
   completion/review templates, catalog/baselines; typed host proof from
   RE3b replaces prose. A file the row missed but that the same change
   needs is in scope; the handoff lists it.
-- [ ] The row's tests exist and pass: `test_run_handoff.py`,
+- [x] The row's tests exist and pass: `test_run_handoff.py`,
   execution/review/worktree tests: paraphrased/absent handoff fields
   change no gate; missing actual observation reruns checks.
-- [ ] Ratchet: the exact keys of the known-violation table of
+- [x] Ratchet: the exact keys of the known-violation table of
   `tests/test_text_gates.py` that the row names are deleted when their
   readers go, and unrelated keys with the same T-ID stay: T-04, T-19,
   T-20, T-21, T-23 (including CLI/import references); T-22 already gone.
-- [ ] Rule 4 of decision 14: Removing prose reads is pure; template
+- [x] Rule 4 of decision 14: Removing prose reads is pure; template
   regeneration interrupted before/after baseline write converges; real
   delivery still uses RE3a transaction. Each effect test kills the
   operation immediately before and after each listed boundary, runs the
   identical command again, and checks convergence without duplicate
   commits, verdicts, counters, or deletion of foreign work. Pure rows test
   repeated resolution with no writes.
-- [ ] Every effect this row performs or changes goes through the operation
+- [x] Every effect this row performs or changes goes through the operation
   receipts of row RE1b and has changed-input and foreign-owner negative
   tests.
-- [ ] Nothing in the change claims authenticity beyond the plan's "Trust
+- [x] Nothing in the change claims authenticity beyond the plan's "Trust
   boundary": no same-user receipt or hash is presented as proof of
   authorship, and real host configuration is never installed or changed.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. The task changes product code, product templates, and tests only;
   it never runs `cardine run` on this repository, installs or changes real
   host configuration, or writes to the real home directory.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -61,16 +61,16 @@ ratchet keys, and interruption boundaries; this record adds no design.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/095.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/095.json`, which only
   the installed `meridian task close 095` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
