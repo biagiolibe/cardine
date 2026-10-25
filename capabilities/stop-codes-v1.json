@@ -690,6 +690,22 @@
       "kind": "status",
       "summary": "known generated upgrade output is absent; planning requires no new decision",
       "resolution": "recoverable"
+    },
+    {
+      "code": "GIT_OPERATION_FAILED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "`cardine worktree integrate stage`",
+      "human_decision": false,
+      "resume": "cardine run {task_id} --project {project}",
+      "kind": "stop",
+      "summary": "Git merge failed without an unmerged textual conflict",
+      "resolution": "recoverable",
+      "test": "tests.test_run_integration.CandidateTest.test_textual_conflict_and_transient_git_failure_are_distinct"
     }
   ]
 }

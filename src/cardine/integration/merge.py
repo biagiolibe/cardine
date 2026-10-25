@@ -174,8 +174,6 @@ def stage_task_integration(
     from cardine.integration.residue import recover_landing_residue
     from cardine.lifecycle import receipts
     project_root = _verified_lifecycle_project(supplied_project)
-    if Path.cwd().resolve() != project_root:
-        raise CardineError("integration stage must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
     _state_path, lease_path, integration_path = _lifecycle_paths(project_root, identity)
     if integration_path.exists():
@@ -319,12 +317,13 @@ def stage_task_integration(
     receipts.boundary("after_stage_lease")
     merged = _run_git(project_root, "merge", "--no-ff", "--no-commit", identity.branch_name)
     if merged.returncode != 0:
-        aborted = _run_git(project_root, "merge", "--abort")
-        if aborted.returncode == 0:
+        conflict = bool(git_output(project_root, "ls-files", "--unmerged"))
+        aborted = _run_git(project_root, "merge", "--abort") if _merge_head_path(project_root).exists() else None
+        if aborted is None or aborted.returncode == 0:
             _remove_owned_file(lease_path)
         raise stop_error(
-            "INTEGRATION_CONFLICT",
-            "integration conflict was aborted; task branch and worktree were retained",
+            "INTEGRATION_CONFLICT" if conflict else "GIT_OPERATION_FAILED",
+            "textual integration conflict" if conflict else "transient Git merge failure: " + merged.stderr.strip(),
             task_id=identity.canonical_id, project=project_root, evidence=evidence_path,
         )
     try:
@@ -373,67 +372,11 @@ def stage_task_integration(
 
 def finalize_task_integration(
     task_id: str,
-    validation_path: Path,
+    validation_path: Path | None = None,
     supplied_project: Path | None = None,
 ) -> dict[str, object]:
-    project_root = _verified_lifecycle_project(supplied_project)
-    if Path.cwd().resolve() != project_root:
-        raise CardineError("integration finalize must run from the canonical primary checkout")
-    identity = resolve_task_identity(project_root, task_id, "existing")
-    _task_state, lease_path, integration_path = _lifecycle_paths(project_root, identity)
-    lease = _read_json_object(lease_path, "integration lease")
-    staged = _read_json_object(integration_path, "staged integration state")
-    if lease.get("task_id") != identity.canonical_id or staged.get("task_id") != identity.canonical_id:
-        raise CardineError("integration ownership does not match the requested task")
-    if not _merge_head_path(project_root).is_file() or git_output(
-        project_root, "rev-parse", "HEAD"
-    ) != staged.get("main_commit"):
-        raise CardineError("the owned staged merge state is missing or its main commit changed")
-    if git_output(project_root, "write-tree") != staged.get("candidate_tree"):
-        raise stop_error("EVIDENCE_MISMATCH", "staged candidate tree changed after integration stage", task_id=identity.canonical_id, project=project_root)
-    validation = _read_json_object(validation_path.expanduser().resolve(), "candidate validation evidence")
-    if validation.get("candidate_tree") != staged.get("candidate_tree") or validation.get("passed") is not True:
-        raise stop_error(
-            "EVIDENCE_MISMATCH", "candidate validation evidence is stale, mismatched, or failed", task_id=identity.canonical_id, project=project_root
-        )
-    required_scope = "full" if staged.get("decision") == "FULL" else "bounded"
-    if validation.get("scope") != required_scope:
-        raise stop_error(
-            "EVIDENCE_MISMATCH", f"candidate validation scope must be {required_scope!r}", task_id=identity.canonical_id, project=project_root
-        )
-    commands = validation.get("commands")
-    if not isinstance(commands, list) or not commands or not all(isinstance(item, str) and item for item in commands):
-        raise stop_error(
-            "EVIDENCE_MISMATCH", "candidate validation evidence must name successful commands", task_id=identity.canonical_id, project=project_root
-        )
-    declaration_state, declaration_fragments = candidate_validation_declaration(project_root, identity.canonical_id)
-    if declaration_state == "undeclared":
-        raise stop_error(
-            "UNDECLARED_VALIDATION_COMMANDS", "declare candidate validation commands before finalize"
-        )
-    missing_commands = missing_candidate_validation_commands(
-        staged["decision"], commands, declaration_fragments
-    )
-    if missing_commands:
-        raise stop_error(
-            "EVIDENCE_MISMATCH",
-            "candidate validation evidence is missing mandatory command(s): " + ", ".join(missing_commands),
-            task_id=identity.canonical_id, project=project_root,
-        )
-    committed = _run_git(project_root, "commit", "-m", f"Integrate {identity.canonical_id}")
-    if committed.returncode != 0:
-        raise CardineError(committed.stderr.strip() or "integration commit failed; staged state was retained")
-    merge_commit = git_output(project_root, "rev-parse", "HEAD")
-    _remove_owned_file(integration_path)
-    _remove_owned_file(lease_path)
-    return {
-        "version": 1,
-        "task_id": identity.canonical_id,
-        "merge_commit": merge_commit,
-        "candidate_tree": staged["candidate_tree"],
-        "decision": staged["decision"],
-        "next_action": "push-or-cleanup",
-    }
+    from cardine.integration.finalize import finalize_candidate
+    return finalize_candidate(task_id, supplied_project)
 
 
 def runnable_candidate_validation_command(command: str, project_root: Path) -> bool:

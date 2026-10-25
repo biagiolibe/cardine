@@ -437,7 +437,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         registry = stops_registry.load_stop_registry()
         closure = (
             "ACCEPTANCE_UNMET", "VALIDATION_FAILED", "VALIDATION_RETRY_LIMIT", "WRONG_WORKTREE", "EVIDENCE_INCOMPLETE",
-            "PRIMARY_DIRTY", "MAIN_BEHIND_ORIGIN", "LEASE_HELD", "INTEGRATION_CONFLICT",
+            "PRIMARY_DIRTY", "MAIN_BEHIND_ORIGIN", "LEASE_HELD", "INTEGRATION_CONFLICT", "GIT_OPERATION_FAILED",
             "CANDIDATE_VALIDATION_FAILED", "EVIDENCE_MISMATCH", "PUSH_PENDING", "PUSH_REJECTED", "CLEANUP_BLOCKED",
             "UNDECLARED_VALIDATION_COMMANDS", "STALE_WORKTREE_BASE", "REVIEW_NOT_APPROVED",
             "WORKTREE_RELOCATE", "LEASE_INTERRUPTED", "CLEANUP_PARTIAL", "TASK_STEP_PENDING", "DEPENDENCY_PENDING",
@@ -592,8 +592,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertEqual(
             result.stderr.strip(),
-            "BLOCKED INTEGRATION_CONFLICT: integration conflict was aborted; task branch and worktree were "
-            "retained; resume: the developer resolves the conflict on the task branch, then rerun cardine "
+            "BLOCKED INTEGRATION_CONFLICT: textual integration conflict; resume: "
+            "the developer resolves the conflict on the task branch, then rerun cardine "
             f"worktree integrate stage 056 --project {self.project.resolve()} "
             "--format json",
         )
@@ -611,7 +611,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(
             result.stderr.strip(),
-            "NEXT EVIDENCE_MISMATCH: candidate validation evidence is stale, mismatched, or failed; resume: "
+            "NEXT EVIDENCE_MISMATCH: no current measured candidate validation; resume: "
             f"cardine worktree integrate abort 056 --project {self.project.resolve()} --format json",
         )
 
@@ -700,65 +700,33 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         worktree = self._advance_ready_task()
         waiting = self._advance()
         self.assertEqual(waiting.returncode, 0, waiting.stderr)
-        report = json.loads(waiting.stdout)
-        self.assertEqual(
-            (report["step"], report["action_required"], report["stop_code"], report["performed"]),
-            ("C5", "run-validation", "EVIDENCE_INCOMPLETE", []),
-        )
-
-        self.measure(worktree)
-        result = self._advance()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertEqual(set(report), {
-            "version", "task_id", "step", "action_required", "commands", "required_fragments", "stop_code", "stop_detail", "resume", "performed",
-        })
-        self.assertEqual((report["step"], report["action_required"]), ("C7", "run-candidate-validation"))
-        self.assertEqual(report["performed"], ["C6"])
-        self.assertIsNone(report["stop_code"])
-        self.assertIsNone(report["stop_detail"])
-        self.assertEqual(report["version"], 1)
-        self.assertEqual(report["commands"][0], "git diff --check")
-        self.assertEqual(report["commands"], ["git diff --check", "scripts/check_repository.py"])
-        self.assertIn("scripts/check_repository.py", report["required_fragments"])
-        self.assertIn("project command containing that exact fragment", report["resume"])
-        commands = [(line["command"], line["result"]) for line in self._journal()]
-        self.assertEqual(
-            [item for item in commands if item[0] not in ("advance", "prepare")],
-            [("integrate stage", "ok")],
-        )
-
-        rerun = json.loads(self._advance().stdout)
-        self.assertEqual((rerun["step"], rerun["action_required"], rerun["performed"]), ("C7", "run-candidate-validation", []))
-        self.assertEqual(rerun["commands"], report["commands"])
-        self.assertEqual(
-            [line["command"] for line in self._journal()].count("integrate stage"), 1
-        )
-
-    def test_advance_complete_commands_run_unchanged_and_finalize(self) -> None:
-        worktree = self._advance_ready_task(candidate_command="python3 scripts/check_repository.py")
-        command = "python3 scripts/check_repository.py"
-        (self.project / cardine_cli.CANDIDATE_VALIDATION_PATH).write_text(json.dumps({
-            "version": 1, "state": "declared",
-            "outcomes": {outcome: [command] for outcome in ("REUSE", "BOUNDED", "FULL")},
-        }), encoding="utf-8")
-        subprocess.run(["git", "add", "."], cwd=self.project, check=True)
-        subprocess.run(["git", "commit", "-m", "runnable declaration"], cwd=self.project,
-                       check=True, capture_output=True)
+        self.assertEqual(json.loads(waiting.stdout)['step'], 'C5')
         self.measure(worktree)
         staged = self._advance()
         self.assertEqual(staged.returncode, 0, staged.stderr)
         report = json.loads(staged.stdout)
-        self.assertEqual(report["commands"], ["git diff --check", command])
-        self.assertEqual(report["required_fragments"], report["commands"])
-        results = []
-        for entry in report["commands"]:
-            executed = subprocess.run(entry, shell=True, cwd=self.project, text=True, capture_output=True)
-            self.assertEqual(executed.returncode, 0, executed.stderr)
-            results.extend(("--candidate-command", entry, "--candidate-exit-code", str(executed.returncode)))
-        finalized = self._advance(*results)
+        self.assertEqual((report['step'], report['performed']), ('C7', ['C6']))
+        self.assertEqual(report['commands'], ['git diff --check', 'scripts/check_repository.py'])
+        finalized = self._advance()
         self.assertEqual(finalized.returncode, 0, finalized.stderr)
-        self.assertEqual(json.loads(finalized.stdout)["action_required"], "push")
+        self.assertEqual(json.loads(finalized.stdout)['action_required'], 'push')
+        self.assertEqual([line['command'] for line in self._journal()].count('integrate stage'), 1)
+        self.assertEqual([line['command'] for line in self._journal()].count('integrate finalize'), 1)
+
+
+    def test_advance_complete_commands_run_unchanged_and_finalize(self) -> None:
+        worktree = self._advance_ready_task(candidate_command="python3 scripts/check_repository.py")
+        self.measure(worktree)
+        staged = self._advance()
+        self.assertEqual(staged.returncode, 0, staged.stderr)
+        self.assertEqual(json.loads(staged.stdout)['commands'], ['git diff --check', 'python3 scripts/check_repository.py'])
+        finalized = self._advance()
+        self.assertEqual(finalized.returncode, 0, finalized.stderr)
+        self.assertEqual(json.loads(finalized.stdout)['action_required'], 'push')
+        measured = json.loads((worktree / '.cardine/tasks/056.json').read_bytes())['run']['candidateValidation']
+        self.assertEqual([r['command'] for r in measured['runs'][0]], ['git diff --check', 'python3 scripts/check_repository.py'])
+        self.assertTrue(all(r['exitStatus'] == 0 for r in measured['runs'][0]))
+
 
     def test_advance_resumes_after_each_mechanical_step_and_reaches_cleanup(self) -> None:
         worktree = self._advance_ready_task()
@@ -838,7 +806,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
         self.assertIn("integrate stage 056", report["resume"])
         self.assertEqual(report["stop_detail"],
-                         "integration conflict was aborted; task branch and worktree were retained")
+                         "textual integration conflict")
         last = self._journal()[-1]
         self.assertEqual((last["command"], last["result"], last["stop_code"]), ("advance", "blocked", "INTEGRATION_CONFLICT"))
 
@@ -853,15 +821,6 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             ("C6", "human", "PRIMARY_DIRTY", []),
         )
 
-    def _candidate(self, *commands: str, exit_code: int = 0) -> tuple[str, ...]:
-        arguments: list[str] = []
-        for command in commands:
-            arguments += ["--candidate-command", command, "--candidate-exit-code", str(exit_code)]
-        return tuple(arguments)
-
-    def _all_candidate_commands(self) -> tuple[str, ...]:
-        return self._candidate("git diff --check", "python3 scripts/check_repository.py", "python3 -m unittest discover")
-
     def _staged_at_c7(self) -> None:
         self.measure(self._advance_ready_task())
         staged = json.loads(self._advance().stdout)
@@ -872,9 +831,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             ["git", "log", "-1", "--format=%s"], cwd=self.project, text=True, capture_output=True, check=True
         ).stdout.strip()
 
-    def test_advance_finalizes_from_candidate_results_and_asks_for_the_push(self) -> None:
+    def test_advance_finalizes_from_measured_candidate_and_asks_for_the_push(self) -> None:
         self._staged_at_c7()
-        result = self._advance(*self._all_candidate_commands())
+        result = self._advance()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual(
@@ -886,7 +845,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def test_push_pending_recovery_runs_unchanged(self) -> None:
         self._staged_at_c7()
-        finalized = self._advance(*self._all_candidate_commands())
+        finalized = self._advance()
         self.assertEqual(finalized.returncode, 0, finalized.stderr)
         stopped = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
                                "--worktree-root", str(self.worktree_root))
@@ -900,49 +859,47 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def test_advance_reruns_after_an_interruption_between_finalize_and_push(self) -> None:
         self._staged_at_c7()
-        self._advance(*self._all_candidate_commands())
-        rerun = self._advance(*self._all_candidate_commands())
+        self._advance()
+        rerun = self._advance()
         self.assertEqual(rerun.returncode, 0, rerun.stderr)
         report = json.loads(rerun.stdout)
         self.assertEqual((report["step"], report["action_required"], report["performed"]), ("C9", "push", []))
         self.assertEqual([line["command"] for line in self._journal()].count("integrate finalize"), 1)
 
-    def test_advance_aborts_and_stops_when_a_candidate_command_failed(self) -> None:
+    def test_advance_preserves_changed_candidate_command_bytes(self) -> None:
         self._staged_at_c7()
-        result = self._advance(
-            *self._candidate("git diff --check", "python3 scripts/check_repository.py"),
-            "--candidate-command", "python3 -m unittest discover", "--candidate-exit-code", "1",
-        )
+        # The real command succeeds on the worker, fails in the primary checkout.
+        script = self.project / 'scripts/check_repository.py'
+        original = script.read_bytes()
+        # Changing candidate bytes cannot be used to simulate a measured result.
+        script.write_bytes(original + b'raise SystemExit(7)\n')
+        result = self._advance()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
-        self.assertEqual((report["step"], report["stop_code"]), ("C7", "CANDIDATE_VALIDATION_FAILED"))
-        self.assertIn("aborted", report["resume"])
-        self.assertEqual(self._main_subject(), "declare")
-        self.assertFalse((self.project / ".git/MERGE_HEAD").exists())
-        self.assertEqual(self._journal()[-1]["stop_code"], "CANDIDATE_VALIDATION_FAILED")
-        self.assertIn("integrate abort", [line["command"] for line in self._journal()])
+        self.assertEqual((report['step'], report['stop_code']), ('C7', 'EVIDENCE_MISMATCH'))
+        self.assertTrue((self.project / '.git/MERGE_HEAD').exists())
+        self.assertEqual(script.read_bytes(), original + b'raise SystemExit(7)\n')
 
-    def test_advance_aborts_without_finalizing_when_a_required_command_is_missing(self) -> None:
+
+    def test_advance_rejects_caller_candidate_results_without_finalizing(self) -> None:
         self._staged_at_c7()
-        result = self._advance(*self._candidate("python3 scripts/check_repository.py"))
-        self.assertEqual(result.returncode, 2, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertEqual((report["step"], report["stop_code"]), ("C7", "UNDECLARED_VALIDATION_COMMANDS"))
-        self.assertEqual(report["commands"], ["git diff --check"])
-        self.assertNotIn("integrate finalize", [line["command"] for line in self._journal()])
-        self.assertFalse((self.project / ".git/MERGE_HEAD").exists())
-        self.assertEqual(self._main_subject(), "declare")
+        result = self._advance('--candidate-command', 'python3 scripts/check_repository.py', '--candidate-exit-code', '0')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('unrecognized arguments', result.stderr)
+        self.assertTrue((self.project / '.git/MERGE_HEAD').exists())
+        self.assertNotIn('integrate finalize', [line['command'] for line in self._journal()])
+
 
     def test_advance_reports_a_candidate_tree_that_changed_after_stage(self) -> None:
         self._staged_at_c7()
         (self.project / "late.txt").write_text("late\n", encoding="utf-8")
         subprocess.run(["git", "add", "late.txt"], cwd=self.project, check=True)
-        result = self._advance(*self._all_candidate_commands())
+        result = self._advance()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
-        self.assertEqual((report["step"], report["stop_code"]), ("C8", "EVIDENCE_MISMATCH"))
+        self.assertEqual((report["step"], report["stop_code"]), ("C7", "EVIDENCE_MISMATCH"))
         self.assertIn("integrate abort", report["resume"])
-        self.assertEqual(report["stop_detail"], "staged candidate tree changed after integration stage")
+        self.assertEqual(report["stop_detail"], "candidate tree or main changed")
         self.assertTrue((self.project / ".git/MERGE_HEAD").exists())
         self.assertEqual(self._journal()[-1]["stop_code"], "EVIDENCE_MISMATCH")
 

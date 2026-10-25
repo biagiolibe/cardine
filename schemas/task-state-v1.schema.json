@@ -1371,6 +1371,286 @@
             }
           }
         },
+        "candidateValidation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "attemptId",
+            "binding",
+            "runs",
+            "phase",
+            "consecutiveFailures",
+            "intermittent"
+          ],
+          "properties": {
+            "attemptId": {
+              "type": "string"
+            },
+            "binding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "task_id",
+                "project",
+                "worker",
+                "contract",
+                "source",
+                "sourceDigest",
+                "tree",
+                "main",
+                "lease",
+                "staged",
+                "environment",
+                "authority",
+                "primaryAuthority",
+                "commands",
+                "worktreeStatus"
+              ],
+              "properties": {
+                "task_id": {
+                  "type": "string"
+                },
+                "project": {
+                  "type": "string"
+                },
+                "worker": {
+                  "type": "string"
+                },
+                "contract": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "sourceDigest": {
+                  "type": "string"
+                },
+                "tree": {
+                  "type": "string"
+                },
+                "main": {
+                  "type": "string"
+                },
+                "lease": {
+                  "type": "string"
+                },
+                "staged": {
+                  "type": "string"
+                },
+                "environment": {
+                  "type": "string"
+                },
+                "authority": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "project",
+                    "common",
+                    "root",
+                    "runtime",
+                    "policy",
+                    "accepted_main",
+                    "worktree_root"
+                  ],
+                  "properties": {
+                    "project": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "common": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "root": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "policy": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "accepted_main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "worktree_root": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "primaryAuthority": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "project",
+                    "common",
+                    "root",
+                    "runtime",
+                    "policy",
+                    "accepted_main",
+                    "worktree_root"
+                  ],
+                  "properties": {
+                    "project": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "common": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "root": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "policy": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "accepted_main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "worktree_root": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "commands": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "worktreeStatus": {
+                  "type": "string"
+                }
+              }
+            },
+            "runs": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "command",
+                    "exitStatus",
+                    "stdout",
+                    "stderr",
+                    "stdoutTruncated",
+                    "stderrTruncated"
+                  ],
+                  "properties": {
+                    "command": {
+                      "type": "string"
+                    },
+                    "stdout": {
+                      "type": "string"
+                    },
+                    "stderr": {
+                      "type": "string"
+                    },
+                    "exitStatus": {
+                      "type": "integer"
+                    },
+                    "stdoutTruncated": {
+                      "type": "boolean"
+                    },
+                    "stderrTruncated": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            },
+            "phase": {
+              "type": "string",
+              "enum": [
+                "passed",
+                "failed"
+              ]
+            },
+            "consecutiveFailures": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "intermittent": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "command",
+                  "exitStatus",
+                  "stdout",
+                  "stderr",
+                  "stdoutTruncated",
+                  "stderrTruncated"
+                ],
+                "properties": {
+                  "command": {
+                    "type": "string"
+                  },
+                  "stdout": {
+                    "type": "string"
+                  },
+                  "stderr": {
+                    "type": "string"
+                  },
+                  "exitStatus": {
+                    "type": "integer"
+                  },
+                  "stdoutTruncated": {
+                    "type": "boolean"
+                  },
+                  "stderrTruncated": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
         "ownedAbort": {
           "type": "object",
           "additionalProperties": false,

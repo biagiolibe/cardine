@@ -15,7 +15,7 @@ from collections.abc import Iterable
 
 from cardine.lifecycle.context import resolve_run_locations
 from cardine.lifecycle.model import OUTCOMES, STEPS, RunFacts, RunLocations
-from cardine.shared.errors import CardineError
+from cardine.shared.errors import CardineError, CardineStop
 from cardine.stops.registry import load_stop_registry
 
 
@@ -268,13 +268,15 @@ def run_preview_cli(argv: list[str]) -> int:
         # RE3b composes measured validation only after a verified delivery.
         # Earlier contract/preparation dispatch and later landing adapters stay
         # independent; editable progress cannot skip those receipt checks.
-        active = (read_task_state(locations.worktree, locations.task_id, 'single',
-                    stop_factory=stop_error, require_contract=True) if locations.worktree.is_dir() else state)
+        from cardine.lifecycle.control import operation_state
+        active = operation_state(locations.worktree, locations.task_id)[0] if locations.worktree.is_dir() else state
         from cardine.lifecycle.control import require_review_budget
         if active['status'] != 'cancelled':
             require_review_budget(locations.worktree, locations.task_id, active)
         result = (resolve_run(RunFacts(locations.task_id, locations.primary, 'cancelled'))
-                  if active['status'] == 'cancelled' else run_validation_step(locations))
+                  if active['status'] == 'cancelled' else run_integration_step(locations))
+        if result is None and active['status'] != 'cancelled':
+            result = run_validation_step(locations)
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
     except CardineStop as error:
@@ -305,6 +307,16 @@ def run_validation_step(locations: RunLocations) -> dict | None:
         receipts.digest(receipts.encoded(contract)),
         tuple(contract.get('expectedCodeSurface', [])), tuple(contract.get('deliverables', [])),
         tuple(contract.get('validation', {}).get('baseline', [])), ('committed implementation delivery',))
+    failed_candidate = state.get('run', {}).get('candidateValidation') if state else None
+    if failed_candidate and failed_candidate['phase'] == 'failed':
+        from cardine.lifecycle.control import source_digest
+        from cardine.integration.candidate import require_budget
+        require_budget(state, task_id, locations.primary)
+        if source_digest(root, task_id) == failed_candidate['binding']['sourceDigest']:
+            result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
+                contract_ready=True, worktree_ready=True, validation_failed=True, implementation_work=request))
+            result['diagnostics'] = [dict(code='CANDIDATE_VALIDATION_FAILED', message=json.dumps(failed_candidate['runs']))]
+            return result
     pending = operation_path(root, task_id).exists()
     if not pending and implementation_delivery(locations) is None:
         return resolve_run(RunFacts(task_id, locations.primary, 'in_progress',
@@ -349,7 +361,9 @@ def run_validation_step(locations: RunLocations) -> dict | None:
             request.expected_surface, request.acceptance_references,
             request.validation_references, ('independent source-bound review',)),
         review_required=state['contract']['options']['review'] == 'required'))
-    result['action'] = 'C6' if result['step'] == 'candidate' else 'task-validation'
+    if result['step'] == 'candidate':
+        return run_integration_step(locations, prepare=True)
+    result['action'] = 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
     if not passed:
         result['diagnostics'] = [dict(code='VALIDATION_FAILED', message=json.dumps(progress['runs']))]
@@ -383,3 +397,69 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
     return envelope(locations.task_id, str(locations.primary), step=step, outcome=outcome,
                     next_command=next_command, stop=stop,
                     diagnostics=[dict(code=error.code, message=detail)])
+
+
+@scoped_command
+def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | None:
+    """One candidate or finalize step; subsequent push/cleanup belongs to RE6b."""
+    from cardine.integration.candidate import (operation_path, wait_for_lease,
+        require_budget)
+    from cardine.integration.landing import landing_for
+    from cardine.lifecycle.control import operation_state
+    from cardine.tasks.identity import resolve_task_identity
+    from cardine.worktree.storage import _lifecycle_paths
+    root, task_id = locations.primary, locations.task_id
+    state, _ = operation_state(locations.worktree, task_id)
+    strategy = landing_for(state['contract']['options']['landingMode'])
+    identity = resolve_task_identity(root, task_id, 'existing')
+    _, lease, staged = _lifecycle_paths(root, identity)
+    final = operation_path(locations, 'finalize')
+    argv = ['cardine', 'run', task_id, '--project', str(root)]
+    if final.exists():
+        landed = strategy.finalize_landing(task_id, None, root)
+        return envelope(task_id, str(root), step='landing', action='finalize',
+            next_command=command_reference(argv, 'Push and clean up the landed task'),
+            evidence=[dict(kind='landing', path=str(final), identity=landed['merge_commit'])])
+    if not staged.exists() and not prepare:
+        return None
+    if not wait_for_lease(locations):
+        return envelope(task_id, str(root), step='candidate', outcome='waiting',
+            action='wait-for-lease', retry_after_seconds=5,
+            next_command=command_reference(argv, 'Wait for the competing integration'))
+    if not staged.exists():
+        strategy.prepare_candidate(task_id, None, root)
+    from cardine.integration.candidate import verified_candidate
+    measured = verified_candidate(locations)
+    if measured and measured['phase'] == 'passed':
+        landed = strategy.finalize_landing(task_id, None, root)
+        return envelope(task_id, str(root), step='landing', action='finalize',
+            next_command=command_reference(argv, 'Push and clean up the landed task'))
+    try:
+        progress = strategy.validate_candidate(task_id, root)
+    except CardineStop as error:
+        if error.code in ('VALIDATION_RETRY_LIMIT', 'EVIDENCE_MISMATCH'):
+            strategy.reconcile_landing(task_id, root)
+        raise
+    if progress['phase'] == 'passed':
+        return _candidate_finalize_next(locations)
+    strategy.reconcile_landing(task_id, root)
+    state, _ = operation_state(locations.worktree, task_id)
+    require_budget(state, task_id, root)
+    from cardine.lifecycle.model import WorkRequest
+    from cardine.lifecycle import receipts
+    contract = state['contract']
+    request = WorkRequest('implementer', locations.worktree, receipts.digest(receipts.encoded(contract)),
+        tuple(contract['expectedCodeSurface']), tuple(contract['deliverables']),
+        tuple(contract['validation']['baseline']), ('repair candidate validation failure',))
+    return envelope(task_id, str(root), step='implementation', outcome='iterate',
+        action='abort-failed-candidate', work=request.as_json(),
+        diagnostics=[dict(code='CANDIDATE_VALIDATION_FAILED', message=json.dumps(progress['runs']))],
+        next_command=command_reference(argv, 'Repair the task implementation'))
+
+
+def _candidate_finalize_next(locations):
+    # Finalize on the next bounded invocation; its durable intent is created there.
+    return envelope(locations.task_id, str(locations.primary), step='candidate',
+        action='validate-candidate', next_command=command_reference(
+            ['cardine', 'run', locations.task_id, '--project', str(locations.primary)],
+            'Finalize the measured candidate'))

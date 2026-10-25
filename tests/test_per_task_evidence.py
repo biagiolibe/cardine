@@ -53,6 +53,8 @@ class PerTaskEvidenceIntegrationTest(support.BoundedWorktreeLifecycleFixture):
                                         'python3 scripts/check_repository.py',
                                         'python3 -m unittest discover', "python3 -c 'pass'"],
         }))
+        from cardine.integration.candidate import run_candidate_validation
+        run_candidate_validation(task_id, self.primary)
         finalize_task_integration(task_id, candidate, self.primary)
 
     def test_two_branches_record_and_integrate_evidence_without_conflict(self):

@@ -108,7 +108,8 @@ def _lifecycle_paths(project_root: Path, identity: ResolvedTaskIdentity) -> tupl
 
 
 def _merge_head_path(project_root: Path) -> Path:
-    return Path(git_output(project_root, "rev-parse", "--git-path", "MERGE_HEAD")).resolve()
+    path = Path(git_output(project_root, "rev-parse", "--git-path", "MERGE_HEAD"))
+    return (project_root / path).resolve()
 
 
 def _branch_commit(project_root: Path, branch: str) -> str | None:

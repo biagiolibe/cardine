@@ -79,7 +79,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
 
 
-    def test_finalize_rejection_for_missing_command_keeps_staged_state(self) -> None:
+    def test_finalize_rejection_for_unmeasured_commands_keeps_staged_state(self) -> None:
         prepared = self.prepare()
         task_worktree = Path(str(prepared["worktree"]))
         (task_worktree / "feature.txt").write_text("implemented\n", encoding="utf-8")
@@ -94,14 +94,14 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             "scope": "bounded", "commands": ["python3 scripts/check_repository.py"],
         }), encoding="utf-8")
 
-        with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"no current measured|candidate tree or main changed"):
             owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
         declaration = self.primary / ".cardine/candidate-validation.json"
         original_policy = declaration.read_bytes()
         declaration.write_text(
             json.dumps({"version": 1, "state": "none"}), encoding="utf-8"
         )
-        with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
+        with self.assertRaisesRegex(shared_errors.CardineError, r"no current measured|candidate tree or main changed"):
             owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
 
         _state, lease_path, integration_path = owner_worktree_storage._lifecycle_paths(

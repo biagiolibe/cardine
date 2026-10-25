@@ -275,6 +275,8 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 candidate.write_text(json.dumps({'candidate_tree': staged['candidate_tree'], 'passed': True,
                                                 'scope': 'bounded', 'commands': ['true', 'git diff --check']}))
                 f.git('diff', '--check', cwd=f.primary)
+                from cardine.integration.candidate import run_candidate_validation
+                run_candidate_validation('001', f.primary)
                 merge.finalize_task_integration('001', candidate, f.primary)
                 landed = json.loads((f.primary / '.cardine/tasks/001.json').read_text())
                 self.assertEqual(landed['status'], 'done')

@@ -32,6 +32,10 @@ class DirectLanding:
                 "candidate_tree": staged["candidate_tree"],
                 "required": ["git diff --check", *fragments.get(str(staged["decision"]), ())]}
 
+    def validate_candidate(self, task_id: str, project: Path) -> dict[str, object]:
+        from cardine.integration.candidate import run_candidate_validation
+        return run_candidate_validation(task_id, project)
+
     def finalize_landing(self, task_id: str, validation: Path, project: Path) -> dict[str, object]:
         return finalize_task_integration(task_id, validation, project)
 

@@ -158,6 +158,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
             "candidate_tree": staged["candidate_tree"], "passed": True, "scope": "bounded",
             "commands": ["git diff --check", "python3 scripts/check_repository.py", "test -f docs/answer.md"],
         }), encoding="utf-8")
+        from cardine.integration.candidate import run_candidate_validation
+        run_candidate_validation('056', self.primary)
         owner_integration_merge.finalize_task_integration("056", candidate, self.primary)
         self.assertEqual((self.primary / owner_tasks_contract.names().execution_evidence_path("056")).read_bytes(), evidence_bytes)
         self.assertEqual((self.primary / "docs/answer.md").read_bytes(), (worktree / "docs/answer.md").read_bytes())
