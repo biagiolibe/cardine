@@ -107,6 +107,7 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
                     if point != 'before_intent':
                         self.assertEqual(result['review'], saved['review'])
                         self.assertEqual(result['transitions'], saved['transitions'])
+                        self.assertEqual(result['run']['reviewRecordedAt'], saved['run']['reviewRecordedAt'])
                     self.assertEqual(len(result['review_history']), 1)
                     self.assertEqual(len([r for r in result['run']['receipts'] if r['kind'].startswith('review_verdict:')]), 1)
                     self.assertEqual((self.root/'tasks/reviews/001.md').read_text().count('## Attempt '), 1)

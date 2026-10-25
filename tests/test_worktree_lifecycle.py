@@ -58,6 +58,14 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "add", "."], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "initial"], cwd=self.project, check=True, capture_output=True)
 
+    def commit_abort_receipts(self):
+        identity = owner_tasks_identity.resolve_task_identity(self.project, '056', 'existing')
+        metadata = owner_worktree_storage._lifecycle_paths(self.project, identity)[0]
+        worker = Path(json.loads(metadata.read_bytes())['worktree'])
+        subprocess.run(['git', 'add', '--', '.cardine/tasks/056.json'], cwd=worker, check=True)
+        subprocess.run(['git', 'commit', '-m', 'Record owned abort receipts'], cwd=worker,
+                       check=True, capture_output=True)
+
     def create_bare_origin(self) -> Path:
         remote = self.root / "origin.git"
         subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
@@ -70,7 +78,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def run_cli(self, *arguments: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [sys.executable, str(CLI), "--framework-root", str(ROOT), *arguments],
+            [sys.executable, str(ROOT / "tests/control_cli.py"), "--framework-root", str(ROOT), *arguments],
             cwd=cwd or self.project,
             text=True,
             capture_output=True,
@@ -559,10 +567,23 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             f"--project {self.project.resolve()} --format json",
         )
 
-        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
+        original = lease.read_bytes()
+        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root,
+                                 control_host=True)
+        self.assertEqual(recovered.returncode, 2, recovered.stderr)
+        self.assertIn('foreign integration ownership', recovered.stderr)
+        self.assertEqual(lease.read_bytes(), original)
+        # An explicit fixture operator now supplies the missing issued ownership.
+        head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.project, text=True).strip()
+        lease.write_text(json.dumps(dict(version=1, task_id='056', branch=identity.branch_name,
+            project=str(self.project.resolve()), main_commit=head)))
+        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root,
+                                 control_host=True)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        self.commit_abort_receipts()
         restaged = self.run_cli(*self._stage_args(evidence_path))
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
+
 
     def test_integrate_stage_reports_undeclared_validation_commands_through_the_registry(self) -> None:
         # Receipt-gated preparation rejects unsigned pre-contract inputs before
@@ -617,8 +638,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             f"cardine worktree integrate abort 056 --project {self.project.resolve()} --format json",
         )
 
-        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
+        recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root, control_host=True)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        self.commit_abort_receipts()
         restaged = self.run_cli(*self._stage_args(evidence_path))
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 

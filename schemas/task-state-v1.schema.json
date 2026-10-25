@@ -1304,6 +1304,7 @@
             }
           }
         },
+        "reviewRecordedAt": {"type": "string", "format": "date-time"},
         "reviewDecision": {
           "type": "object",
           "additionalProperties": false,

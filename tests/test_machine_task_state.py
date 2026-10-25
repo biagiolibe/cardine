@@ -292,10 +292,15 @@ class MachineTaskStateTest(unittest.TestCase):
                 self.assertEqual(self.path.read_bytes(), before)
                 cancelled = self.cli("cancelled", "--cancellation-authority", "Owner directive 054",
                                      "--reason", "Superseded by another task")
-                self.assertEqual(cancelled.returncode, 0, cancelled.stderr)
+                self.assertEqual(cancelled.returncode, 2, cancelled.stderr)
+                self.assertEqual(self.path.read_bytes(), before)
+                from control_support import adapter
+                owner_tasks_transitions.transition_task_state(self.root, '001', 'cancelled',
+                    adapter=adapter(), cancellation_authority='Owner directive 054',
+                    reason='Superseded by another task')
                 result = self.read()
                 self.assertEqual(result["status"], "cancelled")
-                self.assertEqual(result["transitions"][-1]["authority"], "Owner directive 054")
+                self.assertEqual(result["transitions"][-1]["authority"], "developer-channel")
                 self.assertEqual(result["transitions"][-1]["reason"], "Superseded by another task")
                 for target in task_state.STATUSES:
                     self.assertEqual(self.cli(target).returncode, 2)

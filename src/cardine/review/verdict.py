@@ -101,6 +101,7 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         updated = _review_verdict_projection(state, verdict, head, 'owner' if owner else 'reviewer', at)
         updated.setdefault('run', {})['reviewDecision'] = command
         updated['run'].setdefault('reviewDecisions', []).append(command)
+        updated['run']['reviewRecordedAt'] = at
         if verdict == 'CHANGES_REQUESTED':
             # A new delivery and measured validation are required for remediation.
             updated['run'].pop('delivery', None)

@@ -200,3 +200,23 @@ class RunAbortTest(unittest.TestCase):
                 with self.assertRaises(CardineError):
                     self.abort(adapter=adapter('developer') if change == 'owner' else adapter('coordinator'))
                 self.assertEqual(self.lease.read_bytes() if self.lease.exists() else None, before)
+
+
+    def test_foreign_primary_work_and_changed_index_are_never_aborted(self):
+        readme = self.primary/'README.md'
+        readme.write_text('foreign primary work\n')
+        before = self.lease.read_bytes()
+        with self.assertRaisesRegex(CardineError, 'foreign candidate changes'):
+            self.abort()
+        self.assertEqual(readme.read_text(), 'foreign primary work\n')
+        self.assertEqual(self.lease.read_bytes(), before)
+        self.doCleanups()
+        self.setUp()
+        result = killed(self.primary, 'after_abort_intent', 'abort')
+        self.assertEqual(result.returncode, 77, result.stderr)
+        self.fixture.git('restore', '--staged', '--', 'feature.txt')
+        before = self.lease.read_bytes()
+        with self.assertRaisesRegex(CardineError, 'candidate changed'):
+            self.abort()
+        self.assertEqual(self.lease.read_bytes(), before)
+        self.assertEqual((self.primary/'feature.txt').read_text(), 'candidate\n')

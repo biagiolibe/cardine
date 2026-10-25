@@ -93,10 +93,12 @@ def bind_fixture_approval(root, task_id):
     if not state.get('run') or not state.get('review', {}).get('required') or state.get('review', {}).get('verdict') != 'APPROVE':
         return state
     updated = deepcopy(state)
-    command = dict(principal=dict(host='fixture', profile='fixture-reviewer', role='reviewer', session_id='fixture'),
+    owner = state['review'].get('approved_by') == 'owner'
+    role = 'developer' if owner else 'reviewer'
+    command = dict(principal=dict(host='fixture', profile='fixture-' + role, role=role, session_id='fixture'),
         binding=dict(task_id=task_id, root=str(root.resolve()), source=state['review']['reviewed_commit'],
             source_digest=source_digest(root, task_id), contract=receipts.digest(receipts.encoded(state['contract'])),
-            verdict='APPROVE', body='', owner=False, request_id='fixture'))
+            verdict='APPROVE', body='', owner=owner, request_id=None if owner else 'fixture'))
     updated['run']['reviewDecision'] = command
     with receipts.task_lock(root, task_id):
         return receipts.write_operation(root, task_id, updated, previous=state,

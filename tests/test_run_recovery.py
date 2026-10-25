@@ -30,8 +30,12 @@ from cardine.tasks.creation import create_task
 from cardine.tasks.state import read_task_state
 from cardine.worktree import storage as owner_storage
 from project_config_support import write_project_config
-from stop_recovery_support import ROOT, resume_from, run_recovery
+from stop_recovery_support import ROOT, resume_from, run_recovery as _run_recovery
 from task_contract_support import VALIDATION, contract_record, seal_state, write_state
+
+def run_recovery(command, cwd, worktree_root=None):
+    return _run_recovery(command, cwd, worktree_root, control_host=True)
+
 
 FAMILY = frozenset({
     "WRONG_WORKTREE", "LEASE_HELD", "PRIMARY_DIRTY", "CLEANUP_BLOCKED", "TASK_STATE_INVALID",
@@ -189,6 +193,10 @@ class RunRecoveryTest(unittest.TestCase):
         recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
         self.assertFalse(lease.exists())
+        worker = Path(owner_storage._read_json_object(
+            owner_storage._lifecycle_paths(self.project, self.identity())[0], 'worktree')['worktree'])
+        self.git('add', '--', '.cardine/tasks/056.json', cwd=worker)
+        self.git('commit', '-m', 'Record owned abort receipts', cwd=worker)
         restaged = self.run_cli(*self._stage_args(evidence))
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
@@ -288,6 +296,10 @@ class RunRecoveryTest(unittest.TestCase):
         self.assertEqual(self.git("rev-parse", "HEAD"), head)  # no commit was made
         _state, lease, integration = owner_storage._lifecycle_paths(self.project, self.identity())
         self.assertFalse(lease.exists() or integration.exists())
+        worker = Path(owner_storage._read_json_object(
+            owner_storage._lifecycle_paths(self.project, self.identity())[0], 'worktree')['worktree'])
+        self.git('add', '--', '.cardine/tasks/056.json', cwd=worker)
+        self.git('commit', '-m', 'Record owned abort receipts', cwd=worker)
         restaged = self.run_cli(*self._stage_args(evidence))
         if point in RESIDUE_POINTS:
             # Engine-owned landing residue is preserved, not guessed away; its replay is RE5a's.

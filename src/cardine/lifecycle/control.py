@@ -89,8 +89,7 @@ def require_review_budget(root, task_id, state):
 
 @scoped_command
 def cancel_task(task_id, supplied_project=None, *, reason, adapter=None):
-    from cardine.lifecycle.engine import resolve_run_locations
-    from cardine.tasks.transitions import transition_task_state
+    from cardine.lifecycle.context import resolve_run_locations
     locations = resolve_run_locations(task_id, supplied_project)
     root = locations.worktree
     from cardine.tasks.state_core import state_path
@@ -101,8 +100,7 @@ def cancel_task(task_id, supplied_project=None, *, reason, adapter=None):
         if _branch_commit(locations.primary, identity.branch_name) is not None:
             raise CardineError('cancellation requires the existing canonical task worktree')
         root = locations.primary
-    return transition_task_state(root, locations.task_id, 'cancelled',
-                                 reason=reason, adapter=adapter)
+    return cancel_transition(root, locations.task_id, reason=reason, adapter=adapter)
 
 
 @scoped_command

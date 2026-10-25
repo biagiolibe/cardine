@@ -78,6 +78,8 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         state.setdefault("review", {}).update(required=True, verdict="APPROVE", reviewed_commit=validated, approved_by="owner")
         state_path.write_text(json.dumps(state))
         seal_state(task_worktree, '056')
+        from control_support import bind_fixture_approval
+        bind_fixture_approval(task_worktree, '056')
         self.git("add", ".cardine/tasks/056.json", cwd=task_worktree)
         self.git("add", "tasks/reviews/056.md", cwd=task_worktree)
         self.git("commit", "-m", "docs: accept 056", cwd=task_worktree)

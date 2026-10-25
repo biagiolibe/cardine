@@ -86,6 +86,8 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/lifecycle/control.py", "authorize", "COMMAND_REFUSED"): ("guardrail", "missing enforced host channel cannot authorize a review, cancellation or owned abort"),
+    ("src/cardine/review/verdict.py", "_clean_review_outputs", "TASK_STATE_INVALID"): ("guardrail", "unreceipted or foreign work is preserved before recording or replaying a verdict"),
     ("src/cardine/hosts/launch.py", "ProfileAdapter.profiles", "COMMAND_REFUSED"): ("guardrail", "missing, shared or unenforced host role profiles require separately authorized host configuration; never fall back"),
     ("src/cardine/tasks/recording.py", "record_validation", "WRONG_WORKTREE"): ("guardrail", "a task branch cannot record another task's evidence"),
     ("src/cardine/lifecycle/engine.py", "diagnostic_result", "COMMAND_REFUSED"): ("guardrail", "unregistered or untyped diagnostic cannot authorize repair"),
@@ -126,7 +128,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/release/update.py", "run_self_update", "OS_ACCESS_FAILED"): ("split", "missing/busy errno is nonhuman only for --check; denied or apply residue stays guarded"),
     ("src/cardine/release/update.py", "run_self_update", "<dynamic>"): ("passthrough", "non-run errno classifier; no apply retry or ownership inference"),
     ("src/cardine/release/update.py", "run_self_update.refuse", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
-    ("src/cardine/review/verdict.py", "record_review_verdict.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/review/verdict.py", "record_review_verdict", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/tasks/importer.py", "import_task_states.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/tasks/preflight.py", "check_dependencies", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),
     ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),

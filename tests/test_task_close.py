@@ -119,7 +119,7 @@ class TaskCloseTest(unittest.TestCase):
             self.worker, '001', 'cancelled', adapter=__import__('control_support').adapter(), cancellation_authority='owner', reason='superseded')
         self.assertEqual(state['status'], 'cancelled')
         self.assertEqual(state['transitions'][-1]['reason'], 'superseded')
-        self.assertEqual(state['transitions'][-1]['authority'], 'owner')
+        self.assertEqual(state['transitions'][-1]['authority'], 'developer-channel')
         self.assertEqual(state['transitions'][-2]['to'], 'in_progress')
         self.assertEqual(record.read_bytes(), before)
         self.assertFalse((self.worker / 'tasks/done').exists())
