@@ -433,6 +433,26 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
         self.assertEqual(json.loads(state_path(self.worker, '056').read_bytes())['status'], 'cancelled')
         self.assertTrue(self.paths()[1].exists())
 
+    def test_finalized_task_replays_after_another_task_advances_main(self):
+        from test_per_task_evidence import PerTaskEvidenceIntegrationTest
+        fixture = PerTaskEvidenceIntegrationTest()
+        fixture.setUp()
+        try:
+            workers = fixture.prepare_pair()
+            fixture.finalize('056', fixture.stage('056', workers['056']))
+            first = fixture.git('rev-parse', 'HEAD').stdout.strip()
+            fixture.finalize('057', fixture.stage('057', workers['057']))
+            second = fixture.git('rev-parse', 'HEAD').stdout.strip()
+            with mock.patch.object(receipts, '_durable', side_effect=AssertionError('completed replay wrote')):
+                result = merge.finalize_task_integration('056', None, fixture.primary)
+                self.assertEqual(result, merge.finalize_task_integration('056', None, fixture.primary))
+            self.assertEqual(result['merge_commit'], first)
+            self.assertEqual(fixture.git('rev-parse', 'HEAD').stdout.strip(), second)
+            self.assertEqual(fixture.git('rev-list', '--count', '--merges', 'main').stdout.strip(), '2')
+        finally:
+            fixture.tearDown()
+            fixture.doCleanups()
+
     def test_candidate_result_boundaries_replay_once(self):
         for label in ('candidate_intent', 'candidate_logs', 'candidate_result', 'intent',
                       'staged_pair', 'state_replace', 'result_receipt'):

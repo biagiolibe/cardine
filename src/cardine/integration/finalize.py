@@ -94,6 +94,19 @@ def finalize_candidate(task_id, project):
             raise CardineError('finalize task inputs changed')
         _check_files(intent, lease, staged)
         head = git_output(root, 'rev-parse', 'HEAD')
+        if intent['result'] is not None and head != intent['result']['merge_commit']:
+            landed = intent['result']['merge_commit']
+            output = intent['workerState']
+            if (lease.exists() or staged.exists() or _merge_head_path(root).exists()
+                    or git_output(root, 'status', '--porcelain')
+                    or _run_git(root, 'merge-base', '--is-ancestor', landed, head).returncode
+                    or git_output(root, 'show', '-s', '--format=%T', landed) != binding['tree']
+                    or git_output(root, 'show', '-s', '--format=%P', landed).split() != [binding['main'], binding['source']]
+                    or receipts.digest(receipts.safe_path(locations.worktree, output['path']).read_bytes()) != output['before']):
+                raise CardineError('advanced main does not prove the completed owned landing')
+            # A later task's landing does not invalidate this immutable result.
+            # The old operation has no remaining outputs to write or remove.
+            return intent['result']
         if head == binding['main']:
             if intent['result'] is not None:
                 raise CardineError('landed main was moved backwards')
