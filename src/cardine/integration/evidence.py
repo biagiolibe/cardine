@@ -333,6 +333,8 @@ def record_task_evidence(
 
 
 def _remove_owned_file(path: Path) -> None:
+    from cardine.shared.git import invalidate_facts
+    invalidate_facts()
     try:
         path.unlink()
     except FileNotFoundError:

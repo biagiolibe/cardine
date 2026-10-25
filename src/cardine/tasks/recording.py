@@ -61,6 +61,8 @@ def run_validation(project_root: Path, task_id: str, command_id: str) -> int:
     head = _run_git(project_root, "rev-parse", "HEAD")
     binding = ({"commit": head.stdout.strip(), "sourceDigest": execution_source_digest(project_root, task_id)}
                if head.returncode == 0 else None)
+    from cardine.shared.git import invalidate_facts
+    invalidate_facts()
     completed = subprocess.run(command, shell=True, executable="/bin/bash", cwd=project_root, check=False)
     record_validation(project_root, task_id, command_id, command, completed.returncode, binding)
     print(f"Validation {task_id}/{command_id}: exit {completed.returncode}")

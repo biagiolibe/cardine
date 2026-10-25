@@ -267,7 +267,18 @@ class InstallationTest(RepoCase):
 
     def test_snapshot_still_reads_this_repository(self):
         snapshot = installation.load_meridian_snapshot(ROOT)
-        self.assertTrue(snapshot.tasks)
+        self.assertEqual(snapshot.project, ROOT.resolve())
+        self.assertEqual(snapshot.queue, ROOT / "tasks/QUEUE.md")
+        records = {path.stem: installation.read_task_state_file(ROOT, path.stem)
+                   for path in (ROOT / ".meridian/tasks").glob("*.json")}
+        self.assertTrue(records, "the installation contains task records even with an empty queue")
+        self.assertEqual(snapshot.done_count, sum(record["status"] == "DONE"
+                                                for record in records.values()))
+        self.assertLessEqual({task_id for task_id, record in records.items() if record["status"] != "DONE"},
+                             {task.task_id for task in snapshot.tasks})
+        for task in snapshot.tasks:
+            self.assertIsNotNone(task.path)
+            self.assertTrue(task.path.is_file())
         self.assertIsNone(execution_assets_adapter.get())
 
     def test_snapshot_restores_context_after_failure(self):

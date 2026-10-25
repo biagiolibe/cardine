@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.git import scoped_command
+
 from cardine.shared.layout import names
 
 from cardine.shared.errors import CardineError
@@ -35,6 +37,7 @@ import re
 import shlex
 
 
+@scoped_command
 def repair_task_worktree_base(
     task_id: str, worktree_root: Path | None, supplied_project: Path | None = None,
 ) -> dict[str, object]:
@@ -71,6 +74,7 @@ def repair_task_worktree_base(
     }
 
 
+@scoped_command
 def prepare_task_worktree(task_id, worktree_root, supplied_project=None, base="main", resume=False):
     from cardine.worktree.preparation import preparation_lock, _path
     project = _verified_lifecycle_project(supplied_project)
@@ -214,6 +218,7 @@ def _prepare_task_worktree(
     return result
 
 
+@scoped_command
 def inspect_task_worktree(
     task_id: str,
     worktree_root: Path | None,

@@ -14,11 +14,21 @@ OUTCOMES = ("progress", "next", "waiting", "iterate", "blocked", "done")
 
 @dataclass(frozen=True)
 class RunLocations:
+    """Immutable command inputs, shared explicitly by lifecycle adapters.
+
+    Encode the declaration so nested policy values cannot be changed by a
+    consumer. This is resolution context, never a reusable verification verdict.
+    Git observations live in the separate pass that effects invalidate.
+    """
     task_id: str
     primary: Path
     common_dir: Path
     root: Path
     worktree: Path
+    project_declaration: str | None = None
+    runtime_digest: str | None = None
+    record_path: Path | None = None
+    handoff_path: Path | None = None
 
 
 @dataclass(frozen=True)

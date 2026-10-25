@@ -8,6 +8,10 @@ layouts use the explicit `cardine.legacy.snapshot` path instead.
 
 from __future__ import annotations
 
+from cardine.shared.git import scoped_command
+
+from cardine.shared.git import _run_git
+
 import contextlib
 import json
 import os
@@ -65,11 +69,7 @@ def _section(text: str, *names: str) -> tuple[str, ...]:
 
 def _git_result(project: Path, *args: str) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(
-            ("git", "-C", str(project), *args),
-            capture_output=True, text=True, check=False, timeout=5,
-            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
-        )
+        return _run_git(str(project), *args, text=True, timeout=5, env={**os.environ, 'GIT_OPTIONAL_LOCKS': '0'})
     except (OSError, subprocess.TimeoutExpired) as error:
         raise ConsoleError(f"Git {' '.join(args)} failed: {error}") from error
 
@@ -409,11 +409,13 @@ def _delivery_pending(project: Path, worktree: str | None, task_id: str, heads: 
                          shared["main"], shared["common"])
 
 
+@scoped_command
 def load_snapshot(project: Path, identities: IdentityCache | None = None,
                   deliveries: DeliveryCache | None = None) -> Snapshot:
     return _load_snapshot(project, identities, deliveries=deliveries)
 
 
+@scoped_command
 def load_task(project: Path, task_id: str,
               identities: IdentityCache | None = None) -> Task | None:
     """Read only one task, or None when the state directory no longer holds it."""

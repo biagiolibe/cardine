@@ -7,38 +7,128 @@ from cardine.shared.layout import PRODUCT_NAMES
 import contextlib
 import contextvars
 import subprocess
+from copy import deepcopy
+from functools import wraps
 from collections.abc import Iterator
 from pathlib import Path
 
 from cardine.shared.errors import CardineError
 
 
+# Only observations are reusable. Unknown commands are effects, including failed
+# effects: invalidation happens before dispatch and is never rolled back.
+_READ_COMMANDS = {"rev-parse", "show", "rev-list", "merge-base", "diff", "ls-files",
+                  "status", "check-ref-format", "for-each-ref", "log", "cat-file"}
+_FACTS = contextvars.ContextVar("cardine_command_facts", default=None)
+
+
+def invalidate_facts():
+    """End the read-only pass before a Git or filesystem effect."""
+    facts = _FACTS.get()
+    if facts is not None:
+        facts.clear()
+    shared = _SHARED_WORKTREES.get()
+    if shared is not None:
+        shared.clear()
+
+
+@contextlib.contextmanager
+def command_scope():
+    """One in-memory observation scope, shared by nested compatibility adapters."""
+    if _FACTS.get() is not None:
+        yield
+        return
+    token = _FACTS.set({})
+    try:
+        yield
+    finally:
+        _FACTS.reset(token)
+
+
+def scoped_command(function):
+    @wraps(function)
+    def call(*args, **kwargs):
+        with command_scope():
+            return function(*args, **kwargs)
+    return call
+
+
+def scoped_observation(function):
+    """Reuse resolution inputs, never a verification verdict, within one pass.
+
+    Copy results so callers cannot mutate the facts consumed by another reader.
+    Unhashable arguments (explicit snapshot adapters) keep their existing path.
+    """
+    @wraps(function)
+    def call(*args, **kwargs):
+        facts = _FACTS.get()
+        if facts is None:
+            return function(*args, **kwargs)
+        from cardine.shared.layout import names
+        from cardine.shared.snapshot_adapters import locations_adapter, state_adapter
+        key = (function, names(), locations_adapter.get(), state_adapter.get(),
+               args, tuple(sorted(kwargs.items())))
+        try:
+            hash(key)
+        except TypeError:
+            return function(*args, **kwargs)
+        if key not in facts:
+            facts[key] = function(*args, **kwargs)
+        return deepcopy(facts[key])
+    return call
+
+
+def _read_only(arguments):
+    if not arguments:
+        return False
+    if arguments[0] == "--no-optional-locks":
+        arguments = arguments[1:]
+    command, *options = arguments
+    return (command in _READ_COMMANDS
+            or command == "worktree" and options == ["list", "--porcelain"]
+            or command == "config" and options[:1] == ["--get"]
+            or command == "branch" and options in (["--show-current"], ["--list"]))
+
+
+def _run_git(project_root: Path | None, *arguments: str, text=True,
+             timeout=None, env=None) -> subprocess.CompletedProcess:
+    """The sole product Git subprocess gateway (legacy installation excluded)."""
+    readonly = _read_only(arguments)
+    if not readonly:
+        invalidate_facts()
+    facts = _FACTS.get() if readonly else None
+    root = Path(project_root).resolve() if project_root is not None else None
+    key = ("git", root, arguments, text, timeout,
+           tuple(sorted(env.items())) if env is not None else None)
+    if facts is not None and key in facts:
+        return deepcopy(facts[key])
+    command = ["git", *(["-C", str(root)] if root is not None else []), *arguments]
+    result = subprocess.run(command, text=text, capture_output=True, check=False,
+                            timeout=timeout, env=env)
+    if facts is not None:
+        facts[key] = result
+        if result.returncode == 0 and arguments == ("worktree", "list", "--porcelain"):
+            listing = result.stdout if text else result.stdout.decode()
+            for record in parse_worktree_records(listing):
+                if "worktree" in record:
+                    alias = (key[0], Path(record["worktree"]).resolve(), *key[2:])
+                    facts[alias] = result
+    return deepcopy(result)
+
+
 def git_output(project_root: Path, *arguments: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(project_root), *arguments],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    completed = _run_git(project_root, *arguments)
     if completed.returncode != 0:
         raise CardineError(completed.stderr.strip() or f"git {' '.join(arguments)} failed")
     return completed.stdout.strip()
 
 
+@scoped_observation
 def canonical_git_common_dir(project_root: Path) -> Path:
     common = Path(git_output(project_root, "rev-parse", "--git-common-dir"))
     if not common.is_absolute():
         common = project_root / common
     return common.resolve()
-
-
-def _run_git(project_root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", "-C", str(project_root), *arguments],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
 
 
 _SHARED_WORKTREES: contextvars.ContextVar[dict[Path, list[dict[str, str]]] | None] = (

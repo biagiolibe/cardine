@@ -143,4 +143,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 096 — Store execution evidence in one file per task.
 - `[x]` 094 — Run task validation in the engine with a retry limit (RE3b).
 - `[x]` 095 — Remove the handoff and report gates (N3).
-- `[ ]` 100 — Resolve each command's context once and bound its Git subprocesses.
+- `[x]` 100 — Resolve each command's context once and bound its Git subprocesses.

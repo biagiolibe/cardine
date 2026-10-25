@@ -1,4 +1,6 @@
 """Receipt-gated state readers; pure validation remains separately reusable."""
+
+from cardine.shared.git import scoped_command
 from pathlib import Path
 import json
 import shlex
@@ -10,8 +12,9 @@ from cardine.tasks.state_core import (
 )
 
 
+@scoped_command
 def read_task_state(project_root, task_id, workflow, *, spike=False, review_required=None, stop_factory,
-                    text=None, require_contract=False, artifacts=False, artifact_ref=None):
+                    text=None, require_contract=False, artifacts=False, artifact_ref=None, context=None):
     """Verify the consumed state/snapshot, returning state or a registered stop.
 
     Frozen readers do not consume mutable task prose. Artifact consumers opt in
@@ -63,7 +66,7 @@ def read_task_state(project_root, task_id, workflow, *, spike=False, review_requ
         from cardine.lifecycle.receipts import verify_receipts
         from cardine.shared.errors import CardineError
         try:
-            verify_receipts(project_root, state, artifacts=artifacts, artifact_ref=artifact_ref)
+            verify_receipts(project_root, state, artifacts=artifacts, artifact_ref=artifact_ref, context=context)
         except CardineError as error:
             raise TaskStateInvalid(str(error)) from error
         return state

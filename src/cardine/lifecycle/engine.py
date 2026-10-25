@@ -6,18 +6,17 @@ never interprets editable run metadata as verified progress.
 """
 from __future__ import annotations
 
+from cardine.shared.git import scoped_command
+
 import json
 import shlex
 from pathlib import Path
 from collections.abc import Iterable
 
+from cardine.lifecycle.context import resolve_run_locations
 from cardine.lifecycle.model import OUTCOMES, STEPS, RunFacts, RunLocations
 from cardine.shared.errors import CardineError
-from cardine.shared.git import canonical_git_common_dir, canonical_project_root
 from cardine.stops.registry import load_stop_registry
-from cardine.tasks.identity import resolve_task_identity
-from cardine.worktree.paths import task_worktree_path
-from cardine.worktree.storage import resolve_worktree_root
 
 
 def command_reference(argv: Iterable[str], reason: str) -> dict:
@@ -181,19 +180,22 @@ def resolve_run(facts: RunFacts) -> dict:
     return result("landing", "Finalize, push, verify and clean up delivery")
 
 
+@scoped_command
 def deliver_run_implementation(locations: RunLocations) -> dict:
     """Bounded step-three adapter; validation and acceptance remain separate."""
     from cardine.lifecycle.commands import execution_deliver
-    return execution_deliver(locations.worktree, locations.task_id, implementation_only=True)
+    return execution_deliver(locations.worktree, locations.task_id, implementation_only=True,
+                             context=locations)
 
 
+@scoped_command
 def implementation_delivery(locations: RunLocations) -> dict | None:
     """Read verified step-three progress; no prose, writes or caller pass flags."""
     from cardine.lifecycle.delivery import verify_delivery
     from cardine.lifecycle.execution import _execution_location, _execution_owned_paths, _execution_state
     from cardine.lifecycle.scope import enforce_scope
     root = locations.worktree
-    inspection = _execution_location(root, locations.task_id)
+    inspection = _execution_location(root, locations.task_id, context=locations)
     if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
         raise CardineError('implementation progress requires the canonical task worktree')
     from cardine.lifecycle.delivery import _operation_path
@@ -211,54 +213,13 @@ def implementation_delivery(locations: RunLocations) -> dict | None:
     state = _execution_state(root, locations.task_id)
     base = str(inspection['base_commit'])
     enforce_scope(root, state, base, owned=_execution_owned_paths(root, locations.task_id))
-    result = verify_delivery(root, state, base)
+    result = verify_delivery(root, state, base, context=locations)
     if result is not None and intent is not None and result['commit'] != intent['commit']:
         raise CardineError('implementation delivery result identity changed')
     return result
 
 
-def resolve_run_locations(task_id: str, project: Path | None = None, *,
-                          cwd: Path | None = None, registered_projects: Iterable[Path] = (),
-                          worktree_root: Path | None = None) -> RunLocations:
-    """Read locations from either checkout or unique supplied registry entries.
-
-    Registry discovery is supplied by the machine registry reader; this function
-    never scans arbitrary directories or creates a registration/configuration.
-    """
-    def identify(path):
-        primary = canonical_project_root(path)
-        common = canonical_git_common_dir(path)
-        if common != canonical_git_common_dir(primary):
-            raise CardineError("project/common-directory identity mismatch")
-        identity = resolve_task_identity(primary, task_id, "existing", check_queue_links=False)
-        return primary, common, identity
-
-    if project is not None:
-        primary, common, identity = identify(project.expanduser().resolve())
-    else:
-        enclosing = None
-        try:
-            enclosing = canonical_project_root(cwd or Path.cwd())
-        except CardineError:
-            pass
-        if enclosing is not None:
-            primary, common, identity = identify(enclosing)
-        else:
-            matches = {}
-            for candidate in registered_projects:
-                try:
-                    item = identify(candidate)
-                except CardineError:
-                    continue
-                matches[item[1]] = item
-            if len(matches) != 1:
-                raise CardineError("missing or ambiguous project/task identity; supply --project")
-            primary, common, identity = next(iter(matches.values()))
-    root = resolve_worktree_root(worktree_root).path
-    return RunLocations(identity.canonical_id, primary, common, root,
-                        task_worktree_path(primary, root, identity.canonical_id))
-
-
+@scoped_command
 def run_preview_cli(argv: list[str]) -> int:
     """RE1a adapter: preview only; later rows supply verified progress adapters.
 
@@ -307,6 +268,7 @@ def run_preview_cli(argv: list[str]) -> int:
     return emit_run(result, validate_output)
 
 
+@scoped_command
 def run_validation_step(locations: RunLocations) -> dict | None:
     """Recover missing task evidence and return the review or C6 boundary."""
     from cardine.lifecycle.validation import operation_path, run_task_validation
@@ -328,7 +290,7 @@ def run_validation_step(locations: RunLocations) -> dict | None:
                            contract_ready=True, worktree_ready=True, implementation_work=request))
     from cardine.shared.errors import CardineStop
     try:
-        progress = run_task_validation(root, task_id)
+        progress = run_task_validation(root, task_id, context=locations)
     except CardineStop as error:
         if error.code != 'ACCEPTANCE_UNMET':
             raise

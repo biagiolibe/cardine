@@ -256,3 +256,11 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 096 | Store execution evidence in one file per task | 🔴 P1 | 093 | [096](done/096-per-task-execution-evidence.md) |
 | `[x]` | 094 | Run task validation in the engine with a retry limit (RE3b) | 🔴 P1 | 096 | [094](done/094-engine-validation.md) |
 | `[x]` | 095 | Remove the handoff and report gates (N3) | 🔴 P1 | 094 | [095](done/095-remove-handoff-gates.md) |
+
+### Phase 23 — The cardine run engine: hot path and remaining rows
+
+Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 13 and 14.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 100 | Resolve each command's context once and bound its Git subprocesses | 🔴 P1 | 095 | [100](done/100-command-context-and-git-budget.md) |

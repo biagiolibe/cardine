@@ -7,6 +7,8 @@ Progress lives only in the task state's ``run`` object.
 """
 from __future__ import annotations
 
+from cardine.shared.git import _run_git, invalidate_facts
+
 from contextlib import contextmanager
 from copy import deepcopy
 import base64
@@ -15,7 +17,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
+from functools import cache
+from threading import Lock
 import uuid
 
 from cardine.shared.errors import CardineError
@@ -114,22 +117,39 @@ def operation_live(root, task_id):
 
 
 def _git(root, *args):
-    result = subprocess.run(['git', '-C', str(root), *args], capture_output=True, text=True)
+    result = _run_git(str(root), *args, text=True)
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def observed_authority(root):
-    """Measure the executing checkout, not an environment-selected runtime label."""
-    root = Path(root).resolve()
+_RUNTIME_LOCK = Lock()
+
+
+@cache
+def _runtime_identity():
     runtime = Path(__file__).resolve().parents[3]
     files = sorted({p for pattern in ('src/cardine/**/*.py', 'schemas/*.json',
                     'capabilities/*.json', 'migrations/**/*', 'templates/**/*', 'scripts/*.py')
                     for p in runtime.glob(pattern) if p.is_file()
                     and '__pycache__' not in p.parts and p.suffix != '.pyc'})
-    runtime_digest = digest(encoded({str(p.relative_to(runtime)): digest(p.read_bytes()) for p in files}))
+    return runtime, digest(encoded({str(p.relative_to(runtime)): digest(p.read_bytes()) for p in files}))
+
+
+def runtime_digest_once():
+    with _RUNTIME_LOCK:
+        runtime, measured = _runtime_identity()
+    if runtime != Path(__file__).resolve().parents[3]:
+        raise CardineError('developer reauthorization required: executing runtime changed')
+    return measured
+
+
+def observed_authority(root, *, context=None):
+    """Measure the executing checkout, not an environment-selected runtime label."""
+    root = Path(root).resolve()
+    runtime_digest = runtime_digest_once()
     common = _git(root, 'rev-parse', '--git-common-dir')
     from cardine.shared.git import primary_project_root
-    primary = str(primary_project_root(root))
+    primary = str(context.primary if context is not None and root == context.worktree
+                  else primary_project_root(root))
     common = str((root / common).resolve()) if common else None
     policy = safe_path(root, str(names().project_declaration_path))
     from cardine.worktree.storage import resolve_worktree_root
@@ -153,8 +173,7 @@ def authorize_project(root, *, accepted, new=False):
         # A portable receipt may pin an earlier accepted main. Developer
         # acceptance is explicit and Git must prove it belongs to this history.
         base = accepted.get('accepted_main')
-        result = subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor',
-                                 str(base), str(observed['accepted_main'])], capture_output=True)
+        result = _run_git(str(root), 'merge-base', '--is-ancestor', str(base), str(observed['accepted_main']), text=False)
         if not base or result.returncode:
             raise CardineError('accepted main is not an ancestor of observed main')
         comparable['accepted_main'] = observed['accepted_main']
@@ -163,9 +182,7 @@ def authorize_project(root, *, accepted, new=False):
     if new and observed['accepted_main']:
         # Task-branch policy cannot authorize its own first receipt when main
         # already defines policy. Initial untracked project setup remains allowed.
-        policy = subprocess.run(['git', '-C', str(root), 'show',
-                                 f'{observed["accepted_main"]}:{names().project_declaration_path}'],
-                                capture_output=True)
+        policy = _run_git(str(root), 'show', f"{observed['accepted_main']}:{names().project_declaration_path}", text=False)
         if policy.returncode == 0 and digest(policy.stdout) != observed['policy']:
             raise CardineError('developer reauthorization required: policy differs from accepted main')
     path = safe_path(root, f'{names().project_directory}/receipt-authority.json')
@@ -175,8 +192,8 @@ def authorize_project(root, *, accepted, new=False):
     return accepted
 
 
-def require_authority(root):
-    observed = observed_authority(root)
+def require_authority(root, *, context=None):
+    observed = observed_authority(root, context=context)
     primary = Path(observed['project']).resolve()
     path = safe_path(primary, f'{names().project_directory}/receipt-authority.json')
     try:
@@ -199,13 +216,11 @@ def require_authority(root):
         if base is None and main:
             # Explicit acceptance of an unborn project pins policy bytes. Its
             # first main history must retain that policy; no task JSON grants it.
-            policy = subprocess.run(['git', '-C', str(primary), 'show',
-                                     f'{main}:{names().project_declaration_path}'], capture_output=True)
+            policy = _run_git(str(primary), 'show', f'{main}:{names().project_declaration_path}', text=False)
             if policy.returncode or digest(policy.stdout) != accepted['policy']:
                 raise CardineError('developer reauthorization required: initial main policy changed')
         else:
-            result = subprocess.run(['git', '-C', str(root), 'merge-base', '--is-ancestor',
-                                     str(base), str(main)], capture_output=True)
+            result = _run_git(str(root), 'merge-base', '--is-ancestor', str(base), str(main), text=False)
             if not base or not main or result.returncode:
                 raise CardineError('developer reauthorization required: accepted main history changed')
     return accepted
@@ -215,7 +230,7 @@ def _receipt_hash(receipt):
     return digest(encoded({k: v for k, v in receipt.items() if k != 'digest'}))
 
 
-def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref=None, artifact_names=None):
+def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref=None, artifact_names=None, context=None):
     """Verify chaining and current coverage against independently accepted policy.
 
     Portable verification still requires explicit local authorization. It relaxes
@@ -224,7 +239,7 @@ def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref
     root = Path(root).resolve()
     from cardine.tasks.state_core import validate_task_state
     validate_task_state(state, state['task_id'], 'single')
-    accepted = require_authority(root)
+    accepted = require_authority(root, context=context)
     receipts = state.get('run', {}).get('receipts', [])
     if not receipts or state.get('run', {}).get('pending') is not None:
         raise CardineError('missing completed operation receipt')
@@ -269,8 +284,7 @@ def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref
             if artifact_ref is None:
                 content = path.read_bytes() if path.is_file() else None
             else:
-                shown = subprocess.run(['git', '-C', str(root), 'show', f'{artifact_ref}:{name}'],
-                                       capture_output=True)
+                shown = _run_git(str(root), 'show', f'{artifact_ref}:{name}', text=False)
                 content = shown.stdout if shown.returncode == 0 else None
             if content is None or digest(content) != expected:
                 raise CardineError(f'changed or missing receipt artifact: {name}')
@@ -366,6 +380,7 @@ def _finish(root, task_id, intent_path, intent):
         source = safe_path(root, item['staged'])
         path.parent.mkdir(parents=True, exist_ok=True)
         if item['before'] is None:
+            invalidate_facts()
             os.link(source, path)
             _sync_directory(path.parent)
         else:
@@ -390,6 +405,7 @@ def _finish(root, task_id, intent_path, intent):
         _durable(path, final_bytes)
         boundary('after_result_receipt')
     verify_receipts(root, state, artifact_names=outputs)
+    invalidate_facts()
     for item in outputs.values():
         safe_path(root, item['staged']).unlink(missing_ok=True)
     intent_path.unlink()

@@ -32,11 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 23 — The cardine run engine: hot path and remaining rows
-
-Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 13 and 14.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 100 | Resolve each command's context once and bound its Git subprocesses | 🔴 P1 | 095 | [100](100-command-context-and-git-budget.md) |

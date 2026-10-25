@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from cardine.shared.git import scoped_observation
+
+from cardine.shared.git import _run_git
+
 from cardine.shared.layout import names
 
 from cardine.shared.errors import CardineError
@@ -19,7 +23,6 @@ from dataclasses import dataclass
 from pathlib import Path
 import json
 import re
-import subprocess
 import sys
 import unicodedata
 
@@ -50,6 +53,7 @@ def task_identity_json(project_root: Path, identity: ResolvedTaskIdentity) -> di
     return identity.as_json(project_root)
 
 
+@scoped_observation
 def resolve_project_locations(project_root: Path) -> ProjectLocations:
     """Read canonical locations exclusively from the project declaration."""
     from cardine.shared.snapshot_adapters import locations_adapter
@@ -193,12 +197,7 @@ def _identity_names(canonical_id: str, kind: str) -> tuple[str, str, dict[str, o
 
 
 def _check_branch_name(canonical_id: str, branch: str) -> None:
-    checked = subprocess.run(
-        ["git", "check-ref-format", "--branch", branch],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    checked = _run_git(None, 'check-ref-format', '--branch', branch, text=True)
     if checked.returncode != 0 or not SAFE_PATH_COMPONENT.fullmatch(branch):
         raise CardineError(f"task ID does not derive a safe Git branch: {canonical_id!r}")
 
@@ -209,6 +208,7 @@ def _identity_derivations(canonical_id: str, kind: str) -> tuple[str, str, dict[
     return branch, artifact, semantic
 
 
+@scoped_observation
 def resolve_task_identity(
     project_root: Path,
     supplied_id: str,
@@ -313,6 +313,7 @@ def resolve_task_identity(
     )
 
 
+@scoped_observation
 def task_identity_context(project_root: Path, *, states: dict | None = None) -> TaskIdentityContext:
     """Build the authoritative identity inputs once for a command."""
     project_root = project_root.resolve()

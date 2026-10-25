@@ -11,6 +11,8 @@ from cardine.shared.errors import CardineError
 
 
 def _write_json_atomic(path: Path, value: dict[str, object], *, exclusive: bool = False) -> None:
+    from cardine.shared.git import invalidate_facts
+    invalidate_facts()
     path.parent.mkdir(parents=True, exist_ok=True)
     encoded = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
     if exclusive:
