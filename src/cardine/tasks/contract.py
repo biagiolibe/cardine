@@ -361,6 +361,8 @@ def execution_entries(project_root: Path, task_id: str) -> list[dict[str, object
     path = project_root / names().execution_evidence_path(canonical_id)
     if not path.is_file():
         return []
+    from cardine.tasks.evidence import require_measured_ledger
+    require_measured_ledger(project_root, canonical_id)
     try:
         state = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
@@ -405,6 +407,26 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     entries = execution_entries(project_root, canonical_id)
     commands = frozen_validation_commands(project_root, task_id)
+    from cardine.lifecycle.source import execution_source_digest
+    from cardine.tasks.state import read_task_state
+    state = read_task_state(project_root, canonical_id, 'single', stop_factory=stop_error, require_contract=True)
+    if state.get('run', {}).get('validation'):
+        from cardine.tasks.validation import verified_validation
+        progress = verified_validation(project_root, canonical_id, state)
+        if progress is not None:
+            commands = progress['inputs']['commands']
+        entries = progress['runs'][-1] if progress and progress['phase'] == 'passed' else []
+    else:
+        # Retained single-command adapter: only the latest measured result for
+        # an ID counts, and a recorded source binding must still match.
+        latest = {entry.get('id'): entry for entry in entries if entry.get('id')}
+        source = execution_source_digest(project_root, canonical_id) if any(
+            'sourceDigest' in entry for entry in latest.values()) else None
+        if any('sourceDigest' in entry and entry['sourceDigest'] != source for entry in latest.values()):
+            from cardine.shared.git import canonical_project_root
+            raise stop_error('EVIDENCE_INCOMPLETE', 'Measured validation source is stale',
+                             task_id=canonical_id, project=canonical_project_root(project_root))
+        entries = list(latest.values())
     missing_validations = [
         command_id for command_id, command in commands.items()
         if not any(

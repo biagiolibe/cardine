@@ -292,8 +292,12 @@ def run_preview_cli(argv: list[str]) -> int:
                                 stop_factory=stop_error, require_contract=True)
         if "contract" not in state:
             raise CardineError("missing frozen contract; preview cannot import task prose")
-        # Progress verification is deliberately not inferred from editable JSON.
-        result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
+        # RE3b composes measured validation only after a verified delivery.
+        # Earlier contract/preparation dispatch and later landing adapters stay
+        # independent; editable progress cannot skip those receipt checks.
+        result = run_validation_step(locations)
+        if result is None:
+            result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
     except CardineStop as error:
         result = diagnostic_result(locations, error)
     except Exception as error:
@@ -301,6 +305,60 @@ def run_preview_cli(argv: list[str]) -> int:
         # successful progress or an automatic repair inferred from its prose.
         result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)))
     return emit_run(result, validate_output)
+
+
+def run_validation_step(locations: RunLocations) -> dict | None:
+    """Recover missing task evidence and return the review or C6 boundary."""
+    from cardine.lifecycle.validation import operation_path, run_task_validation
+    from cardine.lifecycle.execution import _execution_state
+    from cardine.lifecycle.model import WorkRequest
+    from cardine.lifecycle import receipts
+    root, task_id = locations.worktree, locations.task_id
+    if not root.is_dir():
+        return None
+    state = _execution_state(root, task_id) if not receipts.pending_operation(root, task_id) else None
+    contract = state['contract'] if state else {}
+    request = WorkRequest('implementer', root,
+        receipts.digest(receipts.encoded(contract)),
+        tuple(contract.get('expectedCodeSurface', [])), tuple(contract.get('deliverables', [])),
+        tuple(contract.get('validation', {}).get('baseline', [])), ('committed implementation delivery',))
+    pending = operation_path(root, task_id).exists()
+    if not pending and implementation_delivery(locations) is None:
+        return resolve_run(RunFacts(task_id, locations.primary, 'in_progress',
+                           contract_ready=True, worktree_ready=True, implementation_work=request))
+    from cardine.shared.errors import CardineStop
+    try:
+        progress = run_task_validation(root, task_id)
+    except CardineStop as error:
+        if error.code != 'ACCEPTANCE_UNMET':
+            raise
+        result = resolve_run(RunFacts(task_id, locations.primary, 'in_progress',
+            contract_ready=True, worktree_ready=True, validation_failed=True, implementation_work=request))
+        result['diagnostics'] = [dict(code=error.code, message=error.detail)]
+        return result
+    state = _execution_state(root, task_id)
+    if not contract:
+        contract = state['contract']
+        request = WorkRequest('implementer', root, receipts.digest(receipts.encoded(contract)),
+            tuple(contract.get('expectedCodeSurface', [])), tuple(contract.get('deliverables', [])),
+            tuple(contract['validation']['baseline']), ('committed implementation delivery',))
+    passed = progress['phase'] == 'passed'
+    if passed and any(not item['observed'] or item['exitStatus'] != 0 for item in progress['hostObservations']):
+        result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
+            contract_ready=True, worktree_ready=True, validation_failed=True, implementation_work=request))
+        result['diagnostics'] = [dict(code='ACCEPTANCE_UNMET',
+            message='An enforced host profile needs a matching declared validation command and passing observation')]
+        return result
+    result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
+        contract_ready=True, worktree_ready=True, implementation_delivered=True,
+        validation_passed=passed, validation_failed=not passed,
+        implementation_work=request,
+        review_required=state['contract']['options']['review'] == 'required'))
+    result['action'] = 'C6' if result['step'] == 'candidate' else 'task-validation'
+    result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
+    if not passed:
+        result['diagnostics'] = [dict(code='VALIDATION_FAILED', message=json.dumps(progress['runs']))]
+    return result
 
 
 def diagnostic_result(locations: RunLocations, error, *, step: str = "contract") -> dict:

@@ -535,7 +535,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(
             result.stdout.strip(),
             "NEXT EVIDENCE_INCOMPLETE: machine evidence for the validated task commit is missing or "
-            "incomplete; resume: record machine evidence",
+            f"incomplete; resume: cardine run 056 --project {shlex.quote(str(self.project.resolve()))}",
         )
 
     def test_integrate_stage_reports_primary_dirty_through_the_registry(self) -> None:
@@ -818,7 +818,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         report = json.loads(failed.stdout)
         self.assertEqual((report["step"], report["action_required"], report["stop_code"]), ("C2", "run-validation", "VALIDATION_FAILED"))
         self.assertEqual(report["resume"], "fix the failure on the task branch and rerun the failing command")
-        self.assertEqual(report["stop_detail"], "record machine evidence")
+        self.assertEqual(report["stop_detail"], f"cardine run 056 --project {shlex.quote(str(self.project.resolve()))}")
         unaccepted = self._advance("--validation-command", "check", "--validation-exit-code", "0")
         self.assertEqual(unaccepted.returncode, 0, unaccepted.stderr)
         self.assertEqual(json.loads(unaccepted.stdout)["stop_code"], "ACCEPTANCE_UNMET")

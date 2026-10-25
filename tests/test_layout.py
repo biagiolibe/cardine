@@ -108,7 +108,14 @@ class LayoutTest(unittest.TestCase):
         write_project_config(self.root)
         self.write_json(OTHER_NAMES.project_declaration_path, {"version": 1, "preset": "lean"})
         self.assertEqual(contract.execution_entries(self.root, "042"), [])
+        from task_contract_support import freeze_record
+        frozen = freeze_record(self.root, '042')
+        frozen.pop('run', None)
         with use(OTHER_NAMES):
+            from cardine.lifecycle import receipts
+            receipts.authorize_project(self.root, accepted=receipts.observed_authority(self.root))
+            with receipts.task_lock(self.root, '042'):
+                receipts.write_operation(self.root, '042', frozen, kind='layout-fixture')
             recording.record_validation(self.root, "042", "unit", "python3 -m unittest", 0)
             entries = contract.execution_entries(self.root, "042")
             self.assertEqual(entries, [{"id": "unit", "command": "python3 -m unittest", "exitStatus": 0}])
@@ -119,6 +126,9 @@ class LayoutTest(unittest.TestCase):
     def test_evidence_cannot_overwrite_another_task_from_a_task_branch(self):
         write_project_config(self.root)
         (self.root / "tasks/043-layout.md").write_text("# Task 043\n\n> **ID**: `043`\n")
+        from task_contract_support import freeze_record
+        freeze_record(self.root, '042')
+        freeze_record(self.root, '043')
         recording.record_validation(self.root, "043", "unit", "true", 0)
         other = self.root / names().execution_evidence_path("043")
         before = other.read_bytes()

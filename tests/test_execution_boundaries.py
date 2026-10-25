@@ -260,7 +260,11 @@ class ExecutionBoundariesTest(unittest.TestCase):
         # Whitespace keeps JSON and task projections valid.
         path.write_text(before + '\n')
         self.commit('Later non-handoff change')
-        self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
+        if relative == '.cardine/evidence/001.json':
+            with self.assertRaisesRegex(shared_errors.CardineError, 'changed or missing receipt artifact'):
+                owner_lifecycle_commands.execution_deliver(self.worker, '001')
+        else:
+            self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         path.write_text(before)
         self.commit('Restore original contents')
         self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
