@@ -12,7 +12,6 @@ from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import git_output
 from cardine.shared.jsonio import _read_json_object
-from cardine.shared.jsonio import _write_json_atomic
 from cardine.shared.models import CANDIDATE_VALIDATION_OUTCOMES
 from cardine.shared.models import ResolvedTaskIdentity
 from cardine.stops.render import stop_error
@@ -20,11 +19,9 @@ from cardine.tasks.identity import resolve_project_locations
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.state import state_path
 from cardine.worktree.checkout import inspect_task_worktree
-from cardine.worktree.storage import _lifecycle_paths
 from cardine.worktree.storage import _verified_lifecycle_project
 from pathlib import Path
 import json
-import re
 from cardine.shared.paths import SCRIPTS_ROOT
 
 
@@ -135,18 +132,6 @@ def check_validation_evidence(record_path: Path, project_root: Path, expected_co
     return {"status": report_status, "level": level, "reasons": reasons}, VALIDATION_EXIT_PASSED if not reasons else VALIDATION_EXIT_FAILED
 
 
-def _string_tuple(value: object, label: str) -> tuple[str, ...]:
-    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
-        raise CardineError(f"integration evidence field {label!r} must be an array of non-empty strings")
-    return tuple(value)
-
-
-def _bool_field(value: object, label: str) -> bool:
-    if not isinstance(value, bool):
-        raise CardineError(f"integration evidence field {label!r} must be boolean")
-    return value
-
-
 def candidate_validation_declaration(
     project_root: Path, task_id: str | None = None, *, task_project: Path | None = None,
 ) -> tuple[str, dict[str, tuple[str, ...]]]:
@@ -222,114 +207,58 @@ def proposed_candidate_validation_declaration(project_root: Path) -> dict[str, o
     return {"version": 1, "state": "declared", "outcomes": outcomes}
 
 
-def undeclared_validation_commands_error(project_root: Path, evidence: dict[str, object]) -> CardineError:
-    commands = evidence.get("validation_commands")
-    recorded = ", ".join(commands) if isinstance(commands, list) and commands else "none recorded"
+def undeclared_validation_commands_error(project_root: Path) -> CardineError:
     proposal = json.dumps(proposed_candidate_validation_declaration(project_root), sort_keys=True)
     return stop_error(
         "UNDECLARED_VALIDATION_COMMANDS",
-        f"no project choice is recorded at {names().candidate_validation_path}. "
-        f"Task validation commands: {recorded}. Proposed declaration: {proposal}",
+        f"no project choice is recorded at {names().candidate_validation_path}. Proposed declaration: {proposal}",
     )
 
 
-def _integration_evidence(path: Path) -> dict[str, object]:
-    evidence = _read_json_object(path.expanduser().resolve(), "integration evidence")
-    required = {
-        "accepted",
-        "validation_passed",
-        "validated_task_commit",
-        "validated_base_commit",
-        "full_validation_required",
-        "interaction_assessment_complete",
-        "task_paths",
-        "task_dependencies",
-        "task_behavioral_surfaces",
-        "main_advanced_dependencies",
-        "main_advanced_behavioral_surfaces",
-    }
-    missing = sorted(required - evidence.keys())
-    if missing:
-        raise CardineError(f"integration evidence is incomplete; missing: {', '.join(missing)}")
-    for field in ("accepted", "validation_passed", "full_validation_required", "interaction_assessment_complete"):
-        _bool_field(evidence[field], field)
-    for field in (
-        "task_paths",
-        "task_dependencies",
-        "task_behavioral_surfaces",
-        "main_advanced_dependencies",
-        "main_advanced_behavioral_surfaces",
-    ):
-        _string_tuple(evidence[field], field)
-    for field in ("validated_task_commit", "validated_base_commit"):
-        if not isinstance(evidence[field], str) or not re.fullmatch(r"[0-9a-f]{40}", evidence[field]):
-            raise CardineError(f"integration evidence field {field!r} must be a full Git object ID")
-    return evidence
+def measured_task_validation(worktree: Path, task_id: str) -> dict[str, object] | None:
+    """Return the receipt-verified passing attempt that covers the delivered source.
+
+    Nothing here is declared by a caller: the attempt, its commands, exits and
+    source identity come from the measured state, and a stale or edited result
+    is simply absent. ``worktree`` is the clean canonical task worktree.
+    """
+    from cardine.tasks.state import read_task_state
+    from cardine.tasks.validation import host_observations_complete, verified_validation
+    state = read_task_state(worktree, task_id, "single", stop_factory=stop_error, require_contract=True)
+    progress = verified_validation(worktree, task_id, state)
+    delivery = state.get("run", {}).get("delivery")
+    if not progress or not delivery or progress["phase"] != "passed" or not progress["runs"]:
+        return None
+    last = progress["runs"][-1]
+    if any(entry["exitStatus"] != 0 for entry in last) or not host_observations_complete(state["contract"], progress):
+        return None
+    return {"attempt": progress["attemptId"], "validated_task_commit": progress["inputs"]["source"],
+            "validated_base_commit": delivery["base"]}
 
 
-def record_task_evidence(
-    task_id: str,
-    worktree_root: Path | None,
-    validation_commands: list[str],
-    validation_exit_codes: list[int],
-    *,
-    accepted: bool,
-    task_dependencies: list[str],
-    task_behavioral_surfaces: list[str],
-    main_advanced_dependencies: list[str],
-    main_advanced_behavioral_surfaces: list[str],
-    full_validation_required: bool,
-    supplied_project: Path | None = None,
-    require_effective_worktree: bool = True,
+def measured_validation_report(
+    task_id: str, worktree_root: Path | None, supplied_project: Path | None = None,
 ) -> dict[str, object]:
-    """Record Git-derived task-validation facts without running validation."""
-    if len(validation_commands) != len(validation_exit_codes):
-        raise CardineError("each --validation-command requires one --validation-exit-code")
-    if not validation_commands or any(not command.strip() for command in validation_commands):
-        raise CardineError("at least one non-empty --validation-command is required")
+    """Report the measured validation of the delivered source; it records nothing."""
     project_root = _verified_lifecycle_project(supplied_project)
     identity = resolve_task_identity(project_root, task_id, "existing")
     inspection, ready = inspect_task_worktree(
-        identity.canonical_id,
-        worktree_root,
-        project_root,
-        require_effective_worktree=require_effective_worktree,
+        identity.canonical_id, worktree_root, project_root, require_effective_worktree=False,
     )
     if not ready:
         raise CardineError(f"task worktree is not ready: {', '.join(inspection['errors'])}")
-    state_path, _lease, _integration = _lifecycle_paths(project_root, identity)
-    state = _read_json_object(state_path, "worktree lifecycle state")
-    task_commit = str(inspection["task_commit"])
-    base_commit = str(state["base_commit"])
+    measured = measured_task_validation(Path(str(inspection["worktree"])), identity.canonical_id)
+    if measured is None:
+        raise stop_error(
+            "EVIDENCE_INCOMPLETE", "no passing measured validation covers the delivered source",
+            task_id=identity.canonical_id, project=project_root,
+        )
     task_paths = tuple(filter(None, git_output(
-        project_root, "diff", "--name-only", base_commit, task_commit
+        project_root, "diff", "--name-only", str(measured["validated_base_commit"]),
+        str(measured["validated_task_commit"]),
     ).splitlines()))
-    evidence_path = state_path.with_suffix(".evidence.json")
-    evidence = {
-        "accepted": accepted,
-        "validation_passed": all(code == 0 for code in validation_exit_codes),
-        "validated_task_commit": task_commit,
-        "validated_base_commit": base_commit,
-        "full_validation_required": full_validation_required,
-        "interaction_assessment_complete": True,
-        "task_paths": list(task_paths),
-        "task_dependencies": task_dependencies,
-        "task_behavioral_surfaces": task_behavioral_surfaces,
-        "main_advanced_dependencies": main_advanced_dependencies,
-        "main_advanced_behavioral_surfaces": main_advanced_behavioral_surfaces,
-        "validation_commands": validation_commands,
-        "validation_exit_codes": validation_exit_codes,
-    }
-    _write_json_atomic(evidence_path, evidence)
-    return {
-        "version": 1,
-        "task_id": identity.canonical_id,
-        "evidence": str(evidence_path),
-        "validated_task_commit": task_commit,
-        "validated_base_commit": base_commit,
-        "task_paths": list(task_paths),
-        "validation_passed": evidence["validation_passed"],
-    }
+    return {"version": 1, "task_id": identity.canonical_id, **measured, "task_paths": list(task_paths),
+            "validation_passed": True}
 
 
 def _remove_owned_file(path: Path) -> None:

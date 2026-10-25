@@ -11,14 +11,13 @@ from cardine.shared.models import ResolvedTaskIdentity
 from cardine.worktree.storage import _branch_commit
 from cardine.worktree.storage import _effective_worktree_root
 from cardine.shared.git import _git_worktrees
-from cardine.integration.evidence import _integration_evidence
+from cardine.integration.evidence import measured_task_validation
 from cardine.integration.evidence import _lifecycle_changes_after_validation
 from cardine.worktree.storage import _lifecycle_paths
 from cardine.worktree.storage import _merge_head_path
 from cardine.shared.jsonio import _read_json_object
 from cardine.integration.evidence import _remove_owned_file
 from cardine.shared.git import _run_git
-from cardine.integration.evidence import _string_tuple
 from cardine.worktree.paths import _task_worktree_path_for_identity
 from cardine.worktree.storage import _verified_lifecycle_project
 from cardine.shared.jsonio import _write_json_atomic
@@ -164,9 +163,16 @@ def _regenerate_status_views(project_root: Path) -> dict[str, object]:
 def stage_task_integration(
     task_id: str,
     worktree_root: Path | None,
-    evidence_path: Path,
+    evidence_path: Path | None = None,
     supplied_project: Path | None = None,
 ) -> dict[str, object]:
+    """Stage the exact task candidate. ``evidence_path`` is only a diagnostic reference.
+
+    The validation that gates staging is the receipt-verified attempt measured
+    in the task worktree; no caller-supplied file or result is read.
+    """
+    from cardine.integration.residue import recover_landing_residue
+    from cardine.lifecycle import receipts
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
         raise CardineError("integration stage must run from the canonical primary checkout")
@@ -205,6 +211,7 @@ def stage_task_integration(
         raise CardineError(f"task worktree is not ready: {', '.join(inspection['errors'])}")
     if git_output(project_root, "branch", "--show-current") != "main":
         raise CardineError("primary checkout must be on main")
+    recover_landing_residue(project_root, identity.canonical_id)
     if git_output(project_root, "status", "--porcelain"):
         raise stop_error("PRIMARY_DIRTY", "primary checkout must be clean")
     origin = _run_git(project_root, "remote", "get-url", "origin")
@@ -226,23 +233,26 @@ def stage_task_integration(
             f"origin/main {git_output(project_root, 'rev-parse', '--short=12', 'refs/remotes/origin/main')})",
             task_id=identity.canonical_id, project=project_root, evidence=evidence_path,
         )
-    evidence = _integration_evidence(evidence_path)
     declaration_state, _fragments = candidate_validation_declaration(
         project_root, identity.canonical_id, task_project=Path(str(inspection["worktree"])),
     )
     if declaration_state == "undeclared":
         # This is deliberately before inspection, lease creation, and merge so the
         # first-use decision cannot strand an integration transaction.
-        raise undeclared_validation_commands_error(project_root, evidence)
-    if not evidence["accepted"] or not evidence["validation_passed"]:
-        raise CardineError("accepted, successful task validation evidence is required")
+        raise undeclared_validation_commands_error(project_root)
     task_commit = str(inspection["task_commit"])
     task_state = _integration_task_state(project_root, identity, task_commit, Path(str(inspection["worktree"])))
     from cardine.lifecycle.execution import enforce_execution_scope
     enforce_execution_scope(Path(str(inspection["worktree"])), identity.canonical_id,
                             state=task_state, base=str(inspection["base_commit"]))
-    validated_task = str(evidence["validated_task_commit"])
-    validated_base = str(evidence["validated_base_commit"])
+    measured = measured_task_validation(Path(str(inspection["worktree"])), identity.canonical_id)
+    if measured is None:
+        raise stop_error(
+            "EVIDENCE_INCOMPLETE", "no passing measured validation covers the delivered source",
+            task_id=identity.canonical_id, project=project_root,
+        )
+    validated_task = str(measured["validated_task_commit"])
+    validated_base = str(measured["validated_base_commit"])
     if validated_base != inspection["base_commit"]:
         raise stop_error(
             "EVIDENCE_MISMATCH",
@@ -277,24 +287,17 @@ def stage_task_integration(
         filter(None, git_output(project_root, "diff", "--name-only", validated_base, current_main).splitlines())
     ) if current_main != validated_base else ()
     decision = decide_integration_validation(
-        evidence_complete=True,
+        validation_measured=True,
         validated_task_commit=validated_task,
         current_task_commit=task_commit,
         validated_base_commit=validated_base,
         current_main_commit=current_main,
         validated_base_is_task_ancestor=base_is_ancestor,
-        full_validation_required=bool(evidence["full_validation_required"]),
         validated_task_is_current_ancestor=validated_is_ancestor,
         relevant_tree_unchanged_after_validation=relevant_unchanged,
-        interaction_assessment_complete=bool(evidence["interaction_assessment_complete"]),
-        task_paths=tuple(sorted(set(task_paths) | set(_string_tuple(evidence["task_paths"], "task_paths")))),
+        task_paths=task_paths,
         main_advanced_paths=main_paths,
-        task_dependencies=_string_tuple(evidence["task_dependencies"], "task_dependencies"),
-        main_advanced_dependencies=_string_tuple(evidence["main_advanced_dependencies"], "main_advanced_dependencies"),
-        task_behavioral_surfaces=_string_tuple(evidence["task_behavioral_surfaces"], "task_behavioral_surfaces"),
-        main_advanced_behavioral_surfaces=_string_tuple(
-            evidence["main_advanced_behavioral_surfaces"], "main_advanced_behavioral_surfaces"
-        ),
+        pinned_paths=(names().project_declaration_path.as_posix(), names().candidate_validation_path.as_posix()),
     )
     if decision.outcome == IntegrationValidationOutcome.BLOCKED:
         raise stop_error("EVIDENCE_MISMATCH", decision.reason, task_id=identity.canonical_id, project=project_root)
@@ -305,6 +308,7 @@ def stage_task_integration(
         "project": str(project_root),
         "main_commit": current_main,
     }
+    receipts.boundary("before_stage_lease")
     try:
         _write_json_atomic(lease_path, lease, exclusive=True)
     except FileExistsError as error:
@@ -312,6 +316,7 @@ def stage_task_integration(
             "LEASE_HELD", f"integration lease already exists: {lease_path}",
             task_id=identity.canonical_id, project=project_root,
         ) from error
+    receipts.boundary("after_stage_lease")
     merged = _run_git(project_root, "merge", "--no-ff", "--no-commit", identity.branch_name)
     if merged.returncode != 0:
         aborted = _run_git(project_root, "merge", "--abort")
@@ -360,7 +365,9 @@ def stage_task_integration(
         "views": views,
         "warnings": [views["warning"]] if views["status"] == "STALE" else [],
     }
+    receipts.boundary("before_stage_json")
     _write_json_atomic(integration_path, staged, exclusive=True)
+    receipts.boundary("after_stage_json")
     return staged
 
 

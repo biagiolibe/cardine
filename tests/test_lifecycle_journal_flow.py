@@ -115,7 +115,7 @@ class LifecycleJournalTest(unittest.TestCase):
         commands = (
             ("prepare", "--format", "json"),
             ("check", "--format", "json"),
-            ("evidence", "--validation-command", "true", "--validation-exit-code", "0", "--format", "json"),
+            ("evidence", "--format", "json"),
             ("integrate stage", "--evidence", str(evidence), "--format", "json"),
             ("integrate finalize", "--evidence", str(evidence), "--format", "json"),
             ("integrate abort", "--format", "json"),
@@ -130,7 +130,7 @@ class LifecycleJournalTest(unittest.TestCase):
             self.assertEqual(line["task"], "056")
             self.assertEqual(line["version"], 1)
             self.assertRegex(str(line["ts"]), r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
-            self.assertIn(line["result"], {"ok", "blocked", "error"})
+            self.assertIn(line["result"], {"ok", "blocked", "error", "next"})
         first = self.lines()[0]
         self.assertEqual((first["result"], first["exit"], first["step"]), ("ok", 0, "check"))
         recorded = self.lines()
@@ -151,12 +151,8 @@ class LifecycleJournalTest(unittest.TestCase):
 
     def test_lines_hold_no_absolute_path_or_agent_supplied_text(self) -> None:
         self.lifecycle("prepare", "--format", "json")
-        self.lifecycle(
-            "evidence", "--validation-command", "SECRET-COMMAND-TEXT", "--validation-exit-code", "0",
-            "--format", "json",
-        )
+        self.lifecycle("evidence", "--format", "json")
         text = self.journal.read_text(encoding="utf-8")
-        self.assertNotIn("SECRET-COMMAND-TEXT", text)
         self.assertNotIn(str(self.root), text)
         self.assertNotIn(str(Path.home()), text)
         for line in self.lines():

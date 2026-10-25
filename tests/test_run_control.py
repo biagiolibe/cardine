@@ -146,15 +146,9 @@ class RunAbortTest(unittest.TestCase):
         (self.worker/'feature.txt').write_text('candidate\n')
         self.fixture.git('add', '.', cwd=self.worker)
         self.fixture.git('commit', '-m', 'Implement candidate', cwd=self.worker)
-        head = self.fixture.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip()
-        evidence = self.fixture.root/'evidence.json'
-        evidence.write_text(json.dumps(dict(accepted=True, validation_passed=True,
-            validated_task_commit=head, validated_base_commit=self.fixture.base,
-            full_validation_required=False, interaction_assessment_complete=True,
-            task_paths=['feature.txt'], task_dependencies=[], task_behavioral_surfaces=[],
-            main_advanced_dependencies=[], main_advanced_behavioral_surfaces=[])))
+        self.fixture.measure(self.worker)
         from cardine.integration.merge import stage_task_integration
-        stage_task_integration('056', self.fixture.worktree_root, evidence, self.primary)
+        stage_task_integration('056', self.fixture.worktree_root, None, self.primary)
         identity = resolve_task_identity(self.primary, '056', 'existing')
         _, self.lease, self.staged = _lifecycle_paths(self.primary, identity)
 

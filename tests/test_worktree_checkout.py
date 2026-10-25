@@ -135,29 +135,19 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertTrue(owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)["repaired"])
 
 
-    def test_repaired_base_rejects_old_validation_evidence(self) -> None:
+    def test_measured_validation_binds_the_repaired_base_not_the_old_one(self) -> None:
         _, worktree = self.stale_base()
         owner_worktree_checkout.repair_task_worktree_base("056", self.worktree_root, self.primary)
         (worktree / "task.txt").write_text("task work\n", encoding="utf-8")
         self.git("add", "task.txt", cwd=worktree)
         self.git("commit", "-m", "task work", cwd=worktree)
-        os.chdir(worktree)
-        recorded = owner_integration_evidence.record_task_evidence(
-            "056", self.worktree_root, validation_commands=["git diff --check"], validation_exit_codes=[0],
-            accepted=True, task_dependencies=[], task_behavioral_surfaces=[], main_advanced_dependencies=[],
-            main_advanced_behavioral_surfaces=[], full_validation_required=False, supplied_project=self.primary,
-        )
-        evidence_path = Path(str(recorded["evidence"]))
-        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
-        evidence["validated_base_commit"] = self.base
-        evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
-        before = evidence_path.read_bytes()
+        self.measure(worktree)
         os.chdir(self.primary)
-        self.assertEqual(owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C5")
-        with self.assertRaisesRegex(shared_errors.CardineError, "NEXT EVIDENCE_MISMATCH:"):
-            owner_integration_merge.stage_task_integration("056", self.worktree_root, evidence_path, self.primary)
-        self.assertEqual(evidence_path.read_bytes(), before)
-        self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
+        self.assertEqual(owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)[0]["step"], "C6")
+        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
+        self.assertNotEqual(staged["validated_base_commit"], self.base)
+        self.assertEqual(staged["validated_base_commit"], self.git("rev-parse", "main").stdout.strip())
+        owner_integration_merge.abort_task_integration("056", self.primary)
 
 
     def test_base_repair_rejects_unsafe_worktree_facts(self) -> None:

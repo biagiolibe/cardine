@@ -186,7 +186,7 @@
       "step": "C6",
       "emitter": "`cardine worktree integrate stage`",
       "human_decision": true,
-      "resume": "the developer resolves the conflict on the task branch, then rerun cardine worktree integrate stage {task_id} --project {project} --evidence {evidence} --format json",
+      "resume": "the developer resolves the conflict on the task branch, then rerun cardine worktree integrate stage {task_id} --project {project} --format json",
       "kind": "stop",
       "summary": "the merge of the task branch into main conflicts",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_an_integration_conflict_through_the_registry",

@@ -78,7 +78,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 "Narrative stays.\n\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n\nTail stays.\n")
         elif spike:
             (self.primary / "tasks/056-lifecycle.md").write_text(
-                "# Task 056\n\n> **ID**: `056`\nClass: SPIKE\nStatus: in_progress\n")
+                "# Task 056\n\n> **ID**: `056`\nClass: SPIKE\nStatus: in_progress\nDeliverable: `docs/answer.md`\n"
+                "\n## Expected code surface\n\n- `docs/answer.md`\n")
         freeze_record(self.primary, "056", self.primary / "tasks/056-lifecycle.md")
         self.git("add", ".")
         self.git("commit", "--allow-empty", "-m", "configure task")
@@ -93,6 +94,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
         fixture_state.parent.rmdir()
         if not spike:
             (self.worker / "feature.txt").write_text("approved code\n")
+        else:
+            (self.worker / "docs").mkdir(exist_ok=True)
+            (self.worker / "docs/answer.md").write_text("answer\n")
         self.git("add", ".", cwd=self.worker)
         self.git("commit", "--allow-empty", "-m", "implement task", cwd=self.worker)
         self.reviewed = self.git("rev-parse", "HEAD", cwd=self.worker).stdout.strip()
@@ -129,20 +133,11 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.git("add", ".", cwd=self.worker)
         self.git("commit", "--allow-empty", "-m", "record task evidence", cwd=self.worker)
 
-    def evidence(self, validated=None):
-        head = self.git("rev-parse", "HEAD", cwd=self.worker).stdout.strip()
-        self.evidence_file = self.root / "evidence.json"
-        self.evidence_file.write_text(json.dumps({
-            "accepted": True, "validation_passed": True,
-            "validated_task_commit": validated or head, "validated_base_commit": self.base,
-            "full_validation_required": False, "interaction_assessment_complete": True,
-            "task_paths": [], "task_dependencies": [], "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [], "main_advanced_behavioral_surfaces": [],
-        }))
-        return self.evidence_file
+    def measure_worker(self):
+        fixtures.measure_task(self, self.worker, "056")
 
-    def stage(self, validated=None):
-        return owner_integration_merge.stage_task_integration("056", self.worktree_root, self.evidence(validated), self.primary)
+    def stage(self):
+        return owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
 
     def assert_stop(self, code, detail):
         before = self.git("rev-parse", "HEAD").stdout
@@ -171,7 +166,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         review.parent.mkdir()
         review.write_text("## Attempt 1 — 2026-10-11 — APPROVE\n")
         self.commit()
-        staged = self.stage(self.reviewed)
+        self.measure_worker()
+        staged = self.stage()
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual(staged["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
@@ -251,9 +247,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         handoff = self.worker / "tasks/handoffs/056.md"
         handoff.parent.mkdir()
         handoff.write_text("Completion evidence.\n")
-        (self.worker / ".cardine/evidence").mkdir()
-        (self.worker / ".cardine/evidence/056.json").write_text("{}\n")
         self.commit()
+        self.measure_worker()
         staged = self.stage()
         self.assertEqual(staged["landed_status"], "done")
         self.assertTrue((self.primary / "tasks/056-lifecycle.md").is_file())
@@ -301,6 +296,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_not_required_task_integrates_without_prose(self):
         self.start()
         self.write_state(required=False, verdict=None)
+        self.measure_worker()
         self.assertEqual(self.stage()["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
@@ -308,7 +304,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def check_spike_projection(self, status, *, required=False):
         self.start(spike=True)
         self.write_state(spike=True, status=status, verdict="APPROVE" if required else None, required=required)
-        staged = self.stage(self.reviewed)
+        self.measure_worker()
+        staged = self.stage()
         self.assertEqual(staged["decision"], "REUSE")
         self.assertEqual(staged["landed_status"], "done")
         self.assertFalse((self.primary / "tasks/QUEUE_ARCHIVE.md").exists())
@@ -335,7 +332,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.write_state(required=False)
         freeze_record(self.worker, "056", self.worker / "tasks/056-lifecycle.md")
         self.commit()
-        staged = self.stage(self.reviewed)
+        self.measure_worker()
+        staged = self.stage()
         self.assertEqual(staged["landed_status"], "done")
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
         self.assertIn("| done | 056 |", (self.primary / "PROJECT_PLAN.md").read_text())
@@ -343,7 +341,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         plan = (self.primary / "PROJECT_PLAN.md").read_text()
         self.assertTrue(plan.startswith("Narrative stays.\n\n") and plan.endswith("\n\nTail stays.\n"))
         self.assertEqual(self.git("diff", "--cached", "--name-only").stdout.split(),
-                         [".cardine/tasks/056.json", "PROJECT_PLAN.md", "feature.txt", "tasks/QUEUE.md"])
+                         [".cardine/evidence/056.json", ".cardine/tasks/056.json", "PROJECT_PLAN.md", "feature.txt", "tasks/QUEUE.md",
+                          "tasks/handoffs/056.md"])
         owner_integration_merge.abort_task_integration("056", self.primary)
 
     def test_abort_restores_state_and_views_together(self):
@@ -356,7 +355,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         before_tree = self.git("rev-parse", "HEAD^{tree}").stdout
         queue = (self.primary / "tasks/QUEUE.md").read_bytes()
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
-        staged = self.stage(self.reviewed)
+        self.measure_worker()
+        staged = self.stage()
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
         self.assertTrue((self.primary / "PROJECT_PLAN.md").is_file())
         owner_integration_merge.abort_task_integration("056", self.primary)
@@ -369,7 +369,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_failed_view_write_reports_stale_view_and_keeps_landed_state(self):
         self.start(workflow="single", preset="lean", plan="No region here.\n")
         self.write_state(required=False)
-        staged = self.stage(self.reviewed)
+        self.measure_worker()
+        staged = self.stage()
         self.assertEqual(staged["landed_status"], "done")
         self.assertEqual(staged["views"]["status"], "STALE")
         self.assertIn("cardine status --write", staged["warnings"][0])
@@ -381,8 +382,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_advance_reports_review_gate(self):
         self.start()
         self.write_state(verdict=None)
+        self.measure_worker()
         result, blocked = owner_lifecycle_closure.advance_task_closure(
-            "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+            "056", self.worktree_root, supplied_project=self.primary)
         self.assertTrue(blocked)
         self.assertEqual(result["stop_code"], "REVIEW_NOT_APPROVED")
         self.assertEqual(result["step"], "C6")
@@ -397,7 +399,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.commit()
         with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
             result, blocked = owner_lifecycle_closure.advance_task_closure(
-                "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+                "056", self.worktree_root, supplied_project=self.primary)
         stage.assert_not_called()
         self.assertTrue(blocked)
         self.assertEqual((result["step"], result["stop_code"]), ("C6", "TASK_STATE_INVALID"))
@@ -416,7 +418,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 return_value=({"step": "C2", "stop_reason": "VALIDATION_FAILED", "resume": reason}, False),
             ):
                 result, blocked = owner_lifecycle_closure.advance_task_closure(
-                    "056", self.worktree_root, [], [], accepted=True, supplied_project=self.primary)
+                    "056", self.worktree_root, supplied_project=self.primary)
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_detail"], reason or "")
 
@@ -434,7 +436,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 before = {path: self.git("write-tree", cwd=path).stdout for path in (self.primary, self.worker)}
                 with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
                     result, blocked = owner_lifecycle_closure.advance_task_closure(
-                        "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+                        "056", self.worktree_root, supplied_project=self.primary)
                 stage.assert_not_called()
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING" if missing else "TASK_STATE_INVALID")
@@ -456,7 +458,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertFalse((self.worker / ".cardine/tasks").exists())
         with mock.patch.object(owner_lifecycle_closure, "stage_task_integration") as stage:
             result, blocked = owner_lifecycle_closure.advance_task_closure(
-                "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+                "056", self.worktree_root, supplied_project=self.primary)
         stage.assert_not_called()
         self.assertTrue(blocked)
         self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
@@ -477,7 +479,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     self.commit()
                 before = self.git("write-tree", cwd=self.worker).stdout
                 result, blocked = owner_lifecycle_closure.advance_task_closure(
-                    "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+                    "056", self.worktree_root, supplied_project=self.primary)
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
                 self.assertIn("task state import 056", result["resume"])
@@ -490,7 +492,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_advance_governed_missing_state_keeps_import_resume(self):
         self.start()
         result, blocked = owner_lifecycle_closure.advance_task_closure(
-            "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+            "056", self.worktree_root, supplied_project=self.primary)
         self.assertTrue(blocked)
         # Both presets now use the same contract-aware closure recovery.
         self.assertIn("task state import 056", result["resume"])
@@ -501,10 +503,11 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_advance_terminal_state_reaches_stage(self):
         self.start(workflow="single", preset="lean")
         self.write_state(required=False)
+        self.measure_worker()
         original = owner_integration_merge.stage_task_integration
         with mock.patch.object(owner_lifecycle_closure, "stage_task_integration", wraps=original) as stage:
             result, blocked = owner_lifecycle_closure.advance_task_closure(
-                "056", self.worktree_root, ["test task"], [0], accepted=True, supplied_project=self.primary)
+                "056", self.worktree_root, supplied_project=self.primary)
         stage.assert_called_once()
         self.assertFalse(blocked)
         self.assertEqual(result["action_required"], "run-candidate-validation")

@@ -41,14 +41,16 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "config", "maintenance.auto", "false"], cwd=self.project, check=True)
         self.worktree_root = self.root / "worktrees"
         self.worktree_root.mkdir()
-        self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
+        # Validation results bind the environment, so every process of a test shares one.
+        self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root),
+                                                        'PYTHONPATH': str(ROOT / 'src')})
         self.environment.start()
         self.addCleanup(self.environment.stop)
         if not seed:
             return
         (self.project / "tasks").mkdir()
         (self.project / "tasks/056-lifecycle.md").write_text(
-            contract_record("056"), encoding="utf-8"
+            contract_record("056").replace("Change the documented deliverable only.", "- `**`"), encoding="utf-8"
         )
         (self.project / "tasks/QUEUE.md").write_text(
             "| Status | ID | Title |\n|---|---|---|\n| `[ ]` | 056 | Lifecycle |\n",
@@ -57,6 +59,14 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         write_state(self.project, "056", "in_progress", review_required=False)
         subprocess.run(["git", "add", "."], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "initial"], cwd=self.project, check=True, capture_output=True)
+
+    def git(self, *arguments: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(["git", *arguments], cwd=cwd or self.project, text=True, capture_output=True, check=True)
+
+    def measure(self, worktree: Path) -> None:
+        """Deliver and validate through the real engine; landing reads only that attempt."""
+        from worktree_support import measure_task
+        measure_task(self, worktree, "056")
 
     def commit_abort_receipts(self):
         identity = owner_tasks_identity.resolve_task_identity(self.project, '056', 'existing')
@@ -288,26 +298,12 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
         state, lease, integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
-        task_commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=worktree, check=True, capture_output=True, text=True
-        ).stdout.strip()
-        evidence = {
-            "accepted": True,
-            "validation_passed": True,
-            "validated_task_commit": task_commit,
-            "validated_base_commit": json.loads(prepared.stdout)["base_commit"],
-            "full_validation_required": False,
-            "interaction_assessment_complete": True,
-            "task_paths": [],
-            "task_dependencies": [],
-            "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }
-        evidence_path = state.with_suffix(".evidence.json")
-        evidence_path.write_text(json.dumps({**evidence, "validated_task_commit": "0" * 40}), encoding="utf-8")
+        # A declared evidence file is never read: only the measured attempt moves C5 to C6.
+        forged = state.with_suffix(".evidence.json")
+        forged.write_text(json.dumps({"accepted": True, "validation_passed": True}), encoding="utf-8")
         status("C5", "EVIDENCE_INCOMPLETE")
-        evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+        forged.unlink()
+        self.measure(worktree)
         status("C6", None)
         legacy = self.project / ".cardine/budget.json"
         legacy.parent.mkdir(exist_ok=True)
@@ -316,7 +312,6 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         status("C6", "PRIMARY_DIRTY", resume_contains="primary checkout is dirty")
         subprocess.run(["git", "reset", "HEAD", "--", ".cardine/budget.json"], cwd=self.project, check=True)
         legacy.unlink()
-        evidence_path.unlink()
         lease.write_text(json.dumps({"task_id": identity.canonical_id}), encoding="utf-8")
         integration.write_text(json.dumps({"task_id": identity.canonical_id}), encoding="utf-8")
         status("C7", None)
@@ -340,7 +335,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         worktree = self.worktree_root / "removed"
         status("C10", None)
 
-    def _stage_ready_task_with_origin(self, local_ahead: bool = False) -> Path:
+    def _stage_ready_task_with_origin(self, local_ahead: bool = False, *, measured: bool = True) -> Path:
+        """Prepare and measure a completed task branch; returns its worktree."""
         self.create_bare_origin()
         subprocess.run(["git", "push", "-u", "origin", "main"], cwd=self.project, check=True, capture_output=True)
         if local_ahead:
@@ -374,34 +370,15 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         (worktree / "implementation.txt").write_text("done\n", encoding="utf-8")
         subprocess.run(["git", "add", "implementation.txt"], cwd=worktree, check=True)
         subprocess.run(["git", "commit", "-m", "complete task"], cwd=worktree, check=True, capture_output=True)
-        identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
-        state, _lease, _integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
-        task_commit = subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=worktree, check=True, capture_output=True, text=True
-        ).stdout.strip()
-        validated_base = subprocess.run(
-            ["git", "rev-parse", "main"], cwd=self.project, check=True, capture_output=True, text=True
-        ).stdout.strip()
-        state.with_suffix(".evidence.json").write_text(json.dumps({
-            "accepted": True,
-            "validation_passed": True,
-            "validated_task_commit": task_commit,
-            "validated_base_commit": validated_base,
-            "full_validation_required": False,
-            "interaction_assessment_complete": True,
-            "task_paths": [],
-            "task_dependencies": [],
-            "task_behavioral_surfaces": [],
-            "main_advanced_dependencies": [],
-            "main_advanced_behavioral_surfaces": [],
-        }), encoding="utf-8")
-        return state.with_suffix(".evidence.json")
+        if measured:
+            self.measure(worktree)
+        return worktree
 
     def test_integrate_stage_blocks_when_fetched_origin_main_is_ahead(self) -> None:
         renamed = self.root / "project with spaces"
         self.project.rename(renamed)
         self.project = renamed
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
+        worktree = self._stage_ready_task_with_origin(local_ahead=True)
         subprocess.run(["git", "push", "origin", "main"], cwd=self.project, check=True, capture_output=True)
         remote = self.root / "origin.git"
         clone = self.root / "origin-writer"
@@ -416,7 +393,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
         result = self.run_cli(
             "worktree", "integrate", "stage", "056", "--project", str(self.project),
-            "--worktree-root", str(self.worktree_root), "--evidence", str(evidence_path),
+            "--worktree-root", str(self.worktree_root),
             "--format", "json",
         )
         self.assertEqual(result.returncode, 0)
@@ -437,13 +414,13 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
         recovery = run_recovery(resume_from(result.stderr), self.project, self.worktree_root)
         self.assertEqual(recovery.returncode, 0, recovery.stderr)
-        staged = self.run_cli(*self._stage_args(evidence_path))
+        staged = self.run_cli(*self._stage_args())
         self.assertEqual(staged.returncode, 0, staged.stderr)
 
-    def _stage_args(self, evidence_path: Path) -> tuple[str, ...]:
+    def _stage_args(self) -> tuple[str, ...]:
         return (
             "worktree", "integrate", "stage", "056", "--project", str(self.project),
-            "--worktree-root", str(self.worktree_root), "--evidence", str(evidence_path), "--format", "json",
+            "--worktree-root", str(self.worktree_root), "--format", "json",
         )
 
     def test_stop_helper_formats_registered_codes_and_rejects_others(self) -> None:
@@ -543,9 +520,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
 
     def test_integrate_stage_reports_primary_dirty_through_the_registry(self) -> None:
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
+        worktree = self._stage_ready_task_with_origin(local_ahead=True)
         (self.project / "stray.txt").write_text("stray\n", encoding="utf-8")
-        result = self.run_cli(*self._stage_args(evidence_path))
+        result = self.run_cli(*self._stage_args())
         self.assertEqual(result.returncode, 2)
         self.assertEqual(
             result.stderr.strip(),
@@ -554,11 +531,11 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
 
     def test_integrate_stage_reports_a_held_lease_through_the_registry(self) -> None:
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
+        worktree = self._stage_ready_task_with_origin(local_ahead=True)
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
         _state, lease, _integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
         lease.write_text(json.dumps({"task_id": "056"}), encoding="utf-8")
-        result = self.run_cli(*self._stage_args(evidence_path))
+        result = self.run_cli(*self._stage_args())
         self.assertEqual(result.returncode, 2)
         self.assertEqual(
             result.stderr.strip(),
@@ -581,7 +558,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                                  control_host=True)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
         self.commit_abort_receipts()
-        restaged = self.run_cli(*self._stage_args(evidence_path))
+        restaged = self.run_cli(*self._stage_args())
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
 
@@ -589,9 +566,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         # Receipt-gated preparation rejects unsigned pre-contract inputs before
         # staging. Retain the Internal diagnostic's registered rendering contract.
         from cardine.integration.evidence import undeclared_validation_commands_error
-        error = undeclared_validation_commands_error(self.project, {})
+        error = undeclared_validation_commands_error(self.project)
         self.assertEqual(error.code, 'UNDECLARED_VALIDATION_COMMANDS')
-        self.assertIn('Task validation commands: none recorded.', str(error))
+        self.assertIn('Proposed declaration:', str(error))
         self.assertIn('resume: declare the missing execution or candidate validation policy', str(error))
 
     def test_integrate_stage_refuses_unsigned_precontract_state(self) -> None:
@@ -607,23 +584,23 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
 
     def test_integrate_stage_reports_an_integration_conflict_through_the_registry(self) -> None:
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
+        worktree = self._stage_ready_task_with_origin(local_ahead=True)
         (self.project / "implementation.txt").write_text("main side\n", encoding="utf-8")
         subprocess.run(["git", "add", "implementation.txt"], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "conflicting main change"], cwd=self.project, check=True, capture_output=True)
-        result = self.run_cli(*self._stage_args(evidence_path))
+        result = self.run_cli(*self._stage_args())
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertEqual(
             result.stderr.strip(),
             "BLOCKED INTEGRATION_CONFLICT: integration conflict was aborted; task branch and worktree were "
             "retained; resume: the developer resolves the conflict on the task branch, then rerun cardine "
-            f"worktree integrate stage 056 --project {self.project.resolve()} --evidence {evidence_path} "
+            f"worktree integrate stage 056 --project {self.project.resolve()} "
             "--format json",
         )
 
     def test_integrate_finalize_reports_an_evidence_mismatch_through_the_registry(self) -> None:
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
-        staged = self.run_cli(*self._stage_args(evidence_path))
+        worktree = self._stage_ready_task_with_origin(local_ahead=True)
+        staged = self.run_cli(*self._stage_args())
         self.assertEqual(staged.returncode, 0, staged.stderr)
         validation = self.root / "candidate-validation-evidence.json"
         validation.write_text(json.dumps({"passed": False}), encoding="utf-8")
@@ -641,7 +618,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         recovered = run_recovery(resume_from(result.stderr), self.project, self.worktree_root, control_host=True)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
         self.commit_abort_receipts()
-        restaged = self.run_cli(*self._stage_args(evidence_path))
+        restaged = self.run_cli(*self._stage_args())
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
     def test_cleanup_reports_blocked_cleanup_through_the_registry(self) -> None:
@@ -665,27 +642,31 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
 
     def test_integrate_stage_accepts_local_main_ahead_of_fetched_origin_main(self) -> None:
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
+        worktree = self._stage_ready_task_with_origin(local_ahead=True)
         result = self.run_cli(
             "worktree", "integrate", "stage", "056", "--project", str(self.project),
-            "--worktree-root", str(self.worktree_root), "--evidence", str(evidence_path),
+            "--worktree-root", str(self.worktree_root),
             "--format", "json",
         )
         self.assertNotIn("MAIN_BEHIND_ORIGIN", result.stderr + result.stdout)
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def _advance_ready_task(self, candidate_command="scripts/check_repository.py") -> Path:
-        """A completed task branch with origin and a handoff but no recorded evidence."""
+        """A completed task branch with origin and a handoff but no measured validation."""
         (self.project / "tasks/handoffs").mkdir()
         (self.project / "tasks/handoffs/056.md").write_text("# Completion Report — 056\n", encoding="utf-8")
         subprocess.run(["git", "add", "."], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "handoff"], cwd=self.project, check=True, capture_output=True)
-        evidence_path = self._stage_ready_task_with_origin(local_ahead=True)
-        evidence_path.unlink()
+        self._stage_ready_task_with_origin(local_ahead=True, measured=False)
         worktree = Path(json.loads(self.run_cli(
             "worktree", "path", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
         ).stdout)["path"])
+        # The task's own validation command really runs when the attempt is measured.
+        check = worktree / "scripts/check_repository.py"
+        check.parent.mkdir(exist_ok=True)
+        check.write_text("#!/usr/bin/env python3\nraise SystemExit(0)\n", encoding="utf-8")
+        check.chmod(0o755)
         # Freeze the gate this fixture exercises before creating its contract.
         record = worktree / "tasks/056-lifecycle.md"
         record.write_text(record.read_text().replace("python3 -c 'pass'", candidate_command))
@@ -703,7 +684,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         )
         subprocess.run(["git", "add", ".cardine/candidate-validation.json"], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "declare"], cwd=self.project, check=True, capture_output=True)
-        return evidence_path
+        return worktree
 
     def _advance(self, *extra: str) -> subprocess.CompletedProcess[str]:
         return self.run_cli(
@@ -711,15 +692,12 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "--worktree-root", str(self.worktree_root), *extra, "--format", "json",
         )
 
-    def _passing(self) -> tuple[str, ...]:
-        return ("--accepted", "--validation-command", "check", "--validation-exit-code", "0")
-
     def _journal(self) -> list[dict[str, object]]:
         journal = self.project / ".git/cardine-journal.jsonl"
         return [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
 
     def test_advance_runs_to_candidate_validation_and_reruns_without_repeating(self) -> None:
-        evidence_path = self._advance_ready_task()
+        worktree = self._advance_ready_task()
         waiting = self._advance()
         self.assertEqual(waiting.returncode, 0, waiting.stderr)
         report = json.loads(waiting.stdout)
@@ -727,46 +705,38 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             (report["step"], report["action_required"], report["stop_code"], report["performed"]),
             ("C5", "run-validation", "EVIDENCE_INCOMPLETE", []),
         )
-        self.assertFalse(evidence_path.exists())
 
-        result = self._advance(*self._passing())
+        self.measure(worktree)
+        result = self._advance()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual(set(report), {
             "version", "task_id", "step", "action_required", "commands", "required_fragments", "stop_code", "stop_detail", "resume", "performed",
         })
         self.assertEqual((report["step"], report["action_required"]), ("C7", "run-candidate-validation"))
-        self.assertEqual(report["performed"], ["C5", "C6"])
+        self.assertEqual(report["performed"], ["C6"])
         self.assertIsNone(report["stop_code"])
         self.assertIsNone(report["stop_detail"])
         self.assertEqual(report["version"], 1)
         self.assertEqual(report["commands"][0], "git diff --check")
-        self.assertEqual(report["commands"], ["git diff --check"])
+        self.assertEqual(report["commands"], ["git diff --check", "scripts/check_repository.py"])
         self.assertIn("scripts/check_repository.py", report["required_fragments"])
         self.assertIn("project command containing that exact fragment", report["resume"])
-        recorded = json.loads(evidence_path.read_text(encoding="utf-8"))
-        self.assertEqual(recorded["validation_commands"], ["check"])
         commands = [(line["command"], line["result"]) for line in self._journal()]
         self.assertEqual(
             [item for item in commands if item[0] not in ("advance", "prepare")],
-            [("evidence", "ok"), ("integrate stage", "ok")],
+            [("integrate stage", "ok")],
         )
 
-        before = evidence_path.read_text(encoding="utf-8")
         rerun = json.loads(self._advance().stdout)
         self.assertEqual((rerun["step"], rerun["action_required"], rerun["performed"]), ("C7", "run-candidate-validation", []))
         self.assertEqual(rerun["commands"], report["commands"])
-        self.assertEqual(evidence_path.read_text(encoding="utf-8"), before)
         self.assertEqual(
             [line["command"] for line in self._journal()].count("integrate stage"), 1
         )
 
     def test_advance_complete_commands_run_unchanged_and_finalize(self) -> None:
-        self._advance_ready_task(candidate_command="python3 scripts/check_repository.py")
-        script = self.project / "scripts/check_repository.py"
-        script.parent.mkdir(exist_ok=True)
-        script.write_text("from pathlib import Path\nassert Path('.cardine/project.json').is_file()\n", encoding="utf-8")
-        script.chmod(0o644)
+        worktree = self._advance_ready_task(candidate_command="python3 scripts/check_repository.py")
         command = "python3 scripts/check_repository.py"
         (self.project / cardine_cli.CANDIDATE_VALIDATION_PATH).write_text(json.dumps({
             "version": 1, "state": "declared",
@@ -775,7 +745,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "add", "."], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "runnable declaration"], cwd=self.project,
                        check=True, capture_output=True)
-        staged = self._advance(*self._passing())
+        self.measure(worktree)
+        staged = self._advance()
         self.assertEqual(staged.returncode, 0, staged.stderr)
         report = json.loads(staged.stdout)
         self.assertEqual(report["commands"], ["git diff --check", command])
@@ -790,21 +761,16 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(json.loads(finalized.stdout)["action_required"], "push")
 
     def test_advance_resumes_after_each_mechanical_step_and_reaches_cleanup(self) -> None:
-        self._advance_ready_task()
-        worktree = json.loads(self.run_cli(
-            "worktree", "path", "056", "--project", str(self.project),
-            "--worktree-root", str(self.worktree_root), "--format", "json",
-        ).stdout)["path"]
-        recorded = self.run_cli(
+        worktree = self._advance_ready_task()
+        self.measure(worktree)
+        reported = self.run_cli(
             "worktree", "evidence", "056", "--project", str(self.project),
-            "--worktree-root", str(self.worktree_root), "--accepted",
-            "--validation-command", "check", "--validation-exit-code", "0", "--format", "json",
-            cwd=Path(worktree),
+            "--worktree-root", str(self.worktree_root), "--format", "json", cwd=worktree,
         )
-        self.assertEqual(recorded.returncode, 0, recorded.stderr)
+        self.assertEqual(reported.returncode, 0, reported.stderr)
+        self.assertTrue(json.loads(reported.stdout)["validation_passed"])
         staged = json.loads(self._advance().stdout)
         self.assertEqual((staged["step"], staged["performed"]), ("C7", ["C6"]))
-        self.assertEqual([line["command"] for line in self._journal()].count("evidence"), 1)
 
         identity = owner_tasks_identity.resolve_task_identity(self.project, "056", "existing")
         _state, lease, integration = owner_worktree_storage._lifecycle_paths(self.project, identity)
@@ -832,51 +798,45 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual((again["action_required"], again["performed"]), ("none", []))
         self.assertEqual([line["command"] for line in self._journal()].count("cleanup"), 1)
 
-    def test_advance_stops_on_failed_or_unaccepted_validation_without_recording(self) -> None:
-        evidence_path = self._advance_ready_task()
-        failed = self._advance("--accepted", "--validation-command", "check", "--validation-exit-code", "1")
-        self.assertEqual(failed.returncode, 0, failed.stderr)
-        report = json.loads(failed.stdout)
-        self.assertEqual((report["step"], report["action_required"], report["stop_code"]), ("C2", "run-validation", "VALIDATION_FAILED"))
-        self.assertEqual(report["resume"], "fix the failure on the task branch and rerun the failing command")
-        self.assertEqual(report["stop_detail"], f"cardine run 056 --project {shlex.quote(str(self.project.resolve()))}")
-        unaccepted = self._advance("--validation-command", "check", "--validation-exit-code", "0")
-        self.assertEqual(unaccepted.returncode, 0, unaccepted.stderr)
-        self.assertEqual(json.loads(unaccepted.stdout)["stop_code"], "ACCEPTANCE_UNMET")
-        self.assertFalse(evidence_path.exists())
-        blocked = [line for line in self._journal() if line["result"] == "blocked"]
-        self.assertEqual(blocked, [])
-        diagnostics = [line for line in self._journal() if line["result"] == "iterate"]
-        self.assertEqual([(line["stop_code"], line["resolution"]) for line in diagnostics],
-                         [("VALIDATION_FAILED", "failing-work"), ("ACCEPTANCE_UNMET", "failing-work")])
-        mismatch = self._advance("--validation-command", "check")
-        self.assertNotEqual(mismatch.returncode, 0)
+    def test_advance_has_no_declared_result_options_and_stops_without_a_measured_attempt(self) -> None:
+        self._advance_ready_task()
+        for options in (("--accepted",), ("--validation-command", "check", "--validation-exit-code", "0")):
+            with self.subTest(options=options):
+                self.assertNotEqual(self._advance(*options).returncode, 0)
+        stopped = self._advance()
+        self.assertEqual(stopped.returncode, 0, stopped.stderr)
+        report = json.loads(stopped.stdout)
+        self.assertEqual((report["step"], report["action_required"], report["stop_code"], report["performed"]),
+                         ("C5", "run-validation", "EVIDENCE_INCOMPLETE", []))
+        self.assertEqual(report["resume"], f"cardine run 056 --project {shlex.quote(str(self.project.resolve()))}")
+        self.assertFalse(list((self.project / ".git/cardine-worktrees").glob("*.evidence.json")))
+        self.assertEqual([line for line in self._journal() if line["result"] == "blocked"], [])
 
-    def test_advance_without_task_commits_asks_for_work_and_never_runs_supplied_commands(self) -> None:
+    def test_advance_without_task_commits_asks_for_work(self) -> None:
         prepared = self.run_cli(
             "worktree", "prepare", "056", "--project", str(self.project),
             "--worktree-root", str(self.worktree_root), "--format", "json",
         )
         self.assertEqual(prepared.returncode, 0, prepared.stderr)
-        result = self._advance("--accepted", "--validation-command", "touch ran.txt", "--validation-exit-code", "0")
+        result = self._advance()
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual((report["step"], report["action_required"], report["stop_code"]), ("C1", "run-validation", "ACCEPTANCE_UNMET"))
-        self.assertFalse((self.project / "ran.txt").exists())
 
     def test_advance_reports_a_blocked_stage_as_a_stop(self) -> None:
-        evidence_path = self._advance_ready_task()
+        worktree = self._advance_ready_task()
+        self.measure(worktree)
         (self.project / "implementation.txt").write_text("main side\n", encoding="utf-8")
         subprocess.run(["git", "add", "implementation.txt"], cwd=self.project, check=True)
         subprocess.run(["git", "commit", "-m", "conflicting main change"], cwd=self.project, check=True, capture_output=True)
-        result = self._advance(*self._passing())
+        result = self._advance()
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual(
             (report["step"], report["action_required"], report["stop_code"], report["performed"]),
-            ("C6", "human", "INTEGRATION_CONFLICT", ["C5"]),
+            ("C6", "human", "INTEGRATION_CONFLICT", []),
         )
-        self.assertIn(str(evidence_path), report["resume"])
+        self.assertIn("integrate stage 056", report["resume"])
         self.assertEqual(report["stop_detail"],
                          "integration conflict was aborted; task branch and worktree were retained")
         last = self._journal()[-1]
@@ -885,7 +845,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
     def test_advance_names_the_resume_for_a_stop_the_agent_resolves(self) -> None:
         self._advance_ready_task()
         (self.project / "stray.txt").write_text("stray\n", encoding="utf-8")
-        result = self._advance(*self._passing())
+        result = self._advance()
         self.assertEqual(result.returncode, 2, result.stderr)
         report = json.loads(result.stdout)
         self.assertEqual(
@@ -903,8 +863,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         return self._candidate("git diff --check", "python3 scripts/check_repository.py", "python3 -m unittest discover")
 
     def _staged_at_c7(self) -> None:
-        self._advance_ready_task()
-        staged = json.loads(self._advance(*self._passing()).stdout)
+        self.measure(self._advance_ready_task())
+        staged = json.loads(self._advance().stdout)
         self.assertEqual(staged["step"], "C7", staged)
 
     def _main_subject(self) -> str:

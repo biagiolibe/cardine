@@ -34,7 +34,7 @@ PRESETS = ('lean', 'governed')
 
 
 class SingleWorkflowParityTest(unittest.TestCase):
-    def project(self, preset, *, review='required', spike=False):
+    def project(self, preset, *, review='required', spike=False, surface=False):
         # Reuse the real-Git execution fixture, without importing its test class
         # into this module's discovery namespace or mocking a lifecycle gate.
         fixture = boundaries.ExecutionBoundariesTest()
@@ -48,6 +48,8 @@ class SingleWorkflowParityTest(unittest.TestCase):
         if spike:
             text = text.replace('Class: standard', 'Class: spike\nQuestion: Is this feasible?\n'
                                 'Timebox: 1h\nDeliverable: docs/result.md')
+        if surface:
+            text = text.replace('Change the documented deliverable only.', '- `**`')
         record.write_text(text)
         state_path = fixture.worker / '.cardine/tasks/001.json'
         state = json.loads(state_path.read_text())
@@ -235,7 +237,7 @@ class SingleWorkflowParityTest(unittest.TestCase):
     def test_init_contract_state_review_and_landing_chain_for_both_presets(self):
         for preset, review in product(PRESETS, ('required', 'not_required')):
             with self.subTest(preset=preset, review=review):
-                f = self.project(preset, review=review)
+                f = self.project(preset, review=review, surface=True)
                 # Init's copy/config/lock sequence, preserving the fixture's
                 # owner-selected commands and bounded execution profile.
                 for source in (ROOT / 'templates/single').rglob('*'):
@@ -246,25 +248,29 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 lock_project(f.worker, ROOT, detect_mode(f.worker))
                 self.assertEqual(json.loads((f.worker / '.cardine/manifest.json').read_text())['workflowMode'], 'single')
                 f.commit('Initialize single distribution')
-                identity = f.implemented()
+                # Landing consumes the engine's measured attempt, not recorded results.
+                from cardine.lifecycle.engine import deliver_run_implementation, resolve_run_locations
+                from cardine.lifecycle.validation import run_task_validation
+                commands.execution_start(f.worker, '001')
+                (f.worker / 'feature.txt').write_text('implementation\n')
+                f.commit('Implement feature')
+                deliver_run_implementation(resolve_run_locations('001', f.worker))
+                run_task_validation(f.worker, '001')
+                f.commit('Record measured validation')
+                identity = resolve_task_identity(f.worker, '001', 'existing')
+                identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
+                identity.handoff_path.write_text('## Completion Report — 001\n\n- Files changed: feature.txt\n')
+                f.commit('Finalize handoff')
                 if review == 'required':
-                    commands.execution_deliver(f.worker, '001')
+                    transition_task_state(f.worker, '001', 'in_review')
+                    f.commit('Request review')
                     record_review_verdict(f.worker, '001', 'APPROVE')
                     f.commit('Record approved review')
                 closed = close_task(f.worker, '001')
                 self.assertEqual(closed['record'], 'tasks/001.md')
                 self.assertEqual(f.git('status', '--porcelain'), '')
-                head = f.git('rev-parse', 'HEAD')
-                evidence = Path(f.temp.name) / 'accepted.json'
-                evidence.write_text(json.dumps({
-                    'accepted': True, 'validation_passed': True,
-                    'validated_task_commit': head, 'validated_base_commit': f.git('rev-parse', 'main'),
-                    'full_validation_required': False, 'interaction_assessment_complete': True,
-                    'task_paths': [], 'task_dependencies': [], 'task_behavioral_surfaces': [],
-                    'main_advanced_dependencies': [], 'main_advanced_behavioral_surfaces': [],
-                }))
                 os.chdir(f.primary)
-                staged = merge.stage_task_integration('001', None, evidence, f.primary)
+                staged = merge.stage_task_integration('001', None, None, f.primary)
                 candidate = Path(f.temp.name) / 'candidate.json'
                 candidate.write_text(json.dumps({'candidate_tree': staged['candidate_tree'], 'passed': True,
                                                 'scope': 'bounded', 'commands': ['true', 'git diff --check']}))

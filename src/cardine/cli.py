@@ -13,7 +13,7 @@ import sys
 
 from cardine.hosts.codex import apply_codex_configuration, plan_codex_configuration, print_codex_configuration_plan
 from cardine.hosts.setup import apply_setup, codex_doctor, plan_setup, print_setup_plan
-from cardine.integration.evidence import check_validation_evidence, record_task_evidence
+from cardine.integration.evidence import check_validation_evidence, measured_validation_report
 from cardine.integration.merge import abort_task_integration, cleanup_task_worktree, finalize_task_integration, stage_task_integration
 from cardine.lifecycle.closure import advance_task_closure
 from cardine.lifecycle.commands import execution_deliver, execution_start
@@ -264,19 +264,11 @@ def build_parser() -> CardineArgumentParser:
     worktree_states.add_argument("--project", type=Path, default=Path.cwd())
     worktree_states.add_argument("--format", choices=("json",), required=True)
     worktree_evidence = worktree_sub.add_parser(
-        "evidence", description="Framework-internal: no compatibility promise.", help="record Git-derived task validation evidence without running commands (framework-internal)"
+        "evidence", description="Framework-internal: no compatibility promise.", help="report the measured, receipt-verified task validation without running commands (framework-internal)"
     )
     worktree_evidence.add_argument("task_id")
     worktree_evidence.add_argument("--project", type=Path)
     worktree_evidence.add_argument("--worktree-root", type=Path)
-    worktree_evidence.add_argument("--accepted", action="store_true")
-    worktree_evidence.add_argument("--validation-command", action="append", default=[])
-    worktree_evidence.add_argument("--validation-exit-code", action="append", type=int, default=[])
-    worktree_evidence.add_argument("--task-dependency", action="append", default=[])
-    worktree_evidence.add_argument("--task-behavioral-surface", action="append", default=[])
-    worktree_evidence.add_argument("--main-advanced-dependency", action="append", default=[])
-    worktree_evidence.add_argument("--main-advanced-behavioral-surface", action="append", default=[])
-    worktree_evidence.add_argument("--full-validation-required", action="store_true")
     worktree_evidence.add_argument("--format", choices=("json",), required=True)
     worktree_closure_status = worktree_sub.add_parser(
         "closure-status", description="Framework-internal: no compatibility promise.", help="report the next closure step without changing lifecycle state (framework-internal)"
@@ -291,9 +283,6 @@ def build_parser() -> CardineArgumentParser:
     worktree_advance.add_argument("task_id")
     worktree_advance.add_argument("--project", type=Path)
     worktree_advance.add_argument("--worktree-root", type=Path)
-    worktree_advance.add_argument("--accepted", action="store_true")
-    worktree_advance.add_argument("--validation-command", action="append", default=[])
-    worktree_advance.add_argument("--validation-exit-code", action="append", type=int, default=[])
     worktree_advance.add_argument("--candidate-command", action="append", default=[])
     worktree_advance.add_argument("--candidate-exit-code", action="append", type=int, default=[])
     worktree_advance.add_argument("--format", choices=("json",), required=True)
@@ -303,7 +292,7 @@ def build_parser() -> CardineArgumentParser:
     integrate_stage.add_argument("task_id")
     integrate_stage.add_argument("--project", type=Path)
     integrate_stage.add_argument("--worktree-root", type=Path)
-    integrate_stage.add_argument("--evidence", type=Path, required=True)
+    integrate_stage.add_argument("--evidence", type=Path)
     integrate_stage.add_argument("--format", choices=("json",), required=True)
     integrate_finalize = integrate_sub.add_parser("finalize", help="commit an exactly validated staged candidate")
     integrate_finalize.add_argument("task_id")
@@ -676,19 +665,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     )
                     return emit_diagnostic(mismatch, journal)
             elif arguments.worktree_command == "evidence":
-                recorded = (record_task_evidence(
+                recorded = measured_validation_report(
                     arguments.task_id,
                     arguments.worktree_root,
-                    arguments.validation_command,
-                    arguments.validation_exit_code,
-                    accepted=arguments.accepted,
-                    task_dependencies=arguments.task_dependency,
-                    task_behavioral_surfaces=arguments.task_behavioral_surface,
-                    main_advanced_dependencies=arguments.main_advanced_dependency,
-                    main_advanced_behavioral_surfaces=arguments.main_advanced_behavioral_surface,
-                    full_validation_required=arguments.full_validation_required,
                     supplied_project=project_root,
-                ))
+                )
                 journal.observe(recorded)
                 print(json.dumps(recorded, sort_keys=True))
             elif arguments.worktree_command == "closure-status":
@@ -716,9 +697,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 advanced, blocked = advance_task_closure(
                     arguments.task_id,
                     arguments.worktree_root,
-                    arguments.validation_command,
-                    arguments.validation_exit_code,
-                    accepted=arguments.accepted,
                     supplied_project=project_root,
                     candidate_commands=arguments.candidate_command,
                     candidate_exit_codes=arguments.candidate_exit_code,

@@ -47,7 +47,8 @@ EMITTING_CALLS = frozenset({"stop_error", "stop_factory", "stop_resume", "format
 POINTS = ("before_intent", "after_intent", "before_staged_pair", "after_staged_pair",
           "before_state_replace", "after_state_replace", "before_result_receipt", "after_result_receipt")
 RESIDUE_POINTS = frozenset(POINTS[1:])
-STAGE_KILL_POINTS = ("before_merge", "after_merge", *POINTS, "after_views")
+STAGE_BOUNDARIES = ("before_stage_lease", "after_stage_lease", "before_stage_json", "after_stage_json")
+STAGE_KILL_POINTS = ("before_merge", "after_merge", *POINTS, "after_views", *STAGE_BOUNDARIES)
 SPLIT = {"WORKTREE_RELOCATE", "LEASE_INTERRUPTED", "TASK_STATE_INTERRUPTED", "CLEANUP_PARTIAL"}
 
 
@@ -93,6 +94,7 @@ class RunRecoveryTest(unittest.TestCase):
     create_bare_origin = lifecycle.WorktreeLifecycleCliTest.create_bare_origin
     _stage_ready_task_with_origin = lifecycle.WorktreeLifecycleCliTest._stage_ready_task_with_origin
     _stage_args = lifecycle.WorktreeLifecycleCliTest._stage_args
+    measure = lifecycle.WorktreeLifecycleCliTest.measure
 
     def git(self, *args: str, cwd: Path | None = None) -> str:
         return subprocess.run(["git", *args], cwd=cwd or self.project, check=True, capture_output=True,
@@ -178,14 +180,14 @@ class RunRecoveryTest(unittest.TestCase):
     # LEASE_INTERRUPTED ------------------------------------------------------------
 
     def test_owned_interrupted_lease_recovers_and_foreign_ownership_stays_held(self) -> None:
-        evidence = self._stage_ready_task_with_origin(local_ahead=True)
+        self._stage_ready_task_with_origin(local_ahead=True)
         lease = self.lease()
         owned_bytes = lease.read_bytes()
-        result = self.run_cli(*self._stage_args(evidence))
+        result = self.run_cli(*self._stage_args())
         self.assertEqual(result.returncode, 0)
         self.assertTrue(result.stderr.startswith("NEXT LEASE_INTERRUPTED:"), result.stderr)
         self.assertEqual(lease.read_bytes(), owned_bytes)  # classification wrote nothing
-        again = self.run_cli(*self._stage_args(evidence))
+        again = self.run_cli(*self._stage_args())
         self.assertEqual(again.stderr, result.stderr)  # repeated resolution is stable
         status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
                               "--worktree-root", str(self.worktree_root), "--format", "json")
@@ -197,11 +199,11 @@ class RunRecoveryTest(unittest.TestCase):
             owner_storage._lifecycle_paths(self.project, self.identity())[0], 'worktree')['worktree'])
         self.git('add', '--', '.cardine/tasks/056.json', cwd=worker)
         self.git('commit', '-m', 'Record owned abort receipts', cwd=worker)
-        restaged = self.run_cli(*self._stage_args(evidence))
+        restaged = self.run_cli(*self._stage_args())
         self.assertEqual(restaged.returncode, 0, restaged.stderr)
 
     def test_lease_without_ownership_proof_stays_held(self) -> None:
-        evidence = self._stage_ready_task_with_origin(local_ahead=True)
+        self._stage_ready_task_with_origin(local_ahead=True)
         for label, write in (
             ("other task", lambda: self.lease(task_id="057")),
             ("other branch", lambda: self.lease(branch="task-057")),
@@ -212,7 +214,7 @@ class RunRecoveryTest(unittest.TestCase):
             with self.subTest(label):
                 lease = write()
                 before = lease.read_bytes()
-                result = self.run_cli(*self._stage_args(evidence))
+                result = self.run_cli(*self._stage_args())
                 self.assertTrue(result.stderr.startswith("BLOCKED LEASE_HELD:"), result.stderr)
                 self.assertEqual(lease.read_bytes(), before)
                 lease.unlink()
@@ -223,10 +225,10 @@ class RunRecoveryTest(unittest.TestCase):
         return lease_path
 
     def test_live_writer_keeps_an_owned_lease_held(self) -> None:
-        evidence = self._stage_ready_task_with_origin(local_ahead=True)
+        self._stage_ready_task_with_origin(local_ahead=True)
         lease = self.lease()
         self.hold_writer()
-        result = self.run_cli(*self._stage_args(evidence))
+        result = self.run_cli(*self._stage_args())
         self.assertTrue(result.stderr.startswith("BLOCKED LEASE_HELD:"), result.stderr)
         self.assertTrue(lease.exists())
 
@@ -262,7 +264,7 @@ class RunRecoveryTest(unittest.TestCase):
         self.assertEqual(json.loads(status.stdout)["stop_reason"], "LEASE_HELD")
         self.assertTrue(merge_head.is_file())  # nothing aborted the foreign merge
 
-    def kill_stage(self, point: str, evidence: Path) -> None:
+    def kill_stage(self, point: str) -> None:
         script = (
             "import os, sys\nfrom pathlib import Path\nfrom cardine.integration import merge\n"
             "from cardine.lifecycle import receipts\npoint = sys.argv[1]\nreal = merge._run_git\n"
@@ -279,19 +281,37 @@ class RunRecoveryTest(unittest.TestCase):
             "if point == 'after_views': merge._regenerate_status_views = regenerated\n"
             "def stop(name):\n    if name == point: os._exit(77)\n"
             "if point in %r: receipts.boundary = stop\n"
-            "merge.stage_task_integration('056', Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))\n" % (POINTS,))
-        self.kill_writer(script, point, str(self.worktree_root), str(evidence), str(self.project))
+            "merge.stage_task_integration('056', Path(sys.argv[2]), None, Path(sys.argv[3]))\n" % ((*POINTS, *STAGE_BOUNDARIES),))
+        self.kill_writer(script, point, str(self.worktree_root), str(self.project))
 
     def assert_stage_kill_recovers(self, point: str) -> None:
-        evidence = self._stage_ready_task_with_origin(local_ahead=True)
+        self._stage_ready_task_with_origin(local_ahead=True)
         self.enter_project()
         head = self.git("rev-parse", "HEAD")
-        self.kill_stage(point, evidence)
-        status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
-                              "--worktree-root", str(self.worktree_root), "--format", "json")
-        self.assertEqual(json.loads(status.stdout)["stop_reason"], "LEASE_INTERRUPTED")
+        self.kill_stage(point)
+        if point == "before_stage_lease":
+            # Nothing was created: the identical command simply stages.
+            _state, lease, integration = owner_storage._lifecycle_paths(self.project, self.identity())
+            self.assertFalse(lease.exists() or integration.exists())
+            self.assertEqual(self.git("status", "--porcelain"), "")
+            self.assertEqual(self.run_cli(*self._stage_args()).returncode, 0)
+            return
+        if point == "after_stage_json":
+            # The candidate was fully staged: the identical command returns it unchanged.
+            _state, _lease, integration = owner_storage._lifecycle_paths(self.project, self.identity())
+            stored = json.loads(integration.read_text(encoding="utf-8"))
+            again = self.run_cli(*self._stage_args())
+            self.assertEqual(again.returncode, 0, again.stderr)
+            self.assertEqual(json.loads(again.stdout), stored)
+            resume = ("cardine worktree integrate abort 056 --project " + str(self.project) + " --format json")
+        else:
+            status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
+                                  "--worktree-root", str(self.worktree_root), "--format", "json")
+            self.assertEqual(json.loads(status.stdout)["stop_reason"], "LEASE_INTERRUPTED")
+            resume = json.loads(status.stdout)["resume"]
         residue = sorted(line[3:] for line in self.git("status", "--porcelain").splitlines() if line.startswith("??"))
-        recovered = run_recovery(json.loads(status.stdout)["resume"], self.project, self.worktree_root)
+        self.assertEqual(bool(residue), point in RESIDUE_POINTS)
+        recovered = run_recovery(resume, self.project, self.worktree_root)
         self.assertEqual(recovered.returncode, 0, recovered.stderr)
         self.assertEqual(self.git("rev-parse", "HEAD"), head)  # no commit was made
         _state, lease, integration = owner_storage._lifecycle_paths(self.project, self.identity())
@@ -300,18 +320,105 @@ class RunRecoveryTest(unittest.TestCase):
             owner_storage._lifecycle_paths(self.project, self.identity())[0], 'worktree')['worktree'])
         self.git('add', '--', '.cardine/tasks/056.json', cwd=worker)
         self.git('commit', '-m', 'Record owned abort receipts', cwd=worker)
-        restaged = self.run_cli(*self._stage_args(evidence))
+        restaged = self.run_cli(*self._stage_args())
+        # Owned residue is cleared as a recorded effect and the identical stage converges.
+        self.assertEqual(restaged.returncode, 0, restaged.stderr)
+        state = json.loads((self.project / ".cardine/tasks/056.json").read_text())
+        landing = [item for item in state["run"]["receipts"] if item["kind"] == "landing_state"]
+        self.assertEqual(len(landing), 1)  # exactly one landing receipt after recovery
+        self.assertEqual(self.git("rev-parse", "HEAD"), head)
+        self.assertEqual([line for line in self.git("status", "--porcelain").splitlines() if line.startswith("??")], [])
         if point in RESIDUE_POINTS:
-            # Engine-owned landing residue is preserved, not guessed away; its replay is RE5a's.
-            self.assertTrue(restaged.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), restaged.stderr)
-            self.assertEqual(sorted(line[3:] for line in self.git("status", "--porcelain").splitlines()
-                                    if line.startswith("??")), residue)
-        else:
-            self.assertEqual(restaged.returncode, 0, restaged.stderr)
-            state = json.loads((self.project / ".cardine/tasks/056.json").read_text())
-            landing = [item for item in state["run"]["receipts"] if item["kind"] == "landing_state"]
-            self.assertEqual(len(landing), 1)  # exactly one landing receipt after recovery
-            self.assertEqual(self.git("rev-parse", "HEAD"), head)
+            record = receipts.safe_path(owner_storage.canonical_git_common_dir(self.project),
+                                        "cardine-operations/056.residue.json")
+            self.assertEqual(receipts._load_intent(record)["result"], "verified")
+
+    # Engine-owned landing residue ---------------------------------------------------
+
+    def residue_ready(self) -> str:
+        """Kill a stage inside the landing write, abort it, and return the untouched main commit."""
+        self._stage_ready_task_with_origin(local_ahead=True)
+        self.enter_project()
+        head = self.git("rev-parse", "HEAD")
+        self.kill_stage("after_staged_pair")
+        status = self.run_cli("worktree", "closure-status", "056", "--project", str(self.project),
+                              "--worktree-root", str(self.worktree_root), "--format", "json")
+        recovered = run_recovery(json.loads(status.stdout)["resume"], self.project, self.worktree_root)
+        self.assertEqual(recovered.returncode, 0, recovered.stderr)
+        worker = Path(owner_storage._read_json_object(
+            owner_storage._lifecycle_paths(self.project, self.identity())[0], "worktree")["worktree"])
+        self.git("add", "--", ".cardine/tasks/056.json", cwd=worker)
+        self.git("commit", "-m", "Record owned abort receipts", cwd=worker)
+        return head
+
+    def residue_paths(self) -> list[str]:
+        return sorted(line[3:] for line in self.git("status", "--porcelain").splitlines() if line.startswith("??"))
+
+    def residue_record(self) -> Path:
+        return receipts.safe_path(owner_storage.canonical_git_common_dir(self.project),
+                                  "cardine-operations/056.residue.json")
+
+    def kill_residue(self, point: str) -> None:
+        script = (
+            "import os, sys\nfrom pathlib import Path\nfrom cardine.integration import merge\n"
+            "from cardine.lifecycle import receipts\n"
+            "def stop(name):\n    if name == sys.argv[1]: os._exit(77)\n"
+            "receipts.boundary = stop\n"
+            "merge.stage_task_integration('056', Path(sys.argv[2]), None, Path(sys.argv[3]))\n")
+        self.kill_writer(script, point, str(self.worktree_root), str(self.project))
+
+    def assert_residue_clear_converges(self, point: str) -> None:
+        head = self.residue_ready()
+        self.assertTrue(self.residue_paths())
+        self.kill_residue(point)
+        restaged = self.run_cli(*self._stage_args())
+        self.assertEqual(restaged.returncode, 0, restaged.stderr)
+        state = json.loads((self.project / ".cardine/tasks/056.json").read_text())
+        self.assertEqual(sum(item["kind"] == "landing_state" for item in state["run"]["receipts"]), 1)
+        self.assertEqual(self.git("rev-parse", "HEAD"), head)
+        self.assertEqual(self.residue_paths(), [])
+        self.assertEqual(receipts._load_intent(self.residue_record())["result"], "verified")
+
+    def test_changed_residue_bytes_stay_dirty_and_are_preserved(self) -> None:
+        self.residue_ready()
+        before = self.residue_paths()
+        staged = next(path for path in before if path.endswith(".stage"))
+        with (self.project / staged).open("ab") as handle:
+            handle.write(b"foreign edit\n")
+        content = {path: (self.project / path).read_bytes() for path in before}
+        result = self.run_cli(*self._stage_args())
+        self.assertTrue(result.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), result.stderr)
+        self.assertEqual({path: (self.project / path).read_bytes() for path in before}, content)
+        self.assertFalse(self.residue_record().exists())
+
+    def test_foreign_dirt_beside_owned_residue_preserves_everything(self) -> None:
+        self.residue_ready()
+        (self.project / "foreign.txt").write_text("dirt\n")
+        before = self.residue_paths()
+        result = self.run_cli(*self._stage_args())
+        self.assertTrue(result.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), result.stderr)
+        self.assertEqual(self.residue_paths(), before)
+        self.assertEqual((self.project / "foreign.txt").read_text(), "dirt\n")
+
+    def test_residue_operation_of_another_source_is_foreign_and_residue_survives(self) -> None:
+        self.residue_ready()
+        before = self.residue_paths()
+        record = self.residue_record()
+        record.parent.mkdir(parents=True, exist_ok=True)
+        receipts._save_intent(record, dict(task_id="056", head="0" * 40, authority={}, intent="x",
+                                           intent_digest="x", staged={}, result="pending"))
+        result = self.run_cli(*self._stage_args())
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("foreign landing residue operation", result.stderr)
+        self.assertEqual(self.residue_paths(), before)
+
+    def test_recovered_residue_is_not_replayed_for_a_later_clean_stage(self) -> None:
+        self.residue_ready()
+        self.assertEqual(self.run_cli(*self._stage_args()).returncode, 0)
+        before = self.residue_record().read_bytes()
+        again = self.run_cli(*self._stage_args())
+        self.assertEqual(again.returncode, 0, again.stderr)
+        self.assertEqual(self.residue_record().read_bytes(), before)
 
     # TASK_STATE_INTERRUPTED -------------------------------------------------------
 
@@ -581,9 +688,9 @@ class RunRecoveryTest(unittest.TestCase):
         self.assertTrue(lease.exists())
 
     def test_dirty_primary_checkout_stays_a_guardrail(self) -> None:
-        evidence = self._stage_ready_task_with_origin(local_ahead=True)
+        self._stage_ready_task_with_origin(local_ahead=True)
         (self.project / "foreign.txt").write_text("dirt\n", encoding="utf-8")
-        result = self.run_cli(*self._stage_args(evidence))
+        result = self.run_cli(*self._stage_args())
         self.assertTrue(result.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), result.stderr)
         self.assertEqual((self.project / "foreign.txt").read_text(), "dirt\n")
 
@@ -596,6 +703,20 @@ def _stage_kill_test(point: str):
 
 for _point in STAGE_KILL_POINTS:
     setattr(RunRecoveryTest, f"test_stage_killed_at_{_point}_recovers_the_owned_lease", _stage_kill_test(_point))
+
+
+RESIDUE_BOUNDARIES = ("before_residue_intent", "after_residue_intent", "before_residue_unlink",
+                      "after_residue_unlink", "before_residue_result", "after_residue_result")
+
+
+def _residue_kill_test(point: str):
+    def test(self: RunRecoveryTest) -> None:
+        self.assert_residue_clear_converges(point)
+    return test
+
+
+for _point in RESIDUE_BOUNDARIES:
+    setattr(RunRecoveryTest, f"test_residue_clear_killed_at_{_point}_converges", _residue_kill_test(_point))
 
 
 if __name__ == "__main__":

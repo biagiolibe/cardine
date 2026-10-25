@@ -149,7 +149,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 100 — Resolve each command's context once and bound its Git subprocesses.
 - `[x]` 102 — Launch implementer and reviewer with distinct host roles (RE4a).
 - `[x]` 103 — Bind verdict, cancel, and abort to issued roles (RE4b).
-- `[ ]` 104 — Decide landing from pinned policy and Git facts (RE5a).
+- `[x]` 104 — Decide landing from pinned policy and Git facts (RE5a).
 - `[ ]` 105 — Run candidate validation and reconcile finalize and abort (RE5b).
 - `[ ]` 106 — Query CI by exact repository and commit (RE6a).
 - `[ ]` 107 — Verify the main push and clean up remote and local branches (RE6b).
