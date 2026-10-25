@@ -86,6 +86,7 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/hosts/launch.py", "ProfileAdapter.profiles", "COMMAND_REFUSED"): ("guardrail", "missing, shared or unenforced host role profiles require separately authorized host configuration; never fall back"),
     ("src/cardine/tasks/recording.py", "record_validation", "WRONG_WORKTREE"): ("guardrail", "a task branch cannot record another task's evidence"),
     ("src/cardine/lifecycle/engine.py", "diagnostic_result", "COMMAND_REFUSED"): ("guardrail", "unregistered or untyped diagnostic cannot authorize repair"),
     ("src/cardine/lifecycle/engine.py", "run_preview_cli", "COMMAND_REFUSED"): ("guardrail", "unknown resolved-task failure has no safe ownership or recovery proof"),
