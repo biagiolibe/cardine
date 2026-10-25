@@ -36,8 +36,13 @@ def record_validation(project_root: Path, task_id: str, command_id: str, command
     entries = list(state.get(canonical_id, []))
     entries.append({"id": command_id, "command": command, "exitStatus": status, **(binding or {})})
     state[canonical_id] = entries
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    from cardine.lifecycle import receipts
+    from cardine.tasks.evidence import require_measured_ledger
+    with receipts.task_lock(project_root, canonical_id):
+        previous = require_measured_ledger(project_root, canonical_id)
+        receipts.verify_receipts(project_root, previous)
+        receipts.write_operation(project_root, canonical_id, previous, previous=previous,
+            kind='validation-command', files={path.relative_to(project_root).as_posix(): receipts.encoded(state)})
 
 
 def run_validation(project_root: Path, task_id: str, command_id: str) -> int:

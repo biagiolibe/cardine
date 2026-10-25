@@ -743,6 +743,291 @@
               "pattern": "^[a-f0-9]{64}$"
             }
           }
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "attemptId",
+            "inputs",
+            "runs",
+            "phase",
+            "consecutiveFailures",
+            "intermittent",
+            "evidence",
+            "hostObservations",
+            "acceptanceReferences"
+          ],
+          "properties": {
+            "attemptId": {
+              "type": "string"
+            },
+            "inputs": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "contractDigest",
+                "source",
+                "sourceDigest",
+                "commandDigest",
+                "environmentDigest",
+                "commands",
+                "skips",
+                "sourceTree",
+                "cwd"
+              ],
+              "properties": {
+                "contractDigest": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "sourceDigest": {
+                  "type": "string"
+                },
+                "commandDigest": {
+                  "type": "string"
+                },
+                "environmentDigest": {
+                  "type": "string"
+                },
+                "commands": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "skips": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "command",
+                      "reason"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "reason": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "sourceTree": {
+                  "type": "string"
+                },
+                "cwd": {
+                  "type": "string"
+                }
+              }
+            },
+            "runs": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "command",
+                    "commit",
+                    "sourceDigest",
+                    "attemptId",
+                    "log",
+                    "stdout",
+                    "stderr",
+                    "exitStatus",
+                    "round",
+                    "stdoutTruncated",
+                    "stderrTruncated"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "command": {
+                      "type": "string"
+                    },
+                    "commit": {
+                      "type": "string"
+                    },
+                    "sourceDigest": {
+                      "type": "string"
+                    },
+                    "attemptId": {
+                      "type": "string"
+                    },
+                    "log": {
+                      "type": "string"
+                    },
+                    "stdout": {
+                      "type": "string"
+                    },
+                    "stderr": {
+                      "type": "string"
+                    },
+                    "exitStatus": {
+                      "type": "integer"
+                    },
+                    "round": {
+                      "type": "integer"
+                    },
+                    "stdoutTruncated": {
+                      "type": "boolean"
+                    },
+                    "stderrTruncated": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            },
+            "phase": {
+              "enum": [
+                "passed",
+                "failed"
+              ]
+            },
+            "consecutiveFailures": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "intermittent": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "command",
+                  "commit",
+                  "sourceDigest",
+                  "attemptId",
+                  "log",
+                  "stdout",
+                  "stderr",
+                  "exitStatus",
+                  "round",
+                  "stdoutTruncated",
+                  "stderrTruncated"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "command": {
+                    "type": "string"
+                  },
+                  "commit": {
+                    "type": "string"
+                  },
+                  "sourceDigest": {
+                    "type": "string"
+                  },
+                  "attemptId": {
+                    "type": "string"
+                  },
+                  "log": {
+                    "type": "string"
+                  },
+                  "stdout": {
+                    "type": "string"
+                  },
+                  "stderr": {
+                    "type": "string"
+                  },
+                  "exitStatus": {
+                    "type": "integer"
+                  },
+                  "round": {
+                    "type": "integer"
+                  },
+                  "stdoutTruncated": {
+                    "type": "boolean"
+                  },
+                  "stderrTruncated": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "evidence": {
+              "type": "string"
+            },
+            "hostObservations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "profile",
+                  "commandId",
+                  "observed",
+                  "exitStatus",
+                  "evidence"
+                ],
+                "properties": {
+                  "profile": {
+                    "type": "string"
+                  },
+                  "commandId": {
+                    "type": "string"
+                  },
+                  "observed": {
+                    "type": "boolean"
+                  },
+                  "exitStatus": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "evidence": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "acceptanceReferences": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "path",
+                  "digest"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "digest": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

@@ -713,13 +713,25 @@ Evidence plan:
             {"kind": "captures", "gap": "old gap", "criterion": "AC-1", "artifact": "old.png"},
         ])
         legacy.write_text(json.dumps(state))
+        from cardine.lifecycle import receipts
+        from cardine.tasks.state import read_task_state
+        from cardine.stops.render import stop_error
+        previous = read_task_state(self.project, 'TASK-022', 'single', stop_factory=stop_error)
+        # Diagnostic entries are deliberately fixture-authored; preserve actual
+        # validation bytes through the same covered artifact writer.
+        before = legacy.read_bytes()
+        entries = state['TASK-022']
+        legacy.write_text(json.dumps({'TASK-022': [entry for entry in entries if 'kind' not in entry]}, indent=2, sort_keys=True) + '\n')
+        with receipts.task_lock(self.project, 'TASK-022'):
+            receipts.write_operation(self.project, 'TASK-022', previous, previous=previous,
+                kind='fixture-diagnostics', files={'.cardine/evidence/TASK-022.json': before})
         for summary in ("none", "Explored the API", "A finding without an event"):
             with self.subTest(summary=summary):
                 write(summary)
                 self.assertEqual(check().returncode, 0, summary)
         state["TASK-022"] = [entry for entry in state["TASK-022"] if "kind" in entry]
         legacy.write_text(json.dumps(state))
-        self.assertIn("HANDOFF_VALIDATION_EVIDENCE_MISSING", self.blocked_line(check()))
+        self.assertIn("changed or missing receipt artifact", check().stderr)
 
     def test_validation_runs_only_a_declared_literal_command_and_records_status(self) -> None:
         (self.project / "docs").mkdir()

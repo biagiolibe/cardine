@@ -129,4 +129,5 @@ def closure_status(
                 f"cardine worktree integrate stage {identity.canonical_id} --project {project} "
                 f"--evidence {evidence_path} --format json",
             )
-    return report("C5", "EVIDENCE_INCOMPLETE", stop_resume("EVIDENCE_INCOMPLETE"))
+    return report("C5", "EVIDENCE_INCOMPLETE", stop_resume(
+        "EVIDENCE_INCOMPLETE", task_id=identity.canonical_id, project=project))

@@ -201,7 +201,15 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
     digest = execution_source_digest(project_root, task_id)
     entries = execution_entries(project_root, task_id)
     commands = frozen_validation_commands(project_root, task_id)
-    if not commands:
+    if state.get('run', {}).get('validation'):
+        from cardine.lifecycle.validation import verified_validation
+        progress = verified_validation(project_root, task_id, state)
+        if progress is None or progress['phase'] != 'passed':
+            raise stop_error('EVIDENCE_INCOMPLETE', 'Current measured task validation is missing or failing',
+                             task_id=task_id, project=canonical_project_root(project_root))
+        commands = progress['inputs']['commands']
+        entries = progress['runs'][-1]
+    if not commands and not state.get('run', {}).get('validation'):
         raise stop_error("EVIDENCE_INCOMPLETE", "delivery needs declared completed validation evidence", task_id=task_id, project=canonical_project_root(project_root))
     for command_id, command in commands.items():
         matching = [entry for entry in entries if entry.get("id") == command_id]

@@ -42,11 +42,11 @@
         "governed-sdd"
       ],
       "step": "C2",
-      "emitter": "agent judgment after 3 consecutive counted validation failures",
+      "emitter": "cardine.lifecycle.validation measured consecutive complete attempts",
       "human_decision": true,
-      "resume": "report the failures and obtain the developer's decision before resuming validation",
+      "resume": "cardine run {task_id} --project {project}",
       "kind": "stop",
-      "summary": "validation exhausted the limit of 3 consecutive counted failures after unchanged reruns",
+      "summary": "validation exhausted the frozen retry limit after unchanged full reruns",
       "resolution": "guardrail"
     },
     {
@@ -106,7 +106,7 @@
       "step": "C5",
       "emitter": "`cardine worktree closure-status`",
       "human_decision": false,
-      "resume": "record machine evidence",
+      "resume": "cardine run {task_id} --project {project}",
       "kind": "stop",
       "summary": "machine evidence for the validated task commit is missing or incomplete",
       "test": "tests.test_worktree_lifecycle.WorktreeLifecycleCliTest.test_closure_status_text_reports_incomplete_evidence_through_the_registry",
