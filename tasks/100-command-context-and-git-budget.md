@@ -38,30 +38,30 @@ the subprocesses with a test, without weakening any check.
 
 ## Acceptance Criteria
 
-- [ ] **One Git gateway.** Every Git subprocess in `src/cardine`, outside
+- [x] **One Git gateway.** Every Git subprocess in `src/cardine`, outside
   `cardine.legacy`, goes through one function in `cardine.shared.git`. A
   test parses the product sources and fails on any other `subprocess` call
   whose command starts with `git`.
-- [ ] **One context per command.** Each lifecycle command builds one immutable
+- [x] **One context per command.** Each lifecycle command builds one immutable
   context at its entry point, extending `resolve_run_locations`. It holds
   the primary checkout, the task worktree, the Git common directory, the
   canonical task identity, the project declaration, the worktree root, and
   the runtime digest. Functions reached from the command receive this
   context instead of resolving it again from a path. Signatures that the
   CLI or other entry points call keep working.
-- [ ] **Runtime digest once.** The runtime digest that `observed_authority`
+- [x] **Runtime digest once.** The runtime digest that `observed_authority`
   uses is computed at most once per process.
-- [ ] **Read-only scope, never across a write.** Git facts such as the
+- [x] **Read-only scope, never across a write.** Git facts such as the
   worktree list, the common directory, and refs are read once per
   read-only verification pass. No reused value outlives a write by the
   same process: `prepare`, `cleanup`, `write_operation`, a commit, a
   merge, or any other effect closes the scope first. A test performs a
   write inside one command and proves that the next read sees the new
   fact. Nothing reused is written to disk.
-- [ ] **No-op replay.** A repeated `deliver` whose current receipt already
+- [x] **No-op replay.** A repeated `deliver` whose current receipt already
   covers the same delivery returns the same result after one verification
   pass and writes nothing.
-- [ ] **Subprocess budget test.** A test counts the subprocesses that the
+- [x] **Subprocess budget test.** A test counts the subprocesses that the
   gateway starts for `deliver`, a repeated `deliver`, a task state read,
   `prepare`, and the console snapshot on a fixture of the same shape. It
   fails when a count exceeds its ceiling. The handoff records each count
@@ -69,19 +69,19 @@ the subprocesses with a test, without weakening any check.
   at most half of their measured counts; no other count grows. The test in
   `tests/test_console_snapshot.py` that allows one ref check per open task
   is the precedent.
-- [ ] **No check is weakened.** Verification still runs on every command.
+- [x] **No check is weakened.** Verification still runs on every command.
   Every existing receipt, authority, forgery, scope, and interruption test
   passes with its assertions unchanged. If a ceiling cannot be met without
   dropping a check, the check stays and the handoff names the subprocesses
   it needs.
-- [ ] `test_snapshot_still_reads_this_repository` in
+- [x] `test_snapshot_still_reads_this_repository` in
   `tests/test_legacy_meridian_installation.py` stops depending on this
   repository having an open task. Today it fails on `main` whenever the
   queue is empty. It asserts that the snapshot loads this repository's
   installation and its task records, whether or not a task is open.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes product code and tests only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -90,16 +90,16 @@ the subprocesses with a test, without weakening any check.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/100.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/100.json`, which only
   the installed `meridian task close 100` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
