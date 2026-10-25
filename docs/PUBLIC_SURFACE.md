@@ -43,6 +43,8 @@ including command containers and nested subcommands.
 | Command | Tier |
 |---------|------|
 | `cardine run` | Stable |
+| `cardine cancel` | Stable |
+| `cardine abort` | Stable |
 | `cardine self-check` | Stable |
 | `cardine self-update` | Experimental |
 | `cardine console` | Experimental |

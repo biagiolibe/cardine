@@ -112,7 +112,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
 
         with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
             owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
-        (self.primary / ".cardine/candidate-validation.json").write_text(
+        declaration = self.primary / ".cardine/candidate-validation.json"
+        original_policy = declaration.read_bytes()
+        declaration.write_text(
             json.dumps({"version": 1, "state": "none"}), encoding="utf-8"
         )
         with self.assertRaisesRegex(shared_errors.CardineError, r"git diff --check"):
@@ -124,6 +126,13 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.assertTrue(lease_path.is_file())
         self.assertTrue(integration_path.is_file())
         self.assertTrue((self.primary / ".git/MERGE_HEAD").is_file())
+        foreign_policy = declaration.read_bytes()
+        with self.assertRaisesRegex(shared_errors.CardineError, 'foreign candidate changes'):
+            owner_integration_merge.abort_task_integration('056', self.primary)
+        self.assertEqual(declaration.read_bytes(), foreign_policy)
+        self.assertTrue(lease_path.exists())
+        self.assertTrue(integration_path.exists())
+        declaration.write_bytes(original_policy)  # Fixture operator restores its own policy edit.
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 

@@ -241,7 +241,7 @@ execution_start(Path(sys.argv[1]), '001')
         self.kill('after_intent', 'transition')
         before = self.state_path.read_bytes()
         with self.assertRaisesRegex(CardineError, 'different command'):
-            transition_task_state(self.root, '001', 'cancelled', cancellation_authority='owner', reason='stop')
+            transition_task_state(self.root, '001', 'cancelled', adapter=__import__('control_support').adapter(), cancellation_authority='owner', reason='stop')
         self.assertEqual(self.state_path.read_bytes(), before)
         transition_task_state(self.root, '001', 'in_progress')
 

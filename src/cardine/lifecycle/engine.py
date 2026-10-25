@@ -268,7 +268,13 @@ def run_preview_cli(argv: list[str]) -> int:
         # RE3b composes measured validation only after a verified delivery.
         # Earlier contract/preparation dispatch and later landing adapters stay
         # independent; editable progress cannot skip those receipt checks.
-        result = run_validation_step(locations)
+        active = (read_task_state(locations.worktree, locations.task_id, 'single',
+                    stop_factory=stop_error, require_contract=True) if locations.worktree.is_dir() else state)
+        from cardine.lifecycle.control import require_review_budget
+        if active['status'] != 'cancelled':
+            require_review_budget(locations.worktree, locations.task_id, active)
+        result = (resolve_run(RunFacts(locations.task_id, locations.primary, 'cancelled'))
+                  if active['status'] == 'cancelled' else run_validation_step(locations))
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
     except CardineStop as error:
@@ -291,6 +297,9 @@ def run_validation_step(locations: RunLocations) -> dict | None:
     if not root.is_dir():
         return None
     state = _execution_state(root, task_id) if not receipts.pending_operation(root, task_id) else None
+    if state is not None and state['status'] != 'cancelled':
+        from cardine.lifecycle.control import require_review_budget
+        require_review_budget(root, task_id, state)
     contract = state['contract'] if state else {}
     request = WorkRequest('implementer', root,
         receipts.digest(receipts.encoded(contract)),
@@ -299,7 +308,8 @@ def run_validation_step(locations: RunLocations) -> dict | None:
     pending = operation_path(root, task_id).exists()
     if not pending and implementation_delivery(locations) is None:
         return resolve_run(RunFacts(task_id, locations.primary, 'in_progress',
-                           contract_ready=True, worktree_ready=True, implementation_work=request))
+                           contract_ready=True, worktree_ready=True, implementation_work=request,
+                           review_changes_requested=state is not None and state.get('review', {}).get('verdict') == 'CHANGES_REQUESTED'))
     from cardine.shared.errors import CardineStop
     try:
         progress = run_task_validation(root, task_id, context=locations)
@@ -324,7 +334,14 @@ def run_validation_step(locations: RunLocations) -> dict | None:
         result['diagnostics'] = [dict(code='ACCEPTANCE_UNMET',
             message='An enforced host profile needs a matching declared validation command and passing observation')]
         return result
+    from cardine.review.progress import review_progress, prepare_review
+    from cardine.lifecycle.control import require_review_budget
+    require_review_budget(root, task_id, state)
+    approved, review_pending = review_progress(root, task_id, state)
+    if passed and state['contract']['options']['review'] == 'required' and not approved:
+        state = prepare_review(root, task_id, context=locations)
     result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
+        review_approved=approved, review_pending=review_pending,
         contract_ready=True, worktree_ready=True, implementation_delivered=True,
         validation_passed=passed, validation_failed=not passed,
         implementation_work=request,

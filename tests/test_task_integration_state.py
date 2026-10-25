@@ -43,6 +43,10 @@ class TaskIntegrationStateTest(unittest.TestCase):
         cls.addClassCleanup(cls.template.cleanup)
 
     def setUp(self):
+        from control_support import adapter
+        host = mock.patch('cardine.lifecycle.control.host_adapter', return_value=adapter('coordinator'))
+        host.start()
+        self.addCleanup(host.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         self.primary = self.root / "project"
@@ -117,6 +121,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         frozen["contract"]["options"]["review"] = "required" if required else "not_required"
         self.state_file.write_text(json.dumps(frozen))
         seal_state(self.worker, "056")
+        from control_support import bind_fixture_approval
+        bind_fixture_approval(self.worker, "056")
         self.commit()
 
     def commit(self):

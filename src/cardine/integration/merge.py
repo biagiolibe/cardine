@@ -111,6 +111,15 @@ def _integration_task_state(
                 "REVIEW_NOT_APPROVED", f"cause: missing; {relative}: review.verdict expected APPROVE; found {review.get('verdict')!r}",
                 task_id=identity.canonical_id, project=project_root,
             )
+        decision = state.get('run', {}).get('reviewDecision')
+        from cardine.lifecycle import receipts
+        if (not decision or decision['binding']['contract'] != receipts.digest(receipts.encoded(state['contract']))
+                or decision['binding']['verdict'] != 'APPROVE'
+                or decision['binding']['source'] != review.get('reviewed_commit')
+                or not any(r['kind'] == 'review_verdict:' + receipts.digest(receipts.encoded(decision))
+                           for r in state['run']['receipts'])):
+            raise stop_error('REVIEW_NOT_APPROVED', 'cause: missing; no issued review decision receipt',
+                             task_id=identity.canonical_id, project=project_root)
         reviewed = review.get("reviewed_commit")
         if not reviewed or _run_git(project_root, "merge-base", "--is-ancestor", str(reviewed), task_commit).returncode != 0:
             raise stop_error(
@@ -457,27 +466,9 @@ def missing_candidate_validation_commands(
     return tuple(fragment for fragment in required if not any(fragment in command for command in commands))
 
 
-def abort_task_integration(task_id: str, supplied_project: Path | None = None) -> dict[str, object]:
-    project_root = _verified_lifecycle_project(supplied_project)
-    if Path.cwd().resolve() != project_root:
-        raise CardineError("integration abort must run from the canonical primary checkout")
-    # Abort must stay possible when the queue link is stale, so it skips link checks.
-    identity = resolve_task_identity(project_root, task_id, "existing", check_queue_links=False)
-    _task_state, lease_path, integration_path = _lifecycle_paths(project_root, identity)
-    lease = _read_json_object(lease_path, "integration lease")
-    staged = _read_json_object(integration_path, "staged integration state") if integration_path.is_file() else None
-    if lease.get("task_id") != identity.canonical_id or (
-        staged is not None and staged.get("task_id") != identity.canonical_id
-    ):
-        raise CardineError("integration ownership does not match the requested task")
-    merge_head = _merge_head_path(project_root)
-    if merge_head.exists():
-        aborted = _run_git(project_root, "merge", "--abort")
-        if aborted.returncode != 0:
-            raise CardineError(aborted.stderr.strip() or "cannot abort the owned staged integration")
-    _remove_owned_file(integration_path)
-    _remove_owned_file(lease_path)
-    return {"version": 1, "task_id": identity.canonical_id, "status": "aborted", "next_action": "inspect"}
+def abort_task_integration(task_id: str, supplied_project: Path | None = None, *, adapter=None) -> dict[str, object]:
+    from cardine.lifecycle.control_abort import abort_owned
+    return abort_owned(task_id, supplied_project, adapter=adapter)
 
 
 def cleanup_task_worktree(

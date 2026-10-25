@@ -30,8 +30,8 @@ class StopRegistryTest(unittest.TestCase):
             ("src/cardine/integration/evidence.py", "UNDECLARED_VALIDATION_COMMANDS"): 1,  # candidate policy
             ("src/cardine/integration/merge.py", "UNDECLARED_VALIDATION_COMMANDS"): 1,  # candidate policy
             ("src/cardine/lifecycle/closure.py", "UNDECLARED_VALIDATION_COMMANDS"): 1,  # dynamic report
-            ("src/cardine/integration/merge.py", "REVIEW_NOT_APPROVED"): 3,  # missing, stale ancestor/tree
-            ("src/cardine/review/verdict.py", "REVIEW_NOT_APPROVED"): 1,  # stale submission
+            ("src/cardine/integration/merge.py", "REVIEW_NOT_APPROVED"): 4,  # missing verdict/issued decision, stale ancestor/tree
+            ("src/cardine/review/verdict.py", "REVIEW_NOT_APPROVED"): 3,  # missing issued session, stale issued inputs/submission
         }
         found = {}
         for path in (ROOT / "src/cardine").rglob("*.py"):

@@ -17,7 +17,7 @@ from cardine.integration.evidence import candidate_validation_declaration
 from cardine.shared.constants import WORKFLOW_MODES
 from cardine.legacy.console_workflow import PROFILES
 from cardine.lifecycle import commands, execution
-from cardine.review.verdict import record_review_verdict
+from control_support import issued_verdict as record_review_verdict
 from cardine.shared.authority import adr_list, adr_show
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.shared.project import resolve_project_configuration

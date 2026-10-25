@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import cardine_cli
 from cardine.tasks import transitions as owner_tasks_transitions
-from cardine.review import verdict as owner_review_verdict
+from control_support import issued_verdict
 
 
 class ReviewVerdictTest(unittest.TestCase):
@@ -41,6 +41,8 @@ class ReviewVerdictTest(unittest.TestCase):
             with mock.patch.object(owner_tasks_transitions, "delivery_readiness"):
                 owner_tasks_transitions.transition_task_state(self.root, "001", status)
         self.commit()
+        from control_support import issue_fixture_review
+        issue_fixture_review(self.root, '001')
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, check=True,
@@ -51,9 +53,22 @@ class ReviewVerdictTest(unittest.TestCase):
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Fixture")
 
     def cli(self, verdict, *args):
-        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "review", "verdict", "001", verdict,
-                               "--project", str(self.root), "--format", "json", *args],
-                              cwd=self.root, capture_output=True, text=True)
+        from control_support import issued_verdict
+        from cardine.shared.errors import CardineError, CardineStop
+        from cardine.stops.render import outcome_for_code
+        kwargs = {'owner': '--owner' in args}
+        if '--body' in args:
+            kwargs['body'] = args[args.index('--body') + 1]
+        try:
+            result = issued_verdict(self.root, '001', verdict, **kwargs)
+            return subprocess.CompletedProcess([], 0, json.dumps(result, sort_keys=True) + '\n', '')
+        except CardineStop as error:
+            return subprocess.CompletedProcess([], 2 if outcome_for_code(error.code) == 'blocked' else 0,
+                                               '', 'BLOCKED ' + error.code + ': ' + error.detail)
+
+        except CardineError as error:
+            return subprocess.CompletedProcess([], 2, '', str(error))
+
 
     def snapshot(self):
         return {str(p.relative_to(self.root)): p.read_bytes() for p in (self.path, self.record, self.review) if p.exists()}
@@ -80,6 +95,8 @@ class ReviewVerdictTest(unittest.TestCase):
     def test_approval_requires_resubmission_after_an_implementation_commit(self):
         (self.root / "feature.txt").write_text("changed after submission\n")
         self.commit()
+        from control_support import issue_fixture_review
+        issue_fixture_review(self.root, '001')
         before = self.snapshot()
         messages = []
         for _ in range(2):
@@ -90,7 +107,7 @@ class ReviewVerdictTest(unittest.TestCase):
             messages.append(result.stderr)
             self.assertEqual(self.snapshot(), before)
         self.assertEqual(*messages)
-        # Requested changes can always return the task to implementation.
+        # A current issued review may request remediation after a stale approval refusal.
         self.assertEqual(self.cli("CHANGES_REQUESTED").returncode, 0)
         self.assertEqual(json.loads(self.path.read_text())["status"], "in_progress")
 
@@ -150,6 +167,7 @@ class ReviewVerdictTest(unittest.TestCase):
                 self.assertEqual(self.snapshot(), before)
 
     def test_wrong_status_and_wrong_branch_and_detached_head_write_nothing(self):
+        self.commit()
         for branch in ("main", "--detach"):
             with self.subTest(branch=branch):
                 self.git("switch", branch)
@@ -212,9 +230,9 @@ class ReviewVerdictTest(unittest.TestCase):
             return write(path, content)
         with mock.patch.object(receipts, '_durable', side_effect=fail_state):
             with self.assertRaisesRegex(OSError, 'write failed'):
-                owner_review_verdict.record_review_verdict(self.root, '001', 'APPROVE')
+                issued_verdict(self.root, '001', 'APPROVE')
         self.assertEqual(self.path.read_bytes(), before[str(self.path.relative_to(self.root))])
-        state = owner_review_verdict.record_review_verdict(self.root, '001', 'APPROVE')
+        state = issued_verdict(self.root, '001', 'APPROVE')
         self.assertEqual(state['review']['attempt'], 1)
         self.assertEqual(state['status'], 'in_progress')
         self.assertEqual(state['transitions'][-1]['to'], 'in_progress')

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from cardine.shared.git import git_output
 from cardine.shared.layout import names
-from cardine.tasks.identity import resolve_task_identity
+from cardine.tasks.identity import resolve_task_identity, resolve_project_locations
 from cardine.tasks.state_core import state_path
 
 
@@ -13,10 +13,11 @@ def _execution_owned_paths(project_root: Path, task_id: str, *, context=None) ->
     if context is not None and context.record_path is not None:
         return {context.record_path.as_posix(), context.handoff_path.as_posix(),
                 state_path(project_root, task_id).relative_to(project_root).as_posix(),
-                names().execution_evidence_path(task_id).as_posix()}
+                names().execution_evidence_path(task_id).as_posix(),
+                (resolve_project_locations(project_root).review_root / f'{task_id}.md').as_posix()}
     identity = resolve_task_identity(project_root, task_id, "existing")
     return {path.relative_to(project_root).as_posix() for path in
-            (identity.task_path, identity.handoff_path, state_path(project_root, task_id))} | {names().execution_evidence_path(identity.canonical_id).as_posix()}
+            (identity.task_path, identity.handoff_path, identity.review_path, state_path(project_root, task_id))} | {names().execution_evidence_path(identity.canonical_id).as_posix()}
 
 
 def execution_source_digest(project_root: Path, task_id: str, *, operation_paths=(), context=None) -> str:

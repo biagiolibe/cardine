@@ -32,6 +32,9 @@ def _receipted(kind):
             project_root = Path(project_root).resolve()
             identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
             task_id = identity.canonical_id
+            if target == 'cancelled':
+                from cardine.lifecycle.control import cancel_transition
+                return cancel_transition(project_root, task_id, **kwargs)
             operation = kind + ':' + digest(encoded(dict(target=target, **kwargs)))
             with task_lock(project_root, task_id):
                 if pending_operation(project_root, task_id):
@@ -75,6 +78,9 @@ def transition_task_state(project_root: Path, task_id: str, status: str, *, canc
         })
         if status == "cancelled":
             state["transitions"][-1].update(authority=cancellation_authority, reason=reason)
+        if status == "in_review":
+            from cardine.lifecycle.control import require_review_budget
+            require_review_budget(project_root, task_id, state)
         if status == "in_review" and state.get("review"):
             state["review"] = dict(state["review"], verdict=None, reviewed_commit=None, approved_by=None)
         state["status"] = status
