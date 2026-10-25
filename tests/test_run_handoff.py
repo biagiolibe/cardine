@@ -42,6 +42,18 @@ class RunHandoffTest(unittest.TestCase):
             self.assertEqual(self.git('rev-parse', 'HEAD'), head)
             self.assertEqual(summary.read_text() if summary.exists() else None, text)
 
+    def test_summary_location_cannot_exempt_the_authoritative_task_record(self):
+        from dataclasses import replace
+        from cardine.tasks.identity import resolve_project_locations
+        from cardine.shared.errors import CardineError
+        state = self.fixture.state()
+        record = self.worker / state['contract']['recordPath']
+        record.write_text(record.read_text() + '\nChanged required record.\n')
+        locations = replace(resolve_project_locations(self.worker), handoff_root=Path('tasks'))
+        with patch('cardine.tasks.identity.resolve_project_locations', return_value=locations):
+            with self.assertRaisesRegex(CardineError, 'changed or missing receipt artifact'):
+                receipts.verify_receipts(self.worker, state)
+
     def test_report_success_cannot_replace_failed_actual_validation(self):
         self.fixture.configure({'one': 'exit 19'})
         self.fixture.run_attempt()
