@@ -304,7 +304,7 @@ Evidence plan:
         )
         missing = self.contract_ready_check("TASK-020", report)
         self.assertEqual(missing.returncode, 0)
-        self.assertIn('ITERATE EVIDENCE_INCOMPLETE:', missing.stderr)
+        self.assertIn('NEXT EVIDENCE_INCOMPLETE:', missing.stderr)
         self.assertIn('current measured observations', missing.stderr)
 
         task.write_text(

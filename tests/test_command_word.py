@@ -47,6 +47,11 @@ class CommandWordTest(unittest.TestCase):
             baseline[code] = {"human_decision": False, "resolution": "recoverable"}
         for code in ("SELF_UPDATE_INPUT_INVALID", "OS_PATH_MISSING"):
             baseline[code] = {"human_decision": False, "resolution": "failing-work"}
+        # N3 retires the final completion-prose emitters, including host prose.
+        for code in ("HANDOFF_REPORT_MISSING", "HANDOFF_FIELDS_MISSING", "HANDOFF_FIELD_FORMAT",
+                     "HANDOFF_TASK_MISMATCH", "HANDOFF_VALIDATION_FAILING",
+                     "HANDOFF_VALIDATION_EVIDENCE_MISSING", "HOST_IMPACT_EVIDENCE_MISSING"):
+            baseline.pop(code)
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []

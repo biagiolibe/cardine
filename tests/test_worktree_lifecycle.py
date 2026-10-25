@@ -317,6 +317,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         lease.unlink()
 
         subprocess.run(["git", "merge", "--no-ff", "task-056", "-m", "integrate"], cwd=self.project, check=True)
+        write_state(self.project, "056", "done")
+        subprocess.run(["git", "add", ".cardine/tasks/056.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "commit", "-m", "Record fixture landing"], cwd=self.project, check=True, capture_output=True)
         status("C9", "PUSH_PENDING")
         subprocess.run(["git", "push", "origin", "main"], cwd=self.project, check=True, capture_output=True)
         status("C10", None)
@@ -787,6 +790,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         lease.unlink()
         integration.unlink()
         subprocess.run(["git", "merge", "--no-ff", "task-056", "-m", "integrate"], cwd=self.project, check=True, capture_output=True)
+        write_state(self.project, "056", "done")
+        subprocess.run(["git", "add", ".cardine/tasks/056.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "commit", "-m", "Record fixture landing"], cwd=self.project, check=True, capture_output=True)
         push = json.loads(self._advance().stdout)
         self.assertEqual(
             (push["step"], push["action_required"], push["commands"], push["stop_code"]),

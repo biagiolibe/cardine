@@ -17,7 +17,7 @@ from cardine.shared.errors import CardineStop
 from cardine.shared.authority import context_authority
 from cardine.shared.flow import _flow_origin
 from project_config_support import write_project_config
-from task_contract_support import contract_record, VALIDATION
+from task_contract_support import contract_record, VALIDATION, seal_state
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import codex_read_guard
@@ -264,6 +264,7 @@ Policy outcome: Require evidence for the enforced profile.
         record = self.root / 'tasks/003.md'
         record.write_text(text + execution_contract(self.root, '003') + '\n')
         record.write_text(record.read_text().replace('| enforced |', '| advisory |'))
+        seal_state(self.root, '003', artifacts=True)
         execution_preflight(self.root, '003')
         self.assertEqual(frozen_execution_contract(self.root, '003')['hostImpact']['profiles'],
                          {'Test host': 'enforced'})
@@ -271,6 +272,7 @@ Policy outcome: Require evidence for the enforced profile.
             readiness_check(self.root, '003')
         self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
         record.write_text(record.read_text().replace('## Host impact', '## Removed host impact'))
+        seal_state(self.root, '003', artifacts=True)
         with self.assertRaises(CardineStop) as caught:
             readiness_check(self.root, '003')
         self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')

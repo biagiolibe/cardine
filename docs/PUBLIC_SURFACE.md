@@ -102,7 +102,6 @@ including command containers and nested subcommands.
 | `cardine execution preflight` | Stable |
 | `cardine execution contract` | Stable |
 | `cardine execution reconcile` | Stable |
-| `cardine execution handoff-check` | Stable |
 | `cardine execution ready-check` | Stable |
 | `cardine execution validate` | Stable |
 | `cardine hook` | Host-facing |
