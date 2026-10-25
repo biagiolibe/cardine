@@ -1028,6 +1028,281 @@
               }
             }
           }
+        },
+        "hostLaunches": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "request",
+              "session",
+              "response"
+            ],
+            "properties": {
+              "request": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "task_id",
+                  "root",
+                  "attempt",
+                  "contract",
+                  "source",
+                  "source_digest",
+                  "role",
+                  "host",
+                  "profile",
+                  "request_id",
+                  "work",
+                  "authority"
+                ],
+                "properties": {
+                  "task_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "root": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "attempt": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "contract": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source_digest": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "role": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "host": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "profile": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "work": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "role",
+                      "worktree",
+                      "contract_digest",
+                      "expected_surface",
+                      "acceptance_references",
+                      "validation_references",
+                      "delivery_receipt_requirements"
+                    ],
+                    "properties": {
+                      "role": {
+                        "enum": [
+                          "implementer",
+                          "reviewer"
+                        ]
+                      },
+                      "worktree": {
+                        "type": "string"
+                      },
+                      "contract_digest": {
+                        "type": "string"
+                      },
+                      "expected_surface": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "acceptance_references": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "validation_references": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "delivery_receipt_requirements": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "authority": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "project",
+                      "common",
+                      "root",
+                      "runtime",
+                      "policy",
+                      "accepted_main",
+                      "worktree_root"
+                    ],
+                    "properties": {
+                      "project": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "common": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "root": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "policy": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "accepted_main": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "worktree_root": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                }
+              },
+              "session": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "request_id",
+                      "role",
+                      "profile",
+                      "host",
+                      "session_id"
+                    ],
+                    "properties": {
+                      "request_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "role": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "profile": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "host": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "session_id": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "response": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "session",
+                      "result"
+                    ],
+                    "properties": {
+                      "session": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "request_id",
+                          "role",
+                          "profile",
+                          "host",
+                          "session_id"
+                        ],
+                        "properties": {
+                          "request_id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "role": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "profile": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "host": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "session_id": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      "result": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
       }
     }
