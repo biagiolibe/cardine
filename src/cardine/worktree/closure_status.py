@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from cardine.stops.render import stop_error
+
 from cardine.shared.errors import CardineError
 from pathlib import Path
 from cardine.shared.models import ResolvedTaskIdentity
@@ -52,7 +54,11 @@ def closure_status(
         }, stop_reason is None)
 
     if not state_path.is_file() or registered is None or branch_commit is None:
-        if identity.handoff_path.is_file() and registered is None and branch_commit is None:
+        from cardine.tasks.state import read_task_state
+        from cardine.templates.mode import detect_mode
+        task_state = read_task_state(project_root, identity.canonical_id, detect_mode(project_root),
+                                     stop_factory=stop_error, require_contract=True)
+        if task_state['status'] == 'done' and registered is None and branch_commit is None:
             return report("C10", None, None)
         return report(
             "C4",

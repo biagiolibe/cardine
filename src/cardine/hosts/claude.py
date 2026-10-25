@@ -38,7 +38,6 @@ CLAUDE_PROJECT_ALLOWLIST = (
     "Bash(cardine execution deliver:*)",
     "Bash(cardine execution validate:*)",
     "Bash(cardine execution ready-check:*)",
-    "Bash(cardine execution handoff-check:*)",
     "Bash(cardine execution preflight:*)",
     "Bash(cardine execution contract:*)",
     "Bash(python3 scripts/check_repository.py)",

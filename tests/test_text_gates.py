@@ -234,8 +234,6 @@ def allowed(key: Key) -> bool:
 KNOWN_VIOLATIONS: dict[Key, str] = {
     ('scripts/codex_read_guard.py', 'decision', 'named-reader', 'threshold_for'): 'T-46',
     ('scripts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
-    ('src/cardine/cli.py', '<module>', 'named-reader', 'check_handoff'): 'T-19',
-    ('src/cardine/cli.py', '_run_cli', 'named-reader', 'check_handoff'): 'T-19',
     ('src/cardine/cli.py', 'build_parser', 'declared-result', 'worktree_advance:--accepted'): 'T-39',
     ('src/cardine/cli.py', 'build_parser', 'declared-result', 'worktree_advance:--candidate-exit-code'): 'T-40',
     ('src/cardine/cli.py', 'build_parser', 'declared-result', 'worktree_advance:--validation-exit-code'): 'T-39',
@@ -252,13 +250,10 @@ KNOWN_VIOLATIONS: dict[Key, str] = {
     ('src/cardine/review/verdict.py', 'record_review_verdict', 'disk-text', 'read_text:review_path'): 'T-25',
     ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'require_named_validation_commands'): 'T-15',
     ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'validation_commands'): 'T-15',
-    ('src/cardine/tasks/contract.py', 'check_handoff', 'disk-text', 'read_text:report'): 'T-19',
     ('src/cardine/tasks/contract.py', 'host_impact_required_profiles', 'named-reader', 'host_impact_field'): 'T-03',
     ('src/cardine/tasks/contract.py', 'validate_host_impact_declaration', 'named-reader', 'host_impact_field'): 'T-03',
     ('src/cardine/tasks/contract.py', 'validate_host_impact_declaration', 'named-reader', 'host_impact_required_profiles'): 'T-03',
     ('src/cardine/tasks/contract.py', 'validate_host_impact_declaration', 'named-reader', 'host_impact_section'): 'T-03',
-    ('src/cardine/tasks/contract.py', 'verify_host_impact_completion_evidence', 'named-reader', 'host_impact_section'): 'T-04',
-    ('src/cardine/tasks/contract.py', 'verify_host_impact_completion_evidence', 'named-reader', 'validate_host_impact_declaration'): 'T-04',
     ('src/cardine/tasks/evidence.py', 'require_named_validation_commands', 'named-reader', 'validation_commands'): 'T-15',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', '_queue_task_rows'): 'T-31',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'read_task_field'): 'T-31',
@@ -271,11 +266,6 @@ KNOWN_VIOLATIONS: dict[Key, str] = {
     ('src/cardine/tasks/importer.py', 'import_task_states', 'named-reader', 'record_status'): 'T-31',
     ('src/cardine/tasks/importer.py', 'import_task_states', 'named-reader', 'resolve_task_contract'): 'T-31',
     ('src/cardine/tasks/importer.py', 'legacy_identity_context', 'disk-text', 'read_text:queue_path'): 'T-31',
-    ('src/cardine/tasks/preflight.py', '<module>', 'named-reader', 'check_handoff'): 'T-19',
-    ('src/cardine/tasks/preflight.py', '<module>', 'named-reader', 'verify_host_impact_completion_evidence'): 'T-04',
-    ('src/cardine/tasks/preflight.py', 'readiness_check', 'named-reader', 'check_handoff'): 'T-19',
-    ('src/cardine/tasks/preflight.py', 'readiness_check', 'named-reader', 'verify_host_impact_completion_evidence'): 'T-04',
-    ('src/cardine/worktree/checkout.py', 'inspect_task_worktree', 'disk-text', 'read_text:handoff_path'): 'T-23',
 }
 
 

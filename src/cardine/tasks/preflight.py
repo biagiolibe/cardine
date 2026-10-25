@@ -7,11 +7,9 @@ from cardine.shared.git import current_branch
 from cardine.stops.render import stop_error
 from cardine.tasks.contract import EXECUTION_COMMANDS_LINE
 from cardine.tasks.contract import EXECUTION_COMMANDS_VALUE
-from cardine.tasks.contract import check_handoff
 from cardine.tasks.contract import contract_digest
 from cardine.tasks.contract import contract_requires_execution_commands
 from cardine.tasks.contract import profile_digest
-from cardine.tasks.contract import verify_host_impact_completion_evidence
 from cardine.tasks.evidence import frozen_execution_contract, frozen_validation_commands
 from cardine.tasks.identity import find_task_file
 from cardine.tasks.identity import resolve_task_identity
@@ -123,13 +121,11 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
     return f"Execution reconciliation applied for {task_id}: {task_file.relative_to(project_root)}"
 
 
-def readiness_check(project_root: Path, task_id: str, report: Path) -> str:
-    """Combine execution and handoff gates before a task enters review."""
+def readiness_check(project_root: Path, task_id: str) -> str:
+    """Check frozen execution policy and measured results before review."""
     execution_preflight(project_root, task_id)
-    verify_host_impact_completion_evidence(
-        find_task_file(project_root, task_id).read_text(encoding="utf-8"),
-        profiles=frozen_execution_contract(project_root, task_id)["hostImpact"]["profiles"])
-    check_handoff(project_root, task_id, report)
+    from cardine.tasks.contract import verify_execution_evidence
+    verify_execution_evidence(project_root, task_id)
     return f"in_review gate passed for {task_id}"
 
 

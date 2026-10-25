@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from cardine.lifecycle.execution import _delivery_later_commits
 from cardine.lifecycle.execution import _execution_location
-from cardine.lifecycle.execution import _execution_owned_paths
 from cardine.lifecycle.execution import _execution_state
 from cardine.lifecycle.execution import _execution_worktree
 from cardine.lifecycle.execution import delivery_readiness
@@ -68,7 +66,7 @@ def execution_deliver(project_root: Path, task_id: str, *, implementation_only: 
 
     The run engine always selects implementation delivery, including the
     missing-surface guardrail. Interactive legacy snapshots keep their existing
-    review path until N3/RE4 replace the old review/handoff gates.
+    review path until RE4 replaces role dispatch.
     """
     if implementation_only is None:
         _execution_location(project_root, task_id, command=('execution', 'deliver'))
@@ -78,19 +76,10 @@ def execution_deliver(project_root: Path, task_id: str, *, implementation_only: 
     if implementation_only:
         from cardine.lifecycle.delivery import deliver_implementation
         return deliver_implementation(project_root, task_id)
-    result = delivery_readiness(project_root, task_id, allow_handoff_correction=True)
+    result = delivery_readiness(project_root, task_id)
     task_id = str(result["task_id"])
     if result["status"] == "in_review":
-        identity = resolve_task_identity(project_root, task_id, "existing")
-        later = _delivery_later_commits(
-            project_root, task_id, _execution_state(project_root, task_id), str(result["commit"]),
-            _execution_owned_paths(project_root, task_id), identity.handoff_path.relative_to(project_root).as_posix())
-        if later:
-            completed = _run_git(project_root, "commit", "--allow-empty", "-m", f"Deliver {task_id} for review")
-            if completed.returncode:
-                raise stop_error("EVIDENCE_INCOMPLETE", f"re-delivery commit failed: {completed.stderr.strip()}",
-                                 task_id=task_id, project=canonical_project_root(project_root))
-        return delivery_readiness(project_root, task_id)
+        return result
     try:
         transition_task_state(project_root, task_id, "in_review")
     except (OSError, CardineError) as error:

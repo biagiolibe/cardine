@@ -124,7 +124,7 @@ run_task_validation(Path(sys.argv[1]), '001')
         self.assertEqual(progress['hostObservations'][0]['exitStatus'], 0)
         self.assertTrue(progress['hostObservations'][0]['observed'])
         from cardine.tasks.contract import verify_execution_evidence
-        verify_execution_evidence(self.worker, '001', '')
+        verify_execution_evidence(self.worker, '001')
 
     def test_changed_source_environment_and_stale_ledger_never_reuse_success(self):
         original = self.run_attempt()

@@ -95,8 +95,8 @@
       "version": 1
     },
     "handoff-correction-redelivery": {
-      "sha256": "9eeb816d594ea925f2a58e6eb5db6d7cb155c22013340bed439d256b230c54bc",
-      "version": 1
+      "sha256": "94de0492a15092ae830dfdf4a391f1fb5385b8e70fe2aea12daf570cf2217906",
+      "version": 2
     },
     "manual-verification-record": {
       "sha256": "df183bbca1242244974b7cc46669fc2792fbb956bca5cdfaa931ae24b94e03fa",
@@ -193,13 +193,13 @@
       "version": 1
     },
     "review-remediation-record": {
-      "sha256": "df851f2f62e56e9134ae831836bea6385f7b7bd341df8147b30ad4c4de0727be",
-      "version": 1
+      "sha256": "22f361285277cbcd5184e509538b3a3690a48892487626b9c0039930d9fc6c9a",
+      "version": 2
     }
   },
   "templates/single/docs/WORKTREE_LIFECYCLE.md": {
     "worktree-command-locations": {
-      "sha256": "20eeecaa2b2953529bc29a78202f4b16196c878d1795b02661fcb2ca82bdacbe",
+      "sha256": "c0f49744313e340089d7a1e8ec82e42b8376d19890c87387d50a848d918c7bdb",
       "version": 2
     },
     "worktree-lifecycle": {
@@ -256,7 +256,7 @@
     },
     "review-remediation-record": {
       "sha256": "7bce093fc219d19629e29652df60e762b42dc7e883a500de713646973870841a",
-      "version": 1
+      "version": 2
     },
     "task-worktree-remediation": {
       "sha256": "6f1f2e12be1429bde89a5fd78bfe79321509330e6f929564e058cb65ad0820b5",
@@ -291,8 +291,8 @@
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "a026b2564229bff3ff06a3432a4d1c6b6fbdd0f8cd1c7b843c087a2d944f7cdc",
-      "version": 7
+      "sha256": "9d7940477e6c3e21b391593c562f1f64067765190e795c5c2196a018b0321268",
+      "version": 8
     }
   }
 }

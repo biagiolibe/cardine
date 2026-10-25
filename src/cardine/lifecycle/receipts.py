@@ -253,7 +253,14 @@ def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref
     if coverage.get(state_name) != state_digest(state):
         raise CardineError('changed state is not covered by an operation receipt')
     if artifacts:
+        from cardine.tasks.identity import resolve_project_locations
+        locations = resolve_project_locations(root)
+        summary = (locations.handoff_root / f'{state["task_id"]}.md').as_posix()
         for name, expected in coverage.items():
+            # Completion prose is an optional projection. Its write/replay still
+            # protects foreign edits; later edits never invalidate measured facts.
+            if name == summary:
+                continue
             if name == state_name or (artifact_names is not None and name not in artifact_names):
                 continue
             path = safe_path(root, name)

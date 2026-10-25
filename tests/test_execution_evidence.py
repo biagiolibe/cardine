@@ -58,7 +58,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
     def contract_ready_check(self, task_id, report):
         self.freeze_pending_states()
         try:
-            output = owner_tasks_preflight.readiness_check(self.project.resolve(), task_id, report)
+            output = owner_tasks_preflight.readiness_check(self.project.resolve(), task_id)
             return subprocess.CompletedProcess([], 0, output, "")
         except shared_errors.CardineError as error:
             from cardine.stops.render import outcome_for_code
@@ -304,12 +304,8 @@ Evidence plan:
         )
         missing = self.contract_ready_check("TASK-020", report)
         self.assertEqual(missing.returncode, 0)
-        self.assertEqual(
-            self.blocked_line(missing),
-            "ITERATE HOST_IMPACT_EVIDENCE_MISSING: enforced profile is missing Completion evidence: Cardine CLI / "
-            "direct / project; resume: add a Completion evidence entry for each listed profile to the task's Host "
-            "impact section, then rerun the blocked cardine execution command",
-        )
+        self.assertIn('ITERATE EVIDENCE_INCOMPLETE:', missing.stderr)
+        self.assertIn('current measured observations', missing.stderr)
 
         task.write_text(
             task.read_text(encoding="utf-8").replace(
@@ -320,7 +316,8 @@ Evidence plan:
             encoding="utf-8",
         )
         passed = self.contract_ready_check("TASK-020", report)
-        self.assertEqual(passed.returncode, 0, passed.stderr)
+        self.assertEqual(passed.returncode, 0)
+        self.assertIn("current measured observations", passed.stderr)
 
     def test_reconcile_upgrades_a_nonterminal_legacy_contract_before_preflight(self) -> None:
         (self.project / "docs").mkdir()
@@ -401,7 +398,7 @@ Evidence plan:
         self.assertEqual(task.read_text(encoding="utf-8"), original)
 
 
-    def test_ready_check_combines_preflight_and_handoff(self) -> None:
+    def test_ready_check_combines_preflight_and_measured_results(self) -> None:
         (self.project / "docs").mkdir()
         (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
         (self.project / "tasks/TASK-012.md").write_text(
@@ -425,119 +422,8 @@ Evidence plan:
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("in_review gate passed", result.stdout)
 
-    def test_handoff_rejects_fabricated_validation(self) -> None:
-        (self.project / "docs").mkdir()
-        (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
-        (self.project / "tasks/TASK-013.md").write_text(
-            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n"
-            "## Validation\n\n- `probe`: `printf validation-ok`\n",
-            encoding="utf-8",
-        )
-        self.append_contract("TASK-013")
-        report = self.project / "evidence.md"
-        report.write_text(
-            "## Completion Report — TASK-013\n\n- Files changed: none\n"
-            "- Validation: `printf validation-ok` exit 0\n- Manual verification: none\n"
-            "- Validation skips: none\n"
-            "- Acceptance criteria: all met\n"
-            "- Isolated exploration: none\n- Blockers/deviations: none\n",
-            encoding="utf-8",
-        )
-        fabricated = self.run_cli("execution", "handoff-check", "TASK-013", str(report))
-        self.assertEqual(fabricated.returncode, 0)
-        self.assertIn("ITERATE HANDOFF_VALIDATION_EVIDENCE_MISSING:", fabricated.stderr)
 
-        self.assertEqual(self.run_cli("execution", "validate", "TASK-013", "probe").returncode, 0)
-        self.assertEqual(self.run_cli("execution", "handoff-check", "TASK-013", str(report)).returncode, 0)
 
-    def test_handoff_accepts_report_with_or_without_rule_discrepancies(self) -> None:
-        self.write_task("TASK-009", "in_progress")
-        report = self.project / "rule-discrepancies.md"
-        body = (
-            "## Completion Report — TASK-009\n\n- Files changed: none\n"
-            "- Validation: `python3 -m unittest discover -s tests -v` exit 0\n"
-            "- Validation skips: none\n"
-            "- Manual verification: none\n- Acceptance criteria: all met\n"
-            "- Isolated exploration: none\n"
-            "%s- Blockers/deviations: none\n"
-        )
-        for extra in (
-            "",
-            "- Rule discrepancies: none\n",
-            "- Rule discrepancies: `main` ahead of origin; integrate stage accepted it; followed the command\n",
-        ):
-            report.write_text(body % extra, encoding="utf-8")
-            result = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-            self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_handoff_accepts_non_project_specific_skips_and_rejects_failures(self) -> None:
-        self.write_task("TASK-009", "in_progress")
-        report = self.project / "validation-skips.md"
-        report.write_text(
-            "## Completion Report — TASK-009\n\n- Files changed: none\n"
-            "- Validation: `python3 -m unittest discover -s tests -v` exit 0\n"
-            "- Validation skips: none\n"
-            "- Manual verification: none\n- Acceptance criteria: all met\n"
-            "- Isolated exploration: none\n"
-            "- Blockers/deviations: none\n",
-            encoding="utf-8",
-        )
-        self.assertEqual(self.run_cli("execution", "handoff-check", "TASK-009", str(report)).returncode, 0)
-
-        report.write_text(
-            report.read_text(encoding="utf-8").replace(
-                "- Validation skips: none\n",
-                "- Validation skips: ConsumerSuite.test_unavailable_service — service unavailable; "
-                "reported by `consumer-test --network`\n",
-            ),
-            encoding="utf-8",
-        )
-        documented_form = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertEqual(documented_form.returncode, 0, documented_form.stderr)
-
-        report.write_text(
-            report.read_text(encoding="utf-8").replace(
-                "- Validation skips: ConsumerSuite.test_unavailable_service — service unavailable; "
-                "reported by `consumer-test --network`\n",
-                "- Validation skips: network fixture unavailable\n",
-            ),
-            encoding="utf-8",
-        )
-        free_text = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertEqual(free_text.returncode, 0, free_text.stderr)
-
-        report.write_text(
-            report.read_text(encoding="utf-8").replace(
-                "- Validation: `python3 -m unittest discover -s tests -v` exit 0\n"
-                "- Validation skips: network fixture unavailable\n",
-                "- Validation: `python3 -m unittest discover -s tests -v` exit 1\n"
-                "- Validation skips: none\n",
-            ),
-            encoding="utf-8",
-        )
-        rejected = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertEqual(rejected.returncode, 0)
-        self.assertIn("ITERATE HANDOFF_VALIDATION_FAILING:", rejected.stderr)
-        self.assertIn("a failing validation needs a named skip", rejected.stderr)
-
-        report.write_text(
-            report.read_text(encoding="utf-8").replace(
-                "- Validation skips: none\n",
-                "- Validation skips: network fixture unavailable\n",
-            ),
-            encoding="utf-8",
-        )
-        named_skip_failure = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertEqual(named_skip_failure.returncode, 0)
-        self.assertIn("a named skip does not make a failing validation pass", named_skip_failure.stderr)
-
-        report.write_text(
-            report.read_text(encoding="utf-8").replace("- Validation skips: network fixture unavailable\n", ""),
-            encoding="utf-8",
-        )
-        absent = self.run_cli("execution", "handoff-check", "TASK-009", str(report))
-        self.assertEqual(absent.returncode, 0)
-        self.assertIn("Validation skips", absent.stderr)
 
     def blocked_line(self, result: subprocess.CompletedProcess[str]) -> str:
         line = next(line for line in result.stderr.splitlines() if line.startswith(("BLOCKED ", "NEXT ", "ITERATE ")))
@@ -613,125 +499,7 @@ Evidence plan:
         with self.assertRaisesRegex(shared_errors.CardineError, "VALIDATION_ENTRY_FORMAT"):
             owner_tasks_contract.require_named_validation_commands(task.read_text())
 
-    def test_handoff_gates_report_coded_actionable_stops(self) -> None:
-        self.write_task("TASK-021", "in_progress")
-        report = self.project / "report.md"
-        fields = {
-            "Files changed": "none", "Validation": "`x` exit 0", "Validation skips": "none",
-            "Manual verification": "none", "Acceptance criteria": "all met",
-            "Isolated exploration": "none", "Blockers/deviations": "none",
-        }
 
-        def write(heading: str = "TASK-021", **overrides: str | None) -> None:
-            lines = [f"## Completion Report — {heading}", ""]
-            for field, value in {**fields, **overrides}.items():
-                if value is not None:
-                    lines.append(f"- {field}: {value}")
-            report.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-        def check() -> subprocess.CompletedProcess[str]:
-            return self.run_cli("execution", "handoff-check", "TASK-021", str(report))
-
-        resume = "then rerun cardine execution handoff-check TASK-021 <report> --project ."
-        self.assertEqual(
-            self.blocked_line(check()),
-            f"ITERATE HANDOFF_REPORT_MISSING: rule: the handoff check reads a completion report; source checked: "
-            f"{report}; expected: an existing file; found: no such file; resume: write the completion report, "
-            "then run cardine execution handoff-check TASK-021 <report> --project .",
-        )
-        required = ", ".join(fields)
-        write(Validation=None)
-        self.assertEqual(
-            self.blocked_line(check()),
-            "ITERATE HANDOFF_FIELDS_MISSING: rule: every required field needs a non-empty value; source checked: "
-            "report.md; accepted form: `- <Field>: <value>`; required: " + required + "; missing: Validation; "
-            "resume: add each missing field as `- <Field>: <value>`, " + resume,
-        )
-        report.write_text(report.read_text(encoding="utf-8") + "- Validation (commands): `x` exit 0\n", encoding="utf-8")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "ITERATE HANDOFF_FIELD_FORMAT: rule: a required field's name must be followed directly by the colon; "
-            "source checked: report.md; accepted form: `- <Field>: <value>`; found: `- Validation (commands):` "
-            "(expected `- Validation: <value>`); resume: rewrite each listed field as `- <Field>: <value>`, " + resume,
-        )
-        write("TASK-099")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "ITERATE HANDOFF_TASK_MISMATCH: rule: the report must identify its task; source checked: report.md; "
-            "accepted: `Completion Report — TASK-021`; found: `Completion Report — TASK-099`; resume: correct "
-            "the report heading to name this task, " + resume,
-        )
-        write(Validation="`x` exit 1")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "ITERATE HANDOFF_VALIDATION_FAILING: rule: a failing validation needs a named skip; field checked: "
-            "Validation; accepted: no `exit <non-zero>`; found: `exit 1` with Validation skips: none; resume: fix "
-            "the failing validation and report its passing result, " + resume,
-        )
-        write(Validation="`x` exit 1", **{"Validation skips": "network down"})
-        self.assertIn(
-            "rule: a named skip does not make a failing validation pass; field checked: Validation; accepted: no "
-            "`exit <non-zero>`; found: `exit 1` with Validation skips: network down;",
-            self.blocked_line(check()),
-        )
-
-    def test_handoff_durable_validation_ignores_legacy_events(self) -> None:
-        (self.project / "docs").mkdir()
-        (self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").write_text("profile\n", encoding="utf-8")
-        (self.project / "tasks/TASK-022.md").write_text(
-            "Status: in_progress\n\n## Authority\n\n## Expected code surface\n\n"
-            "## Validation\n\n- `probe`: `printf ok`\n",
-            encoding="utf-8",
-        )
-        self.append_contract("TASK-022")
-        report = self.project / "report.md"
-
-        def write(exploration: str) -> None:
-            report.write_text(
-                "## Completion Report — TASK-022\n\n- Files changed: none\n- Validation: `printf ok` exit 0\n"
-                "- Validation skips: none\n- Manual verification: none\n- Acceptance criteria: all met\n"
-                f"- Isolated exploration: {exploration}\n- Blockers/deviations: none\n",
-                encoding="utf-8",
-            )
-
-        def check() -> subprocess.CompletedProcess[str]:
-            return self.run_cli("execution", "handoff-check", "TASK-022", str(report))
-
-        write("none")
-        self.assertEqual(
-            self.blocked_line(check()),
-            "ITERATE HANDOFF_VALIDATION_EVIDENCE_MISSING: rule: every declared validation needs a successful durable "
-            "record; source checked: .cardine/evidence/TASK-022.json for TASK-022; accepted: an entry with the "
-            "declared id and command and exitStatus 0; missing for: probe; resume: run cardine execution validate "
-            "TASK-022 <validation-id> --project . for each listed ID, then rerun the handoff check",
-        )
-        self.assertEqual(self.run_cli("execution", "validate", "TASK-022", "probe").returncode, 0)
-        legacy = self.project / ".cardine/evidence/TASK-022.json"
-        state = json.loads(legacy.read_text())
-        state["TASK-022"].extend([
-            {"kind": "investigation", "question": "old question", "scope": 2, "finding": "old finding"},
-            {"kind": "captures", "gap": "old gap", "criterion": "AC-1", "artifact": "old.png"},
-        ])
-        legacy.write_text(json.dumps(state))
-        from cardine.lifecycle import receipts
-        from cardine.tasks.state import read_task_state
-        from cardine.stops.render import stop_error
-        previous = read_task_state(self.project, 'TASK-022', 'single', stop_factory=stop_error)
-        # Diagnostic entries are deliberately fixture-authored; preserve actual
-        # validation bytes through the same covered artifact writer.
-        before = legacy.read_bytes()
-        entries = state['TASK-022']
-        legacy.write_text(json.dumps({'TASK-022': [entry for entry in entries if 'kind' not in entry]}, indent=2, sort_keys=True) + '\n')
-        with receipts.task_lock(self.project, 'TASK-022'):
-            receipts.write_operation(self.project, 'TASK-022', previous, previous=previous,
-                kind='fixture-diagnostics', files={'.cardine/evidence/TASK-022.json': before})
-        for summary in ("none", "Explored the API", "A finding without an event"):
-            with self.subTest(summary=summary):
-                write(summary)
-                self.assertEqual(check().returncode, 0, summary)
-        state["TASK-022"] = [entry for entry in state["TASK-022"] if "kind" in entry]
-        legacy.write_text(json.dumps(state))
-        self.assertIn("changed or missing receipt artifact", check().stderr)
 
     def test_validation_runs_only_a_declared_literal_command_and_records_status(self) -> None:
         (self.project / "docs").mkdir()

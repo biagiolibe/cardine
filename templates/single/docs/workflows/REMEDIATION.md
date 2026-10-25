@@ -12,7 +12,7 @@ in the primary checkout, create a replacement worktree, or run concurrently
 with a reviewer. A mismatch is `BLOCKED WRONG_WORKTREE` and preserves the existing state.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=review-remediation-record v1 -->
+<!-- CARDINE:BEGIN capability=review-remediation-record v2 -->
 ### Review-remediation workflow
 
 For `Address review <TASK-ID>`, read the assigned task, its cited authority,

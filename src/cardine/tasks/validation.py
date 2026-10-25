@@ -83,3 +83,19 @@ def verified_validation(root, task_id, state=None, *, environment=None):
     return progress
 
 
+
+
+def host_observations_complete(contract, progress):
+    """Bind each enforced profile to its actual command result, not report prose."""
+    latest = {entry['id']: entry for entry in progress['runs'][-1]} if progress['runs'] else {}
+    observations = {entry['profile']: entry for entry in progress['hostObservations']}
+    for profile, status in contract['hostImpact']['profiles'].items():
+        if status != 'enforced':
+            continue
+        entry, observed = latest.get(profile, {}), observations.get(profile, {})
+        if (not observed.get('observed') or observed.get('commandId') != profile
+                or observed.get('exitStatus') != 0 or entry.get('exitStatus') != 0
+                or entry.get('command') != progress['inputs']['commands'].get(profile)
+                or not entry.get('log') or observed.get('evidence') != entry.get('log')):
+            return False
+    return True

@@ -74,14 +74,14 @@ class TaskCloseTest(unittest.TestCase):
         self.assert_stop('WORKTREE_RELOCATE', lambda: owner_tasks_transitions.close_task(self.primary, '001'))
         self.assertEqual(self.git('status', '--porcelain', cwd=self.primary), before)
 
-    def test_missing_and_uncommitted_handoff_refuse(self):
+    def test_missing_and_ignored_handoff_do_not_gate_closure(self):
         self.identity.handoff_path.unlink()
         self.commit('Remove handoff')
-        self.refused('HANDOFF_REPORT_MISSING')
+        self.assertTrue(owner_tasks_transitions.close_task(self.worker, '001')['verified'])
         self.identity.handoff_path.write_text('ignored handoff')
         (self.worker / '.gitignore').write_text('tasks/handoffs/\n')
         self.commit('Ignore uncommitted handoff')
-        self.refused('HANDOFF_REPORT_MISSING')
+        self.assertTrue(owner_tasks_transitions.close_task(self.worker, '001')['verified'])
 
     def test_record_path_does_not_decide_closure(self):
         archive = self.worker / 'tasks/done/001.md'

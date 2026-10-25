@@ -200,13 +200,13 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         execution_preflight(self.root, '002')
         self.assertEqual(frozen_validation_commands(self.root, '002'), before)
         with self.assertRaises(CardineStop) as caught:
-            verify_execution_evidence(self.root, '002', '')
+            verify_execution_evidence(self.root, '002')
         self.assertIn('task-check', str(caught.exception))
         with self.assertRaises(CardineStop) as caught:
             run_validation(self.root, '002', 'injected')
         self.assertEqual(caught.exception.code, 'VALIDATION_ID_UNDECLARED')
         self.assertEqual(run_validation(self.root, '002', 'task-check'), 0)
-        verify_execution_evidence(self.root, '002', '')
+        verify_execution_evidence(self.root, '002')
 
     def test_host_declaration_is_frozen_and_missing_snapshot_never_backfills(self):
         from cardine.tasks.preflight import execution_contract, execution_preflight
@@ -268,9 +268,9 @@ Policy outcome: Require evidence for the enforced profile.
         self.assertEqual(frozen_execution_contract(self.root, '003')['hostImpact']['profiles'],
                          {'Test host': 'enforced'})
         with self.assertRaises(CardineStop) as caught:
-            readiness_check(self.root, '003', self.root / 'missing-report.md')
-        self.assertEqual(caught.exception.code, 'HOST_IMPACT_EVIDENCE_MISSING')
+            readiness_check(self.root, '003')
+        self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')
         record.write_text(record.read_text().replace('## Host impact', '## Removed host impact'))
         with self.assertRaises(CardineStop) as caught:
-            readiness_check(self.root, '003', self.root / 'missing-report.md')
-        self.assertEqual(caught.exception.code, 'HOST_IMPACT_EVIDENCE_MISSING')
+            readiness_check(self.root, '003')
+        self.assertEqual(caught.exception.code, 'EVIDENCE_INCOMPLETE')

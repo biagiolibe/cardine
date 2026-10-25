@@ -32,7 +32,6 @@ from cardine.shared.project import read_project_declaration
 from cardine.shared.usage import format_usage_report, usage_report
 from cardine.stops.registry import load_stop_registry
 from cardine.stops.render import emit_diagnostic, outcome_for_code, format_stop, stop_error
-from cardine.tasks.contract import check_handoff, default_handoff_path
 from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
 from cardine.tasks.importer import import_task_states
 from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check, reconcile_execution_contract
@@ -449,13 +448,8 @@ def build_parser() -> CardineArgumentParser:
     reconcile.add_argument("task_id")
     reconcile.add_argument("--apply", action="store_true")
     reconcile.add_argument("--project", type=Path, default=Path.cwd())
-    handoff = execution_sub.add_parser("handoff-check", help="check a structured completion handoff")
-    handoff.add_argument("task_id")
-    handoff.add_argument("report", type=Path, nargs="?")
-    handoff.add_argument("--project", type=Path, default=Path.cwd())
-    ready = execution_sub.add_parser("ready-check", help="require preflight and complete handoff before review")
+    ready = execution_sub.add_parser("ready-check", help="check measured delivery readiness before review")
     ready.add_argument("task_id")
-    ready.add_argument("report", type=Path, nargs="?")
     ready.add_argument("--project", type=Path, default=Path.cwd())
     validate = execution_sub.add_parser("validate", help="run one task-declared literal validation command")
     validate.add_argument("task_id")
@@ -839,9 +833,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     result = delivery_readiness(project_root, arguments.task_id)
                     print(json.dumps(result, sort_keys=True))
                 else:
-                    print(readiness_check(project_root, arguments.task_id, (project_root / arguments.report if arguments.report else default_handoff_path(project_root, arguments.task_id))))
-            else:
-                print(check_handoff(project_root, arguments.task_id, (project_root / arguments.report if arguments.report else default_handoff_path(project_root, arguments.task_id))))
+                    print(readiness_check(project_root, arguments.task_id))
         elif arguments.command == "hook":
             if arguments.hook_command == "read-guard" and arguments.host == "codex":
                 from codex_read_guard import main as codex_read_guard_main

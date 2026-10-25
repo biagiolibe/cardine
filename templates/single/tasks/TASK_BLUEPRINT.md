@@ -1,6 +1,6 @@
 # Task [ID] — [Title]
 
-<!-- CARDINE:BEGIN capability=task-blueprint v7 -->
+<!-- CARDINE:BEGIN capability=task-blueprint v8 -->
 > **ID**: `[NNN]`
 > **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
 > **Priority**: [P0 / P1 / P2]
@@ -199,7 +199,7 @@ transcript.
 
 ## Completion
 
-- When the resolved review option is `required`, commit implementation and validation evidence, finalize and commit the completion report at the resolved handoff location (`cardine locations`), then run `cardine execution ready-check <TASK-ID> --project .` before `cardine execution deliver <TASK-ID> --project .` as the final step. Stop writing after its clean committed result. Never edit a status or verdict by hand. The gate requires a complete handoff.
-- When the resolved review option is `not_required`, run `cardine task close <TASK-ID>` in the clean task worktree only after validation passes and the completion record and handoff are committed.
+- When the resolved review option is `required`, commit implementation and validation evidence, optionally write a human completion summary, then run `cardine execution ready-check <TASK-ID> --project .` before `cardine execution deliver <TASK-ID> --project .` as the final step. Stop writing after its clean committed result. Never edit a status or verdict by hand. The gate reads measured validation and committed delivery, never completion prose.
+- When the resolved review option is `not_required`, run `cardine task close <TASK-ID>` in the clean task worktree only after validation passes and the task record and measured results are committed.
 - For `Class: SPIKE`, once `Timebox` is exhausted or `Question` is answered, whichever comes first, record the outcome with `cardine task outcome <TASK-ID> ANSWERED` or `cardine task outcome <TASK-ID> INCONCLUSIVE`, then complete the review or closure path the resolved review option selects.
 <!-- CARDINE:END -->

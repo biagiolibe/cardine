@@ -18,7 +18,7 @@ from cardine.lifecycle.delivery import verify_delivery
 from cardine.lifecycle.execution import (_execution_location, _execution_owned_paths,
                                          _execution_state, execution_source_digest)
 from cardine.tasks.validation import (inputs, _ledger, verified_validation,
-                                      resolved_commands, environment_identity)
+                                      resolved_commands, environment_identity, host_observations_complete)
 from cardine.shared.errors import CardineError
 from cardine.shared.git import git_output
 from cardine.shared.layout import names
@@ -182,7 +182,8 @@ def run_task_validation(root, task_id):
                                  task_id=task_id, project=root)
             return verified_validation(root, task_id, state)
         existing = verified_validation(root, task_id, state)
-        if existing is not None:
+        if (existing is not None and (existing["phase"] != "passed"
+                or host_observations_complete(state["contract"], existing))):
             return existing  # Failed unchanged work returns repair, never spends twice.
         if verify_delivery(root, state, base) is None:
             raise stop_error('ACCEPTANCE_UNMET', 'A complete committed implementation must be delivered first',
