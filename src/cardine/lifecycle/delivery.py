@@ -3,6 +3,8 @@
 The local operation record detects uncovered edits; it is not authorship proof.
 No declaration in a handoff or agent-supplied verdict completes acceptance.
 """
+
+from cardine.shared.git import scoped_command
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -29,15 +31,16 @@ def _git(root, *args):
         raise CardineError(f'delivery {args[0]} failed: {result.stderr.strip()}')
 
 
-def verify_delivery(root, state, base):
+@scoped_command
+def verify_delivery(root, state, base, *, context=None):
     """Derive progress from covered state, actual source and a committed result."""
-    receipts.verify_receipts(root, state)
+    receipts.verify_receipts(root, state, context=context)
     delivery = state.get('run', {}).get('delivery')
     if not delivery:
         return None
     if (delivery['base'] != base
             or delivery['contractDigest'] != receipts.digest(receipts.encoded(state['contract']))
-            or delivery['sourceDigest'] != execution_source_digest(root, state['task_id'])):
+            or delivery['sourceDigest'] != execution_source_digest(root, state['task_id'], context=context)):
         return None  # Genuine, stale delivery requires new work/validation.
     source = delivery['source']
     head = git_output(root, 'rev-parse', 'HEAD')
@@ -56,21 +59,24 @@ def verify_delivery(root, state, base):
         if (git_output(root, 'rev-parse', commit + '^') != source
                 or git_output(root, 'diff', '--name-only', source, commit) != name):
             raise CardineError('delivery commit does not match the exact intended effect')
-        receipts.verify_receipts(root, recorded, portable=True)
+        receipts.verify_receipts(root, recorded, portable=True, context=context)
         proof = [r for r in recorded['run']['receipts'] if r['kind'] == 'implementation-delivery'
                  and r['source'] == source]
         if not proof:
             raise CardineError('delivery lacks its operation receipt')
-        enforce_scope(root, state, base, owned=_execution_owned_paths(root, state['task_id']))
+        enforce_scope(root, state, base, owned=_execution_owned_paths(root, state['task_id'], context=context))
         return dict(task_id=state['task_id'], commit=commit, source=source,
                     status=state['status'], clean=not bool(git_output(root, 'status', '--porcelain')))
     raise CardineError('implementation delivery is not committed')
 
 
-def deliver_implementation(root, task_id):
+@scoped_command
+def deliver_implementation(root, task_id, *, context=None):
     """One writer, durable intent, exact state-only commit, replay at every effect."""
     root = Path(root).resolve()
-    inspection = _execution_location(root, task_id, command=('execution', 'deliver'))
+    from cardine.lifecycle.engine import resolve_run_locations
+    context = context or resolve_run_locations(task_id, root)
+    inspection = _execution_location(root, task_id, context=context, command=('execution', 'deliver'))
     if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
         raise CardineError('delivery worktree identity mismatch')
     base = str(inspection['base_commit'])
@@ -79,12 +85,12 @@ def deliver_implementation(root, task_id):
         name = state_path(root, task_id).relative_to(root).as_posix()
         if operation.exists():
             intent = receipts._load_intent(operation)
-            if (intent['task_id'] != task_id or intent['authority'] != receipts.require_authority(root)
+            if (intent['task_id'] != task_id or intent['authority'] != receipts.require_authority(root, context=context)
                     or intent['root'] != str(root) or intent['base'] != base):
                 raise CardineError('delivery operation owner or authority changed')
             if intent['result'] == 'verified':
-                state = _execution_state(root, task_id)
-                current = verify_delivery(root, state, base)
+                state = _execution_state(root, task_id, context=context)
+                current = verify_delivery(root, state, base, context=context)
                 if current is not None:
                     if current['commit'] != intent['commit']:
                         raise CardineError('delivery result commit identity changed')
@@ -97,24 +103,24 @@ def deliver_implementation(root, task_id):
         else:
             intent = None
         if intent is None:
-            state = _execution_state(root, task_id)
+            state = _execution_state(root, task_id, context=context)
             if state['status'] != 'in_progress':
                 raise CardineError('implementation delivery requires in_progress')
-            owned = _execution_owned_paths(root, task_id)
+            owned = _execution_owned_paths(root, task_id, context=context)
             paths = enforce_scope(root, state, base, owned=owned)
             if not paths:
                 raise CardineError('delivery needs a real implementation change')
             if git_output(root, 'status', '--porcelain'):
                 raise CardineError('implementation must be committed before delivery')
-            existing = verify_delivery(root, state, base)
+            existing = verify_delivery(root, state, base, context=context)
             if existing:
                 return existing
             source = git_output(root, 'rev-parse', 'HEAD')
             delivery = dict(source=source, sourceTree=git_output(root, 'rev-parse', 'HEAD^{tree}'),
-                            sourceDigest=execution_source_digest(root, task_id), base=base,
+                            sourceDigest=execution_source_digest(root, task_id, context=context), base=base,
                             contractDigest=receipts.digest(receipts.encoded(state['contract'])))
             intent = dict(task_id=task_id, root=str(root), base=base,
-                          authority=receipts.require_authority(root), delivery=delivery,
+                          authority=receipts.require_authority(root, context=context), delivery=delivery,
                           before=receipts.digest(state_path(root, task_id).read_bytes()), result='pending')
             operation.parent.mkdir(parents=True, exist_ok=True)
             receipts.boundary('before_delivery_intent')
@@ -132,12 +138,12 @@ def deliver_implementation(root, task_id):
                 raise CardineError('pending delivery belongs to another operation')
             operation_paths = {pending_path.relative_to(root).as_posix(), pending['files'][name]['staged']}
         # The source digest excludes CLI-owned state but includes all foreign dirt.
-        if execution_source_digest(root, task_id, operation_paths=operation_paths) != delivery['sourceDigest']:
+        if execution_source_digest(root, task_id, operation_paths=operation_paths, context=context) != delivery['sourceDigest']:
             raise CardineError('delivery input source changed')
         if receipts.pending_operation(root, task_id):
             state = receipts.replay_operation(root, task_id, kind='implementation-delivery')
         else:
-            state = _execution_state(root, task_id)
+            state = _execution_state(root, task_id, context=context)
             if state.get('run', {}).get('delivery') != delivery:
                 if (git_output(root, 'rev-parse', 'HEAD') != source
                         or receipts.digest(state_path(root, task_id).read_bytes()) != intent['before']):
@@ -169,7 +175,7 @@ def deliver_implementation(root, task_id):
         elif (git_output(root, 'rev-parse', 'HEAD^') != source or changed
               or git_output(root, 'diff', '--name-only', source, 'HEAD') != name):
             raise CardineError('delivery replay found a foreign commit')
-        result = verify_delivery(root, state, base)
+        result = verify_delivery(root, state, base, context=context)
         if result is None:
             raise CardineError('delivery result changed')
         receipts.boundary('before_delivery_receipt')

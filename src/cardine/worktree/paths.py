@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.git import _run_git
+
 from cardine.shared.errors import CardineError
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.git import git_output
@@ -15,7 +17,6 @@ from urllib.parse import urlparse
 import hashlib
 import os
 import re
-import subprocess
 import unicodedata
 
 
@@ -30,12 +31,7 @@ def _normalized_local_repository_name(value: str) -> str:
 def repository_identity(project_root: Path, remote_url: str | None = None) -> RepositoryIdentity:
     """Derive a repository-qualified namespace without machine-specific state."""
     if remote_url is None:
-        completed = subprocess.run(
-            ["git", "-C", str(project_root), "config", "--get", "remote.origin.url"],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        completed = _run_git(str(project_root), 'config', '--get', 'remote.origin.url', text=True)
         remote_url = completed.stdout.strip() if completed.returncode == 0 else ""
     if remote_url:
         candidate = remote_url.strip()

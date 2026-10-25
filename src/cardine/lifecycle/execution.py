@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.git import scoped_command
+
 from cardine.shared.layout import names
 
 from cardine.shared.errors import CardineError
@@ -26,13 +28,13 @@ import shlex
 
 
 def _execution_location(project_root: Path, task_id: str, *,
-                        command: tuple[str, ...] = ("execution", "start")) -> dict[str, object]:
+                        command: tuple[str, ...] = ("execution", "start"), context=None) -> dict[str, object]:
     """Verify the supplied checkout independently of the caller's directory."""
     supplied = project_root.resolve()
     # A stale path may still have a Git parent. Never infer a different task
     # checkout from cwd; cwd is only a fallback for locating the primary.
-    primary = None
-    for candidate in (supplied, *supplied.parents, Path.cwd()):
+    primary = context.primary if context is not None else None
+    for candidate in (() if primary is not None else (supplied, *supplied.parents, Path.cwd())):
         try:
             primary = canonical_project_root(candidate)
             break
@@ -103,9 +105,9 @@ def _execution_worktree(project_root: Path, task_id: str, *, resume: bool = Fals
     return result
 
 
-def _execution_state(project_root: Path, task_id: str) -> dict[str, object]:
+def _execution_state(project_root: Path, task_id: str, *, context=None) -> dict[str, object]:
     return read_task_state(project_root, task_id, detect_mode(project_root),
-                           stop_factory=stop_error, require_contract=True)
+                           stop_factory=stop_error, require_contract=True, context=context)
 
 
 def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, object], head: str,
@@ -133,6 +135,7 @@ def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, o
     return []
 
 
+@scoped_command
 def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: bool = True) -> dict[str, object]:
     """Read-only delivery gate, also used by direct in_review transitions."""
     inspection = _execution_location(project_root, task_id, command=("execution", "deliver"))
@@ -190,6 +193,7 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
     return {"task_id": task_id, "commit": head, "clean": True, "status": state["status"]}
 
 
+@scoped_command
 def enforce_execution_scope(root, task_id, *, base=None, state=None):
     """Interactive legacy snapshots may omit the surface; frozen surfaces always bind."""
     from cardine.lifecycle.scope import enforce_scope

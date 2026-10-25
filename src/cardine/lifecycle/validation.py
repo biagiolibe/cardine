@@ -3,6 +3,8 @@
 Receipts detect uncovered changes; they do not authenticate an author. Unknown
 process outcomes rerun the entire set and never become invented exit statuses.
 """
+
+from cardine.shared.git import scoped_command
 from copy import deepcopy
 from contextlib import contextmanager
 import fcntl
@@ -42,6 +44,8 @@ def _read_log(stream):
 def execute_command(command, root, environment, descriptor):
     """Drain both pipes without unbounded buffers or mixing logs into CLI JSON."""
     receipts.boundary('before_validation_process')
+    from cardine.shared.git import invalidate_facts
+    invalidate_facts()
     process = subprocess.Popen(command, shell=True, executable='/bin/bash', cwd=root,
                                env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                pass_fds=(descriptor,))
@@ -124,10 +128,13 @@ def _publish(root, task_id, intent, state):
     return result
 
 
-def run_task_validation(root, task_id):
+@scoped_command
+def run_task_validation(root, task_id, *, context=None):
     """Execute one complete attempt, including at most one unchanged full rerun."""
     root = Path(root).resolve()
-    inspection = _execution_location(root, task_id)
+    from cardine.lifecycle.engine import resolve_run_locations
+    context = context or resolve_run_locations(task_id, root)
+    inspection = _execution_location(root, task_id, context=context)
     if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
         raise CardineError('validation requires the canonical task worktree')
     base = str(inspection['base_commit'])
@@ -150,7 +157,7 @@ def run_task_validation(root, task_id):
                 if inputs(root, task_id, pending['state'], base, dict(os.environ), operation_paths=ignored) != intent['inputs']:
                     raise CardineError('validation inputs changed before result replay')
                 receipts.replay_operation(root, task_id, kind='task-validation')
-            state = _execution_state(root, task_id)
+            state = _execution_state(root, task_id, context=context)
             receipts.verify_receipts(root, state)
         if (intent and intent['phase'] == 'publish'
                 and state.get('run', {}).get('validation') == intent['progress']):
@@ -203,7 +210,7 @@ def run_task_validation(root, task_id):
             raise CardineError('validation input state changed')
         runs = intent['runs']
         while len(runs) < 2 and (not runs or any(item['exitStatus'] != 0 for item in runs[-1])):
-            before_run = _execution_state(root, task_id)
+            before_run = _execution_state(root, task_id, context=context)
             if (inputs(root, task_id, before_run, base, dict(os.environ)) != current
                     or receipts.state_digest(before_run) != intent['before']):
                 receipts._save_intent(path, dict(intent, phase='invalidated'))
@@ -219,7 +226,7 @@ def run_task_validation(root, task_id):
                      stdout=stdout, stderr=stderr, stdoutTruncated=out_truncated, stderrTruncated=err_truncated))
             # A subprocess may change files, policy or environment; no result is
             # accepted until all inputs and receipt authority have been rechecked.
-            state_after = _execution_state(root, task_id)
+            state_after = _execution_state(root, task_id, context=context)
             if (inputs(root, task_id, state_after, base, dict(os.environ)) != current
                     or receipts.state_digest(state_after) != intent['before']
                     or receipts.require_authority(root) != authority):

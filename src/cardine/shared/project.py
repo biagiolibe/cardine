@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.git import scoped_observation
+
 from cardine.shared.layout import names
 
 from cardine.shared.errors import CardineError
@@ -167,6 +169,7 @@ def parse_project_declaration(declaration: object) -> dict[str, object]:
     return declaration
 
 
+@scoped_observation
 def read_project_declaration(project_root: Path) -> dict[str, object] | None:
     path = primary_project_root(project_root) / names().project_declaration_path
     if not path.exists():

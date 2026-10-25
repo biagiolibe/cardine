@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from cardine.shared.git import _run_git
+
 from cardine.release.version import parse_semver
 from cardine.release.version import read_raw_version
 from cardine.release.version import release_kind_from_body
@@ -26,7 +28,6 @@ import json
 import os
 import re
 import shlex
-import subprocess
 import tempfile
 
 
@@ -132,7 +133,7 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
             if branch:
                 if git_output(probe, "rev-parse", "stable") != target:
                     refuse("SELF_UPDATE_TARGET", "origin/stable is not the target release tag")
-                ancestry = subprocess.run(["git", "-C", str(probe), "merge-base", "--is-ancestor", head, target], capture_output=True)
+                ancestry = _run_git(str(probe), 'merge-base', '--is-ancestor', head, target, text=False)
                 if ancestry.returncode:
                     refuse("SELF_UPDATE_TARGET", "cause non-fast-forward: stable cannot fast-forward to origin/stable")
             if git_output(probe, "show", f"{target}:VERSION") != version:

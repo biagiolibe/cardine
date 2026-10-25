@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from cardine.shared.git import scoped_command
+
 from cardine.lifecycle.execution import _execution_location
 from cardine.lifecycle.execution import _execution_state
 from cardine.lifecycle.execution import _execution_worktree
@@ -18,9 +20,12 @@ from cardine.templates.mode import detect_mode
 from pathlib import Path
 
 
-def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -> dict[str, object]:
+@scoped_command
+def execution_start(project_root: Path, task_id: str, *, resume: bool = False, context=None) -> dict[str, object]:
     """Record the first legal start only after worktree and contract preflight."""
-    inspection = _execution_location(project_root, task_id)
+    from cardine.lifecycle.engine import resolve_run_locations
+    context = context or resolve_run_locations(task_id, project_root)
+    inspection = _execution_location(project_root, task_id, context=context)
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
     workflow = detect_mode(project_root)
@@ -41,7 +46,7 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
                              task_id=task_id, project=canonical_project_root(project_root))
         transition_task_state(project_root, task_id, 'in_progress')
     state = read_task_state(project_root, task_id, workflow,
-                            stop_factory=stop_error, require_contract=True)
+                            stop_factory=stop_error, require_contract=True, context=context)
     contract = state["contract"]
     _execution_worktree(project_root, task_id, resume=resume,
                         repeated_start=bool(state and state["status"] == "in_progress"), inspection=inspection)
@@ -61,21 +66,24 @@ def execution_start(project_root: Path, task_id: str, *, resume: bool = False) -
 
 
 
-def execution_deliver(project_root: Path, task_id: str, *, implementation_only: bool | None = None) -> dict[str, object]:
+@scoped_command
+def execution_deliver(project_root: Path, task_id: str, *, implementation_only: bool | None = None, context=None) -> dict[str, object]:
     """Frozen surfaces use pre-validation delivery; retain the legacy review adapter.
 
     The run engine always selects implementation delivery, including the
     missing-surface guardrail. Interactive legacy snapshots keep their existing
     review path until RE4 replaces role dispatch.
     """
+    from cardine.lifecycle.engine import resolve_run_locations
+    context = context or resolve_run_locations(task_id, project_root)
     if implementation_only is None:
         _execution_location(project_root, task_id, command=('execution', 'deliver'))
         from cardine.lifecycle.delivery import _operation_path
         implementation_only = (_operation_path(project_root, task_id).exists()
-                               or bool(_execution_state(project_root, task_id)['contract'].get('expectedCodeSurface')))
+                               or bool(_execution_state(project_root, task_id, context=context)['contract'].get('expectedCodeSurface')))
     if implementation_only:
         from cardine.lifecycle.delivery import deliver_implementation
-        return deliver_implementation(project_root, task_id)
+        return deliver_implementation(project_root, task_id, context=context)
     result = delivery_readiness(project_root, task_id)
     task_id = str(result["task_id"])
     if result["status"] == "in_review":
@@ -83,7 +91,7 @@ def execution_deliver(project_root: Path, task_id: str, *, implementation_only: 
     try:
         transition_task_state(project_root, task_id, "in_review")
     except (OSError, CardineError) as error:
-        actual = _execution_state(project_root, task_id)["status"]
+        actual = _execution_state(project_root, task_id, context=context)["status"]
         raise stop_error("EVIDENCE_INCOMPLETE", f"delivery transition failed: {error}; actual state {actual}; inspect git status and repair command-owned state/projection before retrying delivery",
                          task_id=task_id, project=canonical_project_root(project_root)) from error
     identity = resolve_task_identity(project_root, task_id, "existing")

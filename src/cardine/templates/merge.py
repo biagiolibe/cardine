@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from cardine.shared.git import _run_git
+
 from cardine.shared.layout import names
 
 from cardine.release.version import read_version
@@ -43,7 +45,6 @@ from cardine.templates.upgrade_support import _unused_adoption_backup
 from cardine.templates.upgrade_support import profile_surface_plan
 from pathlib import Path
 import shutil
-import subprocess
 import tempfile
 
 
@@ -108,11 +109,7 @@ def lock_project(
 def merge_clean(local: Path, base: Path, incoming: Path) -> tuple[bool, bytes]:
     with tempfile.TemporaryDirectory(prefix="cardine-merge-") as directory:
         output = Path(directory) / "merged"
-        process = subprocess.run(
-            ["git", "merge-file", "-p", str(local), str(base), str(incoming)],
-            check=False,
-            capture_output=True,
-        )
+        process = _run_git(None, 'merge-file', '-p', str(local), str(base), str(incoming), text=False)
         # git merge-file returns the number of conflicts (not merely 1) for a
         # successful merge operation with conflict markers. Only 128+ signals
         # a command failure.

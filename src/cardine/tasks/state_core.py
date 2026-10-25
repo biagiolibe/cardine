@@ -213,6 +213,8 @@ def state_path(project_root, task_id):
 
 def write_state_bytes(path, content):
     """Durable same-filesystem replacement used by the operation writer."""
+    from cardine.shared.git import invalidate_facts
+    invalidate_facts()
     path = Path(path)
     if path.is_symlink():
         raise TaskStateInvalid(f'refusing symlink state output: {path}')
