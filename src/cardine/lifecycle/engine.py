@@ -189,6 +189,18 @@ def deliver_run_implementation(locations: RunLocations) -> dict:
 
 
 @scoped_command
+def launch_run_work(locations: RunLocations, work, *, attempt: str, adapter) -> dict:
+    """Launch one issued role through an explicitly injected host profile.
+
+    No real-host fallback exists. RE4b consumes issued review sessions separately
+    from their responses; a host completion never records a verdict here.
+    """
+    from cardine.hosts.launch import launch_work
+    return launch_work(locations.worktree, locations.task_id, work, attempt=attempt,
+                       adapter=adapter, context=locations)
+
+
+@scoped_command
 def implementation_delivery(locations: RunLocations) -> dict | None:
     """Read verified step-three progress; no prose, writes or caller pass flags."""
     from cardine.lifecycle.delivery import verify_delivery
@@ -316,6 +328,9 @@ def run_validation_step(locations: RunLocations) -> dict | None:
         contract_ready=True, worktree_ready=True, implementation_delivered=True,
         validation_passed=passed, validation_failed=not passed,
         implementation_work=request,
+        review_work=WorkRequest('reviewer', root, request.snapshot_digest,
+            request.expected_surface, request.acceptance_references,
+            request.validation_references, ('independent source-bound review',)),
         review_required=state['contract']['options']['review'] == 'required'))
     result['action'] = 'C6' if result['step'] == 'candidate' else 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]

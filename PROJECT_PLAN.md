@@ -147,7 +147,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 094 — Run task validation in the engine with a retry limit (RE3b).
 - `[x]` 095 — Remove the handoff and report gates (N3).
 - `[x]` 100 — Resolve each command's context once and bound its Git subprocesses.
-- `[ ]` 102 — Launch implementer and reviewer with distinct host roles (RE4a).
+- `[x]` 102 — Launch implementer and reviewer with distinct host roles (RE4a).
 - `[ ]` 103 — Bind verdict, cancel, and abort to issued roles (RE4b).
 - `[ ]` 104 — Decide landing from pinned policy and Git facts (RE5a).
 - `[ ]` 105 — Run candidate validation and reconcile finalize and abort (RE5b).
