@@ -278,6 +278,92 @@ else: finalize_task_integration('056', None, root)
         state = json.loads(state_path(self.worker, '056').read_bytes())
         self.assertEqual(candidate.failure_count(state), 1)
 
+    def uncommitted_validation(self):
+        self.worker = Path(self.prepare()['worktree'])
+        (self.worker / 'feature.txt').write_text('implementation')
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'implement', cwd=self.worker)
+        from cardine.lifecycle.engine import deliver_run_implementation, resolve_run_locations
+        from cardine.lifecycle.validation import run_task_validation
+        previous = Path.cwd()
+        os.chdir(self.worker)
+        try:
+            deliver_run_implementation(resolve_run_locations('056', self.worker))
+            run_task_validation(self.worker, '056')
+        finally:
+            os.chdir(previous)
+        return candidate.locations_for('056', self.primary)
+
+    def test_engine_commits_measured_closure_then_validates_candidate(self):
+        locations = self.uncommitted_validation()
+        from cardine.lifecycle.engine import run_validation_step
+        first = run_validation_step(locations)
+        self.assertEqual(first['action'], 'validate-candidate')
+        self.assertEqual(self.git('log', '-1', '--format=%s', cwd=self.worker).stdout.strip(), 'Record 056 measured closure')
+        self.assertEqual(first['step'], 'candidate')
+        self.assertTrue(self.paths()[2].exists())
+
+    def test_closure_record_commit_boundaries_converge(self):
+        for label in ('closure_intent', 'closure_add', 'closure_commit', 'closure_result'):
+            for prefix in ('before_', 'after_'):
+                with self.subTest(point=prefix + label):
+                    fixture = CandidateTest()
+                    fixture.setUp()
+                    try:
+                        locations = fixture.uncommitted_validation()
+                        script = """import os,sys
+from pathlib import Path
+from cardine.lifecycle import receipts
+from cardine.integration.candidate import locations_for
+from cardine.integration.records import commit_closure_records
+receipts.boundary = lambda name: os._exit(97) if name == sys.argv[2] else None
+commit_closure_records(locations_for('056', Path(sys.argv[1])))
+"""
+                        result = subprocess.run([sys.executable, '-c', script, str(fixture.primary), prefix + label],
+                            env=dict(os.environ), cwd=fixture.root, capture_output=True, text=True)
+                        self.assertEqual(result.returncode, 97, result.stderr)
+                        from cardine.integration.records import commit_closure_records
+                        head = commit_closure_records(locations)
+                        self.assertEqual(commit_closure_records(locations), head)
+                        self.assertEqual(fixture.git('status', '--porcelain', cwd=fixture.worker).stdout, '')
+                        self.assertEqual(fixture.git('log', '--format=%s', cwd=fixture.worker).stdout.count('Record 056 measured closure'), 1)
+                    finally:
+                        fixture.tearDown()
+                        fixture.doCleanups()
+
+    def test_closure_commit_preserves_uncovered_and_foreign_changes(self):
+        locations = self.uncommitted_validation()
+        from cardine.integration.records import commit_closure_records
+        handoff = self.worker / 'tasks/handoffs/056.md'
+        original = handoff.read_bytes()
+        handoff.write_bytes(original + b'foreign edit')
+        with self.assertRaisesRegex(CardineError, 'uncovered closure output'):
+            commit_closure_records(locations)
+        self.assertTrue(handoff.read_bytes().endswith(b'foreign edit'))
+        handoff.write_bytes(original)
+        (self.worker / 'foreign.txt').write_text('foreign')
+        with self.assertRaisesRegex(CardineError, 'foreign changes'):
+            commit_closure_records(locations)
+        self.assertEqual((self.worker / 'foreign.txt').read_text(), 'foreign')
+        (self.worker / 'foreign.txt').unlink()
+        def interrupt(name):
+            if name == 'after_closure_intent':
+                raise InterruptedError('test interruption')
+        with mock.patch.object(receipts, 'boundary', interrupt), self.assertRaises(InterruptedError):
+            commit_closure_records(locations)
+        path = candidate.operation_path(locations, 'closure')
+        original_intent = path.read_bytes()
+        intent = receipts._load_intent(path)
+        receipts._save_intent(path, dict(intent, task_id='999'))
+        foreign = path.read_bytes()
+        with self.assertRaisesRegex(CardineError, 'inputs or owner changed'):
+            commit_closure_records(locations)
+        self.assertEqual(path.read_bytes(), foreign)
+        path.write_bytes(original_intent)
+        handoff.write_bytes(original + b'changed after intent')
+        with self.assertRaisesRegex(CardineError, 'closure output changed'):
+            commit_closure_records(locations)
+
     def test_candidate_result_boundaries_replay_once(self):
         for label in ('candidate_intent', 'candidate_logs', 'candidate_result', 'intent',
                       'staged_pair', 'state_replace', 'result_receipt'):

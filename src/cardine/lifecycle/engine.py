@@ -302,6 +302,7 @@ def run_validation_step(locations: RunLocations) -> dict | None:
     if state is not None and state['status'] != 'cancelled':
         from cardine.lifecycle.control import require_review_budget
         require_review_budget(root, task_id, state)
+    before_validation = state.get('run', {}).get('validation') if state else None
     contract = state['contract'] if state else {}
     request = WorkRequest('implementer', root,
         receipts.digest(receipts.encoded(contract)),
@@ -362,6 +363,10 @@ def run_validation_step(locations: RunLocations) -> dict | None:
             request.validation_references, ('independent source-bound review',)),
         review_required=state['contract']['options']['review'] == 'required'))
     if result['step'] == 'candidate':
+        if before_validation != progress:
+            result['action'] = 'C6'
+            result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
+            return result
         return run_integration_step(locations, prepare=True)
     result['action'] = 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]

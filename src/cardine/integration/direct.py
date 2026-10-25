@@ -18,6 +18,9 @@ class DirectLanding:
     name = "direct"
 
     def prepare_candidate(self, task_id: str, worktree_root: Path | None, project: Path) -> dict[str, object]:
+        from cardine.integration.records import commit_closure_records
+        from cardine.integration.candidate import locations_for
+        commit_closure_records(locations_for(task_id, project))
         return stage_task_integration(task_id, worktree_root, None, project)
 
     def readiness(self, task_id: str, worktree_root: Path | None, project: Path) -> tuple[dict[str, object], bool]:

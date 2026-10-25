@@ -177,7 +177,7 @@ run_task_validation(Path(sys.argv[1]), '001')
                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         value = json.loads(result.stdout)
-        self.assertEqual((value['step'], value['action']), ('candidate', 'validate-candidate'))
+        self.assertEqual((value['step'], value['action']), ('candidate', 'C6'))
         self.assertEqual(self.state()['run']['validation']['phase'], 'passed')
 
     def test_changed_environment_before_rerun_invalidates_without_intermittence_or_count(self):
