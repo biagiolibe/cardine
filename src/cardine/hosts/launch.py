@@ -123,7 +123,8 @@ def launch_work(root, task_id, work, *, attempt, adapter, context=None):
                        work=work.as_json(), authority=receipts.require_authority(root, context=context))
         # An attempt is immutable, including across process restarts. New source
         # or contract requires a new attempt; never silently spawn another worker.
-        key = receipts.digest(receipts.encoded(dict(task=task_id, role=work.role, attempt=attempt)))
+        key = receipts.digest(receipts.encoded(dict(root=str(root), task=task_id,
+                                                   role=work.role, attempt=attempt)))
         request['request_id'] = key
         kind = 'host-launch:' + key
         if pending:

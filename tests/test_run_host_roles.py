@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -138,6 +139,18 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
             self.assertEqual(self.fixture.state(), before)
             self.assertEqual(before['status'], 'in_progress')
             self.assertNotIn('review', before.get('run', {}))
+
+    def test_shared_host_keeps_same_task_and_attempt_in_two_projects_distinct(self):
+        with tempfile.TemporaryDirectory() as directory:
+            host = FakeHost(Path(directory) / 'shared-host', 'codex')
+            first = self.launch(host=host)
+            self.doCleanups()
+            self.setUp()
+            second = self.launch(host=host)
+            self.assertNotEqual(first['request']['root'], second['request']['root'])
+            self.assertNotEqual(first['request']['request_id'], second['request']['request_id'])
+            self.assertNotEqual(first['session']['session_id'], second['session']['session_id'])
+            self.assertEqual(len(list(host.directory.iterdir())), 2)
 
     def test_every_host_and_receipt_boundary_restarts_same_session(self):
         cases = [(point, 1) for point in HOST_POINTS]
