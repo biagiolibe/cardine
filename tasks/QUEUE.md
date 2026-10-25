@@ -32,28 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 22 — The cardine run engine: implementation
-
-Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and decisions 13 and 14.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 082 | Revise the run engine plan with the inventories and the trust boundary | 🔴 P1 | — | [082](done/082-revise-run-engine-plan.md) |
-| `[x]` | 083 | Remove the self-reported evidence counters (RX1) | 🔴 P1 | — | [083](done/083-remove-self-reported-counters.md) |
-| `[x]` | 084 | Read class, review policy, and deliverables from the snapshot (N2a) | 🔴 P1 | 083 | [084](done/084-read-class-review-deliverables.md) |
-| `[x]` | 085 | Read validation commands, host impact, and locations from frozen inputs (N2b) | 🔴 P1 | 084 | [085](done/085-read-validation-and-locations.md) |
-| `[x]` | 086 | Add the pure run resolver and output envelope (RE1a) | 🔴 P1 | 085 | [086](done/086-resolver-and-output.md) |
-| `[x]` | 087 | Write and verify operation receipts (RE1b) | 🔴 P1 | 086 | [087](done/087-operation-receipts.md) |
-| `[x]` | 088 | Make state readers and preparation require receipts (RE1c) | 🔴 P1 | 087 | [088](done/088-receipt-gated-readers.md) |
-| `[x]` | 089 | Classify worktree, state, lease, and cleanup stops by cause (RE2a) | 🔴 P1 | 088 | [089](done/089-stop-causes-lifecycle.md) |
-| `[x]` | 090 | Consolidate the approval, configuration, and workflow codes (RE2b) | 🔴 P1 | 089 | [090](done/090-consolidate-policy-codes.md) |
-| `[x]` | 097 | Add focused development runs to the test runner | 🔴 P1 | 090 | [097](done/097-focused-test-runs.md) |
-| `[x]` | 098 | Build heavy lifecycle test fixtures once per class | 🔴 P1 | 097 | [098](done/098-fixture-templates.md) |
-| `[x]` | 099 | Keep the test failure record writable in the sandbox | 🔴 P1 | 098 | [099](done/099-sandbox-failure-record.md) |
-| `[x]` | 091 | Classify self-update, upgrade, and host stops by cause (RE2c) | 🔴 P1 | 099 | [091](done/091-stop-causes-nonrun.md) |
-| `[x]` | 092 | Dispatch typed outcomes through one renderer (RE2d) | 🔴 P1 | 091 | [092](done/092-typed-outcome-dispatch.md) |
-| `[x]` | 093 | Enforce the expected surface and record delivery identity (RE3a) | 🔴 P1 | 092 | [093](done/093-scope-and-delivery.md) |
-| `[x]` | 096 | Store execution evidence in one file per task | 🔴 P1 | 093 | [096](done/096-per-task-execution-evidence.md) |
-| `[x]` | 094 | Run task validation in the engine with a retry limit (RE3b) | 🔴 P1 | 096 | [094](done/094-engine-validation.md) |
-| `[ ]` | 095 | Remove the handoff and report gates (N3) | 🔴 P1 | 094 | [095](095-remove-handoff-gates.md) |

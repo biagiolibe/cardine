@@ -131,7 +131,6 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),
     ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INTERRUPTED"): ("split", "intact plain transition intent and no live writer"),
     ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
-    ("src/cardine/tasks/transitions.py", "close_task", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/tasks/transitions.py", "close_task", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
     ("src/cardine/tasks/transitions.py", "record_spike_outcome", "TASK_STATUS_REJECTED"): ("guardrail", "wrong order or forbidden transition needs a developer decision"),
     ("src/cardine/tasks/transitions.py", "transition_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),

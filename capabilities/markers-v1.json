@@ -98,7 +98,7 @@
       "adoptionRecord": "066-machine-task-state-adoption"
     },
     "handoff-correction-redelivery": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "070-worktree-template-delivery"
@@ -224,7 +224,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "review-remediation-record": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -254,7 +254,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 7,
+      "requiredVersion": 8,
       "retired": false,
       "required": true,
       "adoptionRecord": "096-per-task-execution-evidence"

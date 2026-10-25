@@ -789,13 +789,12 @@ class WorktreeRootSetupTest(unittest.TestCase):
         for subcommand in (
             "validate",
             "ready-check",
-            "handoff-check",
             "preflight",
             "contract",
         ):
             self.assertIn(f"Bash(cardine execution {subcommand}:*)", allowlist)
             self.assertNotIn(f"Bash(python3 scripts/cardine_cli.py execution {subcommand}:*)", allowlist)
-        for retired in ("evidence", "investigate"):
+        for retired in ("evidence", "investigate", "handoff-check"):
             self.assertNotIn(f"Bash(cardine execution {retired}:*)", allowlist)
         for unrelated in ("Bash(git mv:*)", "Bash(mv:*)", "Bash(sed:*)", "Bash(rg:*)", "Bash(find:*)"):
             self.assertNotIn(unrelated, allowlist)

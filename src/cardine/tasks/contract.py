@@ -239,17 +239,6 @@ NORMAL_PREFLIGHT_HEADINGS = ("Expected code surface",)
 SPIKE_PREFLIGHT_FIELDS = ("Question", "Timebox", "Deliverable")
 
 
-HANDOFF_FIELDS = (
-    "Files changed",
-    "Validation",
-    "Validation skips",
-    "Manual verification",
-    "Acceptance criteria",
-    "Isolated exploration",
-    "Blockers/deviations",
-)
-
-
 HOST_IMPACT_STATES = ("enforced", "advisory", "unsupported", "unverified")
 
 
@@ -336,26 +325,6 @@ def validate_host_impact_declaration(text: str) -> list[tuple[str, str]]:
     )
 
 
-def verify_host_impact_completion_evidence(text: str, *, profiles=None) -> None:
-    """Require profile-specific durable evidence for each enforced claim."""
-    section = host_impact_section(text)
-    if section is None:
-        section = ""
-    enforced_profiles = [profile for profile, state in (validate_host_impact_declaration(text) if profiles is None else profiles.items()) if state == "enforced"]
-    if not enforced_profiles:
-        return
-    evidence = {
-        match.group(1).strip()
-        for match in re.finditer(r"^- \[([^\]]+)\]:\s*\S+", section, re.MULTILINE)
-    }
-    missing = [profile for profile in enforced_profiles if profile not in evidence]
-    if missing:
-        raise stop_error(
-            "HOST_IMPACT_EVIDENCE_MISSING",
-            "enforced profile is missing Completion evidence: " + ", ".join(missing),
-        )
-
-
 def execution_entries(project_root: Path, task_id: str) -> list[dict[str, object]]:
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     path = project_root / names().execution_evidence_path(canonical_id)
@@ -373,36 +342,8 @@ def execution_entries(project_root: Path, task_id: str) -> list[dict[str, object
     return entries
 
 
-def verify_validation_skips(report_text: str, task_id: str) -> None:
-    """Reject validation failures that a handoff's skip declaration cannot excuse."""
-    reported = re.search(r"^- Validation skips:\s*(.+)$", report_text, re.MULTILINE)
-    assert reported is not None  # HANDOFF_FIELDS has already checked its presence.
-    value = reported.group(1).strip()
-    validation = re.search(r"^- Validation:\s*(.+)$", report_text, re.MULTILINE)
-    assert validation is not None  # HANDOFF_FIELDS has already checked its presence.
-    failed_validation = re.search(r"\bexit\s+[1-9][0-9]*\b", validation.group(1))
-
-    if value.lower() == "none":
-        if failed_validation:
-            raise stop_error(
-                "HANDOFF_VALIDATION_FAILING",
-                f"rule: a failing validation needs a named skip; field checked: Validation; accepted: no "
-                f"`exit <non-zero>`; found: `{failed_validation.group(0)}` with Validation skips: none",
-                task_id=task_id,
-            )
-        return
-
-    if failed_validation:
-        raise stop_error(
-            "HANDOFF_VALIDATION_FAILING",
-            f"rule: a named skip does not make a failing validation pass; field checked: Validation; "
-            f"accepted: no `exit <non-zero>`; found: `{failed_validation.group(0)}` with Validation skips: {value}",
-            task_id=task_id,
-        )
-
-
-def verify_execution_evidence(project_root: Path, task_id: str, report_text: str) -> None:
-    """Require report claims to be backed by durable, task-declared evidence."""
+def verify_execution_evidence(project_root: Path, task_id: str) -> None:
+    """Require current measured results for the frozen validation commands."""
     from cardine.tasks.evidence import frozen_validation_commands
     canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
     entries = execution_entries(project_root, canonical_id)
@@ -436,62 +377,19 @@ def verify_execution_evidence(project_root: Path, task_id: str, report_text: str
             for entry in entries
         )
     ]
+    profiles = state['contract']['hostImpact']['profiles']
+    enforced = [profile for profile, value in profiles.items() if value == 'enforced']
+    if enforced:
+        from cardine.tasks.validation import verified_validation, host_observations_complete
+        progress = verified_validation(project_root, canonical_id, state)
+        if progress is None or not host_observations_complete(state['contract'], progress):
+            raise stop_error('EVIDENCE_INCOMPLETE', 'Enforced host profiles need current measured observations',
+                             task_id=task_id, project=project_root)
     if missing_validations:
         raise stop_error(
-            "HANDOFF_VALIDATION_EVIDENCE_MISSING",
+            "EVIDENCE_INCOMPLETE",
             f"rule: every declared validation needs a successful durable record; source checked: "
             f"{names().execution_evidence_path(canonical_id).as_posix()} for {task_id}; accepted: an entry with the declared id and "
             f"command and exitStatus 0; missing for: " + ", ".join(missing_validations),
-            task_id=task_id,
+            task_id=task_id, project=project_root,
         )
-
-
-def check_handoff(project_root: Path, task_id: str, report: Path) -> str:
-    """Reject incomplete completion evidence before it can be used as a handoff."""
-    if not report.is_file():
-        raise stop_error(
-            "HANDOFF_REPORT_MISSING",
-            f"rule: the handoff check reads a completion report; source checked: {report}; "
-            "expected: an existing file; found: no such file",
-            task_id=task_id,
-        )
-    text = report.read_text(encoding="utf-8")
-    missing = [field for field in HANDOFF_FIELDS if not re.search(rf"^- {re.escape(field)}:\s*\S+", text, re.MULTILINE)]
-    if missing:
-        labels = re.findall(r"^- ([^:\n]+):", text, re.MULTILINE)
-        malformed = {
-            field: label for field in missing for label in labels
-            if label not in HANDOFF_FIELDS and re.match(rf"{re.escape(field)}(?![A-Za-z0-9])", label)
-        }
-        if malformed:
-            raise stop_error(
-                "HANDOFF_FIELD_FORMAT",
-                f"rule: a required field's name must be followed directly by the colon; source checked: {report.name}; "
-                "accepted form: `- <Field>: <value>`; found: "
-                + "; ".join(f"`- {label}:` (expected `- {field}: <value>`)" for field, label in malformed.items()),
-                task_id=task_id,
-            )
-        raise stop_error(
-            "HANDOFF_FIELDS_MISSING",
-            f"rule: every required field needs a non-empty value; source checked: {report.name}; "
-            "accepted form: `- <Field>: <value>`; required: " + ", ".join(HANDOFF_FIELDS)
-            + "; missing: " + ", ".join(missing),
-            task_id=task_id,
-        )
-    canonical_id = resolve_task_identity(project_root, task_id, "existing").canonical_id
-    if f"Completion Report — {canonical_id}" not in text:
-        heading = re.search(r"Completion Report — (\S+)", text)
-        raise stop_error(
-            "HANDOFF_TASK_MISMATCH",
-            f"rule: the report must identify its task; source checked: {report.name}; "
-            f"accepted: `Completion Report — {canonical_id}`; found: "
-            + (f"`{heading.group(0)}`" if heading else "no Completion Report heading"),
-            task_id=task_id,
-        )
-    verify_validation_skips(text, task_id)
-    verify_execution_evidence(project_root, task_id, text)
-    return f"Handoff evidence complete for {task_id}: {report}"
-
-
-def default_handoff_path(project_root: Path, task_id: str) -> Path:
-    return resolve_task_identity(project_root, task_id, "existing").handoff_path

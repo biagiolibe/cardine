@@ -112,8 +112,8 @@ def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, o
                             owned: set[str], report_path: str) -> list[str]:
     """Check every post-delivery commit, including changes later reverted.
 
-    The transition anchors the original delivery's parent. Subsequent empty
-    Deliver commits renew the review anchor without inventing state transitions.
+    The transition anchors the original delivery's parent. Subsequent report-only
+    commits have no readiness authority and need no delivery effect.
     """
     transition_head = state["transitions"][-1]["commit"]
     if _run_git(project_root, "merge-base", "--is-ancestor", transition_head, head).returncode:
@@ -124,22 +124,16 @@ def _delivery_later_commits(project_root: Path, task_id: str, state: dict[str, o
         raise stop_error("EVIDENCE_INCOMPLETE", "in_review needs a committed delivery",
                          task_id=task_id, project=canonical_project_root(project_root))
     delivery_paths = owned - {names().execution_evidence_path(resolve_task_identity(project_root, task_id, "existing").canonical_id).as_posix(), report_path}
-    later = []
     for index, commit in enumerate(commits):
         paths = set(git_output(project_root, "diff", "--name-only", f"{commit}^", commit).splitlines())
         allowed = delivery_paths if index == 0 else {report_path}
         if paths - allowed:
             raise stop_error("EVIDENCE_INCOMPLETE", "changes after delivery require renewed implementation and delivery",
                              task_id=task_id, project=canonical_project_root(project_root))
-        if index and (paths or git_output(project_root, "log", "-1", "--format=%s", commit) != f"Deliver {task_id} for review"):
-            later.append(commit)
-        else:
-            later = []
-    return later
+    return []
 
 
-def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: bool = True,
-                       allow_handoff_correction: bool = False) -> dict[str, object]:
+def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: bool = True) -> dict[str, object]:
     """Read-only delivery gate, also used by direct in_review transitions."""
     inspection = _execution_location(project_root, task_id, command=("execution", "deliver"))
     identity = resolve_task_identity(project_root, task_id, "existing")
@@ -159,7 +153,7 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
         if not valid or worktree["integration_active"] or Path(worktree["worktree"]).resolve() != project_root.resolve():
             raise stop_error("WRONG_WORKTREE", "delivery requires the clean canonical worktree", task_id=task_id, project=canonical_project_root(project_root))
     enforce_execution_scope(project_root, task_id, state=state, base=str(worktree["base_commit"]))
-    readiness_check(project_root, task_id, identity.handoff_path)
+    readiness_check(project_root, task_id)
     head = git_output(project_root, "rev-parse", "HEAD")
     base = str(worktree["base_commit"])
     owned = _execution_owned_paths(project_root, task_id)
@@ -167,8 +161,6 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
     if not changed - owned:
         raise stop_error("EVIDENCE_INCOMPLETE", "delivery needs a committed implementation change after the prepared base", task_id=task_id, project=canonical_project_root(project_root))
     report_path = identity.handoff_path.relative_to(project_root).as_posix()
-    if _run_git(project_root, "cat-file", "-e", f"HEAD:{report_path}").returncode:
-        raise stop_error("EVIDENCE_INCOMPLETE", "final handoff must be committed", task_id=task_id, project=canonical_project_root(project_root))
     digest = execution_source_digest(project_root, task_id)
     entries = execution_entries(project_root, task_id)
     commands = frozen_validation_commands(project_root, task_id)
@@ -189,15 +181,12 @@ def delivery_readiness(project_root: Path, task_id: str, *, verify_worktree: boo
         if (entry.get("command") != command or entry.get("exitStatus") != 0
                 or entry.get("sourceDigest") != digest or not re.fullmatch(r"[0-9a-f]{40}", str(commit))
                 or _run_git(project_root, "merge-base", "--is-ancestor", str(commit), head).returncode):
-            raise stop_error("EVIDENCE_INCOMPLETE", f"validation {command_id} is missing, failing, or stale; rerun execution validate and commit evidence/handoff", task_id=task_id, project=canonical_project_root(project_root))
+            raise stop_error("EVIDENCE_INCOMPLETE", f"validation {command_id} is missing, failing, or stale; rerun execution validate and commit evidence", task_id=task_id, project=canonical_project_root(project_root))
     if state["status"] == "in_review":
         persisted = _run_git(project_root, "show", f"HEAD:{state_path(project_root, task_id).relative_to(project_root)}")
         if persisted.returncode or json.loads(persisted.stdout) != state:
             raise stop_error("EVIDENCE_INCOMPLETE", "in_review state must be committed", task_id=task_id, project=canonical_project_root(project_root))
-        later = _delivery_later_commits(project_root, task_id, state, head, owned, report_path)
-        if later and not allow_handoff_correction:
-            raise stop_error("EVIDENCE_INCOMPLETE", "handoff correction requires execution deliver before review",
-                             task_id=task_id, project=canonical_project_root(project_root))
+        _delivery_later_commits(project_root, task_id, state, head, owned, report_path)
     return {"task_id": task_id, "commit": head, "clean": True, "status": state["status"]}
 
 

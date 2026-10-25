@@ -98,7 +98,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
         identity.handoff_path.write_text('## Completion Report — 001\n\n' + '\n'.join(
             '- ' + field + ': ' + ('none' if field in ('Validation skips', 'Isolated exploration') else 'complete')
-            for field in owner_tasks_contract.HANDOFF_FIELDS) + '\n')
+            for field in ('Files changed', 'Validation', 'Validation skips', 'Isolated exploration')) + '\n')
         self.commit('Finalize handoff')
         return identity
 
@@ -240,13 +240,9 @@ class ExecutionBoundariesTest(unittest.TestCase):
                 report.write(f'\n{correction} correction.\n')
             self.commit(f'{correction} handoff correction')
             corrected = self.git('rev-parse', 'HEAD')
-            self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_execution.delivery_readiness(self.worker, '001'))
-            result = owner_lifecycle_commands.execution_deliver(self.worker, '001')
+            result = owner_lifecycle_execution.delivery_readiness(self.worker, '001')
             self.assertNotEqual(result['commit'], delivered)
-            self.assertNotEqual(result['commit'], corrected)
-            self.assertEqual(self.git('rev-parse', 'HEAD^'), corrected)
-            self.assertEqual(self.git('log', '-1', '--format=%s'), 'Deliver 001 for review')
-            self.assertEqual(self.git('diff', '--name-only', 'HEAD^', 'HEAD'), '')
+            self.assertEqual(result['commit'], corrected)
             self.assertEqual(self.state(), original)
             self.assertEqual(owner_lifecycle_execution.delivery_readiness(self.worker, '001'), result)
             self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), result)
@@ -305,7 +301,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         identity.handoff_path.parent.mkdir(parents=True, exist_ok=True)
         identity.handoff_path.write_text('## Completion Report — 001\n\n' + '\n'.join(
             '- ' + field + ': ' + ('none' if field in ('Validation skips', 'Isolated exploration') else 'complete')
-            for field in owner_tasks_contract.HANDOFF_FIELDS) + '\n')
+            for field in ('Files changed', 'Validation', 'Validation skips', 'Isolated exploration')) + '\n')
         self.commit('Handoff without implementation')
         for action in (owner_lifecycle_execution.delivery_readiness, owner_lifecycle_commands.execution_deliver):
             with self.assertRaises(shared_errors.CardineStop) as caught:
@@ -318,7 +314,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assert_stop('WRONG_WORKTREE', lambda: owner_tasks_transitions.transition_task_state(self.worker, '001', 'in_review'))
         self.assertEqual(self.state()['status'], 'in_progress')
         self.commit('Start')
-        self.assert_stop('HANDOFF_REPORT_MISSING', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
+        self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         self.implemented()
         (self.worker / 'feature.txt').write_text('changed after validation\n')
         self.commit('Change code')
@@ -386,13 +382,13 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(self.state()['review']['verdict'], 'APPROVE')
         self.assertEqual(self.state()['outcome'], 'ANSWERED')
 
-    def test_incomplete_and_uncommitted_handoff_never_publish_ready(self):
+    def test_uncommitted_dirt_blocks_but_incomplete_report_does_not(self):
         identity = self.implemented()
         identity.handoff_path.write_text('## Completion Report — 001\n')
         self.assert_stop('WRONG_WORKTREE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         self.commit('Incomplete handoff')
-        self.assert_stop('HANDOFF_FIELDS_MISSING', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
-        self.assertEqual(self.state()['status'], 'in_progress')
+        result = owner_lifecycle_commands.execution_deliver(self.worker, '001')
+        self.assertEqual(result['status'], 'in_review')
 
     def test_cli_boundaries_and_ready_check_are_committed_and_read_only(self):
         script = Path(__file__).resolve().parents[1] / 'scripts/cardine_cli.py'

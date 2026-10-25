@@ -20,7 +20,7 @@ only after an explicit Resume directive.
 | `worktree active` | Exact registered task worktree; no `--project` option | Not applicable |
 | `worktree check` | Exact prepared task worktree for worker verification | Primary checkout |
 | `execution start`, `deliver`, state-backed `ready-check` | Any directory; canonical registered task worktree verified through `--project` | Task worktree |
-| `execution validate`, `preflight`, `contract`, `reconcile`, `handoff-check`, legacy `ready-check` | Any directory; existing contract/evidence checks apply. Contract preparation may also precede a worktree | Task worktree (or project being prepared for contract operations) |
+| `execution validate`, `preflight`, `contract`, `reconcile`, legacy `ready-check` | Any directory; existing contract/evidence checks apply. Contract preparation may also precede a worktree | Task worktree (or project being prepared for contract operations) |
 | `task close` | Any directory; canonical registered task worktree, clean and without active integration | Task worktree |
 | `task transition`, `review verdict` | Task worktree context; existing branch/state checks apply | Task worktree |
 <!-- CARDINE:END -->

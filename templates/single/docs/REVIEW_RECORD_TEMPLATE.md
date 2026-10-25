@@ -1,12 +1,12 @@
 # Review Record
 
-<!-- CARDINE:BEGIN capability=review-remediation-record v1 -->
+<!-- CARDINE:BEGIN capability=review-remediation-record v2 -->
 Use one durable review record per required-review task at the location
-`cardine locations` resolves for it. It is the canonical handoff from reviewer to
-implementer; chat output may summarize it but must not be the only location of
-findings. Create the directory when the first record is needed.
+`cardine locations` resolves for it. It is a human-readable summary for the implementer. Machine state and the
+issued review operation determine verdict authority; prose fields never gate
+readiness. Create the directory when the first record is needed.
 
-Record every verdict with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD; owner acceptance adds `--owner`. Never edit a status or verdict by hand. The command owns attempt headings and Status projections. Headings are human-readable only; gates read the task's machine state and Git. Prepare evidence as a command argument before mutating tracked files. Findings must be actionable, prioritized, and tied to evidence. During remediation append a resolution section without changing prior findings, evidence, or verdict headings; commit remediation, validation evidence, and the final handoff, then return to review with `cardine execution deliver <TASK-ID> --project .` last and stop writing.
+Record every verdict with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD; owner acceptance adds `--owner`. Never edit a status or verdict by hand. The command owns attempt headings and Status projections. Headings are human-readable only; gates read the task's machine state and Git. Prepare evidence as a command argument before mutating tracked files. Findings must be actionable, prioritized, and tied to evidence. During remediation append a resolution section without changing prior findings, evidence, or verdict headings; commit remediation and measured validation evidence, then return to review with `cardine execution deliver <TASK-ID> --project .` last and stop writing.
 
 ```md
 # Review Record — <TASK-ID>

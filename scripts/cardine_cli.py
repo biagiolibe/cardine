@@ -86,7 +86,7 @@ from cardine.worktree.paths import _normalized_local_repository_name, repository
 from cardine.hosts.skills import _directory_setup_state, CODEX_SKILL_NAMES, _framework_skill_links, _aggregate_skill_state, _stale_codex_skill_warnings, _setup_codex_state, codex_profile_root_mismatch
 from cardine.shared.flow import FLOW_TARGETS_PATH, FLOW_TARGETS_VERSION, FLOW_ORIGINS, FLOW_ORIGIN_PATTERN, FLOW_JOURNAL_TIME, FLOW_UNCODED, _flow_time, _flow_read_journal, _flow_origin, _flow_median, _flow_targets, _flow_tasks, flow_report, format_flow_report, _flow_duration
 from cardine.tasks.audit import audit_task_state_projections
-from cardine.tasks.contract import profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HANDOFF_FIELDS, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, verify_host_impact_completion_evidence, execution_entries, verify_validation_skips, verify_execution_evidence, check_handoff, default_handoff_path
+from cardine.tasks.contract import profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, execution_entries, verify_execution_evidence
 from cardine.tasks.importer import import_task_states
 from cardine.templates.upgrade import plan_upgrade, complete_profile_surfaces, apply_plan, apply_upgrade
 from cardine.cli import CardineArgumentParser, ShowVersionAction, main, build_parser, _run_cli

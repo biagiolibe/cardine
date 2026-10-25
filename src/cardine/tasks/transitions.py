@@ -93,11 +93,10 @@ def close_task(project_root: Path, task_id: str) -> dict[str, object]:
     _execution_worktree(project_root, task_id, command=("task", "close"))
     identity = resolve_task_identity(project_root, task_id, "existing", allow_archived_queue_links=True)
     task_id = identity.canonical_id
-    for label, path in (("task record", identity.task_path), ("handoff", identity.handoff_path)):
+    for label, path in (("task record", identity.task_path),):
         relative = path.relative_to(project_root).as_posix()
         if not path.is_file() or _run_git(project_root, "cat-file", "-e", f"HEAD:{relative}").returncode:
-            code = "HANDOFF_REPORT_MISSING" if label == "handoff" else "TASK_STATUS_REJECTED"
-            raise stop_error(code, f"task close requires a committed {label}; commit it before cardine task close",
+            raise stop_error("TASK_STATUS_REJECTED", f"task close requires a committed {label}; commit it before cardine task close",
                              task_id=task_id, project=project_root)
     state = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error, require_contract=True)
     if state["status"] != "in_progress":

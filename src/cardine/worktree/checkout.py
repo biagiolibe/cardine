@@ -281,20 +281,6 @@ def inspect_task_worktree(
             project_root, "cat-file", "-e", f"{base_commit}^{{commit}}"
         ).returncode != 0:
             errors.append("base-commit-mismatch")
-    handoff_consistent = bool(state) and not any(item.startswith("state-") for item in errors)
-    if identity.handoff_path.is_file():
-        handoff_text = identity.handoff_path.read_text(encoding="utf-8")
-        expected_fields = {
-            "Branch": identity.branch_name,
-            "Worktree": (handoff_worktree_value(root, expected), str(expected)),
-            "Base `main` commit": (str(state.get("base_commit", "")),),
-        }
-        for label, accepted in expected_fields.items():
-            match = re.search(rf"^- {re.escape(label)}:\s*`([^`]+)`", handoff_text, re.MULTILINE)
-            if match is not None and match.group(1) not in accepted:
-                errors.append("handoff-mismatch")
-                handoff_consistent = False
-                break
     result = {
         "version": 1,
         "status": "ready" if not errors else "blocked",
@@ -308,7 +294,6 @@ def inspect_task_worktree(
         "base_commit": state.get("base_commit", ""),
         "task_commit": head,
         "clean": clean,
-        "handoff_consistent": handoff_consistent,
         "integration_active": lease_path.exists() or integration_path.exists(),
         "errors": errors,
         "next_action": "implement" if not errors else "repair-or-abort",

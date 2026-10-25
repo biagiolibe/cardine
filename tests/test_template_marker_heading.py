@@ -37,7 +37,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_agents_and_claude_carry_expected_marker_versions(self) -> None:
         for name in ("AGENTS.md", "CLAUDE.md"):
             self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "1")])
-        self.assertIn(("review-remediation-record", "1"), self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")))
+        self.assertIn(("review-remediation-record", "2"), self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")))
         self.assertIn(("lifecycle-orchestration", "2"), self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")))
         implementation = self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"))
         for pair in (("execution-command-gate", "2"), ("validation-scoping", "1"), ("spike-routing", "1"), ("host-impact-routing", "1")):
@@ -46,7 +46,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing(self) -> None:
         blueprint = (self.WORKFLOW / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
         implementation = (self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
-        self.assertIn(("task-blueprint", "7"), self.marker_pairs(blueprint))
+        self.assertIn(("task-blueprint", "8"), self.marker_pairs(blueprint))
         self.assertIn("Classification: NOT_APPLICABLE", blueprint)
         self.assertIn("Rationale:", blueprint)
         self.assertIn("Classification: REQUIRED", blueprint)
@@ -63,7 +63,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         text = (self.WORKFLOW / "docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(text),
-            [("review-remediation-record", "1"), ("manual-verification-record", "1")],
+            [("review-remediation-record", "2"), ("manual-verification-record", "1")],
         )
 
     def test_lifecycle_orchestration_carries_its_own_marker(self) -> None:
@@ -120,7 +120,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         ]
         texts = {path: (self.WORKFLOW / path).read_text(encoding="utf-8") for path in paths}
 
-        self.assertIn(("task-blueprint", "7"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
+        self.assertIn(("task-blueprint", "8"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
         self.assertIn(
             ("lifecycle-orchestration", "2"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
         )
@@ -179,7 +179,7 @@ class CapabilityMarkerTest(unittest.TestCase):
             self.marker_pairs(completion_report),
             [
                 ("task-worktree-handoff", "2"),
-                ("handoff-correction-redelivery", "1"),
+                ("handoff-correction-redelivery", "2"),
                 ("manual-verification-record", "1"),
                 ("ci-verified-validation", "1"),
             ],
@@ -242,7 +242,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_whole_file_baseline_capabilities_each_carry_one_marker(self) -> None:
         expectations = {
             "LANGUAGE_POLICY.md": ("language-policy", "1"),
-            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "7"),
+            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "8"),
             "docs/CODE_ORGANIZATION.md": ("code-organization", "1"),
             "docs/AUDIT_PROMPT_READ_ONLY.md": ("audit-prompt", "1"),
         }

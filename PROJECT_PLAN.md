@@ -142,4 +142,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 093 — Enforce the expected surface and record delivery identity (RE3a).
 - `[x]` 096 — Store execution evidence in one file per task.
 - `[x]` 094 — Run task validation in the engine with a retry limit (RE3b).
-- `[ ]` 095 — Remove the handoff and report gates (N3).
+- `[x]` 095 — Remove the handoff and report gates (N3).

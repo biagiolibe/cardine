@@ -65,6 +65,9 @@ class ModuleInventoryTest(unittest.TestCase):
                 owners[name].append(str(path.relative_to(ROOT)))
         # Task 034 retires historical adoption without rewriting the split inventory.
         retired = {
+            # Task 095 retires completion-report readers.
+            "HANDOFF_FIELDS", "verify_host_impact_completion_evidence",
+            "verify_validation_skips", "check_handoff", "default_handoff_path",
             # Task 096 resolves evidence per task instead of a shared constant.
             "EXECUTION_EVIDENCE_PATH",
             # Task 083 removes self-reported evidence and investigations.

@@ -200,7 +200,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         for value, expected in (
             (relative, True),
             (contract["worktree"], True),
-            ("elsewhere/task-056", False),
+            ("elsewhere/task-056", True),
         ):
             with self.subTest(value=value):
                 handoff.write_text(f"- Worktree: `{value}`\n", encoding="utf-8")
@@ -211,12 +211,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 )
                 report = json.loads(result.stdout)
                 self.assertEqual(report["handoff_worktree"], relative)
-                self.assertEqual(report["handoff_consistent"], expected)
-                if expected:
-                    self.assertEqual(result.returncode, 0, result.stdout)
-                else:
-                    self.assertEqual(result.returncode, 2)
-                    self.assertIn("handoff-mismatch", report["errors"])
+                self.assertNotIn("handoff_consistent", report)
+                self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_usage_errors_exit_64(self) -> None:
         result = self.run_cli("worktree", "prepare", "056")
@@ -321,6 +317,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         lease.unlink()
 
         subprocess.run(["git", "merge", "--no-ff", "task-056", "-m", "integrate"], cwd=self.project, check=True)
+        write_state(self.project, "056", "done")
+        subprocess.run(["git", "add", ".cardine/tasks/056.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "commit", "-m", "Record fixture landing"], cwd=self.project, check=True, capture_output=True)
         status("C9", "PUSH_PENDING")
         subprocess.run(["git", "push", "origin", "main"], cwd=self.project, check=True, capture_output=True)
         status("C10", None)
@@ -461,14 +460,11 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         gates = (
             "EXECUTION_CONTRACT_UNRESOLVED", "VALIDATION_ENTRY_FORMAT",
             "TASK_RECORD_INCOMPLETE", "TASK_STATUS_REJECTED",
-            "HANDOFF_REPORT_MISSING", "HANDOFF_FIELDS_MISSING",
-            "HANDOFF_FIELD_FORMAT", "HANDOFF_TASK_MISMATCH", "HANDOFF_VALIDATION_FAILING",
-            "HANDOFF_VALIDATION_EVIDENCE_MISSING",
             "TASK_STATE_MISSING", "TASK_STATE_INVALID", "TASK_STATE_INTERRUPTED",
         )
         remaining = (
             "COMMAND_REFUSED", "OS_ACCESS_FAILED", "VALIDATION_ID_UNDECLARED",
-            "HOST_IMPACT_DECLARATION_INVALID", "HOST_IMPACT_EVIDENCE_MISSING", "UPGRADE_BLOCKED",
+            "HOST_IMPACT_DECLARATION_INVALID", "UPGRADE_BLOCKED",
             "RULE_CONFLICT", "SCOPE_CHANGE_REQUIRED",
             "REVIEW_LOOP_EXHAUSTED", "SELF_UPDATE_PLUGIN_CACHE", "SELF_UPDATE_DIRTY",
             "SELF_UPDATE_BRANCH", "SELF_UPDATE_TARGET", "SELF_UPDATE_VERIFY",
@@ -794,6 +790,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         lease.unlink()
         integration.unlink()
         subprocess.run(["git", "merge", "--no-ff", "task-056", "-m", "integrate"], cwd=self.project, check=True, capture_output=True)
+        write_state(self.project, "056", "done")
+        subprocess.run(["git", "add", ".cardine/tasks/056.json"], cwd=self.project, check=True)
+        subprocess.run(["git", "commit", "-m", "Record fixture landing"], cwd=self.project, check=True, capture_output=True)
         push = json.loads(self._advance().stdout)
         self.assertEqual(
             (push["step"], push["action_required"], push["commands"], push["stop_code"]),

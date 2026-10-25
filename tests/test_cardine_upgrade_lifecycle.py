@@ -61,7 +61,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         audit = self.run_cli("audit")
         # This legacy lock fixture has no capabilityProfiles; audit reports
         # UNVERIFIED for that declaration independently of marker integrity.
-        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v7 matches the released text", audit.stdout)
+        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v8 matches the released text", audit.stdout)
         self.assertNotIn("FAIL           marker-integrity", audit.stdout)
         self.assertNotIn("DRIFT", audit.stdout)
         repeated = self.run_cli("upgrade", "--check")
@@ -110,7 +110,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_blueprint = (self.project / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-blueprint v7", upgraded_blueprint)
+        self.assertIn("capability=task-blueprint v8", upgraded_blueprint)
         self.assertIn("Classification: NOT_APPLICABLE", upgraded_blueprint)
         self.assertIn("Classification: REQUIRED", upgraded_blueprint)
         self.assertIn("Project-owned task note.", upgraded_blueprint)
@@ -521,7 +521,7 @@ worktree before the branch only after validated integration succeeds.
     def test_1_4_0_template_capabilities_are_required(self) -> None:
         requirements = owner_templates_migrations.capability_requirements(self.framework)
         self.assertNotIn("worktree-budget-retirement", requirements)
-        for capability, version in (("worktree-command-locations", 2), ("handoff-correction-redelivery", 1)):
+        for capability, version in (("worktree-command-locations", 2), ("handoff-correction-redelivery", 2)):
             with self.subTest(capability=capability):
                 self.assertEqual(requirements[capability], (version, "030-synthetic-delivery"))
 

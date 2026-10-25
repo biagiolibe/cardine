@@ -343,7 +343,8 @@ def run_validation_step(locations: RunLocations) -> dict | None:
             tuple(contract.get('expectedCodeSurface', [])), tuple(contract.get('deliverables', [])),
             tuple(contract['validation']['baseline']), ('committed implementation delivery',))
     passed = progress['phase'] == 'passed'
-    if passed and any(not item['observed'] or item['exitStatus'] != 0 for item in progress['hostObservations']):
+    from cardine.tasks.validation import host_observations_complete
+    if passed and not host_observations_complete(contract, progress):
         result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
             contract_ready=True, worktree_ready=True, validation_failed=True, implementation_work=request))
         result['diagnostics'] = [dict(code='ACCEPTANCE_UNMET',
