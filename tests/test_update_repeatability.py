@@ -160,7 +160,7 @@ class UpdateRepeatabilityTest(unittest.TestCase):
         self.assertEqual(self.child(f, 'before_update_apply').returncode, 93)
         path = receipts.nonrun_path(f.root, 'self-update')
         before = path.read_bytes()
-        plugin = f.base / 'plugins/cache/meridian/release'
+        plugin = f.base / 'plugins/cache/example/release'
         plugin.parent.mkdir(parents=True)
         f.root.rename(plugin)
         with self.assertRaises(CardineStop) as error:
