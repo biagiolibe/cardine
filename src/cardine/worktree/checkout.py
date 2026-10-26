@@ -194,6 +194,17 @@ def _prepare_task_worktree(
         state["started_at"] = prior["started_at"]
     if not resume or operation.get("result") != "verified":
         publish_preparation(project_root, identity, operation, state)
+    if resume:
+        # Explicit Resume is authority. Persist it only after validating the
+        # exact owned registration; a check flag alone cannot grant it.
+        from cardine.lifecycle import receipts
+        from cardine.worktree.preparation import _path
+        operation = receipts._load_intent(_path(project_root, identity))
+        if operation.get('resume') is not True:
+            receipts.boundary('before_preparation_resume')
+            operation['resume'] = True
+            receipts._save_intent(_path(project_root, identity), operation)
+            receipts.boundary('after_preparation_resume')
     result: dict[str, object] = {
         **state,
         "handoff_worktree": handoff_worktree_value(root, path),
@@ -265,10 +276,12 @@ def inspect_task_worktree(
             clean = not any(dirty_summary.values())
             if not clean:
                 errors.append("dirty-worktree")
+    resume_recorded = False
     if state:
         from cardine.worktree.preparation import verify_preparation
         try:
-            verify_preparation(project_root, root, identity, expected, state)
+            preparation = verify_preparation(project_root, root, identity, expected, state)
+            resume_recorded = preparation.get('resume') is True
         except (CardineError, KeyError, TypeError) as error:
             errors.append("preparation-receipt-mismatch")
         if state.get("task_id") != identity.canonical_id:
@@ -314,7 +327,7 @@ def inspect_task_worktree(
             "cardine", "worktree", "prepare", identity.canonical_id, "--resume",
             "--project", str(project_root), "--format", "json",
         ))
-        if resume:
+        if resume and resume_recorded:
             result.pop("resume")
             result.update(status="ready-dirty", next_action="inspect-dirty", **dirty_summary)
             return result, True

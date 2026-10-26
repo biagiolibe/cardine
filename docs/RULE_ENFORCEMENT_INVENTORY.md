@@ -868,3 +868,14 @@ names.
   selects first.
 - Asset words for the skills and commands are counted ("Files and when an
   agent reads them") but are not part of the template budget.
+
+### RE6b disposition (task 107)
+
+G10, PW-45, IP-05 and IP-09 now run through receipt-bound
+`integration/cleanup.py`: verified main push, exact remote task-ref compare-delete,
+non-force worktree/branch cleanup and lifecycle removal. Every effect rechecks
+the actual remote and landed tip. The capability belongs to the lifecycle
+engine; it does not authorize an agent to delete remote branches. PW-32's
+dirty-resume path additionally requires Resume to be recorded in the verified
+preparation receipt. Same-user receipt checks do not install or prove effective
+host permissions.

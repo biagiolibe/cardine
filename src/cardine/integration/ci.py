@@ -57,6 +57,18 @@ def _refused(text):
     return _REFUSALS.search(text) is not None
 
 
+def remote_transport(root):
+    """One effective fetch/push destination, including Git URL rewrites."""
+    result = _run_git(root, 'remote', 'get-url', 'origin')
+    if result.returncode:
+        return None
+    fetch = result.stdout.strip()
+    pushes = _run_git(root, 'remote', 'get-url', '--push', '--all', 'origin')
+    if pushes.returncode or pushes.stdout.splitlines() != [fetch]:
+        raise CardineError('origin push and fetch destinations differ; refusing delivery')
+    return fetch
+
+
 def remote_repository(worker):
     """Host, owner and name of the configured origin; gh never infers it from the cwd."""
     done = _run_git(worker, 'config', '--get', 'remote.origin.url')
@@ -109,7 +121,8 @@ def ci_binding(locations, state, policy):
     if _run_git(worker, 'merge-base', '--is-ancestor', delivery['source'], 'HEAD').returncode:
         raise CardineError('delivered head is not part of the task branch')
     host, owner, name = remote_repository(worker)
-    return dict(task_id=task_id, repository=f'{host}/{owner}/{name}', ref=f'refs/heads/{identity.branch_name}',
+    return dict(task_id=task_id, repository=f'{host}/{owner}/{name}',
+                origin=remote_transport(worker), ref=f'refs/heads/{identity.branch_name}',
                 head=delivery['source'], attempt=state.get('review', {}).get('attempt', 1),
                 contract=receipts.digest(receipts.encoded(state['contract'])),
                 provider=policy['provider'], checks=policy['checks'])
@@ -180,7 +193,7 @@ def query_checks(binding):
 
 
 def _identity(binding):
-    return {key: binding[key] for key in ('task_id', 'repository', 'ref', 'contract')}
+    return {key: binding[key] for key in ('task_id', 'repository', 'origin', 'ref', 'contract')}
 
 
 def _publish(locations, path, binding, current, run_ci, kind):
@@ -237,13 +250,15 @@ def ci_gate(locations):
     else:
         cached = None
     if cached is None:
-        push = dict(ref=binding['ref'], sha=binding['head'])
+        owned = intent is not None and not intent['done'] and intent['binding'] == binding
         if remote_tip(worker, binding['ref'], locations) != binding['head']:
             if intent is None or intent['done'] or intent['binding'] != binding:
                 receipts._save_intent(path, dict(binding=binding, expected=None, done=False))
             receipts.boundary('before_ci_push')
             _push(worker, locations, binding['head'], binding['ref'])
             receipts.boundary('after_ci_push')
+            owned = True
+        push = dict(ref=binding['ref'], sha=binding['head'], owned=owned)
         state = _publish(locations, path, binding, state, dict(binding=binding, phase='pushed', push=push, checks=[]),
                          'ci-push')
         cached, replayed = state['run']['ci'], True

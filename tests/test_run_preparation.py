@@ -74,6 +74,7 @@ def stop(name):
 receipts.boundary = stop
 root = Path(sys.argv[1])
 if sys.argv[3] == 'prepare': prepare_task_worktree('001', root.parent / 'worktrees', root)
+elif sys.argv[3] == 'resume': prepare_task_worktree('001', root.parent / 'worktrees', root, resume=True)
 else: transition_task_state(root, '001', 'in_progress')
 '''
         result = subprocess.run([sys.executable, '-c', script, str(self.root), point, command],
@@ -210,6 +211,10 @@ execution_start(Path(sys.argv[1]), '001')
         self.assertEqual(active_worktree_task(worktree)['task_id'], '001')
         foreign = worktree / 'implementation.txt'
         foreign.write_text('unfinished implementation')
+        report, ready = inspect_task_worktree('001', self.worktrees, self.root, resume=True,
+                                               require_effective_worktree=False)
+        self.assertFalse(ready, report)  # The flag cannot invent durable Resume authority.
+        self.assertEqual(report['errors'], ['dirty-worktree'])
         result = self.prepare(resume=True)
         self.assertTrue(result['dirty'])
         report, ready = inspect_task_worktree('001', self.worktrees, self.root, resume=True,
@@ -219,6 +224,23 @@ execution_start(Path(sys.argv[1]), '001')
             prepare_task_worktree('001', self.worktrees.parent / 'other', self.root)
         self.assertEqual(foreign.read_text(), 'unfinished implementation')
         self.assertEqual(self.read()['status'], 'queued')
+
+    def test_resume_receipt_survives_both_effect_boundaries(self):
+        from cardine.worktree.preparation import _path
+        from cardine.tasks.identity import resolve_task_identity
+        worker = Path(self.prepare()['worktree'])
+        (worker / 'unfinished').write_text('keep')
+        path = _path(self.root, resolve_task_identity(self.root, '001', 'existing'))
+        original = receipts._load_intent(path)
+        for side in ('before', 'after'):
+            receipts._save_intent(path, original)
+            self.kill(side + '_preparation_resume', 'resume')
+            self.prepare(resume=True)
+            self.assertTrue(receipts._load_intent(path)['resume'])
+            self.assertEqual(receipts._load_intent(path)['operation_id'], original['operation_id'])
+            self.assertTrue(inspect_task_worktree('001', self.worktrees, self.root, resume=True,
+                                                require_effective_worktree=False)[1])
+            self.assertEqual((worker / 'unfinished').read_text(), 'keep')
 
     def test_foreign_collision_changed_input_and_foreign_owner_refuse(self):
         self.kill('after_branch_create')

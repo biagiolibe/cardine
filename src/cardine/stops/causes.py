@@ -86,6 +86,14 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/integration/cleanup.py", "_inactive", "<dynamic>"): ("passthrough", "idle owned lease is recoverable before acquiring the writer guard; foreign or active integration is retained"),
+    ("src/cardine/integration/cleanup.py", "_inactive", "CLEANUP_BLOCKED"): ("guardrail", "idle owned lease is recoverable before acquiring the writer guard; foreign or active integration is retained"),
+    ("src/cardine/integration/cleanup.py", "_inactive", "LEASE_INTERRUPTED"): ("split", "idle owned lease is recoverable before acquiring the writer guard; foreign or active integration is retained"),
+    ("src/cardine/integration/cleanup.py", "_fail", "<dynamic>"): ("passthrough", "receipt-bound cleanup classifier; exact remote ancestry and owned partial effects retain foreign work"),
+    ("src/cardine/integration/cleanup.py", "_fail", "CLEANUP_BLOCKED"): ("guardrail", "receipt-bound cleanup classifier; exact remote ancestry and owned partial effects retain foreign work"),
+    ("src/cardine/integration/cleanup.py", "_fail", "PUSH_PENDING"): ("split", "receipt-bound cleanup classifier; exact remote ancestry and owned partial effects retain foreign work"),
+    ("src/cardine/integration/cleanup.py", "_remote", "CLEANUP_BLOCKED"): ("guardrail", "receipt-bound cleanup classifier; exact remote ancestry and owned partial effects retain foreign work"),
+    ("src/cardine/integration/cleanup.py", "_remote", "PUSH_PENDING"): ("split", "receipt-bound cleanup classifier; exact remote ancestry and owned partial effects retain foreign work"),
     ("src/cardine/integration/ci.py", "remote_tip", "<dynamic>"): ("passthrough", "an unreadable origin is recoverable unless the remote refused authentication or access"),
     ("src/cardine/integration/candidate.py", "wait_for_lease", "LEASE_HELD"): ("guardrail", "malformed or unverified competing lease is preserved"),
     ("src/cardine/lifecycle/control.py", "authorize", "COMMAND_REFUSED"): ("guardrail", "missing enforced host channel cannot authorize a review, cancellation or owned abort"),
@@ -108,10 +116,6 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/integration/evidence.py", "candidate_validation_declaration", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/integration/merge.py", "_integration_task_state", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/integration/merge.py", "_integration_task_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
-    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
-    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "CLEANUP_BLOCKED"): ("guardrail", "unmerged, unpushed, denied or foreign state"),
-    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "LEASE_INTERRUPTED"): ("split", "own idle lease: abort is the exact owned recovery"),
-    ("src/cardine/integration/merge.py", "cleanup_task_worktree", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "LEASE_HELD"): ("guardrail", "exclusive-create race or foreign or live lease"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt only; the exact owned landing residue (intent and stage files) is cleared under an operation record before this check"),

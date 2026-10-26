@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import cardine_cli
 from cardine.integration import merge as owner_integration_merge
+from cardine.integration import cleanup as owner_cleanup
 from cardine.worktree import checkout as owner_worktree_checkout
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
@@ -177,24 +178,29 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
                     owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
                 gate.unlink()
         self.git("remote", "add", "origin", str(self.root / "remote.git"))
-        with self.assertRaisesRegex(shared_errors.CardineError, "not proven pushed"):
+        with self.assertRaisesRegex(shared_errors.CardineError, "cannot read origin"):
             owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        # A forged tracking ref cannot supply the missing remote observation.
         self.git("update-ref", "refs/remotes/origin/main", self.base)
+        with self.assertRaisesRegex(shared_errors.CardineError, "cannot read origin"):
+            owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
+        self.git("init", "--bare", str(self.root / "remote.git"))
+        self.git("push", "origin", "main")
         self.assert_cleanup_finished(prepared, "registered-directory-missing")
 
 
     def test_cleanup_resume_after_directory_removed_but_git_write_denied(self):
         prepared = self.prepare()
         worktree = Path(prepared["worktree"])
-        run_git = owner_integration_merge._run_git
+        run_git = owner_cleanup._run_git
 
-        def deny_removal(project, *arguments):
+        def deny_removal(project, *arguments, **kwargs):
             if arguments[:2] == ("worktree", "remove"):
                 shutil.rmtree(worktree)
                 return subprocess.CompletedProcess(arguments, 128, "", "Permission denied")
-            return run_git(project, *arguments)
+            return run_git(project, *arguments, **kwargs)
 
-        with mock.patch.object(owner_integration_merge, "_run_git", side_effect=deny_removal):
+        with mock.patch.object(owner_cleanup, "_run_git", side_effect=deny_removal):
             with self.assertRaisesRegex(shared_errors.CardineError,
                     r"CLEANUP_BLOCKED.*registered-directory-missing.*write access.*primary checkout's .git") as caught:
                 owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)

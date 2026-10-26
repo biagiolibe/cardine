@@ -18,7 +18,7 @@ from cardine.shared.errors import CardineError
 # Only observations are reusable. Unknown commands are effects, including failed
 # effects: invalidation happens before dispatch and is never rolled back.
 _READ_COMMANDS = {"rev-parse", "show", "rev-list", "merge-base", "diff", "ls-files",
-                  "status", "check-ref-format", "for-each-ref", "log", "cat-file"}
+                  "status", "ls-remote", "check-ref-format", "for-each-ref", "log", "cat-file"}
 _FACTS = contextvars.ContextVar("cardine_command_facts", default=None)
 
 
@@ -87,6 +87,7 @@ def _read_only(arguments):
     return (command in _READ_COMMANDS
             or command == "worktree" and options == ["list", "--porcelain"]
             or command == "config" and options[:1] == ["--get"]
+            or command == "remote" and options[:1] == ["get-url"]
             or command == "branch" and options in (["--show-current"], ["--list"]))
 
 

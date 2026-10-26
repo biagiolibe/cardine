@@ -37,6 +37,9 @@ class LandingStrategy(Protocol):
     def reconcile_landing(self, task_id: str, project: Path) -> dict[str, object]:
         """Restore only the caller-owned candidate and lease after a failure or interruption."""
 
+    def finish_delivery(self, locations) -> dict[str, object]:
+        """Verify main publication and clean the exact owned remote/local outputs."""
+
     def cleanup(self, task_id: str, worktree_root: Path | None, project: Path) -> dict[str, object]:
         """Remove what the landing made removable, never unmerged or foreign work."""
 
