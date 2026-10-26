@@ -32,6 +32,21 @@ import worktree_support as support
 
 
 class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
+    def assert_only_resume_receipt_changed(self, before, worktree):
+        from cardine.lifecycle import receipts
+        after = self.snapshot(worktree)
+        self.assertEqual(after[:2], before[:2])  # Index and every worktree file.
+        self.assertEqual(set(after[2]), set(before[2]))
+        for name, content in before[2].items():
+            if name.endswith('.preparation'):
+                old = json.loads(content)
+                old.pop('digest')
+                path = self.primary / '.git/cardine-worktrees' / name
+                self.assertEqual(receipts._load_intent(path), {**old, 'resume': True})
+            else:
+                self.assertEqual(after[2][name], content)  # Lifecycle JSON and all other files.
+        return after
+
     # MERIDIAN-OLD-NAME-TEST
     def test_old_integration_files_do_not_block_prepare_resume_or_check(self):
         retained = [self.primary / ".git" / name for name in (
@@ -101,7 +116,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
                          + str(report["resume"]))
         self.assertEqual(before, self.snapshot(worktree))
         self.assertEqual(self.resume()["base_commit"], self.base)
-        self.assertEqual(before, self.snapshot(worktree))
+        self.assert_only_resume_receipt_changed(before, worktree)
         with self.assertRaisesRegex(shared_errors.CardineError, "NEXT STALE_WORKTREE_BASE:"):
             self.prepare()
         closure, _ = owner_worktree_closure_status.closure_status("056", self.worktree_root, self.primary)
@@ -218,7 +233,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         with self.assertRaisesRegex(shared_errors.CardineError, "existing task worktree is dirty and was retained"):
             self.prepare()
         resumed = self.resume()
-        self.assertEqual(self.snapshot(worktree), before)
+        after_resume = self.assert_only_resume_receipt_changed(before, worktree)
         self.assertEqual(
             {key: resumed[key] for key in ("resumed", "dirty", "changed_paths", "untracked_paths", "created")},
             {"resumed": True, "dirty": True, "changed_paths": 1, "untracked_paths": 1, "created": False},
@@ -240,7 +255,7 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         self.assertTrue(ready)
         self.assertEqual((report["status"], report["next_action"]), ("ready-dirty", "inspect-dirty"))
         self.assertEqual((report["changed_paths"], report["untracked_paths"]), (1, 1))
-        self.assertEqual(self.snapshot(worktree), before)
+        self.assertEqual(self.snapshot(worktree), after_resume)
         self.assertEqual(shlex.split(resumed["next_command"]), [
             "cardine", "worktree", "check", "056", "--resume", "--project", str(self.primary.resolve()), "--format", "json"])
 
@@ -251,9 +266,22 @@ class WorktreeCheckoutTest(support.BoundedWorktreeLifecycleFixture):
         before = sorted(item.name for item in state_directory.iterdir())
         state_path = next(state_directory.glob("*.json"))
         original = state_path.read_bytes()
+        snapshot = self.snapshot(worktree)
+        receipt = next(state_directory.glob('*.preparation'))
+        mkstemp = cardine_cli.tempfile.mkstemp
+        def only_resume_receipt(*args, **kwargs):
+            self.assertEqual(Path(kwargs['dir']).resolve(), state_directory.resolve())
+            self.assertEqual(kwargs['prefix'], '.' + receipt.name + '.')
+            return mkstemp(*args, **kwargs)
         with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")), \
-                mock.patch.object(cardine_cli.tempfile, "mkstemp", side_effect=AssertionError("temporary file")):
+                mock.patch.object(cardine_cli.tempfile, "mkstemp", side_effect=only_resume_receipt) as temporary:
             resumed = self.resume()
+        self.assertEqual(temporary.call_count, 1)
+        after = self.assert_only_resume_receipt_changed(snapshot, worktree)
+        with mock.patch.object(owner_worktree_checkout, "_write_json_atomic", side_effect=AssertionError("state write")), \
+                mock.patch.object(cardine_cli.tempfile, "mkstemp", side_effect=AssertionError("repeated write")):
+            self.resume()
+        self.assertEqual(self.snapshot(worktree), after)
         self.assertEqual(sorted(item.name for item in state_directory.iterdir()), before)
         self.assertEqual(state_path.read_bytes(), original)
         self.assertEqual(
