@@ -19,8 +19,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import ci_evidence  # noqa: E402
 import cardine_cli  # noqa: E402
-from cardine.integration import evidence as owner_integration_evidence
-import cardine.shared.constants as shared_constants
 
 
 class CiEvidenceTest(unittest.TestCase):
@@ -60,7 +58,7 @@ class CiEvidenceTest(unittest.TestCase):
         return {"databaseId": 42, "headSha": commit or self.commit, "event": "push", "status": status,
                 "conclusion": conclusion, "url": "https://github.com/example/cardine/actions/runs/42", "workflowName": "Validate repository"}
 
-    def test_success_writes_a_verifier_compatible_t1_record(self) -> None:
+    def test_success_writes_a_commit_and_tree_bound_t1_record(self) -> None:
         run = self.run_data()
         code, outcome = self.run_script([([run], None), (run, None), ({"tree": {"sha": self.tree}}, None)])
         self.assertEqual((code, outcome), (0, {"status": "passed"}))
@@ -69,8 +67,8 @@ class CiEvidenceTest(unittest.TestCase):
         self.assertEqual(record["command"], ci_evidence.CI_TEST_COMMAND)
         self.assertIsNone(record["tests_run"])
         self.assertEqual(record["ci"], {"run_id": "42", "run_url": run["url"], "workflow": "Validate repository", "conclusion": "success", "head_sha": self.commit})
-        report, verified = owner_integration_evidence.check_validation_evidence(self.output, self.project, self.commit)
-        self.assertEqual((verified, report["status"]), (shared_constants.VALIDATION_EXIT_PASSED, "VALIDATION_PASSED"))
+        self.assertEqual((record["status"], record["level"], record["commit"], record["tree"]),
+                         ("passed", "T1_CI", self.commit, self.tree))
 
     def test_command_constant_matches_workflow(self) -> None:
         workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")

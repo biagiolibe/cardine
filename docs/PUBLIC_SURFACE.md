@@ -74,8 +74,6 @@ including command containers and nested subcommands.
 | `cardine worktree integrate finalize` | Stable |
 | `cardine worktree integrate abort` | Stable |
 | `cardine worktree cleanup` | Stable |
-| `cardine validation` | Internal |
-| `cardine validation check` | Internal |
 | `cardine review` | Stable |
 | `cardine review verdict` | Stable |
 | `cardine task` | Stable |

@@ -70,6 +70,9 @@ class ModuleInventoryTest(unittest.TestCase):
             "verify_validation_skips", "check_handoff", "default_handoff_path",
             # Task 096 resolves evidence per task instead of a shared constant.
             "EXECUTION_EVIDENCE_PATH",
+            # Task 106 retires the caller-written validation record as landing authority.
+            "VALIDATION_EXIT_PASSED", "VALIDATION_EXIT_PENDING", "VALIDATION_EXIT_FAILED",
+            "_validation_reason", "validation_evidence_reasons", "check_validation_evidence",
             # Task 083 removes self-reported evidence and investigations.
             "EVIDENCE_EVENT_KINDS",
             "record_execution_event",

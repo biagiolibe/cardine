@@ -86,6 +86,7 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/integration/ci.py", "remote_tip", "<dynamic>"): ("passthrough", "an unreadable origin is recoverable unless the remote refused authentication or access"),
     ("src/cardine/integration/candidate.py", "wait_for_lease", "LEASE_HELD"): ("guardrail", "malformed or unverified competing lease is preserved"),
     ("src/cardine/lifecycle/control.py", "authorize", "COMMAND_REFUSED"): ("guardrail", "missing enforced host channel cannot authorize a review, cancellation or owned abort"),
     ("src/cardine/review/verdict.py", "_clean_review_outputs", "TASK_STATE_INVALID"): ("guardrail", "unreceipted or foreign work is preserved before recording or replaying a verdict"),
