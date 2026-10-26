@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from cardine.shared.errors import CardineError
-from cardine.shared.jsonio import _write_json_atomic
+from cardine.hosts.effects import changed, host_operation
+from cardine.lifecycle.file_operation import Operation
+from cardine.shared.jsonio import json_bytes
 from cardine.shared.models import ClaudeConfigurationPlan
 from pathlib import Path
 import copy
@@ -136,16 +138,17 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
     return ClaudeConfigurationPlan("approval-required", settings_path, proposed, detail, current_text)
 
 
-def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan) -> bool:
+def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan, operation: Operation | None = None) -> bool:
     if plan.status == "blocked":
         raise CardineError(f"Claude project allowlist is blocked: {plan.detail}")
-    if plan.proposed_settings is None:
-        return False
-    current_text = plan.settings_path.read_text(encoding="utf-8") if plan.settings_path.is_file() else ""
-    if current_text != plan.current_text:
-        raise CardineError("Claude settings changed since they were planned; rerun --check")
-    _write_json_atomic(plan.settings_path, plan.proposed_settings)
-    return True
+    with host_operation("claude-allowlist", plan.settings_path, operation) as active:
+        if plan.proposed_settings is None:
+            return changed(active, False)
+        current_text = plan.settings_path.read_text(encoding="utf-8") if plan.settings_path.is_file() else ""
+        if current_text != plan.current_text:
+            raise CardineError("Claude settings changed since they were planned; rerun --check")
+        active.replace("claude-allowlist", plan.settings_path, json_bytes(plan.proposed_settings), mode=0o600)
+        return True
 
 
 def claude_hook_duplicate_advisories(project_root: Path, home: Path) -> tuple[str, ...]:

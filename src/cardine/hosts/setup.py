@@ -7,6 +7,7 @@ from cardine.shared.layout import names
 from cardine.worktree.paths import repository_identity
 
 from cardine.hosts.claude import apply_claude_project_allowlist
+from cardine.hosts.effects import host_operation
 from cardine.hosts.claude import claude_hook_duplicate_advisories
 from cardine.hosts.claude import plan_claude_project_allowlist
 from cardine.hosts.codex import _codex_profile_divergence
@@ -25,7 +26,7 @@ from cardine.integration.evidence import proposed_candidate_validation_declarati
 from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
 from cardine.shared.git import primary_project_root
-from cardine.shared.jsonio import _write_json_atomic
+from cardine.shared.jsonio import json_bytes
 from cardine.shared.models import SetupPlan
 from cardine.shared.project import parse_project_declaration
 from cardine.shared.project import read_project_declaration
@@ -364,56 +365,51 @@ def apply_setup(plan: SetupPlan) -> bool:
     fresh_rules = plan_codex_user_rules(plan.user_rules.path)
     if fresh_rules.current_text != plan.user_rules.current_text:
         raise CardineError("Codex user rules changed since planning; rerun --check")
-    changed = apply_codex_user_rules(plan.user_rules)
     root = plan.resolution.path
-    if plan.directory_state == "missing":
-        root.mkdir(parents=True, mode=0o700)
-        os.chmod(root, 0o700)
-        changed = True
-    elif plan.directory_state == "repair-required":
-        os.chmod(root, 0o700)
-        changed = True
-    if plan.config_action == "write":
-        _write_json_atomic(
-            plan.resolution.config_path,
-            {"version": 1, "worktreeRoot": str(root)},
-        )
-        changed = True
-    elif plan.config_action == "remove":
-        plan.resolution.config_path.unlink()
-        changed = True
-    changed = apply_codex_configuration(plan.codex_plan) or changed
-    changed = apply_claude_project_allowlist(plan.claude_plan) or changed
-    if plan.candidate_validation_proposal is not None:
-        _write_json_atomic(plan.candidate_validation_path, plan.candidate_validation_proposal)
-        changed = True
-    if plan.project_declaration_proposal is not None:
-        if plan.project_declaration_path.exists():
-            existing = read_project_declaration(plan.project_declaration_path.parent)
-            if existing is None or "project" in existing:
-                raise CardineError("project declaration appeared or changed since it was planned; rerun --check")
-        _write_json_atomic(plan.project_declaration_path, plan.project_declaration_proposal)
-        changed = True
-    if plan.task_identity_proposal is not None:
-        if plan.task_identity_path.exists():
-            raise CardineError("task identity declaration appeared since it was planned; rerun --check")
-        _write_json_atomic(plan.task_identity_path, plan.task_identity_proposal)
-        changed = True
-    missing_links = [
-        (path, plan.framework_root / "skills" / name)
-        for name, path, state, _ in plan.skill_links
-        if state == "missing"
-    ]
-    if missing_links:
-        skills_root = missing_links[0][0].parent
-        if not skills_root.exists():
-            skills_root.mkdir(parents=True, mode=0o700)
-            os.chmod(skills_root, 0o700)
-            changed = True
-        for path, target in missing_links:
-            path.symlink_to(target)
-            changed = True
-    return changed
+    with host_operation("setup", root) as active:
+        wrote = apply_codex_user_rules(plan.user_rules, active)
+        if plan.directory_state in ("missing", "repair-required"):
+            active.directory("cardine-root", root, 0o700)
+            wrote = True
+        if plan.config_action == "write":
+            active.replace("worktree-config", plan.resolution.config_path,
+                           json_bytes({"version": 1, "worktreeRoot": str(root)}), mode=0o600)
+            wrote = True
+        elif plan.config_action == "remove":
+            active.replace("worktree-config", plan.resolution.config_path, None)
+            wrote = True
+        wrote = apply_codex_configuration(plan.codex_plan, active) or wrote
+        wrote = apply_claude_project_allowlist(plan.claude_plan, active) or wrote
+        if plan.candidate_validation_proposal is not None:
+            active.replace("candidate-validation", plan.candidate_validation_path,
+                           json_bytes(plan.candidate_validation_proposal), mode=0o600)
+            wrote = True
+        if plan.project_declaration_proposal is not None:
+            if plan.project_declaration_path.exists():
+                existing = read_project_declaration(plan.project_declaration_path.parent)
+                if existing is None or "project" in existing:
+                    raise CardineError("project declaration appeared or changed since it was planned; rerun --check")
+            active.replace("project-declaration", plan.project_declaration_path,
+                           json_bytes(plan.project_declaration_proposal), mode=0o600)
+            wrote = True
+        if plan.task_identity_proposal is not None:
+            if plan.task_identity_path.exists():
+                raise CardineError("task identity declaration appeared since it was planned; rerun --check")
+            active.replace("task-identity", plan.task_identity_path,
+                           json_bytes(plan.task_identity_proposal), mode=0o600)
+            wrote = True
+        missing_links = [
+            (path, plan.framework_root / "skills" / name)
+            for name, path, state, _ in plan.skill_links
+            if state == "missing"
+        ]
+        if missing_links:
+            skills_root = missing_links[0][0].parent
+            if not skills_root.exists() or active.intent.get("paths", {}).get("skills-root"):
+                active.directory("skills-root", skills_root, 0o700)
+            for path, target in missing_links:
+                active.symlink("skill:" + path.name, path, target)
+        return wrote or bool(missing_links) or active.resumed
 
 
 CODEX_CLOSURE_POLICY_PROBES = (
