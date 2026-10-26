@@ -322,8 +322,14 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
             fixture.git('config', f'url.{fixture.origin}.insteadOf', REPOSITORY)
             fixture.git('config', 'extensions.worktreeConfig', 'true')
             fixture.git('config', '--worktree', 'remote.origin.url', str(foreign))
-            with self.assertRaisesRegex(CardineError, 'changed CI push ownership'):
+            # Changing the primary's repository identity changes its canonical
+            # worker path; finalize refuses that identity before CI cleanup.
+            with self.assertRaisesRegex(CardineError, 'foreign finalize operation or changed authority'):
                 cleanup.finish_delivery(locations)
+            self.assertIsNotNone(fixture.remote_tip())
+            self.assertTrue((fixture.worker / '.git').exists())
+            foreign_main = fixture.git('rev-parse', '--verify', '-q', 'refs/heads/main', cwd=foreign, check=False)
+            self.assertNotEqual(foreign_main.stdout.strip(), fixture.git('rev-parse', 'main').stdout.strip())
             fixture.git('config', '--worktree', '--unset', 'remote.origin.url')
             result = cleanup.finish_delivery(locations)
             self.assertEqual(result['status'], 'cleaned')
