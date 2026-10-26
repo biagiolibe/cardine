@@ -637,8 +637,9 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertEqual(
             result.stderr.strip(),
-            "BLOCKED CLEANUP_BLOCKED: task commit is not integrated into main; resume: rerun cardine worktree "
-            f"cleanup 056 --project {self.project.resolve()} --format json after the named condition clears",
+            "BLOCKED CLEANUP_BLOCKED: task commit is not integrated into main; resume: "
+            + shlex.join(['cardine', 'worktree', 'cleanup', '056', '--project', str(self.project.resolve()),
+                          '--worktree-root', str(self.worktree_root.resolve()), '--format', 'json']),
         )
 
     def test_integrate_stage_accepts_local_main_ahead_of_fetched_origin_main(self) -> None:

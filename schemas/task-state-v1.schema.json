@@ -1746,10 +1746,11 @@
             "binding": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["task_id", "repository", "ref", "head", "attempt", "contract", "provider", "checks"],
+              "required": ["task_id", "repository", "origin", "ref", "head", "attempt", "contract", "provider", "checks"],
               "properties": {
                 "task_id": {"type": "string", "minLength": 1},
                 "repository": {"type": "string", "minLength": 1},
+                "origin": {"type": "string", "minLength": 1},
                 "ref": {"type": "string", "minLength": 1},
                 "head": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
                 "attempt": {"type": "integer", "minimum": 1},
@@ -1762,8 +1763,9 @@
             "push": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["ref", "sha"],
+              "required": ["ref", "sha", "owned"],
               "properties": {
+                "owned": {"type": "boolean"},
                 "ref": {"type": "string", "minLength": 1},
                 "sha": {"type": "string", "pattern": "^[a-f0-9]{40}$"}
               }

@@ -45,5 +45,9 @@ class DirectLanding:
     def reconcile_landing(self, task_id: str, project: Path) -> dict[str, object]:
         return abort_task_integration(task_id, project)
 
+    def finish_delivery(self, locations):
+        from cardine.integration.cleanup import finish_delivery
+        return finish_delivery(locations)
+
     def cleanup(self, task_id: str, worktree_root: Path | None, project: Path) -> dict[str, object]:
         return cleanup_task_worktree(task_id, worktree_root, project)

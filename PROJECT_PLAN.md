@@ -152,7 +152,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 104 — Decide landing from pinned policy and Git facts (RE5a).
 - `[x]` 105 — Run candidate validation and reconcile finalize and abort (RE5b).
 - `[x]` 106 — Query CI by exact repository and commit (RE6a).
-- `[ ]` 107 — Verify the main push and clean up remote and local branches (RE6b).
+- `[x]` 107 — Verify the main push and clean up remote and local branches (RE6b).
 - `[ ]` 108 — Make self-update repeatable with a pinned target (SR1a).
 - `[ ]` 109 — Make upgrade and host writes repeatable (SR1b).
 - `[ ]` 110 — Rewrite the always-read product templates (TR1a).

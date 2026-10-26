@@ -499,3 +499,40 @@ def write_operation(root, task_id, state, *, kind, files=None, previous=None, st
     _save_intent(intent_path, intent)
     boundary('after_intent')
     return _finish(root, task_id, intent_path, intent)
+
+
+def external_effect(path, intent, name, verify, apply, complete):
+    """Receipt-covered external effect, reconciled from observations after a kill.
+
+    A same-user intent detects changed inputs; it does not prove authorship.
+    Verification runs again after the injection seam and before every retry.
+    """
+    effects = intent.setdefault('effects', {})
+    def intact():
+        safe_path(path.parent, path.name)
+        if _load_intent(path) != intent:
+            raise CardineError('external operation owner or inputs changed')
+    intact()
+    verify()
+    if effects.get(name) == 'done':
+        if not complete():
+            raise CardineError('completed external effect changed: ' + name)
+        return
+    if name not in effects:
+        effects[name] = 'pending'
+        _save_intent(path, intent)
+    boundary('before_' + name)
+    from cardine.shared.git import invalidate_facts
+    invalidate_facts()
+    intact()
+    verify()
+    if not complete():
+        apply()
+    boundary('after_' + name)
+    invalidate_facts()
+    intact()
+    verify()
+    if not complete():
+        raise CardineError('external effect not observed: ' + name)
+    effects[name] = 'done'
+    _save_intent(path, intent)

@@ -268,6 +268,9 @@ def run_preview_cli(argv: list[str]) -> int:
         # RE3b composes measured validation only after a verified delivery.
         # Earlier contract/preparation dispatch and later landing adapters stay
         # independent; editable progress cannot skip those receipt checks.
+        from cardine.integration.candidate import operation_path
+        if operation_path(locations, 'cleanup').exists():
+            return emit_run(run_integration_step(locations), validate_output)
         from cardine.lifecycle.control import operation_state
         active = operation_state(locations.worktree, locations.task_id)[0] if locations.worktree.is_dir() else state
         from cardine.lifecycle.control import require_review_budget
@@ -436,7 +439,7 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
 
 @scoped_command
 def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | None:
-    """One candidate or finalize step; subsequent push/cleanup belongs to RE6b."""
+    """One bounded candidate, finalize or verified delivery step."""
     from cardine.integration.candidate import (operation_path, wait_for_lease,
         require_budget)
     from cardine.integration.landing import landing_for
@@ -445,6 +448,12 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     from cardine.tasks.identity import resolve_task_identity
     from cardine.worktree.storage import _lifecycle_paths
     root, task_id = locations.primary, locations.task_id
+    cleanup = operation_path(locations, 'cleanup')
+    if cleanup.exists():
+        from cardine.integration.cleanup import finish_delivery
+        result = finish_delivery(locations)
+        return envelope(task_id, str(root), step='landing', action='cleanup', outcome='done',
+                        evidence=[dict(kind='landing', path=str(cleanup), identity=result['merge_commit'])])
     if not locations.worktree.is_dir():
         return None
     state, _ = operation_state(locations.worktree, task_id)
@@ -454,9 +463,8 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     final = operation_path(locations, 'finalize')
     argv = ['cardine', 'run', task_id, '--project', str(root)]
     if final.exists() and not finalization_aborted(locations):
-        landed = strategy.finalize_landing(task_id, None, root)
-        return envelope(task_id, str(root), step='landing', action='finalize',
-            next_command=command_reference(argv, 'Push and clean up the landed task'),
+        landed = strategy.finish_delivery(locations)
+        return envelope(task_id, str(root), step='landing', action='cleanup', outcome='done',
             evidence=[dict(kind='landing', path=str(final), identity=landed['merge_commit'])])
     if not staged.exists() and not prepare:
         return None

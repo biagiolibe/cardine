@@ -16,7 +16,7 @@ ratchet keys, and interruption boundaries; this record adds no design.
 
 ## Acceptance Criteria
 
-- [ ] The scope of row RE6b is implemented as its table cell describes it,
+- [x] The scope of row RE6b is implemented as its table cell describes it,
   with the design of the plan's sections "State and next-step resolution",
   "Invocation, locations and output contract", "Stops, recovery and
   bounded work", "Validation attempts", "Review and Stable commands",
@@ -25,41 +25,41 @@ ratchet keys, and interruption boundaries; this record adds no design.
   deletion and local cleanup; direct, merge, checkout, E, receipt module.
   A file the row missed but that the same change needs is in scope; the
   handoff lists it.
-- [ ] The row's tests exist and pass: `test_run_cleanup.py`, bare-origin
+- [x] The row's tests exist and pass: `test_run_cleanup.py`, bare-origin
   subprocess tests: remote advancement, protected refusal, uncertain
   transport, compare-delete race, reused path/branch negatives.
-- [ ] It settles the dirty-resume stop that task 089 left to the rows sharing
+- [x] It settles the dirty-resume stop that task 089 left to the rows sharing
   `worktree/checkout.py` (`tasks/handoffs/089.md`): a `worktree check
   --resume` on a dirty task worktree is split by cause only when the
   preparation receipt records the developer's resume durably; otherwise it
   stays `WRONG_WORKTREE`, and the handoff states which it is with the test
   that proves it.
-- [ ] Ratchet: no new key appears in the known-violation table of
+- [x] Ratchet: no new key appears in the known-violation table of
   `tests/test_text_gates.py`, and the allowlist does not grow.
-- [ ] Every effect this row performs or changes goes through the operation
+- [x] Every effect this row performs or changes goes through the operation
   receipts of row RE1b and has changed-input and foreign-owner negative
   tests.
-- [ ] Rule 4 of decision 14: Main push accepted, remote compare-delete,
+- [x] Rule 4 of decision 14: Main push accepted, remote compare-delete,
   worktree remove/placeholder, local branch delete, lifecycle removal:
   prove exact remote and landed tip at every retry; never force cleanup.
   Each effect test kills the operation immediately before and after each
   listed boundary, runs the identical command again, and checks
   convergence without duplicate commits, verdicts, counters, or deletion
   of foreign work. Pure rows test repeated resolution with no writes.
-- [ ] Nothing in the change claims authenticity beyond the plan's "Trust
+- [x] Nothing in the change claims authenticity beyond the plan's "Trust
   boundary": no same-user receipt or hash is presented as proof of
   authorship, and real host configuration is never installed or changed.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` (task 100)
+- [x] The subprocess ceilings of `tests/test_command_context.py` (task 100)
   still hold. A new Git observation goes through the single gateway and
   the command context; a ceiling rises only with the observation named in
   the handoff, and never because a fact is read twice.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1. The task changes product code, product templates, tests, and the
   other files its row names only; it never runs `cardine run` on this
   repository, installs or changes real host configuration, or writes to
   the real home directory.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -68,16 +68,16 @@ ratchet keys, and interruption boundaries; this record adds no design.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/107.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/107.json`, which only
   the installed `meridian task close 107` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -156,3 +156,9 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Completion evidence
+
+Implemented RE6b and verified every acceptance criterion. See
+`tasks/handoffs/107.md` for the validated commit/base, exact validation results,
+coverage accounting, interruption/ownership tests and the named sandbox skip.

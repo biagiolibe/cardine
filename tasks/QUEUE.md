@@ -44,7 +44,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 104 | Decide landing from pinned policy and Git facts (RE5a) | 🔴 P1 | 103 | [104](done/104-landing-decision.md) |
 | `[x]` | 105 | Run candidate validation and reconcile finalize and abort (RE5b) | 🔴 P1 | 104 | [105](done/105-candidate-integration.md) |
 | `[x]` | 106 | Query CI by exact repository and commit (RE6a) | 🔴 P1 | 105 | [106](done/106-ci-queries.md) |
-| `[ ]` | 107 | Verify the main push and clean up remote and local branches (RE6b) | 🔴 P1 | 106 | [107](107-push-and-cleanup.md) |
+| `[x]` | 107 | Verify the main push and clean up remote and local branches (RE6b) | 🔴 P1 | 106 | [107](done/107-push-and-cleanup.md) |
 | `[ ]` | 108 | Make self-update repeatable with a pinned target (SR1a) | 🔴 P1 | 107 | [108](108-self-update-repeatability.md) |
 | `[ ]` | 109 | Make upgrade and host writes repeatable (SR1b) | 🔴 P1 | 108 | [109](109-upgrade-host-repeatability.md) |
 | `[ ]` | 110 | Rewrite the always-read product templates (TR1a) | 🔴 P1 | 109 | [110](110-always-read-templates.md) |

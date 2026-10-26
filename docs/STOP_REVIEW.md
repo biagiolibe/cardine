@@ -93,9 +93,9 @@ new row SR1 are specified later; they are proposals, not existing row scope.
 | `INTEGRATION_CONFLICT` (G, mixed) | `integration/merge.py` tests any nonzero merge result, attempts abort, then emits this code. A verified textual conflict needs a human conflict-resolution decision. A lock/transient Git failure with no unmerged entries is R/W; inspect return status and index first. An abort failure must retain ownership and expose recovery, not claim an abort succeeded. | RE2 A1; RE5 A4 |
 | `CANDIDATE_VALIDATION_FAILED` (F) | `lifecycle/closure.py` C7 aborts on nonzero supplied results. No person before budget exhaustion: owned abort, return candidate diagnostics to implementation and revalidate the new candidate. Keep separate from task validation by phase; shared F rendering can use one validation-result type. | RE5 existing candidate retry/abort; RE3 counting A2 |
 | `EVIDENCE_MISMATCH` (R, mixed) | `integration/merge.py` stage/finalize checks current commit/tree, evidence shape, pass/scope/commands. Stale genuine evidence is R: rerun the appropriate validation and bind new results. Fabricated receipts or changed protected inputs require authority/information; do not bless them by regenerating from agent claims. | RE5 existing candidate execution; RE2 A1 |
-| `PUSH_PENDING` (R, status) | `closure_status` C9 and closure driver. No person: normal push, then query remote ancestry after an uncertain response before repeating. Already a status, never count as a blocked event. | RE6 existing push reconciliation |
-| `PUSH_REJECTED` (G, mixed) | Declared `git push origin main` exit/judgment; no Python stop emitter yet. Permission/protected-branch refusal needs authority or a landing-policy decision. A transport timeout is R/W after querying the remote; an advanced remote requires fresh ancestry/candidate checks. Preserve code for actual refusal. | RE6 existing rejected-push cases; A5 |
-| `CLEANUP_BLOCKED` (G, mixed) | `integration/merge.py::cleanup_task_worktree`. Missing directory, remaining owned branch, pending push or same-task lease are R; live other integration is W. Unmerged/protected branch, denied access or foreign dirt requires authority. Never force-delete. | RE2 existing split; RE6 existing cleanup/race scope |
+| `PUSH_PENDING` (R, status) | `closure_status` C9 and closure driver. No person: normal push, then query remote ancestry after an uncertain response before repeating. Already a status, never count as a blocked event. | RE6 existing push reconciliation. **Task 107 (RE6b)** reads origin directly before every cleanup effect; tracking refs cannot authorize cleanup. |
+| `PUSH_REJECTED` (G, mixed) | Declared `git push origin main` exit/judgment; no Python stop emitter yet. Permission/protected-branch refusal needs authority or a landing-policy decision. A transport timeout is R/W after querying the remote; an advanced remote requires fresh ancestry/candidate checks. Preserve code for actual refusal. | RE6 existing rejected-push cases; A5. **Task 107 (RE6b)** reconciles accepted/lost responses with `ls-remote`, retains uncertain intents, and keeps protected/refused pushes as guardrails. |
+| `CLEANUP_BLOCKED` (G, mixed) | `integration/merge.py::cleanup_task_worktree`. Missing directory, remaining owned branch, pending push or same-task lease are R; live other integration is W. Unmerged/protected branch, denied access or foreign dirt requires authority. Never force-delete. | RE2 existing split; RE6 existing cleanup/race scope. **Task 107 (RE6b)** binds local effects to task tip, registration, lifecycle bytes, branch reflog and landing receipt; remote deletion uses expected-old-OID compare-delete. |
 | `UNDECLARED_VALIDATION_COMMANDS` (G) | `integration/evidence.py` declaration gate, merge finalize and closure C7. Person supplies trusted command configuration when absent. If valid frozen configuration exists, resolve it automatically. Use this one configuration guardrail also for missing execution profile; include the missing field/source in detail. | RE5 resolved config; RE2 A1 |
 | `EXECUTION_CONTRACT_UNRESOLVED` (R) | `tasks/preflight.py` missing/stale resolution. No person when declared contract inputs exist: resolve from trusted inputs. If required human inputs are absent, return the named contract decision instead of looping. | RE1 resolver; RE2 existing contract scope |
 | `EXECUTION_PROFILE_MISSING` (G) | `tasks/contract.py::read_execution_profile`. Person supplies missing validation policy; tool can resolve a known installed profile. Merge this emitter-specific name into `UNDECLARED_VALIDATION_COMMANDS` with cause `execution-profile`. | RE2 A1; RE5 config |
@@ -346,3 +346,20 @@ self-authenticating. RE7 must test the complete then-current registry, run
 returned recovery commands unchanged from unrelated cwd, crash after each
 listed effect, and keep human/foreign/denied negatives. No registry edits,
 code changes or historical journal rewrites are delivered by this review.
+
+### RE6b implementation disposition (task 107)
+
+`integration/cleanup.py` records intents and completed effects through the RE1b
+receipt writer. Each retry proves the pinned origin and landed tip again. It
+pushes the exact landed commit without force, observes the remote result, and
+removes only the exact CI-pushed task ref using a server-side expected-old-OID
+lease. A concurrent remote advance is retained. A matching ref that CI only
+observed is preserved; its presence does not grant deletion authority. Local worktree removal, empty
+placeholder creation, non-force branch deletion and lifecycle removal each have
+before/after interruption tests and ownership/input negatives. A reused path,
+branch, registration or changed lifecycle output is preserved. These are
+same-user consistency checks, not proof of authorship.
+
+Dirty `worktree check --resume` returns `ready-dirty` only after a verified
+preparation receipt records the explicit Resume request. The flag without that
+receipt remains `WRONG_WORKTREE`; `test_run_preparation` covers both cases.

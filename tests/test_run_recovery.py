@@ -20,6 +20,7 @@ from unittest import mock
 
 import test_worktree_lifecycle as lifecycle
 from cardine.integration import merge as owner_merge
+from cardine.integration import cleanup as owner_cleanup
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineStop
 from cardine.stops import causes
@@ -548,7 +549,7 @@ class RunRecoveryTest(unittest.TestCase):
         (self.project / "foreign.txt").write_text("foreign\n", encoding="utf-8")
         self.git("add", "foreign.txt")
         self.git("commit", "-m", "foreign work")
-        real = owner_merge._run_git
+        real = owner_cleanup._run_git
         failures = []
 
         def fail_branch_delete(project, *args, **kwargs):
@@ -558,7 +559,7 @@ class RunRecoveryTest(unittest.TestCase):
             return real(project, *args, **kwargs)
 
         self.enter_project()
-        with mock.patch.object(owner_merge, "_run_git", fail_branch_delete):
+        with mock.patch.object(owner_cleanup, "_run_git", fail_branch_delete):
             with self.assertRaises(CardineStop) as raised:
                 owner_merge.cleanup_task_worktree("056", self.worktree_root, self.project)
         self.assertEqual(raised.exception.code, "CLEANUP_PARTIAL")
@@ -592,7 +593,13 @@ class RunRecoveryTest(unittest.TestCase):
         self.addCleanup(os.chdir, previous)
 
     def interrupt_cleanup(self, wrapper_target: str, failing, expected: type[BaseException]) -> None:
-        with mock.patch.object(owner_merge, wrapper_target, failing):
+        if wrapper_target == '_remove_owned_file':
+            target, attribute = receipts, 'boundary'
+            original = failing
+            failing = lambda name: original(name) if name == 'before_cleanup_lifecycle' else None
+        else:
+            target, attribute = owner_cleanup, wrapper_target
+        with mock.patch.object(target, attribute, failing):
             with self.assertRaises(expected):
                 owner_merge.cleanup_task_worktree("056", self.worktree_root, self.project)
 
@@ -604,7 +611,7 @@ class RunRecoveryTest(unittest.TestCase):
         self.git("add", ".cardine/tasks/056.json")
         self.git("commit", "-m", "land task state")
         (worktree / "scratch.txt").write_text("unowned\n", encoding="utf-8")  # foreign dirt in the task worktree
-        real_git = owner_merge._run_git
+        real_git = owner_cleanup._run_git
 
         def refuse_worktree_removal(project, *args, **kwargs):
             if args[:2] == ("worktree", "remove"):

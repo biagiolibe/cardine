@@ -197,3 +197,20 @@ integration state above are the current analogues, not equivalent security
 guarantees. Installed-tool metadata and managed prose readers retained for
 compatibility are covered here as separate surfaces; their text details remain
 in [the text gate inventory](TEXT_GATE_INVENTORY.md).
+
+### RE6b disposition (task 107)
+
+For F09/F16, `integration/cleanup.py` re-reads origin refs rather than trusting
+remote-tracking refs. Cleanup receipts bind origin URL, primary/common-dir,
+canonical worker, landed/task tips, authority, preparation-covered lifecycle
+bytes, registration and branch reflog identities. The remote task ref must be
+the exact ref/SHA recorded as owned by the receipt-covered CI push and contained in
+pushed main; deletion uses a server-side expected-old-OID comparison. Changed
+inputs, foreign owners, uncertain transport and reused branches/paths are
+negative tests. These hashes/receipts do not authenticate same-user authorship;
+real host-denial installation remains work item 9.
+
+The CI binding also pins the effective origin transport after Git URL rewriting.
+A different push URL or a changed rewrite cannot redirect publication or grant
+deletion in another repository. An already-existing matching remote ref is
+recorded as observed, not owned, and survives cleanup.
