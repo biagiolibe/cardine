@@ -35,8 +35,8 @@ PAGE_LIMIT = 10
 _REMOTE = re.compile(
     r'^(?:(?:https?|ssh|git)://(?:[^@/]+@)?(?P<h1>[^/:@]+)(?::\d+)?/|(?:[^@/]+@)?(?P<h2>[^/:@]+):)'
     r'(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$')
-_REFUSALS = ('401', '403', '404', 'authentication', 'permission denied', 'could not read username',
-             'not found', 'protected branch', 'denied', 'auth login')
+_REFUSALS = re.compile(r'HTTP 40[134]|authentication|permission denied|could not read username|not found|'
+                       r'protected branch|denied|auth login', re.IGNORECASE)
 
 
 def ci_policy(contract):
@@ -54,7 +54,7 @@ def _git_environment():
 
 
 def _refused(text):
-    return any(marker in text.lower() for marker in _REFUSALS)
+    return _REFUSALS.search(text) is not None
 
 
 def remote_repository(worker):
@@ -255,3 +255,29 @@ def ci_gate(locations):
     _publish(locations, path, binding, state,
              dict(binding=binding, phase='passed', push=cached['push'], checks=outcome['checks']), 'ci-result')
     return _result(binding, 'passed', True, outcome['checks'])
+
+
+def require_ci_pass(worker, project, task_id, task_state):
+    """Read-only staging precondition: no gh call, no push, no write.
+
+    Every route to a direct candidate, including the Internal ``worktree advance``
+    and ``integrate stage`` adapters, passes here. The contract is the committed
+    one; the result must be a receipt-covered pass bound to the current delivered
+    head, repository, ref, review attempt, contract and required checks.
+    """
+    policy = ci_policy(task_state['contract'])
+    if policy is None:
+        return
+    from cardine.lifecycle.context import resolve_run_locations
+    locations = resolve_run_locations(task_id, project)
+    state, pending = operation_state(worker, task_id)
+    cached = state['run'].get('ci')
+    if pending or cached is None:
+        passed = False
+    else:
+        receipts.verify_receipts(worker, state)
+        passed = cached['phase'] == 'passed' and cached['binding'] == ci_binding(locations, state, policy)
+    if not passed:
+        raise stop_error('EVIDENCE_INCOMPLETE', 'required CI has not passed for the delivered head; '
+                         'run cardine run to push it and check the exact commit', task_id=task_id, project=project,
+                         resume=f'cardine run {task_id} --project {project}')

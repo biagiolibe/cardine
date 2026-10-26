@@ -257,6 +257,109 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(self.gate(locations)['phase'], 'waiting')
         self.assertEqual(self.remote_tip(), head)
 
+    def test_pending_push_receipt_with_a_rewritten_or_missing_intent_is_refused(self):
+        locations = self.ready()
+        head = self.head()
+        self.checks(head)
+        self.kill('after_intent', 1)
+        self.assertTrue(receipts.pending_operation(self.worker, '056'))
+        path = candidate.operation_path(locations, 'ci')
+        original = path.read_bytes()
+        intent = receipts._intent_path(self.worker, '056')
+        for name in ('rewritten', 'missing'):
+            with self.subTest(name):
+                if name == 'rewritten':
+                    receipts._save_intent(path, dict(receipts._load_intent(path), expected=None))
+                else:
+                    path.unlink()
+                before = (state_path(self.worker, '056').read_bytes(), intent.read_bytes(), self.push_count(), self.gh_calls())
+                with self.assertRaisesRegex(CardineError, 'foreign pending operation before CI'):
+                    self.gate(locations)
+                self.assertEqual(before, (state_path(self.worker, '056').read_bytes(), intent.read_bytes(),
+                                          self.push_count(), self.gh_calls()))
+                path.write_bytes(original)
+        self.assertEqual(self.gate(locations)['phase'], 'passed')
+        self.assertEqual((self.push_count(), self.kinds().count('ci-push'), self.kinds().count('ci-result')), (1, 1, 1))
+
+    def test_result_write_refuses_inputs_changed_after_the_query(self):
+        locations = self.ready()
+        head = self.head()
+        self.gate(locations)
+        self.checks(head)
+        real = ci.query_checks
+
+        def changed(binding):
+            outcome = real(binding)
+            from copy import deepcopy
+            state, _ = engine_state(self.worker)
+            updated = deepcopy(state)
+            updated['run']['validation']['consecutiveFailures'] = 1
+            with receipts.task_lock(self.worker, '056'):
+                receipts.write_operation(self.worker, '056', updated, previous=state, kind='fixture-change')
+            return outcome
+
+        with mock.patch.object(ci, 'query_checks', side_effect=changed), \
+                self.assertRaisesRegex(CardineError, 'CI inputs changed before the result write'):
+            self.gate(locations)
+        self.assertNotIn('ci-result', self.kinds())
+        self.assertEqual(self.gate(locations)['phase'], 'passed')
+
+    def test_lost_push_response_is_reconciled_from_the_remote_without_a_second_push(self):
+        locations = self.ready()
+        real = ci._run_git
+
+        def lost(root, *args, **kwargs):
+            result = real(root, *args, **kwargs)
+            if args[0] == 'push':
+                return subprocess.CompletedProcess(args, 1, '', 'connection reset by peer')
+            return result
+
+        with mock.patch.object(ci, '_run_git', side_effect=lost):
+            self.assertEqual(self.gate(locations)['phase'], 'waiting')
+            self.assertEqual(self.gate(locations)['phase'], 'waiting')
+        self.assertEqual((self.push_count(), self.remote_tip(), self.kinds().count('ci-push')), (1, self.head(), 1))
+
+    def test_timed_out_push_that_never_arrived_is_retried_exactly_once(self):
+        locations = self.ready()
+        real = ci._run_git
+
+        def stalled(root, *args, **kwargs):
+            if args[0] == 'push':
+                raise subprocess.TimeoutExpired(args, 1)
+            return real(root, *args, **kwargs)
+
+        with mock.patch.object(ci, '_run_git', side_effect=stalled), self.assertRaises(CardineStop) as raised:
+            self.gate(locations)
+        self.assertEqual(raised.exception.code, 'GIT_OPERATION_FAILED')
+        self.assertTrue(raised.exception.resume().startswith('cardine run 056'))
+        self.assertEqual((self.push_count(), self.remote_tip()), (0, None))
+        self.assertNotIn('ci-push', self.kinds())
+        self.assertEqual(self.gate(locations)['phase'], 'waiting')
+        self.assertEqual((self.push_count(), self.remote_tip()), (1, self.head()))
+
+    def test_staging_is_refused_without_a_receipt_covered_pass_for_the_delivered_head(self):
+        from cardine.integration import merge
+        locations = self.ready()
+        head = self.head()
+        with self.assertRaises(CardineStop) as raised:
+            merge.stage_task_integration('056', self.worktree_root, None, self.primary)
+        self.assertEqual(raised.exception.code, 'EVIDENCE_INCOMPLETE')
+        self.assertEqual((self.push_count(), self.gh_calls()), (0, 0))
+        self.checks(head)
+        self.assertEqual(self.gate(locations)['phase'], 'passed')
+        from cardine.integration.direct import DirectLanding
+        self.assertIn('candidate_tree', DirectLanding().prepare_candidate('056', None, self.primary))
+
+    def test_run_command_emits_a_valid_waiting_envelope_from_an_unrelated_directory(self):
+        self.ready()
+        command = [sys.executable, '-m', 'cardine.cli', 'run', '056', '--project', str(self.primary)]
+        result = subprocess.run(command, cwd=self.root, env=dict(os.environ), capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        value = json.loads(result.stdout)
+        engine.validate_output(value)
+        self.assertEqual((value['outcome'], value['step'], value['action']), ('waiting', 'candidate', 'poll-ci'))
+        self.assertEqual(self.push_count(), 1)
+
     def kill(self, name, occurrence):
         script = '''
 import sys
@@ -297,16 +400,19 @@ ci.ci_gate(candidate.locations_for('056', Path(sys.argv[1])))
         locations = self.ready()
         head = self.head()
         first = engine.run_validation_step(locations)
+        engine.validate_output(first)
         self.assertEqual((first['outcome'], first['step'], first['action']), ('waiting', 'candidate', 'poll-ci'))
         self.assertGreater(first['retry_after_seconds'], 0)
         self.assertEqual(first['evidence'][0]['identity'], head)
         self.assertEqual(first['next']['argv'][:2], ['cardine', 'run'])
         self.checks(head, conclusion='failure')
         failed = engine.run_validation_step(locations)
+        engine.validate_output(failed)
         self.assertEqual((failed['outcome'], failed['step'], failed['action']), ('iterate', 'implementation', 'ci-failed'))
         self.assertEqual(failed['diagnostics'][0]['code'], 'VALIDATION_FAILED')
         self.checks(head)
         passed = engine.run_validation_step(locations)
+        engine.validate_output(passed)
         self.assertEqual((passed['outcome'], passed['action']), ('next', 'ci-passed'))
         staged = engine.run_validation_step(locations)
         self.assertEqual(staged['action'], 'validate-candidate')

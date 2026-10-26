@@ -249,6 +249,8 @@ def stage_task_integration(
             "EVIDENCE_INCOMPLETE", "no passing measured validation covers the delivered source",
             task_id=identity.canonical_id, project=project_root,
         )
+    from cardine.integration.ci import require_ci_pass
+    require_ci_pass(Path(str(inspection["worktree"])), project_root, identity.canonical_id, task_state)
     validated_task = str(measured["validated_task_commit"])
     validated_base = str(measured["validated_base_commit"])
     if validated_base != inspection["base_commit"]:
