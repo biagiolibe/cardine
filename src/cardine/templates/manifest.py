@@ -70,14 +70,23 @@ def canonical_manifest(manifest: dict[str, object]) -> dict[str, object]:
     return result
 
 
+def manifest_bytes(
+    manifest: dict[str, object],
+    framework_root: Path | None = None,
+) -> bytes:
+    """The validated manifest exactly as `write_manifest` stores it."""
+    manifest = canonical_manifest(manifest)
+    catalog = load_capability_catalog(framework_root) if framework_root is not None else None
+    validate_manifest(manifest, catalog)
+    return (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+
 def write_manifest(
     project_root: Path,
     manifest: dict[str, object],
     framework_root: Path | None = None,
 ) -> None:
-    manifest = canonical_manifest(manifest)
-    catalog = load_capability_catalog(framework_root) if framework_root is not None else None
-    validate_manifest(manifest, catalog)
+    output = manifest_bytes(manifest, framework_root)
     destination = project_root / names().manifest_path
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    destination.write_text(output.decode("utf-8"), encoding="utf-8")

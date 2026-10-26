@@ -46,7 +46,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 106 | Query CI by exact repository and commit (RE6a) | 🔴 P1 | 105 | [106](done/106-ci-queries.md) |
 | `[x]` | 107 | Verify the main push and clean up remote and local branches (RE6b) | 🔴 P1 | 106 | [107](done/107-push-and-cleanup.md) |
 | `[x]` | 108 | Make self-update repeatable with a pinned target (SR1a) | 🔴 P1 | 107 | [108](done/108-self-update-repeatability.md) |
-| `[ ]` | 109 | Make upgrade and host writes repeatable (SR1b) | 🔴 P1 | 108 | [109](109-upgrade-host-repeatability.md) |
+| `[x]` | 109 | Make upgrade and host writes repeatable (SR1b) | 🔴 P1 | 108 | [109](done/109-upgrade-host-repeatability.md) |
 | `[ ]` | 110 | Rewrite the always-read product templates (TR1a) | 🔴 P1 | 109 | [110](110-always-read-templates.md) |
 | `[ ]` | 111 | Guard template budgets, commands, and stop prose (TR1b) | 🔴 P1 | 110 | [111](111-template-budget-guards.md) |
 | `[ ]` | 112 | Condense the lifecycle and record templates (TR2a) | 🔴 P1 | 111 | [112](112-condense-lifecycle-templates.md) |

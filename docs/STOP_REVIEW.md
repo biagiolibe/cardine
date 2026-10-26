@@ -298,7 +298,7 @@ these are static findings, not claims that crash-injection tests were run.
 | Push accepted remotely before local result/receipt, then CI/remote branch cleanup | No current run engine owns these operations. Repeating blindly can double-push, poll wrong HEAD or delete a ref that advanced. | Query exact remote ref and CI HEAD before retry; one push per source head; compare-delete observed remote SHA. RE6 existing scope plus A5. |
 | `cleanup_task_worktree`: worktree removed, branch deleted, lifecycle file removed | Several partial states already recover. Remaining removal/branch-delete race and access failure still share `CLEANUP_BLOCKED`; without a receipt, a newly reused branch/path can be confused with the old one. | Persist observed task tip and ownership; prove landed/pushed ancestry before each effect, compare refs again, preserve reused/foreign paths. Test interruption after every effect, including directory placeholder creation. RE6 existing cleanup/race scope. |
 | `release/update.py::run_self_update`: fetch before pinned merge/switch, then final verify | SR1a stores checkout/common-directory, requested command, source HEAD/branch/VERSION/origin and resolved tag/SHA in a non-run receipt under Git metadata. Pending retries use that target without resolving latest again, reconcile an already-applied HEAD/VERSION and preserve changed or foreign work. | Fetch, fast-forward/detached switch and verification use RE1b external-effect receipts with before/after kill coverage. A moved pinned tag, changed inputs, foreign receipt/writer, dirty checkout or plugin ownership refuses; no force switch, history rewrite or host setup. Same-user consistency is not authorship proof. |
-| Upgrade multi-file application and non-run host adapters | RE1's run receipts do not automatically cover upgrade/host operations. Missing generated output vs project edits vs denied home writes must stay distinct. | Inventory effect boundaries before claiming decision 14 globally; test interruption and ownership per adapter. RE2 A7 classification; SR1 effect work. |
+| Upgrade multi-file application and non-run host adapters | SR1b records every managed-file replace, backup, generated output, baseline copy, manifest write and baseline prune of `upgrade --apply`, and every `setup`/`codex configure`/Claude allowlist file, directory and link write, in a non-run receipt (`lifecycle/file_operation.py`). Missing generated output, project edits and denied home writes stay distinct. | Each effect has kill coverage before and after it, changed-input and foreign-owner refusal, and symlink, live-writer and denied-home negatives. Same-user consistency evidence only: no authorship claim, no real-home apply. RE2 A7 classification. |
 
 ## Destinations and scope gaps
 
@@ -363,3 +363,30 @@ same-user consistency checks, not proof of authorship.
 Dirty `worktree check --resume` returns `ready-dirty` only after a verified
 preparation receipt records the explicit Resume request. The flag without that
 receipt remains `WRONG_WORKTREE`; `test_run_preparation` covers both cases.
+
+### SR1b implementation disposition (task 109)
+
+`templates/upgrade.py`, `hosts/{codex,claude,setup}.py` and `hosts/effects.py`
+write through `lifecycle/file_operation.py`, which wraps the RE1b external-effect
+writer. Writer inventory, in apply order:
+
+| Writer | Effect names |
+| --- | --- |
+| `apply_plan` / `apply_upgrade`: one managed-file replace per plan action, with an exclusive backup for adoption and restructure | `file:upgrade:<target>`, `backup:upgrade:<target>` |
+| Entry-router regeneration | `file:router:<target>` |
+| Baseline copy of the target version | `file:baseline:<target>` |
+| Manifest write, then removal of stale baselines | `file:manifest`, `prune-baselines` |
+| Codex user rules, Codex configuration (with `.cardine.bak` or repair backup), Claude project allowlist | `file:codex-rules`, `backup:codex-config`, `file:codex-config`, `file:claude-allowlist` |
+| `apply_setup`: private root, worktree configuration, candidate-validation, project and task-identity declarations, skills directory and links | `directory:*`, `file:*`, `symlink:skill:*` |
+
+Every output digest is recorded before the first effect. An identical retry
+finishes exactly those outputs: a file still at its recorded input is written,
+one at its recorded output is observed, and anything else (a user edit, a
+symlink, a replaced receipt, a different owner or different inputs) is refused
+and left untouched. Backups are created complete or not at all and are never
+replaced; temporaries use one fixed name per target, so retries leave no
+accumulating residue. The manifest is now written before stale baselines are
+pruned, so a kill between them leaves a readable state. Receipts live in Git
+metadata for upgrade and in the temporary directory for host and non-Git
+writes. They hold digests, never configuration text, and prove consistency, not
+authorship.

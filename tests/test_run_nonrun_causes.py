@@ -221,10 +221,16 @@ update.run_self_update(root,apply=True,urlopen_fn=lambda *a,**k: io.BytesIO(json
                     foreign = root / 'foreign'
                     foreign.write_text('preserve')
                     script = r'''
-import os, signal, sys
+import os, signal, sys, tempfile
 from pathlib import Path
 from cardine.hosts import codex
+from cardine.lifecycle import receipts
+from cardine.shared import atomic
 root=Path(sys.argv[1]); boundary=sys.argv[2]; side=sys.argv[3]
+seams={'backup': 'backup:codex-config', 'replace': 'file:codex-config'}
+def kill(name):
+    if boundary in seams and name == side + '_' + seams[boundary]: os.kill(os.getpid(),signal.SIGKILL)
+receipts.boundary=kill
 def wrap(original):
     def call(*args,**kwargs):
         if side == 'before': os.kill(os.getpid(),signal.SIGKILL)
@@ -232,9 +238,9 @@ def wrap(original):
         if side == 'after': os.kill(os.getpid(),signal.SIGKILL)
         return result
     return call
-if boundary == 'backup': codex._write_exclusive_backup=wrap(codex._write_exclusive_backup)
-if boundary == 'temporary': codex.tempfile.mkstemp=wrap(codex.tempfile.mkstemp)
-if boundary == 'replace': codex.os.replace=wrap(codex.os.replace)
+# The temporary file is complete and durable; the kill is on either side of its atomic rename.
+if boundary == 'temporary': atomic.os.replace=wrap(atomic.os.replace)
+tempfile.tempdir=str(root/'receipts')
 plan=codex.plan_codex_configuration(root/'config.toml',root/'worktrees')
 codex.apply_codex_configuration(plan)
 '''
@@ -243,11 +249,13 @@ codex.apply_codex_configuration(plan)
                                             capture_output=True, text=True)
                     self.assertEqual(killed.returncode, -signal.SIGKILL, killed.stderr)
                     snapshot = {p.name: p.read_bytes() for p in root.iterdir() if p.is_file()}
+                    receipts_before = {p.name: p.read_bytes() for p in (root / 'receipts').rglob('*') if p.is_file()}
                     results = [codex.plan_codex_configuration(config, root / 'worktrees') for _ in range(2)]
                     self.assertEqual(results[0], results[1])
                     self.assertEqual(results[0].status,
                                      'ready' if (boundary, side) == ('replace', 'after') else 'approval-required')
                     self.assertEqual(snapshot, {p.name: p.read_bytes() for p in root.iterdir() if p.is_file()})
+                    self.assertEqual(receipts_before, {p.name: p.read_bytes() for p in (root / 'receipts').rglob('*') if p.is_file()})
                     self.assertEqual(foreign.read_text(), 'preserve')
 
     def test_upgrade_interruption_only_resolves_generated_residue(self):
@@ -274,6 +282,7 @@ codex.apply_codex_configuration(plan)
 import os,signal,sys
 from pathlib import Path
 from cardine.templates import upgrade
+from cardine.lifecycle import receipts
 from cardine.shared.models import ManagedFile,PlanItem
 from cardine.shared.constants import PROTOCOL_VERSION
 root=Path(sys.argv[1]);boundary=sys.argv[2];side=sys.argv[3]
@@ -286,24 +295,11 @@ manifest={'protocolVersion':PROTOCOL_VERSION,'workflowMode':'single',
 # Router route-map requirements belong to a full project fixture; keep this
 # focused on actual managed/generated/baseline/manifest write boundaries.
 upgrade.audit_entry_router=lambda root: []
-original_copy=upgrade.shutil.copyfile
-original_write=Path.write_text
-def around(match,operation):
-    if match and side=='before':os.kill(os.getpid(),signal.SIGKILL)
-    result=operation()
-    if match and side=='after':os.kill(os.getpid(),signal.SIGKILL)
-    return result
-def copy(source,target,*a,**kw):
-    target=Path(target)
-    match=(boundary=='managed' and target==project/'README.md') or (
-           boundary=='baseline' and 'baselines' in target.parts)
-    return around(match,lambda:original_copy(source,target,*a,**kw))
-def write(path,*a,**kw):
-    match=(boundary=='generated' and path==project/'AGENTS.md') or (
-           boundary=='manifest' and path.name=='manifest.json')
-    return around(match,lambda:original_write(path,*a,**kw))
-upgrade.shutil.copyfile=copy
-Path.write_text=write
+seams={'managed': 'file:upgrade:README.md', 'generated': 'file:router:AGENTS.md',
+       'baseline': 'file:baseline:README.md', 'manifest': 'file:manifest'}
+def kill(name):
+    if name == side + '_' + seams[boundary]: os.kill(os.getpid(),signal.SIGKILL)
+receipts.boundary=kill
 upgrade.apply_plan(project,framework,manifest,plan,project/'.cardine/baselines/1.1.0',
                    managed_files_override=files)
 '''

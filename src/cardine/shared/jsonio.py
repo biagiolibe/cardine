@@ -10,11 +10,16 @@ from pathlib import Path
 from cardine.shared.errors import CardineError
 
 
+def json_bytes(value: dict[str, object]) -> bytes:
+    """The exact bytes `_write_json_atomic` stores for `value`."""
+    return (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
+
+
 def _write_json_atomic(path: Path, value: dict[str, object], *, exclusive: bool = False) -> None:
     from cardine.shared.git import invalidate_facts
     invalidate_facts()
     path.parent.mkdir(parents=True, exist_ok=True)
-    encoded = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
+    encoded = json_bytes(value)
     if exclusive:
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(descriptor, "wb") as stream:

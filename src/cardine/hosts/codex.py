@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from cardine.hosts.effects import changed, host_operation
+from cardine.lifecycle.file_operation import Operation
+from cardine.shared import atomic
 from cardine.shared.errors import CardineError
 from cardine.shared.models import CODEX_MANAGED_BEGIN
 from cardine.shared.models import CODEX_MANAGED_END
@@ -14,9 +17,7 @@ import ast
 import copy
 import difflib
 import json
-import os
 import re
-import tempfile
 import tomllib
 
 
@@ -100,24 +101,15 @@ def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
     return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed, tuple(warnings))
 
 
-def apply_codex_user_rules(plan: CodexUserRulesPlan) -> bool:
-    current = plan.path.read_bytes().decode("utf-8") if plan.path.exists() else ""
-    if current != plan.current_text:
-        raise CardineError("Codex user rules changed since planning; rerun --check")
-    if plan.proposed_text is None:
-        return False
-    plan.path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, name = tempfile.mkstemp(prefix=".cardine-rules-", dir=plan.path.parent)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(plan.proposed_text.encode("utf-8"))
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(name, plan.path)
-    finally:
-        if os.path.exists(name):
-            os.unlink(name)
-    return True
+def apply_codex_user_rules(plan: CodexUserRulesPlan, operation: Operation | None = None) -> bool:
+    with host_operation("codex-rules", plan.path, operation) as active:
+        current = plan.path.read_bytes().decode("utf-8") if plan.path.exists() else ""
+        if current != plan.current_text:
+            raise CardineError("Codex user rules changed since planning; rerun --check")
+        if plan.proposed_text is None:
+            return changed(active, False)
+        active.replace("codex-rules", plan.path, plan.proposed_text.encode("utf-8"), mode=0o600)
+        return True
 
 
 def _toml_quote(value: str) -> str:
@@ -422,18 +414,7 @@ def print_codex_configuration_plan(plan: CodexConfigurationPlan) -> None:
 
 def _write_exclusive_backup(path: Path, backup: Path) -> None:
     """Copy the current bytes to a new owner-only file, never replacing an existing backup."""
-    descriptor = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(path.read_bytes())
-            stream.flush()
-            os.fsync(stream.fileno())
-    except Exception:
-        try:
-            backup.unlink()
-        except OSError:
-            pass
-        raise
+    atomic.create_exclusive(backup, path.read_bytes())
 
 
 def _unused_repair_backup(path: Path) -> Path:
@@ -445,32 +426,19 @@ def _unused_repair_backup(path: Path) -> Path:
     return candidate
 
 
-def apply_codex_configuration(plan: CodexConfigurationPlan) -> bool:
-    if plan.proposed_text is None:
-        return False
+def apply_codex_configuration(plan: CodexConfigurationPlan, operation: Operation | None = None) -> bool:
     path = plan.config_path
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if plan.status in ("repair-required", "repair-and-replace-required"):
-        if not path.is_file() or path.read_text(encoding="utf-8") != plan.current_text:
+    with host_operation("codex-config", path, operation) as active:
+        if plan.proposed_text is None:
+            return changed(active, False)
+        repair = plan.status in ("repair-required", "repair-and-replace-required")
+        actual = path.read_text(encoding="utf-8") if path.is_file() else ""
+        if (repair and not path.is_file()) or actual != plan.current_text:
             raise CardineError("Codex configuration changed since it was planned; rerun --check")
-        _write_exclusive_backup(path, _unused_repair_backup(path))
-    else:
-        backup = path.with_name(path.name + ".cardine.bak")
-        if path.exists() and not backup.exists():
-            _write_exclusive_backup(path, backup)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        os.chmod(temporary, 0o600)
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            stream.write(plan.proposed_text)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-    except Exception:
-        try:
-            temporary.unlink()
-        except OSError:
-            pass
-        raise
-    return True
+        if repair:
+            backup = _unused_repair_backup(path)
+        else:
+            backup = path.with_name(path.name + ".cardine.bak")
+            backup = backup if path.exists() and not backup.exists() else None
+        active.replace("codex-config", path, plan.proposed_text.encode("utf-8"), backup=backup, mode=0o600)
+        return True

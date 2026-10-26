@@ -567,3 +567,27 @@ def nonrun_lock(path):
             yield
         finally:
             fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+def operation_path(root, kind):
+    """Project operation receipt: Git metadata, else the temporary directory.
+
+    A project that is not a Git checkout has no metadata directory to hold it.
+    """
+    try:
+        return nonrun_path(root, kind)
+    except CardineError:
+        return host_path(kind, root)
+
+
+def host_path(kind, target):
+    """Receipt for a host or home write, outside the files it covers.
+
+    The location follows the temporary directory so a disposable root can
+    redirect it; no Git checkout or real-home path is involved.
+    """
+    import tempfile
+    if not kind or any(c not in 'abcdefghijklmnopqrstuvwxyz-' for c in kind):
+        raise CardineError('invalid non-run operation kind')
+    base = Path(tempfile.gettempdir()).resolve()
+    return safe_path(base, f'cardine-operations/{kind}-{digest(str(Path(target).resolve()).encode())}.json')
