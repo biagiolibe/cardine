@@ -234,7 +234,6 @@ def allowed(key: Key) -> bool:
 KNOWN_VIOLATIONS: dict[Key, str] = {
     ('scripts/codex_read_guard.py', 'decision', 'named-reader', 'threshold_for'): 'T-46',
     ('scripts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
-    ('src/cardine/integration/evidence.py', 'check_validation_evidence', 'disk-text', 'read_text:record'): 'T-44',
     ('src/cardine/review/verdict.py', 'record_review_verdict', 'disk-text', 'read_text:review_path'): 'T-25',
     ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'require_named_validation_commands'): 'T-15',
     ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'validation_commands'): 'T-15',

@@ -13,7 +13,7 @@ import sys
 
 from cardine.hosts.codex import apply_codex_configuration, plan_codex_configuration, print_codex_configuration_plan
 from cardine.hosts.setup import apply_setup, codex_doctor, plan_setup, print_setup_plan
-from cardine.integration.evidence import check_validation_evidence, measured_validation_report
+from cardine.integration.evidence import measured_validation_report
 from cardine.integration.merge import abort_task_integration, cleanup_task_worktree, finalize_task_integration, stage_task_integration
 from cardine.lifecycle.closure import advance_task_closure
 from cardine.lifecycle.commands import execution_deliver, execution_start
@@ -306,14 +306,6 @@ def build_parser() -> CardineArgumentParser:
     worktree_cleanup.add_argument("--project", type=Path)
     worktree_cleanup.add_argument("--worktree-root", type=Path)
     worktree_cleanup.add_argument("--format", choices=("json",), required=True)
-
-    validation = subparsers.add_parser("validation", description="Framework-internal: no compatibility promise.", help="read and verify an external validation evidence record (framework-internal)")
-    validation_sub = validation.add_subparsers(dest="validation_command", required=True)
-    validation_check = validation_sub.add_parser("check", description="Framework-internal: no compatibility promise.", help="verify a record without running validation (framework-internal)")
-    validation_check.add_argument("record", type=Path)
-    validation_check.add_argument("--project", type=Path, default=Path.cwd())
-    validation_check.add_argument("--commit")
-    validation_check.add_argument("--format", choices=("json",), required=True)
 
     review = subparsers.add_parser("review", help="preview independent review or record commit-bound verdicts",
                                   epilog="cardine review <ID> --project <root> provides a read-only run preview.")
@@ -772,12 +764,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     project_root, arguments.milestone, arguments.workstream
                 )
                 print(json.dumps(resolved.as_json(project_root), sort_keys=True))
-        elif arguments.command == "validation":
-            report, exit_code = check_validation_evidence(
-                arguments.record, canonical_project_root(project_root), arguments.commit
-            )
-            print(json.dumps(report, sort_keys=True))
-            return exit_code
         elif arguments.command == "adr":
             if arguments.adr_command == "list":
                 listed, adr_warnings = adr_list(project_root, arguments.status)

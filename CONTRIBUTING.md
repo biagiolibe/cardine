@@ -183,8 +183,10 @@ CI runs the repository check and the suite on Linux for pull requests and
 pushes to `main`, as a non-blocking signal. The release gate
 (`.github/workflows/release.yml`) runs the repository check and the sequential
 suite on Linux and macOS, and publishes the release only when both pass.
-`scripts/ci_evidence.py` stays for projects that require CI evidence before
-landing; this repository's tasks do not.
+`scripts/ci_evidence.py` stays only for the installed Meridian lifecycle that
+this repository's own delivery still uses. No Cardine reader consumes the record
+it writes: with `ciBeforeLanding`, `cardine run` pushes the validated head and
+queries the exact repository and commit itself.
 
 Changes under `bin/`, `migrations/`, `scripts/`, or `src/cardine/` run the
 test suite with `python3 scripts/run_tests.py --parallel`, the command the signal CI runs.

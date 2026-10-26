@@ -353,7 +353,7 @@ def run_validation_step(locations: RunLocations) -> dict | None:
     approved, review_pending = review_progress(root, task_id, state)
     if passed and state['contract']['options']['review'] == 'required' and not approved:
         state = prepare_review(root, task_id, context=locations)
-    result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
+    facts = RunFacts(task_id, locations.primary, state['status'],
         review_approved=approved, review_pending=review_pending,
         contract_ready=True, worktree_ready=True, implementation_delivered=True,
         validation_passed=passed, validation_failed=not passed,
@@ -361,17 +361,47 @@ def run_validation_step(locations: RunLocations) -> dict | None:
         review_work=WorkRequest('reviewer', root, request.snapshot_digest,
             request.expected_surface, request.acceptance_references,
             request.validation_references, ('independent source-bound review',)),
-        review_required=state['contract']['options']['review'] == 'required'))
+        review_required=state['contract']['options']['review'] == 'required')
+    result = resolve_run(facts)
     if result['step'] == 'candidate':
         if before_validation != progress:
             result['action'] = 'C6'
             result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
             return result
+        gated = run_ci_step(locations, facts, request, state)
+        if gated is not None:
+            return gated
         return run_integration_step(locations, prepare=True)
     result['action'] = 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
     if not passed:
         result['diagnostics'] = [dict(code='VALIDATION_FAILED', message=json.dumps(progress['runs']))]
+    return result
+
+
+@scoped_command
+def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict) -> dict | None:
+    """Gate the direct candidate on CI for the delivered head when the contract requires it."""
+    from dataclasses import replace
+    from cardine.integration import ci
+    if ci.ci_policy(state['contract']) is None:
+        return None
+    outcome = ci.ci_gate(locations)
+    if outcome is None or (outcome['phase'] == 'passed' and not outcome['changed']):
+        return None
+    task_id, argv = locations.task_id, ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
+    evidence = [dict(kind='ci', path=f"{outcome['repository']} {outcome['ref']}", identity=outcome['head'])]
+    if outcome['phase'] == 'failed':
+        return envelope(task_id, str(locations.primary), step='implementation', outcome='iterate', action='ci-failed',
+            work=request.as_json(), evidence=evidence, diagnostics=[dict(code='VALIDATION_FAILED', message=outcome['detail'])],
+            next_command=command_reference(argv, 'Repair the task implementation'))
+    if outcome['phase'] == 'waiting':
+        result = resolve_run(replace(facts, ci_pending=True))
+        result['diagnostics'] = [dict(code='CI_PENDING', message=outcome['detail'])]
+    else:
+        result = resolve_run(facts)
+    result['action'] = 'poll-ci' if outcome['phase'] == 'waiting' else 'ci-passed'
+    result['evidence'] = evidence
     return result
 
 
