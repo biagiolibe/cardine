@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from cardine.shared.git import _run_git
+from cardine.shared.git import _run_git, scoped_command, invalidate_facts
+from cardine.lifecycle import receipts
+from cardine.release import update_operation
+from contextlib import nullcontext
 
 from cardine.release.version import parse_semver
 from cardine.release.version import read_raw_version
@@ -70,23 +73,47 @@ def fetch_latest_release(
     return latest_version, release_kind_from_body(body)
 
 
+@scoped_command
 def run_self_update(framework_root: Path, *, apply: bool = False,
                     target_tag: str | None = None, urlopen_fn=None) -> int:
+    """Serialize apply and keep recovery metadata outside the tracked checkout."""
+    root = framework_root.resolve()
+    try:
+        # Refusal gates precede even the writer guard creation.
+        if any(root.parts[i:i + 2] == ("plugins", "cache") for i in range(len(root.parts) - 1)):
+            raise stop_error("SELF_UPDATE_PLUGIN_CACHE", f"plugin manager owns this checkout; use {PLUGIN_UPDATE_COMMAND}",
+                             resume=PLUGIN_UPDATE_COMMAND)
+        if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
+            raise stop_error("SELF_UPDATE_INPUT_INVALID", "--to requires a release tag v<version>")
+        if Path(git_output(root, "rev-parse", "--show-toplevel")).resolve() != root:
+            raise CardineError("not the framework Git root")
+        if git_output(root, "status", "--porcelain", "--untracked-files=all"):
+            raise stop_error("SELF_UPDATE_DIRTY", "commit or remove checkout changes before updating")
+        path = receipts.nonrun_path(root, 'self-update')
+        with receipts.nonrun_lock(path) if apply else nullcontext():
+            if apply:
+                invalidate_facts()
+            return _run_self_update(root, apply=apply, target_tag=target_tag,
+                                    urlopen_fn=urlopen_fn, receipt_path=path)
+    except CardineStop:
+        raise
+    except OSError as error:
+        raise stop_error(os_stop_code(error, diagnostic=not apply), str(error),
+                         resume="cardine self-update --check") from error
+    except CardineError as error:
+        raise stop_error("SELF_UPDATE_VERIFY", str(error)) from error
+
+
+def _run_self_update(framework_root: Path, *, apply: bool = False,
+                    target_tag: str | None = None, urlopen_fn=None, receipt_path=None) -> int:
     """Plan in an isolated object store; mutate only the CLI checkout on apply."""
     root = framework_root.resolve()
 
     def refuse(code: str, detail: str, **fields: object) -> None:
         raise stop_error(code, detail, **fields)
 
-    if any(root.parts[index:index + 2] == ("plugins", "cache")
-           for index in range(len(root.parts) - 1)):
-        refuse("SELF_UPDATE_PLUGIN_CACHE", f"plugin manager owns this checkout; use {PLUGIN_UPDATE_COMMAND}",
-               resume=PLUGIN_UPDATE_COMMAND)
-    if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
-        refuse("SELF_UPDATE_INPUT_INVALID", "--to requires a release tag v<version>")
     try:
-        if Path(git_output(root, "rev-parse", "--show-toplevel")).resolve() != root:
-            raise CardineError("not the framework Git root")
+        # Recheck after taking the guard; another writer may have just stopped.
         if git_output(root, "status", "--porcelain", "--untracked-files=all"):
             refuse("SELF_UPDATE_DIRTY", "commit or remove checkout changes before updating")
         branch = git_output(root, "branch", "--show-current")
@@ -99,16 +126,22 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
             refuse("SELF_UPDATE_TARGET", "detached HEAD is not its VERSION release tag")
         print(f"Checkout: {root}")
         print(f"Current: {current}")
-        try:
-            version, templates = fetch_latest_release(current, urlopen_fn=urlopen_fn, target_tag=target_tag)
-        except HTTPError as error:
-            if target_tag is not None and error.code == 404:
-                refuse("SELF_UPDATE_TARGET", f"{target_tag} is not a published release")
-            print(f"Latest: unknown ({error})")
-            return SELF_CHECK_UNKNOWN
-        except (HTTPException, URLError, TimeoutError, OSError, ValueError, CardineError) as error:
-            print(f"Latest: unknown ({error})")
-            return SELF_CHECK_UNKNOWN
+        binding = update_operation.owner(root, target_tag)
+        intent = update_operation.pending(receipt_path, binding)
+        if intent is not None:
+            update_operation.verify(root, intent)
+            version, templates = intent['version'], intent['templates']
+        else:
+            try:
+                version, templates = fetch_latest_release(current, urlopen_fn=urlopen_fn, target_tag=target_tag)
+            except HTTPError as error:
+                if target_tag is not None and error.code == 404:
+                    refuse("SELF_UPDATE_TARGET", f"{target_tag} is not a published release")
+                print(f"Latest: unknown ({error})")
+                return SELF_CHECK_UNKNOWN
+            except (HTTPException, URLError, TimeoutError, OSError, ValueError, CardineError) as error:
+                print(f"Latest: unknown ({error})")
+                return SELF_CHECK_UNKNOWN
         tag = f"v{version}"
         if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) or (target_tag and tag != target_tag):
             refuse("SELF_UPDATE_TARGET", "release response does not identify the requested release tag")
@@ -119,41 +152,42 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         print(f"Release notes: https://github.com/biagiolibe/cardine/releases/tag/{tag}")
         remote = git_output(root, "remote", "get-url", "origin")
         head = git_output(root, "rev-parse", "HEAD")
-        with tempfile.TemporaryDirectory(prefix="cardine-self-update-") as directory:
-            probe = Path(directory)
-            git_output(probe, "init", "--bare", "--quiet")
-            git_output(probe, "fetch", "--quiet", "--no-tags", str(root), head)
-            try:
-                git_output(probe, "fetch", "--quiet", "--no-tags", "--", remote,
-                           f"refs/tags/{tag}:refs/tags/{tag}",
-                           *(["refs/heads/stable:refs/heads/stable"] if branch else []))
-            except CardineError as error:
-                refuse("SELF_UPDATE_TARGET", f"cannot resolve release refs: {error}")
-            target = git_output(probe, "rev-parse", f"refs/tags/{tag}^{{commit}}")
-            if branch:
-                if git_output(probe, "rev-parse", "stable") != target:
-                    refuse("SELF_UPDATE_TARGET", "origin/stable is not the target release tag")
-                ancestry = _run_git(str(probe), 'merge-base', '--is-ancestor', head, target, text=False)
-                if ancestry.returncode:
-                    refuse("SELF_UPDATE_TARGET", "cause non-fast-forward: stable cannot fast-forward to origin/stable")
-            if git_output(probe, "show", f"{target}:VERSION") != version:
-                refuse("SELF_UPDATE_TARGET", "release tag VERSION does not match the release")
-            operation = (f"git fetch --tags origin; git merge --ff-only {target}"
-                         if branch else f"git fetch --tags origin; git switch --detach {tag}")
-            print(f"Git operation (in checkout): {operation}")
-            if not apply:
-                return 0
-            # Fetch only after all refusal gates passed. Pin the operation to the
-            # inspected commit so a concurrent remote update cannot widen it.
-            git_output(root, "fetch", "--tags", "origin")
-            if git_output(root, "rev-parse", f"refs/tags/{tag}^{{commit}}") != target or (branch and git_output(root, "rev-parse", "origin/stable") != target):
-                refuse("SELF_UPDATE_VERIFY", "remote changed during apply; inspect checkout before retrying")
-            if branch:
-                git_output(root, "merge", "--ff-only", target)
-            else:
-                git_output(root, "switch", "--detach", tag)
+        source = dict(head=head, branch=branch, version=current, remote=remote)
+        if intent is not None:
+            target, source = intent['target'], intent['source']
+        else:
+            with tempfile.TemporaryDirectory(prefix="cardine-self-update-") as directory:
+                probe = Path(directory)
+                git_output(probe, "init", "--bare", "--quiet")
+                git_output(probe, "fetch", "--quiet", "--no-tags", str(root), head)
+                try:
+                    git_output(probe, "fetch", "--quiet", "--no-tags", "--", remote,
+                               f"refs/tags/{tag}:refs/tags/{tag}",
+                               *(["refs/heads/stable:refs/heads/stable"] if branch else []))
+                except CardineError as error:
+                    refuse("SELF_UPDATE_TARGET", f"cannot resolve release refs: {error}")
+                target = git_output(probe, "rev-parse", f"refs/tags/{tag}^{{commit}}")
+                if branch:
+                    if git_output(probe, "rev-parse", "stable") != target:
+                        refuse("SELF_UPDATE_TARGET", "origin/stable is not the target release tag")
+                    ancestry = _run_git(str(probe), 'merge-base', '--is-ancestor', head, target, text=False)
+                    if ancestry.returncode:
+                        refuse("SELF_UPDATE_TARGET", "cause non-fast-forward: stable cannot fast-forward to origin/stable")
+                if git_output(probe, "show", f"{target}:VERSION") != version:
+                    refuse("SELF_UPDATE_TARGET", "release tag VERSION does not match the release")
+        fetch = shlex.join(['git', 'fetch', '--no-tags', '--', remote,
+                            f'refs/tags/{tag}:refs/tags/{tag}'])
+        operation = (f"{fetch}; git merge --ff-only {target}"
+                     if branch else f"{fetch}; git switch --detach {target}")
+        print(f"Git operation (in checkout): {operation}")
+        if not apply:
+            return 0
+        intent = update_operation.apply_update(root, receipt_path, binding, source, version,
+                                               templates, target, tag, intent)
         if git_output(root, "rev-parse", "HEAD") != target or read_raw_version(root) != version:
             refuse("SELF_UPDATE_VERIFY", f"post-apply HEAD/VERSION verification failed; recovery: git -C {shlex.quote(str(root))} switch --detach {tag}")
+        intent['result'] = dict(head=target, version=version, verified=True)
+        receipts._save_intent(receipt_path, intent)
         print(f"Updated to {tag}. Restart running Codex and Claude Code sessions.")
         if templates == "template-changing":
             print("Run cardine upgrade --check in each project.")

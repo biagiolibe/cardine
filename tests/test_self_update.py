@@ -79,7 +79,7 @@ class SelfUpdateTest(unittest.TestCase):
             self.assertEqual(self.run_update(), 0)
             self.assertEqual(self.git(self.root, 'show-ref'), before)
             for text in ('Current: 1.2.1', 'Target: 1.3.0', 'minor', 'template-changing',
-                         'releases/tag/v1.3.0', 'git fetch --tags'):
+                         'releases/tag/v1.3.0', 'git fetch --no-tags'):
                 self.assertIn(text, self.output)
             self.assertIn('switch --detach' if detached else 'merge --ff-only', self.output)
 
