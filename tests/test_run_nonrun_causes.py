@@ -43,16 +43,22 @@ class NonrunCausesTest(unittest.TestCase):
         self.assertNotIn('SELF_UPDATE_NON_FF', registry)
 
     def test_every_updater_emitter_is_audited_including_dynamic_forwarding(self):
-        tree = ast.parse((ROOT / 'src/cardine/release/update.py').read_text())
-        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
-                 and isinstance(node.func, ast.Name) and node.func.id == 'refuse']
+        trees = [ast.parse((ROOT / 'src/cardine/release' / name).read_text())
+                 for name in ('update.py', 'update_operation.py')]
+        calls = [node for tree in trees for node in ast.walk(tree) if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Name) and node.func.id in ('refuse', 'stop_error')]
         codes = {node.args[0].value for node in calls if isinstance(node.args[0], ast.Constant)}
         self.assertEqual(codes, {code for code in NONRUN_CAUSES if code.startswith('SELF_UPDATE_')})
-        forwarding = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
-                      and isinstance(node.func, ast.Name) and node.func.id == 'stop_error']
-        self.assertEqual(len(forwarding), 2)
-        self.assertTrue(all(node.args[0].id == 'code' for node in forwarding))
-        self.assertEqual(sum(isinstance(node.args[0], ast.Name) for node in calls), 1)
+        forwarding = [node for node in calls if node.func.id == 'stop_error'
+                      and not isinstance(node.args[0], ast.Constant)]
+        self.assertEqual(len(forwarding), 3)
+        self.assertEqual(sum(isinstance(node.args[0], ast.Name) and node.args[0].id == 'code'
+                             for node in forwarding), 2)
+        classifiers = [node.args[0] for node in forwarding if isinstance(node.args[0], ast.Call)]
+        self.assertEqual(len(classifiers), 1)
+        self.assertEqual(classifiers[0].func.id, 'os_stop_code')
+        self.assertEqual(sum(node.func.id == 'refuse' and isinstance(node.args[0], ast.Name)
+                             for node in calls), 1)
         self.assertFalse(any(value == 'deferred' and 'RE2c' in reason
                              for value, reason in __import__('cardine.stops.causes', fromlist=['EMITTER_CAUSES']).EMITTER_CAUSES.values()))
 
@@ -152,7 +158,7 @@ class NonrunCausesTest(unittest.TestCase):
     def test_update_interruption_residue_is_only_diagnosed(self):
         # Kill before/after each existing update boundary. Re-run the identical
         # diagnostic twice: refs, HEAD, foreign work and counters stay unchanged.
-        # Replaying apply with a newly selected release is intentionally SR1.
+        # SR1a now pins apply retries; diagnostics still remain read-only.
         for boundary in ('fetch', 'merge', 'verify'):
             for side in ('before', 'after'):
                 with self.subTest(boundary=boundary, side=side):
@@ -166,21 +172,12 @@ import io, json, os, signal, sys
 from pathlib import Path
 from cardine.release import update
 root=Path(sys.argv[1]).resolve(); boundary=sys.argv[2]; side=sys.argv[3]
-original=update.git_output
-reads=0
-def kill(): os.kill(os.getpid(), signal.SIGKILL)
-def git(path,*args):
-    global reads
-    match = path == root and ((boundary == 'fetch' and args[:1] == ('fetch',)) or
-                             (boundary == 'merge' and args[:1] == ('merge',)))
-    if path == root and args == ('rev-parse','HEAD'):
-        reads += 1
-        match = boundary == 'verify' and reads == 2
-    if match and side == 'before': kill()
-    result=original(path,*args)
-    if match and side == 'after': kill()
-    return result
-update.git_output=git
+from cardine.lifecycle import receipts
+def inject(name):
+    effect = 'apply' if boundary == 'merge' else boundary
+    if name == side + '_update_' + effect:
+        os.kill(os.getpid(), signal.SIGKILL)
+receipts.boundary=inject
 update.run_self_update(root,apply=True,urlopen_fn=lambda *a,**k: io.BytesIO(json.dumps(
  {'tag_name':'v1.3.0','body':'Template-changing release: test'}).encode()))
 '''

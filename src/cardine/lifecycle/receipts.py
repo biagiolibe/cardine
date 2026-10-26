@@ -536,3 +536,34 @@ def external_effect(path, intent, name, verify, apply, complete):
         raise CardineError('external effect not observed: ' + name)
     effects[name] = 'done'
     _save_intent(path, intent)
+
+
+def nonrun_path(root, kind):
+    """Checkout-bound receipts for operations outside a project task.
+
+    Git metadata keeps updater recovery outside the changing tracked tree.
+    These records have the same same-user limit as task receipts.
+    """
+    from cardine.shared.git import canonical_git_common_dir
+    if not kind or any(c not in 'abcdefghijklmnopqrstuvwxyz-' for c in kind):
+        raise CardineError('invalid non-run operation kind')
+    common = canonical_git_common_dir(root)
+    checkout = digest(str(Path(root).resolve()).encode())
+    return safe_path(common, f'cardine-operations/{kind}-{checkout}.json')
+
+
+@contextmanager
+def nonrun_lock(path):
+    """Serialize non-run writers without installing any host configuration."""
+    guard = safe_path(path.parent, path.name + '.guard')
+    guard.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(guard, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(descriptor, 'a') as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise CardineError('live foreign non-run operation; writer in progress') from error
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
