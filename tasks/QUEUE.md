@@ -42,7 +42,7 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 102 | Launch implementer and reviewer with distinct host roles (RE4a) | 🔴 P1 | 100 | [102](done/102-host-roles.md) |
 | `[x]` | 103 | Bind verdict, cancel, and abort to issued roles (RE4b) | 🔴 P1 | 102 | [103](done/103-review-control.md) |
 | `[x]` | 104 | Decide landing from pinned policy and Git facts (RE5a) | 🔴 P1 | 103 | [104](done/104-landing-decision.md) |
-| `[ ]` | 105 | Run candidate validation and reconcile finalize and abort (RE5b) | 🔴 P1 | 104 | [105](105-candidate-integration.md) |
+| `[x]` | 105 | Run candidate validation and reconcile finalize and abort (RE5b) | 🔴 P1 | 104 | [105](done/105-candidate-integration.md) |
 | `[ ]` | 106 | Query CI by exact repository and commit (RE6a) | 🔴 P1 | 105 | [106](106-ci-queries.md) |
 | `[ ]` | 107 | Verify the main push and clean up remote and local branches (RE6b) | 🔴 P1 | 106 | [107](107-push-and-cleanup.md) |
 | `[ ]` | 108 | Make self-update repeatable with a pinned target (SR1a) | 🔴 P1 | 107 | [108](108-self-update-repeatability.md) |

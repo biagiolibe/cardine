@@ -18,6 +18,9 @@ class DirectLanding:
     name = "direct"
 
     def prepare_candidate(self, task_id: str, worktree_root: Path | None, project: Path) -> dict[str, object]:
+        from cardine.integration.records import commit_closure_records
+        from cardine.integration.candidate import locations_for
+        commit_closure_records(locations_for(task_id, project))
         return stage_task_integration(task_id, worktree_root, None, project)
 
     def readiness(self, task_id: str, worktree_root: Path | None, project: Path) -> tuple[dict[str, object], bool]:
@@ -31,6 +34,10 @@ class DirectLanding:
         return {"version": 1, "task_id": identity.canonical_id, "decision": staged["decision"],
                 "candidate_tree": staged["candidate_tree"],
                 "required": ["git diff --check", *fragments.get(str(staged["decision"]), ())]}
+
+    def validate_candidate(self, task_id: str, project: Path) -> dict[str, object]:
+        from cardine.integration.candidate import run_candidate_validation
+        return run_candidate_validation(task_id, project)
 
     def finalize_landing(self, task_id: str, validation: Path, project: Path) -> dict[str, object]:
         return finalize_task_integration(task_id, validation, project)

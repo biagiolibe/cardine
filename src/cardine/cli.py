@@ -283,8 +283,6 @@ def build_parser() -> CardineArgumentParser:
     worktree_advance.add_argument("task_id")
     worktree_advance.add_argument("--project", type=Path)
     worktree_advance.add_argument("--worktree-root", type=Path)
-    worktree_advance.add_argument("--candidate-command", action="append", default=[])
-    worktree_advance.add_argument("--candidate-exit-code", action="append", type=int, default=[])
     worktree_advance.add_argument("--format", choices=("json",), required=True)
     worktree_integrate = worktree_sub.add_parser("integrate", help="stage, finalize, or abort one owned integration")
     integrate_sub = worktree_integrate.add_subparsers(dest="integrate_command", required=True)
@@ -297,7 +295,7 @@ def build_parser() -> CardineArgumentParser:
     integrate_finalize = integrate_sub.add_parser("finalize", help="commit an exactly validated staged candidate")
     integrate_finalize.add_argument("task_id")
     integrate_finalize.add_argument("--project", type=Path)
-    integrate_finalize.add_argument("--evidence", type=Path, required=True)
+    integrate_finalize.add_argument("--evidence", type=Path)
     integrate_finalize.add_argument("--format", choices=("json",), required=True)
     integrate_abort = integrate_sub.add_parser("abort", help="abort one Cardine-owned staged integration")
     integrate_abort.add_argument("task_id")
@@ -698,8 +696,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     arguments.task_id,
                     arguments.worktree_root,
                     supplied_project=project_root,
-                    candidate_commands=arguments.candidate_command,
-                    candidate_exit_codes=arguments.candidate_exit_code,
                 )
                 journal.observe(advanced)
                 print(json.dumps(advanced, sort_keys=True))

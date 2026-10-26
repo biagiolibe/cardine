@@ -1,35 +1,25 @@
 from __future__ import annotations
 
-from cardine.shared.layout import names
 
-from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.merge import _integration_task_state
 from cardine.integration.merge import abort_task_integration
 from cardine.integration.merge import cleanup_task_worktree
 from cardine.integration.merge import finalize_task_integration
-from cardine.integration.merge import missing_candidate_validation_commands
-from cardine.integration.merge import runnable_candidate_validation_command
 from cardine.integration.merge import stage_task_integration
 from cardine.shared.errors import InternalStopError
 from cardine.shared.errors import CardineError
 from cardine.shared.errors import CardineStop
 from cardine.shared.journal import JOURNAL_VERSION
 from cardine.shared.journal import append_journal_line
-from cardine.shared.jsonio import _read_json_object
-from cardine.shared.jsonio import _write_json_atomic
 from cardine.stops.registry import load_stop_registry
-from cardine.stops.render import _task_state_recovery_project
 from cardine.stops.render import stop_resume
 from cardine.tasks.identity import resolve_task_identity
-from cardine.templates.mode import detect_mode
 from cardine.worktree.checkout import inspect_task_worktree
 from cardine.worktree.closure_status import closure_status
-from cardine.worktree.storage import _lifecycle_paths
 from cardine.worktree.storage import _verified_lifecycle_project
 from datetime import datetime
 from datetime import timezone
 from pathlib import Path
-import shlex
 import sys
 
 
@@ -56,27 +46,20 @@ def advance_task_closure(
     worktree_root: Path | None,
     *,
     supplied_project: Path | None = None,
-    candidate_commands: list[str] | None = None,
-    candidate_exit_codes: list[int] | None = None,
 ) -> tuple[dict[str, object], bool]:
     """Run the mechanical closure steps and return where the agent must act next.
 
-    It performs C6 (stage), C8 (finalize from the supplied candidate
+    It performs C6 (stage), C8 (finalize from measured candidate
     validation results) and C10 (cleanup) when closure_status says their
     preconditions hold. C5 is satisfied only by the measured validation the
     run engine recorded; no caller-supplied result or acceptance is read.
     It never runs a command the agent supplied.
     The boolean is True when the result is a stop that the CLI reports with exit 2.
     """
-    candidate_commands = candidate_commands or []
-    candidate_exit_codes = candidate_exit_codes or []
-    if len(candidate_commands) != len(candidate_exit_codes):
-        raise CardineError("each --candidate-command requires one --candidate-exit-code")
     project_root = _verified_lifecycle_project(supplied_project)
     if Path.cwd().resolve() != project_root:
         raise CardineError("worktree advance must run from the canonical primary checkout")
     identity = resolve_task_identity(project_root, task_id, "existing")
-    state_path, _lease_path, integration_path = _lifecycle_paths(project_root, identity)
     task = identity.canonical_id
     performed: list[str] = []
 
@@ -151,61 +134,26 @@ def advance_task_closure(
                 return stopped("C6", error.code, error_detail(error))
             performed.append("C6")
             _journal_advance_step(project_root, "integrate stage", task, str(staged.get("next_action", "C6")))
+            from cardine.integration.direct import DirectLanding
+            needs = DirectLanding().candidate_needs(task, project_root)
+            return result("C7", "run-candidate-validation", commands=needs['required'],
+                          required_fragments=needs['required'], resume=stop_resume(
+                              'EVIDENCE_INCOMPLETE', task_id=task, project=project_root))
         elif code is not None and not (step == "C9" and code == "PUSH_PENDING"):
             return stopped(step, code)
         elif step == "C7":
-            staged = _read_json_object(integration_path, "staged integration state")
-            declaration_state, fragments = candidate_validation_declaration(project_root, task)
-            required = ["git diff --check", *fragments.get(str(staged.get("decision")), ())]
-            commands = [entry for entry in required if runnable_candidate_validation_command(entry, project_root)]
-            instruction = (
-                "Run commands unchanged from the primary checkout. For each required_fragments entry "
-                "not covered by commands, run a project command containing that exact fragment; "
-                "report every command and exit code to advance."
-            )
-            if not candidate_commands:
-                return result("C7", "run-candidate-validation", commands=commands,
-                              required_fragments=required, resume=instruction)
-            aborted_resume = (
-                "the integration was aborted; fix the failure on the task branch, rerun validation, "
-                "then rerun advance"
-            )
-            if any(exit_code != 0 for exit_code in candidate_exit_codes):
-                abort_task_integration(task, project_root)
-                _journal_advance_step(project_root, "integrate abort", task, "C7")
-                performed.append("abort")
-                return result(
-                    "C7", "resolve", stop_code="CANDIDATE_VALIDATION_FAILED", resume=aborted_resume, blocked=True
-                )
-            missing = (
-                commands
-                if declaration_state == "undeclared"
-                else list(missing_candidate_validation_commands(staged.get("decision"), candidate_commands, fragments))
-            )
-            if missing:
-                abort_task_integration(task, project_root)
-                _journal_advance_step(project_root, "integrate abort", task, "C7")
-                performed.append("abort")
-                return result(
-                    "C7",
-                    "run-candidate-validation",
-                    commands=[entry for entry in missing if runnable_candidate_validation_command(entry, project_root)],
-                    required_fragments=missing,
-                    stop_code="UNDECLARED_VALIDATION_COMMANDS",
-                    resume="the integration was aborted; " + instruction,
-                    blocked=True,
-                )
-            candidate_evidence = state_path.with_suffix(".candidate-validation.json")
-            _write_json_atomic(candidate_evidence, {
-                "version": 1,
-                "task_id": task,
-                "candidate_tree": staged["candidate_tree"],
-                "passed": True,
-                "scope": "full" if staged.get("decision") == "FULL" else "bounded",
-                "commands": candidate_commands,
-            })
+            from cardine.integration.candidate import run_candidate_validation
             try:
-                finalize_task_integration(task, candidate_evidence, project_root)
+                progress = run_candidate_validation(task, project_root)
+            except CardineStop as error:
+                if error.code == 'VALIDATION_RETRY_LIMIT':
+                    abort_task_integration(task, project_root)
+                return stopped('C7', error.code, error_detail(error))
+            if progress['phase'] != 'passed':
+                abort_task_integration(task, project_root)
+                return result("C7", "resolve", stop_code="CANDIDATE_VALIDATION_FAILED", blocked=False)
+            try:
+                finalize_task_integration(task, None, project_root)
             except CardineStop as error:
                 return stopped("C8", error.code, error_detail(error))
             performed.append("C8")

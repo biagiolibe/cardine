@@ -150,7 +150,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 102 — Launch implementer and reviewer with distinct host roles (RE4a).
 - `[x]` 103 — Bind verdict, cancel, and abort to issued roles (RE4b).
 - `[x]` 104 — Decide landing from pinned policy and Git facts (RE5a).
-- `[ ]` 105 — Run candidate validation and reconcile finalize and abort (RE5b).
+- `[x]` 105 — Run candidate validation and reconcile finalize and abort (RE5b).
 - `[ ]` 106 — Query CI by exact repository and commit (RE6a).
 - `[ ]` 107 — Verify the main push and clean up remote and local branches (RE6b).
 - `[ ]` 108 — Make self-update repeatable with a pinned target (SR1a).

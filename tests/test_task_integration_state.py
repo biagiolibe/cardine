@@ -174,6 +174,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         validation = self.root / "candidate.json"
         validation.write_text(json.dumps({"candidate_tree": staged["candidate_tree"], "passed": True,
                                          "scope": "bounded", "commands": ["git diff --check", "scripts/check_repository.py", "python3 -c 'pass'"]}))
+        from cardine.integration.candidate import run_candidate_validation
+        run_candidate_validation('056', self.primary)
         owner_integration_merge.finalize_task_integration("056", validation, self.primary)
         self.assertEqual((self.primary / "feature.txt").read_text(), "approved code\n")
 

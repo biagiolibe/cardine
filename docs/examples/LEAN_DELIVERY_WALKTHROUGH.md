@@ -216,13 +216,12 @@ cardine worktree advance 001 --project . --format json
 
 For this unchanged base and declared policy, `advance` stages integration and
 returns `action_required: run-candidate-validation`, with `git diff --check`.
-It records results; it never executes validation. Run the returned commands on
-the candidate, then supply their actual results. If your project returns a
+The next advance executes the frozen candidate commands and records their actual
+results. Caller-reported exits and candidate pass files have no authority. If your project returns a
 different action or `BLOCKED <CODE>`, follow that result and its resume command.
 
 ```bash
-git diff --check
-cardine worktree advance 001 --project . --candidate-command "git diff --check" --candidate-exit-code 0 --format json
+cardine worktree advance 001 --project . --format json
 ```
 
 Successful finalization returns `action_required: push`.

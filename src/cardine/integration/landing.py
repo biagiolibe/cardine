@@ -28,6 +28,9 @@ class LandingStrategy(Protocol):
     def candidate_needs(self, task_id: str, project: Path) -> dict[str, object]:
         """Name the validation the staged candidate requires; executing it is the engine's step."""
 
+    def validate_candidate(self, task_id: str, project: Path) -> dict[str, object]:
+        """Execute the frozen commands and return measured tree-bound progress."""
+
     def finalize_landing(self, task_id: str, validation: Path, project: Path) -> dict[str, object]:
         """Land the candidate once, only after its tree-bound validation."""
 

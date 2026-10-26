@@ -106,6 +106,8 @@ def _publish(root, task_id, intent, state):
     ledger[task_id] = entries + [item for run in progress['runs'] for item in run]
     updated = deepcopy(state)
     updated['run']['validation'] = progress
+    if 'candidateValidation' in updated['run']:
+        updated['run']['candidateValidation']['consecutiveFailures'] = progress['consecutiveFailures']
     from cardine.tasks.identity import resolve_task_identity
     import re
     handoff = resolve_task_identity(root, task_id, 'existing').handoff_path.relative_to(root).as_posix()
@@ -170,7 +172,8 @@ def run_task_validation(root, task_id, *, context=None):
         environment = dict(os.environ)
         current = inputs(root, task_id, state, base, environment)
         previous = state.get('run', {}).get('validation', {})
-        failures = previous.get('consecutiveFailures', 0)
+        from cardine.tasks.validation import failure_count
+        failures = failure_count(state)
         limit = state['contract']['options']['validationRetryLimit']
         if failures >= limit:
             raise stop_error('VALIDATION_RETRY_LIMIT', json.dumps(previous.get('runs', [])),

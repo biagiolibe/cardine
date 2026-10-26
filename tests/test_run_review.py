@@ -230,8 +230,18 @@ class RunReviewFlowTest(unittest.TestCase):
             adapter=CodexProfileAdapter(host, record['session']['session_id']))
         before = deepcopy(state)
         self.assertTrue(review_progress(root, '001', state)[0])
-        self.assertEqual(run_validation_step(locations)['step'], 'candidate')
-        self.assertEqual(fixture.state(), before)
+        candidate = run_validation_step(locations)
+        self.assertEqual((candidate['step'], candidate['action']), ('candidate', 'validate-candidate'))
+        after = fixture.state()
+        self.assertEqual({k: v for k, v in after.items() if k != 'run'},
+                         {k: v for k, v in before.items() if k != 'run'})
+        self.assertEqual(after['run']['reviewDecision'], before['run']['reviewDecision'])
+        self.assertEqual(after['run']['candidateValidation']['phase'], 'passed')
+        # The review test continues with a new implementation after disposing
+        # only its owned candidate through the authorized fixture channel.
+        from cardine.integration.merge import abort_task_integration
+        from control_support import adapter
+        abort_task_integration('001', locations.primary, adapter=adapter('coordinator'))
         fixture.git('add', '.')
         fixture.git('commit', '-m', 'Commit review evidence')
         self.assertTrue(review_progress(root, '001', fixture.state())[0])

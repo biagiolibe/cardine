@@ -65,6 +65,8 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             }),
             encoding="utf-8",
         )
+        from cardine.integration.candidate import run_candidate_validation
+        run_candidate_validation('056', self.primary)
         finalized = owner_integration_merge.finalize_task_integration("056", validation_path, self.primary)
         self.assertEqual(finalized["decision"], "REUSE")
         self.assertTrue((self.primary / "feature.txt").is_file())
