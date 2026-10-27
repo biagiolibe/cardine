@@ -33,14 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 25 — Host integration: planning
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work item 9 and decision 14 rule 2.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 116 | Plan the host integration (work item 9) | 🔴 P1 | 115 | [116](116-plan-host-integration.md) |
-
 ### Phase 26 — Test suite: receipt boundary matrices
 
 Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.

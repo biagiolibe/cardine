@@ -285,3 +285,11 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 113 | Condense the remaining templates and delete folded documents (TR2b) | 🔴 P1 | 112 | [113](done/113-condense-remaining-templates.md) |
 | `[x]` | 114 | Show console previews and actions from verified facts (RE7a) | 🔴 P1 | 113 | [114](done/114-console-actions.md) |
 | `[x]` | 115 | Audit the run engine end to end and document its commands (RE7b) | 🔴 P1 | 114 | [115](done/115-final-audit.md) |
+
+### Phase 25 — Host integration: planning
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 9 and decision 14 rule 2.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 116 | Plan the host integration (work item 9) | 🔴 P1 | 115 | [116](done/116-plan-host-integration.md) |
