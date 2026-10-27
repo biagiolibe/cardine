@@ -2,7 +2,7 @@
 
 Task context loading, task shape, and completion handoffs are governed by `docs/CONTEXT_READING_POLICY.md`, `tasks/TASK_BLUEPRINT.md`, and `docs/COMPLETION_REPORT_TEMPLATE.md`; this document defines review and direct integration only.
 
-<!-- CARDINE:BEGIN capability=task-worktree-integration v2 -->
+<!-- CARDINE:BEGIN capability=task-worktree-integration v3 -->
 For `Review: required`, the implementer pushes the task branch only to obtain `T1_CI` for that commit, at most once per review attempt, and not at all when the project has no CI, and records its deterministic branch,
 machine-independent dedicated-worktree value (relative to the worktree root, never an absolute path), implementation commit, validated task and
 base `main` commits, exact successful validation evidence, declared integration
@@ -26,7 +26,7 @@ git diff --name-only <validated-task-commit>..<current-task-commit>
 
 Current `main` need not be an ancestor of the branch. Missing evidence, a
 failed ancestry check, or any task-relevant change after validation is
-`BLOCKED EVIDENCE_MISMATCH`; do not record approval or completion. Do not fetch,
+an `EVIDENCE_MISMATCH` (recoverable, not a stop); do not record approval or completion. Do not fetch,
 rebase, amend, cherry-pick, or force-push as recovery. On the clean reviewed HEAD use `cardine review verdict <TASK-ID> APPROVE --body <review-evidence>`, then commit only the state file and task/review projections. Never edit a status or verdict by hand.
 
 Final integration is serialized in the primary checkout under one exclusive
@@ -42,7 +42,7 @@ generated-input, configuration, schema, shared-governance, and behavioral
 identities with the handoff's declared integration surface. Equal or nested
 paths or any shared identity are material interactions and select full
 combined-tree validation. An incomplete declaration or comparison is
-`BLOCKED EVIDENCE_MISMATCH`; neither a conflict-free merge nor disjoint filenames establishes
+an `EVIDENCE_MISMATCH` (recoverable, not a stop); neither a conflict-free merge nor disjoint filenames establishes
 independence. Record an independent comparison before selecting the bounded
 gate. An explicit task requirement also selects full validation.
 

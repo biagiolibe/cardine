@@ -19,6 +19,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from cardine_cli_support import CLI, ROOT
+import check_repository
 from cardine.lifecycle import receipts
 from synthetic_upgrade_support import SyntheticFramework
 
@@ -171,6 +172,16 @@ class MarkerBaselineWriteTest(unittest.TestCase):
                 self.assertEqual(self.write("never").returncode, 0)
                 self.assertEqual(self.path.read_bytes(), expected)
                 self.assertFalse(self.path.with_name(self.path.name + ".tmp").exists())
+
+    def test_the_output_after_an_interruption_passes_the_baseline_check_a_stale_one_fails(self) -> None:
+        with self.assertRaises(SystemExit):
+            check_repository.check_capability_marker_baselines(self.root)
+        for when in ("before", "after"):
+            with self.subTest(when=when):
+                self.path.write_bytes(self.stale)
+                self.assertEqual(self.write(when).returncode, 93)
+                self.assertEqual(self.write("never").returncode, 0)
+                check_repository.check_capability_marker_baselines(self.root)
 
     def test_repeating_the_writer_is_byte_identical(self) -> None:
         first = self.fresh()

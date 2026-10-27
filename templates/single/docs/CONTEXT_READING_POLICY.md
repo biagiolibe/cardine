@@ -16,9 +16,9 @@ Advice: keep plans to three bullets or fewer, report only state changes, finding
 
 | Preset | Role | Ceiling (bytes) |
 | --- | --- | ---: |
-| All presets | status | 100000 |
-| All presets | design | 100000 |
-| All presets | implementation | 100000 |
-| All presets | review | 100000 |
-| All presets | remediation | 100000 |
-| All presets | lifecycle | 100000 |
+| All presets | status | 10000 |
+| All presets | design | 10000 |
+| All presets | implementation | 10000 |
+| All presets | review | 10000 |
+| All presets | remediation | 10000 |
+| All presets | lifecycle | 10000 |

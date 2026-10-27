@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from task_contract_support import freeze_record
 import json
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,6 +16,9 @@ from project_config_support import write_project_config
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "cardine_cli.py"
+sys.path.insert(0, str(ROOT / "scripts"))
+import check_repository as cr  # noqa: E402
+from cardine.shared import context as shared_context  # noqa: E402
 
 
 class ContextSizeTest(unittest.TestCase):
@@ -138,3 +143,71 @@ class ContextSizeTest(unittest.TestCase):
         report = json.loads(self.run_cli("--role", "implementation", "--format", "json").stdout)
         self.assertIn("docs/CODE_ORGANIZATION.md", [item["path"] for item in report["files"]])
         self.assertEqual(report["deferred_documents"], [])
+
+
+class ReferenceResolutionTest(unittest.TestCase):
+    """Task 074 defect 1: inline-code citations are project-relative, links are document-relative."""
+
+    def test_inline_citations_resolve_from_the_project_root(self) -> None:
+        document = Path("docs/workflows/IMPLEMENTATION.md")
+        self.assertEqual(
+            shared_context._context_relative_references(document, "Read `PROJECT_WORKFLOW.md`, `AGENTS.md`, and `docs/CODE_ORGANIZATION.md`."),
+            [Path("PROJECT_WORKFLOW.md"), Path("AGENTS.md"), Path("docs/CODE_ORGANIZATION.md")],
+        )
+
+    def test_links_resolve_from_the_citing_document_with_dots_normalized(self) -> None:
+        document = Path("docs/workflows/IMPLEMENTATION.md")
+        text = "[a](../CODE_ORGANIZATION.md) [b](REVIEW.md#top) [c](../../README.md) [d](../../../outside.md) [e](/etc/x.md)"
+        self.assertEqual(
+            shared_context._context_relative_references(document, text),
+            [Path("docs/CODE_ORGANIZATION.md"), Path("docs/workflows/REVIEW.md"), Path("README.md")],
+        )
+
+    def test_a_citation_of_a_missing_file_is_still_reported_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory) / "project"
+            shutil.copytree(ROOT / "templates/single", project)
+            write_project_config(project, "lean")
+            implementation = project / "docs/workflows/IMPLEMENTATION.md"
+            implementation.write_text(implementation.read_text(encoding="utf-8") + "\nAlso read `docs/MISSING.md`.\n", encoding="utf-8")
+            report = shared_context.context_size_report(project, "implementation", workflow_mode="single")
+        self.assertEqual([item["path"] for item in report["files"] if item["status"] == "missing"], ["docs/MISSING.md"])
+
+    def test_the_shipped_read_sets_report_nothing_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory) / "project"
+            shutil.copytree(ROOT / "templates/single", project)
+            write_project_config(project, "lean")
+            for role in shared_context.CONTEXT_SIZE_ROLES["single"]:
+                with self.subTest(role=role):
+                    report = shared_context.context_size_report(project, role, workflow_mode="single")
+                    self.assertEqual([item["path"] for item in report["files"] if item["status"] == "missing"], [])
+
+
+class CeilingTest(unittest.TestCase):
+    """Task 074 defect 2: the shipped ceilings are the role-start byte budget, and cannot be raised past it."""
+
+    def project(self, directory: str, ceiling: str | None = None) -> Path:
+        project = Path(directory) / "project"
+        shutil.copytree(ROOT / "templates/single", project)
+        write_project_config(project, "lean")
+        if ceiling is not None:
+            policy = project / "docs/CONTEXT_READING_POLICY.md"
+            policy.write_text(policy.read_text(encoding="utf-8").replace("| 10000 |", f"| {ceiling} |"), encoding="utf-8")
+        return project
+
+    def test_every_shipped_ceiling_is_the_role_start_byte_budget(self) -> None:
+        text = (ROOT / "templates/single/docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
+        rows = dict(re.findall(r"^\| All presets \| ([a-z]+) \| ([0-9]+) \|$", text, re.MULTILINE))
+        self.assertEqual(set(rows), set(shared_context.CONTEXT_SIZE_ROLES["single"]))
+        self.assertEqual({int(value) for value in rows.values()}, {shared_context.ROLE_START_BUDGET[1]})
+
+    def test_the_shipped_ceilings_pass_and_a_ceiling_above_the_budget_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cr._check_template_context_sizes(self.project(directory))
+        with tempfile.TemporaryDirectory() as directory, self.assertRaises(SystemExit):
+            cr._check_template_context_sizes(self.project(directory, "100000"))
+
+    def test_a_read_set_over_its_ceiling_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, self.assertRaises(SystemExit):
+            cr._check_template_context_sizes(self.project(directory, "5000"))

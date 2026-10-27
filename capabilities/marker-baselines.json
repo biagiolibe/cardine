@@ -101,8 +101,8 @@
       "version": 1
     },
     "task-worktree-integration": {
-      "sha256": "65f48db6bf1cfc3e9b2007b6623786bc953a44e6a2a1f91de94be1bafa7143cb",
-      "version": 2
+      "sha256": "93d872e3d508f7ca5bdfcf21855db9f24d0c64aec179a3e27a2d3cd89cbcd95c",
+      "version": 3
     }
   },
   "templates/single/docs/LIFECYCLE_ORCHESTRATION.md": {
@@ -131,8 +131,8 @@
       "version": 2
     },
     "worktree-lifecycle": {
-      "sha256": "d10a01fbe8f35a4a41a4156c0f61f6251afc383bd7f648d7706ff9d230e26a56",
-      "version": 3
+      "sha256": "f4ab5d9f95bb4abae56dfc490c4d1189c58f746387ba58b33e6ef7f6a819a7bc",
+      "version": 4
     }
   },
   "templates/single/docs/workflows/IMPLEMENTATION.md": {
