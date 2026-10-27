@@ -41,19 +41,13 @@
   },
   "templates/single/docs/AUDIT_PROMPT_READ_ONLY.md": {
     "audit-prompt": {
-      "sha256": "20929aa675d1463c75f8f0f439d87bde07f93eebf22ea3f3413b5467f6c8f466",
-      "version": 1
+      "sha256": "9c82438ecdabb0353b048c7ed5cc4dadf2174ee6e93ff258d4f4eb05770defe0",
+      "version": 2
     }
   },
   "templates/single/docs/CODE_ORGANIZATION.md": {
     "code-organization": {
-      "sha256": "304af93829529abc266e2585f5b9d6672549db092ecd73903a965560b880d19e",
-      "version": 1
-    }
-  },
-  "templates/single/docs/CODE_REVIEW_PROMPT.md": {
-    "code-review-prompt": {
-      "sha256": "bfe24e7a35129975e420bae193c9ac8eb3bdd6d3f029e72caae9d8342b9c3bca",
+      "sha256": "6bdb254866069976fba263be8c5d54c1d88808bc69b4d870a32d77a1173f6b27",
       "version": 2
     }
   },
@@ -73,20 +67,6 @@
     "long-command-waits": {
       "sha256": "074d47810b551dcb5d86391799ced658f057c0cbd7ccd386e837989579003e7a",
       "version": 2
-    }
-  },
-  "templates/single/docs/INTEGRATION_POLICY.md": {
-    "ci-verified-validation": {
-      "sha256": "08f730590a7e11801a44d3742771b597c5b8b402cd36f8666f71dd5b43d3fe5c",
-      "version": 1
-    },
-    "remote-branch-cleanup": {
-      "sha256": "c9a91f3d83cea7509b7432e1e0d8e376d702bc6309be3d0307cbb7a1f7372d43",
-      "version": 1
-    },
-    "task-worktree-integration": {
-      "sha256": "93d872e3d508f7ca5bdfcf21855db9f24d0c64aec179a3e27a2d3cd89cbcd95c",
-      "version": 3
     }
   },
   "templates/single/docs/LIFECYCLE_ORCHESTRATION.md": {

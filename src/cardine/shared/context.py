@@ -284,7 +284,8 @@ TEMPLATE_ROLE_DOCUMENTS = {
 TEMPLATE_CONDENSED = ("AGENTS.md", "CLAUDE.md", "docs/workflows/IMPLEMENTATION.md", "docs/workflows/REVIEW.md",
                       "docs/workflows/REMEDIATION.md", "docs/LIFECYCLE_ORCHESTRATION.md", "docs/CONTEXT_READING_POLICY.md",
                       "docs/WORKTREE_LIFECYCLE.md", "tasks/TASK_BLUEPRINT.md", "docs/COMPLETION_REPORT_TEMPLATE.md",
-                      "docs/EXECUTION_EVIDENCE_PROFILE.md", "docs/REVIEW_RECORD_TEMPLATE.md")
+                      "docs/EXECUTION_EVIDENCE_PROFILE.md", "docs/REVIEW_RECORD_TEMPLATE.md",
+                      "docs/AUDIT_PROMPT_READ_ONLY.md", "docs/OPERATOR_PROMPTS.md", "docs/CODE_ORGANIZATION.md")
 
 
 def template_budget_findings(templates: Path) -> list[str]:

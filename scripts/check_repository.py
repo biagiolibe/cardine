@@ -300,17 +300,12 @@ def check_language_policy() -> None:
     operator_prompts = ROOT / "templates/single/docs/OPERATOR_PROMPTS.md"
     if not operator_prompts.is_file():
         fail("operator prompts are missing")
-    if "This non-normative cookbook" not in operator_prompts.read_text(
-        encoding="utf-8"
-    ):
-        fail("operator prompts must remain non-normative")
 
 
 def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
     workflow = single_template_root(root)
     review_paths = (
         workflow / "PROJECT_WORKFLOW.md",
-        workflow / "docs" / "CODE_REVIEW_PROMPT.md",
         workflow / "docs" / "LIFECYCLE_ORCHESTRATION.md",
         workflow / "docs" / "workflows" / "REVIEW.md",
     )

@@ -21,7 +21,7 @@ from cardine.templates import audit as owner_templates_audit
 from cardine.templates import catalog as owner_templates_catalog
 
 from cardine.templates import markers as templates_markers
-from synthetic_upgrade_support import SyntheticFramework
+from synthetic_upgrade_support import RELEASED, SyntheticFramework
 import cardine.shared.errors as shared_errors
 from cardine.templates import marker_audit as owner_templates_marker_audit
 from cardine.templates import migrations as owner_templates_migrations
@@ -64,6 +64,8 @@ class FrameworkFixture(unittest.TestCase):
             shutil.copytree(ROOT / name, self.framework / name)
         shutil.copyfile(ROOT / "VERSION", self.framework / "VERSION")
         self.project.mkdir()
+        # Row TR2b: these scenarios start from a release that still shipped the two folded documents.
+        copy_tree(RELEASED, self.framework / "templates" / "single")
         copy_tree(self.framework / "templates" / "single", self.project)
 
     def tearDown(self) -> None:
@@ -103,18 +105,15 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
     def read(self, relative: str) -> str:
         return (ROOT / "templates/single" / relative).read_text(encoding="utf-8")
 
-    def test_review_prompt_is_one_block_and_applies_the_project_checklist(self) -> None:
-        text = self.read(REVIEW_PROMPT)
-        self.assertEqual(templates_markers.marker_pairs(text), [("code-review-prompt", 2)])
-        block = templates_markers.extract_marker_block(text, "code-review-prompt", 2)
-        self.assertIn("## Project review checklist", block)
-        self.assertNotRegex(block, r"(?m)^#+ Project review checklist")
-        self.assertTrue(text.rstrip().endswith("<!-- CARDINE:END -->"))
+    def test_review_prompt_is_folded_into_the_review_procedure_with_its_checklist(self) -> None:
+        # TR2b deleted the prompt; REVIEW.md applies a project's `## Project review checklist` section.
+        self.assertFalse((ROOT / "templates/single" / REVIEW_PROMPT).exists())
+        self.assertIn("Project review checklist", self.read("docs/workflows/REVIEW.md"))
 
     def test_audit_prompt_runs_the_project_specific_checks_section(self) -> None:
         text = self.read("docs/AUDIT_PROMPT_READ_ONLY.md")
-        self.assertEqual(templates_markers.marker_pairs(text), [("audit-prompt", 1)])
-        block = templates_markers.extract_marker_block(text, "audit-prompt", 1)
+        self.assertEqual(templates_markers.marker_pairs(text), [("audit-prompt", 2)])
+        block = templates_markers.extract_marker_block(text, "audit-prompt", 2)
         self.assertIn("## Project-specific checks", block)
         self.assertIn("cite an accepted ADR", block)
 
@@ -132,9 +131,8 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
     def test_lifecycle_and_remote_cleanup_are_managed_capabilities(self) -> None:
         text = self.read("docs/WORKTREE_LIFECYCLE.md")
         self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 3), ("worktree-lifecycle", 5)])
-        policy = self.read("docs/INTEGRATION_POLICY.md")
-        self.assertIn(("remote-branch-cleanup", 1), templates_markers.marker_pairs(policy))
-        self.assertNotIn("distinct authorized reviewer identity", policy)
+        # TR2b retired `remote-branch-cleanup` with the integration policy that carried it.
+        self.assertFalse((ROOT / "templates/single/docs/INTEGRATION_POLICY.md").exists())
 
     def test_new_blocks_audit_as_pass(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -144,9 +142,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
             self.assertFalse([item for item in results if item[0] != "PASS"], results)
             names = " ".join(detail for _status, detail in results)
             for capability in (
-                "code-review-prompt",
                 "worktree-lifecycle",
-                "remote-branch-cleanup",
                 "bounded-context-readers",
             ):
                 self.assertIn(f"capability={capability}", names)
@@ -243,12 +239,16 @@ class RetiredInlineMarkerUpgradeTest(FrameworkFixture):
         self.assertEqual((self.project / REVIEW_PROMPT).read_text(encoding="utf-8"), current)
         self.assertFalse(list(self.project.glob("docs/*.bak*")))
 
-    def test_ci_verified_validation_stays_required_for_other_files(self) -> None:
+    def test_the_capabilities_of_the_folded_documents_are_no_longer_required(self) -> None:
+        # TR2b folded both documents into REVIEW.md and retired every block they alone carried.
         requirements = owner_templates_migrations.capability_requirements(ROOT)
-        self.assertIn("ci-verified-validation", requirements)
-        self.assertNotIn("task-worktree-review", requirements)
-        self.assertNotIn("manual-verification-review-check", requirements)
-        self.assertEqual(requirements["code-review-prompt"][0], 2)
+        retired = owner_templates_migrations.retired_capability_ids(ROOT)
+        for name in ("ci-verified-validation", "code-review-prompt", "task-worktree-integration",
+                     "remote-branch-cleanup", "task-worktree-review", "manual-verification-review-check"):
+            self.assertNotIn(name, requirements)
+        for name in ("ci-verified-validation", "code-review-prompt", "task-worktree-integration",
+                     "remote-branch-cleanup"):
+            self.assertIn(name, retired)
 
     def test_restructure_removes_retired_blocks_from_a_carried_checklist(self) -> None:
         current = self.locked_at_legacy_prompt(

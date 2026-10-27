@@ -890,8 +890,7 @@ stated; advice carries its label), and `tests/test_template_word_budget.py` meas
 both host routes from explicit file lists.
 
 - `CODE_REVIEW_PROMPT.md` and `INTEGRATION_POLICY.md` are folded into `REVIEW.md`
-  (CP-04, CP-05, CP-07, RR-03, IP-08, RV-06, RV-14, RV-17). The files stay until TR2b
-  deletes them.
+  (CP-04, CP-05, CP-07, RR-03, IP-08, RV-06, RV-14, RV-17). TR2b deleted the files.
 - RT-03 projected three routes; six remain because `Accept <ID>` is a developer-only
   command whose procedure is `LIFECYCLE_ORCHESTRATION.md`, and the status, design,
   and lifecycle read sets resolve their route from the router.
@@ -911,3 +910,25 @@ both host routes from explicit file lists.
   designs, and do not restore the Internal commands that PW-28 and IM-01 delete.
 - The reviewer's `--request-id` is the identity of the review request that launched
   its session (`hosts/launch.py`); work item 9 supplies the profiles that hand it over.
+
+### TR2b disposition (task 113)
+
+`AUDIT_PROMPT_READ_ONLY.md`, `OPERATOR_PROMPTS.md`, and `CODE_ORGANIZATION.md` are
+condensed to 265, 259, and 338 words. `CODE_REVIEW_PROMPT.md` and
+`INTEGRATION_POLICY.md` are deleted from `templates/single/`; every project that holds a
+copy keeps it, because the managed set is read from the template tree and `upgrade`
+never removes a file. `tests/test_template_cookbook_actions.py` pins each AP, OP, and CO
+entry to its action, resolves the destination of all 14 `moved` entries, and resolves
+every relative reference of the shipped templates.
+
+- AP-02 runs `cardine audit` first and keeps the eight checks it cannot make. Items 6,
+  10, 11, and 12 left with the queue, projection, and acceptance machinery that SS4 to SS6
+  and RE5 remove (CX-05); `Run lifecycle` remains item 8.
+- `code-review-prompt`, `task-worktree-integration`, `ci-verified-validation`, and
+  `remote-branch-cleanup` lived only in the deleted files and are retired. `audit-prompt`
+  and `code-organization` moved to v2.
+- OP-05 and OP-09 are deleted: the triggers are defined in `AGENTS.md` and `CLAUDE.md`.
+  The `Accept` and `Address review` prompts left with them. OP-07's `adopt` command and
+  OP-02's status prompt do not return.
+- PW-12, PW-26, and WL-07 stay with W10 and H9; no template restates them.
+- A-RE4-3: no surviving template describes the rejected archive or retry-ref ritual.

@@ -30,7 +30,11 @@ FILES = ("AGENTS.md", "CLAUDE.md", "PROJECT_WORKFLOW.md", "LANGUAGE_POLICY.md",
          "docs/workflows/REVIEW.md", "docs/workflows/REMEDIATION.md", "docs/LIFECYCLE_ORCHESTRATION.md",
          "tasks/TASK_BLUEPRINT.md", "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules",
          ".codex/hooks.json", "docs/WORKTREE_LIFECYCLE.md", "docs/COMPLETION_REPORT_TEMPLATE.md",
-         "docs/REVIEW_RECORD_TEMPLATE.md")
+         "docs/REVIEW_RECORD_TEMPLATE.md", "docs/AUDIT_PROMPT_READ_ONLY.md", "docs/OPERATOR_PROMPTS.md",
+         "docs/CODE_ORGANIZATION.md")
+# Row TR2b: the condensed documents with a marker block, and a folded file that releases no longer ship.
+CONDENSED = (("audit-prompt", "docs/AUDIT_PROMPT_READ_ONLY.md"), ("code-organization", "docs/CODE_ORGANIZATION.md"))
+FOLDED = "docs/CODE_REVIEW_PROMPT.md"
 # Row TR2a: the reference documents, each with a marker block that the next release replaces.
 REFERENCE = (("worktree-lifecycle", "docs/WORKTREE_LIFECYCLE.md"), ("task-blueprint", "tasks/TASK_BLUEPRINT.md"),
              ("review-remediation-record", "docs/REVIEW_RECORD_TEMPLATE.md"),
@@ -165,6 +169,48 @@ class TemplateReplacementTest(unittest.TestCase):
                     # A second identical run is a no-op: nothing is duplicated or rewritten.
                     self.assertEqual(self.run_cli(project, "upgrade", "--apply").returncode, 0)
                     self.assertEqual(self.tree(project).pop("foreign-work"), b"preserve this")
+                    shutil.rmtree(project)
+
+    def test_interrupted_replacement_of_the_condensed_documents_keeps_a_folded_copy(self) -> None:
+        for number, (capability, path) in enumerate(CONDENSED, start=2):
+            current = int(re.search(rf"capability={capability} v(\d+)", (TEMPLATES / path).read_text(encoding="utf-8")).group(1))
+            self.framework.migration(f"00{number}-synthetic-{capability}", f"2.{number}.0", capability=capability,
+                                     version=current + 1, content="Replaced condensed rules.", paths=(path,), mode="single")
+        note = "\n## Project module map\n\nKeep this map.\n"
+        for _, path in CONDENSED:
+            target = self.template / path
+            target.write_text(target.read_text(encoding="utf-8") + note, encoding="utf-8")
+        folded = "# Folded review prompt\n\nA project owns this copy.\n"
+        self.assertFalse((TEMPLATES / FOLDED).exists())
+
+        def copy(name: str) -> Path:
+            project = self.copy_project(name)
+            (project / FOLDED).write_text(folded, encoding="utf-8")
+            return project
+
+        reference = copy("condensed")
+        self.assertEqual(self.run_cli(reference, "upgrade", "--apply").returncode, 0)
+        expected = self.tree(reference)
+        self.assertEqual(expected[FOLDED], folded.encode())
+        for _, path in CONDENSED:
+            self.assertIn(b"Replaced condensed rules.", expected[path])
+            self.assertIn(note.encode(), expected[path])
+        wanted = {f"file:upgrade:{path}" for _, path in CONDENSED}
+        names = [name for name in self.effects(reference) if name in wanted]
+        self.assertEqual(len(names), len(CONDENSED))
+        for name in names:
+            for when in ("before", "after"):
+                with self.subTest(seam=f"{when}_{name}"):
+                    project = copy("project")
+                    self.assertEqual(self.run_cli(project, "upgrade", "--apply", seam=f"{when}_{name}").returncode, 93)
+                    again = self.run_cli(project, "upgrade", "--apply")
+                    self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
+                    got = self.tree(project)
+                    self.assertEqual(got.pop("foreign-work"), b"preserve this")
+                    self.assertEqual(got[FOLDED], folded.encode())
+                    self.assertEqual(got, {key: value for key, value in expected.items() if key != "foreign-work"})
+                    self.assertEqual(self.run_cli(project, "upgrade", "--apply").returncode, 0)
+                    self.assertEqual(self.tree(project)[FOLDED], folded.encode())
                     shutil.rmtree(project)
 
     def test_a_project_edit_made_after_an_interruption_is_not_overwritten(self) -> None:

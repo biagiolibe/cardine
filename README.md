@@ -118,7 +118,7 @@ Update the installed plugin or local framework checkout first, restart agent ses
 
 - [Agent operations](docs/AGENT_OPERATIONS.md): console, [Codex command approvals](docs/AGENT_OPERATIONS.md#codex-hooks-and-command-approvals), read guard, and local usage reports
 - [Governed execution evidence](docs/GOVERNED_WORKFLOW.md#governed-execution-evidence), [workflow template](templates/single/PROJECT_WORKFLOW.md), and [task template](templates/single/tasks/TASK_BLUEPRINT.md)
-- [Review and integration](templates/single/docs/CODE_REVIEW_PROMPT.md), [read-only audit](templates/single/docs/AUDIT_PROMPT_READ_ONLY.md), and [operator prompts](templates/single/docs/OPERATOR_PROMPTS.md)
+- [Review procedure](templates/single/docs/workflows/REVIEW.md), [read-only audit](templates/single/docs/AUDIT_PROMPT_READ_ONLY.md), and [operator prompts](templates/single/docs/OPERATOR_PROMPTS.md)
 - [Consumer router adoption](docs/CONSUMER_ROUTER_ADOPTION_PLAYBOOK.md) and [capability audit](commands/meridian-audit.md)
 
 **Maintainers**

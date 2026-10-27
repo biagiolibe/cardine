@@ -532,7 +532,7 @@ class GovernedLifecycleTextTest(unittest.TestCase):
         cr.check_governed_lifecycle_text(self.root)
 
     def test_a_reviewer_author_override_anywhere_fails(self) -> None:
-        for relative in ("docs/INTEGRATION_POLICY.md", "docs/workflows/REVIEW.md"):
+        for relative in ("docs/workflows/REVIEW.md", "docs/workflows/IMPLEMENTATION.md"):
             with self.subTest(relative=relative):
                 self.append(relative, '\n```bash\ngit commit --author="x <x@x>" -m m\n```\n')
                 with self.assertRaises(SystemExit):

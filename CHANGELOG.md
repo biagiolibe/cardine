@@ -1344,7 +1344,7 @@ file changed, so no migration record or `VERSION` bump applies.
 ### Added
 
 - CI-first validation-evidence rule
-  ([docs/PULL_REQUEST_POLICY.md](templates/single/docs/INTEGRATION_POLICY.md)):
+  (`docs/PULL_REQUEST_POLICY.md`, now folded into `docs/workflows/REVIEW.md`):
   a reviewer with a completed CI run for the exact task-branch commit that
   covers the task's validation surface uses that run as evidence instead of
   re-running the same checks locally — a real independent, tamper-evident

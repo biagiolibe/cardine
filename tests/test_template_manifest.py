@@ -818,7 +818,8 @@ LEGACY_TEMPLATE_ROOTS = ("base", "workflows/lean-delivery", "workflows/governed-
 # Old source files that the single set renames or merges into another destination.
 MERGED_DESTINATIONS = {
     "workflows/governed-sdd/docs/workflows/LIFECYCLE.md": "docs/LIFECYCLE_ORCHESTRATION.md",
-    "workflows/governed-sdd/docs/PULL_REQUEST_POLICY.md": "docs/INTEGRATION_POLICY.md",
+    "workflows/governed-sdd/docs/PULL_REQUEST_POLICY.md": "docs/workflows/REVIEW.md",
+    "workflows/governed-sdd/docs/CODE_REVIEW_PROMPT.md": "docs/workflows/REVIEW.md",
 }
 HIDDEN_DESTINATIONS = {
     "base/.gitignore": ".gitignore",

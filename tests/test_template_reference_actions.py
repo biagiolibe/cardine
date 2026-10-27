@@ -240,12 +240,12 @@ class ReferenceBudgetTest(unittest.TestCase):
                 self.assertFalse(catalog[name]["required"])
                 self.assertNotIn(f"capability={name} ", corpus)
 
-    def test_the_ci_block_leaves_the_report_but_stays_catalogued_for_the_integration_policy(self) -> None:
-        # INTEGRATION_POLICY.md still carries the block until TR2b folds it into REVIEW.md.
+    def test_the_ci_block_is_retired_with_the_integration_policy(self) -> None:
+        # TR2b folded INTEGRATION_POLICY.md into REVIEW.md and retired the block it alone carried.
         catalog = json.loads((ROOT / "capabilities/markers-v1.json").read_text(encoding="utf-8"))["capabilities"]
-        self.assertFalse(catalog["ci-verified-validation"]["retired"])
+        self.assertTrue(catalog["ci-verified-validation"]["retired"])
         self.assertNotIn("capability=ci-verified-validation ", read(REPORT))
-        self.assertIn("capability=ci-verified-validation ", read("docs/INTEGRATION_POLICY.md"))
+        self.assertFalse((TEMPLATES / "docs/INTEGRATION_POLICY.md").exists())
 
     def test_every_remaining_block_is_catalogued_at_its_template_version(self) -> None:
         catalog = json.loads((ROOT / "capabilities/markers-v1.json").read_text(encoding="utf-8"))["capabilities"]
