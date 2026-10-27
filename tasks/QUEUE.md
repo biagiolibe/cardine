@@ -39,7 +39,7 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 118 | Print only the generated status in the per-turn briefing (H1a) | 🔴 P1 | 116 | [118](118-status-only-briefing.md) |
+| `[x]` | 118 | Print only the generated status in the per-turn briefing (H1a) | 🔴 P1 | 116 | [118](done/118-status-only-briefing.md) |
 | `[ ]` | 119 | Use one Python read guard with two payload adapters (H1b) | 🔴 P1 | 118 | [119](119-python-read-guard.md) |
 | `[ ]` | 120 | Run the stop audit in Python and retire the shell wrapper (H1c) | 🔴 P1 | 119 | [120](120-python-stop-audit.md) |
 | `[ ]` | 121 | Load heavy imports only on the release and update paths (H1d) | 🔴 P1 | 120 | [121](121-lazy-cli-imports.md) |

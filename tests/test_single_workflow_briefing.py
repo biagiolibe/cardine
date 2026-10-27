@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from installation_fixture import run_host_briefing
+from test_host_briefing import run_host_briefing
 from project_config_support import write_project_config
 from task_state_support import write_task
 from task_contract_support import seal_state
@@ -36,6 +36,8 @@ class SingleWorkflowBriefingTest(unittest.TestCase):
                 lines = result.stdout.splitlines()
                 self.assertEqual(lines[0], f"Preset: {preset}")
                 self.assertEqual(lines[1:1 + len(status_lines)], list(status_lines))
+                self.assertNotIn("Budget", result.stdout)
+                self.assertNotIn("Conversation language", result.stdout)
                 # MERIDIAN-INSTALLATION-CHECK: copied-hook headings must be replaced.
                 self.assertNotIn("[Meridian Governed Queue]", result.stdout)
                 # MERIDIAN-INSTALLATION-CHECK
@@ -99,10 +101,11 @@ class SingleWorkflowBriefingTest(unittest.TestCase):
         self.write_queue(GOVERNED_HEADER)
         for host in ("claude", "codex"):
             with self.subTest(host=host):
-                result = run_host_briefing(self.project, host)
-                self.assertEqual(result.returncode, 2)
-                self.assertEqual(result.stdout, "")
-                self.assertIn("Briefing configuration error: missing project configuration", result.stderr)
+                result = run_host_briefing(self.project, host, discover=False)
+                self.assertEqual(result.returncode, 0)
+                self.assertTrue(result.stdout.startswith("Status unavailable:"), result.stdout)
+                self.assertNotIn("total=", result.stdout)
+                self.assertEqual(result.stderr, "")
 
     def test_malformed_and_invalid_configuration_fail_closed_on_both_hosts(self):
         self.write_queue(GOVERNED_HEADER)
@@ -113,11 +116,12 @@ class SingleWorkflowBriefingTest(unittest.TestCase):
             for host in ("claude", "codex"):
                 with self.subTest(host=host, declaration=declaration):
                     result = run_host_briefing(self.project, host)
-                    self.assertEqual(result.returncode, 2)
-                    self.assertEqual(result.stdout, "")
-                    self.assertIn("Briefing configuration error:", result.stderr)
+                    self.assertEqual(result.returncode, 0)
+                    self.assertTrue(result.stdout.startswith("Status unavailable:"), result.stdout)
+                    self.assertNotIn("total=", result.stdout)
+                    self.assertEqual(result.stderr, "")
 
-    def test_adapter_replaces_the_queue_block_and_preserves_every_other_byte(self):
+    def test_adapter_discards_every_caller_block(self):
         write_project_config(self.project)
         write_task(self.project, "TASK-009", "queued")
         # MERIDIAN-INSTALLATION-CHECK: headings emitted by the frozen copied hook.
@@ -128,15 +132,17 @@ class SingleWorkflowBriefingTest(unittest.TestCase):
         host = "[Meridian Host]\n  note without a trailing newline"
         status = ("Preset: lean\nTasks: queued=1, in_progress=0, in_review=0, done=0, cancelled=0, total=1\n"
                   "Startable: TASK-009\n")
-        self.assertEqual(render_briefing(self.project, language + queue + host), status + language + host)
+        # MERIDIAN-INSTALLATION-CHECK: caller bytes from the frozen hook must be discarded.
+        budget = "[Meridian Context Budget]\nBudget: 100; setup advice; Developer's task\n"
+        self.assertEqual(render_briefing(self.project, language + queue + budget + host), status)
         self.assertEqual(render_briefing(self.project, queue), status)
-        self.assertEqual(render_briefing(self.project, language), status + language)
+        self.assertEqual(render_briefing(self.project, language), status)
 
     def test_incomplete_snapshot_is_reported_without_failing_the_hook(self):
         write_project_config(self.project)
         (self.project / ".cardine/task-creation.lock").write_text("held\n", encoding="utf-8")
         output = render_briefing(self.project, "")
-        self.assertTrue(output.startswith("Preset: lean\nStatus unavailable: "), output)
+        self.assertTrue(output.startswith("Status unavailable: "), output)
         self.assertIn("task creation is in progress", output)
 
 

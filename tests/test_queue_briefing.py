@@ -439,14 +439,12 @@ class QueueBriefingTest(unittest.TestCase):
                 self.assertIn("Queued (startable): TASK-002", original.stdout)
                 self.assertNotIn("Queued (startable)", adapted.stdout)
                 self.assertNotIn("Accepted:", adapted.stdout)
-                self.assertEqual(adapted.stdout.splitlines()[:6], [
+                self.assertEqual(adapted.stdout.splitlines(), [
                     "Preset: lean",
                     "Tasks: queued=2, in_progress=1, in_review=0, done=1, cancelled=0, total=4",
                     "Startable: TASK-005",
                     "In progress: TASK-002",
                     "Diagnostics: 1; run cardine status",  # TASK-003 names a missing dependency
-                    # MERIDIAN-INSTALLATION-CHECK: heading emitted by the frozen copied hook.
-                    "[Meridian Language Policy]",
                 ])
 
 
