@@ -161,3 +161,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 113 — Condense the remaining templates and delete folded documents (TR2b).
 - `[x]` 114 — Show console previews and actions from verified facts (RE7a).
 - `[x]` 115 — Audit the run engine end to end and document its commands (RE7b).
+- `[ ]` 116 — Plan the host integration (work item 9).

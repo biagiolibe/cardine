@@ -32,3 +32,11 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 25 — Host integration: planning
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 9 and decision 14 rule 2.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 116 | Plan the host integration (work item 9) | 🔴 P1 | 115 | [116](116-plan-host-integration.md) |
