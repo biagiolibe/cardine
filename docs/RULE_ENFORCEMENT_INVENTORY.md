@@ -932,3 +932,11 @@ every relative reference of the shipped templates.
   OP-02's status prompt do not return.
 - PW-12, PW-26, and WL-07 stay with W10 and H9; no template restates them.
 - A-RE4-3: no surviving template describes the rejected archive or retry-ref ritual.
+
+### RE7b disposition (task 115)
+
+A-RE7-1: `docs/RUN_COMMANDS.md` documents the product commands only (`run`,
+`status`, `review verdict`, `cancel`, `abort`, the console, and the Internal
+diagnostic surfaces). It is not a template: no router, role read set, catalog or
+baseline includes it, and `RunCommandsDocumentTest` checks that every command
+it names exists in the argparse tree.

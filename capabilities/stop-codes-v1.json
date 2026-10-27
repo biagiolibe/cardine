@@ -461,16 +461,18 @@
     },
     {
       "code": "REVIEW_LOOP_EXHAUSTED",
-      "class": "judgment",
+      "class": "tool",
       "workflows": [
+        "lean-delivery",
         "governed-sdd"
       ],
-      "emitter": "agent judgment after two consecutive CHANGES_REQUESTED verdicts",
+      "emitter": "`cardine review verdict`; `cardine task transition`; `cardine run` (the review budget gate after two consecutive CHANGES_REQUESTED verdicts)",
       "human_decision": true,
       "resume": "report the review-record path and unresolved findings; the developer resolves the scope or authority issue and restarts the lifecycle",
       "kind": "stop",
       "summary": "two consecutive CHANGES_REQUESTED verdicts leave findings unresolved",
-      "resolution": "guardrail"
+      "resolution": "guardrail",
+      "test": "tests.test_run_review.RunReviewTest.test_two_changes_requested_rounds_exhaust_without_duplicate_count"
     },
     {
       "code": "TASK_STATE_MISSING",
@@ -547,7 +549,8 @@
       "resume": "use the owning plugin-manager operation printed in the diagnostic",
       "kind": "stop",
       "summary": "route this checkout to its plugin-manager owner; no update or host-write consent is granted",
-      "resolution": "recoverable"
+      "resolution": "recoverable",
+      "test": "tests.test_run_nonrun_causes.NonrunCausesTest.test_plugin_owner_route_is_stable_and_never_runs_manager"
     },
     {
       "code": "SELF_UPDATE_DIRTY",
@@ -675,7 +678,8 @@
       "resume": "rerun the same read-only check",
       "kind": "status",
       "summary": "a path is temporarily busy during an explicit read-only check",
-      "resolution": "recoverable"
+      "resolution": "recoverable",
+      "test": "tests.test_run_nonrun_causes.NonrunCausesTest.test_errno_and_invocation_are_both_required_for_nonhuman_causes"
     },
     {
       "code": "UPGRADE_OUTPUT_PENDING",
@@ -689,7 +693,8 @@
       "resume": "cardine upgrade --check --project {project}",
       "kind": "status",
       "summary": "known generated upgrade output is absent; planning requires no new decision",
-      "resolution": "recoverable"
+      "resolution": "recoverable",
+      "test": "tests.test_run_nonrun_causes.NonrunCausesTest.test_missing_generated_output_is_planned_without_writes_or_consent"
     },
     {
       "code": "GIT_OPERATION_FAILED",

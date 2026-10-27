@@ -195,6 +195,16 @@ ALLOWLIST = {
         },
         "keys": {
             ("src/cardine/tasks/contract_update.py", "<module>", "named-reader", "resolve_task_contract"),
+            # Creation-input parsers (T-03, T-15): task 085 froze every runtime
+            # consumer on the snapshot; these helpers only validate the record
+            # while a contract is created or explicitly revised.
+            ("src/cardine/tasks/contract.py", "<module>", "named-reader", "require_named_validation_commands"),
+            ("src/cardine/tasks/contract.py", "<module>", "named-reader", "validation_commands"),
+            ("src/cardine/tasks/contract.py", "host_impact_required_profiles", "named-reader", "host_impact_field"),
+            ("src/cardine/tasks/contract.py", "validate_host_impact_declaration", "named-reader", "host_impact_field"),
+            ("src/cardine/tasks/contract.py", "validate_host_impact_declaration", "named-reader", "host_impact_required_profiles"),
+            ("src/cardine/tasks/contract.py", "validate_host_impact_declaration", "named-reader", "host_impact_section"),
+            ("src/cardine/tasks/evidence.py", "require_named_validation_commands", "named-reader", "validation_commands"),
         },
     },
     "managed-text-integrity": {
@@ -208,6 +218,10 @@ ALLOWLIST = {
             ("src/cardine/tasks/audit.py", "audit_task_state_projections", "named-reader", "resolve_human_fields"),
             ("src/cardine/tasks/preflight.py", "<module>", "named-reader", "contract_digest"),
             ("src/cardine/tasks/preflight.py", "execution_preflight", "named-reader", "contract_digest"),
+            # T-25: the review Markdown is an append-only projection of the
+            # state-first verdict. The text is read only to append the next
+            # attempt heading; no decision, count or status derives from it.
+            ("src/cardine/review/verdict.py", "record_review_verdict", "disk-text", "read_text:review_path"),
         },
     },
     "legacy": {"files": {"src/cardine/legacy/**"}, "functions": set(), "keys": set()},
@@ -234,14 +248,6 @@ def allowed(key: Key) -> bool:
 KNOWN_VIOLATIONS: dict[Key, str] = {
     ('scripts/codex_read_guard.py', 'decision', 'named-reader', 'threshold_for'): 'T-46',
     ('scripts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
-    ('src/cardine/review/verdict.py', 'record_review_verdict', 'disk-text', 'read_text:review_path'): 'T-25',
-    ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'require_named_validation_commands'): 'T-15',
-    ('src/cardine/tasks/contract.py', '<module>', 'named-reader', 'validation_commands'): 'T-15',
-    ('src/cardine/tasks/contract.py', 'host_impact_required_profiles', 'named-reader', 'host_impact_field'): 'T-03',
-    ('src/cardine/tasks/contract.py', 'validate_host_impact_declaration', 'named-reader', 'host_impact_field'): 'T-03',
-    ('src/cardine/tasks/contract.py', 'validate_host_impact_declaration', 'named-reader', 'host_impact_required_profiles'): 'T-03',
-    ('src/cardine/tasks/contract.py', 'validate_host_impact_declaration', 'named-reader', 'host_impact_section'): 'T-03',
-    ('src/cardine/tasks/evidence.py', 'require_named_validation_commands', 'named-reader', 'validation_commands'): 'T-15',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', '_queue_task_rows'): 'T-31',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'read_task_field'): 'T-31',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'resolve_task_contract'): 'T-31',
@@ -274,6 +280,38 @@ class TextGateTest(unittest.TestCase):
     def test_product_text_readers_match_ratchet(self):
         self.assertEqual(ratchet_errors(scan(ROOT), KNOWN_VIOLATIONS,
                                        (ROOT / "docs/TEXT_GATE_INVENTORY.md").read_text()), [])
+
+
+class ResidualRatchetTest(unittest.TestCase):
+    """RE7b: only work items 9 and 10 may still hold a known violation."""
+
+    def test_residual_set_is_work_item_nine_and_ten_only(self):
+        self.assertLessEqual(set(KNOWN_VIOLATIONS.values()), {"T-46", "T-47", "T-27", "T-31", "T-25"})
+        for key, entry in KNOWN_VIOLATIONS.items():
+            path = key[0]
+            if entry in ("T-27", "T-31", "T-25"):
+                self.assertEqual(path, "src/cardine/tasks/importer.py", key)
+            else:
+                self.assertTrue(path.startswith("scripts/"), key)
+
+    def test_importer_is_reached_only_by_the_explicit_state_command_and_legacy(self):
+        # Work item 10 moves it to cardine.legacy; until then no run-engine
+        # module, hook or console reader may import it.
+        importers = set()
+        for path in (ROOT / "src/cardine").rglob("*.py"):
+            relative = path.relative_to(ROOT).as_posix()
+            if relative != "src/cardine/tasks/importer.py" and "cardine.tasks.importer" in path.read_text(encoding="utf-8"):
+                importers.add(relative)
+        self.assertEqual(importers, {"src/cardine/cli.py", "src/cardine/legacy/snapshot.py"})
+        cli = (ROOT / "src/cardine/cli.py").read_text(encoding="utf-8")
+        self.assertEqual(cli.count("import_task_states("), 1)
+
+    def test_allowlist_exceptions_are_exact_and_named(self):
+        # No wildcard beyond the three permanent classes, and no function-wide
+        # exemption that RE7b added: new exceptions are exact keys.
+        self.assertEqual(set(ALLOWLIST), {"contract-creation", "managed-text-integrity", "legacy"})
+        self.assertEqual(ALLOWLIST["managed-text-integrity"]["functions"], set())
+        self.assertEqual(ALLOWLIST["legacy"]["keys"], set())
 
 
 class TextGateScannerTest(unittest.TestCase):

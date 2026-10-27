@@ -414,3 +414,19 @@ Run S1 to S7 above on the commit you take, read every hit in context, and
 compare with the IDs here. A hit that fits no ID is a new entry; an ID whose
 line no longer matches is removed from the guard's table (G1) when its row
 lands.
+
+### RE7b disposition (task 115)
+
+The known-violation table now holds only work item 9's T-46 and T-47 and work
+item 10's importer keys (T-27, T-31 and the importer's T-25 reads). The
+creation-input parsers of T-03 and T-15 (`validate_host_impact_declaration`,
+`host_impact_*`, `require_named_validation_commands`, `validation_commands`)
+are exact keys of the permanent contract-creation class: task 085 froze every
+runtime consumer on the contract snapshot, so they run only while a contract is
+created or explicitly revised. The review Markdown read in
+`review/verdict.py::record_review_verdict` (T-25) is an exact key of the
+managed-integrity class: it appends the next attempt heading to a projection of
+the state-first verdict, and no decision, count or status derives from the
+text (`test_contradictory_prose_cannot_supply_or_override_a_verdict`). The
+allowlist keeps its three classes, and `ResidualRatchetTest` asserts the
+residual set. The table is not required to be empty.

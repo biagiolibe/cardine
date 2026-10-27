@@ -147,6 +147,10 @@ class LifecycleJournalTest(unittest.TestCase):
             ("cleanup", "blocked", 2, "CLEANUP_BLOCKED"),
         )
         self.assertEqual(line["resolution"], "guardrail")
+        entry = stops_registry.load_stop_registry()["CLEANUP_BLOCKED"]
+        # RE7b: a stop event names its cause, who must act, the operation and the next action.
+        self.assertEqual((line["cause"], line["owner"], line["operation"], line["next"]),
+                         (entry["summary"], "developer", "cleanup", entry["resume"]))
         self.assertNotIn(str(self.root), self.journal.read_text(encoding="utf-8"))
 
     def test_lines_hold_no_absolute_path_or_agent_supplied_text(self) -> None:
@@ -157,7 +161,8 @@ class LifecycleJournalTest(unittest.TestCase):
         self.assertNotIn(str(Path.home()), text)
         for line in self.lines():
             self.assertLessEqual(
-                set(line), {"version", "ts", "command", "task", "step", "result", "stop_code", "resolution", "exit"}
+                set(line), {"version", "ts", "command", "task", "step", "result", "stop_code", "resolution", "exit",
+                            "cause", "owner", "operation", "next"}
             )
 
     def test_journal_is_untracked_and_shared_by_every_worktree(self) -> None:
