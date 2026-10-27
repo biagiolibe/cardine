@@ -150,7 +150,7 @@ Check whether this project's Cardine baseline can be upgraded.
 
 Run `cardine upgrade --project . --check`. Report the detected version, the
 complete plan, conflicts, and the next permitted action. Do not run
-`cardine upgrade --apply`, `cardine adopt`, or `finalize-adoption`; do not
+`cardine upgrade --apply` or `finalize-adoption`; do not
 edit files or create commits.
 ```
 

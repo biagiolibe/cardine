@@ -16,7 +16,11 @@ from cardine.tasks.identity import resolve_project_locations
 from cardine.templates.mode import detect_mode
 from pathlib import Path
 import json
+import posixpath
 import re
+
+_CONTEXT_REFERENCE = re.compile(r"`([^`]+\.md)`|\]\(([^)#]+\.md)(?:#[^)]+)?\)", re.IGNORECASE)
+
 
 def _context_path_references(text: str) -> list[Path]:
     """Return safe project-relative Markdown paths cited by a document.
@@ -25,9 +29,8 @@ def _context_path_references(text: str) -> list[Path]:
     intentionally recognizes only Markdown documents: command examples and
     arbitrary code literals are not startup reads.
     """
-    raw = re.findall(r"`([^`]+\.md)`|\]\(([^)#]+\.md)(?:#[^)]+)?\)", text, re.IGNORECASE)
     paths: list[Path] = []
-    for inline, link in raw:
+    for inline, link in _CONTEXT_REFERENCE.findall(text):
         candidate = Path(inline or link)
         if candidate.is_absolute() or ".." in candidate.parts:
             continue
@@ -37,13 +40,25 @@ def _context_path_references(text: str) -> list[Path]:
 
 
 def _context_relative_references(path: Path, text: str) -> list[Path]:
-    """Resolve citations relative to the document that contains them."""
+    """Resolve the citations of the document at `path` to project-relative paths.
+
+    Inline-code citations name a project path from the project root. Markdown
+    links are relative to the citing document; their `..` segments are
+    normalized and a link that leaves the project is dropped.
+    """
     references: list[Path] = []
-    for candidate in _context_path_references(text):
-        # Workflow prose conventionally names canonical project locations
-        # (`docs/...`, `tasks/...`) from project root, while Markdown links
-        # such as `README.md` remain document-relative.
-        resolved = candidate if candidate.parts and candidate.parts[0] in {"docs", "tasks", names().project_directory} else path.parent / candidate
+    for inline, link in _CONTEXT_REFERENCE.findall(text):
+        if inline:
+            candidate = Path(inline)
+            if candidate.is_absolute() or ".." in candidate.parts:
+                continue
+            resolved = candidate
+        else:
+            if Path(link).is_absolute():
+                continue
+            resolved = Path(posixpath.normpath((path.parent / link).as_posix()))
+            if resolved.parts[:1] == ("..",):
+                continue
         if resolved not in references:
             references.append(resolved)
     return [item for item in references if item.parts[:2] != (names().project_directory, "tasks")]
@@ -64,6 +79,9 @@ def _context_phase_reads(path: Path, text: str) -> dict[Path, str]:
             for cited in _context_relative_references(path, documents):
                 deferred.setdefault(cited, phase.strip())
     return deferred
+
+
+CONDITIONAL_SOURCE_RULE = "CODE_ORGANIZATION.md"
 
 
 def _context_router(project_root: Path) -> Path:
@@ -174,6 +192,11 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
     route_paths = {Path(value) for value in re.findall(r"(?:read|use) `([^`]+\.md)`", router_text)}
     routed_target = project_root / routed
     deferred_phases = _context_phase_reads(routed, routed_target.read_text(encoding="utf-8")) if routed_target.is_file() else {}
+    # The router names the source-organization rule as advice for a production-source
+    # change, so no role reads it at start; it is reported with the deferred reads.
+    for cited in _context_relative_references(router, router_text):
+        if cited.name == CONDITIONAL_SOURCE_RULE:
+            deferred_phases.setdefault(cited, "production-source change")
     for path, _ in roots:
         deferred_phases.pop(path, None)
     records: list[dict[str, object]] = []
@@ -197,8 +220,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
                     pending.append((cited, "cited"))
         elif category == "router" and target.is_file():
             for cited in _context_relative_references(path, router_text):
-                conditional_source_rule = cited.name == "CODE_ORGANIZATION.md" and role in {"status", "design", "lifecycle"}
-                if cited not in route_paths and cited not in seen and cited not in deferred_phases and not conditional_source_rule:
+                if cited not in route_paths and cited not in seen and cited not in deferred_phases:
                     pending.append((cited, "cited"))
     if task_id is not None:
         task = find_task_file(project_root, task_id)
@@ -240,6 +262,51 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
         "unbounded_documents": unbounded, "deferred_documents": deferred_documents, "router_file_lines_ceiling": router_ceiling,
         "router_files": router_records, "exceeded": exceeded,
     }
+
+
+# Template budgets (docs/RULE_ENFORCEMENT_INVENTORY.md, "Word budget"), as (words, bytes).
+ALWAYS_READ_BUDGET = (1100, 8000)
+WORKFLOW_BUDGET = (750, 5400)
+ROLE_START_BUDGET = (1400, 10000)
+SINGLE_DOCUMENT_BUDGET = (650, 4700)
+TEMPLATE_ROUTERS = {"codex": "AGENTS.md", "claude": "CLAUDE.md"}
+TEMPLATE_ALWAYS_READ = ("PROJECT_WORKFLOW.md", "LANGUAGE_POLICY.md")
+# The documents each role reads at start, after the router and the always-read files.
+TEMPLATE_ROLE_DOCUMENTS = {
+    "status": ("docs/CONTEXT_READING_POLICY.md",),
+    "design": ("docs/CONTEXT_READING_POLICY.md",),
+    "implementation": ("docs/workflows/IMPLEMENTATION.md", "docs/CONTEXT_READING_POLICY.md"),
+    "review": ("docs/workflows/REVIEW.md",),
+    "remediation": ("docs/workflows/REMEDIATION.md",),
+    "lifecycle": ("docs/LIFECYCLE_ORCHESTRATION.md",),
+}
+# Documents already condensed to the single-document budget; later rows add the rest.
+TEMPLATE_CONDENSED = ("AGENTS.md", "CLAUDE.md", "docs/workflows/IMPLEMENTATION.md", "docs/workflows/REVIEW.md",
+                      "docs/workflows/REMEDIATION.md", "docs/LIFECYCLE_ORCHESTRATION.md", "docs/CONTEXT_READING_POLICY.md")
+
+
+def template_budget_findings(templates: Path) -> list[str]:
+    """Return one finding per exceeded or unreadable template budget; read-only."""
+    findings: list[str] = []
+
+    def check(label: str, paths: tuple[str, ...], budget: tuple[int, int]) -> None:
+        try:
+            texts = [(templates / path).read_text(encoding="utf-8") for path in paths]
+        except (OSError, UnicodeDecodeError) as error:
+            findings.append(f"{label}: cannot read {error.filename or paths}")
+            return
+        words, size = sum(len(text.split()) for text in texts), sum(len(text.encode("utf-8")) for text in texts)
+        if words > budget[0] or size > budget[1]:
+            findings.append(f"{label}: {words} words / {size} bytes > {budget[0]} / {budget[1]}")
+
+    check("PROJECT_WORKFLOW.md", ("PROJECT_WORKFLOW.md",), WORKFLOW_BUDGET)
+    for route, router in TEMPLATE_ROUTERS.items():
+        check(f"always-read ({route})", (router, *TEMPLATE_ALWAYS_READ), ALWAYS_READ_BUDGET)
+        for role, documents in TEMPLATE_ROLE_DOCUMENTS.items():
+            check(f"{role} start ({route})", (router, *TEMPLATE_ALWAYS_READ, *documents), ROLE_START_BUDGET)
+    for path in TEMPLATE_CONDENSED:
+        check(path, (path,), SINGLE_DOCUMENT_BUDGET)
+    return findings
 
 
 def format_context_size_report(report: dict[str, object]) -> str:

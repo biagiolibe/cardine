@@ -284,7 +284,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "task-worktree-integration": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -338,7 +338,7 @@
       "adoptionRecord": "070-worktree-template-delivery"
     },
     "worktree-lifecycle": {
-      "requiredVersion": 3,
+      "requiredVersion": 4,
       "retired": false,
       "required": true,
       "adoptionRecord": "096-per-task-execution-evidence"

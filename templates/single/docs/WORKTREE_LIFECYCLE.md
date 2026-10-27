@@ -26,7 +26,7 @@ only after an explicit Resume directive.
 <!-- CARDINE:END -->
 
 
-<!-- CARDINE:BEGIN capability=worktree-lifecycle v3 -->
+<!-- CARDINE:BEGIN capability=worktree-lifecycle v4 -->
 Use the host-neutral `cardine worktree` namespace for task checkout lifecycle
 operations. Commands exit `0` on success, `2` when blocked, and `64` on usage
 errors. The root resolves from an explicit option, the environment, user
@@ -83,7 +83,7 @@ task commit may retain a stale recorded base. Detection requires an intact
 branch reflog proving creation from that base followed only by fast-forward
 merges from `main`, no task commits, and a HEAD that is an ancestor of current
 `main`; a different merge base alone is not proof. `check`, ordinary `prepare`,
-and closure report `BLOCKED STALE_WORKTREE_BASE`; `prepare --resume` preserves
+and closure report `STALE_WORKTREE_BASE` (recoverable, not a stop); `prepare --resume` preserves
 state without mutation.
 
 Run `cardine worktree repair-base <TASK-ID> --project <primary> --format json`

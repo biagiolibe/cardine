@@ -128,7 +128,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("Do not substitute a template path", prompts)
         self.assertIn("Class:\nSPIKE", prompts)
         self.assertIn("cardine upgrade --project . --check", prompts)
-        self.assertIn("Do not run\n`cardine upgrade --apply`, `cardine adopt`, or `finalize-adoption`", prompts)
+        self.assertIn("Do not run\n`cardine upgrade --apply` or `finalize-adoption`", prompts)
         self.assertNotIn("## 3. Design the next milestone or phase", prompts)
         # Prompts 1 and 1a (status and design alignment) left the cookbook: `cardine status` is the report.
         self.assertNotIn("## 1a. Align tech design for questions and future work (read-only)", prompts)
@@ -138,7 +138,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertEqual(
             self.marker_pairs(pull_request_policy),
             [
-                ("task-worktree-integration", "2"),
+                ("task-worktree-integration", "3"),
                 ("ci-verified-validation", "1"),
                 ("remote-branch-cleanup", "1"),
             ],

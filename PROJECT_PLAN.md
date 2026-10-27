@@ -156,7 +156,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 108 — Make self-update repeatable with a pinned target (SR1a).
 - `[x]` 109 — Make upgrade and host writes repeatable (SR1b).
 - `[x]` 110 — Rewrite the always-read product templates (TR1a).
-- `[ ]` 111 — Guard template budgets, commands, and stop prose (TR1b).
+- `[x]` 111 — Guard template budgets, commands, and stop prose (TR1b).
 - `[ ]` 112 — Condense the lifecycle and record templates (TR2a).
 - `[ ]` 113 — Condense the remaining templates and delete folded documents (TR2b).
 - `[ ]` 114 — Show console previews and actions from verified facts (RE7a).

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import ast
 import hashlib
 import json
@@ -137,10 +138,92 @@ def _check_template_context_sizes(project: Path) -> None:
     for role in cardine_cli.CONTEXT_SIZE_ROLES["single"]:
         if role not in rows:
             fail(f"context-size ceiling is missing for {role}")
+        if rows[role] > owner_shared_context.ROLE_START_BUDGET[1]:
+            fail(f"context-size ceiling for {role} exceeds the role-start budget: {rows[role]} > {owner_shared_context.ROLE_START_BUDGET[1]} bytes")
         report = owner_shared_context.context_size_report(project, role, workflow_mode="single")
         actual = int(report["total"]["bytes"])
         if actual > rows[role]:
             fail(f"context-size ceiling exceeded for {role}: {actual} bytes > {rows[role]} bytes")
+
+
+def check_template_budgets(root: Path = ROOT) -> None:
+    """Fail when a shipped template exceeds a word or byte budget on either host route."""
+    findings = owner_shared_context.template_budget_findings(single_template_root(root))
+    if findings:
+        fail("template budget exceeded: " + "; ".join(findings))
+
+
+COMMAND_SPAN = re.compile(r'`cardine\s+([^`]*)`|"cardine\s+([^"]*)"')
+COMMAND_WORD = re.compile(r"[a-z][a-z-]*")
+
+
+def command_tree(parser: argparse.ArgumentParser) -> dict[str, dict]:
+    """Return the nested subcommand names of an argparse parser."""
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return {name: command_tree(child) for name, child in action.choices.items()}
+    return {}
+
+
+def unknown_template_commands(templates: Path, tree: dict[str, dict]) -> list[str]:
+    """Return one finding per `cardine <command>` in the templates that the CLI does not define.
+
+    Words are read up to the first argument, flag, or placeholder. Each word
+    must be a subcommand of the node before it; words after a leaf are positional.
+    """
+    findings = []
+    for path in sorted(templates.rglob("*")):
+        if not path.is_file() or path.suffix not in {".md", ".rules", ".json"}:
+            continue
+        text = path.read_text(encoding="utf-8")
+        for span in COMMAND_SPAN.finditer(text):
+            node, words = tree, []
+            for token in (span.group(1) or span.group(2)).split():
+                if not COMMAND_WORD.fullmatch(token):
+                    break
+                if not node:
+                    break
+                words.append(token)
+                if token not in node:
+                    line = text.count("\n", 0, span.start()) + 1
+                    findings.append(f"{path.relative_to(templates).as_posix()}:{line}: unknown command `cardine {' '.join(words)}`")
+                    break
+                node = node[token]
+    return findings
+
+
+def check_template_commands(root: Path = ROOT) -> None:
+    """Fail on a template command that the argparse tree does not define."""
+    findings = unknown_template_commands(single_template_root(root), command_tree(cardine_cli.build_parser()))
+    if findings:
+        fail("template names a command the CLI lacks: " + "; ".join(findings))
+
+
+def nonhuman_stop_findings(templates: Path, entries: dict[str, dict]) -> list[str]:
+    """Return one finding per template sentence that stops on a code needing no developer decision.
+
+    A sentence that says `not a stop` names the code as work. Registered codes
+    with `human_decision: false` are recoverable or failing work, so the agent
+    acts on them in the same turn.
+    """
+    known = set(entries)
+    findings = []
+    for path in sorted(templates.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        for sentence in re.split(r"(?<=[.!?])\s+", text):
+            if "not a stop" in sentence:
+                continue
+            for _offset, token in stop_tokens_in(sentence, known):
+                if token in entries and entries[token]["human_decision"] is False:
+                    findings.append(f"{path.relative_to(templates).as_posix()}: stop on {token}, which needs no developer decision")
+    return findings
+
+
+def check_nonhuman_stops(root: Path = ROOT) -> None:
+    registry = json.loads((root / "capabilities" / "stop-codes-v1.json").read_text(encoding="utf-8"))
+    findings = nonhuman_stop_findings(single_template_root(root), {entry["code"]: entry for entry in registry["stops"]})
+    if findings:
+        fail("; ".join(findings))
 
 
 ROUTER_FILES = ("AGENTS.md", "CLAUDE.md")
@@ -935,6 +1018,9 @@ def main() -> None:
     check_changelog_fragments()
     check_generated_templates()
     check_template_context_sizes()
+    check_template_budgets()
+    check_template_commands()
+    check_nonhuman_stops()
     check_language_policy()
     check_governed_review_worktree_contract()
     check_governed_lifecycle_text()

@@ -2,11 +2,15 @@
 
 import json
 import re
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import check_repository as cr  # noqa: E402
 TOKEN = r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+"
 
 
@@ -60,6 +64,37 @@ class TemplateStopPolicyTest(unittest.TestCase):
             if "capability=git-workflow" in path.read_text()
         ]
         self.assertEqual(carriers, ["PROJECT_WORKFLOW.md"])
+
+    def test_no_shipped_template_stops_on_a_code_that_needs_no_developer_decision(self):
+        entries = {entry["code"]: entry for entry in json.loads(
+            (ROOT / "capabilities/stop-codes-v1.json").read_text())["stops"]}
+        self.assertEqual(cr.nonhuman_stop_findings(ROOT / "templates/single", entries), [])
+        cr.check_nonhuman_stops(ROOT)
+
+    def test_a_template_that_stops_on_a_recoverable_code_is_reported(self):
+        entries = {
+            "REVIEW_REQUIRED": {"human_decision": True},
+            "EVIDENCE_MISMATCH": {"human_decision": False},
+            "STALE_WORKTREE_BASE": {"human_decision": False},
+        }
+        cases = {
+            "A changed task is `BLOCKED EVIDENCE_MISMATCH`; do not record approval.": 1,
+            "Closure reports `BLOCKED STALE_WORKTREE_BASE` and stops.": 1,
+            "Stop on `EVIDENCE_MISMATCH` or `STALE_WORKTREE_BASE`.": 2,
+            # A human decision, or a code named as work, is not reported.
+            "A missing review is `BLOCKED REVIEW_REQUIRED`.": 0,
+            "An `EVIDENCE_MISMATCH` (recoverable, not a stop) is revalidated.": 0,
+            "`BLOCKED EVIDENCE_MISMATCH` is not a stop: run the printed command.": 0,
+            "A bare mention of `EVIDENCE_MISMATCH` is not a stop context.": 0,
+        }
+        for sentence, expected in cases.items():
+            with self.subTest(sentence=sentence), tempfile.TemporaryDirectory() as directory:
+                (Path(directory) / "docs").mkdir()
+                (Path(directory) / "docs/POLICY.md").write_text(f"# Policy\n\n{sentence}\n", encoding="utf-8")
+                found = cr.nonhuman_stop_findings(Path(directory), entries)
+                self.assertEqual(len(found), expected, found)
+                if expected:
+                    self.assertTrue(all(item.startswith("docs/POLICY.md: stop on ") for item in found), found)
 
 
 if __name__ == "__main__":
