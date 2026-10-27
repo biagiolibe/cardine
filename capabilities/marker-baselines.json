@@ -58,20 +58,8 @@
     }
   },
   "templates/single/docs/COMPLETION_REPORT_TEMPLATE.md": {
-    "ci-verified-validation": {
-      "sha256": "0ee8b7f45a24a0c10737c599f32aa606fb9e620573349e211c223262b0bd5f77",
-      "version": 1
-    },
-    "handoff-correction-redelivery": {
-      "sha256": "94de0492a15092ae830dfdf4a391f1fb5385b8e70fe2aea12daf570cf2217906",
-      "version": 2
-    },
     "manual-verification-record": {
-      "sha256": "df183bbca1242244974b7cc46669fc2792fbb956bca5cdfaa931ae24b94e03fa",
-      "version": 1
-    },
-    "task-worktree-handoff": {
-      "sha256": "ecd50e31d8e4430f67e1e13e6e7b53ccc3dcae4dffa6d1f4b41ffcb5a2b65a63",
+      "sha256": "ed06ec357247996931162bf1c9c46b66c74e9c99626116660a7ac1ae65ba0391",
       "version": 2
     }
   },
@@ -82,13 +70,9 @@
     }
   },
   "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md": {
-    "investigation-scope": {
-      "sha256": "571eab77a13768f0d2e7d370497fc7cef09f293ce0c22c9e649991222e7bcdb1",
-      "version": 2
-    },
     "long-command-waits": {
-      "sha256": "942c3ebfa010f7aba0385d4e0fbb241edf1c17eea89158531a24cddb162198a8",
-      "version": 1
+      "sha256": "074d47810b551dcb5d86391799ced658f057c0cbd7ccd386e837989579003e7a",
+      "version": 2
     }
   },
   "templates/single/docs/INTEGRATION_POLICY.md": {
@@ -117,22 +101,22 @@
   },
   "templates/single/docs/REVIEW_RECORD_TEMPLATE.md": {
     "manual-verification-record": {
-      "sha256": "18e0b552736c60cf66dbacbbdb06b3bb4fd5eebe838dd6a9a153b6bb1f00938e",
-      "version": 1
+      "sha256": "ce2265e6d9f35bfd40f6e4ea5508e74521230b136d7dc0fe694e9c4de66fca49",
+      "version": 2
     },
     "review-remediation-record": {
-      "sha256": "22f361285277cbcd5184e509538b3a3690a48892487626b9c0039930d9fc6c9a",
-      "version": 2
+      "sha256": "d2d1410dcda131beac125c4e9ac8ba6a94a45e6078f1c65181082ad214aeec7e",
+      "version": 3
     }
   },
   "templates/single/docs/WORKTREE_LIFECYCLE.md": {
     "worktree-command-locations": {
-      "sha256": "c0f49744313e340089d7a1e8ec82e42b8376d19890c87387d50a848d918c7bdb",
-      "version": 2
+      "sha256": "f6700da3d7ed12db640b27b5c0be79c9a5ac58a4b6607f54d8ba4214d7a06738",
+      "version": 3
     },
     "worktree-lifecycle": {
-      "sha256": "f4ab5d9f95bb4abae56dfc490c4d1189c58f746387ba58b33e6ef7f6a819a7bc",
-      "version": 4
+      "sha256": "63ea4e0b3533e86b0c62880dd784f71a539429d506b0fea38e7a132e6b927907",
+      "version": 5
     }
   },
   "templates/single/docs/workflows/IMPLEMENTATION.md": {
@@ -163,8 +147,8 @@
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
     "task-blueprint": {
-      "sha256": "a9b6e1ce76b1f71b73f590674e8ea493acd8cf100a27c015b363ad2368ee6c9e",
-      "version": 9
+      "sha256": "def445a873e5e559e99b5926f0581e295f71a1fade9cf18d7ae0173eef28f610",
+      "version": 10
     }
   }
 }

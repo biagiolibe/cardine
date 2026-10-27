@@ -99,9 +99,9 @@
     },
     "handoff-correction-redelivery": {
       "requiredVersion": 2,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "070-worktree-template-delivery"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "host-impact-routing": {
       "requiredVersion": 1,
@@ -117,9 +117,9 @@
     },
     "investigation-scope": {
       "requiredVersion": 2,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "064-closure-text-uses-advance"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "isolated-exploration": {
       "requiredVersion": 3,
@@ -140,7 +140,7 @@
       "adoptionRecord": "067-execution-boundaries"
     },
     "long-command-waits": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
@@ -152,7 +152,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "manual-verification-record": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "017-manual-verification-precondition-and-record"
@@ -224,7 +224,7 @@
       "adoptionRecord": "061-governed-phase-reads"
     },
     "review-remediation-record": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
@@ -254,7 +254,7 @@
       "adoptionRecord": "064-closure-text-uses-advance"
     },
     "task-blueprint": {
-      "requiredVersion": 9,
+      "requiredVersion": 10,
       "retired": false,
       "required": true,
       "adoptionRecord": "096-per-task-execution-evidence"
@@ -279,9 +279,9 @@
     },
     "task-worktree-handoff": {
       "requiredVersion": 2,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "061-governed-phase-reads"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "task-worktree-integration": {
       "requiredVersion": 3,
@@ -332,13 +332,13 @@
       "adoptionRecord": null
     },
     "worktree-command-locations": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "070-worktree-template-delivery"
     },
     "worktree-lifecycle": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "096-per-task-execution-evidence"

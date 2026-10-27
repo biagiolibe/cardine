@@ -10,6 +10,7 @@ around its single replace and must converge on a fresh generation.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -28,7 +29,13 @@ FILES = ("AGENTS.md", "CLAUDE.md", "PROJECT_WORKFLOW.md", "LANGUAGE_POLICY.md",
          "docs/CONTEXT_READING_POLICY.md", "docs/workflows/IMPLEMENTATION.md",
          "docs/workflows/REVIEW.md", "docs/workflows/REMEDIATION.md", "docs/LIFECYCLE_ORCHESTRATION.md",
          "tasks/TASK_BLUEPRINT.md", "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules",
-         ".codex/hooks.json")
+         ".codex/hooks.json", "docs/WORKTREE_LIFECYCLE.md", "docs/COMPLETION_REPORT_TEMPLATE.md",
+         "docs/REVIEW_RECORD_TEMPLATE.md")
+# Row TR2a: the reference documents, each with a marker block that the next release replaces.
+REFERENCE = (("worktree-lifecycle", "docs/WORKTREE_LIFECYCLE.md"), ("task-blueprint", "tasks/TASK_BLUEPRINT.md"),
+             ("review-remediation-record", "docs/REVIEW_RECORD_TEMPLATE.md"),
+             ("long-command-waits", "docs/EXECUTION_EVIDENCE_PROFILE.md"),
+             ("manual-verification-record", "docs/COMPLETION_REPORT_TEMPLATE.md"))
 COMMANDS = "make test\n"
 NOTES = "## Project notes\n\nKeep this paragraph.\n"
 UPGRADE_CHILD = '''
@@ -126,6 +133,38 @@ class TemplateReplacementTest(unittest.TestCase):
                     got = self.tree(project)
                     self.assertEqual(got.pop("foreign-work"), b"preserve this")
                     self.assertEqual(got, {key: value for key, value in expected.items() if key != "foreign-work"})
+                    shutil.rmtree(project)
+
+    def test_interrupted_reference_document_replacement_converges_and_keeps_project_text(self) -> None:
+        for number, (capability, path) in enumerate(REFERENCE, start=2):
+            current = int(re.search(rf"capability={capability} v(\d+)", (TEMPLATES / path).read_text(encoding="utf-8")).group(1))
+            self.framework.migration(f"00{number}-synthetic-{capability}", f"2.{number}.0", capability=capability,
+                                     version=current + 1, content="Replaced reference rules.", paths=(path,), mode="single")
+        note = "\n## Project reference notes\n\nKeep this reference paragraph.\n"
+        for _, path in REFERENCE:
+            target = self.template / path
+            target.write_text(target.read_text(encoding="utf-8") + note, encoding="utf-8")
+        reference = self.copy_project("reference")
+        self.assertEqual(self.run_cli(reference, "upgrade", "--apply").returncode, 0)
+        expected = self.tree(reference)
+        for _, path in REFERENCE:
+            self.assertIn(b"Replaced reference rules.", expected[path])
+            self.assertIn(note.encode(), expected[path])
+        names = [name for name in self.effects(reference) if name in {f"file:upgrade:{path}" for _, path in REFERENCE}]
+        self.assertEqual(len(names), len(REFERENCE))
+        for name in names:
+            for when in ("before", "after"):
+                with self.subTest(seam=f"{when}_{name}"):
+                    project = self.copy_project("project")
+                    self.assertEqual(self.run_cli(project, "upgrade", "--apply", seam=f"{when}_{name}").returncode, 93)
+                    again = self.run_cli(project, "upgrade", "--apply")
+                    self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
+                    got = self.tree(project)
+                    self.assertEqual(got.pop("foreign-work"), b"preserve this")
+                    self.assertEqual(got, {key: value for key, value in expected.items() if key != "foreign-work"})
+                    # A second identical run is a no-op: nothing is duplicated or rewritten.
+                    self.assertEqual(self.run_cli(project, "upgrade", "--apply").returncode, 0)
+                    self.assertEqual(self.tree(project).pop("foreign-work"), b"preserve this")
                     shutil.rmtree(project)
 
     def test_a_project_edit_made_after_an_interruption_is_not_overwritten(self) -> None:
