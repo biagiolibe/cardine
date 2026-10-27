@@ -119,14 +119,15 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
         self.assertIn("cite an accepted ADR", block)
 
     def test_inline_markers_became_complete_standalone_blocks(self) -> None:
-        implementation = self.read("docs/workflows/IMPLEMENTATION.md")
-        block = templates_markers.extract_marker_block(implementation, "validation-scoping", 1)
-        self.assertTrue(block.startswith("Scope validation"))
+        workflow = self.read("PROJECT_WORKFLOW.md")
+        block = templates_markers.extract_marker_block(workflow, "validation-scoping", 2)
+        self.assertIn("## Validation and completion", block)
+        self.assertIn("frozen `validationScoping`", block)
         policy = self.read("docs/CONTEXT_READING_POLICY.md")
-        read_guard = templates_markers.extract_marker_block(policy, "read-guard", 1)
-        self.assertIn("verified task worktree", read_guard)
-        self.assertIn("router read set", read_guard)
-        self.assertNotRegex(policy, r"(?m)^\d+\. <!-- CARDINE:BEGIN capability=(?:read-guard|validation-scoping)")
+        reading = templates_markers.extract_marker_block(policy, "bounded-context-readers", 2)
+        self.assertIn("cardine context authority <TASK-ID>", reading)
+        self.assertIn("Read large files by range", reading)
+        self.assertNotRegex(policy, r"(?m)^\d+\. <!-- CARDINE:BEGIN capability=")
 
     def test_lifecycle_and_remote_cleanup_are_managed_capabilities(self) -> None:
         text = self.read("docs/WORKTREE_LIFECYCLE.md")
@@ -146,7 +147,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
                 "code-review-prompt",
                 "worktree-lifecycle",
                 "remote-branch-cleanup",
-                "read-guard",
+                "bounded-context-readers",
             ):
                 self.assertIn(f"capability={capability}", names)
 

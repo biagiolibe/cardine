@@ -143,6 +143,42 @@ def _check_template_context_sizes(project: Path) -> None:
             fail(f"context-size ceiling exceeded for {role}: {actual} bytes > {rows[role]} bytes")
 
 
+ROUTER_FILES = ("AGENTS.md", "CLAUDE.md")
+ALWAYS_READ_FILES = ("PROJECT_WORKFLOW.md", "LANGUAGE_POLICY.md")
+ROUTE_TARGET = re.compile(r"(?:read|use) `([^`]+\.md)`")
+COMMAND_TRIGGER_BLOCK = re.compile(
+    rf"<!-- {constants.MARKER_BEGIN} capability=command-triggers v\d+ -->.*?{re.escape(constants.MARKER_END)}", re.DOTALL
+)
+
+
+def check_router_routes(root: Path = ROOT) -> None:
+    """Check router structure instead of pinning router prose.
+
+    Each router names both always-read files, routes only to template files
+    that exist, and carries the same generated trigger block; the workflow
+    carries its lock marker.
+    """
+    templates = single_template_root(root)
+    blocks = []
+    for name in ROUTER_FILES:
+        text = (templates / name).read_text(encoding="utf-8")
+        for required in ALWAYS_READ_FILES:
+            if required not in text:
+                fail(f"router does not name an always-read file: {name} -> {required}")
+        block = COMMAND_TRIGGER_BLOCK.search(text)
+        if block is None:
+            fail(f"router has no command-triggers block: {name}")
+        blocks.append(block.group(0))
+        for target in ROUTE_TARGET.findall(block.group(0)):
+            if not (templates / target).is_file():
+                fail(f"router route target is missing: {name} -> {target}")
+    if len(set(blocks)) != 1:
+        fail("the routers carry different command-triggers blocks")
+    workflow = (templates / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+    if "capability=workflow-mode-lock" not in workflow:
+        fail("workflow lock is incomplete: PROJECT_WORKFLOW.md")
+
+
 def check_language_policy() -> None:
     for name in LANGUAGE_POLICY_FILES:
         path = ROOT / name
@@ -167,17 +203,7 @@ def check_language_policy() -> None:
     command_text = (ROOT / "commands/meridian-task.md").read_text(encoding="utf-8")
     if "GOVERNED_SDD" not in command_text or "BLOCKED" not in command_text:
         fail("governed-SDD mode lock is incomplete: commands/meridian-task.md")
-    workflow_lock_files = (
-        "templates/single/PROJECT_WORKFLOW.md",
-        "templates/single/AGENTS.md",
-        "templates/single/CLAUDE.md",
-        "templates/single/docs/CODE_REVIEW_PROMPT.md",
-        "templates/single/docs/OPERATOR_PROMPTS.md",
-    )
-    for name in workflow_lock_files:
-        text = (ROOT / name).read_text(encoding="utf-8")
-        if "BLOCKED RULE_CONFLICT" not in text:
-            fail(f"workflow lock is incomplete: {name}")
+    check_router_routes()
 
     lean_mode_lock_files = (
         "skills/meridian-lean-delivery/SKILL.md",
@@ -216,27 +242,8 @@ def check_governed_review_worktree_contract(root: Path = ROOT) -> None:
                 )
 
     review = review_paths[-1].read_text(encoding="utf-8")
-    preflight_match = re.search(rf"<!-- {constants.MARKER_BEGIN} capability=task-worktree-review-procedure v\d+ -->", review)
-    boundary_match = re.search(rf"<!-- {constants.MARKER_BEGIN} capability=review-mode-boundary v\d+ -->", review)
-    if preflight_match is None or boundary_match is None:
-        fail("governed review must begin with the task-worktree preflight")
-    preflight, boundary = preflight_match.group(0), boundary_match.group(0)
-    required = (
-        "Before reading the assigned task",
-        "cardine worktree check <TASK-ID>",
-        "stops before any other read",
-        "git worktree list\n   --porcelain",
-        "git -C\n   <absolute-task-worktree>",
-        "empty `git status --short`",
-        "base commit\n   exists and is an ancestor of `HEAD`",
-        "Only after every preflight check passes",
-        "initial current directory is never treated as\nthe task checkout",
-    )
-    if preflight not in review or boundary not in review or review.index(preflight) > review.index(boundary):
-        fail("governed review must begin with the task-worktree preflight")
-    for fragment in required:
-        if fragment not in review:
-            fail(f"governed task-worktree review preflight is incomplete: {fragment}")
+    if not re.search(rf"<!-- {constants.MARKER_BEGIN} capability=task-worktree-review-procedure v\d+ -->", review):
+        fail("review procedure is missing its managed block")
 
 
 MANAGED_BLOCK = re.compile(
@@ -255,19 +262,15 @@ FORBIDDEN_TEMPLATE_TEXT = (
 QUEUE_EDIT_STATEMENT = re.compile(
     r"queue (?:row|status|record)s?\b|task(?:/| and )queue|queue and task", re.IGNORECASE
 )
-# Governed blocks name a queue, queue-archive, review, or handoff location by role
-# and defer to `cardine locations`; only execution-assets may state the defaults.
+# Managed blocks name a queue, queue-archive, review, or handoff location by role
+# and defer to `cardine locations`.
 LITERAL_LOCATION = re.compile(r"tasks/QUEUE\.md|QUEUE_ARCHIVE\.md|TASK_QUEUE\.md|tasks/reviews/|tasks/handoffs/")
-LITERAL_LOCATION_EXEMPT_CAPABILITIES = ("execution-assets",)
-REVIEWER_IDENTITY_CAPABILITY = "reviewer-integrator-identity"
 
 
 def check_governed_lifecycle_text(root: Path = ROOT) -> None:
     """Keep managed lifecycle text free of queue edits, literal locations, and placeholders.
 
-    The literal-location rule is Governed-only: Lean's `git-workflow` block keeps
-    naming the governance files its task branches must not edit, because task 145
-    scopes Lean to the branch-name and push rules.
+    The literal-location rule applies to every managed block.
     """
     workflows = single_template_root(root)
     for path in sorted(workflows.rglob("*.md")):
@@ -281,24 +284,14 @@ def check_governed_lifecycle_text(root: Path = ROOT) -> None:
             edit = QUEUE_EDIT_STATEMENT.search(body)
             if edit:
                 fail(f"{relative}: capability {capability} says a role edits a queue row: {edit.group(0)!r}")
-            if capability not in LITERAL_LOCATION_EXEMPT_CAPABILITIES:
-                literal = LITERAL_LOCATION.search(body)
-                if literal:
-                    fail(f"{relative}: capability {capability} names a literal location: {literal.group(0)!r}")
-    identity_blocks = []
+            literal = LITERAL_LOCATION.search(body)
+            if literal:
+                fail(f"{relative}: capability {capability} names a literal location: {literal.group(0)!r}")
+    # The reviewer is identified by the review request the engine issues, so no
+    # template instructs a commit author override.
     for path in sorted(workflows.rglob("*.md")):
-        text = path.read_text(encoding="utf-8")
-        for match in re.finditer(r"--author=", text):
-            enclosing = next(
-                (block for block in MANAGED_BLOCK.finditer(text) if block.start() <= match.start() < block.end()),
-                None,
-            )
-            identity_blocks.append((path.relative_to(root), enclosing.group("capability") if enclosing else None))
-    if len(identity_blocks) != 1 or identity_blocks[0][1] != REVIEWER_IDENTITY_CAPABILITY:
-        fail(
-            "the reviewer identity rule must appear in exactly one managed block "
-            f"({REVIEWER_IDENTITY_CAPABILITY}): {identity_blocks}"
-        )
+        if "--author=" in path.read_text(encoding="utf-8"):
+            fail(f"{path.relative_to(root)} instructs a reviewer author override")
     repository_workflow = root / "PROJECT_WORKFLOW.md"
     if repository_workflow.is_file() and "Project integration smoke command" in repository_workflow.read_text(encoding="utf-8"):
         fail("PROJECT_WORKFLOW.md contains retired text: Project integration smoke command")
@@ -726,9 +719,11 @@ def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str,
 def write_marker_baselines(root: Path = ROOT) -> None:
     baseline_path = root / "capabilities" / "marker-baselines.json"
     baseline_path.parent.mkdir(parents=True, exist_ok=True)
-    baseline_path.write_text(
-        json.dumps(current_marker_baselines(root), indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    # Replace atomically: an interrupted run leaves the previous baseline whole, and
+    # rerunning converges on the same bytes as a fresh run.
+    temporary = baseline_path.with_name(baseline_path.name + ".tmp")
+    temporary.write_text(json.dumps(current_marker_baselines(root), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(temporary, baseline_path)
 
 
 def check_capability_marker_baselines(root: Path = ROOT) -> None:

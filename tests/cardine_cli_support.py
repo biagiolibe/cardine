@@ -100,7 +100,7 @@ class CardineCliFixtureMixin:
         )
 
     def configure_1_1_53_to_1_1_54_manual_proceed_upgrade(self) -> tuple[Path, Path]:
-        """Lock the two governed worktree capabilities immediately before 056."""
+        """Lock the implementation and workflow-lock blocks in their legacy form, immediately before 056."""
         workflow = self.framework / "templates/single"
         implementation = workflow / "docs/workflows/IMPLEMENTATION.md"
         project_workflow = workflow / "PROJECT_WORKFLOW.md"
@@ -121,7 +121,7 @@ class CardineCliFixtureMixin:
             "",
         ))
         legacy_workflow = "\n".join((
-            "<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v3 -->",
+            "<!-- CARDINE:BEGIN capability=workflow-mode-lock v2 -->",
             "The coordinator runs `meridian worktree prepare` before creating an",
             "implementer, reviewer, or remediation session and passes the returned existing",
             "path, branch, primary checkout, and worktree root as durable launch inputs.",
@@ -139,14 +139,14 @@ class CardineCliFixtureMixin:
             "",
         ))
         previous_implementation = re.sub(
-            r"<!-- CARDINE:BEGIN capability=task-worktree-boundary v2 -->.*?<!-- CARDINE:END -->\n",
+            r"<!-- CARDINE:BEGIN capability=task-worktree-boundary v\d+ -->.*?<!-- CARDINE:END -->\n",
             legacy_implementation,
             current_implementation,
             count=1,
             flags=re.DOTALL,
         )
         previous_workflow = re.sub(
-            r"<!-- CARDINE:BEGIN capability=bounded-worktree-lifecycle v\d+ -->.*?<!-- CARDINE:END -->\n",
+            r"<!-- CARDINE:BEGIN capability=workflow-mode-lock v\d+ -->.*?<!-- CARDINE:END -->\n",
             legacy_workflow,
             current_workflow,
             count=1,
@@ -394,8 +394,8 @@ class CardineCliFixtureMixin:
             encoding="utf-8"
         )
         previous = current.replace(
-            "\n## Lifecycle orchestration", "\n" + self.REASONING_CONTRACT_BLOCK + "## Lifecycle orchestration", 1
-        )
+            "\n## Context-size ceilings", "\n" + self.REASONING_CONTRACT_BLOCK + "## Context-size ceilings", 1
+        ).replace("capability=bounded-context-readers v2", "capability=bounded-context-readers v1", 1)
         self.assertIn("reasoning-budget-contract", previous)
         policy.write_text(previous, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.2.8\n", encoding="utf-8")
@@ -405,15 +405,13 @@ class CardineCliFixtureMixin:
         self.copy_governed_templates()
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         policy.write_text(
-            current.replace(
-                "capability=execution-evidence-profile v1", "capability=execution-evidence-profile v2"
-            ),
+            current,
             encoding="utf-8",
         )
         (self.framework / "VERSION").write_text("1.2.9\n", encoding="utf-8")
         self.write_synthetic_migration(
             "002-synthetic-retire-contract", "1.2.8", "1.2.9", ["docs/CONTEXT_READING_POLICY.md"],
-            capabilities=[{"capability": "execution-evidence-profile", "capabilityVersion": 2}],
+            capabilities=[{"capability": "bounded-context-readers", "capabilityVersion": 2}],
             removes=[{"capability": "reasoning-budget-contract", "capabilityVersion": 1}],
         )
         return policy, self.project / "docs/CONTEXT_READING_POLICY.md"

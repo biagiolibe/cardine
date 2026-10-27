@@ -59,6 +59,9 @@ Long commands and suite runs:
 - Start with the failing check's ordinary bounded output, then run the
   narrowest single-test or file-specific diagnostic. Use verbose output or a
   full trace only when those two levels cannot identify the cause.
+- Do not tune by repeated test-and-fix cycles: state the evidence gap before
+  a second hypothesis. A reviewer reuses unchanged successful validation
+  unless a coverage gap requires a rerun.
 
 ## Diff inspection
 

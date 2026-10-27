@@ -879,3 +879,31 @@ engine; it does not authorize an agent to delete remote branches. PW-32's
 dirty-resume path additionally requires Resume to be recorded in the verified
 preparation receipt. Same-user receipt checks do not install or prove effective
 host permissions.
+
+### TR1a disposition (task 110)
+
+The always-read set was rewritten to the budget: the routers, `PROJECT_WORKFLOW.md`,
+the implementation, review, and remediation procedures, `LIFECYCLE_ORCHESTRATION.md`,
+and `CONTEXT_READING_POLICY.md`. `tests/test_template_entry_actions.py` pins each
+entry destined for TR1 to its action (deleted prose leaves no phrase; kept rules are
+stated; advice carries its label), and `tests/test_template_word_budget.py` measures
+both host routes from explicit file lists.
+
+- `CODE_REVIEW_PROMPT.md` and `INTEGRATION_POLICY.md` are folded into `REVIEW.md`
+  (CP-04, CP-05, CP-07, RR-03, IP-08, RV-06, RV-14, RV-17). The files stay until TR2b
+  deletes them.
+- RT-03 projected three routes; six remain because `Accept <ID>` is a developer-only
+  command whose procedure is `LIFECYCLE_ORCHESTRATION.md`, and the status, design,
+  and lifecycle read sets resolve their route from the router.
+- CR-14 keeps the ceiling table parseable; TR1b sets its values and fixes defects 1
+  and 2. The `phase-reads` parser in `shared/context.py` is also TR1b's.
+- CR-10 (evidence tiers) moved into `TASK_BLUEPRINT.md` and the remainder of CR-11
+  into `EXECUTION_EVIDENCE_PROFILE.md`, so neither is lost before TR2a condenses them.
+  OP-02 (prompts 1 and 1a) left `OPERATOR_PROMPTS.md`.
+- The reviewer author override (RV-17) is gone: the issued review request
+  (`--request-id`) identifies the reviewer. No template claims authenticity beyond the
+  plan's trust boundary.
+- At this commit `cardine run` returns its own command as `next` for the contract and
+  worktree steps of a queued task and does not prepare the worktree itself; the
+  templates tell the agent to follow `next` unchanged, as the plan designs, and RE7b
+  audits the remaining adapters.

@@ -146,10 +146,10 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         """
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
-        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
+        policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v2 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -160,7 +160,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         # customization below also touches, so the three-way merge cannot
         # auto-resolve and the file falls through to the retirement fallback.
         incoming_policy = incoming_policy.replace(
-            "## Task-first loading", "## Task-First Loading (framework wording)"
+            "## Task contract", "## Task contract (framework wording)"
         )
         policy.write_text(incoming_policy, encoding="utf-8")
 
@@ -173,12 +173,12 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "description": "test-only retirement",
                     "removes": [
                         {
-                            "capability": "minimal-read-only-status",
-                            "capabilityVersion": 1,
+                            "capability": "review-policy",
+                            "capabilityVersion": 2,
                             "supersededBy": "role-scoped-agent-rules",
                         }
                     ],
-                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
+                    "managedPaths": ["PROJECT_WORKFLOW.md"],
                     "verification": ["test-only"],
                 }
             ),
@@ -186,31 +186,31 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-        local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
+        local_policy = self.project / "PROJECT_WORKFLOW.md"
         local_text = local_policy.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=minimal-read-only-status v1", local_text)
+        self.assertIn("CARDINE:BEGIN capability=review-policy v2", local_text)
         local_policy.write_text(
-            local_text.replace("## Task-first loading", "## Task-First Loading (project wording)"),
+            local_text.replace("## Task contract", "## Task contract (project wording)"),
             encoding="utf-8",
         )
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("RETIRE-MARKERS docs/CONTEXT_READING_POLICY.md", checked.stdout)
+        self.assertIn("RETIRE-MARKERS PROJECT_WORKFLOW.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
         upgraded = local_policy.read_text(encoding="utf-8")
-        self.assertNotIn("capability=minimal-read-only-status", upgraded)
-        self.assertNotIn("A status report is not a conformance audit.", upgraded)
+        self.assertNotIn("capability=review-policy", upgraded)
+        self.assertNotIn("nobody approves their own work", upgraded)
         # The unrelated local customization survives untouched.
-        self.assertIn("## Task-First Loading (project wording)", upgraded)
+        self.assertIn("## Task contract (project wording)", upgraded)
         # Every other still-required capability in this file is untouched.
-        self.assertIn("capability=validation-scoping v1", upgraded)
-        self.assertIn("capability=evidence-tiers v1", upgraded)
+        self.assertIn("capability=validation-scoping v2", upgraded)
+        self.assertIn("capability=task-lifecycle v3", upgraded)
 
         audited = self.run_cli("audit", "--mode", "single")
-        self.assertNotIn("minimal-read-only-status", audited.stdout)
+        self.assertNotIn("review-policy", audited.stdout)
 
     def test_upgrade_refuses_to_retire_a_locally_modified_block(self) -> None:
         """The same retirement, but the local copy of the retired block itself
@@ -218,10 +218,10 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         silently discard the customization along with the block."""
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
-        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
+        policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v2 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -229,7 +229,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertIsNotNone(marker)
         incoming_policy = incoming_policy[: marker.start()] + incoming_policy[marker.end() :]
         incoming_policy = incoming_policy.replace(
-            "## Task-first loading", "## Task-First Loading (framework wording)"
+            "## Task contract", "## Task contract (framework wording)"
         )
         policy.write_text(incoming_policy, encoding="utf-8")
 
@@ -240,8 +240,8 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "from": "1.1.0",
                     "to": "1.1.1",
                     "description": "test-only retirement",
-                    "removes": [{"capability": "minimal-read-only-status", "capabilityVersion": 1}],
-                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
+                    "removes": [{"capability": "review-policy", "capabilityVersion": 2}],
+                    "managedPaths": ["PROJECT_WORKFLOW.md"],
                     "verification": ["test-only"],
                 }
             ),
@@ -249,19 +249,19 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-        local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
+        local_policy = self.project / "PROJECT_WORKFLOW.md"
         local_text = local_policy.read_text(encoding="utf-8")
-        local_text = local_text.replace("## Task-first loading", "## Task-First Loading (project wording)")
+        local_text = local_text.replace("## Task contract", "## Task contract (project wording)")
         # Edit inside the very block that is about to be retired.
         local_text = local_text.replace(
-            "A status report is not a conformance audit.",
-            "A status report is not a conformance audit, locally customized.",
+            "nobody approves their own work",
+            "nobody approves their own work, locally customized",
         )
         local_policy.write_text(local_text, encoding="utf-8")
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
-        self.assertIn("CONFLICT docs/CONTEXT_READING_POLICY.md", checked.stdout)
+        self.assertIn("CONFLICT PROJECT_WORKFLOW.md", checked.stdout)
         self.assertIn("BLOCKED", checked.stdout)
 
     def test_retirement_move_preserves_project_text_outside_exact_source_marker(self) -> None:
@@ -273,10 +273,10 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         """
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
-        source = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
+        source = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         source_text = source.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=minimal-read-only-status v1 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v2 -->\n?.*?"
             r"<!-- CARDINE:END -->",
             source_text,
             re.DOTALL,
@@ -287,8 +287,8 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         incoming_source = source_text[: marker.start()] + source_text[marker.end() :]
         source.write_text(
             incoming_source.replace(
-                "This policy reduces context and reasoning overhead while preserving authority and review quality.",
-                "This framework policy reduces context and reasoning overhead while preserving authority and review quality.",
+                "An omitted optional section grants nothing.",
+                "This framework wording: an omitted optional section grants nothing.",
             ),
             encoding="utf-8",
         )
@@ -306,20 +306,20 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                         {
                             "stage": "retirement",
                             "source": {
-                                "path": "docs/CONTEXT_READING_POLICY.md",
-                                "capability": "minimal-read-only-status",
-                                "capabilityVersion": 1,
+                                "path": "PROJECT_WORKFLOW.md",
+                                "capability": "review-policy",
+                                "capabilityVersion": 2,
                                 "markerSha256": digest,
                             },
                             "target": {
                                 "path": "docs/ROUTED_STATUS_RULE.md",
-                                "capability": "minimal-read-only-status",
-                                "capabilityVersion": 1,
+                                "capability": "review-policy",
+                                "capabilityVersion": 2,
                                 "markerSha256": digest,
                             },
                         }
                     ],
-                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md", "docs/ROUTED_STATUS_RULE.md"],
+                    "managedPaths": ["PROJECT_WORKFLOW.md", "docs/ROUTED_STATUS_RULE.md"],
                     "verification": ["test-only"],
                 }
             ),
@@ -327,25 +327,25 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
-        local_source = self.project / "docs/CONTEXT_READING_POLICY.md"
+        local_source = self.project / "PROJECT_WORKFLOW.md"
         local_source.write_text(
             local_source.read_text(encoding="utf-8").replace(
-                "This policy reduces context and reasoning overhead while preserving authority and review quality.",
-                "This project policy reduces context and reasoning overhead while preserving governed-SDD authority and review quality.",
+                "An omitted optional section grants nothing.",
+                "This project wording: an omitted optional section grants nothing.",
             ),
             encoding="utf-8",
         )
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("RETIRE-MARKERS docs/CONTEXT_READING_POLICY.md", checked.stdout)
+        self.assertIn("RETIRE-MARKERS PROJECT_WORKFLOW.md", checked.stdout)
         self.assertIn("ADD      docs/ROUTED_STATUS_RULE.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_source = local_source.read_text(encoding="utf-8")
-        self.assertIn("This project policy reduces context and reasoning overhead", upgraded_source)
-        self.assertNotIn("capability=minimal-read-only-status", upgraded_source)
+        self.assertIn("This project wording: an omitted optional section grants nothing.", upgraded_source)
+        self.assertNotIn("capability=review-policy", upgraded_source)
         self.assertEqual((self.project / "docs/ROUTED_STATUS_RULE.md").read_text(encoding="utf-8"), marker_text + "\n")
 
         audited = self.run_cli("audit", "--mode", "single")
@@ -353,19 +353,19 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertIn("declaration/legacy-compatibility", audited.stdout)
 
     def test_upgrade_retires_reasoning_contract_alongside_a_marker_supersession(self) -> None:
-        """A migration that both supersedes execution-evidence-profile v1 and
+        """A migration that both supersedes bounded-context-readers v1 and
         retires reasoning-budget-contract in one file; when the three-way merge
         conflicts, the retirement must still apply, not be skipped."""
         policy, local_policy = self._lock_project_with_reasoning_contract()
         local_policy.write_text(
             local_policy.read_text(encoding="utf-8").replace(
-                "## Task-first loading", "## Task-First Loading (project wording)"
+                "## Context-size ceilings", "## Context-size ceilings (project wording)"
             ),
             encoding="utf-8",
         )
         policy.write_text(
             policy.read_text(encoding="utf-8").replace(
-                "## Task-first loading", "## Task-First Loading (framework wording)"
+                "## Context-size ceilings", "## Context-size ceilings (framework wording)"
             ),
             encoding="utf-8",
         )
@@ -378,20 +378,20 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertNotIn("reasoning-budget-contract", upgraded)
-        self.assertIn("capability=execution-evidence-profile v2", upgraded)
-        self.assertIn("Task-First Loading (project wording)", upgraded)
+        self.assertIn("capability=bounded-context-readers v2", upgraded)
+        self.assertIn("Context-size ceilings (project wording)", upgraded)
 
     def test_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract(self) -> None:
         policy, local_policy = self._lock_project_with_reasoning_contract()
         local_policy.write_text(
             local_policy.read_text(encoding="utf-8")
             .replace("while designing the task.", "while designing the task, locally customized.")
-            .replace("## Task-first loading", "## Task-First Loading (project wording)"),
+            .replace("## Context-size ceilings", "## Context-size ceilings (project wording)"),
             encoding="utf-8",
         )
         policy.write_text(
             policy.read_text(encoding="utf-8").replace(
-                "## Task-first loading", "## Task-First Loading (framework wording)"
+                "## Context-size ceilings", "## Context-size ceilings (framework wording)"
             ),
             encoding="utf-8",
         )
