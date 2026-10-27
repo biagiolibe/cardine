@@ -419,11 +419,9 @@ ci.ci_gate(candidate.locations_for('056', Path(sys.argv[1])))
         self.assertEqual(self.push_count(), 1)
 
 
-# Each listed boundary is killed once; occurrence 2 of a receipt boundary is the result write.
+# Keep every CI effect and a writer seam for both the push and result writes.
 POINTS = [(name, 1) for name in ('before_ci_push', 'after_ci_push', 'before_ci_query', 'after_ci_query')]
-POINTS += [(name, occurrence) for occurrence in (1, 2) for name in (
-    'before_intent', 'after_intent', 'before_staged_pair', 'after_staged_pair', 'before_state_replace',
-    'after_state_replace', 'before_result_receipt', 'after_result_receipt')]
+POINTS += [('after_intent', occurrence) for occurrence in (1, 2)]
 for _name, _occurrence in POINTS:
     setattr(CiTest, f'test_kill_at_{_name}_{_occurrence}_converges',
             lambda self, n=_name, o=_occurrence: self.converges_after_kill(n, o))

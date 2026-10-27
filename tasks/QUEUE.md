@@ -32,11 +32,3 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
-
-### Phase 26 — Test suite: receipt boundary matrices
-
-Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 117 | Prove the receipt writer once and test each operation's own boundaries | 🔴 P1 | 115 | [117](117-receipt-writer-proof.md) |

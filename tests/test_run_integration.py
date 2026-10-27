@@ -454,23 +454,22 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
             fixture.doCleanups()
 
     def test_candidate_result_boundaries_replay_once(self):
-        for label in ('candidate_intent', 'candidate_logs', 'candidate_result', 'intent',
-                      'staged_pair', 'state_replace', 'result_receipt'):
-            for prefix in ('before_', 'after_'):
-                point = prefix + label
-                with self.subTest(point=point):
-                    fixture = CandidateTest()
-                    fixture.setUp()
-                    try:
-                        fixture.ready('exit 7')
-                        fixture.kill(point, 'candidate')
-                        first = fixture.run_candidate()
-                        self.assertEqual(fixture.run_candidate(), first)
-                        self.assertEqual(first['consecutiveFailures'], 1)
-                        merge.abort_task_integration('056', fixture.primary)
-                    finally:
-                        fixture.tearDown()
-                        fixture.doCleanups()
+        points = [prefix + label for label in ('candidate_intent', 'candidate_logs', 'candidate_result')
+                  for prefix in ('before_', 'after_')] + ['after_intent']
+        for point in points:
+            with self.subTest(point=point):
+                fixture = CandidateTest()
+                fixture.setUp()
+                try:
+                    fixture.ready('exit 7')
+                    fixture.kill(point, 'candidate')
+                    first = fixture.run_candidate()
+                    self.assertEqual(fixture.run_candidate(), first)
+                    self.assertEqual(first['consecutiveFailures'], 1)
+                    merge.abort_task_integration('056', fixture.primary)
+                finally:
+                    fixture.tearDown()
+                    fixture.doCleanups()
 
     def test_finalize_every_effect_boundary_returns_the_same_commit(self):
         for label in ('finalize_intent', 'finalize_commit', 'finalize_result',
