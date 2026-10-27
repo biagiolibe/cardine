@@ -27,7 +27,7 @@ if any effect bypasses the writer, so no interruption guarantee is lost.
 
 ## Acceptance Criteria
 
-- [ ] **Before.** Before any change, the handoff records for each of
+- [x] **Before.** Before any change, the handoff records for each of
   `tests/test_run_host_roles.py`, `tests/test_run_review.py`,
   `tests/test_run_control.py`, `tests/test_run_cleanup.py`,
   `tests/test_run_console.py`, `tests/test_run_integration.py`,
@@ -36,7 +36,7 @@ if any effect bypasses the writer, so no interruption guarantee is lost.
   helper during a run, the number of cases, and the module's wall time
   with `python3 scripts/run_tests.py --parallel --module <module>`. It
   also records one full parallel run.
-- [ ] **Writer proved once.** One test module proves that the receipt writer
+- [x] **Writer proved once.** One test module proves that the receipt writer
   converges at every boundary it exposes, for every operation kind the
   product writes: it kills the writer immediately before and after each
   boundary, reruns, and checks one receipt, no duplicate commit, and
@@ -45,27 +45,27 @@ if any effect bypasses the writer, so no interruption guarantee is lost.
   set of kinds that the writer enforces, this task adds one in
   `src/cardine/lifecycle/receipts.py`; that is the only product change
   allowed. A new kind then fails the test until it is covered.
-- [ ] **Every effect goes through the writer.** A test fails if any operation
+- [x] **Every effect goes through the writer.** A test fails if any operation
   changes a task state file or a receipt without going through
   `write_operation`. It checks a fact, at runtime or statically, the way
   task 100 checks the single Git gateway, and never reads prose.
-- [ ] **Operation boundaries stay.** Each operation's matrix still kills every
+- [x] **Operation boundaries stay.** Each operation's matrix still kills every
   boundary specific to that operation, such as host spawn and response,
   merge, push, CI query, worktree removal, branch deletion, and lease
   files, plus at least one receipt boundary that proves the operation is
   wired to the writer. Points that do not depend on the host run for one
   host; host-specific points run for every host.
-- [ ] **After.** The handoff lists, per module, the killed points before and
+- [x] **After.** The handoff lists, per module, the killed points before and
   after. Every removed case is a generic receipt point that the writer
   proof covers for the same operation kind. It records the case counts and
   wall times after the change, on the same machine, and the full parallel
   run.
-- [ ] Every remaining test keeps every assertion, and the subprocess ceilings
+- [x] Every remaining test keeps every assertion, and the subprocess ceilings
   of `tests/test_command_context.py` still hold.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes tests, and at most the operation-kind set of
   `src/cardine/lifecycle/receipts.py`.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -74,16 +74,16 @@ if any effect bypasses the writer, so no interruption guarantee is lost.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/117.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/117.json`, which only
   the installed `meridian task close 117` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -185,3 +185,11 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Completion evidence
+
+Implemented in `6d2b0ad77b80cb01b046677d4c961baa8a1eae58`. See
+`tasks/handoffs/117.md` for instrumented before/after point inventories, case
+counts, wall times, unchanged assertion checks and the successful 1838-test
+clean-clone result. All operation-specific interruption points remain; 129
+generic operation cases moved to the shared writer proof.
