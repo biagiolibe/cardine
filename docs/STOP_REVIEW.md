@@ -390,3 +390,19 @@ pruned, so a kill between them leaves a readable state. Receipts live in Git
 metadata for upgrade and in the temporary directory for host and non-Git
 writes. They hold digests, never configuration text, and prove consistency, not
 authorship.
+
+### RE7b implementation disposition (task 115)
+
+A8: every journal event for a registered stop now carries `cause` (the
+registry summary), `resolution`, `owner` (`developer` for a human decision,
+otherwise `cardine`), `operation` (the lifecycle command) and `next` (the
+registry resume template). The fields are static and non-sensitive; history is
+not rewritten and no step reads the journal back. `REVIEW_LOOP_EXHAUSTED` now has
+a tool emitter (`require_review_budget`) in both workflows and a named test.
+`SELF_UPDATE_PLUGIN_CACHE`, `OS_PATH_BUSY` and `UPGRADE_OUTPUT_PENDING` name
+their progress proofs, and the registry schema requires a `test` for every
+`recoverable` entry. `RegistryAuditTest` checks the whole registry: blocked
+outcomes are exactly the guardrails that need a decision, each recoverable
+entry's test resolves, each `cardine` resume parses from a metacharacter
+project path, and each stop event names its cause, owner, operation and next
+action.

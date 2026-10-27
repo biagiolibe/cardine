@@ -105,8 +105,15 @@ class LifecycleJournalEntry:
         if self.step is not None:
             line["step"] = self.step
         if self.stop_code is not None:
+            # Registry-derived, non-sensitive telemetry. It is a record for
+            # people and evaluation runs; no step reads it back as authority.
+            entry = load_stop_registry()[self.stop_code]
             line["stop_code"] = self.stop_code
-            line["resolution"] = load_stop_registry()[self.stop_code]["resolution"]
+            line["resolution"] = entry["resolution"]
+            line["cause"] = entry["summary"]
+            line["owner"] = "developer" if entry["human_decision"] else "cardine"
+            line["operation"] = self.command
+            line["next"] = entry["resume"]
         if self.resume:
             line["resume"] = True
         try:

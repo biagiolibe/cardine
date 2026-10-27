@@ -226,3 +226,14 @@ resolution ignores the standalone legacy declaration; the explicit Meridian
 installation reader retains it. Repeated rendering performs no lifecycle step,
 and interrupted host launches reconcile the issued RE4a request/session.
 These checks retain the declared same-user limit and install no host rules.
+
+### RE7b disposition (task 115)
+
+`tests/test_run_end_to_end.py::ForgeryMatrixTest` maps every row F01–F20 to an
+executable test inside the declared same-user boundary, except F17 and F20,
+which name the plan's "Trust boundary" as their limit: installation authority is
+deferred after 1.0 and a trusted executable is protected only by a host
+permission. No row claims authenticity; a receipt or hash proves consistency,
+not authorship. The journal (F13) stays advisory: forged, historical and
+malformed lines change no preview or step
+(`JournalNeverGatesTest.test_historical_and_forged_journal_lines_never_change_progress`).

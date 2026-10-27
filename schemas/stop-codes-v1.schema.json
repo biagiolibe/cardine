@@ -36,6 +36,8 @@
         "allOf": [
           {"if": {"properties": {"class": {"const": "tool"}, "kind": {"const": "stop"}}},
            "then": {"required": ["test"]}},
+          {"if": {"properties": {"resolution": {"const": "recoverable"}}},
+           "then": {"required": ["test"]}},
           {"if": {"properties": {"human_decision": {"const": true}}},
            "then": {"properties": {"resolution": {"const": "guardrail"}}}}
         ]
