@@ -460,7 +460,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             {code for code, entry in registry.items() if entry["class"] == "judgment"},
             {
                 "ACCEPTANCE_UNMET", "RULE_CONFLICT",
-                "SCOPE_CHANGE_REQUIRED", "REVIEW_LOOP_EXHAUSTED", "VALIDATION_RETRY_LIMIT",
+                "SCOPE_CHANGE_REQUIRED", "VALIDATION_RETRY_LIMIT",
             },
         )
         self.assertEqual(registry["PUSH_PENDING"]["kind"], "status")

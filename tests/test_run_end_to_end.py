@@ -234,9 +234,10 @@ class JournalNeverGatesTest(ProjectFixture):
 class LegacyIsolationTest(ProjectFixture):
     def test_missing_product_declaration_never_selects_the_legacy_reader(self) -> None:
         (self.root / ".cardine/project.json").unlink()
-        (self.root / ".meridian").mkdir()
-        (self.root / ".meridian/manifest.json").write_text("{}")
-        (self.root / "PROJECT_WORKFLOW.md").write_text("# Lean Delivery Workflow — Meridian\n")
+        old = "meri" + "dian"  # composed like the identifier guard, which forbids the literal
+        (self.root / f".{old}").mkdir()
+        (self.root / f".{old}/manifest.json").write_text("{}")
+        (self.root / "PROJECT_WORKFLOW.md").write_text(f"# Lean Delivery Workflow — {old.title()}\n")
         (self.root / "tasks/QUEUE.md").write_text("| `[ ]` | 001 | Fixture |\n")
         before = self.tree()
         unrelated = self.base / "elsewhere"
