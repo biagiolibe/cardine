@@ -446,7 +446,7 @@ def build_parser() -> CardineArgumentParser:
     hook = subparsers.add_parser("hook", help="run a Cardine host hook entry point")
     hook_sub = hook.add_subparsers(dest="hook_command", required=True)
     read_guard = hook_sub.add_parser("read-guard", help="apply the advisory-safe read guard")
-    read_guard.add_argument("--host", choices=("codex",), required=True)
+    read_guard.add_argument("--host", choices=("claude", "codex"), required=True)
     stop_audit = hook_sub.add_parser("stop-audit", help="record `BLOCKED <CODE>` reports that no command emitted (Stop hook)")
     stop_audit.add_argument("--host", choices=("claude", "codex"), default="claude")
 
@@ -809,10 +809,10 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 else:
                     print(readiness_check(project_root, arguments.task_id))
         elif arguments.command == "hook":
-            if arguments.hook_command == "read-guard" and arguments.host == "codex":
-                from codex_read_guard import main as codex_read_guard_main
+            if arguments.hook_command == "read-guard":
+                from cardine.hosts.read_guard import main as read_guard_main
 
-                return codex_read_guard_main()
+                return read_guard_main(arguments.host)
             if arguments.hook_command == "stop-audit":
                 from stop_audit import main as stop_audit_main
 
