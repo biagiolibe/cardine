@@ -12,6 +12,7 @@ import statistics
 
 from cardine.shared.errors import CardineError
 from cardine.shared.git import canonical_git_common_dir
+from cardine.shared.git import scoped_command
 from cardine.shared.journal import JOURNAL_VERSION
 from cardine.stops.registry import load_stop_registry
 from cardine.tasks.contract_snapshot import read_human_contract
@@ -207,6 +208,7 @@ def _flow_tasks(project_root: Path, records: list[dict[str, object]], cutoff: da
     return tasks
 
 
+@scoped_command
 def flow_report(project_root: Path, since: str | None, now: datetime | None = None) -> dict[str, object]:
     """Summarize the lifecycle journal into lead time, stops, and origin shares; read-only."""
     cutoff = None
@@ -255,6 +257,8 @@ def flow_report(project_root: Path, since: str | None, now: datetime | None = No
             host = record.get("host", "claude")
             blocks_by_host.setdefault(host if isinstance(host, str) else "unknown", {"unbacked": 0, "declared": 0})[kind] += 1
     report: dict[str, object] = {
+        'telemetry_verification': 'unverifiable',
+        'observations': _flow_observations(project_root),
         "since": since,
         "malformed_lines": malformed,
         "period_days": period_days,
@@ -277,17 +281,46 @@ def flow_report(project_root: Path, since: str | None, now: datetime | None = No
         "targets": targets,
         "removal_candidates": candidates,
     }
+    for task in public_tasks:
+        task['verification'] = 'unverifiable'
+    for target in targets:
+        target['verification'] = 'unverifiable'
+        target['authority'] = 'advisory owner-editable target; never lifecycle policy'
     return report
+
+
+def _flow_observations(project_root):
+    """Current facts, independently checked against accepted receipt policy.
+
+    Historical journal timing/classifications cannot be authenticated by a
+    matching task ID or an operation ID copied into an editable journal line.
+    """
+    from cardine.lifecycle.context import resolve_run_locations
+    from cardine.lifecycle.preview import preview_run
+    observations = []
+    for path in sorted((project_root / names().tasks_path).glob('*.json')):
+        try:
+            result = preview_run(resolve_run_locations(path.stem, project_root))
+            observations.append(dict(task=path.stem, step=result['step'], outcome=result['outcome'],
+                verification='unverifiable' if result['stop'] else 'receipt-verified',
+                diagnostics=result['diagnostics']))
+        except (CardineError, OSError, ValueError) as error:
+            observations.append(dict(task=path.stem, verification='unverifiable', detail=str(error)))
+    return observations
 
 
 def format_flow_report(report: dict[str, object]) -> str:
     totals = report["totals"]  # type: ignore[assignment]
     median = totals["median_lead_time_seconds"]
     lines = [
+        'Historical telemetry: unverifiable (including timings, stops and advisory targets).',
         f"Flow report{' since ' + str(report['since']) if report['since'] else ''}: {totals['tasks']} tasks, "
         f"{totals['integrated']} integrated, median lead time {_flow_duration(median)}, "
         f"{totals['stops']} stops, {totals['aborts']} aborts, {totals['resumes']} resumes",
     ]
+    for observation in report.get('observations', []):
+        lines.append(f"Current task {observation['task']}: {observation['verification']}"
+                     f"; {observation.get('step', 'unavailable')}; {observation.get('outcome', 'unavailable')}")
     if report["malformed_lines"]:
         lines.append(f"Malformed journal lines skipped: {report['malformed_lines']}")
     for task in report["tasks"]:  # type: ignore[index]

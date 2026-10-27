@@ -134,7 +134,7 @@ def _start_launch(request: LaunchRequest) -> tuple[bool, str]:
 
 
 def _launch_selected(state: "ConsoleState", task: Task, agent: str,
-                     dirty_confirmed: bool = False) -> tuple[bool, str]:
+                     dirty_confirmed: bool = False, action: str = 'run') -> tuple[bool, str]:
     """Reread only the selected task, require an unchanged directive, and launch it.
 
     Blocking: run it off the UI thread through `ConsoleState.start_launch`.
@@ -149,6 +149,31 @@ def _launch_selected(state: "ConsoleState", task: Task, agent: str,
         return False, "Task state changed; review the refreshed task before launching"
     if current.is_resume and current.active_writer and not dirty_confirmed:
         return False, "Task worktree became dirty; confirm Resume again before launching"
+    if not current.legacy:
+        from cardine.lifecycle.engine import dispatch_run, resolve_run_locations
+        from cardine.lifecycle.control import host_adapter
+        from cardine.hosts.launch import launch_run_request
+        locations = resolve_run_locations(current.task_id, state.project)
+        adapter = host_adapter()
+        if adapter is None or adapter.host != agent:
+            return False, 'Host role boundary unavailable: configure the selected enforced host profiles'
+        if action == 'cancel':
+            from cardine.lifecycle.control import cancel_task
+            cancel_task(current.task_id, locations.primary, reason='Cancelled from the console', adapter=adapter)
+            return True, 'Task cancelled'
+        if action == 'abort':
+            from cardine.lifecycle.control_abort import abort_owned
+            abort_owned(current.task_id, locations.primary, adapter=adapter)
+            return True, 'Owned operation aborted'
+        if action != 'run':
+            return False, 'Unknown console action'
+        result = (current.run_preview if current.run_preview and current.run_preview['work']
+                  else dispatch_run(locations))
+        if result['work'] is not None:
+            launch_run_request(locations, result['work'], adapter=adapter)
+        return result['outcome'] != 'blocked', result['next']['command'] if result['next'] else 'Delivery complete'
+    if action != 'run':
+        return False, 'Stable controls require a product project'
     request, error = _launch_request(current, state.project, agent)
     if error:
         return False, error

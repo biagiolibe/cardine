@@ -214,3 +214,15 @@ The CI binding also pins the effective origin transport after Git URL rewriting.
 A different push URL or a changed rewrite cannot redirect publication or grant
 deletion in another repository. An already-existing matching remote ref is
 recorded as observed, not owned, and survives cleanup.
+
+### RE7a disposition (task 114)
+
+For F13/F18, console actions use the Stable engine and its receipt-verifying
+read-only preview. Flow reports separate current receipt-verified observations
+from unverifiable historical journal timings, classifications and owner-editable
+advisory targets. Copying an operation ID into a journal line cannot authenticate
+that line. Neither history nor targets authorize an effect. Product identity
+resolution ignores the standalone legacy declaration; the explicit Meridian
+installation reader retains it. Repeated rendering performs no lifecycle step,
+and interrupted host launches reconcile the issued RE4a request/session.
+These checks retain the declared same-user limit and install no host rules.

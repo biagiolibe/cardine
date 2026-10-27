@@ -99,8 +99,16 @@ def _run_git(project_root: Path | None, *arguments: str, text=True,
         invalidate_facts()
     facts = _FACTS.get() if readonly else None
     root = Path(project_root).resolve() if project_root is not None else None
-    key = ("git", root, arguments, text, timeout,
-           tuple(sorted(env.items())) if env is not None else None)
+    if readonly:
+        # Optional index refreshes are writes, even for status. Timeout and
+        # optional-lock spelling do not distinguish an already observed fact.
+        import os
+        env = {**(os.environ if env is None else env), 'GIT_OPTIONAL_LOCKS': '0'}
+        observed_args = arguments[1:] if arguments[:1] == ('--no-optional-locks',) else arguments
+        key = ('git', root, observed_args, text, None, tuple(sorted(env.items())))
+    else:
+        key = ('git', root, arguments, text, timeout,
+               tuple(sorted(env.items())) if env is not None else None)
     if facts is not None and key in facts:
         return deepcopy(facts[key])
     command = ["git", *(["-C", str(root)] if root is not None else []), *arguments]

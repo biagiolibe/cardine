@@ -70,7 +70,9 @@ class Task:
     legacy: bool = True
     review_verdict: str | None = None
     state_error: str | None = None
+    state_error_origin: str | None = None
     delivery_pending: str | None = None
+    run_preview: dict | None = None
 
     @property
     def is_resume(self) -> bool:
@@ -85,6 +87,13 @@ class Task:
 
     @property
     def launch_command(self) -> str | None:
+        if self.state_error or self.record_problem or self.readiness == 'MISMATCH':
+            return None
+        if self.run_preview is not None:
+            if self.readiness.startswith(('BLOCKED', 'UNKNOWN')):
+                return None
+            return (self.run_preview['next']['command']
+                    if self.run_preview['next'] and self.run_preview['outcome'] != 'blocked' else None)
         if self.state_error or self.record_problem or self.delivery_pending or self.readiness == "MISMATCH":
             return None
         if self.is_resume:
@@ -121,6 +130,10 @@ class Task:
 
     @property
     def next_action(self) -> str:
+        if self.run_preview is not None:
+            if self.run_preview['stop']:
+                return self.run_preview['stop']['code'] + ': ' + self.run_preview['stop']['detail']
+            return self.run_preview['next']['command'] if self.run_preview['next'] else 'Delivery complete'
         if self.state_error:
             return self.state_error
         if self.is_resume and self.launch_command:

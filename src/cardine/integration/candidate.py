@@ -13,7 +13,7 @@ from cardine.lifecycle import receipts
 from cardine.lifecycle.control import operation_state, source_digest
 from cardine.lifecycle.validation import execute_command, runner_lock
 from cardine.shared.errors import CardineError
-from cardine.shared.git import git_output, scoped_command, invalidate_facts
+from cardine.shared.git import git_output, _run_git, scoped_command, invalidate_facts
 from cardine.shared.jsonio import _read_json_object
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.validation import environment_identity, failure_count
@@ -30,7 +30,7 @@ def locations_for(task_id, project):
     return resolve_run_locations(task_id, project)
 
 
-def staged_inputs(locations, state, pending=None):
+def staged_inputs(locations, state, pending=None, *, read_only=False):
     root, task_id = locations.primary, locations.task_id
     identity = resolve_task_identity(root, task_id, 'existing')
     _, lease_path, staged_path = _lifecycle_paths(root, identity)
@@ -47,7 +47,8 @@ def staged_inputs(locations, state, pending=None):
             or git_output(root, 'rev-parse', 'HEAD') != staged['main_commit']
             or not _merge_head_path(root).is_file()
             or _merge_head_path(root).read_text().strip() != staged['task_commit']
-            or git_output(root, 'write-tree') != staged['candidate_tree']
+            or (_run_git(root, 'diff', '--cached', '--quiet', staged['candidate_tree']).returncode
+                if read_only else git_output(root, 'write-tree') != staged['candidate_tree'])
             or git_output(root, 'diff', '--binary')):
         raise stop_error('EVIDENCE_MISMATCH', 'candidate tree or main changed', task_id=task_id, project=root)
     # Candidate progress/counters may change, while lifecycle authority must
@@ -88,14 +89,14 @@ def require_budget(state, task_id, root):
                          task_id=task_id, project=root)
 
 
-def verified_candidate(locations):
+def verified_candidate(locations, *, read_only=False):
     state, pending = operation_state(locations.worktree, locations.task_id)
     if pending:
         return None
     progress = state.get('run', {}).get('candidateValidation')
     if not progress:
         return None
-    return progress if progress['binding'] == staged_inputs(locations, state) else None
+    return progress if progress['binding'] == staged_inputs(locations, state, read_only=read_only) else None
 
 
 @scoped_command

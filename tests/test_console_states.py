@@ -42,7 +42,7 @@ class BranchStateTest(support.StateConsoleFixture):
         task = self.load()["001"]
         self.assertEqual((task.readiness, task.lifecycle, task.source),
                          ("READY", "todo", "task state on main"))
-        self.assertEqual(task.launch_command, "Proceed with 001")
+        self.assertEqual(task.launch_command, f"cardine run 001 --project {self.project}")
         self.assertFalse(task.active_writer)
         self.assertFalse(task.legacy)
 
@@ -54,8 +54,8 @@ class BranchStateTest(support.StateConsoleFixture):
         self.assertEqual(self.refs_and_status(), before)
         self.assertEqual((task.readiness, task.lifecycle, task.status), ("IN PROGRESS", "in_progress", "in_progress"))
         self.assertEqual(task.source, "task state in worktree task-001")
-        self.assertEqual(task.launch_command, "Proceed with 001")
-        self.assertEqual(task.next_action, "If assigned: Proceed with 001")
+        self.assertEqual(task.launch_command, f"cardine run 001 --project {self.project}")
+        self.assertEqual(task.next_action, f"cardine run 001 --project {self.project}")
         self.assertEqual(task.worktree, str(self.root / "wt-task-001"))
 
     def test_clean_prepared_worktree_offers_resume_without_a_state_write(self) -> None:
@@ -77,17 +77,18 @@ class BranchStateTest(support.StateConsoleFixture):
         self.assertIsNone(task.launch_command)
         self.assertFalse(task.is_resume)
 
-    def test_closure_status_is_shown_in_the_detail_pane(self) -> None:
+    def test_legacy_closure_advice_cannot_override_the_run_preview(self) -> None:
         self.setup_project({"001": "queued"})
         self.worktree("task-001")
         report = {"stop_reason": "REVIEW_NOT_APPROVED", "resume": "After approval, continue at C4"}
-        with mock.patch.object(owner_console_snapshot, "closure_status", return_value=(report, False)):
+        with mock.patch.object(owner_console_snapshot, "closure_status", return_value=(report, False)) as old:
             task = self.load()["001"]
-        self.assertEqual(task.closure_stop_reason, "REVIEW_NOT_APPROVED")
-        self.assertEqual(task.closure_resume, "After approval, continue at C4")
-        lines = [value for value, _ in owner_console_render._detail_lines(task, 60, PALETTE)]
-        self.assertIn("Closure stop: REVIEW_NOT_APPROVED", lines)
-        self.assertIn("Resume: After approval, continue at C4", lines)
+        old.assert_not_called()
+        self.assertIsNone(task.closure_stop_reason)
+        self.assertEqual(task.closure_resume, f"cardine run 001 --project {self.project}")
+        lines = [value for value, _ in owner_console_render._detail_lines(task, 200, PALETTE)]
+        self.assertNotIn("Closure stop: REVIEW_NOT_APPROVED", lines)
+        self.assertNotIn("Resume: After approval, continue at C4", lines)
 
     def test_every_closure_stop_is_rendered_without_special_cases(self) -> None:
         reasons = (
@@ -136,7 +137,7 @@ class BranchStateTest(support.StateConsoleFixture):
             task = self.load()["001"]
         self.assertEqual((task.readiness, task.lifecycle), ("READY FOR REVIEW", "ready_for_review"))
         self.assertEqual(owner_console_render._state_label(task), ("Review", "ready"))
-        self.assertEqual((task.review, task.launch_command), ("REQUIRED", "Review 001"))
+        self.assertEqual((task.review, task.launch_command), ("REQUIRED", f"cardine run 001 --project {self.project}"))
 
     def test_review_not_required_is_shown_and_never_offers_review(self) -> None:
         self.add("001", "queued", required=False)
@@ -146,14 +147,15 @@ class BranchStateTest(support.StateConsoleFixture):
         self.commit(wt)
         task = self.load()["001"]
         self.assertEqual((task.review, task.lifecycle), ("NOT REQUIRED", "in_progress"))
-        self.assertEqual(task.launch_command, "Proceed with 001")
+        self.assertEqual(task.launch_command, f"cardine run 001 --project {self.project}")
 
-    def test_undeliverable_review_ready_task_is_reported_not_offered(self) -> None:
+    def test_unverified_review_branch_cannot_select_a_reviewer(self) -> None:
         self.setup_project({"001": "queued"})
         self.branch_state(self.worktree("task-001"), "001", "in_review")
         task = self.load()["001"]
-        self.assertEqual(task.readiness, "PENDING DELIVERY/CHANGES")
-        self.assertIsNone(task.launch_command)
+        self.assertEqual(task.run_preview["step"], "contract")
+        self.assertIsNone(task.run_preview["work"])
+        self.assertEqual(task.launch_command, f"cardine run 001 --project {self.project}")
 
     def test_changes_requested_verdict_marks_the_in_progress_task(self) -> None:
         self.setup_project({"001": "queued"})
@@ -163,7 +165,7 @@ class BranchStateTest(support.StateConsoleFixture):
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
         self.assertTrue(task.changes_requested)
         self.assertEqual(task.markers, ("changes requested",))
-        self.assertEqual(task.launch_command, "Address review 001")
+        self.assertEqual(task.launch_command, f"cardine run 001 --project {self.project}")
         self.assertEqual(task.review_verdict, "CHANGES_REQUESTED")
         self.branch_state(wt, "001", "in_progress", verdict="APPROVE")
         self.assertFalse(self.load()["001"].changes_requested)
@@ -187,8 +189,8 @@ class BranchStateTest(support.StateConsoleFixture):
         self.assertTrue(dirty.active_writer)
         self.assertEqual((clean.readiness, clean.lifecycle), (dirty.readiness, dirty.lifecycle))
         self.assertEqual(dirty.markers, ("active writer",))
-        self.assertEqual(clean.launch_command, "Proceed with 001")
-        self.assertEqual(dirty.launch_command, RESUME_001)
+        self.assertEqual(clean.launch_command, f"cardine run 001 --project {self.project}")
+        self.assertEqual(dirty.launch_command, f"cardine run 001 --project {self.project}")
 
     def test_branch_behind_primary_is_a_mismatch_without_directive(self) -> None:
         self.setup_project({"001": "in_progress"})
@@ -263,7 +265,7 @@ class StateAuthorityTest(support.StateConsoleFixture):
         self.assertEqual(task.review, "REQUIRED")
         self.assertTrue(task.changes_requested)
         self.assertIsNone(task.mismatch)
-        self.assertEqual(task.launch_command, "Address review 001")
+        self.assertEqual(task.launch_command, f"cardine run 001 --project {self.project}")
 
     def test_queued_row_with_met_dependencies_and_in_progress_state_is_not_startable(self) -> None:
         self.setup_project({"001": "done", "002": "in_progress"}, deps={"002": "001"})
@@ -272,8 +274,8 @@ class StateAuthorityTest(support.StateConsoleFixture):
         self.assertNotEqual(task.readiness, "READY")
         self.assertEqual((task.readiness, task.lifecycle), ("IN PROGRESS", "in_progress"))
         self.assertTrue(task.is_resume)
-        self.assertEqual(task.launch_command, "Proceed with 002")
-        self.assertEqual(task.next_action, "If assigned: Proceed with 002")
+        self.assertEqual(task.launch_command, f"cardine run 002 --project {self.project}")
+        self.assertEqual(task.next_action, f"cardine run 002 --project {self.project}")
         self.assertFalse(load_task_status(self.project)["tasks"][0]["startable"])
 
     def test_queued_row_with_met_dependencies_and_in_review_state_is_not_startable(self) -> None:
@@ -284,7 +286,7 @@ class StateAuthorityTest(support.StateConsoleFixture):
             task = self.load()["002"]
         self.assertEqual((task.readiness, task.lifecycle), ("READY FOR REVIEW", "ready_for_review"))
         self.assertFalse(task.is_resume)
-        self.assertNotEqual(task.launch_command, "Proceed with 002")
+        self.assertEqual(task.launch_command, f"cardine run 002 --project {self.project}")
         self.assertFalse(load_task_status(self.project)["tasks"][0]["startable"])
 
     def test_empty_queue_with_done_states_preserves_totals(self) -> None:
@@ -329,7 +331,7 @@ class StateAuthorityTest(support.StateConsoleFixture):
         self.assertIn("state.task_id", invalid.state_error)
         self.assertIsNone(invalid.launch_command)
         self.assertFalse(invalid.legacy)
-        self.assertEqual(valid.launch_command, "Proceed with 002")
+        self.assertEqual(valid.launch_command, f"cardine run 002 --project {self.project}")
         state = owner_console_state.ConsoleState(self.project)
         state.snapshot = owner_console_snapshot.load_snapshot(self.project)
         output = owner_console_state.one_shot(state)
@@ -384,7 +386,7 @@ class StateAuthorityTest(support.StateConsoleFixture):
             snapshot = owner_console_snapshot.load_snapshot(self.project)
         task = snapshot.tasks[0]
         self.assertEqual((task.readiness, task.lifecycle, task.status), ("CLOSING", "closing", "done"))
-        self.assertEqual(task.closure_resume, "git push origin main")
+        self.assertEqual(task.closure_resume, f"cardine run 001 --project {self.project}")
         self.assertEqual(snapshot.done_count, 0)
 
 

@@ -140,7 +140,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         self.assertEqual(resolved.handoff_path, (self.project / "artifacts/handoffs/M8-API-011.md").resolve())
         self.assertEqual(resolved.review_path, (self.project / "artifacts/reviews/M8-API-011.md").resolve())
 
-    def test_policy_and_authority_fail_closed(self) -> None:
+    def test_standalone_product_policy_is_ignored_when_project_declaration_is_missing(self) -> None:
         identity = self.project / ".cardine/task-identity.json"
         (self.project / ".cardine/project.json").unlink()
         identity.parent.mkdir(parents=True, exist_ok=True)
@@ -154,8 +154,7 @@ class TaskIdentityResolverTest(unittest.TestCase):
         for declaration in malformed:
             with self.subTest(declaration=declaration):
                 identity.write_text(declaration, encoding="utf-8")
-                with self.assertRaises(shared_errors.CardineError):
-                    owner_tasks_identity.read_task_identity_policy(self.project)
+                self.assertEqual(owner_tasks_identity.read_task_identity_policy(self.project).mode, "opaque")
 
     def test_ambiguity_collisions_mixed_case_and_traversal_are_rejected(self) -> None:
         self.declare()
