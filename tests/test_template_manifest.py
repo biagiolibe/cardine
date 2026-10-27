@@ -1053,12 +1053,12 @@ class SingleTemplateSetTest(unittest.TestCase):
             installed.write_text(installed.read_text(encoding="utf-8") + local_note, encoding="utf-8")
         template = framework / "templates/single/PROJECT_WORKFLOW.md"
         text = template.read_text(encoding="utf-8")
-        self.assertIn("## Preset and options", text)
-        template.write_text(text.replace("## Preset and options", "## Presets and task options", 1), encoding="utf-8")
+        self.assertIn("## Task contract", text)
+        template.write_text(text.replace("## Task contract", "## Task contracts", 1), encoding="utf-8")
         (framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
         applied = cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded = (project / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-        self.assertIn("## Presets and task options", upgraded)
+        self.assertIn("## Task contracts", upgraded)
         for name in ("PROJECT_WORKFLOW.md", "tasks/TASK_BLUEPRINT.md"):
             self.assertIn("Project-owned prose that no update may drop.", (project / name).read_text(encoding="utf-8"))

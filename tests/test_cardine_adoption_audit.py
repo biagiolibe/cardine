@@ -24,9 +24,9 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.project / "docs/LIFECYCLE_ORCHESTRATION.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=lifecycle-orchestration v2", text)
+        self.assertIn("CARDINE:BEGIN capability=lifecycle-orchestration v3", text)
         edited = text.replace(
-            "The orchestrator is a coordination-only role", "The orchestrator is a coordination-only role (edited without an upgrade)"
+            "Start the implementer and the reviewer as distinct fresh sessions", "Start the implementer and the reviewer as distinct fresh sessions (edited without an upgrade)"
         )
         self.assertNotEqual(text, edited, "the replacement should have matched something inside the marker")
         agents.write_text(edited, encoding="utf-8")
@@ -35,7 +35,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
             "FAIL           marker-integrity — docs/LIFECYCLE_ORCHESTRATION.md: "
-            "capability=lifecycle-orchestration v2",
+            "capability=lifecycle-orchestration v3",
             audited.stdout,
         )
         self.assertIn("SUMMARY worst=FAIL", audited.stdout)
@@ -47,9 +47,9 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.project / "AGENTS.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=command-triggers v1", text)
+        self.assertIn("CARDINE:BEGIN capability=command-triggers v2", text)
         relabeled = text.replace(
-            "CARDINE:BEGIN capability=command-triggers v1",
+            "CARDINE:BEGIN capability=command-triggers v2",
             "CARDINE:BEGIN capability=command-triggers v4",
             1,
         )
@@ -65,7 +65,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
             "FAIL           marker-integrity — AGENTS.md: capability=command-triggers "
-            "carries 2 versions (v1, v4)",
+            "carries 2 versions (v2, v4)",
             audited.stdout,
         )
 
@@ -75,7 +75,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
             local = self.project / name
             local.write_text(
                 local.read_text(encoding="utf-8").replace(
-                    "CARDINE:BEGIN capability=lifecycle-orchestration v2",
+                    "CARDINE:BEGIN capability=lifecycle-orchestration v3",
                     "CARDINE:BEGIN capability=lifecycle-orchestration v99",
                 ),
                 encoding="utf-8",
@@ -115,17 +115,17 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
                     "from": "1.1.0",
                     "to": "1.1.1",
                     "description": "test-only retirement",
-                    "removes": [{"capability": "validation-scoping", "capabilityVersion": 1}],
-                    "managedPaths": ["docs/CONTEXT_READING_POLICY.md"],
+                    "removes": [{"capability": "validation-scoping", "capabilityVersion": 2}],
+                    "managedPaths": ["PROJECT_WORKFLOW.md"],
                     "verification": ["test-only"],
                 }
             ),
             encoding="utf-8",
         )
-        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
+        policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         policy_text = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=validation-scoping v1 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=validation-scoping v2 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             policy_text,
             re.DOTALL,
@@ -140,4 +140,4 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         audited = self.run_cli("audit", "--mode", "single")
         self.assertEqual(audited.returncode, 2, audited.stdout + audited.stderr)
         self.assertIn("FAIL", audited.stdout)
-        self.assertIn("validation-scoping v1 is retired but still present", audited.stdout)
+        self.assertIn("validation-scoping v2 is retired but still present", audited.stdout)

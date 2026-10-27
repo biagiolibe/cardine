@@ -6,6 +6,7 @@ import contextlib
 import io
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -201,8 +202,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
-                "If any acceptance criterion cannot be evaluated",
-                "If any acceptance criterion is an UNAUTHORIZED HAND EDIT",
+                "A criterion that cannot be evaluated",
+                "A criterion that is an UNAUTHORIZED HAND EDIT",
                 1,
             ),
             encoding="utf-8",
@@ -219,8 +220,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
-                "If any acceptance criterion cannot be evaluated",
-                "If any acceptance criterion is an UNAUTHORIZED HAND EDIT",
+                "A criterion that cannot be evaluated",
+                "A criterion that is an UNAUTHORIZED HAND EDIT",
                 1,
             ),
             encoding="utf-8",
@@ -233,8 +234,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
-                "If any acceptance criterion cannot be evaluated",
-                "If any acceptance criterion is deliberately reworded",
+                "A criterion that cannot be evaluated",
+                "A criterion that is deliberately reworded",
                 1,
             ),
             encoding="utf-8",
@@ -251,7 +252,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         target = self.root / "templates/single/AGENTS.md"
         text = target.read_text(encoding="utf-8")
         text = text.replace(
-            "<!-- CARDINE:BEGIN capability=command-triggers v1 -->",
+            "<!-- CARDINE:BEGIN capability=command-triggers v2 -->",
             "<!-- CARDINE:BEGIN capability=command-triggers v4 -->",
             1,
         )
@@ -291,12 +292,12 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         """The baseline guard's original task-014 behavior: an absence with
         no accounting migration is still an unauthorized change, retirement
         infrastructure or not."""
-        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 1)
+        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 2)
         with self.assertRaises(SystemExit):
             cr.check_capability_marker_baselines(self.root)
 
     def test_a_capability_retired_in_the_catalog_passes_without_a_migration(self) -> None:
-        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 1)
+        self._remove_marker_block(self.root / "templates/single/docs/workflows/IMPLEMENTATION.md", "spike-routing", 2)
         path = self.root / "capabilities/markers-v1.json"
         catalog = json.loads(path.read_text(encoding="utf-8"))
         catalog["capabilities"]["spike-routing"].update(retired=True, required=False)
@@ -376,7 +377,7 @@ class CapabilityRequiredVersionsTest(unittest.TestCase):
     def test_every_managed_file_must_use_the_same_version(self) -> None:
         later = self.root / "templates/single/docs/workflows/IMPLEMENTATION.md"
         original = later.read_text(encoding="utf-8")
-        for version in (3, 99):
+        for version in (4, 99):
             with self.subTest(later_version=version):
                 later.write_text(original + f"\n<!-- CARDINE:BEGIN capability=lifecycle-orchestration v{version} -->\n<!-- CARDINE:END -->\n", encoding="utf-8")
                 message = self.failure()
@@ -415,19 +416,68 @@ class GovernedReviewWorktreeContractTest(unittest.TestCase):
         with self.assertRaises(SystemExit):
             cr.check_governed_review_worktree_contract(self.root)
 
-    def test_preflight_must_precede_substantive_review_boundary(self) -> None:
-        review = (
-            self.root
-            / "templates/single/docs/workflows/REVIEW.md"
-        )
+    def test_review_procedure_block_is_required(self) -> None:
+        review = self.root / "templates/single/docs/workflows/REVIEW.md"
         text = review.read_text(encoding="utf-8")
-        begin = re.search(r"<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v\d+ -->", text).group(0)
-        boundary = re.search(r"<!-- CARDINE:BEGIN capability=review-mode-boundary v\d+ -->", text).group(0)
-        text = text.replace(begin, "TEMP-PREFLIGHT", 1)
-        text = text.replace(boundary, begin, 1).replace("TEMP-PREFLIGHT", boundary, 1)
-        review.write_text(text, encoding="utf-8")
+        review.write_text(re.sub(r"<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v\d+ -->", "", text), encoding="utf-8")
         with self.assertRaises(SystemExit):
             cr.check_governed_review_worktree_contract(self.root)
+
+
+class RouterRoutesTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        shutil.copytree(ROOT / "templates", self.root / "templates")
+        self.templates = self.root / "templates/single"
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def edit(self, name: str, old: str, new: str) -> None:
+        path = self.templates / name
+        path.write_text(path.read_text(encoding="utf-8").replace(old, new), encoding="utf-8")
+
+    def test_shipped_routers_pass(self) -> None:
+        cr.check_router_routes(self.root)
+
+    def test_a_router_must_name_both_always_read_files(self) -> None:
+        for required in cr.ALWAYS_READ_FILES:
+            with self.subTest(required=required):
+                shutil.copy(ROOT / "templates/single/AGENTS.md", self.templates / "AGENTS.md")
+                self.edit("AGENTS.md", required, "ELSEWHERE.txt")
+                with self.assertRaises(SystemExit):
+                    cr.check_router_routes(self.root)
+
+    def test_a_route_to_a_missing_document_fails(self) -> None:
+        for router in cr.ROUTER_FILES:
+            with self.subTest(router=router):
+                shutil.copy(ROOT / "templates/single/AGENTS.md", self.templates / "AGENTS.md")
+                shutil.copy(ROOT / "templates/single/CLAUDE.md", self.templates / "CLAUDE.md")
+                self.edit(router, "docs/workflows/REVIEW.md", "docs/workflows/MISSING.md")
+                with self.assertRaises(SystemExit):
+                    cr.check_router_routes(self.root)
+
+    def test_routers_with_different_trigger_blocks_fail(self) -> None:
+        self.edit("CLAUDE.md", "`Review <TASK-ID>` — read", "`Inspect <TASK-ID>` — read")
+        with self.assertRaises(SystemExit):
+            cr.check_router_routes(self.root)
+
+    def test_the_workflow_must_carry_its_lock_marker(self) -> None:
+        self.edit("PROJECT_WORKFLOW.md", "capability=workflow-mode-lock", "capability=other")
+        with self.assertRaises(SystemExit):
+            cr.check_router_routes(self.root)
+
+    def test_the_check_is_read_only_and_independent_of_the_working_directory(self) -> None:
+        before = {path: path.read_bytes() for path in self.root.rglob("*") if path.is_file()}
+        cwd = Path.cwd()
+        try:
+            os.chdir(tempfile.gettempdir())
+            cr.check_router_routes(self.root)
+            cr.check_router_routes(self.root)
+        finally:
+            os.chdir(cwd)
+        self.assertEqual(before, {path: path.read_bytes() for path in self.root.rglob("*") if path.is_file()})
 
 
 class GovernedLifecycleTextTest(unittest.TestCase):
@@ -470,21 +520,24 @@ class GovernedLifecycleTextTest(unittest.TestCase):
                     cr.check_governed_lifecycle_text(self.root)
                 path.write_text(original, encoding="utf-8")
 
-    def test_governed_block_naming_a_literal_location_fails_but_execution_assets_may(self) -> None:
-        path = self.workflows / "docs/workflows/REMEDIATION.md"
-        original = path.read_text(encoding="utf-8")
-        path.write_text(original.replace("<!-- CARDINE:END -->", "Read tasks/reviews/X.md.\n<!-- CARDINE:END -->", 1), encoding="utf-8")
-        with self.assertRaises(SystemExit):
-            cr.check_governed_lifecycle_text(self.root)
-        path.write_text(original, encoding="utf-8")
-        execution_assets = (self.workflows / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-        self.assertIn("tasks/handoffs/<TASK-ID>.md", execution_assets)
+    def test_a_managed_block_naming_a_literal_location_fails_in_every_file(self) -> None:
+        for relative in ("docs/workflows/REMEDIATION.md", "PROJECT_WORKFLOW.md"):
+            with self.subTest(relative=relative):
+                path = self.workflows / relative
+                original = path.read_text(encoding="utf-8")
+                path.write_text(original.replace("<!-- CARDINE:END -->", "Read tasks/reviews/X.md.\n<!-- CARDINE:END -->", 1), encoding="utf-8")
+                with self.assertRaises(SystemExit):
+                    cr.check_governed_lifecycle_text(self.root)
+                path.write_text(original, encoding="utf-8")
         cr.check_governed_lifecycle_text(self.root)
 
-    def test_reviewer_identity_rule_in_a_second_place_fails(self) -> None:
-        self.append("docs/INTEGRATION_POLICY.md", '\n```bash\ngit commit --author="x <x@x>" -m m\n```\n')
-        with self.assertRaises(SystemExit):
-            cr.check_governed_lifecycle_text(self.root)
+    def test_a_reviewer_author_override_anywhere_fails(self) -> None:
+        for relative in ("docs/INTEGRATION_POLICY.md", "docs/workflows/REVIEW.md"):
+            with self.subTest(relative=relative):
+                self.append(relative, '\n```bash\ngit commit --author="x <x@x>" -m m\n```\n')
+                with self.assertRaises(SystemExit):
+                    cr.check_governed_lifecycle_text(self.root)
+                shutil.copy(ROOT / "templates/single" / relative, self.workflows / relative)
 
     def test_repository_copy_must_not_keep_the_smoke_line(self) -> None:
         # MERIDIAN-INSTALLATION-CHECK

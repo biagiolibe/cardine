@@ -304,10 +304,9 @@ class CodexProfileRepairTest(unittest.TestCase):
         contract = (ROOT / "docs/HOST_CAPABILITY_CONTRACT.md").read_text(encoding="utf-8")
         for fragment in ("repair-required", "Explicit `--apply`", "does not prove", "profile-ownership"):
             self.assertIn(fragment, contract)
+        # The recovery text left the always-read workflow (PW-26); the host contract is its home until work item 9.
         workflow = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
-        region = workflow.split("capability=codex-worktree-access v1 -->", 1)[1].split("<!-- CARDINE:END -->", 1)[0]
-        for fragment in ("repair-required", "`--apply` only", "`blocked` status", "fresh session"):
-            self.assertIn(fragment, region)
+        self.assertNotIn("codex-worktree-access", workflow)
 
     def test_doctor_reports_ownership_separately_from_root_access(self) -> None:
         self.config.write_text(self.rewritten(), encoding="utf-8")

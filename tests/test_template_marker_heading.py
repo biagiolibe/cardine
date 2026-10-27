@@ -36,17 +36,16 @@ class CapabilityMarkerTest(unittest.TestCase):
 
     def test_agents_and_claude_carry_expected_marker_versions(self) -> None:
         for name in ("AGENTS.md", "CLAUDE.md"):
-            self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "1")])
-        self.assertIn(("review-remediation-record", "2"), self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")))
-        self.assertIn(("lifecycle-orchestration", "2"), self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")))
-        implementation = self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"))
-        for pair in (("execution-command-gate", "2"), ("validation-scoping", "1"), ("spike-routing", "1"), ("host-impact-routing", "1")):
-            self.assertIn(pair, implementation)
-
+            self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "2")])
+        self.assertEqual(self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")), [("task-worktree-remediation", "2")])
+        self.assertEqual(self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")),
+                         [("lifecycle-orchestration", "3"), ("owner-acceptance-workflow", "2")])
+        self.assertEqual(self.marker_pairs((self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")),
+                         [("task-worktree-boundary", "3"), ("manual-verification-precondition", "2"), ("spike-routing", "2")])
     def test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing(self) -> None:
         blueprint = (self.WORKFLOW / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
         implementation = (self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
-        self.assertIn(("task-blueprint", "8"), self.marker_pairs(blueprint))
+        self.assertIn(("task-blueprint", "9"), self.marker_pairs(blueprint))
         self.assertIn("Classification: NOT_APPLICABLE", blueprint)
         self.assertIn("Rationale:", blueprint)
         self.assertIn("Classification: REQUIRED", blueprint)
@@ -55,10 +54,9 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("- Host execution:", blueprint)
         self.assertIn("- Manual activation:", blueprint)
         self.assertIn("Completion evidence:", blueprint)
-        self.assertIn(("host-impact-routing", "1"), self.marker_pairs(implementation))
-        self.assertIn("return `BLOCKED HOST_IMPACT_DECLARATION_INVALID`", implementation)
-        self.assertIn("not host enforcement", implementation)
-
+        # The routing prose left the implementation procedure: the engine measures host observations.
+        self.assertNotIn("host-impact-routing", dict(self.marker_pairs(implementation)))
+        self.assertNotIn("HOST_IMPACT_DECLARATION_INVALID", implementation)
     def test_review_record_template_carries_its_own_marker(self) -> None:
         text = (self.WORKFLOW / "docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertEqual(
@@ -70,42 +68,21 @@ class CapabilityMarkerTest(unittest.TestCase):
         text = (self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(text),
-            [
-                ("lifecycle-orchestration", "2"),
-                ("task-worktree-lifecycle", "1"),
-                ("owner-acceptance-workflow", "1"),
-                ("rejected-attempt-restart", "1"),
-            ],
+            [("lifecycle-orchestration", "3"), ("owner-acceptance-workflow", "2")],
         )
-
     def test_context_budget_policy_carries_its_capability_markers(self) -> None:
         text = (self.WORKFLOW / "docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
-        self.assertEqual(
-            self.marker_pairs(text),
-            [
-                ("queue-briefing", "1"),
-                ("authority-excerpt", "1"),
-                ("read-guard", "1"),
-                ("isolated-exploration", "2"),
-                ("minimal-read-only-status", "1"),
-                ("validation-scoping", "1"),
-                ("evidence-tiers", "1"),
-                ("execution-evidence-profile", "1"),
-                ("phase-reads", "1"),
-            ],
-        )
-
+        self.assertEqual(self.marker_pairs(text), [("bounded-context-readers", "2")])
     def test_execution_evidence_profile_is_stack_agnostic_and_configurable(self) -> None:
         policy = (self.WORKFLOW / "docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
         profile = (self.WORKFLOW / "docs/EXECUTION_EVIDENCE_PROFILE.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn(("execution-evidence-profile", "1"), self.marker_pairs(policy))
+        self.assertNotIn("execution-evidence-profile", dict(self.marker_pairs(policy)))
         self.assertIn("Successful validation output", profile)
         self.assertIn("Failure diagnostics", profile)
         self.assertIn("Manual evidence", profile)
         self.assertNotIn("cargo", profile.lower())
-
     def test_reasoning_budget_contract_was_retired_from_governed_templates(self) -> None:
         """Migration 063 retires `reasoning-budget-contract` through `removes`;
         no managed Governed SDD text may require choosing, recording, matching,
@@ -120,9 +97,9 @@ class CapabilityMarkerTest(unittest.TestCase):
         ]
         texts = {path: (self.WORKFLOW / path).read_text(encoding="utf-8") for path in paths}
 
-        self.assertIn(("task-blueprint", "8"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
+        self.assertIn(("task-blueprint", "9"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
         self.assertIn(
-            ("lifecycle-orchestration", "2"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
+            ("lifecycle-orchestration", "3"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
         )
         self.assertNotIn(
             "reasoning-budget-contract", dict(self.marker_pairs(texts["docs/CONTEXT_READING_POLICY.md"]))
@@ -136,14 +113,14 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("reasoning-budget-contract", owner_templates_migrations.retired_capability_ids(ROOT))
         self.assertNotIn("reasoning-budget-contract", owner_templates_migrations.capability_requirements(ROOT))
 
-    def test_minimal_read_only_status_profile_limits_context_expansion(self) -> None:
+    def test_status_requests_use_the_status_command_not_a_reading_profile(self) -> None:
         policy = (self.WORKFLOW / "docs/CONTEXT_READING_POLICY.md").read_text(encoding="utf-8")
         prompts = (self.WORKFLOW / "docs/OPERATOR_PROMPTS.md").read_text(encoding="utf-8")
-        self.assertIn("A status report is not a conformance audit.", policy)
-        self.assertIn("Before every expanded read", policy)
-        self.assertIn("Use the minimal read-only status profile", prompts)
-        self.assertIn("Do not load completed milestones", prompts)
-
+        self.assertIn("run `cardine status`", policy)
+        self.assertIn("it is not an audit", policy)
+        self.assertNotIn("minimal read-only status", policy.lower())
+        self.assertNotIn("Use the minimal read-only status profile", prompts)
+        self.assertNotIn("## 1. Report project status", prompts)
     def test_operator_prompts_resolve_locations_and_bound_framework_maintenance(self) -> None:
         prompts = (self.WORKFLOW / "docs/OPERATOR_PROMPTS.md").read_text(encoding="utf-8")
         self.assertIn("Resolve the canonical queue, task, and review-record locations", prompts)
@@ -153,10 +130,9 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("cardine upgrade --project . --check", prompts)
         self.assertIn("Do not run\n`cardine upgrade --apply`, `cardine adopt`, or `finalize-adoption`", prompts)
         self.assertNotIn("## 3. Design the next milestone or phase", prompts)
-        self.assertIn("## 1a. Align tech design for questions and future work (read-only)", prompts)
-        self.assertIn("Return a concise readiness brief", prompts)
-        self.assertIn("Do not modify files, create ADRs or tasks", prompts)
-
+        # Prompts 1 and 1a (status and design alignment) left the cookbook: `cardine status` is the report.
+        self.assertNotIn("## 1a. Align tech design for questions and future work (read-only)", prompts)
+        self.assertIn("## 2. Design a change, decompose a milestone, or select the next phase", prompts)
     def test_ci_verified_validation_marker_in_each_of_its_three_docs(self) -> None:
         pull_request_policy = (self.WORKFLOW / "docs/INTEGRATION_POLICY.md").read_text(encoding="utf-8")
         self.assertEqual(
@@ -187,23 +163,14 @@ class CapabilityMarkerTest(unittest.TestCase):
 
     def test_manual_verification_precondition_gates_implementation_start(self) -> None:
         agents = (self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
-        self.assertIn(("manual-verification-precondition", "1"), self.marker_pairs(agents))
+        self.assertIn(("manual-verification-precondition", "2"), self.marker_pairs(agents))
         self.assertIn("Manual verification: required", agents)
-        self.assertIn("return `BLOCKED SCOPE_CHANGE_REQUIRED` immediately", agents)
-        self.assertIn("deterministic test", agents)
-        self.assertIn("probe that actually succeeds", agents)
-        self.assertIn(
-            "never respond to a failed probe by exploring the local environment for an alternative",
-            agents,
-        )
-        self.assertIn(
-            "it never suspends the requirement to stop on a probe that has already been "
-            "attempted and failed",
-            agents,
-        )
-        self.assertIn("check its `Manual verification rationale` first, before any probe", agents)
-        self.assertIn("do not run the probe", agents)
-
+        self.assertIn("is a scope change", agents)
+        self.assertNotIn("BLOCKED", agents)  # the stop belongs to the workflow, not to an advice clause
+        self.assertIn("a missing rationale", agents)
+        self.assertIn("readable as a value in the program", agents)
+        self.assertIn("prove the evidence channel with a successful probe before implementing", agents)
+        self.assertIn("report a failed probe and do not search for an alternative", agents)
     def test_manual_verification_record_fields_in_completion_and_review_records(self) -> None:
         completion_report = (self.WORKFLOW / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertIn("Manual verification: `<none | screenshot path", completion_report)
@@ -224,25 +191,19 @@ class CapabilityMarkerTest(unittest.TestCase):
         }
         self.assertEqual(sorted(pairs), sorted(expected.items()))
 
-    def test_git_workflow_block_drives_closure_through_advance(self) -> None:
-        for path in (
-            self.WORKFLOW / "PROJECT_WORKFLOW.md",
-            ROOT / "templates" / "single" / "PROJECT_WORKFLOW.md",
-        ):
-            text = path.read_text(encoding="utf-8")
-            start = text.index("capability=git-workflow")
-            block = " ".join(text[start : text.index("<!-- CARDINE:END -->", start)].split())
-            self.assertIn("cardine worktree advance", block, path)
-            self.assertIn("`action_required`", block, path)
-            self.assertIn("`BLOCKED <CODE>`", block, path)
-            self.assertNotIn("Close a validated task in order", block, path)
-            self.assertNotIn("closure-status", block, path)
-            self.assertIn("`Validation skips:`", block, path)
-
+    def test_git_workflow_block_drives_the_task_through_run(self) -> None:
+        text = (self.WORKFLOW / "PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
+        start = text.index("capability=git-workflow")
+        block = " ".join(text[start : text.index("<!-- CARDINE:END -->", start)].split())
+        self.assertIn("cardine run <TASK-ID> --project <primary-checkout>", block)
+        self.assertIn("`next.command`", block)
+        self.assertIn("`stop.human_decision: true`", block)
+        for retired in ("worktree advance", "closure-status", "action_required", "Validation skips"):
+            self.assertNotIn(retired, block)
     def test_whole_file_baseline_capabilities_each_carry_one_marker(self) -> None:
         expectations = {
             "LANGUAGE_POLICY.md": ("language-policy", "1"),
-            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "8"),
+            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "9"),
             "docs/CODE_ORGANIZATION.md": ("code-organization", "1"),
             "docs/AUDIT_PROMPT_READ_ONLY.md": ("audit-prompt", "1"),
         }
@@ -266,54 +227,27 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertNotIn("[Conversation language]", match.group(1))
 
     def test_agents_and_claude_carry_the_five_residual_capabilities(self) -> None:
-        self.assertIn(("command-triggers", "1"), self.marker_pairs((self.WORKFLOW / "AGENTS.md").read_text(encoding="utf-8")))
+        self.assertIn(("command-triggers", "2"), self.marker_pairs((self.WORKFLOW / "AGENTS.md").read_text(encoding="utf-8")))
         review = self.marker_pairs((self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8"))
-        self.assertIn(("review-mode-boundary", "1"), review)
-        self.assertIn(("implementer-reviewer-handoff", "2"), review)
-        self.assertIn(("reviewer-integrator-identity", "1"), review)
-        self.assertIn(("task-worktree-review-procedure", "3"), review)
-
-    def test_review_preflight_fails_closed_before_substantive_inspection(self) -> None:
+        self.assertEqual(review, [("task-worktree-review-procedure", "4")])
+    def test_review_hands_off_through_the_command_before_substantive_inspection(self) -> None:
         review = (self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        preflight = review.index("## Mandatory task-worktree preflight")
-        substantive = review.index("Only after every preflight check passes")
-        boundary = review.index("### Review-mode boundary")
+        handoff = review.index("Run `cardine review <TASK-ID> --project <primary-checkout>`")
+        substantive = review.index("Read the task contract")
+        self.assertLess(handoff, substantive)
         normalized = " ".join(review.split())
-        self.assertLess(preflight, substantive)
-        self.assertLess(preflight, boundary)
-        for condition in (
-            "session started in the primary checkout",
-            "locate exactly one registered entry",
-            "path is absent",
-            "mismatched branch",
-            "mismatched `HEAD`",
-            "dirty worktree",
-            "disagrees with the handoff",
-            "active or unconfirmed implementer",
-            "base commit exists and is an ancestor of `HEAD`",
-        ):
-            with self.subTest(condition=condition):
-                self.assertIn(condition, normalized)
-        self.assertIn("every such read uses the verified absolute", review)
-        self.assertIn("every Git command uses `git -C", review)
+        self.assertIn("hands off only a committed `in_review` delivery with a clean worktree", normalized)
+        self.assertIn("in the `work.worktree` it names", normalized)
         self.assertNotIn("uses that same primary checkout", review)
         self.assertNotIn("git switch <task-branch>", review)
         self.assertNotRegex(
             review,
             r"(?is)leave the primary checkout.{0,80}on the task branch",
         )
-
-    def test_review_mode_boundary_has_no_hardcoded_review_record_path(self) -> None:
+    def test_review_procedure_has_no_hardcoded_review_record_path(self) -> None:
         text = (self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        match = re.search(
-            r"<!-- CARDINE:BEGIN capability=review-mode-boundary v1 -->\n?(.*?)"
-            r"<!-- CARDINE:END -->",
-            text,
-            re.DOTALL,
-        )
-        self.assertIsNotNone(match)
-        self.assertNotIn("tasks/reviews/<TASK-ID>.md", match.group(1))
-
+        self.assertNotIn("tasks/reviews/<TASK-ID>.md", text)
+        self.assertNotIn("review-mode-boundary", text)
 
 class DuplicateHeadingAuditTest(unittest.TestCase):
     """`audit_duplicate_headings` (task 007's duplication-detection half):

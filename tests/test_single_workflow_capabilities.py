@@ -34,14 +34,16 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
 
     def test_lifecycle_and_bounded_worktree_keep_their_catalog_versions(self):
         pairs = dict(marker_pairs((ROOT / "templates/single/docs/LIFECYCLE_ORCHESTRATION.md").read_text()))
-        self.assertEqual(pairs["lifecycle-orchestration"], 2)
+        self.assertEqual(pairs["lifecycle-orchestration"], 3)
         pairs = dict(marker_pairs((ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()))
-        self.assertEqual(pairs["bounded-worktree-lifecycle"], 2)
+        # The bounded-worktree prose is the engine's now, so its capability is retired.
+        self.assertNotIn("bounded-worktree-lifecycle", pairs)
+        self.assertTrue(json.loads((ROOT / "capabilities/markers-v1.json").read_text())["capabilities"]["bounded-worktree-lifecycle"]["retired"])
         check_repository.check_capability_required_versions(ROOT)
         text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
         self.assertIn("queued -> in_progress", text)
-        self.assertIn("until landing writes `done`", text)
-        self.assertIn("taskIdentity.mode", text)
+        self.assertIn("reached only through verified landing", text)
+        self.assertNotIn("taskIdentity.mode", text)
         for item in managed_files(ROOT):
             text = item.source.read_text()
             self.assertNotIn("task transition <TASK-ID> ACCEPTED", text)
@@ -56,12 +58,12 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
             shutil.copytree(ROOT / "templates/single", root / "templates/single")
             shutil.copytree(ROOT / "capabilities", root / "capabilities")
             later = root / "templates/single/docs/workflows/IMPLEMENTATION.md"
-            later.write_text(later.read_text() + "\n<!-- CARDINE:BEGIN capability=lifecycle-orchestration v3 -->\nOld variant.\n<!-- CARDINE:END -->\n")
+            later.write_text(later.read_text() + "\n<!-- CARDINE:BEGIN capability=lifecycle-orchestration v4 -->\nOld variant.\n<!-- CARDINE:END -->\n")
             output = io.StringIO()
             with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
                 check_repository.check_capability_required_versions(root)
-            self.assertIn("requiredVersion=2,", output.getvalue())
-            self.assertIn("ships v3", output.getvalue())
+            self.assertIn("requiredVersion=3,", output.getvalue())
+            self.assertIn("ships v4", output.getvalue())
 
     def test_catalog_and_dependencies_use_the_reading_policy(self):
         catalog = load_capability_catalog(ROOT)
@@ -88,8 +90,11 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
 
     def test_reading_policy_retains_read_guards_and_evidence_without_counters(self):
         text = (ROOT / "templates/single/docs/CONTEXT_READING_POLICY.md").read_text()
-        for required in ("Task-first loading", "Read-guard threshold", "Evidence tiers", "bounded", "authority-excerpt"):
+        for required in ("bounded-context-readers", "Read large files by range", "cardine context authority"):
             self.assertIn(required, text)
+        # The evidence tiers live in the task blueprint, where manual verification is declared.
+        blueprint = (ROOT / "templates/single/tasks/TASK_BLUEPRINT.md").read_text()
+        self.assertIn("tier-3 (perceptual)", blueprint)
         for retired in ("budget show", "budget spend", "Budget usage:", "budget.jsonl"):
             self.assertNotIn(retired, text)
 
@@ -108,7 +113,7 @@ class SingleWorkflowCapabilitiesTest(unittest.TestCase):
                 locked = cli("lock", "--mode", mode)
                 self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
                 path = project / "PROJECT_WORKFLOW.md"
-                text = path.read_text().replace("capability=git-workflow v3 -->", "capability=git-workflow v3 -->\nTampered policy.", 1)
+                text = path.read_text().replace("capability=git-workflow v4 -->", "capability=git-workflow v4 -->\nTampered policy.", 1)
                 path.write_text(text)
                 fixture.migration("001-synthetic-policy", "2.1.0", capability="git-workflow", version=17,
                                   content="Updated canonical policy.", paths=("PROJECT_WORKFLOW.md",), mode=mode)

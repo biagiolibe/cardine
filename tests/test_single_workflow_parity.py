@@ -229,8 +229,9 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 self.assertEqual(resolve_project_configuration(f.worker)['taskDefaults']['validationRetryLimit'], 3)
                 self.assertEqual(resolve_task_contract(f.worker, '001')['options']['validationRetryLimit'], 3)
                 policy = (ROOT / 'templates/single/docs/CONTEXT_READING_POLICY.md').read_text()
-                self.assertIn('Read-guard threshold', policy)
-                self.assertIn('Evidence tiers', policy)
+                self.assertIn('Read large files by range', policy)
+                blueprint = (ROOT / 'templates/single/tasks/TASK_BLUEPRINT.md').read_text()
+                self.assertIn('tier-3 (perceptual)', blueprint)
                 self.assertNotIn('budget spend', policy)
                 self.assertNotIn('Budget usage:', policy)
 

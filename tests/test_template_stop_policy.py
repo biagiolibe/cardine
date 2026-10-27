@@ -10,16 +10,28 @@ ROOT = Path(__file__).resolve().parents[1]
 TOKEN = r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+"
 
 
+def stops_section() -> str:
+    text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
+    match = re.search(
+        r"<!-- CARDINE:BEGIN capability=git-workflow v\d+ -->(.*?)<!-- CARDINE:END -->", text, re.S,
+    )
+    return re.split(r"\n##+ Stops and denials\n", match[1])[1]
+
+
 class TemplateStopPolicyTest(unittest.TestCase):
     def test_decision_12_distinguishes_guardrails_recovery_and_failing_work(self):
-        text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text()
-        policy = text.split("### Stops and denials", 1)[1].split("### Closure", 1)[0]
+        policy = " ".join(stops_section().split())
         for instruction in (
-            "**Guardrail.** Stop", "human_decision: true", "**Recoverable state.**",
-            "in the same turn and continue", "Never\n  run a recovery twice",
-            "**Failing work.**", "Rerun a failed validation\n  once without changes",
-            "record the test as intermittent", "resolved `validationRetryLimit` consecutive\n  counted failures",
-            "a single\n  failed validation does not stop the agent",
+            # Guardrail: only a blocked outcome that needs a person is a stop.
+            "Stop only for a denied action, a scope change (`BLOCKED SCOPE_CHANGE_REQUIRED`), or `outcome: blocked` with `stop.human_decision: true`",
+            "report the code and `stop.resume`",
+            # Recoverable state: act in the same turn.
+            "Every other outcome is not a stop: run `next.command` in the same turn",
+            "wait `retry_after_seconds` when `waiting`",
+            # Failing work: repair and rerun; the engine counts.
+            "Failing validation or an unmet criterion (`ACCEPTANCE_UNMET`) is work, not a stop: fix it and call `cardine run` again",
+            "The engine reruns once, records an intermittent pass, and counts failures",
+            "after the task's `validationRetryLimit` counted failures it stops with `VALIDATION_RETRY_LIMIT`",
         ):
             self.assertIn(instruction, policy)
 
@@ -30,33 +42,25 @@ class TemplateStopPolicyTest(unittest.TestCase):
                 (ROOT / "capabilities/stop-codes-v1.json").read_text()
             )["stops"]
         }
-        policies = []
-        for path in (ROOT / "templates/single").rglob("*.md"):
-            text = path.read_text()
-            match = re.search(
-                r"<!-- CARDINE:BEGIN capability=git-workflow v\d+ -->(.*?)<!-- CARDINE:END -->",
-                text, re.S,
-            )
-            if not match:
-                continue
-            policies.append(path)
-            policy = match[1]
-            codes = set(re.findall(r"`(" + TOKEN + r")`|BLOCKED (" + TOKEN + r")", re.split(r"\n##+ Stops and denials\n", policy)[1]))
-            named = {left or right for left, right in codes}
-            with self.subTest(path=str(path)):
-                self.assertTrue(named)
-                self.assertFalse(named - entries.keys())
-                guardrail = re.search(r"- \*\*Guardrail\.\*\*(.*?)(?=\n- )", policy, re.S)
-                self.assertIsNotNone(guardrail)
-                guardrail_codes = set(re.findall(r"BLOCKED (" + TOKEN + r")", guardrail[1]))
-                # Explicit stop instructions outside the class paragraph also
-                # declare guardrails, including required review and rule conflict.
-                guardrail_codes.update(re.findall(
-                    r"stop (?:with|at) `(?:BLOCKED )?(" + TOKEN + r")`", policy
-                ))
-                self.assertTrue(guardrail_codes)
-                for code in guardrail_codes:
-                    self.assertIs(entries[code]["human_decision"], True, code)
-                self.assertIs(entries["VALIDATION_FAILED"]["human_decision"], False)
-        # The single template set carries the git-workflow block once, in PROJECT_WORKFLOW.md.
-        self.assertEqual([path.name for path in policies], ["PROJECT_WORKFLOW.md"])
+        # A code named only as work, not a stop, is not a stop instruction.
+        policy = " ".join(sentence for sentence in re.split(r"(?<=[.])\s", stops_section()) if "not a stop" not in sentence)
+        codes = set(re.findall(r"`(" + TOKEN + r")`|BLOCKED (" + TOKEN + r")", policy))
+        named = {left or right for left, right in codes}
+        self.assertTrue(named)
+        self.assertFalse(named - entries.keys())
+        # Every code the section names is one the agent stops on, so each needs a person.
+        for code in named:
+            self.assertIs(entries[code]["human_decision"], True, code)
+        self.assertIs(entries["VALIDATION_FAILED"]["human_decision"], False)
+        self.assertNotIn("VALIDATION_FAILED", policy)
+
+    def test_the_git_workflow_block_ships_once_in_the_workflow(self):
+        carriers = [
+            path.name for path in (ROOT / "templates/single").rglob("*.md")
+            if "capability=git-workflow" in path.read_text()
+        ]
+        self.assertEqual(carriers, ["PROJECT_WORKFLOW.md"])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -155,7 +155,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 107 — Verify the main push and clean up remote and local branches (RE6b).
 - `[x]` 108 — Make self-update repeatable with a pinned target (SR1a).
 - `[x]` 109 — Make upgrade and host writes repeatable (SR1b).
-- `[ ]` 110 — Rewrite the always-read product templates (TR1a).
+- `[x]` 110 — Rewrite the always-read product templates (TR1a).
 - `[ ]` 111 — Guard template budgets, commands, and stop prose (TR1b).
 - `[ ]` 112 — Condense the lifecycle and record templates (TR2a).
 - `[ ]` 113 — Condense the remaining templates and delete folded documents (TR2b).

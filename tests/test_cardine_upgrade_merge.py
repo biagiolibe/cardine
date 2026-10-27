@@ -163,7 +163,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         local = self.project / "docs/workflows/REMEDIATION.md"
         local_text = local.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=review-remediation-record", local_text)
+        self.assertIn("CARDINE:BEGIN capability=task-worktree-remediation", local_text)
         local.write_text(
             local_text.replace("# Remediation Procedure", "# Our Remediation Procedure"), encoding="utf-8"
         )
@@ -185,28 +185,26 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_upgrade_appends_new_marker_when_existing_marker_was_moved(self) -> None:
         """A new protected capability must not conflict solely because a project
         relocated an unchanged older protected block."""
-        policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
-        profile = self.framework / "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md"
+        policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=execution-evidence-profile v1 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v2 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
         )
         self.assertIsNotNone(marker)
         policy.write_text(incoming_policy[: marker.start()] + incoming_policy[marker.end() :], encoding="utf-8")
-        profile.unlink()
         (self.framework / "VERSION").write_text("1.1.14\n", encoding="utf-8")
         shutil.rmtree(self.project)
         self.project.mkdir()
         self.copy_governed_templates()
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
 
-        local_policy = self.project / "docs/CONTEXT_READING_POLICY.md"
+        local_policy = self.project / "PROJECT_WORKFLOW.md"
         local_text = local_policy.read_text(encoding="utf-8")
         validation = re.search(
-            r"<!-- CARDINE:BEGIN capability=validation-scoping v1 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=validation-scoping v2 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             local_text,
             re.DOTALL,
@@ -224,31 +222,27 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
 
         policy.write_text(incoming_policy, encoding="utf-8")
-        profile.write_text("# Project Execution Evidence Profile\n", encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.15\n", encoding="utf-8")
 
         appended = templates_markers.append_only_new_markers(
             local_policy.read_text(encoding="utf-8"),
-            (self.project / ".cardine/baselines/1.1.14/docs/CONTEXT_READING_POLICY.md").read_text(
-                encoding="utf-8"
-            ),
+            (self.project / ".cardine/baselines/1.1.14/PROJECT_WORKFLOW.md").read_text(encoding="utf-8"),
             incoming_policy,
         )
         self.assertIsNotNone(appended)
         self.assertIn("## Project validation baseline", appended)
-        self.assertIn("capability=execution-evidence-profile v1", appended)
+        self.assertIn("capability=review-policy v2", appended)
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("MERGE    docs/CONTEXT_READING_POLICY.md", checked.stdout)
+        self.assertIn("MERGE    PROJECT_WORKFLOW.md", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stderr)
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertIn("## Project validation baseline", upgraded)
-        self.assertIn("capability=validation-scoping v1", upgraded)
-        self.assertIn("capability=execution-evidence-profile v1", upgraded)
-        self.assertTrue((self.project / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file())
+        self.assertIn("capability=validation-scoping v2", upgraded)
+        self.assertIn("capability=review-policy v2", upgraded)
 
     def test_marker_insertion_promotes_an_identical_unmarked_local_rule(self) -> None:
         template = (
@@ -304,14 +298,14 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         policy = self.framework / "templates/single/docs/CONTEXT_READING_POLICY.md"
         policy.write_text(
-            policy.read_text(encoding="utf-8").replace("## Task-first loading", "## Task-First Loading Rules"),
+            policy.read_text(encoding="utf-8").replace("## Context-size ceilings", "## Task-First Loading Rules"),
             encoding="utf-8",
         )
         local = self.project / "docs/CONTEXT_READING_POLICY.md"
         local_text = local.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=validation-scoping", local_text)
+        self.assertIn("CARDINE:BEGIN capability=bounded-context-readers", local_text)
         local.write_text(
-            local_text.replace("## Task-first loading", "## Our Task-First Loading"), encoding="utf-8"
+            local_text.replace("## Context-size ceilings", "## Our Task-First Loading"), encoding="utf-8"
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
@@ -322,22 +316,22 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
     def test_apply_refuses_conflicting_local_change(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
-        workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Roles", "## Updated Roles"), encoding="utf-8")
+        workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Review policy", "## Updated Review policy"), encoding="utf-8")
         local = self.project / "PROJECT_WORKFLOW.md"
-        local.write_text(local.read_text(encoding="utf-8").replace("## Roles", "## Local Roles"), encoding="utf-8")
+        local.write_text(local.read_text(encoding="utf-8").replace("## Review policy", "## Local Review policy"), encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 2)
         self.assertIn("BLOCKED", applied.stderr)
-        self.assertIn("## Local Roles", local.read_text(encoding="utf-8"))
+        self.assertIn("## Local Review policy", local.read_text(encoding="utf-8"))
 
     def test_owner_reconciled_upgrade_registers_baseline_despite_conflicts(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
-        workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Roles", "## Updated Roles"), encoding="utf-8")
+        workflow.write_text(workflow.read_text(encoding="utf-8").replace("## Review policy", "## Updated Review policy"), encoding="utf-8")
         local = self.project / "PROJECT_WORKFLOW.md"
-        local.write_text(local.read_text(encoding="utf-8").replace("## Roles", "## Local Roles"), encoding="utf-8")
+        local.write_text(local.read_text(encoding="utf-8").replace("## Review policy", "## Local Review policy"), encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
 
         rejected = self.run_cli("upgrade", "--check", "--owner-reconciled")
@@ -347,28 +341,28 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply", "--owner-reconciled")
         self.assertEqual(applied.returncode, 0, applied.stderr)
         self.assertIn("Owner-reconciled upgrade", applied.stdout)
-        self.assertIn("## Local Roles", local.read_text(encoding="utf-8"))
+        self.assertIn("## Local Review policy", local.read_text(encoding="utf-8"))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.1")
         baselines = sorted(path.name for path in (self.project / ".cardine/baselines").iterdir())
         self.assertEqual(baselines, ["1.1.1"])
         baseline_workflow = self.project / ".cardine/baselines/1.1.1/PROJECT_WORKFLOW.md"
-        self.assertIn("## Updated Roles", baseline_workflow.read_text(encoding="utf-8"))
+        self.assertIn("## Updated Review policy", baseline_workflow.read_text(encoding="utf-8"))
 
     def test_check_reports_multiple_merge_conflicts(self) -> None:
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         workflow = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         workflow.write_text(
             workflow.read_text(encoding="utf-8")
-            .replace("## Roles", "## Updated Roles")
-            .replace("## Git workflow", "## Updated Git workflow"),
+            .replace("## Review policy", "## Updated Review policy")
+            .replace("## Running a task", "## Updated Running a task"),
             encoding="utf-8",
         )
         local = self.project / "PROJECT_WORKFLOW.md"
         local.write_text(
             local.read_text(encoding="utf-8")
-            .replace("## Roles", "## Local Roles")
-            .replace("## Git workflow", "## Local Git workflow"),
+            .replace("## Review policy", "## Local Review policy")
+            .replace("## Running a task", "## Local Running a task"),
             encoding="utf-8",
         )
         (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
