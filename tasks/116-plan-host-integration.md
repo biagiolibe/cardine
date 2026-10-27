@@ -219,3 +219,14 @@ revalidation in the same turn; do not stop to report the fix.
 This task changes documentation only. Under the validation-scoping rule of
 `PROJECT_WORKFLOW.md`, it skips the test suites and records that skip in the
 handoff. It still runs the identifier guard, which scans documentation.
+
+## Completion evidence
+
+`docs/HOST_INTEGRATION_PLAN.md` supplies the inventory, target, permission
+boundary, six deferred-item assignments, regression fixtures, twenty bounded
+implementation rows and four explicitly undecided developer questions. It
+identifies conflicts with the historical host capability contract and preserves
+the run engine's authority and receipt/session protocols. All five required
+validation commands passed on implementation commit `f13815a`; the handoff
+records exact results and the documentation-only test-suite skip. No product
+implementation, frozen file, real-home setup or `.cardine/` write occurred.
