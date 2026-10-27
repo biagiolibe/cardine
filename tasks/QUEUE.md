@@ -54,7 +54,15 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[ ]` | 130 | Orchestrate setup on Cardine paths without real-home apply (H4b) | 🔴 P1 | 129 | [130](130-setup-orchestration.md) |
 | `[ ]` | 131 | Register user-level hooks on both hosts without duplicates (H4c) | 🔴 P1 | 130 | [131](131-user-hook-registration.md) |
 | `[ ]` | 132 | Unify doctor and drop adopter test-command assumptions (H4d) | 🔴 P1 | 131 | [132](132-unified-doctor.md) |
-| `[ ]` | 133 | Enforce protected paths and Claude role restrictions (H5a) | 🔴 P1 | 132 | [133](133-claude-role-permissions.md) |
+| `[ ]` | 133 | Enforce protected paths and Claude role restrictions (H5a) | 🔴 P1 | 132, 137 | [133](133-claude-role-permissions.md) |
 | `[ ]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](134-codex-role-policy.md) |
-| `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134 | [135](135-host-transports.md) |
+| `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](135-host-transports.md) |
 | `[ ]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](136-doctor-role-proofs.md) |
+
+### Phase 28 — Test suite: run engine fixtures
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 137 | Restore the run engine fixtures in place instead of rebuilding them | 🔴 P1 | 117 | [137](137-restore-run-fixtures.md) |

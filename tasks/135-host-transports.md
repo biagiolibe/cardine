@@ -127,7 +127,7 @@ Other rows of the plan, work item 10, the evaluation runs of decision 14 rule
 
 ## Dependencies
 
-- **Depends on**: 134
+- **Depends on**: 134, 137
 - **Blocks**: 136
 
 ## Developer decisions given in advance
