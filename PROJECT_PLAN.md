@@ -157,7 +157,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 109 — Make upgrade and host writes repeatable (SR1b).
 - `[x]` 110 — Rewrite the always-read product templates (TR1a).
 - `[x]` 111 — Guard template budgets, commands, and stop prose (TR1b).
-- `[ ]` 112 — Condense the lifecycle and record templates (TR2a).
+- `[x]` 112 — Condense the lifecycle and record templates (TR2a).
 - `[ ]` 113 — Condense the remaining templates and delete folded documents (TR2b).
 - `[ ]` 114 — Show console previews and actions from verified facts (RE7a).
 - `[ ]` 115 — Audit the run engine end to end and document its commands (RE7b).

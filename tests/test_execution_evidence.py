@@ -183,7 +183,7 @@ class ExecutionEvidenceTest(unittest.TestCase):
 
     def blueprint_contract_section(self) -> str:
         blueprint = (Path(__file__).resolve().parents[1] / "templates/single/tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        match = re.search(r"^## Execution contract — resolved\n.*?(?=^## )", blueprint, re.MULTILINE | re.DOTALL)
+        match = re.search(r"^## Execution contract — resolved\n.*?(?=^## |\Z)", blueprint, re.MULTILINE | re.DOTALL)
         self.assertIsNotNone(match)
         return match.group(0)
 

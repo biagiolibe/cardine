@@ -240,7 +240,7 @@ class GovernedCompletionRowsTest(support.GovernedCompletionRowsFixture):
         self.assertIn("cardine review verdict <TASK-ID> APPROVE --owner", workflow)
         self.assertIn("run by the developer and never by an agent", workflow)
         self.assertIn("then continue with `cardine run`", workflow)
-        self.assertIn("owner acceptance adds `--owner`", record_template)
+        self.assertIn("the owner adds `--owner`", record_template)
         heading = re.search(r"^## Attempt <N> — <(.+?)>$", record_template, re.MULTILINE)
         self.assertIsNotNone(heading)
         self.assertIn("APPROVE", heading.group(1))

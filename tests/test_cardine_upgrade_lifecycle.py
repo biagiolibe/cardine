@@ -61,7 +61,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         audit = self.run_cli("audit")
         # This legacy lock fixture has no capabilityProfiles; audit reports
         # UNVERIFIED for that declaration independently of marker integrity.
-        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v9 matches the released text", audit.stdout)
+        self.assertIn("tasks/TASK_BLUEPRINT.md: capability=task-blueprint v10 matches the released text", audit.stdout)
         self.assertNotIn("FAIL           marker-integrity", audit.stdout)
         self.assertNotIn("DRIFT", audit.stdout)
         repeated = self.run_cli("upgrade", "--check")
@@ -111,7 +111,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         upgraded_blueprint = (self.project / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-blueprint v9", upgraded_blueprint)
+        self.assertIn("capability=task-blueprint v10", upgraded_blueprint)
         self.assertIn("Classification: NOT_APPLICABLE", upgraded_blueprint)
         self.assertIn("Classification: REQUIRED", upgraded_blueprint)
         self.assertIn("Project-owned task note.", upgraded_blueprint)
@@ -203,7 +203,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
             (self.project / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8"),
         )
         report = (self.project / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
-        self.assertIn("never an absolute path", report)
+        self.assertIn("free-form and optional", report)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.48")
         self.assertEqual(manifest["appliedMigrations"][-1], "013-synthetic-bounded")
@@ -271,7 +271,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn(f"capability=git-workflow v{self.baseline_version('single', 'PROJECT_WORKFLOW.md', 'git-workflow')}", project_workflow.read_text(encoding="utf-8"))
         self.assertIn("Consumer-owned note.", project_workflow.read_text(encoding="utf-8"))
         self.assertIn(
-            "capability=task-worktree-handoff v2",
+            "capability=manual-verification-record v2",
             (self.project / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8"),
         )
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
@@ -509,7 +509,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded_report = report.read_text(encoding="utf-8")
-        self.assertIn("capability=task-worktree-handoff v2", upgraded_report)
+        self.assertIn("capability=manual-verification-record v2", upgraded_report)
         self.assertNotIn("Current task commit", upgraded_report)
         self.assertIn("Consumer-owned handoff note.", upgraded_report)
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
@@ -522,9 +522,10 @@ worktree before the branch only after validated integration succeeds.
     def test_1_4_0_template_capabilities_are_required(self) -> None:
         requirements = owner_templates_migrations.capability_requirements(self.framework)
         self.assertNotIn("worktree-budget-retirement", requirements)
-        for capability, version in (("worktree-command-locations", 2), ("handoff-correction-redelivery", 2)):
+        for capability, version in (("worktree-command-locations", 3),):
             with self.subTest(capability=capability):
                 self.assertEqual(requirements[capability], (version, "030-synthetic-delivery"))
+        self.assertNotIn("handoff-correction-redelivery", requirements)
 
     def test_pristine_1_2_15_lean_upgrade_installs_task_close(self) -> None:
         workflow = self.framework / "templates/single"
@@ -754,7 +755,7 @@ worktree before the branch only after validated integration succeeds.
         paths = ("PROJECT_WORKFLOW.md", "docs/WORKTREE_LIFECYCLE.md")
         current = {relative: (workflow / relative).read_text(encoding="utf-8") for relative in paths}
         resume_paragraph = re.compile(r"\nGuidance that no command backs is advice.*?(?=<!-- CARDINE:END -->)", re.DOTALL)
-        resume_bullet = re.compile(r" Only a Resume directive adds `--resume`.*?`dirty-worktree` and no other error\.", re.DOTALL)
+        resume_bullet = re.compile(r" Only a Resume directive adds `prepare --resume`.*?changes nothing\.", re.DOTALL)
         previous = {
             "PROJECT_WORKFLOW.md": resume_paragraph.sub(
                 "\n", current["PROJECT_WORKFLOW.md"].replace(
@@ -763,7 +764,7 @@ worktree before the branch only after validated integration succeeds.
             ),
             "docs/WORKTREE_LIFECYCLE.md": resume_bullet.sub(
                 "", re.sub(
-                    r"## Commit-less fast-forward recovery.*?(?=## Candidate validation)",
+                    r"; Resume adds `--resume` after reading status and diff",
                     "", current["docs/WORKTREE_LIFECYCLE.md"], flags=re.DOTALL,
                 ).replace(
                     "capability=worktree-lifecycle v1", "capability=worktree-lifecycle v1"
@@ -805,7 +806,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("Consumer-owned resume note.", upgraded)
         lifecycle = (self.project / "docs/WORKTREE_LIFECYCLE.md").read_text(encoding="utf-8")
         self.assertIn(f"capability=worktree-lifecycle v{self.baseline_version('single', 'docs/WORKTREE_LIFECYCLE.md', 'worktree-lifecycle')}", lifecycle)
-        self.assertIn("Only a Resume directive adds `--resume`", lifecycle)
+        self.assertIn("Only a Resume directive adds `prepare --resume`", lifecycle)
 
     def test_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules(self) -> None:
         self._assert_upgrade_installs_closure_command_policy("single")
@@ -815,8 +816,8 @@ worktree before the branch only after validated integration succeeds.
         template = workflow / "docs/WORKTREE_LIFECYCLE.md"
         current = template.read_text(encoding="utf-8")
         previous = re.sub(
-            r"\n## Candidate validation by integration outcome\n.*?(?=\n`cardine codex worktree-path`)",
-            "\n",
+            r"\n## Candidate validation\n.*?(?=<!-- CARDINE:END -->)",
+            "",
             current,
             count=1,
             flags=re.DOTALL,
@@ -933,7 +934,7 @@ worktree before the branch only after validated integration succeeds.
                 self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
                 self.assertIn(lifecycle_plan, applied.stdout)
                 upgraded = lifecycle.read_text(encoding="utf-8")
-                self.assertIn("## Candidate validation by integration outcome", upgraded)
+                self.assertIn("## Candidate validation", upgraded)
                 if state == "local-edit":
                     self.assertIn("Consumer-owned lifecycle note.", upgraded)
                 else:

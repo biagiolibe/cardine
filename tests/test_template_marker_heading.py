@@ -45,7 +45,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing(self) -> None:
         blueprint = (self.WORKFLOW / "tasks/TASK_BLUEPRINT.md").read_text(encoding="utf-8")
         implementation = (self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
-        self.assertIn(("task-blueprint", "9"), self.marker_pairs(blueprint))
+        self.assertIn(("task-blueprint", "10"), self.marker_pairs(blueprint))
         self.assertIn("Classification: NOT_APPLICABLE", blueprint)
         self.assertIn("Rationale:", blueprint)
         self.assertIn("Classification: REQUIRED", blueprint)
@@ -61,7 +61,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         text = (self.WORKFLOW / "docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(text),
-            [("review-remediation-record", "2"), ("manual-verification-record", "1")],
+            [("review-remediation-record", "3"), ("manual-verification-record", "2")],
         )
 
     def test_lifecycle_orchestration_carries_its_own_marker(self) -> None:
@@ -79,9 +79,9 @@ class CapabilityMarkerTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertNotIn("execution-evidence-profile", dict(self.marker_pairs(policy)))
-        self.assertIn("Successful validation output", profile)
-        self.assertIn("Failure diagnostics", profile)
-        self.assertIn("Manual evidence", profile)
+        self.assertIn("This profile is advice", profile)
+        self.assertIn("Advice: diagnose progressively", profile)
+        self.assertIn("perceptual criterion", profile)
         self.assertNotIn("cargo", profile.lower())
     def test_reasoning_budget_contract_was_retired_from_governed_templates(self) -> None:
         """Migration 063 retires `reasoning-budget-contract` through `removes`;
@@ -97,7 +97,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         ]
         texts = {path: (self.WORKFLOW / path).read_text(encoding="utf-8") for path in paths}
 
-        self.assertIn(("task-blueprint", "9"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
+        self.assertIn(("task-blueprint", "10"), self.marker_pairs(texts["tasks/TASK_BLUEPRINT.md"]))
         self.assertIn(
             ("lifecycle-orchestration", "3"), self.marker_pairs(texts["docs/LIFECYCLE_ORCHESTRATION.md"])
         )
@@ -153,12 +153,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         completion_report = (self.WORKFLOW / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(completion_report),
-            [
-                ("task-worktree-handoff", "2"),
-                ("handoff-correction-redelivery", "2"),
-                ("manual-verification-record", "1"),
-                ("ci-verified-validation", "1"),
-            ],
+            [("manual-verification-record", "2")],
         )
 
     def test_manual_verification_precondition_gates_implementation_start(self) -> None:
@@ -173,11 +168,11 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertIn("report a failed probe and do not search for an alternative", agents)
     def test_manual_verification_record_fields_in_completion_and_review_records(self) -> None:
         completion_report = (self.WORKFLOW / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
-        self.assertIn("Manual verification: `<none | screenshot path", completion_report)
+        self.assertIn("name the screenshot path", completion_report)
         review_record = (self.WORKFLOW / "docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
-        self.assertIn(("manual-verification-record", "1"), self.marker_pairs(review_record))
+        self.assertIn(("manual-verification-record", "2"), self.marker_pairs(review_record))
         self.assertIn("Manual verification observed:", review_record)
-        self.assertIn("independently confirms", review_record)
+        self.assertIn("confirm the named screenshot", review_record)
 
     def test_project_workflow_carries_all_declared_baseline_capabilities(self) -> None:
         text = (ROOT / "templates/single/PROJECT_WORKFLOW.md").read_text(encoding="utf-8")
@@ -203,7 +198,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_whole_file_baseline_capabilities_each_carry_one_marker(self) -> None:
         expectations = {
             "LANGUAGE_POLICY.md": ("language-policy", "1"),
-            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "9"),
+            "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "10"),
             "docs/CODE_ORGANIZATION.md": ("code-organization", "1"),
             "docs/AUDIT_PROMPT_READ_ONLY.md": ("audit-prompt", "1"),
         }

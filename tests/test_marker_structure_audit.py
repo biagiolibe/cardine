@@ -131,7 +131,7 @@ class StandaloneBlockTemplateTest(unittest.TestCase):
 
     def test_lifecycle_and_remote_cleanup_are_managed_capabilities(self) -> None:
         text = self.read("docs/WORKTREE_LIFECYCLE.md")
-        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 2), ("worktree-lifecycle", 4)])
+        self.assertEqual(templates_markers.marker_pairs(text), [("worktree-command-locations", 3), ("worktree-lifecycle", 5)])
         policy = self.read("docs/INTEGRATION_POLICY.md")
         self.assertIn(("remote-branch-cleanup", 1), templates_markers.marker_pairs(policy))
         self.assertNotIn("distinct authorized reviewer identity", policy)
@@ -329,7 +329,7 @@ class WrappedTextUpgradeTest(unittest.TestCase):
     def test_a_customized_lean_lifecycle_document_is_a_conflict_not_a_duplicate(self) -> None:
         stdout, stderr = self.scenario(
             "single", "docs/WORKTREE_LIFECYCLE.md", "worktree-lifecycle",
-            ("Use the host-neutral", "Use the project-specific host-neutral"),
+            ("normally issues these single steps", "normally issues these project-specific single steps"),
         )
         self.assertRegex(stdout, r"CONFLICT\s+docs/WORKTREE_LIFECYCLE.md")
         self.assertNotIn("APPEND-MARKERS", stdout)
@@ -450,7 +450,7 @@ class ManagedCopyDigestAuditTest(FrameworkFixture):
         self.lock()
         lifecycle = self.project / "docs/WORKTREE_LIFECYCLE.md"
         lifecycle.write_text(
-            lifecycle.read_text(encoding="utf-8").replace("Commands exit `0` on success", "Commands exit `7` on success", 1),
+            lifecycle.read_text(encoding="utf-8").replace("Exit `0` is success", "Exit `7` is success", 1),
             encoding="utf-8",
         )
 

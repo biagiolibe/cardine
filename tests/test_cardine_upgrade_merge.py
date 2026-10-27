@@ -259,11 +259,11 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
 
     def test_long_command_waits_block_is_added_once_to_a_customized_profile(self) -> None:
         template = (ROOT / "templates" / "single" / "docs" / "EXECUTION_EVIDENCE_PROFILE.md").read_text(encoding="utf-8")
-        self.assertIsNotNone(templates_markers.extract_marker_block(template, "long-command-waits", 1))
+        self.assertIsNotNone(templates_markers.extract_marker_block(template, "long-command-waits", 2))
         local = "# Project profile\n\nProject-owned rule.\n"
         upgraded = templates_markers.append_only_new_markers(local, "# Project profile\n", template)
         self.assertIsNotNone(upgraded)
-        self.assertEqual(upgraded.count("capability=long-command-waits v1"), 1)
+        self.assertEqual(upgraded.count("capability=long-command-waits v2"), 1)
         self.assertIn("Project-owned rule.", upgraded)
 
     def test_marker_normalization_accepts_prose_reflow_but_not_fenced_content(self) -> None:
