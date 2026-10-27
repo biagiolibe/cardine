@@ -9,9 +9,9 @@ Run `cardine run <TASK-ID> --project <primary-checkout>`, do the `work` it retur
 <!-- CARDINE:END -->
 
 <!-- CARDINE:BEGIN capability=manual-verification-precondition v2 -->
-Advice: if the task declares `Manual verification: required`, check its rationale first: a missing one, or one naming a property readable as a value in the program, is `BLOCKED SCOPE_CHANGE_REQUIRED`. Otherwise prove the evidence channel with a successful probe before implementing. Report a failed probe; do not search for an alternative.
+If the task declares `Manual verification: required`, a missing rationale, or one naming a property readable as a value in the program, is a scope change. Advice: otherwise prove the evidence channel with a successful probe before implementing; report a failed probe and do not search for an alternative.
 <!-- CARDINE:END -->
 
 <!-- CARDINE:BEGIN capability=spike-routing v2 -->
-Advice: if an acceptance criterion cannot be evaluated without discovering an unknown, return `BLOCKED SCOPE_CHANGE_REQUIRED` naming the spike task that resolves it; do not investigate inside this task.
+A criterion that cannot be evaluated without discovering an unknown is a scope change: name the spike task that resolves it. Advice: do not investigate inside this task.
 <!-- CARDINE:END -->

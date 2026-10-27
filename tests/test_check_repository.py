@@ -202,8 +202,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
-                "if an acceptance criterion cannot be evaluated",
-                "if an acceptance criterion is an UNAUTHORIZED HAND EDIT",
+                "A criterion that cannot be evaluated",
+                "A criterion that is an UNAUTHORIZED HAND EDIT",
                 1,
             ),
             encoding="utf-8",
@@ -220,8 +220,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
-                "if an acceptance criterion cannot be evaluated",
-                "if an acceptance criterion is an UNAUTHORIZED HAND EDIT",
+                "A criterion that cannot be evaluated",
+                "A criterion that is an UNAUTHORIZED HAND EDIT",
                 1,
             ),
             encoding="utf-8",
@@ -234,8 +234,8 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         text = target.read_text(encoding="utf-8")
         target.write_text(
             text.replace(
-                "if an acceptance criterion cannot be evaluated",
-                "if an acceptance criterion is deliberately reworded",
+                "A criterion that cannot be evaluated",
+                "A criterion that is deliberately reworded",
                 1,
             ),
             encoding="utf-8",

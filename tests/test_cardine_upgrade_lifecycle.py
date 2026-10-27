@@ -117,7 +117,7 @@ class UpgradeLifecycleTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         self.assertIn("Project-owned task note.", upgraded_blueprint)
         upgraded_routing = (self.project / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
         self.assertIn("capability=spike-routing v2", upgraded_routing)
-        self.assertIn("return `BLOCKED SCOPE_CHANGE_REQUIRED` naming the spike task", upgraded_routing)
+        self.assertIn("is a scope change: name the spike task", upgraded_routing)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["frameworkVersion"], "1.1.40")
         self.assertEqual(manifest["appliedMigrations"][-1], "007-synthetic-host")

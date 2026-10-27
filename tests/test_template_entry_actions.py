@@ -98,12 +98,12 @@ KEPT = {
     "RT-03": ("AGENTS.md", "read `docs/workflows/IMPLEMENTATION.md`", "one line"),
     "RT-04": ("AGENTS.md", "`docs/CODE_ORGANIZATION.md`", "advice"),
     "RT-05": ("CLAUDE.md", "generated from `AGENTS.md`", "one line"),
-    "IM-10": (IMPLEMENTATION, "Manual verification: required", "advice"),
+    "IM-10": (IMPLEMENTATION, "prove the evidence channel", "advice"),
     "IM-12": (IMPLEMENTATION, "without discovering an unknown", "advice"),
     "IM-08-kept": (IMPLEMENTATION, "clean committed HEAD", "one line"),
     "RV-06": (REVIEW, "committed `in_review` delivery with a clean worktree", "one line"),
     "RV-14": (REVIEW, "Edit no implementation file", "one line"),
-    "RV-17-kept": (REVIEW, "--request-id <issued-request-id>", "enforce"),
+    "RV-17-kept": (REVIEW, "--request-id <launch-request-id>", "enforce"),
     "IP-08": (REVIEW, "completed CI run for this exact commit", "enforce"),
     "CP-04": (REVIEW, "actionable findings", "advice"),
     "CP-05": (REVIEW, "## Project review checklist", "advice"),
@@ -215,6 +215,14 @@ class TemplateClassificationTest(unittest.TestCase):
         for code in sorted(named):
             with self.subTest(code=code):
                 self.assertIn(code, guardrails)
+
+    def test_no_stop_sits_inside_an_advice_clause(self) -> None:
+        # The scope-change stop is the workflow's; only the judgment around it is advice.
+        for path in REWRITTEN:
+            for clause in re.findall(r"Advice:[^.\n]*(?:\.|$)", read(path), re.MULTILINE):
+                with self.subTest(file=path, clause=clause[:60]):
+                    self.assertNotIn("BLOCKED", clause)
+                    self.assertNotIn("scope change", clause)
 
     def test_nothing_claims_authenticity_beyond_the_trust_boundary(self) -> None:
         text = corpus().lower()

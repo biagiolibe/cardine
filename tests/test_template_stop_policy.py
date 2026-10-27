@@ -23,7 +23,7 @@ class TemplateStopPolicyTest(unittest.TestCase):
         policy = " ".join(stops_section().split())
         for instruction in (
             # Guardrail: only a blocked outcome that needs a person is a stop.
-            "Stop only for a denied action, a scope change, or `outcome: blocked` with `stop.human_decision: true`",
+            "Stop only for a denied action, a scope change (`BLOCKED SCOPE_CHANGE_REQUIRED`), or `outcome: blocked` with `stop.human_decision: true`",
             "report the code and `stop.resume`",
             # Recoverable state: act in the same turn.
             "Every other outcome is not a stop: run `next.command` in the same turn",
@@ -32,7 +32,6 @@ class TemplateStopPolicyTest(unittest.TestCase):
             "Failing validation is work on the task: fix it and call `cardine run` again",
             "The engine reruns once, records an intermittent pass, and counts failures",
             "after the task's `validationRetryLimit` counted failures it stops with `VALIDATION_RETRY_LIMIT`",
-            "Record no counter yourself",
         ):
             self.assertIn(instruction, policy)
 

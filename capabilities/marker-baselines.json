@@ -19,7 +19,7 @@
   },
   "templates/single/PROJECT_WORKFLOW.md": {
     "git-workflow": {
-      "sha256": "91a134e8c7603c1045e67c38edf78021853c44f77783d3c85c979a761e1df7df",
+      "sha256": "36063fb4c3cd480ab87ca01f068fc9b1cfe0953dfdc83bce1ed07c1566acc935",
       "version": 4
     },
     "review-policy": {
@@ -137,11 +137,11 @@
   },
   "templates/single/docs/workflows/IMPLEMENTATION.md": {
     "manual-verification-precondition": {
-      "sha256": "8b901c1653da232b4f527f1052964af7be867c3322da6a0a2dd1e52a3473d8ce",
+      "sha256": "d34004181e4d4813cbc75f62ae1c1762cf6264ba62126cb3f67002633d89a392",
       "version": 2
     },
     "spike-routing": {
-      "sha256": "db6323f2b7cbe37d0f7d98891df603e7889f3f4f0d664611dd1b4f94786d1cc0",
+      "sha256": "411e50f035f3810fcfae54bd8e51bce20ab7e54fe8c2828738e612ccc3061d76",
       "version": 2
     },
     "task-worktree-boundary": {
@@ -151,13 +151,13 @@
   },
   "templates/single/docs/workflows/REMEDIATION.md": {
     "task-worktree-remediation": {
-      "sha256": "e423570a3d6698c0b081671e8ee607326844671254ec05acbeabc9b562479733",
+      "sha256": "4d4dc225d325c781e3621fbf15b900cb7d94cd5b5a58aa09f4ae14b159b6d53c",
       "version": 2
     }
   },
   "templates/single/docs/workflows/REVIEW.md": {
     "task-worktree-review-procedure": {
-      "sha256": "b917c0f838905e79a941719a0b83a36ca3d75916a839e0f1160b08202a8de328",
+      "sha256": "1e5e6fb728e7e419f28181846ec5f29ae5a13576a0cbb23164b632a658fac51f",
       "version": 4
     }
   },

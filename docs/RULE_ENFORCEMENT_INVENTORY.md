@@ -904,6 +904,10 @@ both host routes from explicit file lists.
   (`--request-id`) identifies the reviewer. No template claims authenticity beyond the
   plan's trust boundary.
 - At this commit `cardine run` returns its own command as `next` for the contract and
-  worktree steps of a queued task and does not prepare the worktree itself; the
-  templates tell the agent to follow `next` unchanged, as the plan designs, and RE7b
-  audits the remaining adapters.
+  worktree steps of a queued task, prepares no worktree, and leaves the state
+  `queued`; `deliver_run_implementation` and `launch_run_work` have no caller. No row
+  of the plan assigns wiring those steps into the dispatcher (RE7b audits and tests
+  it end to end). The templates tell the agent to follow `next` unchanged, as the plan
+  designs, and do not restore the Internal commands that PW-28 and IM-01 delete.
+- The reviewer's `--request-id` is the identity of the review request that launched
+  its session (`hosts/launch.py`); work item 9 supplies the profiles that hand it over.

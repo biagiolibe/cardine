@@ -165,11 +165,12 @@ class CapabilityMarkerTest(unittest.TestCase):
         agents = (self.WORKFLOW / "docs/workflows/IMPLEMENTATION.md").read_text(encoding="utf-8")
         self.assertIn(("manual-verification-precondition", "2"), self.marker_pairs(agents))
         self.assertIn("Manual verification: required", agents)
-        self.assertIn("is `BLOCKED SCOPE_CHANGE_REQUIRED`", agents)
-        self.assertIn("check its rationale first", agents)
+        self.assertIn("is a scope change", agents)
+        self.assertNotIn("BLOCKED", agents)  # the stop belongs to the workflow, not to an advice clause
+        self.assertIn("a missing rationale", agents)
         self.assertIn("readable as a value in the program", agents)
         self.assertIn("prove the evidence channel with a successful probe before implementing", agents)
-        self.assertIn("Report a failed probe; do not search for an alternative", agents)
+        self.assertIn("report a failed probe and do not search for an alternative", agents)
     def test_manual_verification_record_fields_in_completion_and_review_records(self) -> None:
         completion_report = (self.WORKFLOW / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertIn("Manual verification: `<none | screenshot path", completion_report)
