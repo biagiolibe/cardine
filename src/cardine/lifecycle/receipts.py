@@ -25,6 +25,43 @@ from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
 
 
+# Enforced operation families; command-specific identities follow a colon.
+# Existing fixture callers retain their explicit kinds so registering product
+# operations does not change fixture authority or require a migration.
+OPERATION_KINDS = frozenset((
+    'abort',
+    'abort-result',
+    'cancel',
+    'candidate-validation',
+    'ci-push',
+    'ci-result',
+    'contract_revision',
+    'creation',
+    'fixture',
+    'fixture-allowance',
+    'fixture-baseline',
+    'fixture-change',
+    'fixture-contract-revision',
+    'fixture-issued-review',
+    'fixture-missing-observation',
+    'fixture-review-policy',
+    'fixture-surface',
+    'fixture-validation',
+    'foreign-command',
+    'host-launch',
+    'implementation-delivery',
+    'landing_state',
+    'layout-fixture',
+    'reauthorization',
+    'review-submit',
+    'review_verdict',
+    'spike_outcome',
+    'task-validation',
+    'transition',
+    'validation-command',
+))
+
+
 def encoded(value):
     return (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
 
@@ -454,6 +491,8 @@ def reauthorize_task(root, task_id):
 def write_operation(root, task_id, state, *, kind, files=None, previous=None, state_first=False):
     """Caller holds task_lock. Persist intent, stage exact bytes, publish result."""
     from cardine.tasks.state_core import state_path
+    if not isinstance(kind, str) or kind.partition(':')[0] not in OPERATION_KINDS:
+        raise CardineError(f'unregistered operation kind: {kind!r}')
     root = Path(root).resolve()
     intent_path = _intent_path(root, task_id)
     if intent_path.exists():

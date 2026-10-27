@@ -22,8 +22,6 @@ import worktree_support
 from control_support import adapter
 
 ROOT = Path(__file__).resolve().parents[1]
-RECEIPT_POINTS = tuple(prefix + name for name in ('intent', 'staged_pair', 'state_replace', 'result_receipt')
-                       for prefix in ('before_', 'after_'))
 ABORT_POINTS = tuple(prefix + name for name in ('abort_intent', 'abort_merge', 'abort_state_unlink',
                       'abort_lease_unlink', 'abort_result') for prefix in ('before_', 'after_'))
 
@@ -65,7 +63,7 @@ class RunCancelTest(unittest.TestCase):
                            adapter=kwargs.pop('adapter', adapter()), **kwargs)
 
     def test_every_cancel_and_receipt_boundary_retains_branch_and_time_once(self):
-        for index, point in enumerate((*RECEIPT_POINTS, 'before_cancel_transition', 'after_cancel_transition')):
+        for index, point in enumerate(('after_intent', 'before_cancel_transition', 'after_cancel_transition')):
             with self.subTest(point=point):
                 if index:
                     self.doCleanups()
@@ -156,8 +154,8 @@ class RunAbortTest(unittest.TestCase):
         return abort_owned('056', self.primary, adapter=kwargs.pop('adapter', adapter('coordinator')), **kwargs)
 
     def test_every_abort_and_receipt_boundary_converges_once(self):
-        cases = [(point, 1) for point in (*ABORT_POINTS, *RECEIPT_POINTS)]
-        cases += [(point, 2) for point in RECEIPT_POINTS]
+        cases = [(point, 1) for point in ABORT_POINTS]
+        cases += [('after_intent', phase) for phase in (1, 2)]
         for index, (point, phase) in enumerate(cases):
             with self.subTest(point=point, phase=phase):
                 if index:

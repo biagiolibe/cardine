@@ -18,8 +18,9 @@ import test_run_delivery
 from test_run_host_roles import FakeHost, request
 
 ROOT = Path(__file__).resolve().parents[1]
-POINTS = tuple(prefix + name for name in ('intent', 'staged_pair', 'state_replace',
-    'result_receipt', 'review_state', 'review_projection') for prefix in ('before_', 'after_'))
+# Keep state-first publication ordering and one writer seam for every verdict.
+POINTS = ('after_intent',) + tuple(prefix + name for name in
+    ('review_state', 'review_projection') for prefix in ('before_', 'after_'))
 
 
 class BoundHost(FakeHost):

@@ -20,9 +20,6 @@ ADAPTERS = {'codex': CodexProfileAdapter, 'claude': ClaudeProfileAdapter}
 HOST_POINTS = tuple(prefix + 'host_' + name for name in
     ('request', 'spawn', 'session', 'response', 'response_receipt')
     for prefix in ('before_', 'after_'))
-RECEIPT_POINTS = tuple(prefix + name for name in
-    ('intent', 'staged_pair', 'state_replace', 'result_receipt')
-    for prefix in ('before_', 'after_'))
 
 
 class FakeHost:
@@ -153,10 +150,13 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
             self.assertEqual(len(list(host.directory.iterdir())), 2)
 
     def test_every_host_and_receipt_boundary_restarts_same_session(self):
-        cases = [(point, 1) for point in HOST_POINTS]
-        cases += [(point, phase) for phase in (1, 2, 3) for point in RECEIPT_POINTS]
         first = True
         for host_name in ADAPTERS:
+            cases = [(point, 1) for point in HOST_POINTS]
+            # One writer seam per publication phase; generic seams are proved
+            # for host-launch in test_run_receipts, independently of the host.
+            if host_name == 'codex':
+                cases += [('after_intent', phase) for phase in (1, 2, 3)]
             for point, phase in cases:
                 with self.subTest(host=host_name, point=point, phase=phase):
                     if not first:

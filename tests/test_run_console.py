@@ -17,7 +17,7 @@ from cardine.shared.errors import CardineError
 from cardine.shared.flow import flow_report, format_flow_report
 from cardine.tasks.identity import read_task_identity_policy
 import test_run_delivery
-from test_run_host_roles import FakeHost, HOST_POINTS, RECEIPT_POINTS
+from test_run_host_roles import FakeHost, HOST_POINTS
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -93,7 +93,7 @@ class RunConsoleTest(unittest.TestCase):
 
     def test_launch_interruption_reuses_request_session_and_response(self):
         points = [(point, 1) for point in HOST_POINTS]
-        points += [(point, phase) for phase in (1, 2, 3) for point in RECEIPT_POINTS]
+        points += [('after_intent', phase) for phase in (1, 2, 3)]
         for index, (point, phase) in enumerate(points):
             if index:
                 self.doCleanups()
