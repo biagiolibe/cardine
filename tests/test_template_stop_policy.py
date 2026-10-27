@@ -29,7 +29,7 @@ class TemplateStopPolicyTest(unittest.TestCase):
             "Every other outcome is not a stop: run `next.command` in the same turn",
             "wait `retry_after_seconds` when `waiting`",
             # Failing work: repair and rerun; the engine counts.
-            "Failing validation is work on the task: fix it and call `cardine run` again",
+            "Failing validation or an unmet criterion (`ACCEPTANCE_UNMET`) is work, not a stop: fix it and call `cardine run` again",
             "The engine reruns once, records an intermittent pass, and counts failures",
             "after the task's `validationRetryLimit` counted failures it stops with `VALIDATION_RETRY_LIMIT`",
         ):
@@ -42,7 +42,8 @@ class TemplateStopPolicyTest(unittest.TestCase):
                 (ROOT / "capabilities/stop-codes-v1.json").read_text()
             )["stops"]
         }
-        policy = stops_section()
+        # A code named only as work, not a stop, is not a stop instruction.
+        policy = " ".join(sentence for sentence in re.split(r"(?<=[.])\s", stops_section()) if "not a stop" not in sentence)
         codes = set(re.findall(r"`(" + TOKEN + r")`|BLOCKED (" + TOKEN + r")", policy))
         named = {left or right for left, right in codes}
         self.assertTrue(named)

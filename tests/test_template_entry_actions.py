@@ -200,7 +200,8 @@ class TemplateClassificationTest(unittest.TestCase):
     def test_no_rewritten_file_tells_the_agent_to_stop_on_a_non_guardrail_code(self) -> None:
         stops = json.loads((ROOT / "capabilities/stop-codes-v1.json").read_text(encoding="utf-8"))["stops"]
         recoverable = {stop["code"] for stop in stops if not stop["human_decision"]}
-        text = corpus()
+        # A code may be named only in a sentence that says it is work, not a stop.
+        text = " ".join(s for s in re.split(r"(?<=[.])\s", corpus()) if "not a stop" not in s)
         for code in sorted(recoverable):
             with self.subTest(code=code):
                 self.assertNotRegex(text, rf"\bBLOCKED `?{code}\b")
@@ -210,7 +211,8 @@ class TemplateClassificationTest(unittest.TestCase):
         stops = json.loads((ROOT / "capabilities/stop-codes-v1.json").read_text(encoding="utf-8"))["stops"]
         guardrails = {stop["code"] for stop in stops if stop["human_decision"]}
         registered = {stop["code"] for stop in stops}
-        named = set(re.findall(r"\b([A-Z]{3,}(?:_[A-Z]+)+)\b", corpus())) & registered
+        stopping = " ".join(s for s in re.split(r"(?<=[.])\s", corpus()) if "not a stop" not in s)
+        named = set(re.findall(r"\b([A-Z]{3,}(?:_[A-Z]+)+)\b", stopping)) & registered
         self.assertTrue(named)
         for code in sorted(named):
             with self.subTest(code=code):

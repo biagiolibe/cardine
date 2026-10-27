@@ -19,7 +19,7 @@
   },
   "templates/single/PROJECT_WORKFLOW.md": {
     "git-workflow": {
-      "sha256": "36063fb4c3cd480ab87ca01f068fc9b1cfe0953dfdc83bce1ed07c1566acc935",
+      "sha256": "abe213d281ab44c214d0e9ef6acb5a5868a017af0f10395c23b326b5c95149af",
       "version": 4
     },
     "review-policy": {

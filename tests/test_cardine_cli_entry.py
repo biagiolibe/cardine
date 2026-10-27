@@ -73,7 +73,7 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
 
     def test_router_project_upgrades_1_1_40_to_1_1_41_without_generated_drift(self) -> None:
         self.configure_1_1_40_to_1_1_41_upgrade()
-        self.install_entry_router(include_restart=True)
+        self.install_entry_router(include_accept=True)
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
@@ -95,9 +95,9 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(noop.returncode, 0, noop.stdout + noop.stderr)
         self.assertIn("ROUTER   AGENTS.md", noop.stdout)
 
-    def test_router_project_missing_restart_trigger_blocks_before_writing(self) -> None:
+    def test_router_project_missing_accept_trigger_blocks_before_writing(self) -> None:
         self.configure_1_1_40_to_1_1_41_upgrade()
-        self.install_entry_router(include_restart=False)
+        self.install_entry_router(include_accept=False)
         before = {
             path.relative_to(self.project): path.read_bytes()
             for path in self.project.rglob("*")
@@ -107,7 +107,7 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 2, checked.stdout + checked.stderr)
         self.assertIn("ROUTER   AGENTS.md", checked.stdout)
-        self.assertIn("missing trigger `Restart rejected <TASK-ID>`", checked.stdout)
+        self.assertIn("missing trigger `Accept <TASK-ID>`", checked.stdout)
         self.assertIn("for `docs/LIFECYCLE_ORCHESTRATION.md`", checked.stdout)
         self.assertIn("existing route line", checked.stdout)
         self.assertIn("exactly once", checked.stdout)
@@ -133,6 +133,6 @@ class CliEntryTest(CardineCliFixtureMixin, unittest.TestCase):
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertIn(
-            "`Restart rejected <TASK-ID>`",
+            "`Accept <TASK-ID>`",
             (self.project / "AGENTS.md").read_text(encoding="utf-8"),
         )

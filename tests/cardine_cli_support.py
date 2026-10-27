@@ -79,11 +79,8 @@ class CardineCliFixtureMixin:
         for name in ("AGENTS.md", "CLAUDE.md"):
             current = workflow / name
             old_text = current.read_text(encoding="utf-8").replace(
-                "CARDINE:BEGIN capability=command-triggers v1",
                 "CARDINE:BEGIN capability=command-triggers v2",
-            ).replace(
-                "- `Restart rejected <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.\n",
-                "",
+                "CARDINE:BEGIN capability=command-triggers v1",
             )
             current.write_text(old_text, encoding="utf-8")
             (self.project / name).write_text(old_text, encoding="utf-8")
@@ -96,7 +93,7 @@ class CardineCliFixtureMixin:
         (self.framework / "VERSION").write_text("1.1.41\n", encoding="utf-8")
         self.write_synthetic_migration(
             "002-synthetic-restart", "1.1.40", "1.1.41", ["AGENTS.md", "CLAUDE.md"],
-            capabilities=[{"capability": "command-triggers", "capabilityVersion": 1}],
+            capabilities=[{"capability": "command-triggers", "capabilityVersion": 2}],
         )
 
     def configure_1_1_53_to_1_1_54_manual_proceed_upgrade(self) -> tuple[Path, Path]:
@@ -168,10 +165,8 @@ class CardineCliFixtureMixin:
         (self.framework / "VERSION").write_text("1.1.54\n", encoding="utf-8")
         return self.project / "docs/workflows/IMPLEMENTATION.md", self.project / "PROJECT_WORKFLOW.md"
 
-    def install_entry_router(self, include_restart: bool = True) -> None:
-        lifecycle_triggers = (
-            "`Restart rejected <TASK-ID>`, " if include_restart else ""
-        ) + "`Run lifecycle <TASK-ID>`, or `Accept <TASK-ID>`"
+    def install_entry_router(self, include_accept: bool = True) -> None:
+        lifecycle_triggers = "`Run lifecycle <TASK-ID>`" + (", or `Accept <TASK-ID>`" if include_accept else "")
         router = (
             "# Project entry router\n\n"
             "- Status or design question: `docs/workflows/STATUS_DESIGN.md`.\n"

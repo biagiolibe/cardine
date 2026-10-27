@@ -46,7 +46,7 @@ It authorizes the whole lifecycle when every gate passes; `cardine run` carries 
 
 Stop only for a denied action, a scope change (`BLOCKED SCOPE_CHANGE_REQUIRED`), or `outcome: blocked` with `stop.human_decision: true`; report the code and `stop.resume`. Every other outcome is not a stop: run `next.command` in the same turn, wait `retry_after_seconds` when `waiting`, and repair the work when `iterate`. `RULE_CONFLICT` and `VALIDATION_RETRY_LIMIT` are guardrails.
 
-Failing validation is work on the task: fix it and call `cardine run` again. The engine reruns once, records an intermittent pass, and counts failures; after the task's `validationRetryLimit` counted failures it stops with `VALIDATION_RETRY_LIMIT`.
+Failing validation or an unmet criterion (`ACCEPTANCE_UNMET`) is work, not a stop: fix it and call `cardine run` again. The engine reruns once, records an intermittent pass, and counts failures; after the task's `validationRetryLimit` counted failures it stops with `VALIDATION_RETRY_LIMIT`.
 
 Guidance that no command backs is advice: follow it when you can, and never stop on its strength alone. Never satisfy a gate by writing false state. When a gate contradicts another rule, stop with `BLOCKED RULE_CONFLICT` and report both rules.
 <!-- CARDINE:END -->
