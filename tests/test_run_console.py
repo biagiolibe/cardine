@@ -220,6 +220,7 @@ launch_run_request(locations, request,
         fixture = test_run_integration.CandidateTest()
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
+        self.addCleanup(fixture.tearDown)
         fixture.ready()
         fixture.run_candidate()
         locations = resolve_run_locations('056', fixture.primary)
@@ -239,6 +240,7 @@ launch_run_request(locations, request,
         fixture = test_run_cleanup.CleanupTest()
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
+        self.addCleanup(fixture.tearDown)
         with patch.object(receipts, '_durable', side_effect=AssertionError('preview wrote')):
             result = preview_run(fixture.locations)
             self.assertEqual((result['step'], result['outcome']), ('landing', 'next'), result)
@@ -253,7 +255,30 @@ launch_run_request(locations, request,
         fixture = test_run_integration.CandidateTest()
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
+        self.addCleanup(fixture.tearDown)
         fixture.ready('exit 7')
         fixture.run_candidate()
         result = preview_run(resolve_run_locations('056', fixture.primary))
         self.assertEqual((result['step'], result['outcome']), ('implementation', 'iterate'), result)
+
+    def test_cleanup_stays_visible_after_worktree_unregistration_without_rendering_effects(self):
+        import test_run_cleanup
+        fixture = test_run_cleanup.CleanupTest()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        self.addCleanup(fixture.tearDown)
+        def interrupt(name):
+            if name == 'after_cleanup_worktree':
+                raise RuntimeError('interrupted cleanup')
+        with patch.object(receipts, 'boundary', side_effect=interrupt):
+            with self.assertRaisesRegex(RuntimeError, 'interrupted cleanup'):
+                fixture.finish()
+        with patch.object(receipts, '_durable', side_effect=AssertionError('snapshot wrote')):
+            snapshot = load_snapshot(fixture.primary)
+            task = next(task for task in snapshot.tasks if task.task_id == '056')
+            self.assertEqual(task.run_preview['step'], 'landing')
+            self.assertEqual(task.lifecycle, 'closing')
+            self.assertEqual(snapshot.done_count, 0)
+            self.assertEqual(load_snapshot(fixture.primary), snapshot)
+        fixture.finish()
+        self.assertNotIn('056', [task.task_id for task in load_snapshot(fixture.primary).tasks])

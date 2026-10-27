@@ -327,14 +327,14 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
     task_id = row["id"]
     needle = task_id.casefold()
     if not any(needle in branch.casefold() for branch in worktrees):
-        return None
+        return _orphaned_cleanup_task(project, row, by_id, preset)
     try:
         identity = identities.resolve(project, task_id)
     except CardineError:
         return None
     worktree = worktrees.get(identity.branch_name)
     if worktree is None:
-        return None
+        return _orphaned_cleanup_task(project, row, by_id, preset)
     closure: dict[str, object] | None = None
     try:
         report, _ready = closure_status(task_id, None, project, identity=identity)
@@ -373,6 +373,34 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
         dependency_states=_dependency_states(by_id, dependencies),
         review_verdict=row["review"].get("verdict"),
     )
+
+
+def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str) -> Task | None:
+    """Keep an issued cleanup visible after Git has removed its registration.
+
+    The common-directory receipt, not a missing worktree or a guessed phase,
+    selects the read-only preview. Completed deliveries stay hidden.
+    """
+    common = canonical_git_common_dir(project)
+    if not (common / 'cardine-operations' / f"{row['id']}.cleanup.json").exists():
+        return None
+    from cardine.lifecycle.context import resolve_run_locations
+    from cardine.lifecycle.preview import preview_run
+    locations = resolve_run_locations(row['id'], project)
+    preview = preview_run(locations)
+    if preview['outcome'] == 'done':
+        return None
+    path, text = _record_text(project, row, None)
+    dependencies = tuple(row['dependencies'])
+    return Task(row['id'], row['title'], 'done', (row['phase'],) if row['phase'] else (),
+        dependencies, path, _section(text or '', 'Objective', 'Goal'),
+        _section(text or '', 'Acceptance Criteria'), legacy=False, workflow=preset,
+        readiness='CLOSING', lifecycle='closing', source='main',
+        worktree=str(locations.worktree), progress_phase=preview['step'],
+        remaining_gates=('Finish delivery and cleanup',),
+        closure_stop_reason=preview['stop']['code'] if preview['stop'] else None,
+        closure_resume=preview['next']['command'] if preview['next'] else None,
+        dependency_states=_dependency_states(by_id, dependencies), run_preview=preview)
 
 
 def _cached_identity(project: Path, task_id: str,
