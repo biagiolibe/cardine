@@ -26,6 +26,11 @@ class ProjectNames:
     shared_worktrees_context: str = "cardine_shared_worktrees"
 
     @property
+    def legacy_identity_policy(self) -> bool:
+        """Standalone identity configuration belongs to explicit installation readers."""
+        return False
+
+    @property
     def manifest_path(self) -> Path:
         return Path(self.project_directory) / "manifest.json"
 

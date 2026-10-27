@@ -51,5 +51,5 @@ Authority: `docs/RUN_ENGINE_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 8 and
 | `[x]` | 111 | Guard template budgets, commands, and stop prose (TR1b) | 🔴 P1 | 110 | [111](done/111-template-budget-guards.md) |
 | `[x]` | 112 | Condense the lifecycle and record templates (TR2a) | 🔴 P1 | 111 | [112](done/112-condense-lifecycle-templates.md) |
 | `[x]` | 113 | Condense the remaining templates and delete folded documents (TR2b) | 🔴 P1 | 112 | [113](done/113-condense-remaining-templates.md) |
-| `[ ]` | 114 | Show console previews and actions from verified facts (RE7a) | 🔴 P1 | 113 | [114](114-console-actions.md) |
+| `[x]` | 114 | Show console previews and actions from verified facts (RE7a) | 🔴 P1 | 113 | [114](done/114-console-actions.md) |
 | `[ ]` | 115 | Audit the run engine end to end and document its commands (RE7b) | 🔴 P1 | 114 | [115](115-final-audit.md) |

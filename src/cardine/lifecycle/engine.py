@@ -133,7 +133,8 @@ def resolve_run(facts: RunFacts) -> dict:
     argv = ["cardine", "run", facts.task_id, "--project", str(facts.project)]
 
     def result(step, reason, *, outcome="next", action="none", poll=0, stop=None):
-        request = facts.implementation_work if step == "implementation" else None
+        request = (facts.implementation_work if step == "implementation"
+                   else facts.review_work if step == "review" else None)
         return envelope(facts.task_id, str(facts.project), step=step, outcome=outcome,
                         action=action, next_command=command_reference(argv, reason),
                         stop=stop, retry_after_seconds=poll,
@@ -260,6 +261,14 @@ def run_preview_cli(argv: list[str]) -> int:
         result = envelope("", "", step=None, diagnostics=[dict(code="INVALID_INVOCATION", message=str(error))])
         emit_run(result, validate_output)
         return 64
+    return emit_run(dispatch_run(locations), validate_output)
+
+
+@scoped_command
+def dispatch_run(locations: RunLocations) -> dict:
+    """Execute one Stable engine step; console actions share this entry point."""
+    from cardine.tasks.state import read_task_state
+    from cardine.stops.render import stop_error
     try:
         state = read_task_state(locations.primary, locations.task_id, "single",
                                 stop_factory=stop_error, require_contract=True)
@@ -270,7 +279,7 @@ def run_preview_cli(argv: list[str]) -> int:
         # independent; editable progress cannot skip those receipt checks.
         from cardine.integration.candidate import operation_path
         if operation_path(locations, 'cleanup').exists():
-            return emit_run(run_integration_step(locations), validate_output)
+            return run_integration_step(locations)
         from cardine.lifecycle.control import operation_state
         active = operation_state(locations.worktree, locations.task_id)[0] if locations.worktree.is_dir() else state
         from cardine.lifecycle.control import require_review_budget
@@ -288,7 +297,7 @@ def run_preview_cli(argv: list[str]) -> int:
         # An unknown failure carries no ownership proof and must never suggest
         # successful progress or an automatic repair inferred from its prose.
         result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)))
-    return emit_run(result, validate_output)
+    return result
 
 
 @scoped_command

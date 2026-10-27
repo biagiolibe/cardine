@@ -74,6 +74,30 @@ class ClaudeProfileAdapter(ProfileAdapter):
         super().__init__('claude', transport, credential)
 
 
+@scoped_command
+def launch_run_request(locations, request, *, adapter):
+    """Adapt a Stable work envelope to the existing idempotent role launch.
+
+    Request identity survives console restarts; rendering never calls this.
+    Changed source or contract cannot reuse the previous session.
+    """
+    from cardine.lifecycle.model import WorkRequest
+    work = WorkRequest(request['role'], Path(request['worktree']), request['contract_digest'],
+        tuple(request['expected_surface']), tuple(request['acceptance_references']),
+        tuple(request['validation_references']), tuple(request['delivery_receipt_requirements']))
+    ignored = []
+    if receipts.pending_operation(locations.worktree, locations.task_id):
+        intent = receipts._load_intent(receipts._intent_path(locations.worktree, locations.task_id))
+        ignored = [receipts._intent_path(locations.worktree, locations.task_id).relative_to(locations.worktree).as_posix(),
+                   *[item['staged'] for item in intent['files'].values()]]
+    attempt = receipts.digest(receipts.encoded(dict(role=work.role, contract=work.snapshot_digest,
+        source=git_output(locations.worktree, 'rev-parse', 'HEAD'),
+        source_digest=execution_source_digest(locations.worktree, locations.task_id,
+                                             context=locations, operation_paths=ignored))))
+    return launch_work(locations.worktree, locations.task_id, work,
+                       attempt=attempt, adapter=adapter, context=locations)
+
+
 def _session(request, value):
     keys = ('request_id', 'role', 'profile', 'host')
     if (not isinstance(value, dict) or set(value) != {*keys, 'session_id'}

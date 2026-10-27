@@ -242,6 +242,8 @@ def _detail_lines(task: Task, width: int, palette: dict[str, int],
     add(f"Task {task.task_id}", "muted")
     add(f"○ {label}", color)
     add(f"Status: {task.status}; verdict: {task.review_verdict or 'none'}", "muted")
+    if task.run_preview:
+        add(f"Run: {task.run_preview['step']}; {task.run_preview['outcome']}", "muted")
     if task.legacy:
         add("legacy", "muted")
     if task.state_error:
@@ -497,7 +499,7 @@ def _draw_detail(screen, task: Task | None, x: int, top: int, width: int,
 def _draw_launch_prompt(screen, width: int, height: int, task: Task | None,
                         confirmation: int,
                         project: Path, defaults: dict[str, AgentDefaults],
-                        palette: dict[str, int]) -> None:
+                        palette: dict[str, int], *, action: str = 'run') -> None:
     """Draw an opaque, single-choice launch panel over the console."""
     if task is None:
         return
@@ -519,8 +521,9 @@ def _draw_launch_prompt(screen, width: int, height: int, task: Task | None,
         )
     else:
         lines = (
-            ("Launch agent", "title"),
-            ("This starts an agent that may modify the project.", "blocked"),
+            ("Launch agent" if action == 'run' else f"Confirm task {action}", "title"),
+            ("This starts an agent that may modify the project." if action == 'run'
+             else f"This invokes cardine {action} through the authorized host channel.", "blocked"),
             (f"Task: {task.task_id} — {task.title}", "text"),
             (f"Directive: {task.launch_command or 'unavailable'}", "text"),
             (f"Project: {project.name}", "text"),

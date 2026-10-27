@@ -41,6 +41,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
     notice_until = 0.0
     launch_task: Task | None = None
     launch_confirmation = 0
+    launch_action = 'run'
     while True:
         now = time.monotonic()
         state.apply_pending()
@@ -110,7 +111,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                     action_bounds = (detail_x, width - 3, action_rows)
             _draw_launch_prompt(screen, width, height, launch_task, launch_confirmation,
                                 state.project,
-                                state.agent_defaults, palette)
+                                state.agent_defaults, palette, action=launch_action)
             if notice and time.monotonic() < notice_until:
                 footer = notice
             elif state.launching:
@@ -123,7 +124,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                 footer = "Esc back   [/] scroll   r refresh   q quit"
             else:
                 footer = ("? help   ↑/↓ move   [/] scroll detail   tab filter   enter details   "
-                          "c copy   l launch   / search   r refresh   q quit")
+                          "c copy   l launch   x cancel task   a abort   / search   r refresh   q quit")
             _put(screen, height - 2, 0, "─" * max(0, width - 1),
                  width - 1, palette["line"])
             _put(screen, height - 1, 1, footer, width - 2,
@@ -146,6 +147,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                 if state.start_launch(
                     task_to_launch, selected,
                     dirty_confirmed=task_to_launch.active_writer and launch_confirmation >= 2,
+                    action=launch_action,
                 ):
                     notice, notice_until = (
                         f"Launching {state.launch_target}…", time.monotonic() + 2)
@@ -198,6 +200,10 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             continue
         if key in (ord("q"), ord("Q")):
             return
+        if key in (ord('x'), ord('a')) and selected_task and not selected_task.legacy:
+            launch_task, launch_confirmation = selected_task, 0
+            launch_action = 'cancel' if key == ord('x') else 'abort'
+            continue
         scroll_focus = detail_open or detail_focused
         page = max(1, height - 4 - 2)
         if (key in (ord("j"), curses.KEY_DOWN) and scroll_focus and not help_visible
@@ -259,6 +265,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             elif selected_task.launch_command:
                 launch_task = selected_task
                 launch_confirmation = 0
+                launch_action = 'run'
             else:
                 notice, notice_until = "No eligible directive for this task", time.monotonic() + 2
         elif key == ord("?"):

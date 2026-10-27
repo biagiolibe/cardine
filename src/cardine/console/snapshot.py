@@ -17,7 +17,7 @@ import json
 import os
 import re
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from cardine.console.models import Snapshot, Task
@@ -202,7 +202,7 @@ class IdentityCache:
 
     def resolve(self, project: Path, task_id: str) -> ResolvedTaskIdentity:
         try:
-            declaration = (project / names().task_identity_path).read_bytes()
+            declaration = (project / names().project_declaration_path).read_bytes()
         except OSError:
             declaration = None
         if not self._loaded or names() != self._layout or declaration != self._declaration:
@@ -327,14 +327,14 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
     task_id = row["id"]
     needle = task_id.casefold()
     if not any(needle in branch.casefold() for branch in worktrees):
-        return None
+        return _orphaned_cleanup_task(project, row, by_id, preset)
     try:
         identity = identities.resolve(project, task_id)
     except CardineError:
         return None
     worktree = worktrees.get(identity.branch_name)
     if worktree is None:
-        return None
+        return _orphaned_cleanup_task(project, row, by_id, preset)
     closure: dict[str, object] | None = None
     try:
         report, _ready = closure_status(task_id, None, project, identity=identity)
@@ -373,6 +373,34 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
         dependency_states=_dependency_states(by_id, dependencies),
         review_verdict=row["review"].get("verdict"),
     )
+
+
+def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str) -> Task | None:
+    """Keep an issued cleanup visible after Git has removed its registration.
+
+    The common-directory receipt, not a missing worktree or a guessed phase,
+    selects the read-only preview. Completed deliveries stay hidden.
+    """
+    common = canonical_git_common_dir(project)
+    if not (common / 'cardine-operations' / f"{row['id']}.cleanup.json").exists():
+        return None
+    from cardine.lifecycle.context import resolve_run_locations
+    from cardine.lifecycle.preview import preview_run
+    locations = resolve_run_locations(row['id'], project)
+    preview = preview_run(locations)
+    if preview['outcome'] == 'done':
+        return None
+    path, text = _record_text(project, row, None)
+    dependencies = tuple(row['dependencies'])
+    return Task(row['id'], row['title'], 'done', (row['phase'],) if row['phase'] else (),
+        dependencies, path, _section(text or '', 'Objective', 'Goal'),
+        _section(text or '', 'Acceptance Criteria'), legacy=False, workflow=preset,
+        readiness='CLOSING', lifecycle='closing', source='main',
+        worktree=str(locations.worktree), progress_phase=preview['step'],
+        remaining_gates=('Finish delivery and cleanup',),
+        closure_stop_reason=preview['stop']['code'] if preview['stop'] else None,
+        closure_resume=preview['next']['command'] if preview['next'] else None,
+        dependency_states=_dependency_states(by_id, dependencies), run_preview=preview)
 
 
 def _cached_identity(project: Path, task_id: str,
@@ -432,7 +460,21 @@ def _load_snapshot(project: Path, identities: IdentityCache | None = None,
     """
     project = project.expanduser().resolve()
     with contextlib.ExitStack() as stack:
-        return _build_snapshot(project, identities, only, deliveries, stack)
+        snapshot = _build_snapshot(project, identities, only, deliveries, stack)
+        from cardine.lifecycle.context import resolve_run_locations
+        from cardine.lifecycle.preview import preview_run
+        tasks = []
+        for task in snapshot.tasks:
+            try:
+                preview = preview_run(resolve_run_locations(task.task_id, project))
+            except (CardineError, OSError, ValueError) as error:
+                tasks.append(replace(task, state_error=str(error)))
+                continue
+            tasks.append(replace(task, run_preview=preview, progress_phase=preview['step'],
+                state_error=None if preview['work'] and task.state_error_origin == 'worktree' else task.state_error,
+                closure_stop_reason=preview['stop']['code'] if preview['stop'] else None,
+                closure_resume=preview['next']['command'] if preview['next'] else None))
+        return replace(snapshot, tasks=tuple(tasks))
 
 
 def _build_snapshot(project: Path, identities: IdentityCache | None, only: str | None,
@@ -462,6 +504,20 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         except (ValueError, UnicodeError):
             pass
     diagnostics = {item["path"]: item["error"] for item in model["diagnostics"]}
+    # Enumeration/totals are observations too. A forged terminal status must
+    # not disappear from the list or increment Done before preview is called.
+    for task_id, state in states.items():
+        if task_id not in by_id:
+            continue
+        try:
+            read_task_state(project, task_id, 'single', text=inputs[state_files[task_id]].decode('utf-8'),
+                            spike='outcome' in state, stop_factory=stop_error, require_contract=True)
+        except (CardineError, OSError, ValueError) as error:
+            by_id.pop(task_id)
+            model['tasks'] = [row for row in model['tasks'] if row['id'] != task_id]
+            model['totals'][state['status']] -= 1
+            model['totals']['total'] -= 1
+            diagnostics[state_files[task_id].relative_to(project).as_posix()] = str(error)
     identities = identities or IdentityCache()
     try:
         identities.context = task_identity_context(project, states={
@@ -489,7 +545,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         tasks.append(Task(
             task_id, task_id, "STATE_ERROR", (), (), None, (), (),
             lifecycle="in_progress", readiness="STATE ERROR", legacy=False,
-            source="task state on main", state_error=error, workflow=preset,
+            source="task state on main", state_error=error, state_error_origin='main', workflow=preset,
         ))
     for row in model["tasks"]:
         task_id = row["id"]
@@ -536,17 +592,6 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             # A task waiting for approval stops at the review gate (C3), which
             # closure-status never reports; keep its timing and gate visible.
             progress_phase, remaining_gates = _lifecycle_progress("C3", True)
-        if facts and facts.exists and facts.worktree and lifecycle == "in_progress":
-            known = _cached_identity(project, task_id, identities)
-            try:
-                closure, _ready = closure_status(task_id, None, project, identity=known)
-                closure_reason = closure["stop_reason"]
-                closure_resume = closure["resume"]
-                progress_phase, remaining_gates = _lifecycle_progress(
-                    str(closure.get("step", "")), bool(facts and facts.worktree))
-            except (CardineError, OSError, ValueError):
-                # A transient lifecycle read must not make the entire dashboard stale.
-                pass
         missing = [item for item in dependencies if item not in by_id]
         if state_error:
             readiness = "STATE ERROR"
@@ -562,12 +607,6 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         else:
             readiness = {"in_progress": "IN PROGRESS", "ready_for_review": "READY FOR REVIEW"}[lifecycle]
         delivery_pending = None
-        if status == "in_review" and not state_error:
-            delivery_pending = _delivery_pending(
-                project, facts.worktree if facts else None, task_id, heads, identities,
-                delivery_cache, deliveries_shared)
-            if delivery_pending is not None:
-                readiness = "PENDING DELIVERY/CHANGES"
         updated_ref = f"refs/heads/{facts.branch}" if from_branch else "HEAD"
         tasks.append(Task(
             task_id=task_id, title=row["title"], status=status,
@@ -586,7 +625,9 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             started_at=started_at, progress_phase=progress_phase, remaining_gates=remaining_gates,
             dependency_states=_dependency_states(by_id, dependencies), legacy=False,
             review_verdict=None if state_error else state.get("review", {}).get("verdict"),
-            state_error=state_error, delivery_pending=delivery_pending,
+            state_error=state_error,
+            state_error_origin=('worktree' if facts and facts.worktree_available else 'branch') if state_error else None,
+            delivery_pending=delivery_pending,
         ))
     totals = model["totals"]
     return Snapshot(

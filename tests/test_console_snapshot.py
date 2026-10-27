@@ -40,7 +40,9 @@ class ProjectConsoleTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
-        self.project = Path(self.temporary.name)
+        self.project = Path(self.temporary.name).resolve()
+        subprocess.run(["git", "init", "-q", "-b", "main", str(self.project)],
+                       capture_output=True, text=True, check=True)
         write_project_config(self.project, "lean")
 
     def write_states(self, dependency: str = "001", done: bool = True) -> None:
@@ -48,11 +50,14 @@ class ProjectConsoleTest(unittest.TestCase):
                    criteria="First check.", record="tasks/001-first.md")
         write_task(self.project, "002", "queued", dependency, objective="Second task.",
                    criteria="Second check.", record="tasks/002-second.md")
+        for arguments in (("add", "-A"), ("-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                "-c", "commit.gpgsign=false", "commit", "-q", "-m", "Fixture state")):
+            subprocess.run(["git", "-C", str(self.project), *arguments], check=True, capture_output=True)
 
     def snapshot(self) -> owner_console_models.Snapshot:
         with mock.patch.object(owner_console_snapshot, "_git", side_effect=lambda _project, *args: (
             "## main...origin/main\n" if args[0] == "status"
-            else "worktree /tmp/task-002\nbranch refs/heads/task-002\n"
+            else f"worktree {self.project}\nbranch refs/heads/main\n\nworktree /tmp/task-002\nbranch refs/heads/task-002\n"
         )):
             return owner_console_snapshot.load_snapshot(self.project)
 
@@ -64,7 +69,7 @@ class ProjectConsoleTest(unittest.TestCase):
         self.assertEqual(snapshot.tasks[0].objective, ("Second task.",))
         self.assertEqual(snapshot.tasks[0].criteria, ("- [ ] Second check.",))
         self.assertEqual(snapshot.tasks[0].worktree, "/tmp/task-002")
-        self.assertEqual(snapshot.tasks[0].next_action, "If assigned: Proceed with 002")
+        self.assertEqual(snapshot.tasks[0].next_action, snapshot.tasks[0].launch_command)
         self.assertEqual(snapshot.tasks[0].phase, ("Build",))
         self.assertEqual(snapshot.done_count, 1)
 
@@ -74,13 +79,13 @@ class ProjectConsoleTest(unittest.TestCase):
 
         def git(_project, *args):
             calls.append(args)
-            return "worktree /tmp/task-002\nbranch refs/heads/task-002\n"
+            return f"worktree {self.project}\nbranch refs/heads/main\n\nworktree /tmp/task-002\nbranch refs/heads/task-002\n"
 
         with mock.patch.object(owner_console_snapshot, "_git", side_effect=git):
             task = owner_console_snapshot.load_task(self.project, "002")
             missing = owner_console_snapshot.load_task(self.project, "999")
         self.assertEqual((task.task_id, task.readiness, task.launch_command),
-                         ("002", "READY", "Proceed with 002"))
+                         ("002", "READY", f"cardine run 002 --project {self.project}"))
         self.assertIsNone(missing)
         self.assertNotIn("status", [args[0] for args in calls])
 
@@ -262,7 +267,7 @@ class ProjectConsoleTest(unittest.TestCase):
         self.write_states()
         task = self.snapshot().tasks[0]
         palette = {name: 0 for name in (
-            "base", "text", "title", "ready", "muted", "line", "action"
+            "base", "text", "title", "ready", "muted", "line", "action", "blocked", "unknown"
         )}
         lines = [value for value, _ in owner_console_render._detail_lines(task, 40, palette)]
         self.assertEqual(lines[0], "Task details")
@@ -282,13 +287,13 @@ class ProjectConsoleTest(unittest.TestCase):
             task.objective, task.criteria, readiness=task.readiness,
             dependency_states=(("001", "Done"),),
         )
-        palette = {name: 0 for name in ("base", "text", "title", "ready", "muted", "line", "action")}
+        palette = {name: 0 for name in ("base", "text", "title", "ready", "muted", "line", "action", "blocked", "unknown")}
         lines = [value for value, _ in owner_console_render._detail_lines(detailed, 50, palette)]
         self.assertLess(lines.index("Dependencies"), lines.index("Objective"))
         self.assertIn("001 — Done", lines)
 
     def test_detail_view_clamps_scroll_across_resize_and_draws_hidden_indicators(self) -> None:
-        palette = {name: 0 for name in ("base", "text", "title", "ready", "muted", "line", "action")}
+        palette = {name: 0 for name in ("base", "text", "title", "ready", "muted", "line", "action", "blocked", "unknown")}
         task = owner_console_models.Task(
             "LONG", "A long task", "[ ]", (), ("001",), None,
             tuple(f"Objective line {number} needs enough text to wrap in narrow panes." for number in range(12)),
@@ -338,9 +343,9 @@ class ProjectConsoleTest(unittest.TestCase):
     def test_ready_directive_copy_hit_and_clipboard_result(self) -> None:
         self.write_states()
         task = self.snapshot().tasks[0]
-        self.assertEqual(task.launch_command, "Proceed with 002")
+        self.assertEqual(task.launch_command, f"cardine run 002 --project {self.project}")
         palette = {name: 0 for name in (
-            "base", "text", "title", "ready", "muted", "line", "action"
+            "base", "text", "title", "ready", "muted", "line", "action", "blocked", "unknown"
         )}
         screen = mock.Mock()
         screen.getmaxyx.return_value = (35, 140)
@@ -353,7 +358,7 @@ class ProjectConsoleTest(unittest.TestCase):
             run.return_value.returncode = 0
             self.assertTrue(owner_console_render._copy_to_clipboard(task.launch_command))
             run.assert_called_once_with(
-                ("pbcopy",), input="Proceed with 002", text=True,
+                ("pbcopy",), input=task.launch_command, text=True,
                 capture_output=True, check=False, timeout=2,
             )
             run.return_value.returncode = 1
@@ -406,9 +411,10 @@ class MilestoneProjectTest(support.StateConsoleFixture):
         self.assertEqual(tasks["M37-CAUSE-002"].objective, ("Objective of M37-CAUSE-002.",))
         self.assertIsNone(tasks["M37-CAUSE-002"].record_problem)
         self.assertEqual(tasks["M37-CAUSE-002"].readiness, "READY")
-        self.assertEqual(tasks["M37-CAUSE-002"].launch_command, "Proceed with M37-CAUSE-002")
+        self.assertEqual(tasks["M37-CAUSE-002"].launch_command,
+                         f"cardine run M37-CAUSE-002 --project {self.project}")
         self.assertEqual(tasks["M37-CAUSE-005"].readiness, "READY")
-        self.assertEqual(tasks["M37-CAUSE-003"].launch_command, "Proceed with M37-CAUSE-003")
+        self.assertEqual(tasks["M37-CAUSE-003"].launch_command, f"cardine run M37-CAUSE-003 --project {self.project}")
         self.assertEqual(state.snapshot.done_count, 2)
 
     def test_milestone_phases_group_the_rendered_open_list(self) -> None:
@@ -506,12 +512,12 @@ class RefreshCostTest(support.StateConsoleFixture):
         self.assertEqual([call for call in calls if "show" in call], [])
         self.assertEqual(self.load()["003"].source, "task state in worktree task-003")
 
-    def test_warm_refresh_resolves_no_identity_and_spawns_no_ref_check(self) -> None:
+    def test_warm_refresh_rechecks_each_preview_identity_once(self) -> None:
         self.setup_with_history(5)
         cache = owner_console_snapshot.IdentityCache()
         self.subprocess_calls(cache)
         warm = self.subprocess_calls(cache)
-        self.assertEqual([call for call in warm if "check-ref-format" in call], [])
+        self.assertEqual(len([call for call in warm if "check-ref-format" in call]), 2)
 
     def test_identity_is_resolved_once_until_the_declaration_changes(self) -> None:
         self.setup_with_history(1)
@@ -524,7 +530,13 @@ class RefreshCostTest(support.StateConsoleFixture):
             self.write(self.project, ".cardine/task-identity.json",
                        json.dumps({"version": 1, "mode": "opaque"}))
             owner_console_snapshot.load_snapshot(self.project, cache)
-            self.assertEqual(resolver.call_count, 4)
+            self.assertEqual(resolver.call_count, 2)
+            declaration = json.loads((self.project / ".cardine/project.json").read_text())
+            declaration["taskIdentity"] = {"mode": "milestone"}
+            self.write(self.project, ".cardine/project.json", json.dumps(declaration))
+            from task_contract_support import seal_state
+            for path in (self.project / '.cardine/tasks').glob('*.json'):
+                seal_state(self.project, path.stem)
             owner_console_snapshot.load_snapshot(self.project, cache)
             self.assertEqual(resolver.call_count, 4)
 
@@ -636,33 +648,34 @@ class SnapshotCostTest(support.StateConsoleFixture):
         return wt, owner_console_snapshot.DeliveryCache(), gate
 
     def load_with(self, deliveries: owner_console_snapshot.DeliveryCache, gate: mock.Mock) -> owner_console_models.Task:
-        with mock.patch.object(owner_console_snapshot, "delivery_readiness", gate), \
+        with mock.patch("cardine.lifecycle.preview.preview_run", gate), \
              mock.patch.object(Path, "cwd", return_value=self.project):
-            snapshot = owner_console_snapshot.load_snapshot(self.project, owner_console_snapshot.IdentityCache(), deliveries)
-        return next(task for task in snapshot.tasks if task.task_id == "TASK-002")
+            return owner_console_snapshot.load_task(self.project, "TASK-002", owner_console_snapshot.IdentityCache())
 
-    def test_unchanged_review_ready_task_is_not_rechecked(self) -> None:
+    def test_unchanged_review_ready_task_rechecks_receipts_each_refresh(self) -> None:
         _wt, deliveries, gate = self.review_ready()
         first = self.load_with(deliveries, gate)
         second = self.load_with(deliveries, gate)
-        self.assertEqual(gate.call_count, 1)
+        self.assertEqual(gate.call_count, 2)
         self.assertEqual(first, second)
-        self.assertEqual(second.readiness, "PENDING DELIVERY/CHANGES")
-        self.assertEqual(second.delivery_pending, "evidence is incomplete")
+        self.assertEqual(second.state_error, "evidence is incomplete")
+        self.assertIsNone(second.launch_command)
 
-    def test_success_is_cached_and_a_changed_input_discards_it(self) -> None:
+    def test_successful_preview_is_not_cached_across_commands(self) -> None:
         wt, deliveries, gate = self.review_ready()
         gate.side_effect = None
-        gate.return_value = {"status": "in_review"}
+        from cardine.lifecycle.engine import resolve_run
+        from cardine.lifecycle.model import RunFacts
+        gate.return_value = resolve_run(RunFacts("TASK-002", self.project, "in_review"))
         task = self.load_with(deliveries, gate)
         self.assertIsNone(task.delivery_pending)
         self.load_with(deliveries, gate)
-        self.assertEqual(gate.call_count, 1)
+        self.assertEqual(gate.call_count, 2)
         gate.side_effect = owner_shared_errors.CardineError("handoff changed")
         self.write(wt, "tasks/handoffs/TASK-002.md", "# Handoff\n")
         self.commit(wt)
-        self.assertEqual(self.load_with(deliveries, gate).delivery_pending, "handoff changed")
-        self.assertEqual(gate.call_count, 2)
+        self.assertEqual(self.load_with(deliveries, gate).state_error, "handoff changed")
+        self.assertEqual(gate.call_count, 3)
 
     def test_each_cache_input_invalidates_the_entry(self) -> None:
         wt, deliveries, gate = self.review_ready()
@@ -675,10 +688,12 @@ class SnapshotCostTest(support.StateConsoleFixture):
             calls += 1
             self.assertEqual(gate.call_count, calls, label)
             self.load_with(deliveries, gate)
-            self.assertEqual(gate.call_count, calls, f"{label}: settled")
+            calls += 1
+            self.assertEqual(gate.call_count, calls, f"{label}: fresh verification")
 
         self.load_with(deliveries, gate)
-        self.assertEqual(gate.call_count, 1, "unchanged inputs stay cached")
+        calls += 1
+        self.assertEqual(gate.call_count, calls, "unchanged inputs still verify receipts")
         self.write(wt, "src.txt", "next\n")
         self.commit(wt)
         assert_rechecked("worktree HEAD")

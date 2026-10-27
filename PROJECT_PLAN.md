@@ -159,5 +159,5 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 111 — Guard template budgets, commands, and stop prose (TR1b).
 - `[x]` 112 — Condense the lifecycle and record templates (TR2a).
 - `[x]` 113 — Condense the remaining templates and delete folded documents (TR2b).
-- `[ ]` 114 — Show console previews and actions from verified facts (RE7a).
+- `[x]` 114 — Show console previews and actions from verified facts (RE7a).
 - `[ ]` 115 — Audit the run engine end to end and document its commands (RE7b).

@@ -94,21 +94,23 @@ class ConsoleState:
         with self._lock:
             return self._launcher is not None
 
-    def start_launch(self, task: Task, agent: str, dirty_confirmed: bool = False) -> bool:
+    def start_launch(self, task: Task, agent: str, dirty_confirmed: bool = False,
+                     action: str = 'run') -> bool:
         """Revalidate and launch on one background thread; False while one is pending."""
         with self._lock:
             if self._launcher is not None:
                 return False
             self.launch_target = f"{agent} for task {task.task_id}"
             self._launcher = threading.Thread(
-                target=self._run_launch, args=(task, agent, dirty_confirmed), daemon=True)
+                target=self._run_launch, args=(task, agent, dirty_confirmed, action), daemon=True)
             launcher = self._launcher
         launcher.start()
         return True
 
-    def _run_launch(self, task: Task, agent: str, dirty_confirmed: bool) -> None:
+    def _run_launch(self, task: Task, agent: str, dirty_confirmed: bool, action: str = 'run') -> None:
         try:
-            result = _launch_selected(self, task, agent, dirty_confirmed)
+            result = (_launch_selected(self, task, agent, dirty_confirmed)
+                      if action == 'run' else _launch_selected(self, task, agent, dirty_confirmed, action))
         except Exception as error:  # a worker must never die silently
             result = (False, f"Launch failed: {error}; [copy] remains available")
         with self._lock:
@@ -145,6 +147,8 @@ def one_shot(state: ConsoleState) -> str:
     for task in snapshot.tasks:
         objective = " ".join(task.objective)
         lines.append(f"{task.task_id} [{task.readiness}] {task.title}")
+        if task.run_preview:
+            lines.append(f"  Run: {task.run_preview['step']} | {task.run_preview['outcome']}")
         if objective:
             lines.append(f"  {objective}")
         lines.append(f"  Dependencies: {', '.join(task.dependencies) or 'none'}")

@@ -102,6 +102,15 @@ def read_task_identity_policy(project_root: Path) -> TaskIdentityPolicy:
     declaration = read_project_declaration(project_root)
     if declaration is not None:
         return TaskIdentityPolicy(version=1, mode=declaration.get("taskIdentity", {}).get("mode", "opaque"))
+    if not names().legacy_identity_policy:
+        # Only the explicit installation reader may interpret the old file.
+        # Missing product configuration never selects compatibility policy.
+        return TaskIdentityPolicy(version=1, mode='opaque')
+    return read_installation_identity_policy(project_root)
+
+
+def read_installation_identity_policy(project_root: Path) -> TaskIdentityPolicy:
+    """Explicit installation/conversion input; never a product resolution fallback."""
     path = project_root / names().task_identity_path
     if not path.exists():
         return TaskIdentityPolicy(version=1, mode="opaque")

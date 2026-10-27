@@ -91,6 +91,8 @@ class LayoutTest(unittest.TestCase):
 
     def test_identity_policy_reads_selected_directory(self):
         self.write_json(OTHER_NAMES.task_identity_path, {"version": 1, "mode": "milestone"})
+        self.write_json(OTHER_NAMES.project_declaration_path,
+                        {"version": 1, "preset": "lean", "taskIdentity": {"mode": "milestone"}})
         self.assertEqual(identity.read_task_identity_policy(self.root).mode, "opaque")
         with use(OTHER_NAMES):
             self.assertEqual(identity.read_task_identity_policy(self.root).mode, "milestone")

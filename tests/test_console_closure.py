@@ -67,25 +67,25 @@ class ClosingTaskMixin:
         self.assertEqual(state_file.read_bytes(), state_bytes)
         self.assertEqual((task.readiness, task.lifecycle, task.status),
                          ("CLOSING", "closing", self.done_token))
-        self.assertEqual(task.progress_phase, "candidate validation")
+        self.assertEqual(task.progress_phase, "landing")
         self.assertEqual(task.remaining_gates[0], "Stage integration")
-        self.assertEqual(task.closure_resume, "run the selected candidate validation")
-        self.assertEqual(task.next_action, "run the selected candidate validation")
-        self.assertIsNone(task.launch_command)
+        self.assertEqual(task.closure_resume, f"cardine run {self.done_id} --project {self.project}")
+        self.assertEqual(task.next_action, f"cardine run {self.done_id} --project {self.project}")
+        self.assertEqual(task.launch_command, f"cardine run {self.done_id} --project {self.project}")
         self.assertTrue(task.shows_progress)
 
     def test_task_stays_visible_after_finalize_with_a_pending_push(self) -> None:
         self.closing_project()
         tasks, _status = self.load_closing(self.report("C9", "PUSH_PENDING", "git push origin main"))
         task = tasks[self.done_id]
-        self.assertEqual(task.progress_phase, "push pending")
-        self.assertEqual(task.closure_stop_reason, "PUSH_PENDING")
-        self.assertEqual(task.next_action, "PUSH_PENDING: git push origin main")
+        self.assertEqual(task.progress_phase, "landing")
+        self.assertIsNone(task.closure_stop_reason)
+        self.assertEqual(task.next_action, f"cardine run {self.done_id} --project {self.project}")
 
     def check_cleanup_only(self, archived: bool) -> None:
         self.closing_project(archived=archived)
         before = self.refs_and_status()
-        resume = f"cardine worktree cleanup {self.done_id} --project /exact/project"
+        resume = f"cardine run {self.done_id} --project {self.project}"
         state = owner_console_state.ConsoleState(self.project)
         with mock.patch.object(owner_console_snapshot, "closure_status", return_value=self.report(
                 "C10", None, resume)) as status:
@@ -102,10 +102,10 @@ class ClosingTaskMixin:
         self.assertEqual((task.readiness, task.lifecycle), ("DONE", "done"))
         self.assertTrue(task.cleanup_pending)
         self.assertFalse(task.shows_progress)
-        self.assertIsNone(task.launch_command)
+        self.assertEqual(task.launch_command, f"cardine run {self.done_id} --project {self.project}")
         self.assertEqual(task.next_action, resume)
         self.assertEqual(task.closure_resume, resume)
-        self.assertEqual(task.progress_phase, "cleanup pending")
+        self.assertEqual(task.progress_phase, "landing")
         self.assertEqual(owner_console_render._filter_counts(snapshot)["Working"], 0)
         palette = {name: 0 for name in (
             "base", "text", "title", "ready", "working", "muted", "line", "action", "blocked")}
@@ -149,7 +149,7 @@ class ClosingTaskMixin:
                 task = next(item for item in snapshot.tasks if item.task_id == self.done_id)
                 self.assertEqual(owner_console_render._state_label(task), ("Closing", "working"))
                 self.assertEqual(snapshot.done_count, 0)
-                self.assertEqual(task.progress_phase, "unavailable")
+                self.assertEqual(task.progress_phase, "landing")
 
     def test_completed_task_without_closure_work_is_hidden_without_reading_closure(self) -> None:
         self.closing_project(worktree=False)
@@ -173,36 +173,36 @@ class ClosingTaskMixin:
             item.task_id for item in owner_console_render._visible_tasks(snapshot, "Review", "")])
         self.assertIsNotNone(owner_console_render._tab_at(snapshot, 1, 1))
 
-    def test_closing_task_does_not_launch_and_does_not_change_dependent_readiness(self) -> None:
+    def test_closing_task_offers_stable_resume_without_changing_dependencies(self) -> None:
         self.closing_project()
         tasks, _status = self.load_closing(self.report("C7"))
-        self.assertIsNone(tasks[self.done_id].launch_command)
+        self.assertEqual(tasks[self.done_id].launch_command, f"cardine run {self.done_id} --project {self.project}")
         self.assertEqual(tasks[self.open_id].readiness, "READY")
         self.assertEqual(tasks[self.open_id].dependency_states, ((self.done_id, "Done"),))
 
-    def test_lifecycle_read_failure_keeps_the_task_with_unavailable_progress(self) -> None:
+    def test_lifecycle_read_failure_keeps_the_engine_preview(self) -> None:
         self.closing_project()
         for error in (owner_shared_errors.CardineError("boom"), OSError("boom"), ValueError("boom")):
             with self.subTest(error=type(error).__name__):
                 tasks, _status = self.load_closing(error=error)
                 task = tasks[self.done_id]
                 self.assertEqual(task.readiness, "CLOSING")
-                self.assertEqual(task.progress_phase, "unavailable")
-                self.assertIn("Closure state unavailable", task.next_action)
+                self.assertEqual(task.progress_phase, "landing")
+                self.assertEqual(task.next_action, f"cardine run {self.done_id} --project {self.project}")
 
     def test_steps_that_are_not_closure_work_never_surface_a_prepare_resume(self) -> None:
         self.closing_project()
         tasks, _status = self.load_closing(self.report(
             "C4", "WRONG_WORKTREE", "cardine worktree prepare 1"))
         task = tasks[self.done_id]
-        self.assertIsNone(task.closure_resume)
+        self.assertEqual(task.closure_resume, f"cardine run {self.done_id} --project {self.project}")
         self.assertIsNone(task.closure_stop_reason)
-        self.assertEqual(task.progress_phase, "unavailable")
+        self.assertEqual(task.progress_phase, "landing")
 
     def test_task_whose_phase_was_archived_at_stage_stays_visible(self) -> None:
         self.closing_project(archived=True)
         tasks, _status = self.load_closing(self.report("C9", None, "git push origin main"))
-        self.assertEqual(tasks[self.done_id].progress_phase, "push pending")
+        self.assertEqual(tasks[self.done_id].progress_phase, "landing")
 
     def test_once_output_lists_the_closing_task_with_the_same_facts(self) -> None:
         self.closing_project()
@@ -214,9 +214,9 @@ class ClosingTaskMixin:
         text = owner_console_state.one_shot(state)
         self.assertIn("CARDINE | ", text)
         self.assertIn(f"{self.done_id} [CLOSING]", text)
-        self.assertIn("  Closure stop: PUSH_PENDING", text)
-        self.assertIn("  Resume: git push origin main", text)
-        self.assertIn("  Progress: push pending", text)
+        self.assertNotIn("  Closure stop: PUSH_PENDING", text)
+        self.assertIn(f"  Resume: cardine run {self.done_id} --project {self.project}", text)
+        self.assertIn("  Progress: landing", text)
         self.assertIn("  Remaining gates: Push main, Clean up worktree", text)
         self.assertNotIn("  Elapsed: unavailable", text)
 
@@ -227,7 +227,7 @@ class ClosingTaskMixin:
             "base", "text", "title", "ready", "working", "muted", "line", "action", "blocked")}
         lines = [value for value, _ in owner_console_render._detail_lines(tasks[self.done_id], 80, palette)]
         self.assertIn("○ Closing", lines)
-        self.assertIn("Lifecycle progress: candidate validation", lines)
+        self.assertIn("Lifecycle progress: landing", lines)
         self.assertTrue(any(line.startswith("Elapsed cycle time:") for line in lines))
 
 
@@ -262,8 +262,8 @@ class OpaqueIdClosingTaskTest(ClosingTaskMixin, support.StateConsoleFixture):
         status.assert_not_called()
         self.assertEqual((task.readiness, task.lifecycle),
                          ("READY FOR REVIEW", "ready_for_review"))
-        self.assertEqual(task.launch_command, "Review 003")
-        self.assertEqual(task.progress_phase, "review pending")
+        self.assertEqual(task.launch_command, f"cardine run 003 --project {self.project}")
+        self.assertEqual(task.progress_phase, "contract")
         self.assertEqual(task.remaining_gates[0], "Independent review")
         self.assertTrue(task.shows_progress)
         self.assertNotEqual(owner_console_render._elapsed(task.started_at), "unavailable")
@@ -272,7 +272,7 @@ class OpaqueIdClosingTaskTest(ClosingTaskMixin, support.StateConsoleFixture):
         self.setup_project({"003": "in_review"})
         task = self.load()["003"]
         self.assertFalse(task.shows_progress)
-        self.assertEqual(task.progress_phase, "unavailable")
+        self.assertEqual(task.progress_phase, "contract")
 
     def test_review_gate_progress_phase(self) -> None:
         phase, gates = owner_console_snapshot._lifecycle_progress("C3", True)
