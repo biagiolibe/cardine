@@ -2,7 +2,7 @@
   "catalogVersion": 1,
   "capabilities": {
     "audit-prompt": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "066-machine-task-state-adoption"
@@ -27,21 +27,21 @@
     },
     "ci-verified-validation": {
       "requiredVersion": 1,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "005-ci-verified-validation"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "code-organization": {
-      "requiredVersion": 1,
+      "requiredVersion": 2,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
     },
     "code-review-prompt": {
       "requiredVersion": 2,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "066-machine-task-state-adoption"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "codex-worktree-access": {
       "requiredVersion": 1,
@@ -207,9 +207,9 @@
     },
     "remote-branch-cleanup": {
       "requiredVersion": 1,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "061-governed-phase-reads"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "review-mode-boundary": {
       "requiredVersion": 1,
@@ -285,9 +285,9 @@
     },
     "task-worktree-integration": {
       "requiredVersion": 3,
-      "retired": false,
-      "required": true,
-      "adoptionRecord": "067-execution-boundaries"
+      "retired": true,
+      "required": false,
+      "adoptionRecord": null
     },
     "task-worktree-lifecycle": {
       "requiredVersion": 1,

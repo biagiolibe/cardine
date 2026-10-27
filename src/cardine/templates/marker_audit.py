@@ -129,8 +129,8 @@ def audit_duplicate_headings(project_root: Path, framework_root: Path, mode: str
     Deliberately scoped to one file at a time, not across a project's whole
     managed-files set: the same capability legitimately appears under
     different heading names in different documents by design (for example
-    `ci-verified-validation` under "Code Review and Integration Prompt" in
-    `docs/CODE_REVIEW_PROMPT.md` and under "Completion Report" in
+    `manual-verification-record` under the heading of
+    `docs/REVIEW_RECORD_TEMPLATE.md` and under that of
     `docs/COMPLETION_REPORT_TEMPLATE.md` — one canonical rule, several
     consuming documents, not a drifted duplicate). A cross-file heuristic
     was tried against these templates and produced five false positives on

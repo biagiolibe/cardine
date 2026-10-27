@@ -679,10 +679,10 @@ worktree before the branch only after validated integration succeeds.
         workflow = self.framework / "templates/single"
         relative = "docs/CODE_ORGANIZATION.md"
         current = (workflow / relative).read_text(encoding="utf-8")
-        new_sentence = re.search(r"^The project records its layered module map.*$", current, re.MULTILINE)
+        new_sentence = re.search(r"^Record the module map and its dependency direction.*$", current, re.MULTILINE)
         self.assertNotIn("\n## Project module map", current)
         self.assertIsNotNone(new_sentence)
-        previous = current.replace("capability=code-organization v1", "capability=code-organization v1").replace(
+        previous = current.replace("capability=code-organization v2", "capability=code-organization v1").replace(
             new_sentence.group(0),
             "Record this project's actual layered module map in its own architecture documentation, not in this file.",
         )
@@ -706,7 +706,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded = organization.read_text(encoding="utf-8")
-        self.assertIn("capability=code-organization v1", upgraded)
+        self.assertIn("capability=code-organization v2", upgraded)
         self.assertIn(new_sentence.group(0), upgraded)
         self.assertTrue(upgraded.endswith(module_map))
         self.assertEqual(len(re.findall(r"^## Project module map$", upgraded, re.MULTILINE)), 1)

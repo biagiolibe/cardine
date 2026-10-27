@@ -17,6 +17,10 @@ from cardine_cli_support import CardineCliFixtureMixin, ROOT
 from cardine.templates import markers
 
 
+# Documents that earlier releases shipped and `templates/single/` no longer holds.
+RELEASED = Path(__file__).resolve().parent / "data" / "released"
+
+
 class SyntheticFramework:
     def __init__(self, root: Path, version: str = "1.1.0", *, templates: dict[str, str] | None = None):
         self.root = root
@@ -25,6 +29,8 @@ class SyntheticFramework:
         (root / "capabilities").mkdir()
         if templates is None:
             shutil.copytree(ROOT / "templates", root / "templates")
+            # Row TR2b: the rich scenarios model a release that still shipped the two folded documents.
+            shutil.copytree(RELEASED, root / "templates/single", dirs_exist_ok=True)
             # Profile declarations and advisory rules are independent of migrations.
             for name in ("catalog-v1.json", "retired-text-v1.json"):
                 shutil.copyfile(ROOT / "capabilities" / name, root / "capabilities" / name)

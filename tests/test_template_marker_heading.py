@@ -92,7 +92,7 @@ class CapabilityMarkerTest(unittest.TestCase):
             "docs/CONTEXT_READING_POLICY.md",
             "docs/LIFECYCLE_ORCHESTRATION.md",
             "docs/OPERATOR_PROMPTS.md",
-            "docs/INTEGRATION_POLICY.md",
+            "docs/workflows/REVIEW.md",
             "docs/EXECUTION_EVIDENCE_PROFILE.md",
         ]
         texts = {path: (self.WORKFLOW / path).read_text(encoding="utf-8") for path in paths}
@@ -123,32 +123,19 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertNotIn("## 1. Report project status", prompts)
     def test_operator_prompts_resolve_locations_and_bound_framework_maintenance(self) -> None:
         prompts = (self.WORKFLOW / "docs/OPERATOR_PROMPTS.md").read_text(encoding="utf-8")
-        self.assertIn("Resolve the canonical queue, task, and review-record locations", prompts)
-        self.assertIn("cardine locations --project .", prompts)
-        self.assertIn("Do not substitute a template path", prompts)
-        self.assertIn("Class:\nSPIKE", prompts)
-        self.assertIn("cardine upgrade --project . --check", prompts)
-        self.assertIn("Do not run\n`cardine upgrade --apply` or `finalize-adoption`", prompts)
+        self.assertIn("Resolve the queue and task locations with `cardine locations --project .`", prompts)
+        self.assertIn("`Class: SPIKE` task", prompts)
+        # TR2b deleted the upgrade-check prompt (OP-07); the cookbook no longer names upgrade commands.
+        self.assertNotIn("upgrade", prompts)
+        self.assertNotIn("finalize-adoption", prompts)
         self.assertNotIn("## 3. Design the next milestone or phase", prompts)
         # Prompts 1 and 1a (status and design alignment) left the cookbook: `cardine status` is the report.
         self.assertNotIn("## 1a. Align tech design for questions and future work (read-only)", prompts)
-        self.assertIn("## 2. Design a change, decompose a milestone, or select the next phase", prompts)
-    def test_ci_verified_validation_marker_in_each_of_its_three_docs(self) -> None:
-        pull_request_policy = (self.WORKFLOW / "docs/INTEGRATION_POLICY.md").read_text(encoding="utf-8")
-        self.assertEqual(
-            self.marker_pairs(pull_request_policy),
-            [
-                ("task-worktree-integration", "3"),
-                ("ci-verified-validation", "1"),
-                ("remote-branch-cleanup", "1"),
-            ],
-        )
-
-        code_review_prompt = (self.WORKFLOW / "docs/CODE_REVIEW_PROMPT.md").read_text(encoding="utf-8")
-        self.assertEqual(
-            self.marker_pairs(code_review_prompt),
-            [("code-review-prompt", "2")],
-        )
+        self.assertIn("## Design a change or decompose a milestone", prompts)
+    def test_ci_verified_validation_marker_is_retired_from_every_doc(self) -> None:
+        # TR2b folded INTEGRATION_POLICY.md and CODE_REVIEW_PROMPT.md into REVIEW.md, so only the report keeps a block.
+        for name in ("docs/INTEGRATION_POLICY.md", "docs/CODE_REVIEW_PROMPT.md"):
+            self.assertFalse((self.WORKFLOW / name).exists(), name)
 
         completion_report = (self.WORKFLOW / "docs/COMPLETION_REPORT_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertEqual(
@@ -199,8 +186,8 @@ class CapabilityMarkerTest(unittest.TestCase):
         expectations = {
             "LANGUAGE_POLICY.md": ("language-policy", "1"),
             "tasks/TASK_BLUEPRINT.md": ("task-blueprint", "10"),
-            "docs/CODE_ORGANIZATION.md": ("code-organization", "1"),
-            "docs/AUDIT_PROMPT_READ_ONLY.md": ("audit-prompt", "1"),
+            "docs/CODE_ORGANIZATION.md": ("code-organization", "2"),
+            "docs/AUDIT_PROMPT_READ_ONLY.md": ("audit-prompt", "2"),
         }
         for name, pair in expectations.items():
             text = (self.WORKFLOW / name).read_text(encoding="utf-8")
