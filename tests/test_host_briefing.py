@@ -96,8 +96,10 @@ class HostBriefingTest(unittest.TestCase):
     def test_no_state_never_falls_back_to_legacy_counts(self):
         (self.project / "tasks").mkdir()
         (self.project / "tasks/QUEUE.md").write_text("| 001 | QUEUED |\n")
-        (self.project / ".meridian/tasks").mkdir(parents=True)
-        (self.project / ".meridian/tasks/001.json").write_text('{"status":"done"}')
+        # MERIDIAN-INSTALLATION-CHECK: frozen installation state is never a product fallback.
+        legacy = self.project / ".meridian/tasks"
+        legacy.mkdir(parents=True)
+        (legacy / "001.json").write_text('{"status":"done"}')
         self.assert_bindings(expected="Preset: lean\nTasks: queued=0, in_progress=0, in_review=0, done=0, cancelled=0, total=0\nStartable: none\n")
 
     def test_custom_paths_and_large_snapshot(self):

@@ -132,6 +132,7 @@ class SingleWorkflowBriefingTest(unittest.TestCase):
         host = "[Meridian Host]\n  note without a trailing newline"
         status = ("Preset: lean\nTasks: queued=1, in_progress=0, in_review=0, done=0, cancelled=0, total=1\n"
                   "Startable: TASK-009\n")
+        # MERIDIAN-INSTALLATION-CHECK: caller bytes from the frozen hook must be discarded.
         budget = "[Meridian Context Budget]\nBudget: 100; setup advice; Developer's task\n"
         self.assertEqual(render_briefing(self.project, language + queue + budget + host), status)
         self.assertEqual(render_briefing(self.project, queue), status)
