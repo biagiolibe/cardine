@@ -224,12 +224,14 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), result)
         self.assertEqual(self.state(), state)
         task = project_console.load_snapshot(self.primary).tasks[0]
-        self.assertEqual(task.launch_command, 'Review 001')
+        self.assertEqual(task.launch_command, f'cardine run 001 --project {self.primary.resolve()}')
+        self.assertEqual(task.run_preview['step'], 'implementation')
+        self.assertEqual(task.run_preview['work']['role'], 'implementer')
         (self.worker / 'feature.txt').write_text('later changes\n')
         task = project_console.load_snapshot(self.primary).tasks[0]
         self.assertEqual(task.status, 'in_review')
-        self.assertEqual(task.readiness, 'PENDING DELIVERY/CHANGES')
-        self.assertIsNone(task.launch_command)
+        self.assertEqual(task.run_preview['step'], 'implementation')
+        self.assertEqual(task.run_preview['work']['role'], 'implementer')
 
     def test_handoff_only_corrections_redeliver_twice_without_new_transitions(self):
         identity = self.implemented()
@@ -334,8 +336,8 @@ class ExecutionBoundariesTest(unittest.TestCase):
             self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         self.assertEqual(self.state()['status'], 'in_review')
         task = project_console.load_snapshot(self.primary).tasks[0]
-        self.assertIsNone(task.launch_command)
-        self.assertEqual(task.readiness, 'PENDING DELIVERY/CHANGES')
+        self.assertEqual(task.launch_command, f'cardine run 001 --project {self.primary.resolve()}')
+        self.assertEqual(task.run_preview['step'], 'implementation')
         self.commit('Deliver 001 for review')
         self.assertTrue(owner_lifecycle_commands.execution_deliver(self.worker, '001')['clean'])
 

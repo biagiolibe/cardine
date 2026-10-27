@@ -52,6 +52,16 @@ class InstallationTest(RepoCase):
             "started_at": "2026-10-19T12:00:00Z",
         }))
 
+    def test_standalone_identity_requires_explicit_installation_context(self):
+        from cardine.tasks.identity import read_task_identity_policy
+        self.write(self.project, ".meridian/task-identity.json", '{"version": 1, "mode": "milestone"}')
+        self.assertEqual(read_task_identity_policy(self.project).mode, "opaque")
+        with use(installation.MERIDIAN_INSTALLATION_NAMES):
+            self.assertTrue(names().legacy_identity_policy)
+            self.assertEqual(read_task_identity_policy(self.project).mode, "milestone")
+        self.assertFalse(names().legacy_identity_policy)
+        self.assertEqual(read_task_identity_policy(self.project).mode, "opaque")
+
     def test_snapshot_equals_current_builder_on_synthetic_installation(self):
         (self.project / ".cardine/project.json").unlink()
         expected = installation.load_meridian_snapshot(self.project)

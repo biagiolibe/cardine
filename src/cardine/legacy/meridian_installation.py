@@ -20,6 +20,10 @@ from cardine.shared.snapshot_adapters import execution_assets_adapter, state_ada
 class MeridianInstallationNames(ProjectNames):
     """Keep the installed Meridian evidence ledger behind the legacy boundary."""
 
+    @property
+    def legacy_identity_policy(self) -> bool:
+        return True
+
     def execution_evidence_path(self, canonical_id: str) -> Path:
         return Path(self.project_directory) / "execution-evidence.json"
 

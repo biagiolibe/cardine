@@ -32,6 +32,7 @@ from cardine.shared.project import parse_project_declaration
 from cardine.shared.project import read_project_declaration
 from cardine.tasks.identity import parse_task_identity_policy
 from cardine.tasks.identity import read_task_identity_policy
+from cardine.tasks.identity import read_installation_identity_policy
 from cardine.worktree.storage import _read_user_configuration
 from cardine.worktree.storage import resolve_worktree_root
 from collections.abc import Mapping
@@ -154,7 +155,8 @@ def plan_setup(
         task_identity_state = "not-requested"
     elif task_identity_path.exists():
         try:
-            existing_identity = read_task_identity_policy(project_root)
+            existing_identity = (read_task_identity_policy(project_root) if project_declaration_path.exists()
+                                 else read_installation_identity_policy(project_root))
         except CardineError as error:
             task_identity_state = "blocked"
             task_identity_detail = str(error)
@@ -181,7 +183,8 @@ def plan_setup(
         try:
             project_declaration_proposal["taskIdentity"] = {
                 "mode": (task_identity_proposal["mode"] if task_identity_proposal is not None
-                         else read_task_identity_policy(project_root).mode)
+                         else read_installation_identity_policy(project_root).mode
+                         if task_identity_path.exists() else read_task_identity_policy(project_root).mode)
             }
         except CardineError as error:
             task_identity_state = "blocked"
