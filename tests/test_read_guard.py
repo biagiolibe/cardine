@@ -193,6 +193,9 @@ class PythonReadGuardTest(unittest.TestCase):
         self.project.mkdir()
         self.home = self.root / "home"
         self.home.mkdir()
+        environment = patch.dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home / ".config"))
+        environment.start()
+        self.addCleanup(environment.stop)
         (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
         self.target = self.project / "big.txt"
         self.target.write_text("line\n" * 500, encoding="utf-8")
