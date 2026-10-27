@@ -163,3 +163,22 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 115 — Audit the run engine end to end and document its commands (RE7b).
 - `[x]` 116 — Plan the host integration (work item 9).
 - `[x]` 117 — Prove the receipt writer once and test each operation's own boundaries.
+- `[ ]` 118 — Print only the generated status in the per-turn briefing (H1a).
+- `[ ]` 119 — Use one Python read guard with two payload adapters (H1b).
+- `[ ]` 120 — Run the stop audit in Python and retire the shell wrapper (H1c).
+- `[ ]` 121 — Load heavy imports only on the release and update paths (H1d).
+- `[ ]` 122 — Add cardine init with preview and apply (H2a).
+- `[ ]` 123 — Rename the init slash command and route it to the CLI (H2b).
+- `[ ]` 124 — Rename the remaining slash commands to Cardine routes (H2c).
+- `[ ]` 125 — Write the two Cardine skills and fix the Accept route (H3a).
+- `[ ]` 126 — Remove the four old skills and install the two shared links (H3b).
+- `[ ]` 127 — Rename the plugin metadata and stop shipping product auto-hooks (H3c).
+- `[ ]` 128 — Route the entry routers and register the managed templates (H3d).
+- `[ ]` 129 — Name the Codex rules and profile for Cardine with a bounded migration (H4a).
+- `[ ]` 130 — Orchestrate setup on Cardine paths without real-home apply (H4b).
+- `[ ]` 131 — Register user-level hooks on both hosts without duplicates (H4c).
+- `[ ]` 132 — Unify doctor and drop adopter test-command assumptions (H4d).
+- `[ ]` 133 — Enforce protected paths and Claude role restrictions (H5a).
+- `[ ]` 134 — Realize the Codex role policy and profiles (H5b).
+- `[ ]` 135 — Wire the concrete host transports to issued roles (H5c).
+- `[ ]` 136 — Prove roles at runtime in doctor and update the host contract (H5d).

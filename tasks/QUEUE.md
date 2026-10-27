@@ -32,3 +32,29 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 27 — Host integration: implementation
+
+Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 9 and decision 14 rule 2; developer decisions D1–D4 of 2026-10-27.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 118 | Print only the generated status in the per-turn briefing (H1a) | 🔴 P1 | 116 | [118](118-status-only-briefing.md) |
+| `[ ]` | 119 | Use one Python read guard with two payload adapters (H1b) | 🔴 P1 | 118 | [119](119-python-read-guard.md) |
+| `[ ]` | 120 | Run the stop audit in Python and retire the shell wrapper (H1c) | 🔴 P1 | 119 | [120](120-python-stop-audit.md) |
+| `[ ]` | 121 | Load heavy imports only on the release and update paths (H1d) | 🔴 P1 | 120 | [121](121-lazy-cli-imports.md) |
+| `[ ]` | 122 | Add cardine init with preview and apply (H2a) | 🔴 P1 | 121 | [122](122-cardine-init.md) |
+| `[ ]` | 123 | Rename the init slash command and route it to the CLI (H2b) | 🔴 P1 | 122 | [123](123-init-command-route.md) |
+| `[ ]` | 124 | Rename the remaining slash commands to Cardine routes (H2c) | 🔴 P1 | 123 | [124](124-rename-slash-commands.md) |
+| `[ ]` | 125 | Write the two Cardine skills and fix the Accept route (H3a) | 🔴 P1 | 124 | [125](125-two-skills.md) |
+| `[ ]` | 126 | Remove the four old skills and install the two shared links (H3b) | 🔴 P1 | 125 | [126](126-remove-old-skills.md) |
+| `[ ]` | 127 | Rename the plugin metadata and stop shipping product auto-hooks (H3c) | 🔴 P1 | 126 | [127](127-plugin-metadata.md) |
+| `[ ]` | 128 | Route the entry routers and register the managed templates (H3d) | 🔴 P1 | 127 | [128](128-router-routes.md) |
+| `[ ]` | 129 | Name the Codex rules and profile for Cardine with a bounded migration (H4a) | 🔴 P1 | 128 | [129](129-codex-rules-naming.md) |
+| `[ ]` | 130 | Orchestrate setup on Cardine paths without real-home apply (H4b) | 🔴 P1 | 129 | [130](130-setup-orchestration.md) |
+| `[ ]` | 131 | Register user-level hooks on both hosts without duplicates (H4c) | 🔴 P1 | 130 | [131](131-user-hook-registration.md) |
+| `[ ]` | 132 | Unify doctor and drop adopter test-command assumptions (H4d) | 🔴 P1 | 131 | [132](132-unified-doctor.md) |
+| `[ ]` | 133 | Enforce protected paths and Claude role restrictions (H5a) | 🔴 P1 | 132 | [133](133-claude-role-permissions.md) |
+| `[ ]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](134-codex-role-policy.md) |
+| `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134 | [135](135-host-transports.md) |
+| `[ ]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](136-doctor-role-proofs.md) |
