@@ -175,7 +175,7 @@ class SelfUpdateTest(unittest.TestCase):
     def test_cli_uses_own_checkout_and_requires_explicit_mode(self):
         with patch.object(sys, 'argv', ['cardine', '--framework-root', str(self.root),
                                       'self-update', '--check']), patch.object(
-                owner_cli, 'run_self_update', return_value=0) as update:
+                owner_release_update, 'run_self_update', return_value=0) as update:
             self.assertEqual(owner_cli._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
         update.assert_called_once_with(Path(cardine_cli.__file__).resolve().parents[1],
                                        apply=False, target_tag=None)

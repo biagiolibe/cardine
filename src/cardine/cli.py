@@ -11,44 +11,10 @@ import os
 import shlex
 import sys
 
-from cardine.hosts.codex import apply_codex_configuration, plan_codex_configuration, print_codex_configuration_plan
-from cardine.hosts.setup import apply_setup, codex_doctor, plan_setup, print_setup_plan
-from cardine.integration.evidence import measured_validation_report
-from cardine.integration.merge import abort_task_integration, cleanup_task_worktree, finalize_task_integration, stage_task_integration
-from cardine.lifecycle.closure import advance_task_closure
-from cardine.lifecycle.commands import execution_deliver, execution_start
-from cardine.lifecycle.execution import delivery_readiness
-from cardine.release.update import run_self_check, run_self_update
 from cardine.release.version import parse_semver, read_raw_version
-from cardine.review.verdict import record_review_verdict
-from cardine.shared.authority import adr_list, adr_show, context_authority
 from cardine.shared.constants import USAGE_HOSTS
-from cardine.shared.context import context_size_report, format_context_size_report
 from cardine.shared.errors import CardineError, CardineStop
-from cardine.shared.git import canonical_project_root
-from cardine.shared.journal import LifecycleJournalEntry
 from cardine.shared.paths import SCRIPTS_ROOT
-from cardine.shared.project import read_project_declaration
-from cardine.shared.usage import format_usage_report, usage_report
-from cardine.stops.registry import load_stop_registry
-from cardine.stops.render import emit_diagnostic, outcome_for_code, format_stop, stop_error
-from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
-from cardine.tasks.importer import import_task_states
-from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check, reconcile_execution_contract
-from cardine.tasks.recording import run_validation
-from cardine.tasks.state import state_path
-from cardine.tasks.transitions import close_task, transition_task_state
-from cardine.templates.audit import retired_text_advisories, run_audit
-from cardine.templates.catalog import manifest_workflow_mode
-from cardine.templates.files import manifest_baseline_version
-from cardine.templates.merge import lock_project, plan_from_baseline
-from cardine.templates.mode import detect_mode
-from cardine.templates.upgrade import apply_upgrade
-from cardine.templates.upgrade_support import plan_has_blockers, prepare_upgrade_targets, print_plan
-from cardine.worktree.checkout import active_worktree_task, inspect_task_worktree, prepare_task_worktree, registered_worktree_task_states, repair_task_worktree_base
-from cardine.worktree.closure_status import closure_status
-from cardine.worktree.paths import _task_worktree_path_for_identity, handoff_worktree_value, task_worktree_path, validate_worktree_collision
-from cardine.worktree.storage import _effective_worktree_root, _verified_lifecycle_project, resolve_worktree_root
 
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
@@ -84,12 +50,15 @@ def main() -> int:
     if preview_args[:1] == ["run"] or review_preview:
         from cardine.lifecycle.engine import run_preview_cli
         return run_preview_cli(preview_args[1:])
-    if sys.argv[1:2] == ["hook"]:
+    if preview_args[:1] == ["hook"]:
         try:
             Path.cwd()
         except FileNotFoundError:
             # Advisory hooks must also tolerate an inherited, deleted cwd.
             return 0
+        return _run_hook(build_parser().parse_args())
+    from cardine.shared.journal import LifecycleJournalEntry
+
     journal = LifecycleJournalEntry()
     exit_code = _run_cli(journal)
     journal.write(exit_code)
@@ -453,7 +422,51 @@ def build_parser() -> CardineArgumentParser:
     return parser
 
 
+def _run_hook(arguments: argparse.Namespace) -> int:
+    """Dispatch advisory hooks without loading lifecycle or release commands."""
+    if arguments.hook_command == "read-guard":
+        from cardine.hosts.read_guard import read_guard_main
+
+        return read_guard_main(arguments.host)
+    from cardine.hosts.stop_audit import stop_audit_main
+
+    return stop_audit_main(arguments.host)
+
+
 def _run_cli(journal: LifecycleJournalEntry) -> int:
+    from cardine.hosts.codex import apply_codex_configuration, plan_codex_configuration, print_codex_configuration_plan
+    from cardine.hosts.setup import apply_setup, codex_doctor, plan_setup, print_setup_plan
+    from cardine.integration.evidence import measured_validation_report
+    from cardine.integration.merge import abort_task_integration, cleanup_task_worktree, finalize_task_integration, stage_task_integration
+    from cardine.lifecycle.closure import advance_task_closure
+    from cardine.lifecycle.commands import execution_deliver, execution_start
+    from cardine.lifecycle.execution import delivery_readiness
+    from cardine.review.verdict import record_review_verdict
+    from cardine.shared.authority import adr_list, adr_show, context_authority
+    from cardine.shared.context import context_size_report, format_context_size_report
+    from cardine.shared.git import canonical_project_root
+    from cardine.shared.project import read_project_declaration
+    from cardine.shared.usage import format_usage_report, usage_report
+    from cardine.stops.registry import load_stop_registry
+    from cardine.stops.render import emit_diagnostic, outcome_for_code, format_stop, stop_error
+    from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
+    from cardine.tasks.importer import import_task_states
+    from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check, reconcile_execution_contract
+    from cardine.tasks.recording import run_validation
+    from cardine.tasks.state import state_path
+    from cardine.tasks.transitions import close_task, transition_task_state
+    from cardine.templates.audit import retired_text_advisories, run_audit
+    from cardine.templates.catalog import manifest_workflow_mode
+    from cardine.templates.files import manifest_baseline_version
+    from cardine.templates.merge import lock_project, plan_from_baseline
+    from cardine.templates.mode import detect_mode
+    from cardine.templates.upgrade import apply_upgrade
+    from cardine.templates.upgrade_support import plan_has_blockers, prepare_upgrade_targets, print_plan
+    from cardine.worktree.checkout import active_worktree_task, inspect_task_worktree, prepare_task_worktree, registered_worktree_task_states, repair_task_worktree_base
+    from cardine.worktree.closure_status import closure_status
+    from cardine.worktree.paths import _task_worktree_path_for_identity, handoff_worktree_value, task_worktree_path, validate_worktree_collision
+    from cardine.worktree.storage import _effective_worktree_root, _verified_lifecycle_project, resolve_worktree_root
+
     arguments = build_parser().parse_args()
     journal.begin(arguments)
     framework_root = arguments.framework_root.resolve()
@@ -464,11 +477,15 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
     )
     try:
         if arguments.command == "self-update":
+            from cardine.release.update import run_self_update
+
             # Environment and --framework-root select upgrade inputs, never the
             # checkout that owns this running executable.
             return run_self_update(SCRIPTS_ROOT.parent,
                                    apply=arguments.apply, target_tag=arguments.target_tag)
         if arguments.command == "self-check":
+            from cardine.release.update import run_self_check
+
             return run_self_check(framework_root)
         if arguments.command == "console":
             if not 0.2 <= arguments.interval <= 60:
@@ -809,14 +826,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 else:
                     print(readiness_check(project_root, arguments.task_id))
         elif arguments.command == "hook":
-            if arguments.hook_command == "read-guard":
-                from cardine.hosts.read_guard import read_guard_main
-
-                return read_guard_main(arguments.host)
-            if arguments.hook_command == "stop-audit":
-                from cardine.hosts.stop_audit import stop_audit_main
-
-                return stop_audit_main(arguments.host)
+            return _run_hook(arguments)
         elif arguments.check:
             if arguments.owner_reconciled:
                 raise CardineError("--owner-reconciled only applies to --apply")
