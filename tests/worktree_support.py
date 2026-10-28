@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import subprocess
 import sys
-import tempfile
 import unittest
 import json
 import os
 from pathlib import Path
+from fixture_restore_support import RestorableFixture
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -44,21 +44,44 @@ def measure_task(fixture, worktree: Path, task_id: str = "056") -> None:
         os.chdir(previous)
 
 
+def build_bounded_fixture(directory):
+    from unittest.mock import patch
+    from control_support import adapter
+    test = BoundedWorktreeLifecycleFixture()
+    with patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(directory / 'worktrees')}), \
+            patch("cardine.lifecycle.control.host_adapter", return_value=adapter("coordinator")):
+        test._build_fixture(directory)
+    return {'base': test.base}
+
+
+BOUNDED_FIXTURE = RestorableFixture('bounded-worktree', build_bounded_fixture)
+
+
 class BoundedWorktreeLifecycleFixture(unittest.TestCase):
     def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
-        self.primary = self.root / "project"
-        self.primary.mkdir()
+        previous = Path.cwd()
+        directory, record = BOUNDED_FIXTURE.restore()
+        self.root = directory
+        self.primary = directory / "project"
+        self.worktree_root = directory / "worktrees"
+        self.base = record['base']
         from unittest.mock import patch
         from control_support import adapter
         host = patch("cardine.lifecycle.control.host_adapter", return_value=adapter("coordinator"))
         host.start()
         self.addCleanup(host.stop)
-        self.worktree_root = self.root / "worktrees"
         self.environment = patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
         self.environment.start()
         self.addCleanup(self.environment.stop)
+        self.previous_cwd = previous
+        self.addCleanup(os.chdir, previous)
+        os.chdir(self.primary)
+
+    def _build_fixture(self, directory):
+        self.root = directory
+        self.primary = directory / "project"
+        self.primary.mkdir()
+        self.worktree_root = directory / "worktrees"
         self.git("init", "-b", "main")
         self.git("config", "user.name", "Cardine Test")
         self.git("config", "user.email", "cardine@example.invalid")
@@ -95,13 +118,9 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         self.base = self.git("rev-parse", "HEAD").stdout.strip()
         self.worktree_root = self.root / "worktrees"
         self.worktree_root.mkdir()
-        self.previous_cwd = Path.cwd()
-        os.chdir(self.primary)
-
 
     def tearDown(self) -> None:
         os.chdir(self.previous_cwd)
-        self.temporary.cleanup()
 
 
     def git(self, *arguments: str, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -235,6 +254,9 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
 class GovernedCompletionRowsFixture(unittest.TestCase):
     def setUp(self) -> None:
         BoundedWorktreeLifecycleFixture.setUp(self)
+        GovernedCompletionRowsFixture._configure_fixture(self)
+
+    def _configure_fixture(self):
         write_project_config(self.primary, "governed", validation=VALIDATION)
         (self.primary / "tasks/QUEUE.md").write_text(
             "### Phase 1 — Governed\n\n"

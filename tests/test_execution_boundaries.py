@@ -4,7 +4,8 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
+from types import SimpleNamespace
+from fixture_restore_support import RestorableFixture
 import unittest
 from pathlib import Path
 from project_config_support import write_project_config
@@ -26,18 +27,48 @@ from cardine.tasks import identity as owner_tasks_identity
 from cardine.tasks import contract as owner_tasks_contract
 
 
+def build_execution_fixture(directory, preset):
+    test = ExecutionBoundariesTest()
+    test.preset = preset
+    previous = Path.cwd()
+    with mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(directory / 'worktrees')}):
+        try:
+            test._build_fixture(directory)
+        finally:
+            os.chdir(previous)
+    return {'worker': str(test.worker), 'record': str(test.record)}
+
+
+EXECUTION_FIXTURES = {
+    preset: RestorableFixture(f'execution-{preset}',
+                              lambda directory, preset=preset: build_execution_fixture(directory, preset))
+    for preset in ('lean', 'governed')
+}
+
+
 class ExecutionBoundariesTest(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
+        previous = Path.cwd()
+        source = EXECUTION_FIXTURES[getattr(self, 'preset', 'governed')]
+        directory, record = source.restore()
+        self.temp = SimpleNamespace(name=str(directory))
+        self.primary = directory / 'project'
+        self.worker = Path(record['worker'])
+        self.record = Path(record['record'])
+        self.env = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(directory / 'worktrees')})
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.oldcwd = previous
+        self.addCleanup(os.chdir, previous)
+        os.chdir(self.worker)
+
+    def _build_fixture(self, directory):
+        self.temp = SimpleNamespace(name=str(directory))
         self.primary = Path(self.temp.name) / 'project'
         self.primary.mkdir()
         self.git('init', '-q', '-b', 'main', cwd=self.primary)
         self.git('config', 'user.name', 'Test', cwd=self.primary)
         self.git('config', 'user.email', 'test@example.invalid', cwd=self.primary)
-        self.env = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(Path(self.temp.name) / 'worktrees')})
-        self.env.start()
-        self.addCleanup(self.env.stop)
         write_project_config(self.primary, getattr(self, "preset", "governed"), validation=VALIDATION)
         (self.primary / 'tasks').mkdir()
         (self.primary / 'docs').mkdir()
@@ -54,12 +85,11 @@ class ExecutionBoundariesTest(unittest.TestCase):
         freeze_record(self.primary, "001", self.primary / self.record)
         self.git('add', '.', cwd=self.primary)
         self.git('commit', '-qm', 'Initial', cwd=self.primary)
-        self.oldcwd = Path.cwd()
         os.chdir(self.primary)
-        self.addCleanup(os.chdir, self.oldcwd)
         prepared = owner_worktree_checkout.prepare_task_worktree('001', None, self.primary)
         self.worker = Path(prepared['worktree'])
         os.chdir(self.worker)
+
 
     def test_delivery_uses_frozen_validation_after_record_edits(self):
         self.implemented()

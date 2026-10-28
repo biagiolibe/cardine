@@ -7,9 +7,7 @@ import sys
 import unittest
 from unittest import mock
 import shlex
-import shutil
-import tempfile
-from repository_template_support import RepositoryTemplate, authorize_copy
+from fixture_restore_support import RestorableFixture
 from pathlib import Path
 from project_config_support import write_project_config
 from task_contract_support import freeze_record, seal_state
@@ -26,44 +24,40 @@ from cardine.worktree import checkout as owner_worktree_checkout
 from cardine.integration import merge as owner_integration_merge
 
 
+def build_integration_state_fixture(directory):
+    from control_support import adapter
+    test = TaskIntegrationStateTest()
+    with mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(directory / 'worktrees')}), \
+            mock.patch('cardine.lifecycle.control.host_adapter', return_value=adapter('coordinator')):
+        fixtures.BoundedWorktreeLifecycleFixture._build_fixture(test, directory)
+        fixtures.GovernedCompletionRowsFixture._configure_fixture(test)
+        path = test.primary / ".cardine/tasks/056.json"
+        path.unlink()
+        path.with_name(".056.guard").unlink(missing_ok=True)
+        path.parent.rmdir()
+    return {'base': test.base}
+
+
+INTEGRATION_STATE_FIXTURE = RestorableFixture('task-integration-state', build_integration_state_fixture)
+
+
 class TaskIntegrationStateTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        def build(project):
-            fixture = cls()
-            try:
-                fixtures.GovernedCompletionRowsFixture.setUp(fixture)
-                shutil.copytree(fixture.primary, project)
-            finally:
-                fixtures.BoundedWorktreeLifecycleFixture.tearDown(fixture)
-                fixture.doCleanups()
-        cls.template = RepositoryTemplate(build)
-        cls.addClassCleanup(cls.template.cleanup)
-
     def setUp(self):
+        previous = Path.cwd()
+        self.root, record = INTEGRATION_STATE_FIXTURE.restore()
+        self.primary = self.root / "project"
+        self.worktree_root = self.root / "worktrees"
+        self.base = record['base']
         from control_support import adapter
         host = mock.patch('cardine.lifecycle.control.host_adapter', return_value=adapter('coordinator'))
         host.start()
         self.addCleanup(host.stop)
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
-        self.primary = self.root / "project"
-        self.template.copy_to(self.primary)
-        self.worktree_root = self.root / "worktrees"
-        self.worktree_root.mkdir()
         self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root)})
         self.environment.start()
         self.addCleanup(self.environment.stop)
-        authorize_copy(self.primary)
-        self.base = self.git("rev-parse", "HEAD").stdout.strip()
-        self.previous_cwd = Path.cwd()
+        self.previous_cwd = previous
+        self.addCleanup(os.chdir, previous)
         os.chdir(self.primary)
-        path = self.primary / ".cardine/tasks/056.json"
-        path.unlink()
-        path.with_name(".056.guard").unlink(missing_ok=True)
-        path.parent.rmdir()
 
     def tearDown(self):
         fixtures.BoundedWorktreeLifecycleFixture.tearDown(self)

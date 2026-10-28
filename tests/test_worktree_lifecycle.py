@@ -25,12 +25,39 @@ from cardine.stops import render as owner_stops_render
 from cardine.worktree import storage as owner_worktree_storage
 import cardine_cli
 from stop_recovery_support import run_recovery, resume_from
+from fixture_restore_support import RestorableFixture
+
+
+def build_lifecycle_fixture(directory):
+    test = WorktreeLifecycleCliTest()
+    with mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(directory / 'worktrees'),
+                                     'PYTHONPATH': str(ROOT / 'src')}):
+        test._build_fixture(directory)
+    return {}
+
+
+LIFECYCLE_FIXTURE = RestorableFixture('worktree-lifecycle', build_lifecycle_fixture)
 
 
 class WorktreeLifecycleCliTest(unittest.TestCase):
     def setUp(self, *, seed: bool = True) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name)
+        if seed:
+            self.root, _ = LIFECYCLE_FIXTURE.restore()
+        else:
+            # The walkthrough intentionally starts without a task or a commit.
+            self.temporary = tempfile.TemporaryDirectory()
+            self.addCleanup(self.temporary.cleanup)
+            self.root = Path(self.temporary.name)
+            self._build_fixture(self.root, seed=False)
+        self.project = self.root / "project"
+        self.worktree_root = self.root / "worktrees"
+        self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root),
+                                                        'PYTHONPATH': str(ROOT / 'src')})
+        self.environment.start()
+        self.addCleanup(self.environment.stop)
+
+    def _build_fixture(self, directory, *, seed=True):
+        self.root = directory
         self.project = self.root / "project"
         self.project.mkdir()
         write_project_config(self.project, validation=VALIDATION)
@@ -41,11 +68,6 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         subprocess.run(["git", "config", "maintenance.auto", "false"], cwd=self.project, check=True)
         self.worktree_root = self.root / "worktrees"
         self.worktree_root.mkdir()
-        # Validation results bind the environment, so every process of a test shares one.
-        self.environment = mock.patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktree_root),
-                                                        'PYTHONPATH': str(ROOT / 'src')})
-        self.environment.start()
-        self.addCleanup(self.environment.stop)
         if not seed:
             return
         (self.project / "tasks").mkdir()
@@ -84,7 +106,6 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.environment.stop()
-        self.temporary.cleanup()
 
     def run_cli(self, *arguments: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(

@@ -309,3 +309,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 137 | Restore the run engine fixtures in place instead of rebuilding them | 🔴 P1 | 117 | [137](done/137-restore-run-fixtures.md) |
+
+### Phase 29 — Test suite: remaining heavy fixtures
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 138 | Restore the remaining heavy fixtures in place | 🔴 P1 | 137 | [138](done/138-restore-remaining-fixtures.md) |
