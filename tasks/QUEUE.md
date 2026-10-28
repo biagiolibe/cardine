@@ -58,3 +58,11 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[ ]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](134-codex-role-policy.md) |
 | `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](135-host-transports.md) |
 | `[ ]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](136-doctor-role-proofs.md) |
+
+### Phase 29 — Test suite: remaining heavy fixtures
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 138 | Restore the remaining heavy fixtures in place | 🔴 P1 | 137 | [138](138-restore-remaining-fixtures.md) |
