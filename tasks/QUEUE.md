@@ -44,7 +44,7 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[x]` | 120 | Run the stop audit in Python and retire the shell wrapper (H1c) | 🔴 P1 | 119 | [120](done/120-python-stop-audit.md) |
 | `[x]` | 121 | Load heavy imports only on the release and update paths (H1d) | 🔴 P1 | 120 | [121](done/121-lazy-cli-imports.md) |
 | `[x]` | 122 | Add cardine init with preview and apply (H2a) | 🔴 P1 | 121 | [122](done/122-cardine-init.md) |
-| `[ ]` | 123 | Rename the init slash command and route it to the CLI (H2b) | 🔴 P1 | 122 | [123](123-init-command-route.md) |
+| `[x]` | 123 | Rename the init slash command and route it to the CLI (H2b) | 🔴 P1 | 122 | [123](done/123-init-command-route.md) |
 | `[ ]` | 124 | Rename the remaining slash commands to Cardine routes (H2c) | 🔴 P1 | 123 | [124](124-rename-slash-commands.md) |
 | `[ ]` | 125 | Write the two Cardine skills and fix the Accept route (H3a) | 🔴 P1 | 124 | [125](125-two-skills.md) |
 | `[ ]` | 126 | Remove the four old skills and install the two shared links (H3b) | 🔴 P1 | 125 | [126](126-remove-old-skills.md) |

@@ -270,7 +270,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         self.assertEqual(parsed["permissions"]["other"]["extends"], ":read-only")
 
     def test_initializer_only_offers_explicit_check_and_apply(self) -> None:
-        instructions = (ROOT / "commands/meridian-init.md").read_text(encoding="utf-8")
+        instructions = (ROOT / "commands/cardine-init.md").read_text(encoding="utf-8")
         self.assertIn("setup --check", instructions)
         self.assertIn("setup --apply` only after explicit confirmation", instructions)
         self.assertIn("not invalidate initialization", instructions)
