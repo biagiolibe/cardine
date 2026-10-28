@@ -37,7 +37,12 @@ class SingleWorkflowParityTest(unittest.TestCase):
     def project(self, preset, *, review='required', spike=False, surface=False):
         # Reuse the real-Git execution fixture, without importing its test class
         # into this module's discovery namespace or mocking a lifecycle gate.
+        # Each subcase finishes before restoring the same preset's stable path.
+        previous = getattr(self, '_project_fixture', None)
+        if previous is not None:
+            previous.doCleanups()
         fixture = boundaries.ExecutionBoundariesTest()
+        self._project_fixture = fixture
         fixture.preset = preset
         fixture.setUp()
         fixture.primary = fixture.primary.resolve()
