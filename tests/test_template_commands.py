@@ -262,7 +262,7 @@ class SharedSkillTest(unittest.TestCase):
                 self.assertTrue(text.startswith(f"---\nname: {name}\ndescription: "))
                 self.assertFalse((ROOT / "skills" / f"{name}-claude-code").exists())
                 self.assertEqual(findings_for(text), [])
-                self.assertNotIn("MERIDIAN_ROOT", text)
+                self.assertNotIn("MERIDIAN_ROOT", text)  # MERIDIAN-OLD-NAME-TEST
 
     def test_route_matrix_is_the_same_for_both_presets_and_hosts(self) -> None:
         text = self.skill("cardine-delivery")
