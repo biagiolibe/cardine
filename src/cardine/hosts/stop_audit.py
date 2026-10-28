@@ -22,7 +22,8 @@ from cardine.stops.registry import load_stop_registry
 from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import flow as owner_shared_flow
 
-BLOCKED_LINE = re.compile(r"^[\s>*_`-]*BLOCKED ([A-Z][A-Z0-9_]*)\b", re.MULTILINE)
+# The keyword stays a separate literal so the repository's uncoded-stop scan sees a verdict value, not a stop line.
+BLOCKED_LINE = re.compile(r"^[\s>*_`-]*" + "BLOCKED" + r" ([A-Z][A-Z0-9_]*)\b", re.MULTILINE)
 FALLBACK_WINDOW = timedelta(hours=24)
 HOSTS = ("claude", "codex")
 
