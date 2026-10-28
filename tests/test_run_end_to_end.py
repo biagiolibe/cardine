@@ -266,6 +266,7 @@ class ReplayInventoryTest(unittest.TestCase):
     """Every module that crosses an effect boundary has an executable replay test."""
 
     REPLAY = {
+        "src/cardine/templates/init.py": ["test_init.InitTest.test_every_effect_and_plan_and_result_boundary_converges"],
         "src/cardine/integration/records.py": ["test_run_integration.CandidateTest.test_closure_record_commit_boundaries_converge"],
         "src/cardine/integration/ci.py": ["test_run_ci.CiTest.converges_after_kill"],
         "src/cardine/integration/merge.py": ["test_run_recovery.RunRecoveryTest.assert_stage_kill_recovers"],

@@ -167,7 +167,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 119 — Use one Python read guard with two payload adapters (H1b).
 - `[x]` 120 — Run the stop audit in Python and retire the shell wrapper (H1c).
 - `[x]` 121 — Load heavy imports only on the release and update paths (H1d).
-- `[ ]` 122 — Add cardine init with preview and apply (H2a).
+- `[x]` 122 — Add cardine init with preview and apply (H2a).
 - `[ ]` 123 — Rename the init slash command and route it to the CLI (H2b).
 - `[ ]` 124 — Rename the remaining slash commands to Cardine routes (H2c).
 - `[ ]` 125 — Write the two Cardine skills and fix the Accept route (H3a).

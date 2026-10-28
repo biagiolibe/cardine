@@ -34,7 +34,7 @@ class TemplateCommandTest(unittest.TestCase):
 
     def test_the_walk_sees_the_commands_the_templates_rely_on(self) -> None:
         commands = tree()
-        for words in (("run",), ("review", "verdict"), ("worktree", "integrate", "stage"), ("context", "size"),
+        for words in (("init",), ("run",), ("review", "verdict"), ("worktree", "integrate", "stage"), ("context", "size"),
                       ("task", "close"), ("execution", "start")):
             node = commands
             for word in words:

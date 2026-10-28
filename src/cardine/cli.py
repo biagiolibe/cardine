@@ -79,6 +79,18 @@ def build_parser() -> CardineArgumentParser:
         help="print the framework SemVer, including prerelease and build metadata",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    init = subparsers.add_parser("init", help="preview or apply a configured project bootstrap")
+    init.add_argument("--project", type=Path, required=True)
+    init_mode = init.add_mutually_exclusive_group(required=True)
+    init_mode.add_argument("--check", action="store_true")
+    init_mode.add_argument("--apply", action="store_true")
+    init.add_argument("--name", required=True)
+    init.add_argument("--slug", required=True)
+    init.add_argument("--preset", choices=("lean", "governed"), required=True)
+    init.add_argument("--language", required=True)
+    init.add_argument("--task-identity", choices=("opaque", "milestone"), required=True)
+    init.add_argument("--validation", type=Path, required=True,
+                      help="JSON file containing commands, baseline and candidate choices; empty lists are explicit")
     run = subparsers.add_parser("run", help="preview the next bounded lifecycle step (read-only)")
     run.add_argument("task_id")
     run.add_argument("--project", type=Path)
@@ -470,6 +482,10 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
     arguments = build_parser().parse_args()
     journal.begin(arguments)
     framework_root = arguments.framework_root.resolve()
+    if arguments.command == "init":
+        from cardine.templates.init import init_cli
+
+        return init_cli(arguments, framework_root)
     project_root = (
         arguments.project.resolve()
         if hasattr(arguments, "project") and arguments.project is not None
