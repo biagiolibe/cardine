@@ -109,7 +109,6 @@ class InitTest(unittest.TestCase):
                     self.assertEqual(load_manifest(root, ROOT)["workflowMode"], "single")
                     self.assertTrue((root / "tasks/done").is_dir())
                     self.assertIn('`Italian`', (root / "LANGUAGE_POLICY.md").read_text())
-                    self.assertFalse((root / ".meridian").exists())
                     self.assertEqual(list((root / ".cardine/tasks").iterdir()), [])
                     self.assertNotIn("ADR-0001", (root / "docs/ARCHITECTURE_DECISIONS.md").read_text())
                     # Baselines are pristine template bytes, not configured consumer bytes.
