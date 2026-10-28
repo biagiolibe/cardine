@@ -26,35 +26,35 @@ fixtures of `tests/test_run_recovery.py`, `tests/test_worktree_lifecycle.py`,
 
 ## Acceptance Criteria
 
-- [ ] **Before.** Before any change, the handoff records the wall time of each
+- [x] **Before.** Before any change, the handoff records the wall time of each
   of `test_run_integration`, `test_run_cleanup`, `test_run_ci`,
   `test_run_recovery`, `test_worktree_lifecycle`,
   `test_execution_boundaries`, `test_single_workflow_parity`,
   `test_task_integration_state` with `python3 scripts/run_tests.py
   --parallel --module <module>`, and one full parallel run, on the same
   machine and with no other suite running on it.
-- [ ] **Restore in place.** `BoundedWorktreeLifecycleFixture` and each listed
+- [x] **Restore in place.** `BoundedWorktreeLifecycleFixture` and each listed
   module's fixture are built once per process in a directory that process
   owns and restored into the same absolute path for every case, with
   `tests/fixture_restore_support.py` from task 137. Environment variables,
   the working directory, and anything a case adds stay per case; parallel
   shards never share a fixture directory.
-- [ ] **Equivalence.** `tests/test_fixture_restore.py` gains one case per
+- [x] **Equivalence.** `tests/test_fixture_restore.py` gains one case per
   newly restored fixture, with the checks task 137 established:
   byte-identical to the saved state, matching `git worktree list`, refs,
   HEAD, and index, a task state that `verify_receipts` accepts where the
   fixture writes receipts, and no leak from one case into the next
   restore.
-- [ ] **Nothing weakened.** No test is removed, renamed, or skipped, and every
+- [x] **Nothing weakened.** No test is removed, renamed, or skipped, and every
   assertion stays. A case that needs a fixture different from its module's
   keeps building its own, and the handoff names it. A module whose
   measured gain is under 10 percent is left unchanged and reported.
-- [ ] **After.** The handoff records the same measurements after the change,
+- [x] **After.** The handoff records the same measurements after the change,
   the gain per module, and the full run.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes tests and test helpers only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -63,16 +63,16 @@ fixtures of `tests/test_run_recovery.py`, `tests/test_worktree_lifecycle.py`,
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/138.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/138.json`, which only
   the installed `meridian task close 138` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
