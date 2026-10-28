@@ -20,7 +20,7 @@ from project_config_support import write_project_config
 from task_contract_support import contract_record, VALIDATION, seal_state
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-import codex_read_guard
+from cardine.hosts import read_guard as codex_read_guard
 
 
 class ContractSnapshotReadersTest(unittest.TestCase):

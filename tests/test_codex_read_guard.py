@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 from project_config_support import write_project_config
 
@@ -22,6 +24,12 @@ class CodexReadGuardTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.project = Path(self.temporary.name)
         self.external = tempfile.TemporaryDirectory()
+        self.home = self.project / "home"
+        self.home.mkdir()
+        self.environment = dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home / ".config"))
+        environment = patch.dict(os.environ, self.environment)
+        environment.start()
+        self.addCleanup(environment.stop)
         (self.project / "tasks").mkdir()
         (self.project / "PROJECT_WORKFLOW.md").write_text("workflow\n", encoding="utf-8")
 
@@ -49,6 +57,12 @@ class CodexReadGuardTest(unittest.TestCase):
             "nl one.txt | sed -n '1,401p'": False,
             "head -n 401 one.txt": False,
             "tail -400 one.txt": True,
+            "tail -n 0 one.txt": True,
+            "head -n 0 one.txt": True,
+            "nl one.txt ; sed -n '1,401p'": True,
+            "nl one.txt && sed -n '1,401p'": True,
+            "cat $UNKNOWN": True,
+            "cat 'unterminated": True,
         }
         for command, allowed in cases.items():
             with self.subTest(command=command):
@@ -98,12 +112,15 @@ class CodexReadGuardTest(unittest.TestCase):
                 self.assertEqual(payload["hook_event_name"], "PreToolUse")
                 self.assertEqual(payload["tool_name"], "Bash")
                 self.assertIsInstance(payload["tool_input"]["command"], str)
+                self.write("sample.txt", 500)
+                payload["cwd"] = str(self.project)
+                self.assertEqual(decision(payload)[0], path.name != "cat.json")
 
     def test_cli_emits_stderr_and_structured_denial(self) -> None:
         self.write("big.txt", 500)
         result = subprocess.run(
             [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "hook", "read-guard", "--host", "codex"],
-            input=json.dumps(self.payload("cat big.txt")), text=True, capture_output=True, check=False,
+            input=json.dumps(self.payload("cat big.txt")), text=True, capture_output=True, check=False, env=self.environment,
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("Blocked: shell read", result.stderr)
