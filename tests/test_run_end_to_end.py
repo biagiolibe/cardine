@@ -228,7 +228,8 @@ class JournalNeverGatesTest(ProjectFixture):
                 if "cardine.shared.flow" in path.read_text(encoding="utf-8"):
                     readers.append(path.relative_to(ROOT).as_posix())
         # Closure and checkout only append their own best-effort lines; none reads one back.
-        self.assertEqual(sorted(set(readers)), [])
+        # The Stop-hook audit is the one diagnostic reader: it backs a reported stop, never gates a command.
+        self.assertEqual(sorted(set(readers)), ["src/cardine/hosts/stop_audit.py"])
 
 
 class LegacyIsolationTest(ProjectFixture):
