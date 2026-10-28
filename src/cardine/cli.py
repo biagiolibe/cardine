@@ -814,7 +814,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
 
                 return read_guard_main(arguments.host)
             if arguments.hook_command == "stop-audit":
-                from stop_audit import main as stop_audit_main
+                from cardine.hosts.stop_audit import stop_audit_main
 
                 return stop_audit_main(arguments.host)
         elif arguments.check:

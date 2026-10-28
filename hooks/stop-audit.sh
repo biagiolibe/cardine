@@ -1,8 +1,8 @@
 #!/bin/bash
-# Cardine stop-audit — Stop hook.
-# Records BLOCKED <CODE> reports in the final assistant message that no
-# Cardine command emitted. Advisory only: it always exits 0 and never blocks
-# the stop. The CLI decides whether the directory is a Cardine project.
+# Compatibility shim for the frozen plugin registration in hooks/hooks.json.
+# The product entry is `cardine hook stop-audit --host <host>`; this file only
+# names the Claude host for that registration and holds no audit logic. It
+# always exits 0 and never blocks the stop.
 set -uo pipefail
 
 HOOK_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,5 +16,5 @@ if [ ! -x "$CARDINE_BIN" ]; then
 fi
 [ -n "$CARDINE_BIN" ] && [ -x "$CARDINE_BIN" ] || exit 0
 
-"$CARDINE_BIN" hook stop-audit >/dev/null 2>&1
+"$CARDINE_BIN" hook stop-audit --host claude >/dev/null 2>&1
 exit 0
