@@ -182,4 +182,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 134 — Realize the Codex role policy and profiles (H5b).
 - `[ ]` 135 — Wire the concrete host transports to issued roles (H5c).
 - `[ ]` 136 — Prove roles at runtime in doctor and update the host contract (H5d).
-- `[ ]` 137 — Restore the run engine fixtures in place instead of rebuilding them.
+- `[x]` 137 — Restore the run engine fixtures in place instead of rebuilding them.

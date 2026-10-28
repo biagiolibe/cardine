@@ -14,6 +14,7 @@ from cardine.lifecycle.engine import launch_run_work, resolve_run_locations
 from cardine.lifecycle.model import WorkRequest
 from cardine.shared.errors import CardineError, CardineStop
 import test_run_delivery
+from fixture_restore_support import RestorableFixture
 
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTERS = {'codex': CodexProfileAdapter, 'claude': ClaudeProfileAdapter}
@@ -87,8 +88,11 @@ def request(root, role):
 
 
 class RunHostRolesTest(unittest.TestCase):
+    delivery_source = test_run_delivery.DELIVERY_FIXTURE
+
     def setUp(self):
         self.fixture = test_run_delivery.RunDeliveryTest()
+        self.fixture.fixture_source = self.delivery_source
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.worker = self.fixture.worker
@@ -142,6 +146,8 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
             host = FakeHost(Path(directory) / 'shared-host', 'codex')
             first = self.launch(host=host)
             self.doCleanups()
+            # A second project needs its own path, so it gets its own build.
+            self.delivery_source = RestorableFixture('delivery-second', test_run_delivery.build_delivery_fixture)
             self.setUp()
             second = self.launch(host=host)
             self.assertNotEqual(first['request']['root'], second['request']['root'])

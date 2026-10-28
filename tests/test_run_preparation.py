@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-import tempfile
 import unittest
 
 from cardine.lifecycle import receipts
@@ -15,6 +14,7 @@ from cardine.tasks.creation import create_task
 from cardine.tasks.state import read_task_state
 from cardine.tasks.transitions import transition_task_state
 from cardine.worktree.checkout import prepare_task_worktree, inspect_task_worktree
+from fixture_restore_support import RestorableFixture
 from project_config_support import write_project_config
 from task_contract_support import contract_record, VALIDATION
 
@@ -27,27 +27,45 @@ TRANSITION = ('before_intent', 'after_intent', 'before_staged_pair', 'after_stag
               'before_state_replace', 'after_state_replace', 'before_result_receipt', 'after_result_receipt')
 
 
+def build_preparation_fixture(directory):
+    """Build the repository with its frozen task under a directory; return nothing to remember."""
+    from unittest.mock import patch
+    root = directory / 'project'
+    root.mkdir()
+    with patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(directory / 'worktrees')}):
+        test = RunPreparationTest()
+        test.attach(directory)
+        test.git('init', '-b', 'main')
+        test.git('config', 'user.name', 'Preparation Test')
+        test.git('config', 'user.email', 'preparation@example.test')
+        write_project_config(root, 'lean', validation=deepcopy(VALIDATION))
+        test.git('add', '.')
+        test.git('commit', '-m', 'Initial policy')
+        create_task(root, '001', contract_record())
+        test.git('add', '.')
+        test.git('commit', '-m', 'Create task')
+    return {}
+
+
+PREPARATION_FIXTURE_BUILD = build_preparation_fixture
+PREPARATION_FIXTURE = RestorableFixture('preparation', build_preparation_fixture)
+
+
 class RunPreparationTest(unittest.TestCase):
+    def attach(self, directory):
+        self.root = directory / 'project'
+        self.worktrees = directory / 'worktrees'
+        self.state_path = self.root / '.cardine/tasks/001.json'
+
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name).resolve() / 'project'
-        self.root.mkdir()
-        self.worktrees = self.root.parent / 'worktrees'
+        # The fixture is restored into the same path; the environment and the
+        # working directory stay per case.
+        directory, _ = PREPARATION_FIXTURE.restore()
+        self.attach(directory)
         from unittest.mock import patch
         environment = patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.worktrees)})
         environment.start()
         self.addCleanup(environment.stop)
-        self.git('init', '-b', 'main')
-        self.git('config', 'user.name', 'Preparation Test')
-        self.git('config', 'user.email', 'preparation@example.test')
-        write_project_config(self.root, 'lean', validation=deepcopy(VALIDATION))
-        self.git('add', '.')
-        self.git('commit', '-m', 'Initial policy')
-        create_task(self.root, '001', contract_record())
-        self.git('add', '.')
-        self.git('commit', '-m', 'Create task')
-        self.state_path = self.root / '.cardine/tasks/001.json'
         previous = Path.cwd()
         os.chdir(self.root)
         self.addCleanup(os.chdir, previous)

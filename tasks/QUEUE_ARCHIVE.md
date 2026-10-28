@@ -301,3 +301,11 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 117 | Prove the receipt writer once and test each operation's own boundaries | 🔴 P1 | 115 | [117](done/117-receipt-writer-proof.md) |
+
+### Phase 28 — Test suite: run engine fixtures
+
+Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 137 | Restore the run engine fixtures in place instead of rebuilding them | 🔴 P1 | 117 | [137](done/137-restore-run-fixtures.md) |

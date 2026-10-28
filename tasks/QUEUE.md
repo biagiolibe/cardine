@@ -58,11 +58,3 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[ ]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](134-codex-role-policy.md) |
 | `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](135-host-transports.md) |
 | `[ ]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](136-doctor-role-proofs.md) |
-
-### Phase 28 — Test suite: run engine fixtures
-
-Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[ ]` | 137 | Restore the run engine fixtures in place instead of rebuilding them | 🔴 P1 | 117 | [137](137-restore-run-fixtures.md) |

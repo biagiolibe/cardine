@@ -35,35 +35,35 @@ build would make them.
 
 ## Acceptance Criteria
 
-- [ ] **Before.** Before any change, the handoff records the wall time of each
+- [x] **Before.** Before any change, the handoff records the wall time of each
   of `test_run_preparation`, `test_run_delivery`, `test_run_host_roles`,
   `test_run_review`, `test_run_validation`, `test_run_handoff`,
   `test_run_console`, `test_run_control` with `python3
   scripts/run_tests.py --parallel --module <module>`, the `setUp` share of
   the two tests named above, and one full parallel run, all on the same
   machine.
-- [ ] **Restore in place.** `RunPreparationTest` and `RunDeliveryTest` build
+- [x] **Restore in place.** `RunPreparationTest` and `RunDeliveryTest` build
   their fixture once per process in a directory that process owns, keep a
   copy, and for every case remove the directory and restore the copy into
   the same absolute path. Environment variables, the working directory,
   and anything a case adds stay per case. Parallel shards never share a
   fixture directory, and the directory and its copy are removed when the
   process's tests finish.
-- [ ] **Equivalence.** A test in a new module proves, for both fixtures, that
+- [x] **Equivalence.** A test in a new module proves, for both fixtures, that
   a restored fixture is byte-identical to the state it was copied from,
   that `git worktree list`, the refs, HEAD, and the index match it, that
   `verify_receipts` accepts the restored task state, and that a case which
   changes the restored fixture leaves the next restore unchanged. If
   restoring ever diverges, this test fails.
-- [ ] **Nothing weakened.** No test is removed, renamed, or skipped, and every
+- [x] **Nothing weakened.** No test is removed, renamed, or skipped, and every
   assertion stays. A dependent module whose cases need a fixture that
   differs from the base keeps building its own; the handoff names it.
-- [ ] **After.** The handoff records the same measurements after the change
+- [x] **After.** The handoff records the same measurements after the change
   and the gain per module and for the full run.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1; this task changes tests and test helpers only.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -72,16 +72,16 @@ build would make them.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/137.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/137.json`, which only
   the installed `meridian task close 137` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

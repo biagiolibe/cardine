@@ -15,6 +15,7 @@ from cardine.shared.errors import CardineError
 from cardine.tasks.state import read_task_state, state_path
 from cardine.stops.render import stop_error
 import test_run_preparation
+from fixture_restore_support import RestorableFixture
 from task_contract_support import contract_record
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,38 +27,69 @@ POINTS = ('before_delivery_intent', 'after_delivery_intent', 'before_delivery_st
           'before_delivery_receipt', 'after_delivery_receipt')
 
 
+def build_delivery_fixture(directory):
+    """Build the prepared, started, and implemented task; return what a case needs."""
+    from unittest.mock import patch
+    test_run_preparation.PREPARATION_FIXTURE_BUILD(directory)
+    fixture = test_run_preparation.RunPreparationTest()
+    fixture.attach(directory)
+    previous = Path.cwd()
+    with patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(fixture.worktrees)}):
+        os.chdir(fixture.root)
+        try:
+            from cardine.tasks.contract import resolve_task_contract
+            from cardine.tasks.identity import resolve_task_identity
+            original = fixture.read()
+            updated = deepcopy(original)
+            proposal = contract_record().replace('Change the documented deliverable only.', '- `src/**`')
+            updated['contract'] = resolve_task_contract(fixture.root, '001', text=proposal,
+                                      identity=resolve_task_identity(fixture.root, '001', 'existing'))
+            with receipts.task_lock(fixture.root, '001'):
+                receipts.write_operation(fixture.root, '001', updated, previous=original, kind='fixture-surface')
+            fixture.git('add', '.')
+            fixture.git('commit', '-m', 'Freeze surface')
+            prepared = fixture.prepare()
+            worker = Path(prepared['worktree'])
+            os.chdir(worker)
+            from cardine.lifecycle.commands import execution_start
+            execution_start(worker, '001')
+            fixture.git('add', '.', root=worker)
+            fixture.git('commit', '-m', 'Start task', root=worker)
+            (worker / 'src').mkdir()
+            (worker / 'src/result.py').write_text('result = 1\n')
+            fixture.git('add', '.', root=worker)
+            fixture.git('commit', '-m', 'Implement result', root=worker)
+            return {'worker': str(worker), 'base': prepared['base_commit'],
+                    'source': fixture.git('rev-parse', 'HEAD', root=worker),
+                    'source_digest': execution_source_digest(worker, '001')}
+        finally:
+            os.chdir(previous)
+
+
+DELIVERY_FIXTURE = RestorableFixture('delivery', build_delivery_fixture)
+
+
 class RunDeliveryTest(unittest.TestCase):
+    # A case that needs a second, independent project sets its own source.
+    fixture_source = DELIVERY_FIXTURE
+
     def setUp(self):
         # Reuse setup helpers without inheriting/discovering another test class.
+        directory, record = self.fixture_source.restore()
         self.fixture = test_run_preparation.RunPreparationTest()
-        self.fixture.setUp()
-        self.addCleanup(self.fixture.doCleanups)
+        self.fixture.attach(directory)
+        from unittest.mock import patch
+        environment = patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.fixture.worktrees)})
+        environment.start()
+        self.addCleanup(environment.stop)
+        previous = Path.cwd()
+        self.addCleanup(os.chdir, previous)
         self.root = self.fixture.root
-        from cardine.tasks.contract import resolve_task_contract
-        from cardine.tasks.identity import resolve_task_identity
-        original = self.fixture.read()
-        updated = deepcopy(original)
-        proposal = contract_record().replace('Change the documented deliverable only.', '- `src/**`')
-        updated['contract'] = resolve_task_contract(self.root, '001', text=proposal,
-                                  identity=resolve_task_identity(self.root, '001', 'existing'))
-        with receipts.task_lock(self.root, '001'):
-            receipts.write_operation(self.root, '001', updated, previous=original, kind='fixture-surface')
-        self.fixture.git('add', '.')
-        self.fixture.git('commit', '-m', 'Freeze surface')
-        prepared = self.fixture.prepare()
-        self.worker = Path(prepared['worktree'])
-        self.base = prepared['base_commit']
+        self.worker = Path(record['worker'])
+        self.base = record['base']
+        self.source = record['source']
+        self.source_digest = record['source_digest']
         os.chdir(self.worker)
-        from cardine.lifecycle.commands import execution_start
-        execution_start(self.worker, '001')
-        self.git('add', '.')
-        self.git('commit', '-m', 'Start task')
-        (self.worker / 'src').mkdir()
-        (self.worker / 'src/result.py').write_text('result = 1\n')
-        self.git('add', '.')
-        self.git('commit', '-m', 'Implement result')
-        self.source = self.git('rev-parse', 'HEAD')
-        self.source_digest = execution_source_digest(self.worker, '001')
 
     def git(self, *args):
         return self.fixture.git(*args, root=self.worker)
