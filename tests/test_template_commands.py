@@ -18,6 +18,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import check_repository as cr  # noqa: E402
+from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin
 
 TEMPLATES = ROOT / "templates" / "single"
 
@@ -145,6 +146,106 @@ class InitSlashCommandTest(unittest.TestCase):
         self.assertNotRegex(self.text, r"(?im)^\s*\d+\. (?:Copy|Replace|Write|Create)")
         self.assertIn("separate operation", self.text)
         self.assertIn("does not invalidate initialization", self.text)
+
+
+class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        home = Path(self.temporary.name) / "home"
+        home.mkdir()
+        patcher = patch.dict(os.environ, HOME=str(home), CODEX_HOME=str(home / ".codex"),
+                             CLAUDE_CONFIG_DIR=str(home / ".claude"), XDG_CONFIG_HOME=str(home / "xdg"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.texts = {name: (ROOT / f"commands/cardine-{name}.md").read_text(encoding="utf-8")
+                      for name in ("adopt", "upgrade", "task", "audit")}
+
+    def routes(self, name: str) -> list[list[str]]:
+        values = {"milestone": "2", "workstream": "HOST", "task ID": "EXAMPLE",
+                  "proposed record path": str(Path(self.temporary.name) / "proposed record.md")}
+        result = []
+        for block in re.findall(r"```bash\n(.*?)```", self.texts[name], re.DOTALL):
+            for key, value in values.items():
+                block = block.replace(f"<{key}>", value)
+            words = shlex.split(block)
+            self.assertEqual(words.pop(0), "${CLAUDE_PLUGIN_ROOT}/bin/cardine")
+            index = words.index("--project") + 1
+            words[index] = str(self.project)
+            result.append(words)
+        return result
+
+    def invoke(self, route: list[str]) -> tuple[int, str]:
+        with patch.object(sys, "argv", ["cardine", "--framework-root", str(self.framework), *route]), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            code = cr.cardine_cli.main()
+        return code, output.getvalue()
+
+    def snapshot(self) -> dict[str, bytes]:
+        root = Path(self.temporary.name)
+        return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+    def test_four_renamed_routes_exist_without_legacy_command_paths(self) -> None:
+        for name, text in self.texts.items():
+            with self.subTest(name=name):
+                self.assertFalse((ROOT / f"commands/meridian-{name}.md").exists())  # MERIDIAN-OLD-NAME-TEST
+                self.assertNotIn("bin/meridian", text)  # MERIDIAN-OLD-NAME-TEST
+                self.assertNotIn(".meridian/", text)  # MERIDIAN-OLD-NAME-TEST
+                self.assertEqual(findings_for(text), [])
+        parsed = {name: [cr.cardine_cli.build_parser().parse_args(route) for route in self.routes(name)]
+                  for name in self.texts}
+        self.assertEqual(parsed["adopt"], [])
+        self.assertIn("no conversion command", self.texts["adopt"])
+        self.assertEqual([p.command for p in parsed["upgrade"]], ["upgrade"] * 3)
+        self.assertTrue(parsed["upgrade"][0].check)
+        self.assertTrue(parsed["upgrade"][1].apply)
+        self.assertTrue(parsed["upgrade"][2].owner_reconciled)
+        self.assertEqual([p.command for p in parsed["task"]], ["locations", "task", "task", "status"])
+        self.assertEqual(parsed["task"][1].identity_command, "next")
+        self.assertEqual(parsed["task"][2].task_command, "new")
+        self.assertTrue(parsed["task"][3].write)
+        self.assertEqual(parsed["audit"][0].command, "audit")
+        self.assertIsNone(parsed["audit"][0].mode)
+        self.assertIn("GOVERNED_SDD", self.texts["task"])
+        self.assertIn("BLOCKED", self.texts["task"])
+        self.assertIn("Do not add checkbox status", self.texts["task"])
+
+    def test_documented_checks_repeat_without_project_or_home_writes(self) -> None:
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
+        before = self.snapshot()
+        for route in (self.routes("upgrade")[0], self.routes("audit")[0], self.routes("task")[0]):
+            results = [self.invoke(route) for _ in range(2)]
+            self.assertEqual(results[0], results[1])
+            if route[0] == "audit":
+                # The synthetic legacy lock deliberately has no capabilityProfiles.
+                self.assertEqual(results[0][0], 1, results[0][1])
+                self.assertIn("SUMMARY worst=UNVERIFIED", results[0][1])
+                self.assertIn("FAIL=0", results[0][1])
+            else:
+                self.assertEqual(results[0][0], 0, results[0][1])
+            self.assertEqual(self.snapshot(), before)
+
+    def test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer(self) -> None:
+        self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
+        installed = self.project / "PROJECT_WORKFLOW.md"
+        installed.write_text(installed.read_text() + "\nAdopter-owned workflow note.\n", encoding="utf-8")
+        source = self.framework / "templates/single/PROJECT_WORKFLOW.md"
+        source.write_text(source.read_text().replace("# Workflow", "# Updated workflow", 1), encoding="utf-8")
+        (self.framework / "VERSION").write_text("1.1.1\n", encoding="utf-8")
+        before = self.snapshot()
+        checked = self.invoke(self.routes("upgrade")[0])
+        self.assertEqual(checked[0], 0, checked[1])
+        self.assertEqual(self.snapshot(), before)
+        applied = self.invoke(self.routes("upgrade")[1])
+        self.assertEqual(applied[0], 0, applied[1])
+        self.assertIn("# Updated workflow", installed.read_text())
+        self.assertTrue(installed.read_text().endswith("\nAdopter-owned workflow note.\n"))
+        after = self.snapshot()
+        repeated = self.invoke(self.routes("upgrade")[0])
+        self.assertEqual(repeated[0], 0, repeated[1])
+        self.assertEqual(self.snapshot(), after)
+        self.assertIn("operation protocol owns recovery", self.texts["upgrade"])
+        self.assertIn("Do not copy files", self.texts["upgrade"])
+        self.assertIn("only after that manual reconciliation", self.texts["upgrade"])
 
 
 if __name__ == "__main__":

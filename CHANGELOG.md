@@ -1125,7 +1125,7 @@ migration for each version and remains the authoritative detail.
   — a contradiction between the two commands that shouldn't be possible
   since they check the same protected regions.
 - `meridian audit --project <path> [--mode ...]`
-  ([commands/meridian-audit.md](commands/meridian-audit.md)): a new,
+  (`commands/meridian-audit.md`): a new,
   read-only command. Phase 4 of
   `migrations/CAPABILITY_MARKERS.md` —
   verifies every `MERIDIAN:BEGIN`/`END` protected region in a project's

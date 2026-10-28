@@ -55,8 +55,8 @@ REQUIRED_FILES = (
     "schemas/stop-codes-v1.schema.json",
     "schemas/manifest-v2.schema.json",
     "migrations/README.md",
-    "commands/meridian-upgrade.md",
-    "commands/meridian-audit.md",
+    "commands/cardine-upgrade.md",
+    "commands/cardine-audit.md",
     "templates/single/PROJECT_WORKFLOW.md",
     "templates/single/AGENTS.md",
     "templates/single/CLAUDE.md",
@@ -283,9 +283,9 @@ def check_language_policy() -> None:
         if "LANGUAGE_POLICY.md" not in (ROOT / name).read_text(encoding="utf-8"):
             fail(f"agent instructions do not load the language policy: {name}")
 
-    command_text = (ROOT / "commands/meridian-task.md").read_text(encoding="utf-8")
+    command_text = (ROOT / "commands/cardine-task.md").read_text(encoding="utf-8")
     if "GOVERNED_SDD" not in command_text or "BLOCKED" not in command_text:
-        fail("governed-SDD mode lock is incomplete: commands/meridian-task.md")
+        fail("governed-SDD mode lock is incomplete: commands/cardine-task.md")
     check_router_routes()
 
     lean_mode_lock_files = (

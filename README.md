@@ -119,11 +119,11 @@ Update the installed plugin or local framework checkout first, restart agent ses
 - [Agent operations](docs/AGENT_OPERATIONS.md): console, [Codex command approvals](docs/AGENT_OPERATIONS.md#codex-hooks-and-command-approvals), read guard, and local usage reports
 - [Governed execution evidence](docs/GOVERNED_WORKFLOW.md#governed-execution-evidence), [workflow template](templates/single/PROJECT_WORKFLOW.md), and [task template](templates/single/tasks/TASK_BLUEPRINT.md)
 - [Review procedure](templates/single/docs/workflows/REVIEW.md), [read-only audit](templates/single/docs/AUDIT_PROMPT_READ_ONLY.md), and [operator prompts](templates/single/docs/OPERATOR_PROMPTS.md)
-- [Consumer router adoption](docs/CONSUMER_ROUTER_ADOPTION_PLAYBOOK.md) and [capability audit](commands/meridian-audit.md)
+- [Consumer router adoption](docs/CONSUMER_ROUTER_ADOPTION_PLAYBOOK.md) and [capability audit](commands/cardine-audit.md)
 
 **Maintainers**
 
-- [Contributing and releases](CONTRIBUTING.md), [upgrade CLI](commands/meridian-upgrade.md), [distribution design](docs/DISTRIBUTION_AND_UPDATE_DESIGN.md), and [consumer profiles](docs/CONSUMER_PROFILES.md)
+- [Contributing and releases](CONTRIBUTING.md), [upgrade CLI](commands/cardine-upgrade.md), [distribution design](docs/DISTRIBUTION_AND_UPDATE_DESIGN.md), and [consumer profiles](docs/CONSUMER_PROFILES.md)
 - [Public surface](docs/PUBLIC_SURFACE.md): stable compatibility starts at 1.3.0; `meridian console` and `meridian usage` are experimental.
 - [Open tasks](tasks/QUEUE.md) and [project plan](PROJECT_PLAN.md)
 
