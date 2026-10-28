@@ -84,7 +84,7 @@ class NonrunCausesTest(unittest.TestCase):
                              (errno.EACCES, 'OS_ACCESS_FAILED')):
             stderr = io.StringIO()
             argv = ['cardine', 'codex', 'configure', '--check', '--config', '/tmp/a b;input.toml']
-            with patch.object(sys, 'argv', argv), patch.object(cli, 'plan_codex_configuration',
+            with patch.object(sys, 'argv', argv), patch.object(codex, 'plan_codex_configuration',
                     side_effect=OSError(number, 'injected')), contextlib.redirect_stderr(stderr):
                 self.assertEqual(cli._run_cli(LifecycleJournalEntry()), 2 if number == errno.EACCES else 0)
             self.assertIn(code, stderr.getvalue())
