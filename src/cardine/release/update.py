@@ -21,17 +21,19 @@ from cardine.shared.errors import CardineStop
 from cardine.shared.git import git_output
 from cardine.stops.render import stop_error
 from cardine.stops.nonrun import os_stop_code
-from http.client import HTTPException
 from pathlib import Path
-from urllib.error import HTTPError
-from urllib.error import URLError
-from urllib.request import Request
-from urllib.request import urlopen
 import json
 import os
 import re
 import shlex
 import tempfile
+
+
+def urlopen(*args, **kwargs):
+    """Load the network stack only when a release request is made."""
+    from urllib.request import urlopen as open_url
+
+    return open_url(*args, **kwargs)
 
 
 PLUGIN_UPDATE_COMMAND = "/plugin marketplace update meridian"
@@ -43,6 +45,8 @@ def fetch_latest_release(
     target_tag: str | None = None,
 ) -> tuple[str, str]:
     """Return a release version and template kind from GitHub's public API."""
+    from urllib.request import Request
+
     request = Request(
         LATEST_RELEASE_URL if target_tag is None else
         LATEST_RELEASE_URL.rsplit("/", 1)[0] + "/tags/" + target_tag,
@@ -107,6 +111,9 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
 def _run_self_update(framework_root: Path, *, apply: bool = False,
                     target_tag: str | None = None, urlopen_fn=None, receipt_path=None) -> int:
     """Plan in an isolated object store; mutate only the CLI checkout on apply."""
+    from http.client import HTTPException
+    from urllib.error import HTTPError, URLError
+
     root = framework_root.resolve()
 
     def refuse(code: str, detail: str, **fields: object) -> None:
@@ -253,6 +260,9 @@ def plugin_ref_report(settings_path: Path, latest_version: str | None) -> str:
 
 def run_self_check(framework_root: Path, *, urlopen_fn=None, settings_path: Path | None = None) -> int:
     """Print the installed/latest comparison without mutating local state."""
+    from http.client import HTTPException
+    from urllib.error import HTTPError, URLError
+
     installed_version = read_raw_version(framework_root)
     installed = parse_semver(installed_version)
     settings = claude_user_settings_path() if settings_path is None else settings_path
