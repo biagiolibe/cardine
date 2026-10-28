@@ -65,6 +65,7 @@ design.
 | File | Role |
 |------|------|
 | `commands/meridian-{adopt,upgrade,task,audit}.md`, `commands/cardine-{adopt,upgrade,task,audit}.md`, `Ttest_template_commands.py` (9) | The files this row edits, as the plan lists them. |
+| `scripts/check_repository.py` | Coordinator scope amendment, 2026-10-28: update only the two renamed required-file entries and the renamed task-command path and failure message; retain the existing mode-lock assertion unchanged. |
 
 ## Authority excerpt
 

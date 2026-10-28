@@ -1,14 +1,14 @@
 ---
-description: "Check or apply a deterministic Meridian framework upgrade"
+description: "Check or apply a deterministic Cardine framework upgrade"
 ---
 
-Upgrade a project initialized by Meridian without overwriting local workflow
+Upgrade an existing Cardine project without overwriting local workflow
 customizations.
 
 Run the CLI from this plugin source. First inspect the plan:
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/bin/meridian upgrade --project . --check
+"${CLAUDE_PLUGIN_ROOT}/bin/cardine" upgrade --project . --check
 ```
 
 Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
@@ -17,14 +17,18 @@ If the plan has no `CONFLICT` entries and the developer authorizes the update,
 apply it:
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/bin/meridian upgrade --project . --apply
+"${CLAUDE_PLUGIN_ROOT}/bin/cardine" upgrade --project . --apply
 ```
 
-The CLI uses `.meridian/manifest.json` and installed baseline snapshots for a
+On interruption, rerun the same command with identical inputs; the existing
+operation protocol owns recovery. Do not copy files or write the manifest or
+baselines by hand. Repeating `--check` must not write anything.
+
+The CLI uses `.cardine/manifest.json` and installed baseline snapshots for a
 three-way merge. It applies no files when any managed-file conflict exists.
 After a successful apply, inspect the diff, run the project's baseline checks,
 and create a dedicated framework-upgrade commit. Never resolve conflict markers
-or edit `.meridian/` baselines automatically; report `BLOCKED` with the exact
+or edit `.cardine/` baselines automatically; report `BLOCKED` with the exact
 paths instead.
 
 When `docs/workflows/ENTRY_ROUTER.md` exists, `AGENTS.md` and `CLAUDE.md` are
@@ -44,7 +48,7 @@ preserving the project's own structure and terminology, then register the
 result without touching any file automatically:
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/bin/meridian upgrade --project . --apply --owner-reconciled
+"${CLAUDE_PLUGIN_ROOT}/bin/cardine" upgrade --project . --apply --owner-reconciled
 ```
 
 This registers the new manifest and baseline but writes nothing to the
