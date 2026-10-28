@@ -247,7 +247,7 @@ def allowed(key: Key) -> bool:
 # stays until every reference of that reader kind in the function is gone.
 KNOWN_VIOLATIONS: dict[Key, str] = {
     ('src/cardine/hosts/read_guard.py', 'evaluate_targets', 'named-reader', 'threshold_for'): 'T-46',
-    ('scripts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
+    ('src/cardine/hosts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', '_queue_task_rows'): 'T-31',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'read_task_field'): 'T-31',
     ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'resolve_task_contract'): 'T-31',
@@ -294,7 +294,7 @@ class ResidualRatchetTest(unittest.TestCase):
             elif entry == "T-46":
                 self.assertEqual(path, "src/cardine/hosts/read_guard.py", key)
             else:
-                self.assertEqual(path, "scripts/stop_audit.py", key)
+                self.assertEqual(path, "src/cardine/hosts/stop_audit.py", key)
 
     def test_importer_is_reached_only_by_the_explicit_state_command_and_legacy(self):
         # Work item 10 moves it to cardine.legacy; until then no run-engine
@@ -406,7 +406,7 @@ class TextGateScannerTest(unittest.TestCase):
             ("scripts/second.py", "gate", "disk-text", "read_text:report")})
         self.assertEqual({path.relative_to(ROOT).as_posix() for path in product_sources(ROOT)
                           if path.is_relative_to(ROOT / "scripts")},
-                         {"scripts/stop_audit.py"})
+                         set())
 
     def test_allowlist_has_only_three_classes_and_creation_is_branch_scoped(self):
         self.assertFalse(allowed(("src/cardine/tasks/audit.py", "runtime", "disk-text", "read_text:record")))

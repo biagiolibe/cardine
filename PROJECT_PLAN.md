@@ -165,7 +165,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 117 — Prove the receipt writer once and test each operation's own boundaries.
 - `[x]` 118 — Print only the generated status in the per-turn briefing (H1a).
 - `[x]` 119 — Use one Python read guard with two payload adapters (H1b).
-- `[ ]` 120 — Run the stop audit in Python and retire the shell wrapper (H1c).
+- `[x]` 120 — Run the stop audit in Python and retire the shell wrapper (H1c).
 - `[ ]` 121 — Load heavy imports only on the release and update paths (H1d).
 - `[ ]` 122 — Add cardine init with preview and apply (H2a).
 - `[ ]` 123 — Rename the init slash command and route it to the CLI (H2b).

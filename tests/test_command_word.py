@@ -147,4 +147,4 @@ class CommandWordTest(unittest.TestCase):
             environment["MERIDIAN_BIN"] = "/retired/bin/meridian"  # MERIDIAN-OLD-NAME-TEST
             result = subprocess.run(["/bin/bash", str(hook)], env=environment, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(called.read_text(), "hook stop-audit")
+            self.assertEqual(called.read_text(), "hook stop-audit --host claude")

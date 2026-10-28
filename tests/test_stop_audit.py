@@ -15,8 +15,8 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import cardine_cli  # noqa: E402
+from cardine.hosts import stop_audit
 from cardine.shared import journal as owner_shared_journal
-import stop_audit  # noqa: E402
 from cardine.shared import flow as owner_shared_flow
 
 NOW = datetime(2026, 10, 5, 12, 0, 0, tzinfo=timezone.utc)
@@ -88,7 +88,7 @@ class StopAuditTest(unittest.TestCase):
     def test_malformed_input_exits_zero(self) -> None:
         for raw in ("not json", "[]", '{"cwd": 3}', ""):
             with mock.patch("sys.stdin", io.StringIO(raw)):
-                self.assertEqual(stop_audit.main(), 0)
+                self.assertEqual(stop_audit.stop_audit_main(), 0)
 
     def test_final_message_falls_back_to_the_transcript(self) -> None:
         transcript = self.project / "t.jsonl"
@@ -150,7 +150,7 @@ class StopAuditTest(unittest.TestCase):
         self.assertEqual(stop_audit.audit(self.codex_input(None), NOW, host="codex"), [])
         for raw in ("not json", "[]", '{"cwd": 3}', ""):
             with mock.patch("sys.stdin", io.StringIO(raw)):
-                self.assertEqual(stop_audit.main("codex"), 0)
+                self.assertEqual(stop_audit.stop_audit_main("codex"), 0)
         self.assertEqual(len(self.journal.read_text().splitlines()), 1)
 
     def test_cli_host_option_defaults_to_claude_and_rejects_others(self) -> None:
@@ -175,6 +175,65 @@ class StopAuditTest(unittest.TestCase):
         text = owner_shared_flow.format_flow_report(report)
         self.assertIn("Unbacked stop reports: claude=2, codex=1", text)
         self.assertIn("Declared stop reports: claude=1, codex=0", text)
+
+    def snapshot(self) -> tuple[bytes, int]:
+        return self.journal.read_bytes(), self.journal.stat().st_mtime_ns
+
+    def test_duplicate_invocation_records_one_line_per_event(self) -> None:
+        self.seed(self.blocked("PRIMARY_DIRTY"))
+        payload = self.codex_input("BLOCKED WRONG_WORKTREE\nBLOCKED ACCEPTANCE_UNMET")
+        first = stop_audit.audit(payload, NOW, host="codex")
+        before = self.snapshot()
+        self.assertEqual(len(first), 2)
+        self.assertEqual(stop_audit.audit(payload, NOW, host="codex"), [])
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(len(self.journal.read_text().splitlines()), 3)
+        again = stop_audit.audit({**payload, "turn_id": "t2"}, NOW, host="codex")
+        self.assertEqual(len(again), 2)
+        self.assertEqual(len({line["event"] for line in first + again}), 2)
+
+    def test_event_identity_holds_no_message_text_and_names_the_host(self) -> None:
+        payload = self.codex_input("BLOCKED WRONG_WORKTREE: private reasoning")
+        self.assertNotEqual(stop_audit.event_identity(payload, "codex", "m"), stop_audit.event_identity(payload, "claude", "m"))
+        self.assertNotIn("private", stop_audit.event_identity(payload, "codex", "private reasoning"))
+
+    def test_claude_transcript_event_records_once_and_a_new_entry_records_again(self) -> None:
+        transcript = self.project / "t.jsonl"
+        entry = {"type": "assistant", "uuid": "u1", "timestamp": "2026-10-05T10:05:00.000Z", "message": {"content": [{"type": "text", "text": "BLOCKED WRONG_WORKTREE"}]}}
+        transcript.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+        self.seed(self.blocked("PRIMARY_DIRTY"))
+        payload = {"cwd": str(self.project), "session_id": "s", "transcript_path": str(transcript)}
+        self.assertEqual(len(stop_audit.audit(payload, NOW)), 1)
+        before = self.snapshot()
+        self.assertEqual(stop_audit.audit(payload, NOW), [])
+        self.assertEqual(self.snapshot(), before)
+        transcript.write_text(json.dumps({**entry, "uuid": "u2"}) + "\n", encoding="utf-8")
+        self.assertEqual(len(stop_audit.audit(payload, NOW)), 1)
+
+    def test_backed_codeless_and_non_project_payloads_leave_the_journal_untouched(self) -> None:
+        self.seed(self.blocked("WRONG_WORKTREE"))
+        before = self.snapshot()
+        for message in ("BLOCKED WRONG_WORKTREE", "nothing to report", None):
+            for host, payload in (("claude", {"cwd": str(self.project), "last_assistant_message": message}), ("codex", self.codex_input(message))):
+                for _ in range(2):
+                    self.assertEqual(stop_audit.audit(payload, NOW, host=host), [])
+        with tempfile.TemporaryDirectory() as other:
+            self.assertEqual(stop_audit.audit({"cwd": other, "last_assistant_message": "BLOCKED WRONG_WORKTREE"}, NOW), [])
+        self.assertEqual(self.snapshot(), before)
+
+    def test_audit_never_writes_task_state(self) -> None:
+        self.seed(self.blocked("PRIMARY_DIRTY"))
+        payload = self.codex_input("BLOCKED WRONG_WORKTREE")
+        for _ in range(2):
+            stop_audit.audit(payload, NOW, host="codex")
+        self.assertFalse((self.project / ".meridian").exists())
+        self.assertEqual(sorted(path.name for path in self.project.iterdir() if path.name != ".git"), ["PROJECT_WORKFLOW.md"])
+
+    def test_compatibility_script_delegates_to_the_host_module(self) -> None:
+        import runpy
+        namespace = runpy.run_path(str(ROOT / "scripts" / "stop_audit.py"), run_name="not_main")
+        self.assertIs(namespace["main"], stop_audit.stop_audit_main)
+        self.assertIs(namespace["audit"], stop_audit.audit)
 
     def test_codex_templates_register_the_stop_hook_beside_the_read_guard(self) -> None:
         hooks = json.loads((ROOT / "templates" / "single" / ".codex" / "hooks.json").read_text())["hooks"]
