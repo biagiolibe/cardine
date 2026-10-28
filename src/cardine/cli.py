@@ -810,7 +810,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     print(readiness_check(project_root, arguments.task_id))
         elif arguments.command == "hook":
             if arguments.hook_command == "read-guard":
-                from cardine.hosts.read_guard import main as read_guard_main
+                from cardine.hosts.read_guard import read_guard_main
 
                 return read_guard_main(arguments.host)
             if arguments.hook_command == "stop-audit":

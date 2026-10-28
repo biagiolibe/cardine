@@ -1,6 +1,6 @@
 """Compatibility entry point; the host module owns all read-guard policy."""
 
-from cardine.hosts.read_guard import decision, extract_targets, main
+from cardine.hosts.read_guard import decision, extract_targets, read_guard_main as main
 
 __all__ = ["decision", "extract_targets", "main"]
 

@@ -239,7 +239,7 @@ def evaluate_targets(cwd: Path, targets: list[ReadTarget], label: str) -> tuple[
     )
 
 
-def main(host: str = "codex") -> int:
+def read_guard_main(host: str = "codex") -> int:
     try:
         payload = json.load(sys.stdin)
         allowed, reason = decision(payload, host)
@@ -253,4 +253,4 @@ def main(host: str = "codex") -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(read_guard_main())
