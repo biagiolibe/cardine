@@ -69,6 +69,7 @@ design.
 | File | Role |
 |------|------|
 | Four old skill files in inventory, `Hskills.py`, `Hsetup.py`, `Ttest_host_worktree_setup.py`, `Ttest_host_repeatability.py` (8) | The files this row edits, as the plan lists them. |
+| `scripts/check_repository.py` | Coordinator amendment of 2026-10-28: its required-file list and its Lean Delivery mode-lock check name the old skill files, so it joins the files column. |
 
 ## Authority excerpt
 
@@ -82,6 +83,13 @@ instead of the whole documents:
 >
 ## Technical Context
 
+- Coordinator amendment of 2026-10-28, found when task 124 stopped on the
+  same gap: `scripts/check_repository.py` lists
+  `skills/meridian-lean-delivery/SKILL.md` and
+  `skills/meridian-lean-delivery-claude-code/SKILL.md` among the required
+  files and runs its mode-lock check on them. Repoint both to the two skills
+  of task 125, keeping a mode-lock check at least as strong as today's; do
+  not delete the check. No other change to that file belongs to this task.
 - The plan orders the rows serially. This task depends on 125 and is followed
   by 127; the plan's own dependency cell reads: H3a, SR1b.
 - Plan conventions: `H` is `src/cardine/hosts/`, `T` is `tests/`, `C` is
