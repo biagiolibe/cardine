@@ -187,9 +187,9 @@ class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase)
     def test_four_renamed_routes_exist_without_legacy_command_paths(self) -> None:
         for name, text in self.texts.items():
             with self.subTest(name=name):
-                self.assertFalse((ROOT / f"commands/meridian-{name}.md").exists())
-                self.assertNotIn("bin/meridian", text)
-                self.assertNotIn(".meridian/", text)
+                self.assertFalse((ROOT / f"commands/meridian-{name}.md").exists())  # MERIDIAN-OLD-NAME-TEST
+                self.assertNotIn("bin/meridian", text)  # MERIDIAN-OLD-NAME-TEST
+                self.assertNotIn(".meridian/", text)  # MERIDIAN-OLD-NAME-TEST
                 self.assertEqual(findings_for(text), [])
         parsed = {name: [cr.cardine_cli.build_parser().parse_args(route) for route in self.routes(name)]
                   for name in self.texts}
