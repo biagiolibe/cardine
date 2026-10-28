@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
+import json
 import os
+import re
+import shlex
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -88,6 +94,57 @@ class TemplateCommandTest(unittest.TestCase):
             finally:
                 os.chdir(previous)
             self.assertEqual(snapshot, {path: path.read_bytes() for path in root.rglob("*") if path.is_file()})
+
+
+class InitSlashCommandTest(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.home = Path(temporary.name).resolve()
+        patcher = patch.dict(os.environ, HOME=str(self.home), XDG_CONFIG_HOME=str(self.home / "xdg"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.text = (ROOT / "commands/cardine-init.md").read_text(encoding="utf-8")
+        self.validation = self.home / "validation.json"
+        self.validation.write_text(json.dumps({"commands": {}, "baseline": [],
+                                              "candidate": {"REUSE": [], "BOUNDED": [], "FULL": []}}))
+        values = {"project path": str(self.home / "project with spaces"), "project name": "Example Project",
+                  "project slug": "example-project", "lean|governed": "lean", "conversation language": "Italian",
+                  "opaque|milestone": "opaque", "validation JSON path": str(self.validation)}
+        self.routes = []
+        for block in re.findall(r"```bash\n(.*?)```", self.text, re.DOTALL):
+            for key, value in values.items():
+                block = block.replace(f"<{key}>", value)
+            words = shlex.split(block)
+            self.assertEqual(words[0], "${CLAUDE_PLUGIN_ROOT}/bin/cardine")
+            self.routes.append(words[1:])
+
+    def test_renamed_command_routes_to_argparse_with_all_inputs(self) -> None:
+        self.assertFalse((ROOT / "commands/meridian-init.md").exists())
+        parsed = [cr.cardine_cli.build_parser().parse_args(route) for route in self.routes]
+        self.assertEqual([args.command for args in parsed], ["init", "init", "setup"])
+        self.assertTrue(parsed[0].check)
+        self.assertTrue(parsed[1].apply)
+        self.assertEqual([word if word != "--check" else "--apply" for word in self.routes[0]], self.routes[1])
+        self.assertEqual(parsed[0].name, "Example Project")
+        self.assertEqual(parsed[0].validation, self.validation)
+        self.assertTrue(parsed[2].check)
+        self.assertIn("only after explicit confirmation", self.text)
+
+    def test_documented_preview_repeats_without_project_or_home_writes(self) -> None:
+        before = {p.relative_to(self.home): p.read_bytes() for p in self.home.rglob("*") if p.is_file()}
+        for _ in range(2):
+            with patch.object(sys, "argv", ["cardine", *self.routes[0]]), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(cr.cardine_cli.main(), 0)
+            self.assertEqual(before, {p.relative_to(self.home): p.read_bytes()
+                                      for p in self.home.rglob("*") if p.is_file()})
+            self.assertEqual(list(self.home.iterdir()), [self.validation])
+
+    def test_cli_owns_bootstrap_and_setup_stays_separate(self) -> None:
+        self.assertIn("Do not copy templates", self.text)
+        self.assertNotRegex(self.text, r"(?im)^\s*\d+\. (?:Copy|Replace|Write|Create)")
+        self.assertIn("separate operation", self.text)
+        self.assertIn("does not invalidate initialization", self.text)
 
 
 if __name__ == "__main__":

@@ -235,9 +235,9 @@ class GeneratedEntryRouterTest(unittest.TestCase):
 class InitAdapterTest(unittest.TestCase):
     """The init slash command installs the single template set for either preset."""
 
-    COMMAND = ROOT / "commands" / "meridian-init.md"
+    COMMAND = ROOT / "commands" / "cardine-init.md"
 
-    def test_init_copies_the_single_set_and_defaults_to_lean(self) -> None:
+    def test_init_routes_to_the_single_set_and_defaults_to_lean(self) -> None:
         text = self.COMMAND.read_text(encoding="utf-8")
         self.assertIn("`templates/single/`", text)
         self.assertIn("offering `lean` as the default", text)
@@ -247,9 +247,10 @@ class InitAdapterTest(unittest.TestCase):
         for hidden in (".gitignore", ".claudeignore", ".codex/hooks.json", ".codex/rules/meridian.rules"):
             self.assertIn(hidden, text)
         self.assertIn("Do not copy from `templates/base/` or `templates/workflows/`", text)
+        self.assertIn("Do not copy templates", text)
         for retired in ("overlay", "classic", "workflow mode"):
             self.assertNotIn(retired, text)
-        self.assertNotIn("cardine init", text)
+        self.assertIn('cardine" init', text)
 
     def test_init_writes_a_project_declaration_that_the_schema_accepts(self) -> None:
         text = self.COMMAND.read_text(encoding="utf-8")
@@ -257,7 +258,7 @@ class InitAdapterTest(unittest.TestCase):
         self.assertIsNotNone(block)
         for preset in ("lean", "governed"):
             with self.subTest(preset=preset):
-                declaration = json.loads(
+                validation = json.loads(
                     block.group(1)
                     .replace("<lean|governed>", preset)
                     .replace("<opaque|milestone>", "opaque")
@@ -268,6 +269,9 @@ class InitAdapterTest(unittest.TestCase):
                 )
                 with tempfile.TemporaryDirectory() as directory:
                     project = Path(directory)
+                    declaration = {"version": 1, "project": {"name": "Example", "slug": "example"},
+                                   "preset": preset, "taskIdentity": {"mode": "opaque"},
+                                   "validation": validation, "ci": "none"}
                     (project / ".cardine").mkdir()
                     (project / ".cardine/project.json").write_text(json.dumps(declaration), encoding="utf-8")
                     configuration = resolve_project_configuration(project)
