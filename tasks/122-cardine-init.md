@@ -17,30 +17,30 @@ design.
 
 ## Acceptance Criteria
 
-- [ ] Row H2a is implemented as its line in the excerpt describes it: CLI init
+- [x] Row H2a is implemented as its line in the excerpt describes it: CLI init
   preview/apply, configured single-template bootstrap.
-- [ ] Only the files in the row's files column are edited, together with this
+- [x] Only the files in the row's files column are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside the column may change only to update an expectation that this
   change made stale, without new behavior, and the handoff lists it. If
   the change needs any other file, the task stops before editing it and
   names the file, so that the coordinator splits the row.
-- [ ] The row's tests exist and pass: All required choices, generated status,
+- [x] The row's tests exist and pass: All required choices, generated status,
   existing/conflicting project, idempotent apply.
-- [ ] Rule 4 of decision 14: Plan, each directory/file write, lock/baseline,
+- [x] Rule 4 of decision 14: Plan, each directory/file write, lock/baseline,
   empty views, final result; resume only identical owned outputs.
   Read-only checks repeat without any write.
-- [ ] Every proof that a host rule, hook, or profile is in force comes from
+- [x] Every proof that a host rule, hook, or profile is in force comes from
   the host evaluating a probe or from an observed host decision, never
   from reading rule or policy text.
-- [ ] Every test runs against disposable home directories. No step runs `setup
+- [x] Every test runs against disposable home directories. No step runs `setup
   --apply` against the real home directory or writes real host
   configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -49,16 +49,16 @@ design.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/122.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/122.json`, which only
   the installed `meridian task close 122` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -165,3 +165,11 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Completion
+
+Implemented configured CLI init preview/apply with receipt-covered project outputs,
+pristine upgrade baselines, empty generated status views and no initial task or ADR.
+All acceptance criteria passed on commit `1183621c4d0cc1eb1065e707ddcb29efc23175fe`.
+Validation and the two authorized stale test-inventory updates are recorded in
+`tasks/handoffs/122.md`.
