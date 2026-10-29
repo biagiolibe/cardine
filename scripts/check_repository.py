@@ -293,7 +293,7 @@ def check_language_policy() -> None:
         "skills/cardine-delivery/SKILL.md",
     )
     for name in lean_mode_lock_files:
-        text = (ROOT / name).read_text(encoding="utf-8")
+        text = " ".join((ROOT / name).read_text(encoding="utf-8").split())
         if not all(fragment in text for fragment in (
             "PROJECT_WORKFLOW.md", "Local workflow rules override",
             "missing, contradictory", "BLOCKED", "before any",
