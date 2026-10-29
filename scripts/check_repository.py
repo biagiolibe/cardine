@@ -24,6 +24,7 @@ from cardine.shared import context as owner_shared_context
 from cardine.shared import constants
 from cardine.templates import catalog as catalog_provider
 import release  # noqa: E402
+import build_host_plugin  # noqa: E402
 from cardine.templates import generator
 from cardine.templates import files as owner_templates_files
 from cardine.templates import migration_audit as owner_templates_migration_audit
@@ -594,6 +595,17 @@ def check_plugin_version(root: Path = ROOT) -> None:
         )
 
 
+def check_plugin_distribution(root: Path = ROOT) -> None:
+    try:
+        build_host_plugin.payload(root)
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary).resolve() / "plugin"
+            build_host_plugin.build(destination, root)
+            build_host_plugin.check(destination, root)
+    except (cardine_cli.CardineError, OSError, ValueError) as error:
+        fail(f"invalid host plugin distribution: {error}")
+
+
 def check_capability_catalog(root: Path = ROOT) -> None:
     try:
         catalog = catalog_provider.load_capability_catalog(root)
@@ -1025,6 +1037,7 @@ def main() -> None:
     check_json()
     check_stop_code_registry()
     check_plugin_version()
+    check_plugin_distribution()
     cardine_cli.load_retired_text_registry(ROOT)
     check_capability_catalog()
     check_migrations()

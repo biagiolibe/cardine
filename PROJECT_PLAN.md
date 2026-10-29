@@ -172,7 +172,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 124 — Rename the remaining slash commands to Cardine routes (H2c).
 - `[x]` 125 — Write the two Cardine skills and fix the Accept route (H3a).
 - `[x]` 126 — Remove the four old skills and install the two shared links (H3b).
-- `[ ]` 127 — Rename the plugin metadata and stop shipping product auto-hooks (H3c).
+- `[x]` 127 — Rename the plugin metadata and stop shipping product auto-hooks (H3c).
 - `[ ]` 128 — Route the entry routers and register the managed templates (H3d).
 - `[ ]` 129 — Name the Codex rules and profile for Cardine with a bounded migration (H4a).
 - `[ ]` 130 — Orchestrate setup on Cardine paths without real-home apply (H4b).

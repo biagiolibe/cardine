@@ -1,12 +1,12 @@
 {
-  "name": "meridian",
+  "name": "cardine",
   "owner": {
     "name": "Biagio Liberto",
     "url": "https://github.com/biagiolibe"
   },
   "plugins": [
     {
-      "name": "meridian",
+      "name": "cardine",
       "source": "./",
       "description": "Explicit tasks, isolated worktrees, verified integration. A delivery workflow for AI coding agents."
     }
