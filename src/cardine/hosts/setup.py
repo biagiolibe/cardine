@@ -20,6 +20,7 @@ from cardine.hosts.skills import _directory_setup_state
 from cardine.hosts.skills import _framework_skill_links
 from cardine.hosts.skills import _setup_codex_state
 from cardine.hosts.skills import _stale_codex_skill_warnings
+from cardine.hosts.skills import _remove_old_skill_links
 from cardine.hosts.skills import codex_profile_root_mismatch
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.evidence import proposed_candidate_validation_declaration
@@ -232,6 +233,9 @@ def plan_setup(
         changes = ["none; setup is blocked before mutation"]
     elif skill_links_state == "missing" and changes != ["none; setup is blocked before mutation"]:
         changes.append(f"create missing Codex skill links in {home / '.agents/skills'}")
+    if any(state == "remove" for _, _, state, _ in skill_links):
+        if changes != ["none; setup is blocked before mutation"]:
+            changes.append("remove proven-owned old Codex skill links")
     cardine_root_value = environment.get("CARDINE_ROOT")
     cardine_root_state = (
         "unset"
@@ -412,7 +416,8 @@ def apply_setup(plan: SetupPlan) -> bool:
                 active.directory("skills-root", skills_root, 0o700)
             for path, target in missing_links:
                 active.symlink("skill:" + path.name, path, target)
-        return wrote or bool(missing_links) or active.resumed
+        removed = _remove_old_skill_links(active, plan.skill_links)
+        return wrote or bool(missing_links) or removed or active.resumed
 
 
 CODEX_CLOSURE_POLICY_PROBES = (

@@ -66,8 +66,8 @@ REQUIRED_FILES = (
     "templates/single/docs/CONTEXT_READING_POLICY.md",
     "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md",
     "templates/single/.codex/hooks.json",
-    "skills/meridian-lean-delivery/SKILL.md",
-    "skills/meridian-lean-delivery-claude-code/SKILL.md",
+    "skills/cardine-project/SKILL.md",
+    "skills/cardine-delivery/SKILL.md",
 )
 # MERIDIAN-INSTALLATION-CHECK
 INSTALLED_MERIDIAN_RECORDS = (
@@ -289,12 +289,15 @@ def check_language_policy() -> None:
     check_router_routes()
 
     lean_mode_lock_files = (
-        "skills/meridian-lean-delivery/SKILL.md",
-        "skills/meridian-lean-delivery-claude-code/SKILL.md",
+        "skills/cardine-project/SKILL.md",
+        "skills/cardine-delivery/SKILL.md",
     )
     for name in lean_mode_lock_files:
         text = (ROOT / name).read_text(encoding="utf-8")
-        if "LEAN_DELIVERY" not in text or "BLOCKED" not in text:
+        if not all(fragment in text for fragment in (
+            "PROJECT_WORKFLOW.md", "Local workflow rules override",
+            "missing, contradictory", "BLOCKED", "before any",
+        )):
             fail(f"Lean Delivery mode lock is incomplete: {name}")
 
     operator_prompts = ROOT / "templates/single/docs/OPERATOR_PROMPTS.md"

@@ -7,6 +7,7 @@ from cardine.hosts.codex import _codex_markers_intact
 from cardine.shared.git import _run_git
 from cardine.shared.models import CODEX_PERMISSION_PROFILE
 from cardine.shared.models import CodexConfigurationPlan
+from cardine.shared.errors import CardineError
 from pathlib import Path
 import os
 import stat
@@ -27,7 +28,54 @@ def _directory_setup_state(root: Path) -> tuple[str, str]:
     return "ready", "no directory change"
 
 
-CODEX_SKILL_NAMES = ("meridian-lean-delivery", "meridian-governed-sdd")
+CODEX_SKILL_NAMES = ("cardine-project", "cardine-delivery")
+OLD_SKILL_NAMES = (
+    "meridian-lean-delivery", "meridian-governed-sdd",
+    "meridian-lean-delivery-claude-code", "meridian-governed-sdd-claude-code",
+)
+
+
+def _safe_skill_parent(path: Path) -> bool:
+    return all(not parent.is_symlink() and (not parent.exists() or parent.is_dir())
+               for parent in path.parents)
+
+
+def _owned_old_link(path: Path, target: Path) -> bool:
+    return (_safe_skill_parent(path) and path.is_symlink()
+            and os.path.abspath(path.parent / os.readlink(path)) == str(target))
+
+
+def _remove_old_skill_links(active, links) -> bool:
+    active._check()
+    records = active.intent.get("old_skill_links", {})
+    for value, target in records.items():
+        _old_link_absent(Path(value), Path(target))
+    for _, path, state, target in links:
+        if state == "remove" and str(path) not in records:
+            records[str(path)] = target
+            active.intent["old_skill_links"] = records
+            active._save()
+    for value, target in records.items():
+        path = Path(value)
+
+        label = "/".join(path.parts[-3:])
+        active.effect("remove-skill:" + label, path.unlink,
+                      lambda: _old_link_absent(path, Path(target)))
+    if records:
+        active.effect("skill-migration-result", lambda: None,
+                      lambda: all(_old_link_absent(Path(value), Path(target))
+                                  for value, target in records.items()))
+    return bool(records)
+
+
+def _old_link_absent(path: Path, target: Path) -> bool:
+    if not _safe_skill_parent(path):
+        raise CardineError(f"skill parent changed: {path}")
+    if not path.exists() and not path.is_symlink():
+        return True
+    if not _owned_old_link(path, target):
+        raise CardineError(f"old skill link changed: {path}")
+    return False
 
 
 def _framework_skill_links(framework_root: Path, home: Path) -> tuple[tuple[str, Path, str, str], ...]:
@@ -46,7 +94,9 @@ def _framework_skill_links(framework_root: Path, home: Path) -> tuple[tuple[str,
     for name in CODEX_SKILL_NAMES:
         path = home / ".agents/skills" / name
         target = target_root / name
-        if path.is_symlink():
+        if not _safe_skill_parent(path):
+            state, detail = "blocked", "skill parent is a symlink or a non-directory"
+        elif path.is_symlink():
             observed = os.readlink(path)
             state = "ready" if path.resolve() == target else "conflict"
             detail = str(target) if state == "ready" else f"points to {observed} (expected {target})"
@@ -57,6 +107,11 @@ def _framework_skill_links(framework_root: Path, home: Path) -> tuple[tuple[str,
             state = "missing"
             detail = f"create symlink to {target}"
         links.append((name, path, state, detail))
+    for directory in (".agents/skills", ".codex/skills"):
+        for name in OLD_SKILL_NAMES:
+            path, target = home / directory / name, target_root / name
+            if _owned_old_link(path, target):
+                links.append((name, path, "remove", str(target)))
     return tuple(links)
 
 
@@ -68,7 +123,7 @@ def _aggregate_skill_state(links: tuple[tuple[str, Path, str, str], ...]) -> str
         return "conflict"
     if states == {"skipped"}:
         return "skipped"
-    if "missing" in states:
+    if states & {"missing", "remove"}:
         return "missing"
     return "ready"
 
@@ -76,7 +131,8 @@ def _aggregate_skill_state(links: tuple[tuple[str, Path, str, str], ...]) -> str
 def _stale_codex_skill_warnings(home: Path) -> list[str]:
     return [
         f"stale Codex skill copy: {path}"
-        for path in sorted((home / ".codex/skills").glob("meridian-*"))
+        for directory in (".codex/skills", ".agents/skills")
+        for path in sorted((home / directory).glob("meridian-*"))
     ]
 
 

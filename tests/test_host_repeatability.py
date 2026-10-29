@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import patch
 
 from cardine_cli_support import ROOT
-from cardine.hosts import claude, codex, setup
+from cardine.hosts import claude, codex, setup, skills
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
 
@@ -67,8 +67,84 @@ class HostRepeatabilityTest(unittest.TestCase):
         return receipts.host_path('setup', home / '.cardine/worktrees')
 
     def tree(self, home):
-        return {path.relative_to(home).as_posix(): path.read_bytes().replace(str(home).encode(), b'<home>')
-                for path in sorted(home.rglob('*')) if path.is_file()}
+        return {path.relative_to(home).as_posix():
+                (('link:' + os.readlink(path)).encode() if path.is_symlink() else path.read_bytes())
+                .replace(str(home).encode(), b'<home>')
+                for path in sorted(home.rglob('*')) if path.is_symlink() or path.is_file()}
+
+    def old_links(self, home):
+        for directory in ('.agents/skills', '.codex/skills'):
+            root = home / directory
+            root.mkdir(parents=True)
+            for name in skills.OLD_SKILL_NAMES:
+                (root / name).symlink_to(ROOT / 'skills' / name)
+
+    def test_old_skill_migration_replays_every_effect_and_preserves_foreign_paths(self):
+        reference = self.make_home()
+        self.old_links(reference)
+        self.assertEqual(self.run_setup(reference).returncode, 0)
+        names = sorted(receipts._load_intent(self.receipt(reference))['effects'])
+        self.assertEqual(len([name for name in names if name.startswith('remove-skill:')]), 8)
+        self.assertIn('skill-migration-result', names)
+        expected = self.tree(reference)
+        for name in names:
+            for when in ('before', 'after'):
+                with self.subTest(seam=f'{when}_{name}'):
+                    home = self.make_home()
+                    self.old_links(home)
+                    self.assertEqual(self.run_setup(home, f'{when}_{name}').returncode, 93)
+                    replay = self.run_setup(home)
+                    self.assertEqual(replay.returncode, 0, replay.stderr)
+                    self.assertEqual(self.tree(home), expected)
+        for when, replacement in ((when, kind) for when in ('before', 'after')
+                                  for kind in ('link', 'directory', 'copy')):
+            home = self.make_home()
+            self.old_links(home)
+            target = home / '.agents/skills' / skills.OLD_SKILL_NAMES[0]
+            seam = when + '_remove-skill:.agents/skills/' + target.name
+            self.assertEqual(self.run_setup(home, seam).returncode, 93)
+            target.unlink(missing_ok=True)
+            if replacement == 'link':
+                target.symlink_to(home / 'foreign-work')
+            elif replacement == 'directory':
+                target.mkdir()
+            else:
+                target.write_text('foreign copy')
+            snapshot = self.tree(home)
+            self.assertNotEqual(self.run_setup(home).returncode, 0)
+            self.assertEqual(self.tree(home), snapshot)
+            self.assertTrue(target.exists())
+
+    def test_skill_migration_checks_are_read_only_and_keep_unowned_legacy_paths(self):
+        home = self.make_home()
+        self.old_links(home)
+        foreign = home / '.agents/skills' / skills.OLD_SKILL_NAMES[0]
+        foreign.unlink()
+        foreign.mkdir()
+        (foreign / 'SKILL.md').write_text('foreign skill copy')
+        stale = home / '.codex/skills' / skills.OLD_SKILL_NAMES[1]
+        stale.unlink()
+        stale.symlink_to(home / 'foreign-work')
+        snapshot = self.tree(home)
+        for _ in range(2):
+            plan = self.planned(home)
+            self.assertTrue(any(str(foreign) in warning for warning in plan.warnings))
+            self.assertEqual(self.tree(home), snapshot)
+            self.assertFalse(self.receipt(home).exists())
+        self.assertEqual(self.run_setup(home).returncode, 0)
+        self.assertEqual((foreign / 'SKILL.md').read_text(), 'foreign skill copy')
+        self.assertEqual(os.readlink(stale), str(home / 'foreign-work'))
+
+    def test_symlinked_skill_roots_are_blocked_without_writing(self):
+        home = self.make_home()
+        outside = home / 'foreign-skills'
+        outside.mkdir()
+        (home / '.agents').mkdir()
+        (home / '.agents/skills').symlink_to(outside)
+        snapshot = self.tree(home)
+        self.assertNotEqual(self.run_setup(home).returncode, 0)
+        self.assertEqual(self.tree(home), snapshot)
+        self.assertEqual(list(outside.iterdir()), [])
 
     def reference(self):
         home = self.make_home()
