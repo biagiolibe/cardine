@@ -72,7 +72,7 @@ class HostDistributionTest(unittest.TestCase):
         reference = self.home()
         self.assertEqual(self.run_build(reference).returncode, 0)
         expected = plugin.inventory(reference / 'plugin')
-        names = ['assembly', *(f'copy:{name}' for name in plugin.FILES), 'publication']
+        names = ['assembly', *(f'copy:{name}' for name in plugin.payload()), 'publication']
         for name in names:
             for when in ('before', 'after'):
                 with self.subTest(seam=f'{when}_{name}'):
@@ -145,6 +145,27 @@ class HostDistributionTest(unittest.TestCase):
     def test_source_checkout_is_not_an_installation_destination(self):
         with self.assertRaisesRegex(CardineError, 'outside the source checkout'):
             plugin.build(ROOT / 'distribution')
+
+    def test_packaged_command_runtime_runs_without_the_source_checkout(self):
+        home = self.home()
+        destination = plugin.build(home / 'plugin')
+        environment = {**self.environment(home), 'CARDINE_ROOT': str(destination), 'PYTHONPATH': ''}
+        version = subprocess.run([str(destination / 'bin/cardine'), '--version'], cwd=home,
+                                 env=environment, capture_output=True, text=True, timeout=30)
+        self.assertEqual(version.returncode, 0, version.stderr)
+        self.assertIn((ROOT / 'VERSION').read_text().strip(), version.stdout)
+        validation = home / 'validation.json'
+        validation.write_text(json.dumps({'commands': {}, 'baseline': [],
+                                          'candidate': {'REUSE': [], 'BOUNDED': [], 'FULL': []}}))
+        arguments = ['init', '--project', str(home / 'project'), '--check', '--name', 'Example',
+                     '--slug', 'example', '--preset', 'lean', '--language', 'English',
+                     '--task-identity', 'opaque', '--validation', str(validation)]
+        for _ in range(2):
+            planned = subprocess.run([str(destination / 'bin/cardine'), *arguments], cwd=home,
+                                     env=environment, capture_output=True, text=True, timeout=30)
+            self.assertEqual(planned.returncode, 0, planned.stdout + planned.stderr)
+            self.assertFalse((home / 'project').exists())
+        plugin.check(destination)
 
     def claude(self, home, *arguments):
         executable = shutil.which('claude')

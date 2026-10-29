@@ -21,18 +21,28 @@ from cardine.shared.errors import CardineError
 
 SKILLS = ('cardine-project', 'cardine-delivery')
 COMMANDS = ('cardine-adopt', 'cardine-init', 'cardine-audit', 'cardine-upgrade', 'cardine-task')
-FILES = ('.claude-plugin/plugin.json', '.claude-plugin/marketplace.json', 'LICENSE',
+FILES = ('.claude-plugin/plugin.json', '.claude-plugin/marketplace.json', 'LICENSE', 'VERSION', 'bin/cardine',
          *(f'skills/{name}/SKILL.md' for name in SKILLS),
          *(f'commands/{name}.md' for name in COMMANDS))
+RUNTIME_PATTERNS = ('src/cardine/**/*.py', 'scripts/*.py', 'scripts/*.sh',
+                    'templates/single/**/*', 'capabilities/*.json', 'schemas/*.json',
+                    'migrations/*.json', 'releases/*.json')
 
 
 def payload(root=ROOT):
     files = {}
-    for name in FILES:
+    names = set(FILES)
+    for pattern in RUNTIME_PATTERNS:
+        names.update(path.relative_to(root).as_posix() for path in root.glob(pattern)
+                     if not path.is_dir() and '__pycache__' not in path.parts)
+    for name in sorted(names):
         source = receipts.safe_path(root, name)
         if not source.is_file():
             raise CardineError(f'missing plugin source: {name}')
         files[name] = source.read_bytes()
+    # Keep the published artifact immutable when its bundled CLI imports modules.
+    files['bin/cardine'] = files['bin/cardine'].replace(
+        b'import sys\n', b'import sys\nsys.dont_write_bytecode = True\n', 1)
     manifest = json.loads(files['.claude-plugin/plugin.json'])
     marketplace = json.loads(files['.claude-plugin/marketplace.json'])
     if (manifest.get('name') != 'cardine' or marketplace.get('name') != 'cardine'
@@ -103,7 +113,8 @@ def build(destination, root=ROOT):
                 if target.exists() and (not target.is_file() or target.read_bytes() != data):
                     raise CardineError(f'plugin staging contents changed: {target}')
                 target.parent.mkdir(parents=True, exist_ok=True)
-                atomic.replace_bytes(target, data, 0o644)
+                executable = target.relative_to(staging).as_posix() == 'bin/cardine' or target.suffix == '.sh'
+                atomic.replace_bytes(target, data, 0o755 if executable else 0o644)
 
             def copied(target=target, data=data):
                 if published():
