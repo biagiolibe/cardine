@@ -46,7 +46,7 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[x]` | 122 | Add cardine init with preview and apply (H2a) | 🔴 P1 | 121 | [122](done/122-cardine-init.md) |
 | `[x]` | 123 | Rename the init slash command and route it to the CLI (H2b) | 🔴 P1 | 122 | [123](done/123-init-command-route.md) |
 | `[x]` | 124 | Rename the remaining slash commands to Cardine routes (H2c) | 🔴 P1 | 123 | [124](done/124-rename-slash-commands.md) |
-| `[ ]` | 125 | Write the two Cardine skills and fix the Accept route (H3a) | 🔴 P1 | 124 | [125](125-two-skills.md) |
+| `[x]` | 125 | Write the two Cardine skills and fix the Accept route (H3a) | 🔴 P1 | 124 | [125](done/125-two-skills.md) |
 | `[ ]` | 126 | Remove the four old skills and install the two shared links (H3b) | 🔴 P1 | 125 | [126](126-remove-old-skills.md) |
 | `[ ]` | 127 | Rename the plugin metadata and stop shipping product auto-hooks (H3c) | 🔴 P1 | 126 | [127](127-plugin-metadata.md) |
 | `[ ]` | 128 | Route the entry routers and register the managed templates (H3d) | 🔴 P1 | 127 | [128](128-router-routes.md) |

@@ -248,5 +248,54 @@ class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase)
         self.assertIn("only after that manual reconciliation", self.texts["upgrade"])
 
 
+class SharedSkillTest(unittest.TestCase):
+    NAMES = ("cardine-project", "cardine-delivery")
+    HOSTS = {"claude": "CLAUDE.md", "codex": "AGENTS.md"}
+
+    def skill(self, name: str) -> str:
+        return (ROOT / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_two_host_neutral_skills_name_only_commands_that_exist(self) -> None:
+        for name in self.NAMES:
+            text = self.skill(name)
+            with self.subTest(name=name):
+                self.assertTrue(text.startswith(f"---\nname: {name}\ndescription: "))
+                self.assertFalse((ROOT / "skills" / f"{name}-claude-code").exists())
+                self.assertEqual(findings_for(text), [])
+                self.assertNotIn("MERIDIAN_ROOT", text)  # MERIDIAN-OLD-NAME-TEST
+
+    def test_route_matrix_is_the_same_for_both_presets_and_hosts(self) -> None:
+        text = self.skill("cardine-delivery")
+        for preset in ("lean", "governed"):
+            for host, entry in self.HOSTS.items():
+                with self.subTest(preset=preset, host=host):
+                    self.assertIn("`.cardine/project.json`", text)
+                    self.assertIn("(`lean` or\n`governed`)", text)
+                    self.assertIn("`AGENTS.md` or `CLAUDE.md`", text)
+                    for route in ("Proceed with <TASK-ID>", "Address review <TASK-ID>", "Review <TASK-ID>",
+                                  "Accept <TASK-ID>", "Run lifecycle <TASK-ID>"):
+                        self.assertIn(f"`{route}`", text)
+        self.assertIn("Review <TASK-ID>`: independent review", text)
+
+    def test_accept_and_lifecycle_route_to_the_existing_orchestration_document(self) -> None:
+        for name in self.NAMES:
+            self.assertNotIn("workflows/LIFECYCLE.md", self.skill(name))
+        text = self.skill("cardine-delivery")
+        self.assertIn("`Accept <TASK-ID>` and `Run lifecycle <TASK-ID>`: follow `docs/LIFECYCLE_ORCHESTRATION.md`", text)
+        for name in self.NAMES:
+            for document in re.findall(r"`(docs/[A-Z_]+\.md)`", self.skill(name)):
+                with self.subTest(document=document):
+                    self.assertTrue((TEMPLATES / document).is_file())
+
+    def test_project_skill_keeps_setup_consented_and_checks_read_only(self) -> None:
+        text = self.skill("cardine-project")
+        for word in ("init", "adopt", "upgrade", "setup", "doctor"):
+            self.assertIn(f"- {word.capitalize()}:", text)
+        self.assertIn("only after explicit consent", text)
+        self.assertIn("separate operation from init", text)
+        self.assertIn("never proof that a host rule, hook, or profile is in force", text)
+        self.assertIn("Never choose them by default", text)
+
+
 if __name__ == "__main__":
     unittest.main()
