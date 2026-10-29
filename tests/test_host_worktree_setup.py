@@ -280,6 +280,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(plan.cardine_root_state, "ready")
         self.assertFalse((self.home / ".agents").exists())
         self.assertTrue(owner_hosts_setup.apply_setup(plan))
+        self.assertEqual(sorted(path.name for path in (self.home / ".agents/skills").iterdir()),
+                         ["cardine-delivery", "cardine-project"])
         for name in owner_hosts_skills.CODEX_SKILL_NAMES:
             link = self.home / ".agents/skills" / name
             self.assertTrue(link.is_symlink())
@@ -293,8 +295,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
     def test_setup_refuses_conflicting_or_blocked_skill_links(self) -> None:
         skills = self.home / ".agents/skills"
         skills.mkdir(parents=True)
-        (skills / "meridian-lean-delivery").symlink_to(self.home / "elsewhere")
-        (skills / "meridian-governed-sdd").mkdir()
+        (skills / "cardine-project").symlink_to(self.home / "elsewhere")
+        (skills / "cardine-delivery").mkdir()
         plan = owner_hosts_setup.plan_setup(
             self.home / "root", self.codex_config, environment=self.environment, home=self.home, framework_root=ROOT
         )

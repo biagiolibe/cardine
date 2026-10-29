@@ -557,10 +557,12 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertIn('cardine run <TASK-ID>', text)
         for retired in ('worktree check', 'execution start', 'execution deliver', 'advisor consultation'):
             self.assertNotIn(retired, text)
-        for host in ('meridian-governed-sdd', 'meridian-governed-sdd-claude-code'):
-            skill = (root / 'skills' / host / 'SKILL.md').read_text().split('capability=execution-boundaries v1 -->')[1]
-            self.assertIn('execution start', skill)
-            self.assertIn('execution deliver', skill)
+        skill = (root / 'skills/cardine-delivery/SKILL.md').read_text()
+        self.assertIn('cardine run <TASK-ID> --project <primary-checkout>', skill)
+        self.assertNotIn('execution start', skill)
+        self.assertNotIn('execution deliver', skill)
+        project_skill = (root / 'skills/cardine-project/SKILL.md').read_text()
+        self.assertIn('cardine-delivery', project_skill)
         orchestration = (root / 'templates/single/docs/LIFECYCLE_ORCHESTRATION.md').read_text()
         self.assertIn('cardine run <TASK-ID>', orchestration)
         self.assertNotIn('execution start', orchestration)
