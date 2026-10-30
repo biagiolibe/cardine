@@ -121,7 +121,7 @@ def module_shards(tests: list[unittest.TestCase], count: int, weights: Mapping[s
     groups: dict[str, list[unittest.TestCase]] = {}
     for test in sorted(tests, key=lambda item: item.id()):
         groups.setdefault(test.id().split(".")[0], []).append(test)
-    shards: list[list[unittest.TestCase]] = [[] for _ in range(count)]
+    assigned: list[list[str]] = [[] for _ in range(count)]
     loads = [0.0] * count
     def weight(name: str) -> float:
         key = hashlib.sha256(name.encode("utf-8")).hexdigest()
@@ -129,9 +129,15 @@ def module_shards(tests: list[unittest.TestCase], count: int, weights: Mapping[s
 
     for module in sorted(groups, key=lambda name: (-weight(name), name)):
         index = min(range(count), key=lambda i: (loads[i], i))
-        shards[index].extend(groups[module])
+        assigned[index].append(module)
         loads[index] += weight(module)
-    return [sorted(shard, key=lambda item: item.id()) for shard in shards]
+    # Alternate heavy-first and light-first execution to avoid starting all
+    # resource-intensive modules together. Assignment itself is unchanged.
+    return [
+        [test for name in sorted(names, key=lambda name: ((-1 if index % 2 == 0 else 1) * weight(name), name))
+         for test in groups[name]]
+        for index, names in enumerate(assigned)
+    ]
 
 
 def parse_shard(value: str) -> tuple[int, int]:

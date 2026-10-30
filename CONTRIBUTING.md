@@ -120,6 +120,8 @@ where the parallel run cannot start its workers.
 
 Full runs assign whole test modules by descending measured duration to the
 least-loaded shard, breaking ties by module name and then shard index. The
+resulting shards alternate heavy-first and light-first module order to reduce
+concurrent peaks; tests within each module remain sorted by ID. The
 versioned `tests/shard_durations.json` contains summed per-test wall times,
 keyed by the lowercase SHA-256 hex digest of each UTF-8 module name;
 unknown modules use a positive one-second estimate and stale module entries

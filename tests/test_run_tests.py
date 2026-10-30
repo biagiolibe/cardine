@@ -83,6 +83,18 @@ class ShardedTestRunnerTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "invalid shard duration data"):
                     runner.load_weights(path)
 
+    def test_module_execution_order_staggers_heavy_work(self) -> None:
+        directory = self.make_suite(["a", "b", "c", "d", "e", "f"])
+        self.addCleanup(shutil.rmtree, directory, True)
+        tests = runner.discover_tests(directory)
+        names = [test.id().split(".")[0] for test in tests]
+        values = dict(zip(names, (8, 7, 6, 5, 4, 3)))
+        weights = {hashlib.sha256(name.encode()).hexdigest(): value for name, value in values.items()}
+        shards = runner.module_shards(list(reversed(tests)), 2, weights)
+        orders = [[values[test.id().split(".")[0]] for test in shard] for shard in shards]
+        self.assertEqual(orders, [[8, 5, 4], [3, 6, 7]])
+        self.assertEqual({test.id() for shard in shards for test in shard}, {test.id() for test in tests})
+
     def test_discovered_suite_partition_is_exact(self) -> None:
         tests = runner.discover_tests()
         identifiers = {test.id() for test in tests}
