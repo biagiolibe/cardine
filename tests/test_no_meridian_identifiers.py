@@ -72,8 +72,6 @@ ALLOWLIST = (
               r'^\s*\.replace\("cardine-worktrees", "' + OLD + r'-worktrees"\)$|^\s*self\.assertNotIn\(\'' + OLD + r'-worktrees\', actual\)$'),
     Allowance(2, "9", re.escape("tests/" + Path(__file__).name),
               r'^HISTORIC_PROFILE = "' + OLD + r'-worktrees"$'),
-    Allowance(2, "9", r"tests/test_queue_briefing\.py",
-              r"(?:permissions\.|[\"']|\\n)" + OLD + r"-worktrees(?=[\"'.\] =])"),
     Allowance(
         2, "9",
         r"(?:src|tests|capabilities)/.*",
@@ -93,11 +91,6 @@ ALLOWLIST = (
         2, "9",
         r"src/cardine/hosts/skills\.py",
         OLD + r"-\*",
-    ),
-    Allowance(
-        2, "9",
-        r"(?:src/cardine/hosts/codex|tests/test_host_codex_(?:access|repair)|tests/test_queue_briefing)\.py",
-        r"Workspace access plus " + OLD.capitalize() + r"-managed task worktrees\.",
     ),
     Allowance(
         2, "9",
