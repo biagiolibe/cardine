@@ -58,3 +58,12 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[ ]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](134-codex-role-policy.md) |
 | `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](135-host-transports.md) |
 | `[ ]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](136-doctor-role-proofs.md) |
+
+### Phase 28 — Targeted test performance
+
+Authority: developer-requested cleanup-matrix discovery and measurements, 2026-10-30.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 139 | Reuse the ready cleanup fixture and measure the real savings | 🟡 P2 | 138 | [139](139-reuse-ready-cleanup-fixture.md) |
+| `[ ]` | 140 | Balance test shards by measured duration without reducing coverage | 🟡 P2 | 138 | [140](140-balance-test-shards-by-duration.md) |
