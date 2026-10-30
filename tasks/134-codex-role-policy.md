@@ -23,12 +23,19 @@ design.
   native policy doctor cannot show to enforce the protected paths and role
   actions is declared unsupported for role launches. No guarded transport
   adapter is built.
-- [ ] Only the files in the row's files column are edited, together with this
-  task's own record and its archive, handoff, and state file. A test file
-  outside the column may change only to update an expectation that this
-  change made stale, without new behavior, and the handoff lists it. If
-  the change needs any other file, the task stops before editing it and
-  names the file, so that the coordinator splits the row.
+- [ ] Only the files in the row's files column are edited, together with
+  this task's own record and its archive, handoff, and state file. A test
+  file outside the column may change only to update an expectation that this
+  change made stale, without new behavior, and the handoff lists it. A
+  repository check, test helper, or product module outside the column that
+  fails only because this row's rename or route made its expectation stale
+  is adapted to the new name or route in this task, minimally and without
+  loosening it: no check is removed, skipped, or widened, and a route a gate
+  cannot resolve still fails. The handoff lists each such file with the
+  check that required it (coordinator clause of 2026-10-30). Any other file,
+  or a change that adds behavior beyond that adaptation, stops the task
+  before editing it and names the file, so that the coordinator splits the
+  row.
 - [ ] The row's tests exist and pass: Host decision table, bounded roots,
   shared/foreign profiles, direct main push denied.
 - [ ] Rule 4 of decision 14: Each role block and rules replace, backup/result;
