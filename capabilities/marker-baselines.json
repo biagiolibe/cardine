@@ -1,14 +1,14 @@
 {
   "templates/single/AGENTS.md": {
     "command-triggers": {
-      "sha256": "328f14390888c248b05bb4c1de37e20c8ff5fa544d64a17e64225fa267dd6d37",
-      "version": 2
+      "sha256": "81925a32bb354af53fa7ac13d544a497a036f844fc1eacfc24c81d82e15ed101",
+      "version": 3
     }
   },
   "templates/single/CLAUDE.md": {
     "command-triggers": {
-      "sha256": "328f14390888c248b05bb4c1de37e20c8ff5fa544d64a17e64225fa267dd6d37",
-      "version": 2
+      "sha256": "81925a32bb354af53fa7ac13d544a497a036f844fc1eacfc24c81d82e15ed101",
+      "version": 3
     }
   },
   "templates/single/LANGUAGE_POLICY.md": {

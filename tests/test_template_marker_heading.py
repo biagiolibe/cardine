@@ -36,7 +36,7 @@ class CapabilityMarkerTest(unittest.TestCase):
 
     def test_agents_and_claude_carry_expected_marker_versions(self) -> None:
         for name in ("AGENTS.md", "CLAUDE.md"):
-            self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "2")])
+            self.assertEqual(self.marker_pairs((self.WORKFLOW / name).read_text(encoding="utf-8")), [("command-triggers", "3")])
         self.assertEqual(self.marker_pairs((self.WORKFLOW / "docs/workflows/REMEDIATION.md").read_text(encoding="utf-8")), [("task-worktree-remediation", "2")])
         self.assertEqual(self.marker_pairs((self.WORKFLOW / "docs/LIFECYCLE_ORCHESTRATION.md").read_text(encoding="utf-8")),
                          [("lifecycle-orchestration", "3"), ("owner-acceptance-workflow", "2")])
@@ -209,7 +209,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertNotIn("[Conversation language]", match.group(1))
 
     def test_agents_and_claude_carry_the_five_residual_capabilities(self) -> None:
-        self.assertIn(("command-triggers", "2"), self.marker_pairs((self.WORKFLOW / "AGENTS.md").read_text(encoding="utf-8")))
+        self.assertIn(("command-triggers", "3"), self.marker_pairs((self.WORKFLOW / "AGENTS.md").read_text(encoding="utf-8")))
         review = self.marker_pairs((self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8"))
         self.assertEqual(review, [("task-worktree-review-procedure", "4")])
     def test_review_hands_off_through_the_command_before_substantive_inspection(self) -> None:

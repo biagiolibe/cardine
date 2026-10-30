@@ -49,7 +49,7 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[x]` | 125 | Write the two Cardine skills and fix the Accept route (H3a) | 🔴 P1 | 124 | [125](done/125-two-skills.md) |
 | `[x]` | 126 | Remove the four old skills and install the two shared links (H3b) | 🔴 P1 | 125 | [126](done/126-remove-old-skills.md) |
 | `[x]` | 127 | Rename the plugin metadata and stop shipping product auto-hooks (H3c) | 🔴 P1 | 126 | [127](done/127-plugin-metadata.md) |
-| `[ ]` | 128 | Route the entry routers and register the managed templates (H3d) | 🔴 P1 | 127 | [128](128-router-routes.md) |
+| `[x]` | 128 | Route the entry routers and register the managed templates (H3d) | 🔴 P1 | 127 | [128](done/128-router-routes.md) |
 | `[ ]` | 129 | Name the Codex rules and profile for Cardine with a bounded migration (H4a) | 🔴 P1 | 128 | [129](129-codex-rules-naming.md) |
 | `[ ]` | 130 | Orchestrate setup on Cardine paths without real-home apply (H4b) | 🔴 P1 | 129 | [130](130-setup-orchestration.md) |
 | `[ ]` | 131 | Register user-level hooks on both hosts without duplicates (H4c) | 🔴 P1 | 130 | [131](131-user-hook-registration.md) |

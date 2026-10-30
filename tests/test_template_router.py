@@ -15,6 +15,7 @@ from cardine.templates import markers as templates_markers
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
 from cardine.shared.project import resolve_project_configuration
+from cardine.shared.models import ManagedFile
 from cardine.templates import router as owner_templates_router
 
 
@@ -38,6 +39,17 @@ class GenerateClaudeMdTest(unittest.TestCase):
             "CLAUDE.md has drifted from AGENTS.md past the shared anchor "
             f"{owner_generator.CLAUDE_MD_SHARED_ANCHOR!r}",
         )
+
+    def test_host_entry_routes_use_shared_skills_without_old_procedures(self) -> None:
+        for name in ("AGENTS.md", "CLAUDE.md"):
+            text = (ROOT / "templates/single" / name).read_text(encoding="utf-8")
+            block = templates_markers.extract_marker_block(text, "command-triggers", 3)
+            self.assertIsNotNone(block)
+            for trigger in ("Proceed with <TASK-ID>", "Address review <TASK-ID>", "Review <TASK-ID>"):
+                self.assertTrue(any(trigger in line and "cardine-delivery" in line for line in block.splitlines()))
+            self.assertIn("cardine-project", block)
+            for old in ("docs/workflows/IMPLEMENTATION.md", "docs/workflows/REVIEW.md", "docs/workflows/REMEDIATION.md"):
+                self.assertNotIn(old, block)
 
     def test_generator_reports_drift_when_claude_md_diverges(self) -> None:
         agents_text = (
@@ -184,6 +196,24 @@ class GeneratedEntryRouterTest(unittest.TestCase):
                 "# Routed procedure\n\n" + " ".join(shared_constants.ENTRY_ROUTER_SAFEGUARDS[route]) + "\n",
                 encoding="utf-8",
             )
+
+    def test_v2_migration_checks_current_v3_skill_routes(self) -> None:
+        framework = self.project / "framework"
+        (framework / "migrations").mkdir(parents=True)
+        (framework / "migrations/001.json").write_text(json.dumps({"id": "001", "capability": "command-triggers", "capabilityVersion": 2}))
+        template = ROOT / "templates/single/AGENTS.md"
+        files = [ManagedFile(source=template, target=Path("AGENTS.md"))]
+        self.router.write_text(
+            "- `Proceed with <TASK-ID>` and `Address review <TASK-ID>`: `cardine-delivery`.\n"
+            "- `Review <TASK-ID>`: `cardine-delivery`.\n"
+            "- `Run lifecycle <TASK-ID>` and `Accept <TASK-ID>`: `cardine-delivery` `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
+        )
+        requirements = lambda: owner_templates_router.entry_router_trigger_requirements(self.project, framework, ["001"], files)
+        self.assertEqual(requirements(), ())
+        self.router.write_text(self.router.read_text().replace("`Review <TASK-ID>`: `cardine-delivery`", "`Review <TASK-ID>`: `wrong-skill`"))
+        self.assertTrue(any("Review <TASK-ID>" in item for item in requirements()))
+        self.router.write_text(self.router.read_text().replace("`Accept <TASK-ID>`", "`Other <TASK-ID>`"))
+        self.assertTrue(any("Accept <TASK-ID>" in item for item in requirements()))
 
     def test_renders_identical_entry_points_and_audits_routes(self) -> None:
         outputs = owner_templates_router.entry_router_outputs(self.project)
