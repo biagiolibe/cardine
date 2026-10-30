@@ -103,13 +103,13 @@ def load_weights(path: Path = WEIGHTS) -> dict[str, float]:
     """Read versioned, positive finite module timings; never silently ignore damage."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] != 1:
-            raise ValueError("expected version 1 object")
+        if not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] != 2:
+            raise ValueError("expected version 2 object")
         modules = data.get("modules")
         if not isinstance(modules, dict) or not modules:
             raise ValueError("modules must be a nonempty object")
         for name, value in modules.items():
-            if not isinstance(name, str) or not name or isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            if not isinstance(name, str) or not re.fullmatch(r"[0-9a-f]{64}", name) or isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
                 raise ValueError(f"invalid duration for module {name!r}")
         return modules
     except (OSError, UnicodeError, ValueError, OverflowError) as error:
@@ -123,10 +123,14 @@ def module_shards(tests: list[unittest.TestCase], count: int, weights: Mapping[s
         groups.setdefault(test.id().split(".")[0], []).append(test)
     shards: list[list[unittest.TestCase]] = [[] for _ in range(count)]
     loads = [0.0] * count
-    for module in sorted(groups, key=lambda name: (-weights.get(name, UNKNOWN_MODULE_SECONDS), name)):
+    def weight(name: str) -> float:
+        key = hashlib.sha256(name.encode("utf-8")).hexdigest()
+        return weights.get(key, UNKNOWN_MODULE_SECONDS)
+
+    for module in sorted(groups, key=lambda name: (-weight(name), name)):
         index = min(range(count), key=lambda i: (loads[i], i))
         shards[index].extend(groups[module])
-        loads[index] += weights.get(module, UNKNOWN_MODULE_SECONDS)
+        loads[index] += weight(module)
     return [sorted(shard, key=lambda item: item.id()) for shard in shards]
 
 

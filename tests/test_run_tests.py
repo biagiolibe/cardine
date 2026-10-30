@@ -62,9 +62,9 @@ class ShardedTestRunnerTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, directory, True)
         tests = runner.discover_tests(directory)
         names = [test.id().split(".")[0] for test in tests]
-        weights = dict(zip(names, (8, 7, 6, 5)))
+        weights = {hashlib.sha256(name.encode()).hexdigest(): value for name, value in zip(names, (8, 7, 6, 5))}
         shards = runner.module_shards(list(reversed(tests)), 2, weights)
-        loads = [sum(weights[test.id().split(".")[0]] for test in shard) for shard in shards]
+        loads = [sum(weights[hashlib.sha256(test.id().split(".")[0].encode()).hexdigest()] for test in shard) for shard in shards]
         self.assertLess(max(loads), max(8 + 6, 7 + 5))
         tied = runner.module_shards(tests, 6, {})
         self.assertEqual([[t.id() for t in s] for s in tied[:4]], [[t.id()] for t in tests])
@@ -74,9 +74,10 @@ class ShardedTestRunnerTest(unittest.TestCase):
         directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, directory, True)
         path = directory / "weights.json"
-        for value in ('{}', '{"version":1,"modules":{"x":0}}', '{"version":1,"modules":{"x":-1}}',
-                      '{"version":1,"modules":{"x":NaN}}', '{"version":1,"modules":{"x":Infinity}}',
-                      '{"version":1,"modules":{"x":true}}', 'invalid'):
+        key = 'a' * 64
+        for value in ('{}', *(f'{{"version":2,"modules":{{"{key}":{duration}}}}}'
+                                for duration in ('0', '-1', 'NaN', 'Infinity', 'true')),
+                      '{"version":2,"modules":{"bad":1}}', 'invalid'):
             with self.subTest(value=value):
                 path.write_text(value)
                 with self.assertRaisesRegex(ValueError, "invalid shard duration data"):
@@ -250,6 +251,8 @@ class ParallelTestRunnerTest(unittest.TestCase):
 
     def test_real_shards_execute_each_discovered_id_once(self) -> None:
         directory = self.make_suite(["pass"] * 8)
+        for path in directory.glob("test_generated_*.py"):
+            path.rename(directory / f"test_{directory.name}_{path.stem}.py")
         tests = runner.discover_tests(directory)
         expected = {test.id() for test in tests}
         for count in (1, 2, 4, 8):
