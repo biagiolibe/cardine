@@ -186,7 +186,7 @@ class HostRepeatabilityTest(unittest.TestCase):
     def test_user_edits_between_a_kill_and_its_retry_are_preserved(self):
         for seam, target, edit in (
                 ('after_backup:codex-config', 'codex/config.toml', '# user edit\nmodel = "other"\n'),
-                ('before_file:codex-rules', '.codex/rules/default.rules', FOREIGN_RULES + '# edit\n'),
+                ('before_file:codex-rules', '.codex/rules/cardine.rules', FOREIGN_RULES + '# edit\n'),
                 ('before_file:claude-allowlist', 'project/.claude/settings.local.json', '{"edited": true}\n')):
             with self.subTest(seam=seam):
                 home = self.make_home()
@@ -272,7 +272,7 @@ class HostRepeatabilityTest(unittest.TestCase):
         for name in names:
             for when in ('before', 'after'):
                 for change in ('edit', 'owner'):
-                    targets = {'file:codex-config': 'codex/config.toml', 'file:codex-rules': '.codex/rules/default.rules',
+                    targets = {'file:codex-config': 'codex/config.toml', 'file:codex-rules': '.codex/rules/cardine.rules',
                                'file:claude-allowlist': 'project/.claude/settings.local.json'}
                     if change == 'edit' and name not in targets:
                         continue

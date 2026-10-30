@@ -3,6 +3,7 @@
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -24,7 +25,7 @@ class CodexUserRulesTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.home = Path(self.temporary.name)
-        self.rules = self.home / ".codex/rules/default.rules"
+        self.rules = self.home / ".codex/rules/cardine.rules"
 
     def write(self, text):
         self.rules.parent.mkdir(parents=True, exist_ok=True)
@@ -46,23 +47,21 @@ class CodexUserRulesTest(unittest.TestCase):
                 self.assertEqual(ready.status, "ready")
                 self.assertFalse(owner_hosts_codex.apply_codex_user_rules(ready))
 
-    def test_stale_block_replacement_preserves_both_sides(self):
+    def test_changed_block_is_preserved(self):
         before, after = "# foreign before\r\n", "# foreign after\r\n"
-        self.write(before + "# MERIDIAN:BEGIN codex-user-rules v0\n# old\n# MERIDIAN:END codex-user-rules\n" + after)
+        self.write(before + "# CARDINE:BEGIN codex-user-rules v0\n# old\n# CARDINE:END codex-user-rules\n" + after)
         original = self.rules.read_bytes()
-        plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
-        self.assertEqual(plan.status, "stale")
+        with self.assertRaisesRegex(shared_errors.CardineError, "has changed"):
+            owner_hosts_codex.plan_codex_user_rules(self.rules)
         self.assertEqual(self.rules.read_bytes(), original)
-        owner_hosts_codex.apply_codex_user_rules(plan)
-        self.assertEqual(self.rules.read_bytes().decode(), before + owner_hosts_codex.CODEX_USER_RULES + after)
 
     def test_damaged_markers_stop_before_any_setup_mutation(self):
         for text in (
-            "# MERIDIAN:BEGIN codex-user-rules v1\n",
-            "# MERIDIAN:END codex-user-rules\n",
+            "# CARDINE:BEGIN codex-user-rules v1\n",
+            "# CARDINE:END codex-user-rules\n",
             owner_hosts_codex.CODEX_USER_RULES * 2,
-            "# MERIDIAN:END codex-user-rules\n# MERIDIAN:BEGIN codex-user-rules v1\n",
-            "# MERIDIAN:BEGIN codex-user-rules broken\n# MERIDIAN:END codex-user-rules\n",
+            "# CARDINE:END codex-user-rules\n# CARDINE:BEGIN codex-user-rules v1\n",
+            "# CARDINE:BEGIN codex-user-rules broken\n# CARDINE:END codex-user-rules\n",
         ):
             self.write(text)
             with self.assertRaisesRegex(shared_errors.CardineStop, "BLOCKED COMMAND_REFUSED.*damaged"):
@@ -106,18 +105,107 @@ class CodexUserRulesTest(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             owner_hosts_setup.print_setup_plan(plan)
-        self.assertIn("+# MERIDIAN:BEGIN codex-user-rules v1", output.getvalue())
+        self.assertIn("+# CARDINE:BEGIN codex-user-rules v1", output.getvalue())
         self.assertFalse(self.rules.exists())
         owner_hosts_setup.apply_setup(plan)
         self.assertEqual(doctor(), "ready")
         self.write(owner_hosts_codex.CODEX_USER_RULES.replace('"git", "fetch"', '"git", "old"'))
         self.assertEqual(doctor(), "stale")
-        stale = setup()
-        with contextlib.redirect_stdout(output):
-            owner_hosts_setup.print_setup_plan(stale)
-        self.assertIn('-prefix_rule(pattern=["git", "old"]', output.getvalue())
-        owner_hosts_setup.apply_setup(stale)
-        self.assertEqual(doctor(), "ready")
+        changed = self.rules.read_bytes()
+        with self.assertRaisesRegex(shared_errors.CardineError, "has changed"):
+            setup()
+        self.assertEqual(self.rules.read_bytes(), changed)
+
+    def test_legacy_rules_migrate_only_the_exact_owned_block(self):
+        legacy = self.rules.with_name("default.rules")
+        legacy.parent.mkdir(parents=True, exist_ok=True)
+        foreign = "# before\r\n"
+        suffix = "# after\r\n"
+        legacy.write_bytes((foreign + owner_hosts_codex.LEGACY_CODEX_USER_RULES + suffix).encode())
+        original = legacy.read_bytes()
+        plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
+        self.assertEqual(legacy.read_bytes(), original)
+        self.assertEqual(owner_hosts_codex.plan_codex_user_rules(self.rules), plan)
+        owner_hosts_codex.apply_codex_user_rules(plan)
+        self.assertEqual(legacy.read_bytes(), (foreign + suffix).encode())
+        self.assertEqual(self.rules.read_text(), owner_hosts_codex.CODEX_USER_RULES)
+        self.rules.unlink()
+        modified = original.replace(b'"git", "fetch"', b'"git", "other"')
+        legacy.write_bytes(modified)
+        plan = owner_hosts_codex.plan_codex_user_rules(self.rules)
+        self.assertTrue(plan.warnings)
+        owner_hosts_codex.apply_codex_user_rules(plan)
+        self.assertEqual(legacy.read_bytes(), modified)
+
+    def test_setup_refuses_symlinked_codex_directory_before_host_writes(self):
+        outside = self.home / 'outside'
+        outside.mkdir()
+        (self.home / '.codex').symlink_to(outside, target_is_directory=True)
+        config = self.home / 'config.toml'
+        plan = owner_hosts_setup.plan_setup(None, config, home=self.home, environment={},
+                                            framework_root=ROOT, project_root=self.home)
+        with self.assertRaisesRegex(shared_errors.CardineError, "symlink"):
+            owner_hosts_setup.apply_setup(plan)
+        self.assertEqual(list(outside.iterdir()), [])
+        self.assertFalse(config.exists())
+        self.assertFalse((self.home / '.cardine').exists())
+
+    def test_setup_migration_replays_all_durable_boundaries(self):
+        script = r"""
+import os, sys, tempfile
+from pathlib import Path
+from cardine.hosts import setup
+from cardine.lifecycle import receipts
+home, seam, framework, temp = map(Path, sys.argv[1:])
+tempfile.tempdir = str(temp)
+def boundary(name):
+    if name == str(seam):
+        os._exit(93)
+receipts.boundary = boundary
+plan = setup.plan_setup(home / 'worktrees', home / '.codex/config.toml', home=home,
+                        environment={'HOME': str(home)}, framework_root=framework, project_root=home / 'project')
+setup.apply_setup(plan)
+"""
+        base = self.home / 'cases'
+        base.mkdir()
+        receipt_dir = self.home / 'receipts'
+        receipt_dir.mkdir()
+        def fixture(name):
+            home = base / name
+            (home / '.codex/rules').mkdir(parents=True)
+            (home / 'project').mkdir()
+            root = home / 'worktrees'
+            block = (owner_hosts_codex._codex_managed_block(root)
+                     .replace('CARDINE:', 'MERIDIAN:')
+                     .replace('cardine-worktrees', 'meridian-worktrees')
+                     .replace('Cardine-managed', 'Meridian-managed'))
+            (home / '.codex/config.toml').write_text('# foreign\nmodel = "test"\n\n' + block + '\n')
+            (home / '.codex/rules/default.rules').write_text('# foreign\n' + owner_hosts_codex.LEGACY_CODEX_USER_RULES)
+            return home
+        def run(home, seam=''):
+            return subprocess.run([sys.executable, '-c', script, str(home), seam, str(ROOT), str(receipt_dir)],
+                                  env={**os.environ, 'HOME': str(home), 'PYTHONPATH': str(ROOT / 'src')},
+                                  capture_output=True, text=True)
+        def tree(home):
+            return {p.relative_to(home).as_posix(): p.read_bytes().replace(str(home).encode(), b'<home>')
+                    for p in home.rglob('*') if p.is_file() and not p.is_symlink()}
+        reference = fixture('reference')
+        done = run(reference)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        expected = tree(reference)
+        for effect in ('backup:codex-config', 'file:codex-config', 'file:codex-rules',
+                       'file:codex-legacy-rules', 'setup_result'):
+            for when in ('before', 'after'):
+                seam = f'{when}_{effect}'
+                with self.subTest(seam=seam):
+                    home = fixture(seam.replace(':', '-'))
+                    interrupted = run(home, seam)
+                    self.assertEqual(interrupted.returncode, 93, interrupted.stderr)
+                    replay = run(home)
+                    self.assertEqual(replay.returncode, 0, replay.stderr)
+                    self.assertEqual(tree(home), expected)
+                    self.assertEqual(run(home).returncode, 0)
+                    self.assertEqual(tree(home), expected)
 
     @unittest.skipUnless(shutil.which("codex"), "codex_user_rules_decisions: codex binary unavailable")
     def test_codex_user_rules_decisions(self):

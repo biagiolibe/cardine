@@ -186,12 +186,12 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         self.assertIn("# keep this comment", changed)
         self.assertIn(str(root.resolve()), changed)
         parsed = tomllib.loads(changed)
-        self.assertEqual(parsed["default_permissions"], "meridian-worktrees")
+        self.assertEqual(parsed["default_permissions"], "cardine-worktrees")
         self.assertEqual(parsed["notify"], ["/usr/bin/example", "turn-ended"])
         self.assertEqual(parsed["model"], "gpt-test")
         self.assertEqual(parsed["model_reasoning_effort"], "medium")
         self.assertEqual(
-            parsed["permissions"]["meridian-worktrees"]["workspace_roots"],
+            parsed["permissions"]["cardine-worktrees"]["workspace_roots"],
             {str(root.resolve()): True},
         )
         self.assertLess(changed.index('model = "gpt-test"'), changed.index(cardine_cli.CODEX_MANAGED_BEGIN))
@@ -221,7 +221,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         self.assertEqual(parsed["notify"], ["/usr/bin/example", "turn-ended"])
         self.assertEqual(parsed["model"], "gpt-test")
         self.assertEqual(
-            parsed["permissions"]["meridian-worktrees"]["workspace_roots"],
+            parsed["permissions"]["cardine-worktrees"]["workspace_roots"],
             {str(root): True},
         )
         self.assertLess(repaired.index('model = "gpt-test"'), repaired.index(cardine_cli.CODEX_MANAGED_BEGIN))
@@ -251,7 +251,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         requirements.write_text('[allowed_permission_profiles]\nother = true\n', encoding="utf-8")
         with self.assertRaisesRegex(shared_errors.CardineError, "managed"):
             owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees", requirements)
-        requirements.write_text('[allowed_permission_profiles]\nmeridian-worktrees = true\n', encoding="utf-8")
+        requirements.write_text('[allowed_permission_profiles]\ncardine-worktrees = true\n', encoding="utf-8")
         self.assertEqual(
             owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees", requirements).status,
             "approval-required",
@@ -266,7 +266,7 @@ class CodexWorktreeAccessTest(unittest.TestCase):
         plan = owner_hosts_codex.plan_codex_configuration(config, self.root / "worktrees")
         self.assertIsNotNone(plan.proposed_text)
         parsed = tomllib.loads(plan.proposed_text or "")
-        self.assertEqual(parsed["default_permissions"], "meridian-worktrees")
+        self.assertEqual(parsed["default_permissions"], "cardine-worktrees")
         self.assertEqual(parsed["permissions"]["other"]["extends"], ":read-only")
 
     def test_initializer_only_offers_explicit_check_and_apply(self) -> None:

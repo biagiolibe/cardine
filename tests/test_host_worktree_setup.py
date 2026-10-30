@@ -196,7 +196,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertFalse(self.user_config.exists())
         self.assertEqual(
             tomllib.loads(self.codex_config.read_text(encoding="utf-8"))["permissions"]
-            ["meridian-worktrees"]["workspace_roots"],
+            ["cardine-worktrees"]["workspace_roots"],
             {str(root): True},
         )
         second = owner_hosts_setup.plan_setup(
@@ -266,7 +266,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertTrue(owner_hosts_setup.apply_setup(combined))
         self.assertEqual(
             tomllib.loads(self.codex_config.read_text(encoding="utf-8"))["permissions"]
-            ["meridian-worktrees"]["workspace_roots"],
+            ["cardine-worktrees"]["workspace_roots"],
             {str(root): True},
         )
 

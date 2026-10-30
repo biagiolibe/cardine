@@ -162,6 +162,17 @@ revalidation in the same turn; do not stop to report the fix.
 - The deny list, `RULE_CONFLICT`, every guardrail, and a change of scope
   remain stops.
 
+### Developer decision on historical identifiers (2026-10-30)
+
+Task 129 may update `tests/test_no_meridian_identifiers.py` despite the
+no-widening clause, solely to allow exact historical references needed for
+this migration. The guard must reject the old profile as the current profile,
+a default, a new-installation setting, or in unrelated locations. Remove
+obsolete allowances and add regression tests for both permitted historical
+references and forbidden uses. Do not obscure the old name with concatenation
+or encoding. Preserve ownership checks and never change foreign or altered
+profiles or real-home host configuration.
+
 ## Validation
 
 - `meridian profile doctor meridian-self-hosting --project .`

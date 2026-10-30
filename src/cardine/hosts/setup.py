@@ -8,8 +8,10 @@ from cardine.worktree.paths import repository_identity
 
 from cardine.hosts.claude import apply_claude_project_allowlist
 from cardine.hosts.effects import host_operation
+from cardine.lifecycle import receipts
 from cardine.hosts.claude import claude_hook_duplicate_advisories
 from cardine.hosts.claude import plan_claude_project_allowlist
+from cardine.hosts.codex import _configuration_backup
 from cardine.hosts.codex import _codex_profile_divergence
 from cardine.hosts.codex import apply_codex_configuration
 from cardine.hosts.codex import apply_codex_user_rules
@@ -83,7 +85,7 @@ def plan_setup(
     else:
         config_action = "write"
 
-    user_rules = plan_codex_user_rules(home / ".codex/rules/default.rules")
+    user_rules = plan_codex_user_rules(home / ".codex/rules/cardine.rules")
     directory_state, directory_change = _directory_setup_state(resolution.path)
     codex_plan: CodexConfigurationPlan | None = None
     try:
@@ -370,11 +372,33 @@ def apply_setup(plan: SetupPlan) -> bool:
         raise CardineError(f"setup is blocked: {detail}")
     # Revalidate the user-owned file before any setup mutation.
     fresh_rules = plan_codex_user_rules(plan.user_rules.path)
-    if fresh_rules.current_text != plan.user_rules.current_text:
+    if (fresh_rules.current_text != plan.user_rules.current_text
+        or fresh_rules.legacy_text != plan.user_rules.legacy_text):
         raise CardineError("Codex user rules changed since planning; rerun --check")
     root = plan.resolution.path
     with host_operation("setup", root) as active:
-        wrote = apply_codex_user_rules(plan.user_rules, active)
+        # Check all recorded destinations and pin this migration's outputs before
+        # any host write; a retry cannot silently adopt changes to pending files.
+        active.targets("before")
+        active.targets("after")
+        rules = plan.user_rules
+        for target in (rules.path, rules.legacy_path, plan.codex_config):
+            if target is not None:
+                active.guard(target)
+                for parent in (target.parent, target.parent.parent):
+                    if parent.is_symlink():
+                        raise CardineError(f"refusing to write through a symlink: {parent}")
+        current_config = plan.codex_config.read_text(encoding="utf-8") if plan.codex_config.is_file() else ""
+        if plan.codex_plan.proposed_text is not None and current_config != plan.codex_plan.current_text:
+            raise CardineError("Codex configuration changed since it was planned; rerun --check")
+        if rules.proposed_text is not None:
+            active.declare("codex-rules", rules.path, rules.proposed_text.encode("utf-8"), mode=0o600)
+        if rules.legacy_proposed is not None and rules.legacy_path is not None:
+            active.declare("codex-legacy-rules", rules.legacy_path, rules.legacy_proposed.encode("utf-8"), mode=0o600)
+        if plan.codex_plan.proposed_text is not None:
+            active.declare("codex-config", plan.codex_config, plan.codex_plan.proposed_text.encode("utf-8"),
+                           backup=_configuration_backup(plan.codex_plan), mode=0o600)
+        wrote = False
         if plan.directory_state in ("missing", "repair-required"):
             active.directory("cardine-root", root, 0o700)
             wrote = True
@@ -386,6 +410,7 @@ def apply_setup(plan: SetupPlan) -> bool:
             active.replace("worktree-config", plan.resolution.config_path, None)
             wrote = True
         wrote = apply_codex_configuration(plan.codex_plan, active) or wrote
+        wrote = apply_codex_user_rules(plan.user_rules, active) or wrote
         wrote = apply_claude_project_allowlist(plan.claude_plan, active) or wrote
         if plan.candidate_validation_proposal is not None:
             active.replace("candidate-validation", plan.candidate_validation_path,
@@ -417,7 +442,10 @@ def apply_setup(plan: SetupPlan) -> bool:
             for path, target in missing_links:
                 active.symlink("skill:" + path.name, path, target)
         removed = _remove_old_skill_links(active, plan.skill_links)
-        return wrote or bool(missing_links) or removed or active.resumed
+        result = wrote or bool(missing_links) or removed or active.resumed
+        receipts.boundary("before_setup_result")
+    receipts.boundary("after_setup_result")
+    return result
 
 
 CODEX_CLOSURE_POLICY_PROBES = (
@@ -574,7 +602,7 @@ def codex_doctor(
     home = (home or Path.home()).expanduser().resolve()
     framework_root = (framework_root or SCRIPTS_ROOT.parent).expanduser().resolve()
     try:
-        result["user-command-policy"] = plan_codex_user_rules(home / ".codex/rules/default.rules").status
+        result["user-command-policy"] = plan_codex_user_rules(home / ".codex/rules/cardine.rules").status
     except CardineError:
         result["user-command-policy"] = "stale"
     result["skill-links"] = _aggregate_skill_state(_framework_skill_links(framework_root, home))

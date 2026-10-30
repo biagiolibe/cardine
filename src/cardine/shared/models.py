@@ -9,13 +9,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-CODEX_PERMISSION_PROFILE = "meridian-worktrees"
+CODEX_PERMISSION_PROFILE = "cardine-worktrees"
 
 
-CODEX_MANAGED_BEGIN = "# MERIDIAN:BEGIN worktree-permissions v1"
+CODEX_MANAGED_BEGIN = "# CARDINE:BEGIN worktree-permissions v1"
 
 
-CODEX_MANAGED_END = "# MERIDIAN:END worktree-permissions"
+CODEX_MANAGED_END = "# CARDINE:END worktree-permissions"
 
 
 SAFE_PATH_COMPONENT = re.compile(r"[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?")
@@ -139,6 +139,9 @@ class CodexUserRulesPlan:
     current_text: str
     proposed_text: str | None
     warnings: tuple[str, ...]
+    legacy_path: Path | None = None
+    legacy_text: str = ""
+    legacy_proposed: str | None = None
 
 
 @dataclass(frozen=True)
