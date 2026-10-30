@@ -70,6 +70,11 @@ design.
 |------|------|
 | `templates/single/{AGENTS,CLAUDE}.md`, `src/cardine/templates/catalog.py`, `capabilities/marker-baselines.json`, `Ttest_template_router.py`, `Ttest_template_commands.py` (6) | The files this row edits, as the plan lists them. |
 
+## Coordinator scope amendments (2026-10-30)
+
+- Add `capabilities/markers-v1.json` solely to update `command-triggers.requiredVersion` to the shipped version. Regenerate the current marker baseline in place; existing project snapshots provide upgrade baselines.
+- Add `src/cardine/shared/context.py` solely to recognize the `cardine-delivery` route without crossing router entries, and `tests/test_context_size.py` for regression coverage of that issue and supported routes. Keep the 10,000-byte limit and repository check; do not restore a procedural fallback. Preserve the existing worktree changes.
+
 ## Authority excerpt
 
 The parts of the plan and inventories this task needs, extracted from the

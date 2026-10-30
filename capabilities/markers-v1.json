@@ -50,7 +50,7 @@
       "adoptionRecord": null
     },
     "command-triggers": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "044-rejected-attempt-restart"

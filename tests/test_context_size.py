@@ -53,6 +53,21 @@ class ContextSizeTest(unittest.TestCase):
         for name in ("STATUS.md", "IMPLEMENTATION.md", "REVIEW.md", "REMEDIATION.md", "LIFECYCLE.md"):
             (self.project / "docs/workflows" / name).write_text(f"# {name}\n", encoding="utf-8")
 
+    def test_skill_routes_do_not_consume_later_entries(self) -> None:
+        router = self.project / "AGENTS.md"
+        router.write_text(
+            "- `Proceed with <TASK-ID>` or `Address review <TASK-ID>` — use `cardine-delivery`.\n"
+            "- `Review <TASK-ID>` — use `cardine-delivery`.\n"
+            "- `Run lifecycle <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
+        )
+        for role in ("implementation", "review", "remediation"):
+            with self.subTest(role=role):
+                self.assertEqual(shared_context._context_routed_workflow(self.project, "single", role, Path("AGENTS.md")), Path("PROJECT_WORKFLOW.md"))
+        self.assertEqual(shared_context._context_routed_workflow(self.project, "single", "lifecycle", Path("AGENTS.md")), Path("docs/LIFECYCLE_ORCHESTRATION.md"))
+        self.governed()
+        for role, target in (("status", "STATUS.md"), ("implementation", "IMPLEMENTATION.md"), ("review", "REVIEW.md"), ("remediation", "REMEDIATION.md")):
+            self.assertEqual(shared_context._context_routed_workflow(self.project, "single", role, Path("AGENTS.md")), Path("docs/workflows") / target)
+
     def test_lean_roles_report_estimated_ranges(self) -> None:
         for role in ("implementation", "review"):
             result = self.run_cli("--role", role, "--format", "json")
@@ -168,6 +183,7 @@ class ReferenceResolutionTest(unittest.TestCase):
             project = Path(directory) / "project"
             shutil.copytree(ROOT / "templates/single", project)
             write_project_config(project, "lean")
+            (project / "AGENTS.md").write_text("- `Proceed with <TASK-ID>` — read `docs/workflows/IMPLEMENTATION.md`.\n")
             implementation = project / "docs/workflows/IMPLEMENTATION.md"
             implementation.write_text(implementation.read_text(encoding="utf-8") + "\nAlso read `docs/MISSING.md`.\n", encoding="utf-8")
             report = shared_context.context_size_report(project, "implementation", workflow_mode="single")

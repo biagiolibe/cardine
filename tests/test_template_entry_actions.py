@@ -95,7 +95,7 @@ KEPT = {
     "PW-58": (WORKFLOW, "verify each criterion before delivery", "advice"),
     "RT-01": ("AGENTS.md", "return `BLOCKED RULE_CONFLICT`", "one line"),
     "RT-02": ("AGENTS.md", "preserve unrelated changes", "enforce"),
-    "RT-03": ("AGENTS.md", "read `docs/workflows/IMPLEMENTATION.md`", "one line"),
+    "RT-03": ("AGENTS.md", "use `cardine-delivery` for the engine action", "one line"),
     "RT-04": ("AGENTS.md", "`docs/CODE_ORGANIZATION.md`", "advice"),
     "RT-05": ("CLAUDE.md", "generated from `AGENTS.md`", "one line"),
     "IM-10": (IMPLEMENTATION, "prove the evidence channel", "advice"),
@@ -248,7 +248,8 @@ class NoOrphanInstructionTest(unittest.TestCase):
             routed = set(re.findall(r"(?:read|use) `([^`]+\.md)`", block))
             with self.subTest(router=router):
                 self.assertTrue(all((TEMPLATES / target).is_file() for target in routed))
-                self.assertTrue({IMPLEMENTATION, REVIEW, REMEDIATION, LIFECYCLE, CONTEXT} <= routed)
+                self.assertTrue({CONTEXT, "docs/AUDIT_PROMPT_READ_ONLY.md"} <= routed)
+                self.assertIn("`cardine-delivery`", block)
         self.assertNotIn("Restart rejected", corpus())
 
     def test_no_template_carries_a_retired_capability_marker(self) -> None:

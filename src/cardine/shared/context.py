@@ -19,7 +19,7 @@ import json
 import posixpath
 import re
 
-_CONTEXT_REFERENCE = re.compile(r"`([^`]+\.md)`|\]\(([^)#]+\.md)(?:#[^)]+)?\)", re.IGNORECASE)
+_CONTEXT_REFERENCE = re.compile(r"`([^`\n]+\.md)`|\]\(([^)#]+\.md)(?:#[^)]+)?\)", re.IGNORECASE)
 
 
 def _context_path_references(text: str) -> list[Path]:
@@ -96,12 +96,12 @@ def _context_router(project_root: Path) -> Path:
 def _context_routed_workflow(project_root: Path, mode: str, role: str, router: Path) -> Path:
     text = (project_root / router).read_text(encoding="utf-8") if (project_root / router).is_file() else ""
     patterns = {
-        "status": r"Status, project question, or tech-design alignment.*?`([^`]+\.md)`",
-        "design": r"Status, project question, or tech-design alignment.*?`([^`]+\.md)`",
-        "implementation": r"Proceed with <TASK-ID>.*?`([^`]+\.md)`",
-        "review": r"Review <TASK-ID>.*?`([^`]+\.md)`",
-        "remediation": r"Address review <TASK-ID>.*?`([^`]+\.md)`",
-        "lifecycle": r"(?:Run lifecycle|Accept) <TASK-ID>.*?`([^`]+\.md)`",
+        "status": r"Status, project question, or tech-design alignment.*?`([^`\n]+\.md)`",
+        "design": r"Status, project question, or tech-design alignment.*?`([^`\n]+\.md)`",
+        "implementation": r"Proceed with <TASK-ID>.*?`([^`\n]+\.md)`",
+        "review": r"Review <TASK-ID>.*?`([^`\n]+\.md)`",
+        "remediation": r"Address review <TASK-ID>.*?`([^`\n]+\.md)`",
+        "lifecycle": r"(?:Run lifecycle|Accept) <TASK-ID>.*?`([^`\n]+\.md)`",
     }
     match = re.search(patterns[role], text)
     if not match:
@@ -189,7 +189,8 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
     routed = _context_routed_workflow(project_root, mode, role, router)
     roots: list[tuple[Path, str]] = [(router, "router"), (routed, "routed-workflow"), (Path("PROJECT_WORKFLOW.md"), "always-read"), (Path("LANGUAGE_POLICY.md"), "always-read")]
     router_text = (project_root / router).read_text(encoding="utf-8") if (project_root / router).is_file() else ""
-    route_paths = {Path(value) for value in re.findall(r"(?:read|use) `([^`]+\.md)`", router_text)}
+    route_paths = {path for line in router_text.splitlines() if line.startswith("- ")
+                   for path in _context_path_references(line)}
     routed_target = project_root / routed
     deferred_phases = _context_phase_reads(routed, routed_target.read_text(encoding="utf-8")) if routed_target.is_file() else {}
     # The router names the source-organization rule as advice for a production-source
@@ -214,7 +215,7 @@ def context_size_report(project_root: Path, role: str, task_id: str | None = Non
         # work.  Count only citations from the router and its selected route;
         # recursively following every incidental documentation link would turn
         # a bounded role read set into a repository crawl.
-        if category == "routed-workflow" and target.is_file():
+        if category == "routed-workflow" and path != Path("PROJECT_WORKFLOW.md") and target.is_file():
             for cited in _context_relative_references(path, target.read_text(encoding="utf-8")):
                 if cited not in seen and cited not in deferred_phases:
                     pending.append((cited, "cited"))
