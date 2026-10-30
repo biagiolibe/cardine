@@ -39,6 +39,17 @@ class GenerateClaudeMdTest(unittest.TestCase):
             f"{owner_generator.CLAUDE_MD_SHARED_ANCHOR!r}",
         )
 
+    def test_host_entry_routes_use_shared_skills_without_old_procedures(self) -> None:
+        for name in ("AGENTS.md", "CLAUDE.md"):
+            text = (ROOT / "templates/single" / name).read_text(encoding="utf-8")
+            block = templates_markers.extract_marker_block(text, "command-triggers", 3)
+            self.assertIsNotNone(block)
+            for trigger in ("Proceed with <TASK-ID>", "Address review <TASK-ID>", "Review <TASK-ID>"):
+                self.assertTrue(any(trigger in line and "cardine-delivery" in line for line in block.splitlines()))
+            self.assertIn("cardine-project", block)
+            for old in ("docs/workflows/IMPLEMENTATION.md", "docs/workflows/REVIEW.md", "docs/workflows/REMEDIATION.md"):
+                self.assertNotIn(old, block)
+
     def test_generator_reports_drift_when_claude_md_diverges(self) -> None:
         agents_text = (
             "# [Project Name] — Agent Rules\n\npreamble\n\n"
