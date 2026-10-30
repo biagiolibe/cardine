@@ -20,6 +20,23 @@ from synthetic_upgrade_support import SyntheticUpgradeFixtureMixin
 
 
 class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
+    def test_v2_migration_with_v3_template_preserves_customized_entry_router(self) -> None:
+        self.configure_1_1_40_to_1_1_41_upgrade()
+        self.install_entry_router(include_accept=True)
+        router = self.project / "docs/workflows/ENTRY_ROUTER.md"
+        text = router.read_text(encoding="utf-8")
+        text += "\nProject-owned router note.\n"
+        router.write_text(text, encoding="utf-8")
+        before = router.read_bytes()
+        checked = self.run_cli("upgrade", "--check")
+        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+        self.assertEqual(router.read_bytes(), before)
+        applied = self.run_cli("upgrade", "--apply")
+        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+        self.assertEqual(router.read_bytes(), before)
+        for name in ("AGENTS.md", "CLAUDE.md"):
+            self.assertIn("Project-owned router note.", (self.project / name).read_text())
+
     def test_upgrade_check_reports_retired_text_without_writes_or_exit_change(self) -> None:
         (self.framework / "VERSION").write_text(cardine_cli.read_version(ROOT) + "\n", encoding="utf-8")
         locked = self.run_cli("lock", "--mode", "single")

@@ -75,6 +75,10 @@ design.
 - Add `capabilities/markers-v1.json` solely to update `command-triggers.requiredVersion` to the shipped version. Regenerate the current marker baseline in place; existing project snapshots provide upgrade baselines.
 - Add `src/cardine/shared/context.py` solely to recognize the `cardine-delivery` route without crossing router entries, and `tests/test_context_size.py` for regression coverage of that issue and supported routes. Keep the 10,000-byte limit and repository check; do not restore a procedural fallback. Preserve the existing worktree changes.
 
+- Add `src/cardine/templates/router.py` solely for compatibility of entry-router upgrades with command-triggers v3 and cardine-delivery routes. Add regression tests in `tests/test_template_router.py` and `tests/test_cardine_upgrade_merge.py` for a v2 migration with the current v3 template. Preserve missing and incompatible route checks and project-owned content; do not ignore migrations or restore procedural fallbacks. Update obsolete expectations only after tests demonstrate the new behavior.
+
+- The coordinator authorizes changes under `tests/` directly needed to construct historically accurate fixtures, update obsolete expectations, and add upgrade and customization regressions for command-triggers v3 and skill routes. This supersedes the former expectation-only restriction for test files. Preserve behavioral checks and real migrations.
+
 ## Authority excerpt
 
 The parts of the plan and inventories this task needs, extracted from the

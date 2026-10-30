@@ -78,10 +78,15 @@ class CardineCliFixtureMixin:
         workflow = self.framework / "templates/single"
         for name in ("AGENTS.md", "CLAUDE.md"):
             current = workflow / name
-            old_text = current.read_text(encoding="utf-8").replace(
-                "CARDINE:BEGIN capability=command-triggers v2",
-                "CARDINE:BEGIN capability=command-triggers v1",
-            )
+            old_block = ("<!-- CARDINE:BEGIN capability=command-triggers v1 -->\n"
+                         "## Command triggers\n\n"
+                         "- `Proceed with <TASK-ID>` — read `docs/workflows/IMPLEMENTATION.md`.\n"
+                         "- `Review <TASK-ID>` — read `docs/workflows/REVIEW.md`.\n"
+                         "- `Address review <TASK-ID>` — read `docs/workflows/REMEDIATION.md`.\n"
+                         "- `Run lifecycle <TASK-ID>` — read `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
+                         "<!-- CARDINE:END -->")
+            old_text = re.sub(r"<!-- CARDINE:BEGIN capability=command-triggers v\d+ -->.*?<!-- CARDINE:END -->",
+                              lambda _: old_block, current.read_text(encoding="utf-8"), count=1, flags=re.DOTALL)
             current.write_text(old_text, encoding="utf-8")
             (self.project / name).write_text(old_text, encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.40\n", encoding="utf-8")
@@ -170,10 +175,10 @@ class CardineCliFixtureMixin:
         router = (
             "# Project entry router\n\n"
             "- Status or design question: `docs/workflows/STATUS_DESIGN.md`.\n"
-            "- `Proceed with <TASK-ID>`: `docs/workflows/IMPLEMENTATION.md`.\n"
-            "- `Review <TASK-ID>`: `docs/workflows/REVIEW.md`.\n"
-            "- `Address review <TASK-ID>`: `docs/workflows/REMEDIATION.md`.\n"
-            f"- {lifecycle_triggers}: `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
+            "- `Proceed with <TASK-ID>`: `cardine-delivery` `docs/workflows/IMPLEMENTATION.md`.\n"
+            "- `Review <TASK-ID>`: `cardine-delivery` `docs/workflows/REVIEW.md`.\n"
+            "- `Address review <TASK-ID>`: `cardine-delivery` `docs/workflows/REMEDIATION.md`.\n"
+            f"- {lifecycle_triggers}: `cardine-delivery` `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
             "- Explicit audit: `docs/AUDIT_PROMPT_READ_ONLY.md`.\n"
         )
         router_path = self.project / shared_constants.ENTRY_ROUTER_PATH

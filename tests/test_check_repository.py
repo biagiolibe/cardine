@@ -252,7 +252,7 @@ class CapabilityMarkerBaselineTest(unittest.TestCase):
         target = self.root / "templates/single/AGENTS.md"
         text = target.read_text(encoding="utf-8")
         text = text.replace(
-            "<!-- CARDINE:BEGIN capability=command-triggers v2 -->",
+            "<!-- CARDINE:BEGIN capability=command-triggers v3 -->",
             "<!-- CARDINE:BEGIN capability=command-triggers v4 -->",
             1,
         )
@@ -454,12 +454,12 @@ class RouterRoutesTest(unittest.TestCase):
             with self.subTest(router=router):
                 shutil.copy(ROOT / "templates/single/AGENTS.md", self.templates / "AGENTS.md")
                 shutil.copy(ROOT / "templates/single/CLAUDE.md", self.templates / "CLAUDE.md")
-                self.edit(router, "docs/workflows/REVIEW.md", "docs/workflows/MISSING.md")
+                self.edit(router, "docs/AUDIT_PROMPT_READ_ONLY.md", "docs/MISSING.md")
                 with self.assertRaises(SystemExit):
                     cr.check_router_routes(self.root)
 
     def test_routers_with_different_trigger_blocks_fail(self) -> None:
-        self.edit("CLAUDE.md", "`Review <TASK-ID>` — read", "`Inspect <TASK-ID>` — read")
+        self.edit("CLAUDE.md", "`Review <TASK-ID>` — use", "`Inspect <TASK-ID>` — use")
         with self.assertRaises(SystemExit):
             cr.check_router_routes(self.root)
 

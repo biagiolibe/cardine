@@ -13,6 +13,7 @@ from cardine.shared.models import ManagedFile
 from cardine.templates.markers import CLAUDE_AGENTS_POINTER_MARKER
 from cardine.templates.markers import extract_marker_block
 from cardine.templates.markers import is_agents_pointer
+from cardine.templates.markers import marker_pairs
 from cardine.templates.migrations import migration_capability_entries
 from cardine.templates.migrations import migration_record_paths
 from pathlib import Path
@@ -100,7 +101,11 @@ def entry_router_trigger_requirements(
     source = templates.get(Path("AGENTS.md")) or templates.get(Path("CLAUDE.md"))
     if source is None:
         raise CardineError("upgrade plan has no managed entry-point template for command-triggers")
-    block = extract_marker_block(source.read_text(encoding="utf-8"), "command-triggers", version)
+    template_text = source.read_text(encoding="utf-8")
+    versions = [v for capability, v in marker_pairs(template_text) if capability == "command-triggers"]
+    if len(versions) != 1 or versions[0] < version:
+        raise CardineError(f"entry-point template lacks capability=command-triggers v{version} or newer required by the migration ledger")
+    block = extract_marker_block(template_text, "command-triggers", versions[0])
     if block is None:
         raise CardineError(
             f"entry-point template lacks capability=command-triggers v{version} required by the migration ledger"
@@ -117,12 +122,13 @@ def entry_router_trigger_requirements(
         triggers = re.findall(r"`([^`]+)`", label)
         if not triggers:
             continue
-        targets = [value for value in re.findall(r"`([^`]+)`", route) if value.endswith(".md")]
+        targets = [value for value in re.findall(r"`([^`]+)`", route)
+                   if value.endswith(".md") or value == "cardine-delivery"]
         if not targets:
             raise CardineError(f"command trigger has no routed Markdown target: {stripped}")
         target = targets[-1]
         for trigger in triggers:
-            if any(trigger in router_line and target in router_line for router_line in router_lines):
+            if any(trigger in router_line and all(item in router_line for item in targets) for router_line in router_lines):
                 continue
             if router_text.count(target) == 1:
                 guidance = (

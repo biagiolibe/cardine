@@ -47,9 +47,9 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         agents = self.project / "AGENTS.md"
         text = agents.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=command-triggers v2", text)
+        self.assertIn("CARDINE:BEGIN capability=command-triggers v3", text)
         relabeled = text.replace(
-            "CARDINE:BEGIN capability=command-triggers v2",
+            "CARDINE:BEGIN capability=command-triggers v3",
             "CARDINE:BEGIN capability=command-triggers v4",
             1,
         )
@@ -65,7 +65,7 @@ class CapabilityAuditTest(CardineCliFixtureMixin, unittest.TestCase):
         self.assertEqual(audited.returncode, 2)
         self.assertIn(
             "FAIL           marker-integrity — AGENTS.md: capability=command-triggers "
-            "carries 2 versions (v2, v4)",
+            "carries 2 versions (v3, v4)",
             audited.stdout,
         )
 

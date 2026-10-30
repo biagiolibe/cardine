@@ -15,6 +15,7 @@ from cardine.templates import markers as templates_markers
 import cardine.shared.constants as shared_constants
 import cardine.shared.errors as shared_errors
 from cardine.shared.project import resolve_project_configuration
+from cardine.shared.models import ManagedFile
 from cardine.templates import router as owner_templates_router
 
 
@@ -195,6 +196,24 @@ class GeneratedEntryRouterTest(unittest.TestCase):
                 "# Routed procedure\n\n" + " ".join(shared_constants.ENTRY_ROUTER_SAFEGUARDS[route]) + "\n",
                 encoding="utf-8",
             )
+
+    def test_v2_migration_checks_current_v3_skill_routes(self) -> None:
+        framework = self.project / "framework"
+        (framework / "migrations").mkdir(parents=True)
+        (framework / "migrations/001.json").write_text(json.dumps({"id": "001", "capability": "command-triggers", "capabilityVersion": 2}))
+        template = ROOT / "templates/single/AGENTS.md"
+        files = [ManagedFile(source=template, target=Path("AGENTS.md"))]
+        self.router.write_text(
+            "- `Proceed with <TASK-ID>` and `Address review <TASK-ID>`: `cardine-delivery`.\n"
+            "- `Review <TASK-ID>`: `cardine-delivery`.\n"
+            "- `Run lifecycle <TASK-ID>` and `Accept <TASK-ID>`: `cardine-delivery` `docs/LIFECYCLE_ORCHESTRATION.md`.\n"
+        )
+        requirements = lambda: owner_templates_router.entry_router_trigger_requirements(self.project, framework, ["001"], files)
+        self.assertEqual(requirements(), ())
+        self.router.write_text(self.router.read_text().replace("`Review <TASK-ID>`: `cardine-delivery`", "`Review <TASK-ID>`: `wrong-skill`"))
+        self.assertTrue(any("Review <TASK-ID>" in item for item in requirements()))
+        self.router.write_text(self.router.read_text().replace("`Accept <TASK-ID>`", "`Other <TASK-ID>`"))
+        self.assertTrue(any("Accept <TASK-ID>" in item for item in requirements()))
 
     def test_renders_identical_entry_points_and_audits_routes(self) -> None:
         outputs = owner_templates_router.entry_router_outputs(self.project)

@@ -74,11 +74,13 @@ class TemplateWordBudgetTest(unittest.TestCase):
                     with self.subTest(route=route, role=role):
                         report = context_size_report(project, role, workflow_mode="single")
                         present = [item for item in report["files"] if item["status"] == "present"]
+                        skill_roles = {"implementation", "review", "remediation"}
+                        expected_documents = () if role in skill_roles else documents
                         self.assertEqual(sorted(item["path"] for item in present),
-                                         sorted({router, *TEMPLATE_ALWAYS_READ, *documents}))
-                        # The router must send the role to its own procedure, not the workflow fallback.
+                                         sorted({router, *TEMPLATE_ALWAYS_READ, *expected_documents}))
+                        # Skill routes defer to the workflow; other routes keep their selected document.
                         routed = [item["path"] for item in report["files"] if item["category"] == "routed-workflow"]
-                        self.assertEqual(routed, [ROUTED[role]])
+                        self.assertEqual(routed, ["PROJECT_WORKFLOW.md" if role in skill_roles else ROUTED[role]])
                         # Only the Claude router cites the deleted AGENTS.md; nothing else is missing.
                         missing = [item["path"] for item in report["files"] if item["status"] == "missing"]
                         self.assertEqual(missing, ["AGENTS.md"] if route == "claude" else [])
