@@ -196,5 +196,52 @@ class CodexRulesTemplateTest(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout).get("decision"), "prompt")
 
 
+class CodexRoleRulesDecisionTableTest(unittest.TestCase):
+    """Rendered role rules are advisory text: the table shows what they cover and what only a host proof can."""
+
+    @staticmethod
+    def forbids(role: str, argv: list[str]) -> bool:
+        import ast
+        from cardine.hosts import codex
+
+        def covers(pattern: list, words: list[str]) -> bool:
+            return len(words) >= len(pattern) and all(
+                word in item if isinstance(item, list) else word == item for item, word in zip(pattern, words))
+
+        for line in codex.role_rule_lines(role):
+            call = ast.parse(line).body[0].value
+            keywords = {item.arg: ast.literal_eval(item.value) for item in call.keywords}
+            if keywords["decision"] == "forbidden" and covers(keywords["pattern"], argv):
+                return True
+        return False
+
+    def test_leading_literal_forms_are_forbidden_and_task_work_is_not(self) -> None:
+        for role in ("implementer", "reviewer"):
+            for argv in (["git", "push", "origin", "main"], ["git", "push", "origin", "+main"],
+                         ["git", "push", "origin", "HEAD:main"], ["git", "push", "--force", "origin", "task-1"],
+                         ["cardine", "worktree", "integrate", "finalize", "001"], ["cardine", "cancel", "001"]):
+                self.assertTrue(self.forbids(role, argv), (role, argv))
+            for argv in (["git", "status"], ["cardine", "task", "status"], ["cat", "x"]):
+                self.assertFalse(self.forbids(role, argv), (role, argv))
+        self.assertFalse(self.forbids("implementer", ["git", "push", "origin", "task-001"]))
+        self.assertTrue(self.forbids("reviewer", ["git", "push", "origin", "task-001"]))
+        self.assertFalse(self.forbids("reviewer", ["cardine", "review", "status"]))
+        self.assertTrue(self.forbids("implementer", ["cardine", "review", "verdict", "001"]))
+        self.assertFalse(self.forbids("reviewer", ["cardine", "review", "verdict", "001"]))
+
+    def test_reordered_forms_are_not_covered_by_prefix_rules_so_text_alone_never_enforces(self) -> None:
+        self.assertFalse(self.forbids("implementer", ["git", "-C", ".", "push", "--force", "origin", "task-1"]))
+        self.assertFalse(self.forbids("implementer", ["env", "git", "push", "origin", "main"]))
+
+    def test_role_rule_files_are_valid_and_outside_the_global_rules_directory(self) -> None:
+        from cardine.hosts import codex
+        for role in ("implementer", "reviewer"):
+            for line in codex.role_rule_lines(role):
+                self.assertRegex(line, PREFIX_RULE)
+            path = codex.role_rules_path(Path("codex-home"), role)
+            self.assertNotEqual(path.parent.name, "rules")
+            self.assertEqual(path.parent.parent, Path("codex-home"))
+
+
 if __name__ == "__main__":
     unittest.main()

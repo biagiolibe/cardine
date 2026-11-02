@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from cardine.hosts import permissions
 from cardine.hosts.effects import changed, host_operation
 from cardine.lifecycle.file_operation import Operation
 from cardine.shared import atomic
@@ -12,6 +13,7 @@ from cardine.shared.models import CODEX_PERMISSION_PROFILE
 from cardine.shared.models import CodexConfigurationPlan
 from cardine.shared.models import CodexUserRulesPlan
 from cardine.stops.render import stop_error
+from dataclasses import dataclass
 from pathlib import Path
 import ast
 import copy
@@ -511,4 +513,230 @@ def apply_codex_configuration(plan: CodexConfigurationPlan, operation: Operation
             raise CardineError("Codex configuration changed since it was planned; rerun --check")
         backup = _configuration_backup(plan)
         active.replace("codex-config", path, plan.proposed_text.encode("utf-8"), backup=backup, mode=0o600)
+        return True
+
+
+# -- Role policy and profiles ---------------------------------------------------
+#
+# The two role profiles are separate from the shared `cardine-worktrees` base
+# profile and never replace it or `default_permissions`. Only keys the host
+# contract documents are written (`description`, `extends`, `workspace_roots`);
+# protected paths and role actions are carried by the policy and its digest, so
+# only a host-evaluated proof of that digest can make a role profile enforced (D3).
+# Role rules live in a Cardine-owned directory that Codex does not load by
+# itself: Codex rule files are global, so a `forbidden` rule there would also
+# bind the coordinator that `Proceed with` authorizes to push `main`. The launch
+# adapter hands the file to the role session.
+
+ROLE_RULES_DIRECTORY = "cardine-roles"
+_FORBIDDEN_FLAGS = ["--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"]
+_REVIEWER_GIT = ["push", "add", "commit", "merge", "rebase", "reset", "checkout"]
+
+
+@dataclass(frozen=True)
+class CodexRolePlan:
+    status: str  # ready | approval-required | blocked
+    config_path: Path
+    detail: str
+    config_text: str
+    proposed_config: str | None
+    rules: tuple  # ((role, path, current_text, proposed_text | None), ...)
+
+    @property
+    def writes(self) -> bool:
+        return self.proposed_config is not None or any(item[3] is not None for item in self.rules)
+
+
+def _role_identity(role: str) -> str:
+    if role not in permissions.ROLES:
+        raise CardineError(f"unknown Codex role: {role}")
+    return f"cardine-{role}"
+
+
+def _role_markers(role: str) -> tuple[str, str]:
+    return f"# CARDINE:BEGIN role-permissions-{role} v1", f"# CARDINE:END role-permissions-{role}"
+
+
+def _rules_markers(role: str) -> tuple[str, str]:
+    return f"# CARDINE:BEGIN codex-role-rules-{role} v1", f"# CARDINE:END codex-role-rules-{role}"
+
+
+def _bounded_root(worktree_root: Path) -> Path:
+    root = Path(worktree_root).expanduser().resolve()
+    if root == Path(root.anchor) or root == Path.home().resolve():
+        raise CardineError("worktree root must not authorize the filesystem root or the user's home")
+    return root
+
+
+def _role_profile_table(role: str, root: Path) -> dict:
+    return {"description": f"Cardine {role} role inside the managed task worktrees.",
+            "extends": ":workspace", "workspace_roots": {str(root): True}}
+
+
+def _role_block(role: str, root: Path) -> str:
+    begin, end = _role_markers(role)
+    name = _role_identity(role)
+    table = _role_profile_table(role, root)
+    return "\n".join([begin, f"[permissions.{name}]", f"description = {_toml_quote(table['description'])}",
+                      'extends = ":workspace"', "", f"[permissions.{name}.workspace_roots]",
+                      f"{_toml_quote(str(root))} = true", end])
+
+
+def _rule(pattern: list) -> str:
+    return f'prefix_rule(pattern={json.dumps(pattern)}, decision="forbidden")'
+
+
+def role_rule_lines(role: str) -> tuple[str, ...]:
+    """Command rules of one role, from the shared action matrix. Prefix rules are advisory text."""
+    _role_identity(role)
+    rules = [_rule(["git", "push", "origin", target]) for branch in permissions.PROTECTED_BRANCHES
+             for target in (branch, f"+{branch}", f"HEAD:{branch}", f"HEAD:refs/heads/{branch}")]
+    rules += [_rule(["git", "push", _FORBIDDEN_FLAGS]), _rule(["git", "push", "origin", _FORBIDDEN_FLAGS])]
+    actions = list(permissions.DEVELOPER_ONLY + permissions.INTEGRATION)
+    if role == "implementer":
+        actions.append(permissions.VERDICT)
+    else:
+        actions += list(permissions.REVIEWER_DENIED)
+        rules.append(_rule(["git", _REVIEWER_GIT]))
+    rules += [_rule(["cardine", *action]) for action in actions]
+    return tuple(dict.fromkeys(rules))
+
+
+def _role_rules_text(role: str) -> str:
+    begin, end = _rules_markers(role)
+    return "\n".join([begin, *role_rule_lines(role), end]) + "\n"
+
+
+def role_rules_path(codex_home: Path, role: str) -> Path:
+    _role_identity(role)
+    return Path(codex_home) / ROLE_RULES_DIRECTORY / f"{role}.rules"
+
+
+def codex_role_policy(role: str, project_root: Path, worktree_root: Path, worktree: Path,
+                      common_dir: Path) -> permissions.RolePolicy:
+    """Deterministic role policy: bounded profile, command rules, and every protected path.
+
+    Holds rules and paths only; no credential, token, or environment value.
+    """
+    identity = _role_identity(role)
+    root = _bounded_root(worktree_root)
+    roots = permissions.protected_roots((project_root, worktree), common_dir)
+    settings = {"profile": {"name": identity, **_role_profile_table(role, root)},
+                "rules": list(role_rule_lines(role)),
+                "protected_paths": [str(path) for path in roots]}
+    return permissions.RolePolicy("codex", role, identity, settings,
+                                  permissions.policy_digest("codex", role, settings))
+
+
+def codex_role_profile(policy: permissions.RolePolicy, proof: permissions.HostProof | None):
+    """`enforced` only from a complete host proof of this exact policy; Codex has no probe yet (D3)."""
+    from cardine.hosts.launch import RoleProfile  # lazy: launch pulls in the lifecycle engine
+    return RoleProfile(policy.identity, policy.role, policy.host == "codex" and permissions.proof_enforces(policy, proof))
+
+
+def codex_role_profiles(plan: CodexRolePlan, policies: dict, proofs: dict) -> dict:
+    """Both role profiles, or neither: an incomplete installation falls back to nothing broader."""
+    from cardine.hosts.launch import RoleProfile
+    complete = (plan.status == "ready" and set(policies) == set(permissions.ROLES)
+                and all(permissions.proof_enforces(policies[role], proofs.get(role)) for role in permissions.ROLES))
+    return {role: RoleProfile(policies[role].identity, role, complete) for role in policies}
+
+
+def _role_span(text: str, role: str) -> tuple[int, int] | None:
+    begin, end = _role_markers(role)
+    if text.count(begin) != text.count(end) or text.count(begin) > 1:
+        raise CardineError(f"damaged Cardine role markers for {role} in the Codex configuration; reconcile them manually")
+    if begin not in text:
+        return None
+    start, stop = text.index(begin), text.index(end)
+    if start > stop:
+        raise CardineError(f"damaged Cardine role markers for {role} in the Codex configuration; reconcile them manually")
+    return start, stop + len(end)
+
+
+def _plan_role_config(text: str, role: str, root: Path) -> str:
+    """The configuration text with this role's owned block present and current, or CardineError."""
+    name = _role_identity(role)
+    permission_tables = tomllib.loads(text).get("permissions", {})
+    profile = permission_tables.get(name) if isinstance(permission_tables, dict) else None
+    span = _role_span(text, role)
+    block = _role_block(role, root)
+    if span is None:
+        if profile is not None:
+            raise CardineError(f"Codex permission profile {name!r} exists without Cardine ownership; it is foreign and preserved")
+        return text + ("\n" if text and not text.endswith("\n") else "") + ("\n" if text.strip() else "") + block + "\n"
+    roots = profile.get("workspace_roots") if isinstance(profile, dict) else None
+    enabled = [key for key, value in roots.items() if value is True] if isinstance(roots, dict) else []
+    if len(enabled) != 1 or len(roots) != 1 or text[span[0]:span[1]] != _role_block(role, Path(enabled[0])):
+        raise CardineError(f"Cardine role block for {role} has changed or is incomplete; reconcile it manually")
+    return text[:span[0]] + block + text[span[1]:]
+
+
+def _plan_role_rules(codex_home: Path, role: str) -> tuple:
+    path = role_rules_path(codex_home, role)
+    if path.is_symlink() or (path.exists() and not path.is_file()):
+        raise CardineError(f"Codex role rules path {path} is not a regular file; preserved")
+    current = path.read_bytes().decode("utf-8") if path.exists() else ""
+    wanted = _role_rules_text(role)
+    begin, end = _rules_markers(role)
+    if current and current != wanted and not (
+            current.startswith(begin + "\n") and current.endswith(end + "\n") and current.count("CARDINE:") == 2):
+        raise CardineError(f"Codex role rules {path} are foreign or damaged; reconcile them manually")
+    return role, path, current, None if current == wanted else wanted
+
+
+def plan_codex_role_policies(config_path: Path, codex_home: Path, worktree_root: Path) -> CodexRolePlan:
+    """Read-only plan for both role blocks and both role rule files; never writes.
+
+    Either profile being foreign, damaged, or incomplete blocks the whole plan.
+    """
+    config_path = Path(config_path)
+    text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
+    try:
+        root = _bounded_root(worktree_root)
+        try:
+            proposed = text
+            for role in permissions.ROLES:
+                proposed = _plan_role_config(proposed, role, root)
+        except tomllib.TOMLDecodeError as error:
+            raise CardineError(f"malformed Codex TOML at {config_path}: {error}") from error
+        rules = tuple(_plan_role_rules(codex_home, role) for role in permissions.ROLES)
+    except CardineError as error:
+        return CodexRolePlan("blocked", config_path, str(error), text, None, ())
+    if proposed == text and all(item[3] is None for item in rules):
+        return CodexRolePlan("ready", config_path, "both role profiles and rules are current", text, None, rules)
+    return CodexRolePlan("approval-required", config_path, "explicit --apply is required", text,
+                         None if proposed == text else proposed, rules)
+
+
+def _unused_backup(path: Path) -> Path:
+    index = 0
+    while True:
+        index += 1
+        candidate = path.with_name(f"{path.name}.cardine-backup-{index}")
+        if not candidate.exists() and not candidate.is_symlink():
+            return candidate
+
+
+def apply_codex_role_policies(plan: CodexRolePlan, operation: Operation | None = None) -> bool:
+    """Replace both role blocks and both rule files in one receipt-covered operation, with backups."""
+    if plan.status == "blocked":
+        raise CardineError(f"Codex role policy is blocked: {plan.detail}")
+    with host_operation("codex-roles", plan.config_path, operation) as active:
+        if not plan.writes:
+            return changed(active, False)
+        path = plan.config_path
+        if (path.read_text(encoding="utf-8") if path.is_file() else "") != plan.config_text:
+            raise CardineError("Codex configuration changed since it was planned; rerun --check")
+        for _role, rules_path, current, _proposed in plan.rules:
+            active.guard(rules_path)
+            if (rules_path.read_bytes().decode("utf-8") if rules_path.exists() else "") != current:
+                raise CardineError("Codex role rules changed since they were planned; rerun --check")
+        if plan.proposed_config is not None:
+            active.replace("codex-roles-config", path, plan.proposed_config.encode("utf-8"),
+                           backup=_unused_backup(path) if path.exists() else None, mode=0o600)
+        for role, rules_path, current, proposed in plan.rules:
+            if proposed is not None:
+                active.replace(f"codex-roles-rules-{role}", rules_path, proposed.encode("utf-8"),
+                               backup=_unused_backup(rules_path) if current else None, mode=0o600)
         return True
