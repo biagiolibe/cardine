@@ -51,14 +51,60 @@ class ShardedTestRunnerTest(unittest.TestCase):
         self.addCleanup(lambda: __import__("shutil").rmtree(directory))
         tests = runner.discover_tests(directory)
         identifiers = [test.id() for test in tests]
-        shards = [
-            {test.id() for position, test in enumerate(tests) if position % 3 == shard}
-            for shard in range(3)
-        ]
+        shards = [{test.id() for test in shard} for shard in runner.module_shards(tests, 3, {})]
 
         self.assertEqual(identifiers, sorted(identifiers))
         self.assertEqual(set().union(*shards), set(identifiers))
         self.assertEqual(sum(len(shard) for shard in shards), len(identifiers))
+
+    def test_allocator_ties_skew_and_unknown_modules(self) -> None:
+        directory = self.make_suite(["a", "b", "c", "d"])
+        self.addCleanup(shutil.rmtree, directory, True)
+        tests = runner.discover_tests(directory)
+        names = [test.id().split(".")[0] for test in tests]
+        weights = {hashlib.sha256(name.encode()).hexdigest(): value for name, value in zip(names, (8, 7, 6, 5))}
+        shards = runner.module_shards(list(reversed(tests)), 2, weights)
+        loads = [sum(weights[hashlib.sha256(test.id().split(".")[0].encode()).hexdigest()] for test in shard) for shard in shards]
+        self.assertLess(max(loads), max(8 + 6, 7 + 5))
+        tied = runner.module_shards(tests, 6, {})
+        self.assertEqual([[t.id() for t in s] for s in tied[:4]], [[t.id()] for t in tests])
+        self.assertEqual(tied[4:], [[], []])
+
+    def test_duration_data_rejects_invalid_values(self) -> None:
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory, True)
+        path = directory / "weights.json"
+        key = 'a' * 64
+        for value in ('{}', *(f'{{"version":2,"modules":{{"{key}":{duration}}}}}'
+                                for duration in ('0', '-1', 'NaN', 'Infinity', 'true')),
+                      '{"version":2,"modules":{"bad":1}}', 'invalid'):
+            with self.subTest(value=value):
+                path.write_text(value)
+                with self.assertRaisesRegex(ValueError, "invalid shard duration data"):
+                    runner.load_weights(path)
+
+    def test_module_execution_order_staggers_heavy_work(self) -> None:
+        directory = self.make_suite(["a", "b", "c", "d", "e", "f"])
+        self.addCleanup(shutil.rmtree, directory, True)
+        tests = runner.discover_tests(directory)
+        names = [test.id().split(".")[0] for test in tests]
+        values = dict(zip(names, (8, 7, 6, 5, 4, 3)))
+        weights = {hashlib.sha256(name.encode()).hexdigest(): value for name, value in values.items()}
+        shards = runner.module_shards(list(reversed(tests)), 2, weights)
+        orders = [[values[test.id().split(".")[0]] for test in shard] for shard in shards]
+        self.assertEqual(orders, [[8, 5, 4], [3, 6, 7]])
+        self.assertEqual({test.id() for shard in shards for test in shard}, {test.id() for test in tests})
+
+    def test_discovered_suite_partition_is_exact(self) -> None:
+        tests = runner.discover_tests()
+        identifiers = {test.id() for test in tests}
+        weights = runner.load_weights()
+        for count in (1, 2, 4, 8):
+            shards = runner.module_shards(tests, count, weights)
+            actual = [test.id() for shard in shards for test in shard]
+            self.assertEqual(set(actual), identifiers)
+            self.assertEqual(len(actual), len(identifiers))
+            self.assertEqual(runner.coverage(sorted(tests, key=lambda test: test.id())), runner.coverage(tests))
 
     def test_adding_a_test_changes_the_digest(self) -> None:
         directory = self.make_suite(["first"])
@@ -198,6 +244,37 @@ class ParallelTestRunnerTest(unittest.TestCase):
                     self.assertEqual((header[1], header[3]), (total, digest))
                     selected += int(header[2])
                 self.assertEqual(selected, int(total))
+
+    def test_full_runner_allows_empty_shards_and_direct_shards_stay_exact(self) -> None:
+        directory = self.make_suite([])
+        (directory / "test_only.py").write_text(
+            "import unittest\nclass GeneratedTest(unittest.TestCase):\n"
+            "    def test_one(self): pass\n    def test_two(self): pass\n", encoding="utf-8")
+        combined = self.run_parallel(directory, "--parallel", "2")
+        self.assertEqual(combined.returncode, 0, combined.stdout + combined.stderr)
+        self.assertIn("workers=2 ran=2", combined.stdout)
+        first = self.run_parallel(directory, "--shard", "1/2")
+        second = self.run_parallel(directory, "--shard", "2/2")
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.assertEqual(second.returncode, 2)
+        self.assertIn("selects no tests", second.stderr)
+        self.assertIn("test_one", first.stderr)
+        self.assertIn("test_two", first.stderr)
+
+    def test_real_shards_execute_each_discovered_id_once(self) -> None:
+        directory = self.make_suite(["pass"] * 8)
+        for path in directory.glob("test_generated_*.py"):
+            path.rename(directory / f"test_{directory.name}_{path.stem}.py")
+        tests = runner.discover_tests(directory)
+        expected = {test.id() for test in tests}
+        for count in (1, 2, 4, 8):
+            seen = []
+            for index in range(1, count + 1):
+                result = self.run_parallel(directory, "--shard", f"{index}/{count}")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                seen.extend(re.findall(r"^\w+ \(([\w.]+)\) \.\.\. ok$", result.stderr, re.M))
+            self.assertEqual(set(seen), expected)
+            self.assertEqual(len(seen), len(expected))
 
     def test_passing_run_prints_a_short_summary_and_is_repeatable(self) -> None:
         directory = self.make_suite(["pass"] * 6)
@@ -586,6 +663,7 @@ class FocusedTestRunnerTest(unittest.TestCase):
             (root / "scripts").mkdir()
             (root / "tests").mkdir()
             shutil.copyfile(SCRIPT, root / "scripts/run_tests.py")
+            shutil.copyfile(runner.WEIGHTS, root / "tests/shard_durations.json")
             (root / "scripts/check_repository.py").write_text("pass\n")
             (root / "tests/test_example.py").write_text(
                 "import unittest\nclass Example(unittest.TestCase):\n    def test_failure(self): self.fail('broken')\n")

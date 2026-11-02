@@ -66,4 +66,4 @@ Authority: developer-requested cleanup-matrix discovery and measurements, 2026-1
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[ ]` | 139 | Reuse the ready cleanup fixture and measure the real savings | 🟡 P2 | 138 | [139](139-reuse-ready-cleanup-fixture.md) |
-| `[ ]` | 140 | Balance test shards by measured duration without reducing coverage | 🟡 P2 | 138 | [140](140-balance-test-shards-by-duration.md) |
+| `[x]` | 140 | Balance test shards by measured duration without reducing coverage | 🟡 P2 | 138 | [140](done/140-balance-test-shards-by-duration.md) |

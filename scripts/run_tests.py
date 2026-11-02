@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import difflib
 import json
+import math
 import os
 import re
 import shutil
@@ -25,6 +26,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TESTS_DIRECTORY = ROOT / "tests"
 SCRIPT = Path(__file__).resolve()
+WEIGHTS = ROOT / "tests" / "shard_durations.json"
+UNKNOWN_MODULE_SECONDS = 1.0
 # Ceiling on concurrent shard processes: beyond it the suite's subprocess-heavy
 # tests contend for the same cores and the wall time stops improving.
 MAX_WORKERS = 8
@@ -96,6 +99,47 @@ def coverage(tests: list[unittest.TestCase]) -> tuple[int, str]:
     return len(tests), hashlib.sha256(identifiers.encode("utf-8")).hexdigest()
 
 
+def load_weights(path: Path = WEIGHTS) -> dict[str, float]:
+    """Read versioned, positive finite module timings; never silently ignore damage."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] != 2:
+            raise ValueError("expected version 2 object")
+        modules = data.get("modules")
+        if not isinstance(modules, dict) or not modules:
+            raise ValueError("modules must be a nonempty object")
+        for name, value in modules.items():
+            if not isinstance(name, str) or not re.fullmatch(r"[0-9a-f]{64}", name) or isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                raise ValueError(f"invalid duration for module {name!r}")
+        return modules
+    except (OSError, UnicodeError, ValueError, OverflowError) as error:
+        raise ValueError(f"invalid shard duration data {path}: {error}") from error
+
+
+def module_shards(tests: list[unittest.TestCase], count: int, weights: Mapping[str, float]) -> list[list[unittest.TestCase]]:
+    """Allocate complete modules by longest processing time, breaking ties stably."""
+    groups: dict[str, list[unittest.TestCase]] = {}
+    for test in sorted(tests, key=lambda item: item.id()):
+        groups.setdefault(test.id().split(".")[0], []).append(test)
+    assigned: list[list[str]] = [[] for _ in range(count)]
+    loads = [0.0] * count
+    def weight(name: str) -> float:
+        key = hashlib.sha256(name.encode("utf-8")).hexdigest()
+        return weights.get(key, UNKNOWN_MODULE_SECONDS)
+
+    for module in sorted(groups, key=lambda name: (-weight(name), name)):
+        index = min(range(count), key=lambda i: (loads[i], i))
+        assigned[index].append(module)
+        loads[index] += weight(module)
+    # Alternate heavy-first and light-first execution to avoid starting all
+    # resource-intensive modules together. Assignment itself is unchanged.
+    return [
+        [test for name in sorted(names, key=lambda name: ((-1 if index % 2 == 0 else 1) * weight(name), name))
+         for test in groups[name]]
+        for index, names in enumerate(assigned)
+    ]
+
+
 def parse_shard(value: str) -> tuple[int, int]:
     """Parse a one-based shard I/N, rejecting invalid bounds."""
     try:
@@ -147,6 +191,7 @@ def parser() -> argparse.ArgumentParser:
     selection.add_argument("--last-failed", action="store_true", help="rerun the recorded failing tests")
     selection.add_argument("--module", action="append", default=[], help="select a module, path, class, or test ID (repeatable)")
     argument_parser.add_argument("--selection-file", type=Path, help=argparse.SUPPRESS)
+    argument_parser.add_argument("--allow-empty-shard", action="store_true", help=argparse.SUPPRESS)
     argument_parser.add_argument("--failure-record", type=Path, help=argparse.SUPPRESS)
     argument_parser.add_argument("--failed-output", type=Path, help=argparse.SUPPRESS)
     argument_parser.add_argument("--tests-directory", type=Path, default=TESTS_DIRECTORY, help=argparse.SUPPRESS)
@@ -180,7 +225,7 @@ def parse_shard_output(index: int, returncode: int, output: str) -> ShardResult:
 
 
 def shard_command(index: int, count: int, tests_directory: Path) -> list[str]:
-    command = [sys.executable, str(SCRIPT), "--shard", f"{index}/{count}"]
+    command = [sys.executable, str(SCRIPT), "--shard", f"{index}/{count}", "--allow-empty-shard"]
     if tests_directory != TESTS_DIRECTORY:
         command += ["--tests-directory", str(tests_directory)]
     return command
@@ -470,6 +515,13 @@ def main(arguments: list[str] | None = None) -> int:
                 print(f"PARTIAL selection=last-failed ran=0 total={len(tests)} failures=0 errors=0")
                 print(FULL_COMMAND)
                 return 2
+        if selection is None:
+            if not tests:
+                parser().error("discovery found no tests")
+            try:
+                load_weights()
+            except ValueError as error:
+                parser().error(str(error))
         return run_parallel(options.parallel, options.tests_directory, selection=selection, selection_label=label, record=record)
     tests = discover_tests(options.tests_directory)
     if options.selection_file:
@@ -481,12 +533,20 @@ def main(arguments: list[str] | None = None) -> int:
         return 0
 
     index, count = options.shard
-    selected = [test for position, test in enumerate(tests) if position % count == index - 1]
+    if not tests:
+        parser().error("discovery found no tests")
+    if options.selection_file:
+        selected = [test for position, test in enumerate(tests) if position % count == index - 1]
+    else:
+        try:
+            selected = module_shards(tests, count, load_weights())[index - 1]
+        except ValueError as error:
+            parser().error(str(error))
     print(
         f"shard={index}/{count} total={total} selected={len(selected)} digest={digest}",
         flush=True,
     )
-    if not selected:
+    if not selected and not options.allow_empty_shard:
         parser().error(f"shard {index}/{count} selects no tests")
     # MERIDIAN-INSTALLATION-CHECK
     with reject_path_meridian() as result_class:

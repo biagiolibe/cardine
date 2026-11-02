@@ -185,4 +185,4 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 137 — Restore the run engine fixtures in place instead of rebuilding them.
 - `[x]` 138 — Restore the remaining heavy fixtures in place.
 - `[ ]` 139 — Reuse the ready cleanup fixture and measure the real savings.
-- `[ ]` 140 — Balance test shards by measured duration without reducing coverage.
+- `[x]` 140 — Balance test shards by measured duration without reducing coverage.

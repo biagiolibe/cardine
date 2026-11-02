@@ -15,26 +15,25 @@ using measured durations instead of round-robin positions of individual test
 IDs. Retain all existing tests, scenarios, assertions, and validation gates.
 Measure the actual full-suite improvement separately from scheduling forecasts.
 
-This is a planning record. Implementation starts only after `Proceed with 140`
-through the local Lean Delivery workflow and its deterministic task worktree.
+Implementation and measurement evidence are recorded in `tasks/handoffs/140.md`.
 
 ## Acceptance Criteria
 
-- [ ] **Fresh baseline.** Before implementation, run the complete clean-clone
+- [x] **Fresh baseline.** Before implementation, run the complete clean-clone
   suite with eight workers on a clean, committed pre-implementation task HEAD.
   Record command wall time, runner wall time, every shard's duration, per-module
   durations, commit, Python version, machine, worker count, and test IDs/count/
   digest. Use disposable homes and a short temporary root consistently before
   and after. Run measurements sequentially, without another test suite active.
   Historical numbers below are context, not substitutes for this baseline.
-- [ ] **Deterministic duration-based assignment.** Allocate whole modules
+- [x] **Deterministic duration-based assignment.** Allocate whole modules
   by descending measured duration to the least-loaded shard. Define stable
   module-name and shard-index tie breakers. Parent and child processes,
   including direct `--shard I/N` invocations, derive the same assignment from
   the same discovered IDs, weights, and worker count. No runtime completion
   order, PID, filesystem enumeration order, or machine CPU count may affect
   assignment for an explicitly selected effective worker count.
-- [ ] **Portable weights.** Commit a small, versioned module-duration data
+- [x] **Portable weights.** Commit a small, versioned module-duration data
   file derived from the fresh baseline. Record measurement provenance without
   absolute machine paths. Document how to refresh it explicitly. Successful
   test runs never modify this tracked file automatically. A missing weight or
@@ -42,14 +41,14 @@ through the local Lean Delivery workflow and its deterministic task worktree.
   runs. Removed modules in the data do not create phantom tests. Validate the
   data shape and reject malformed, non-finite, zero, or negative weights with
   a clear diagnostic; never turn a data problem into a passing empty run.
-- [ ] **Every test exactly once.** Preserve every existing test ID, scenario,
+- [x] **Every test exactly once.** Preserve every existing test ID, scenario,
   and assertion, including all 442 plugin-distribution interruption scenarios
   and all twelve cleanup scenarios. Prove that the full shards' union equals
   discovery and that intersections are empty for 1, 2, 4, and 8 workers. Keep
   the full sorted-ID count/digest independent of partitioning. New runner
   proof tests are allowed and must be listed in the handoff; no existing test
   may be removed, renamed, skipped, sampled, or weakened to obtain a speedup.
-- [ ] **Runner modes remain sound.** Preserve worker-count bounds, private
+- [x] **Runner modes remain sound.** Preserve worker-count bounds, private
   shard environments, full-run success/failure semantics, failure diagnostics,
   failed-test records, and clean-clone behavior. `--list` remains discovery
   evidence, not an execution. Keep `--module`, `--last-failed`, and partial
@@ -60,14 +59,14 @@ through the local Lean Delivery workflow and its deterministic task worktree.
   preserve or clearly document existing empty-shard/error behavior. An
   intentionally changed full-shard membership is not an API-compatible claim
   of retaining the old round-robin assignment.
-- [ ] **Meaningful scheduler proofs.** Test deterministic ties and an
+- [x] **Meaningful scheduler proofs.** Test deterministic ties and an
   intentionally skewed synthetic workload whose predicted longest shard is
   lower than round-robin. Test exact coverage and failure propagation through
   the real runner, not only a duplicate implementation of its allocator.
   Update old tests that prescribe round-robin membership only where that
   membership is intentionally replaced; retain their underlying coverage and
   safety assertions.
-- [ ] **Real full-suite gain.** After implementation is committed, run the
+- [x] **Real full-suite gain.** After implementation is committed, run the
   same complete clean-clone command on the same environment with eight workers.
   Record seconds and percentage gained or lost, all shard durations, the
   longest shard, and the spread between shortest and longest. The measured
@@ -77,7 +76,7 @@ through the local Lean Delivery workflow and its deterministic task worktree.
   the comparison inconclusive, repeat only the comparison needed to resolve
   that uncertainty. Do not promise the historical 11–12-minute forecast as a
   guaranteed result or count the first discarded experiment below.
-- [ ] Every validation command passes. The completion report distinguishes
+- [x] Every validation command passes. The completion report distinguishes
   test-ID coverage evidence from code/behavioral coverage and names any
   environmental skip with its test-reported reason.
 

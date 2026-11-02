@@ -118,6 +118,32 @@ and reported the same `total` and `digest`. `python3 -m unittest discover -s
 tests` is the release gate (`release.yml` runs it) and the fallback for a host
 where the parallel run cannot start its workers.
 
+Full runs assign whole test modules by descending measured duration to the
+least-loaded shard, breaking ties by module name and then shard index. The
+resulting shards alternate heavy-first and light-first module order to reduce
+concurrent peaks; tests within each module remain sorted by ID. The
+versioned `tests/shard_durations.json` contains summed per-test wall times,
+keyed by the lowercase SHA-256 hex digest of each UTF-8 module name;
+unknown modules use a positive one-second estimate and stale module entries
+do not add tests. Invalid duration data fails the run. Assignment is stable
+for a given discovery, weights, and shard count, but differs from the old
+round-robin membership. Partial selections still use round-robin test IDs.
+When fewer modules than workers are present, parallel runs accept empty
+shards; a direct empty `--shard` invocation continues to report an error.
+
+To refresh weights, run a complete clean-clone suite sequentially with eight
+workers in a disposable home and short temporary directory. Instrument each
+test's `startTest` and `stopTest` using a temporary `sitecustomize.py` on
+`PYTHONPATH`, recording its ID and monotonic elapsed seconds outside the clone.
+Verify that the recorded IDs match discovery exactly once, discard timings
+from nested test-runner fixtures, and sum elapsed seconds by the first
+component of each ID. Replace the `modules` object with the positive sums,
+using the SHA-256 digest of each UTF-8 module name as its key, and update the
+version-2 provenance with the commit, command, Python version,
+platform, worker count, test count, digest, date, and method. Commit the data
+explicitly; ordinary test runs never update it. Measure the complete command
+wall time independently of these summed test times.
+
 To run the shards concurrently and get one combined result, use the standard
 validation command for this repository:
 
