@@ -779,8 +779,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     def test_claude_allowlist_covers_only_the_declared_command_surface(self) -> None:
         allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
+        self.assertNotIn("Bash(git push origin main)", allowlist)  # task 133: no pre-approved direct main push
         for command in (
-            "Bash(git push origin main)",
             "Bash(cardine worktree evidence:*)",
             "Bash(cardine worktree closure-status:*)",
             "Bash(cardine worktree integrate stage:*)",

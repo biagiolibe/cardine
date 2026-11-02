@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cardine.shared.errors import CardineError
+from cardine.hosts import permissions
 from cardine.hosts.effects import changed, host_operation
 from cardine.lifecycle.file_operation import Operation
 from cardine.shared.jsonio import json_bytes
@@ -24,7 +25,6 @@ CLAUDE_PROJECT_ALLOWLIST = (
     "Bash(git switch:*)",
     "Bash(git commit -m:*)",
     "Bash(git merge --ff-only:*)",
-    "Bash(git push origin main)",
     "Bash(git worktree list:*)",
     "Bash(cardine worktree path:*)",
     "Bash(cardine worktree prepare:*)",
@@ -68,7 +68,13 @@ CLAUDE_PROJECT_DENYLIST = (
     "Bash(git cherry-pick:*)",
     "Bash(git branch -D:*)",
     "Bash(git worktree remove --force:*)",
+    # Protected paths: relative to the project root, applied to every native edit tool.
+    *(f"{tool}(/{path})" for path in permissions.relative_protected() for tool in permissions.NATIVE_WRITE_TOOLS),
 )
+
+# A previous Cardine version pre-approved this exact entry. A user can also write it, so
+# ownership is unprovable: setup keeps it and reports it instead of removing it.
+LEGACY_ALLOW_ENTRIES = ("Bash(git push origin main)",)
 
 
 def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan:
@@ -104,6 +110,9 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
         return ClaudeConfigurationPlan(
             "blocked", settings_path, None, "Claude settings permissions.deny must contain strings", current_text
         )
+    legacy = [item for item in LEGACY_ALLOW_ENTRIES if item in allow]
+    legacy_note = ("; kept entries of unprovable ownership, remove by hand if unwanted: " + ", ".join(legacy)
+                   if legacy else "")
     missing = [item for item in CLAUDE_PROJECT_ALLOWLIST if item not in allow]
     missing_deny = [item for item in CLAUDE_PROJECT_DENYLIST if item not in deny]
     if not missing and not missing_deny:
@@ -111,7 +120,8 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
             "ready",
             settings_path,
             None,
-            "project command allowlist and deny rules are already installed; installation is not host enforcement",
+            "project command allowlist and deny rules are already installed; installation is not host enforcement"
+            + legacy_note,
             current_text,
         )
     proposed = copy.deepcopy(settings)
@@ -131,6 +141,7 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
             + "; prefix rules are defense in depth, a reworded command can evade them,"
             + " and the managed denial text remains in force"
         )
+    detail += legacy_note
     return ClaudeConfigurationPlan("approval-required", settings_path, proposed, detail, current_text)
 
 
@@ -145,6 +156,48 @@ def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan, operation: Ope
             raise CardineError("Claude settings changed since they were planned; rerun --check")
         active.replace("claude-allowlist", plan.settings_path, json_bytes(plan.proposed_settings), mode=0o600)
         return True
+
+
+def _edit_rule(tool: str, root: Path) -> str:
+    return f"{tool}(/{root.as_posix()})"  # `//path` is an absolute path in Claude rule syntax
+
+
+def claude_role_policy(role: str, project_root: Path, worktree: Path, common_dir: Path) -> permissions.RolePolicy:
+    """Deterministic settings for one role session, from the shared protected-path and action matrix.
+
+    The launch adapter passes this fragment to the role session. It contains
+    rules only: no credential, token, or environment value is ever rendered.
+    """
+    if role not in permissions.ROLES:
+        raise CardineError(f"unknown Claude role: {role}")
+    roots = permissions.protected_roots((project_root, worktree), common_dir)
+    deny = [_edit_rule(tool, path) for tool in permissions.NATIVE_WRITE_TOOLS
+            for root in roots for path in (root, root / "**")]
+    deny += [f"Bash(cardine {' '.join(action)}:*)" for action in permissions.DEVELOPER_ONLY + permissions.INTEGRATION]
+    deny += ["Bash(git push origin main:*)", "Bash(git push origin HEAD:main:*)",
+             "Bash(git push origin +main:*)", "Bash(git push origin HEAD:refs/heads/main:*)",
+             "Bash(git push origin master:*)", "Bash(git push origin HEAD:master:*)"]
+    if role == "implementer":
+        deny.append("Bash(cardine review verdict:*)")
+    else:
+        deny += list(permissions.NATIVE_WRITE_TOOLS)
+        deny += ["Bash(git push:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git merge:*)",
+                 "Bash(rm:*)", "Bash(mv:*)", "Bash(cp:*)", "Bash(tee:*)", "Bash(sed -i:*)", "Bash(ln:*)"]
+        deny += [f"Bash(cardine {' '.join(action)}:*)" for action in permissions.REVIEWER_DENIED]
+    settings = {"permissions": {"deny": list(dict.fromkeys(deny))}}
+    return permissions.RolePolicy("claude", role, f"cardine-{role}", settings,
+                                  permissions.policy_digest("claude", role, settings))
+
+
+def claude_role_profile(policy: permissions.RolePolicy, proof: permissions.HostProof | None):
+    """`enforced` comes only from a complete host-evaluated proof of this exact policy.
+
+    Claude has no host decision probe yet, so doctor reports `unverified` and
+    the proof is None: the profile stays unenforced and the launch adapter
+    refuses the role (D3), whatever the installed settings say.
+    """
+    from cardine.hosts.launch import RoleProfile  # lazy: launch pulls in the lifecycle engine
+    return RoleProfile(policy.identity, policy.role, permissions.proof_enforces(policy, proof))
 
 
 def _claude_settings(project_root: Path, home: Path) -> list[tuple[Path, object]]:
