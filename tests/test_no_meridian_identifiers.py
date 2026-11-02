@@ -13,6 +13,7 @@ OLD = "meri" + "dian"
 INSTALLATION_TAG = OLD.upper() + "-INSTALLATION-CHECK"
 OLD_NAME_TAG = OLD.upper() + "-OLD-NAME-TEST"
 TEMPLATE_TAG = OLD.upper() + "-TEMPLATE-PROGRAM"
+HISTORIC_PROFILE = "meridian-worktrees"
 
 
 @dataclass(frozen=True)
@@ -47,21 +48,30 @@ ALLOWLIST = (
         OLD.upper() + r":(?:BEGIN|END|\(\?:BEGIN\|END\))(?:\s+|\\s\+)(?:worktree-permissions|codex-user-rules)\b",
     ),
     Allowance(
-        2, "9",
-        r"tests/test_host_codex_repair\.py",
-        r'"# ' + OLD.upper() + r':BEGIN(?:  )?"',
-    ),
-    Allowance(
         2, "10",
         r"tests/fixtures/task-blueprint-v15\.md",
     ),
-    Allowance(
-        2, "9",
-        r"src/cardine/shared/models\.py",
-        r'CODEX_PERMISSION_PROFILE = "' + OLD + r'-worktrees"',
-    ),
-    Allowance(2, "9", r"tests/test_(?:host_codex_access|host_codex_repair|host_worktree_setup|queue_briefing)\.py",
-              r'''(?:permissions\.|["']|\\n)''' + OLD + r'''-worktrees(?=["'.\] =])'''),
+    # Exact legacy migration expressions; never a current profile declaration.
+    Allowance(2, "9", r"src/cardine/hosts/codex\.py",
+              r'^\s*legacy_name = "' + OLD + r'-worktrees"$'),
+    Allowance(2, "9", r"src/cardine/hosts/codex\.py",
+              r"^CODEX_USER_RULES = LEGACY_CODEX_USER_RULES\.replace\('# " + OLD.upper() + r":', '# CARDINE:'\)$"),
+    Allowance(2, "9", r"src/cardine/hosts/codex\.py",
+              r'^\s*elif legacy_path and "# ' + OLD.upper() + r':" in legacy_text and "codex-user-rules" in legacy_text:$'),
+    Allowance(2, "9", r"src/cardine/hosts/codex\.py",
+              r'^\s*\.replace\("Cardine-managed", "' + OLD.capitalize() + r'-managed"\)\)$'),
+    Allowance(2, "9", r"src/cardine/hosts/codex\.py",
+              r'^\s*proposed, "migrate the owned ' + OLD.capitalize() + r' profile", text\)$'),
+    Allowance(2, "9", r"tests/test_(?:codex_user_rules|host_codex_repair)\.py",
+              r"^\s*\.replace\(['\"]CARDINE:['\"], ['\"]" + OLD.upper() + r":['\"]\)\s*$"),
+    Allowance(2, "9", r"tests/test_codex_user_rules\.py",
+              r"^\s*\.replace\('cardine-worktrees', '" + OLD + r"-worktrees'\)$"),
+    Allowance(2, "9", r"tests/test_(?:codex_user_rules|host_codex_repair)\.py",
+              r"^\s*\.replace\(['\"]Cardine-managed['\"], ['\"]" + OLD.capitalize() + r"-managed['\"]\)\)$"),
+    Allowance(2, "9", r"tests/test_host_codex_repair\.py",
+              r'^\s*\.replace\("cardine-worktrees", "' + OLD + r'-worktrees"\)$|^\s*self\.assertNotIn\(\'' + OLD + r'-worktrees\', actual\)$'),
+    Allowance(2, "9", re.escape("tests/" + Path(__file__).name),
+              r'^HISTORIC_PROFILE = "' + OLD + r'-worktrees"$'),
     Allowance(
         2, "9",
         r"(?:src|tests|capabilities)/.*",
@@ -81,11 +91,6 @@ ALLOWLIST = (
         2, "9",
         r"src/cardine/hosts/skills\.py",
         OLD + r"-\*",
-    ),
-    Allowance(
-        2, "9",
-        r"(?:src/cardine/hosts/codex|tests/test_host_codex_(?:access|repair)|tests/test_queue_briefing)\.py",
-        r"Workspace access plus " + OLD.capitalize() + r"-managed task worktrees\.",
     ),
     Allowance(
         2, "9",
@@ -221,6 +226,30 @@ class IdentifierGuardTest(unittest.TestCase):
     def test_repository_has_no_unallowed_identifiers_or_stale_allowances(self):
         failures, _ = scan_repository(ROOT)
         self.assertEqual(failures, [], "\n".join(failures))
+
+    def test_historical_profile_is_allowed_only_in_the_migration_expression(self):
+        allowance = next(entry for entry in ALLOWLIST if entry.paths == r"src/cardine/hosts/codex\.py"
+                         and entry.pattern and "legacy_name" in entry.pattern)
+        with tempfile.TemporaryDirectory(prefix="cardine-profile-guard-") as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            path = root / "src/cardine/hosts/codex.py"
+            path.parent.mkdir(parents=True)
+            path.write_text(f'    legacy_name = "{HISTORIC_PROFILE}"\n')
+            self.assertEqual(scan_repository(root, (allowance,))[0], [])
+            for line in (f'CODEX_PERMISSION_PROFILE = "{HISTORIC_PROFILE}"',
+                         f'default_permissions = "{HISTORIC_PROFILE}"',
+                         f'    current_profile = "{HISTORIC_PROFILE}"'):
+                with self.subTest(line=line):
+                    path.write_text(line + "\n")
+                    failures, _ = scan_repository(root, (allowance,))
+                    self.assertTrue(any("codex.py:1:" in failure for failure in failures))
+            path.unlink()
+            other = root / "src/cardine/shared/models.py"
+            other.parent.mkdir(parents=True)
+            other.write_text(f'CODEX_PERMISSION_PROFILE = "{HISTORIC_PROFILE}"\n')
+            failures, _ = scan_repository(root, (allowance,))
+            self.assertTrue(any("models.py:1:" in failure for failure in failures))
 
     def test_future_task_records_pass_without_allowing_other_paths(self):
         allowance = next(e for e in ALLOWLIST if e.removal.startswith("kept: historical records"))

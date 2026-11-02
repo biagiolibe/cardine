@@ -17,9 +17,9 @@ design.
 
 ## Acceptance Criteria
 
-- [ ] Row H4a is implemented as its line in the excerpt describes it: Cardine
+- [x] Row H4a is implemented as its line in the excerpt describes it: Cardine
   Codex rules/profile naming and bounded owned migration.
-- [ ] Only the files in the row's files column are edited, together with
+- [x] Only the files in the row's files column are edited, together with
   this task's own record and its archive, handoff, and state file. A test
   file outside the column may change only to update an expectation that this
   change made stale, without new behavior, and the handoff lists it. A
@@ -32,22 +32,22 @@ design.
   or a change that adds behavior beyond that adaptation, stops the task
   before editing it and names the file, so that the coordinator splits the
   row.
-- [ ] The row's tests exist and pass: Existing/foreign TOML and rules,
+- [x] The row's tests exist and pass: Existing/foreign TOML and rules,
   ownership-marker loss, changed root.
-- [ ] Rule 4 of decision 14: Backup creation, config replace, new rules write,
+- [x] Rule 4 of decision 14: Backup creation, config replace, new rules write,
   owned old block removal, result; preserve changed user text. Read-only
   checks repeat without any write.
-- [ ] Every proof that a host rule, hook, or profile is in force comes from
+- [x] Every proof that a host rule, hook, or profile is in force comes from
   the host evaluating a probe or from an observed host decision, never
   from reading rule or policy text.
-- [ ] Every test runs against disposable home directories. No step runs `setup
+- [x] Every test runs against disposable home directories. No step runs `setup
   --apply` against the real home directory or writes real host
   configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -56,16 +56,16 @@ design.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/129.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/129.json`, which only
   the installed `meridian task close 129` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -161,6 +161,17 @@ revalidation in the same turn; do not stop to report the fix.
   again with the same code, stop.
 - The deny list, `RULE_CONFLICT`, every guardrail, and a change of scope
   remain stops.
+
+### Developer decision on historical identifiers (2026-10-30)
+
+Task 129 may update `tests/test_no_meridian_identifiers.py` despite the
+no-widening clause, solely to allow exact historical references needed for
+this migration. The guard must reject the old profile as the current profile,
+a default, a new-installation setting, or in unrelated locations. Remove
+obsolete allowances and add regression tests for both permitted historical
+references and forbidden uses. Do not obscure the old name with concatenation
+or encoding. Preserve ownership checks and never change foreign or altered
+profiles or real-home host configuration.
 
 ## Validation
 

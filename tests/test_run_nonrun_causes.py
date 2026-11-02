@@ -127,7 +127,7 @@ class NonrunCausesTest(unittest.TestCase):
     def test_damaged_host_markers_are_not_repaired_by_classification(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'rules'
-            path.write_text('# MERIDIAN:BEGIN codex-user-rules v1\nforeign rules\n')
+            path.write_text('# CARDINE:BEGIN codex-user-rules v1\nforeign rules\n')
             before = path.read_bytes()
             for _ in range(2):
                 with self.assertRaises(CardineStop) as error:

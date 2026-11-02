@@ -75,14 +75,14 @@ class QueueBriefingTest(unittest.TestCase):
         config.parent.mkdir(parents=True)
         other = self.project / "old-root"
         config.write_text(
-            '# MERIDIAN:BEGIN worktree-permissions v1\n'
-            'default_permissions = "meridian-worktrees"\n\n'
-            '[permissions.meridian-worktrees]\n'
-            'description = "Workspace access plus Meridian-managed task worktrees."\n'
+            '# CARDINE:BEGIN worktree-permissions v1\n'
+            'default_permissions = "cardine-worktrees"\n\n'
+            '[permissions.cardine-worktrees]\n'
+            'description = "Workspace access plus Cardine-managed task worktrees."\n'
             'extends = ":workspace"\n\n'
-            '[permissions.meridian-worktrees.workspace_roots]\n'
+            '[permissions.cardine-worktrees.workspace_roots]\n'
             f'"{other}" = true\n'
-            '# MERIDIAN:END worktree-permissions\n',
+            '# CARDINE:END worktree-permissions\n',
             encoding="utf-8",
         )
         result = run_hook(
@@ -102,12 +102,12 @@ class QueueBriefingTest(unittest.TestCase):
         config.parent.mkdir(parents=True)
         old_root = self.project / "old-root"
         config.write_text(
-            '# MERIDIAN:BEGIN worktree-permissions v1\n'
-            'default_permissions = "meridian-worktrees"\n\n'
-            '[permissions.meridian-worktrees]\n'
-            'description = "Workspace access plus Meridian-managed task worktrees."\n'
+            '# CARDINE:BEGIN worktree-permissions v1\n'
+            'default_permissions = "cardine-worktrees"\n\n'
+            '[permissions.cardine-worktrees]\n'
+            'description = "Workspace access plus Cardine-managed task worktrees."\n'
             'extends = ":workspace"\n\n'
-            '[permissions.meridian-worktrees.workspace_roots]\n'
+            '[permissions.cardine-worktrees.workspace_roots]\n'
             f'"{old_root}" = true\n',
             encoding="utf-8",
         )

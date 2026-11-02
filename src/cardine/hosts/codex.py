@@ -21,7 +21,7 @@ import re
 import tomllib
 
 
-CODEX_USER_RULES = '''# MERIDIAN:BEGIN codex-user-rules v1
+LEGACY_CODEX_USER_RULES = '''# MERIDIAN:BEGIN codex-user-rules v1
 # Plain pushes to origin only. A flag placed after the refspec
 # (`git push origin main --force`) is not caught by prefix rules; the GitHub
 # ruleset on main and stable is the real guard against that form.
@@ -57,22 +57,27 @@ prefix_rule(pattern=["ps"], decision="allow")
 '''
 
 
+CODEX_USER_RULES = LEGACY_CODEX_USER_RULES.replace('# MERIDIAN:', '# CARDINE:')
+
+
 def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
     # Read bytes so CRLF and missing final newlines in foreign rules survive.
     text = path.read_bytes().decode("utf-8") if path.exists() else ""
-    markers = list(re.finditer(r"(?m)^.*# MERIDIAN:(?:BEGIN|END) codex-user-rules[^\r\n]*", text))
+    markers = list(re.finditer(r"(?m)^.*# CARDINE:(?:BEGIN|END) codex-user-rules[^\r\n]*", text))
     if markers:
         if (len(markers) != 2
-            or not re.fullmatch(r"# MERIDIAN:BEGIN codex-user-rules v[0-9]+", markers[0].group())
-            or markers[1].group() != "# MERIDIAN:END codex-user-rules"):
+            or not re.fullmatch(r"# CARDINE:BEGIN codex-user-rules v[0-9]+", markers[0].group())
+            or markers[1].group() != "# CARDINE:END codex-user-rules"):
             raise stop_error("COMMAND_REFUSED", f"damaged Codex user-rules markers in {path}; repair the marker pair before setup")
         start, end = markers[0].start(), markers[1].end()
         if text[end:end + 2] == "\r\n":
             end += 2
         elif text[end:end + 1] == "\n":
             end += 1
-        proposed = text[:start] + CODEX_USER_RULES + text[end:]
-        status = "ready" if proposed == text else "stale"
+        if text[start:end] != CODEX_USER_RULES:
+            raise CardineError(f"Codex user-rules block in {path} has changed; reconcile it manually")
+        proposed = text
+        status = "ready"
     else:
         proposed = text + ("\n" if text and not text.endswith("\n") else "") + CODEX_USER_RULES
         status = "missing"
@@ -98,18 +103,39 @@ def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
             continue
         if decision == "allow" and pattern in (["cardine"], ["git", "push"]):
             warnings.append(f"{path}:{call.lineno}: broad allow rule {pattern!r} permits commands outside Cardine's prompt coverage")
-    return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed, tuple(warnings))
+    legacy_path = path.with_name("default.rules") if path.name == "cardine.rules" else None
+    legacy_text = legacy_path.read_bytes().decode("utf-8") if legacy_path and legacy_path.exists() else ""
+    legacy_proposed = None
+    if legacy_path and legacy_text.count(LEGACY_CODEX_USER_RULES) == 1 and legacy_text.count("# MERIDIAN:BEGIN codex-user-rules") == 1 and legacy_text.count("# MERIDIAN:END codex-user-rules") == 1:
+        legacy_proposed = legacy_text.replace(LEGACY_CODEX_USER_RULES, "", 1)
+    elif legacy_path and "# MERIDIAN:" in legacy_text and "codex-user-rules" in legacy_text:
+        warnings.append(f"{legacy_path}: legacy rules differ from the known owned block; preserved")
+    return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed,
+                              tuple(warnings), legacy_path, legacy_text, legacy_proposed)
 
 
 def apply_codex_user_rules(plan: CodexUserRulesPlan, operation: Operation | None = None) -> bool:
     with host_operation("codex-rules", plan.path, operation) as active:
+        active.guard(plan.path)
+        if plan.legacy_path is not None:
+            active.guard(plan.legacy_path)
+            current_legacy = plan.legacy_path.read_bytes().decode("utf-8") if plan.legacy_path.exists() else ""
+            if current_legacy != plan.legacy_text:
+                raise CardineError("legacy Codex user rules changed since planning; rerun --check")
         current = plan.path.read_bytes().decode("utf-8") if plan.path.exists() else ""
         if current != plan.current_text:
             raise CardineError("Codex user rules changed since planning; rerun --check")
-        if plan.proposed_text is None:
-            return changed(active, False)
-        active.replace("codex-rules", plan.path, plan.proposed_text.encode("utf-8"), mode=0o600)
-        return True
+        wrote = False
+        if plan.proposed_text is not None:
+            active.replace("codex-rules", plan.path, plan.proposed_text.encode("utf-8"), mode=0o600)
+            wrote = True
+        if plan.legacy_proposed is not None and plan.legacy_path is not None:
+            current_legacy = plan.legacy_path.read_bytes().decode("utf-8") if plan.legacy_path.exists() else ""
+            if current_legacy != plan.legacy_text:
+                raise CardineError("legacy Codex user rules changed since planning; rerun --check")
+            active.replace("codex-legacy-rules", plan.legacy_path, plan.legacy_proposed.encode("utf-8"), mode=0o600)
+            wrote = True
+        return changed(active, wrote)
 
 
 def _toml_quote(value: str) -> str:
@@ -124,7 +150,7 @@ def _codex_managed_block(worktree_root: Path) -> str:
             f'default_permissions = "{CODEX_PERMISSION_PROFILE}"',
             "",
             f"[permissions.{CODEX_PERMISSION_PROFILE}]",
-            'description = "Workspace access plus Meridian-managed task worktrees."',
+            'description = "Workspace access plus Cardine-managed task worktrees."',
             'extends = ":workspace"',
             "",
             f"[permissions.{CODEX_PERMISSION_PROFILE}.workspace_roots]",
@@ -162,7 +188,7 @@ def _without_top_level_default_permissions(text: str) -> str:
 
 def _codex_expected_profile(root: Path) -> dict[str, object]:
     return {
-        "description": "Workspace access plus Meridian-managed task worktrees.",
+        "description": "Workspace access plus Cardine-managed task worktrees.",
         "extends": ":workspace",
         "workspace_roots": {str(root): True},
     }
@@ -231,7 +257,7 @@ def _without_codex_profile_text(text: str) -> str:
     plain table header, so unusual serializations are never edited heuristically.
     """
     profile_header, roots_header = _codex_header_patterns()
-    marker = re.compile(r"^\s*#\s*MERIDIAN:(?:BEGIN|END)\s+worktree-permissions\b.*$")
+    marker = re.compile(r"^\s*#\s*CARDINE:(?:BEGIN|END)\s+worktree-permissions\b.*$")
     lines = text.splitlines(keepends=True)
     if sum(1 for line in lines if profile_header.match(line.rstrip("\r\n"))) != 1 or sum(
         1 for line in lines if roots_header.match(line.rstrip("\r\n"))
@@ -248,6 +274,8 @@ def _without_codex_profile_text(text: str) -> str:
             skipping = bool(profile_header.match(bare) or roots_header.match(bare))
             if skipping:
                 continue
+        if skipping and bare.lstrip().startswith("#") and not marker.match(bare):
+            raise CardineError("Codex profile contains comments of unknown ownership; reconcile it manually")
         if skipping or marker.match(bare):
             continue
         kept.append(line)
@@ -364,7 +392,35 @@ def plan_codex_configuration(
             raise CardineError(
                 f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}"
             )
-    existing_profile = parsed.get("permissions", {}).get(CODEX_PERMISSION_PROFILE)
+    permissions = parsed.get("permissions", {})
+    if not isinstance(permissions, dict):
+        raise CardineError("Codex permissions must be a table")
+    existing_profile = permissions.get(CODEX_PERMISSION_PROFILE)
+    legacy_name = "meridian-worktrees"
+    legacy_begin = "# MERIDIAN:BEGIN worktree-permissions v1"
+    legacy_end = "# MERIDIAN:END worktree-permissions"
+    legacy_profile = permissions.get(legacy_name)
+    if legacy_profile is not None or legacy_begin in text or legacy_end in text:
+        if existing_profile is not None or CODEX_MANAGED_BEGIN in text or CODEX_MANAGED_END in text:
+            raise CardineError("both legacy and Cardine permission profiles exist; reconcile them manually")
+        roots = legacy_profile.get("workspace_roots") if isinstance(legacy_profile, dict) else None
+        if not isinstance(roots, dict) or len(roots) != 1 or list(roots.values()) != [True]:
+            raise CardineError("legacy Codex profile has unknown ownership or changed roots; reconcile it manually")
+        legacy_root = Path(next(iter(roots)))
+        legacy_block = (_codex_managed_block(legacy_root)
+                        .replace(CODEX_MANAGED_BEGIN, legacy_begin)
+                        .replace(CODEX_MANAGED_END, legacy_end)
+                        .replace(CODEX_PERMISSION_PROFILE, legacy_name)
+                        .replace("Cardine-managed", "Meridian-managed"))
+        if text.count(legacy_block) != 1 or parsed.get("default_permissions") != legacy_name:
+            raise CardineError("legacy Codex profile has changed or lost ownership markers; reconcile it manually")
+        proposed = text.replace(legacy_block, _codex_managed_block(root), 1)
+        try:
+            tomllib.loads(proposed)
+        except tomllib.TOMLDecodeError as error:
+            raise CardineError(f"proposed Codex migration would be invalid: {error}") from error
+        return CodexConfigurationPlan("approval-required", config_path, root, "permission-profile",
+                                      proposed, "migrate the owned Meridian profile", text)
     managed_present = CODEX_MANAGED_BEGIN in text or CODEX_MANAGED_END in text
     if existing_profile is not None and not _codex_markers_intact(text):
         replacement = _plan_codex_ownership_repair_and_root_replacement(config_path, text, parsed, root)
@@ -373,6 +429,14 @@ def plan_codex_configuration(
         return _plan_codex_ownership_repair(config_path, text, parsed, root)
     if managed_present and not _codex_markers_intact(text):
         raise CardineError("Codex configuration contains an incomplete or damaged Cardine-managed block")
+    if existing_profile is not None and managed_present:
+        roots = existing_profile.get("workspace_roots") if isinstance(existing_profile, dict) else None
+        enabled = [name for name, value in roots.items() if value is True] if isinstance(roots, dict) else []
+        if len(enabled) != 1:
+            raise CardineError("Cardine Codex profile has changed; reconcile it manually")
+        old_block = _codex_managed_block(Path(enabled[0]))
+        if text.count(old_block) != 1:
+            raise CardineError("Cardine Codex profile block has changed; reconcile it manually")
     base_text = text
     if "default_permissions" in parsed and not managed_present:
         base_text = _without_top_level_default_permissions(text)
@@ -426,6 +490,16 @@ def _unused_repair_backup(path: Path) -> Path:
     return candidate
 
 
+def _configuration_backup(plan: CodexConfigurationPlan) -> Path | None:
+    path = plan.config_path
+    if not path.exists():
+        return None
+    if plan.status in ("repair-required", "repair-and-replace-required"):
+        return _unused_repair_backup(path)
+    backup = path.with_name(path.name + ".cardine.bak")
+    return backup if not backup.exists() and not backup.is_symlink() else _unused_repair_backup(path)
+
+
 def apply_codex_configuration(plan: CodexConfigurationPlan, operation: Operation | None = None) -> bool:
     path = plan.config_path
     with host_operation("codex-config", path, operation) as active:
@@ -435,10 +509,6 @@ def apply_codex_configuration(plan: CodexConfigurationPlan, operation: Operation
         actual = path.read_text(encoding="utf-8") if path.is_file() else ""
         if (repair and not path.is_file()) or actual != plan.current_text:
             raise CardineError("Codex configuration changed since it was planned; rerun --check")
-        if repair:
-            backup = _unused_repair_backup(path)
-        else:
-            backup = path.with_name(path.name + ".cardine.bak")
-            backup = backup if path.exists() and not backup.exists() else None
+        backup = _configuration_backup(plan)
         active.replace("codex-config", path, plan.proposed_text.encode("utf-8"), backup=backup, mode=0o600)
         return True

@@ -283,6 +283,7 @@ class ReplayInventoryTest(unittest.TestCase):
         "src/cardine/lifecycle/validation.py": ["test_run_validation.RunValidationTest.test_replay_before_validation_process",
                                                 "test_run_validation.RunValidationTest.test_replay_after_validation_result"],
         "src/cardine/hosts/launch.py": ["test_run_host_roles.RunHostRolesTest.test_every_host_and_receipt_boundary_restarts_same_session"],
+        "src/cardine/hosts/setup.py": ["test_codex_user_rules.CodexUserRulesTest.test_setup_migration_replays_all_durable_boundaries"],
     }
 
     def boundary_modules(self) -> set[str]:

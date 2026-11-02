@@ -30,18 +30,18 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def profile_tables(self, root: Path | None = None, **overrides: str) -> str:
         values = {
-            "description": '"Workspace access plus Meridian-managed task worktrees."',
+            "description": '"Workspace access plus Cardine-managed task worktrees."',
             "extends": '":workspace"',
         }
         values.update(overrides)
         body = "".join(f"{key} = {value}\n" for key, value in values.items())
         return (
-            f"[permissions.meridian-worktrees]\n{body}\n"
-            f"[permissions.meridian-worktrees.workspace_roots]\n"
+            f"[permissions.cardine-worktrees]\n{body}\n"
+            f"[permissions.cardine-worktrees.workspace_roots]\n"
             f'"{root or self.worktrees}" = true\n'
         )
 
-    def rewritten(self, *, selection: str = 'default_permissions = "meridian-worktrees"\n', tables: str | None = None) -> str:
+    def rewritten(self, *, selection: str = 'default_permissions = "cardine-worktrees"\n', tables: str | None = None) -> str:
         """Model the observed app rewrite: keys moved, app settings changed, trailing marker gone."""
         return (
             '# app-managed header\n'
@@ -70,6 +70,32 @@ class CodexProfileRepairTest(unittest.TestCase):
             owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(self.config.read_text(encoding="utf-8"), text)
 
+    def test_legacy_profile_migration_preserves_foreign_and_refuses_changed_block(self) -> None:
+        old_root = self.root / "old-root"
+        block = (owner_hosts_codex._codex_managed_block(old_root)
+                 .replace("CARDINE:", "MERIDIAN:")
+                 .replace("cardine-worktrees", "meridian-worktrees")
+                 .replace("Cardine-managed", "Meridian-managed"))
+        original = '# foreign\nmodel = "test"\n\n' + block + '\n[features]\nfoo = true\n'
+        self.config.write_text(original)
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
+        self.assertEqual(self.config.read_text(), original)
+        owner_hosts_codex.apply_codex_configuration(plan)
+        actual = self.config.read_text()
+        self.assertIn('# foreign\nmodel = "test"', actual)
+        self.assertIn('[features]\nfoo = true', actual)
+        self.assertNotIn('meridian-worktrees', actual)
+        self.assertIn('cardine-worktrees', actual)
+        self.assertEqual(self.config.with_name('config.toml.cardine.bak').read_text(), original)
+        changed = original.replace('extends = ":workspace"', 'extends = ":read-only"')
+        self.assert_blocked_unchanged(changed, "changed or lost ownership")
+        missing = original.replace('# MERIDIAN:END worktree-permissions', '')
+        self.assert_blocked_unchanged(missing, "changed or lost ownership")
+
+    def test_unowned_comments_in_damaged_profile_are_preserved(self) -> None:
+        original = self.rewritten().replace('extends = ":workspace"', '# user comment\nextends = ":workspace"')
+        self.assert_blocked_unchanged(original, "comments of unknown ownership")
+
     def test_observed_rewrite_is_a_named_repairable_state(self) -> None:
         text = self.rewritten()
         self.config.write_text(text, encoding="utf-8")
@@ -92,7 +118,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertIn("restores Cardine's ownership metadata and replaces the one configured worktree root", plan.detail)
         self.assertEqual(self.config.read_text(encoding="utf-8"), original)
         expected = tomllib.loads(original)
-        expected["permissions"]["meridian-worktrees"]["workspace_roots"] = {str(self.worktrees): True}
+        expected["permissions"]["cardine-worktrees"]["workspace_roots"] = {str(self.worktrees): True}
         self.assertEqual(tomllib.loads(plan.proposed_text or ""), expected)
 
         checked = self.run_cli("--check")
@@ -121,7 +147,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         base = self.rewritten(tables=self.profile_tables(old_root))
         shapes = {
             "moved": cardine_cli.CODEX_MANAGED_END + "\n" + base,
-            "normalized": base.replace("# MERIDIAN:BEGIN", "# MERIDIAN:BEGIN  "),
+            "normalized": base.replace("# CARDINE:BEGIN", "# CARDINE:BEGIN  "),
         }
         for name, text in shapes.items():
             with self.subTest(name):
@@ -129,7 +155,7 @@ class CodexProfileRepairTest(unittest.TestCase):
                 plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
                 self.assertEqual(plan.status, "repair-and-replace-required")
                 self.assertEqual(
-                    tomllib.loads(plan.proposed_text or "")["permissions"]["meridian-worktrees"]["workspace_roots"],
+                    tomllib.loads(plan.proposed_text or "")["permissions"]["cardine-worktrees"]["workspace_roots"],
                     {str(self.worktrees): True},
                 )
 
@@ -148,8 +174,8 @@ class CodexProfileRepairTest(unittest.TestCase):
             ),
             # Markers wrap only the parent table; the workspace_roots table sits outside.
             "roots-outside-span": self.rewritten().replace(
-                "\n[permissions.meridian-worktrees.workspace_roots]",
-                f"{end}\n\n[permissions.meridian-worktrees.workspace_roots]",
+                "\n[permissions.cardine-worktrees.workspace_roots]",
+                f"{end}\n\n[permissions.cardine-worktrees.workspace_roots]",
                 1,
             ),
         }
@@ -213,7 +239,7 @@ class CodexProfileRepairTest(unittest.TestCase):
             "no-selection": (self.rewritten(selection=""), "default_permissions"),
             "extra-grant": (self.rewritten(tables=self.profile_tables(network="true")), "network"),
             "partial": (
-                self.rewritten(tables='[permissions.meridian-worktrees]\nextends = ":workspace"\n'),
+                self.rewritten(tables='[permissions.cardine-worktrees]\nextends = ":workspace"\n'),
                 "description",
             ),
             "extra-root": (
@@ -233,15 +259,15 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def test_ambiguous_or_unusual_serializations_are_blocked(self) -> None:
         inline = (
-            '[permissions.meridian-worktrees]\n'
-            'description = "Workspace access plus Meridian-managed task worktrees."\n'
+            '[permissions.cardine-worktrees]\n'
+            'description = "Workspace access plus Cardine-managed task worktrees."\n'
             'extends = ":workspace"\n'
             f'workspace_roots = {{ "{self.worktrees}" = true }}\n'
         )
         self.assert_blocked_unchanged(self.rewritten(tables=inline), "exactly one plain")
         dotted = (
-            '[permissions.meridian-worktrees]\n'
-            'description = "Workspace access plus Meridian-managed task worktrees."\n'
+            '[permissions.cardine-worktrees]\n'
+            'description = "Workspace access plus Cardine-managed task worktrees."\n'
             'extends = ":workspace"\n'
             f'workspace_roots."{self.worktrees}" = true\n'
         )
@@ -266,7 +292,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees)
         self.assertEqual(plan.status, "approval-required")
         self.assertEqual(
-            tomllib.loads(plan.proposed_text or "")["permissions"]["meridian-worktrees"]["workspace_roots"],
+            tomllib.loads(plan.proposed_text or "")["permissions"]["cardine-worktrees"]["workspace_roots"],
             {str(self.worktrees): True},
         )
 
