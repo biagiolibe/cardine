@@ -178,7 +178,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 130 — Orchestrate setup on Cardine paths without real-home apply (H4b).
 - `[x]` 131 — Register user-level hooks on both hosts without duplicates (H4c).
 - `[x]` 132 — Unify doctor and drop adopter test-command assumptions (H4d).
-- `[ ]` 133 — Enforce protected paths and Claude role restrictions (H5a).
+- `[x]` 133 — Enforce protected paths and Claude role restrictions (H5a).
 - `[ ]` 134 — Realize the Codex role policy and profiles (H5b).
 - `[ ]` 135 — Wire the concrete host transports to issued roles (H5c).
 - `[ ]` 136 — Prove roles at runtime in doctor and update the host contract (H5d).

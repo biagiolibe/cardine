@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from cardine.hosts import claude, permissions
 from cardine.hosts.launch import RoleProfile, CodexProfileAdapter, ClaudeProfileAdapter
 from cardine.lifecycle import receipts
 from cardine.lifecycle.engine import launch_run_work, resolve_run_locations
@@ -75,6 +76,29 @@ class FakeHost:
 
     def poll(self, session):
         return dict(session=session, result='completed') if self.ready else None
+
+
+class ClaudeRoleHost(FakeHost):
+    """Claude profiles built from the installed role policy; `enforced` only follows a host proof."""
+    def __init__(self, directory, project, worktree, common):
+        super().__init__(directory, 'claude')
+        self.policies = {role: claude.claude_role_policy(role, project, worktree, common) for role in permissions.ROLES}
+        self.roots = permissions.protected_roots((project, worktree), common)
+        self.worktree = worktree
+        self.observe = True
+
+    def proof(self, role, **change):
+        policy = self.policies[role]
+        decisions = {}
+        for name, (tool, tool_input, _expected) in permissions.probe_matrix(role).items():
+            seen = permissions.evaluate_tool(tool, tool_input, role=role, roots=self.roots, cwd=self.worktree)
+            decisions[name] = 'allow' if seen.allowed else 'deny'
+        decisions.update(change)
+        return permissions.HostProof('claude', policy.identity, policy.digest, decisions)
+
+    def profile(self, role):
+        proof = self.proof(role) if self.observe else None  # no host decision probe: nothing to observe
+        return claude.claude_role_profile(self.policies[role], proof)
 
 
 def request(root, role):
@@ -202,6 +226,46 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
                 with self.assertRaises(CardineStop):
                     self.launch(host=host)
         self.assertEqual(list(self.host_root.iterdir()), [])
+
+    def claude_host(self):
+        common = Path(self.fixture.git('rev-parse', '--git-common-dir'))
+        common = common if common.is_absolute() else self.worker / common
+        return ClaudeRoleHost(self.host_root, self.worker, self.worker, common.resolve())
+
+    def test_complete_claude_policy_without_a_host_proof_denies_role_activation(self):
+        host = self.claude_host()
+        host.observe = False
+        for role in permissions.ROLES:
+            self.assertTrue(host.policies[role].settings['permissions']['deny'])  # fully installed text
+        before = self.fixture.state()
+        with self.assertRaises(CardineStop) as caught:
+            self.launch(host=host)
+        self.assertEqual(caught.exception.code, 'COMMAND_REFUSED')
+        self.assertIn('boundary unavailable', caught.exception.detail)
+        self.assertEqual(self.fixture.state(), before)
+        self.assertEqual(list(self.host_root.iterdir()), [])
+
+    def test_an_incomplete_or_contradicted_host_proof_denies_role_activation(self):
+        host = self.claude_host()
+        for change in ({'push-main': 'allow'}, {'inspect-status': 'deny'}, {'edit-state': 'allow'}):
+            with patch.object(host, 'proof', side_effect=lambda role, change=change: ClaudeRoleHost.proof(host, role, **change)):
+                with self.assertRaises(CardineStop):
+                    self.launch(host=host)
+        with patch.object(host, 'proof', side_effect=lambda role: permissions.HostProof(
+                'claude', host.policies[role].identity, host.policies[role].digest, {})):
+            with self.assertRaises(CardineStop):
+                self.launch(host=host)
+        self.assertEqual(list(self.host_root.iterdir()), [])
+
+    def test_host_proved_claude_roles_launch_with_distinct_policy_identities(self):
+        host = self.claude_host()
+        implementer = self.launch('implementer', host=host)
+        reviewer = self.launch(host=host)
+        self.assertEqual(implementer['request']['profile'], 'cardine-implementer')
+        self.assertEqual(reviewer['request']['profile'], 'cardine-reviewer')
+        self.assertNotEqual(implementer['session'], reviewer['session'])
+        self.assertNotIn('credential', json.dumps(host.policies['implementer'].settings))
+        self.assertNotIn('coordinator-channel', json.dumps([record for record in (implementer, reviewer)]))
 
     def test_implementer_credentials_denied_reviewer_developer_and_push_paths(self):
         for name in ADAPTERS:
