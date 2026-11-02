@@ -333,6 +333,10 @@ else:
 
 PUBLICATION_ALLOWLIST = {'hosts/setup.py': ["(root / 'PROJECT_WORKFLOW.md').write_text('probe\\n', encoding='utf-8')",
                           "(root / 'sentinel.txt').write_text('line\\n' * _PROBE_LINES, encoding='utf-8')"],
+ # Host-owned session records (request, session, launch, credential digests); never task state.
+ 'hosts/transports.py': ["open(temporary, 'wb')", "os.fdopen(descriptor, 'wb')",
+                         'os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 384)',
+                         'os.replace(temporary, path)'],
  'integration/finalize.py': ["receipts._durable(target, base64.b64decode(output['content'], validate=True))"],
  'integration/merge.py': ['_write_json_atomic(integration_path, staged, exclusive=True)',
                           '_write_json_atomic(lease_path, lease, exclusive=True)'],
