@@ -201,6 +201,12 @@ def launch_run_work(locations: RunLocations, work, *, attempt: str, adapter) -> 
                        adapter=adapter, context=locations)
 
 
+def concrete_host_adapter(host: str, transport, credential: str):
+    """Explicit factory for a concrete transport; there is still no default adapter or host fallback."""
+    from cardine.hosts.launch import host_adapter
+    return host_adapter(host, transport, credential)
+
+
 @scoped_command
 def implementation_delivery(locations: RunLocations) -> dict | None:
     """Read verified step-three progress; no prose, writes or caller pass flags."""
