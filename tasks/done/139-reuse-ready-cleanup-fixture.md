@@ -21,7 +21,7 @@ workflow and its deterministic task worktree.
 
 ## Acceptance Criteria
 
-- [ ] **Before measurements.** Before implementation, record three sequential
+- [x] **Before measurements.** Before implementation, record three sequential
   uninstrumented runs of the exact focused command below and their median,
   one run of the cleanup module, and one full clean-clone run from a clean,
   committed pre-implementation task HEAD. Record the commit, Python version,
@@ -29,13 +29,13 @@ workflow and its deterministic task worktree.
   running. Do not run these measurements concurrently with each other or with
   another test suite. Historical discovery numbers are context, not this
   task's baseline.
-- [ ] **One ready build.** Build the matrix's integrated fixture once, save
+- [x] **One ready build.** Build the matrix's integrated fixture once, save
   it before `own_remote()`, use it for the first scenario, and restore it
   before the other eleven. Eliminate the unused outer fixture build. Do not
   repeat prepare, implementation, task validation, staging, candidate
   validation, or finalization for each scenario. Keep `own_remote()` per
   scenario, including its real push and intent construction.
-- [ ] **Stable identity and isolation.** Restore independent file copies,
+- [x] **Stable identity and isolation.** Restore independent file copies,
   including the local bare origin, primary checkout, and linked worktree,
   into their original absolute paths. Do not relocate a prepared repository,
   use hard links for mutable files, share state across shard processes, or
@@ -43,26 +43,26 @@ workflow and its deterministic task worktree.
   working directory outside the live tree before deleting/restoring it.
   Manage environment patches, open handles, and temporary-copy cleanup for
   the matrix's lifetime; no process or held lock survives a scenario.
-- [ ] **All twelve scenarios remain.** Execute both `before` and `after`
+- [x] **All twelve scenarios remain.** Execute both `before` and `after`
   for `cleanup_push`, `cleanup_remote`, `cleanup_worktree`,
   `cleanup_placeholder`, `cleanup_branch`, and `cleanup_lifecycle`.
   Each child must really terminate with exit 97 at the requested boundary.
   Preserve the existing matrix test ID and every existing test/assertion;
   no case may be removed, skipped, renamed, sampled, or replaced by mocked
   cleanup effects.
-- [ ] **All four cleanup calls remain per scenario.** Retain the refusals
+- [x] **All four cleanup calls remain per scenario.** Retain the refusals
   for changed task ownership and changed actual remote destination, the
   successful recovery, and its identical idempotent repetition. Preserve
   every assertion on the merge commit, main remote tip, absent remote task
   ref, and removed local task branch.
-- [ ] **Restore equivalence.** Add a narrowly scoped proof that a ready
+- [x] **Restore equivalence.** Add a narrowly scoped proof that a ready
   snapshot and its restored state have equal path/mode/link/content digests,
   Git worktree registrations, refs, primary and worker HEADs, and indexes;
   task receipts remain valid. After a scenario changes/deletes fixture state,
   the next restore must equal the saved state and retain no scenario data.
   Additional proof tests are allowed; list their IDs and account for their
   effect on round-robin shard assignment. Do not weaken existing assertions.
-- [ ] **After measurements and useful gain.** Repeat the same three focused
+- [x] **After measurements and useful gain.** Repeat the same three focused
   runs and cleanup-module run on the same environment. The focused median
   decreases; report every sample and their spread so timing noise is visible.
   Record the measured result, not the historical 52-percent forecast. Run the
@@ -73,12 +73,12 @@ workflow and its deterministic task worktree.
   redistribute work, distinguish those effects from the matrix improvement;
   never claim a full-suite gain from the focused result alone. A positive
   full-suite timing delta is not guaranteed by this bounded task.
-- [ ] **Phase evidence.** Using temporary external instrumentation, report
+- [x] **Phase evidence.** Using temporary external instrumentation, report
   preparation (including remote intent), interruption, the two rejection
   checks, first successful recovery, and idempotent repetition separately
   for all twelve scenarios. Report cold build and snapshot capture/restore
   costs separately. Keep the uninstrumented runs as the performance baseline.
-- [ ] All validation commands pass. The existing subprocess ceilings remain
+- [x] All validation commands pass. The existing subprocess ceilings remain
   unchanged. The handoff lists added proof tests, environmental skips, and
   timing limitations explicitly.
 

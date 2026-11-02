@@ -1,11 +1,14 @@
 """A restored run engine fixture is exactly the state it was copied from."""
+import os
+import shutil
 import subprocess
 import unittest
 
 from cardine.lifecycle import receipts
 from cardine.stops.render import stop_error
 from cardine.tasks.state import read_task_state
-from fixture_restore_support import tree_digest
+from fixture_restore_support import ReadySnapshot, tree_digest
+import test_run_cleanup
 import test_run_delivery
 import test_run_preparation
 import worktree_support
@@ -115,6 +118,45 @@ class FixtureRestoreTest(unittest.TestCase):
                    test_task_integration_state.TaskIntegrationStateTest,
                    lambda test: test.primary, primary_of=lambda test: test.primary,
                    task_id='056', has_state=False)
+
+    def test_cleanup_ready_snapshot_restores_identically(self):
+        test = test_run_cleanup.CleanupTest('test_recorded_remote_is_compare_deleted')
+        test.setUp()
+        self.addCleanup(test.doCleanups)
+        snapshot = ReadySnapshot(test.root)
+        self.addCleanup(snapshot.close)
+        self.addCleanup(os.chdir, test.previous_cwd)
+
+        def observe():
+            return {
+                'tree': tree_digest(test.root),
+                'worktrees': git(test.primary, 'worktree', 'list', '--porcelain'),
+                'refs': git(test.primary, 'for-each-ref'),
+                'heads': (git(test.primary, 'rev-parse', 'HEAD'), git(test.worker, 'rev-parse', 'HEAD')),
+                'indexes': (git(test.primary, 'ls-files', '--stage'), git(test.worker, 'ls-files', '--stage')),
+                'origin-refs': git(test.origin, 'for-each-ref'),
+            }
+
+        def verify():
+            state = read_task_state(test.primary, '056', 'single', stop_factory=stop_error)
+            receipts.verify_receipts(test.primary, state)
+
+        before = observe()
+        verify()
+        # A scenario pushes, is interrupted, then changes and deletes fixture state.
+        test.own_remote()
+        test.kill('after_cleanup_remote')
+        test.git('remote', 'set-url', 'origin', '/foreign')
+        (test.worker / 'scenario.txt').write_text('scenario\n')
+        test.git('add', 'scenario.txt', cwd=test.worker)
+        shutil.rmtree(test.worker / 'feature.txt', ignore_errors=True)
+        self.assertNotEqual(observe(), before)
+        snapshot.restore()
+        os.chdir(test.primary)
+        self.assertEqual(observe(), before)
+        verify()
+        self.assertFalse((test.worker / 'scenario.txt').exists())
+        self.assertIsNone(test.remote('task-056'))
 
 
 if __name__ == '__main__':

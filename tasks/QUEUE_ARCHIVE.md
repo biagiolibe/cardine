@@ -317,3 +317,12 @@ Authority: `docs/ADR_CARDINE_1_0.md`, decision 14 rule 4.
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 138 | Restore the remaining heavy fixtures in place | 🔴 P1 | 137 | [138](done/138-restore-remaining-fixtures.md) |
+
+### Phase 28 — Targeted test performance
+
+Authority: developer-requested cleanup-matrix discovery and measurements, 2026-10-30.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 139 | Reuse the ready cleanup fixture and measure the real savings | 🟡 P2 | 138 | [139](done/139-reuse-ready-cleanup-fixture.md) |
+| `[x]` | 140 | Balance test shards by measured duration without reducing coverage | 🟡 P2 | 138 | [140](done/140-balance-test-shards-by-duration.md) |
