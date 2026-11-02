@@ -8,6 +8,7 @@ from cardine.worktree.paths import repository_identity
 
 from cardine.hosts.claude import apply_claude_project_allowlist
 from cardine.hosts.effects import host_operation
+from cardine.hosts.hooks import HooksPlan, apply_hooks, plan_hooks
 from cardine.lifecycle import receipts
 from cardine.hosts.claude import claude_hook_duplicate_advisories
 from cardine.hosts.claude import plan_claude_project_allowlist
@@ -31,7 +32,7 @@ from cardine.shared.git import _run_git
 from cardine.shared.git import primary_project_root
 from cardine.shared.jsonio import json_bytes
 from cardine.shared.models import SetupPlan
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import hashlib
 from cardine.shared.project import parse_project_declaration
 from cardine.shared.project import read_project_declaration
@@ -57,6 +58,7 @@ class PinnedSetupPlan(SetupPlan):
     """A setup plan plus the digest of every user-owned file it was computed from."""
 
     inputs: Mapping[str, str | None] = field(default_factory=dict)
+    hooks: HooksPlan | None = None
 
 
 def _input_digest(path: Path) -> str | None:
@@ -72,7 +74,10 @@ def _input_digest(path: Path) -> str | None:
 
 
 def _plan_inputs(plan: SetupPlan) -> dict[str, str | None]:
+    hooks = getattr(plan, "hooks", None)
     return {
+        **({f"{registry.host}-hooks": _input_digest(registry.path) for registry in hooks.registries}
+           if hooks is not None else {}),
         "worktree-config": _input_digest(plan.resolution.config_path),
         "candidate-validation": _input_digest(plan.candidate_validation_path),
         "project-declaration": _input_digest(plan.project_declaration_path),
@@ -85,6 +90,9 @@ def _refuse_linked_write_paths(plan: SetupPlan) -> None:
     """Setup writes through no link: not a target, its directory, or the directory above it."""
     targets = [plan.resolution.config_path, plan.candidate_validation_path,
                plan.project_declaration_path, plan.task_identity_path]
+    hooks = getattr(plan, "hooks", None)
+    if hooks is not None:
+        targets.extend(registry.path for registry in hooks.registries)
     for target in targets:
         for path in (target, target.parent, target.parent.parent):
             if path.is_symlink():
@@ -160,6 +168,7 @@ def plan_setup(
     claude_state = claude_plan.status
     claude_detail = claude_plan.detail
     claude_hook_duplicates = claude_hook_duplicate_advisories(project_root, home)
+    hooks_plan = plan_hooks(home, project_root)
     candidate_validation_path = project_root / names().candidate_validation_path
     candidate_validation_proposal: dict[str, object] | None = None
     try:
@@ -257,6 +266,9 @@ def plan_setup(
     if codex_plan is not None and codex_plan.proposed_text is not None:
         verb = "repair" if codex_state in ("repair-required", "repair-and-replace-required") else "configure"
         changes.append(f"{verb} Codex permission profile in {codex_config} for {resolution.path}")
+    for registry in hooks_plan.registries:
+        if registry.proposed_text is not None:
+            changes.append(registry.detail)
     if claude_plan.proposed_settings is not None:
         changes.append(
             f"add project Claude Code command allowlist and deny rules in {claude_plan.settings_path}"
@@ -273,6 +285,7 @@ def plan_setup(
         directory_state == "blocked"
         or codex_state == "blocked"
         or claude_state == "blocked"
+        or hooks_plan.blocked is not None
         or candidate_validation_state == "blocked"
         or project_declaration_state == "blocked"
         or task_identity_state == "blocked"
@@ -345,8 +358,8 @@ def plan_setup(
         tuple(changes),
         tuple(warnings),
     )
-    return PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__),
-                           inputs=_plan_inputs(plan))
+    pinned = PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__), hooks=hooks_plan)
+    return replace(pinned, inputs=_plan_inputs(pinned))
 
 
 def print_setup_plan(plan: SetupPlan) -> None:
@@ -364,6 +377,14 @@ def print_setup_plan(plan: SetupPlan) -> None:
     print(f"directory: {plan.directory_state}")
     print(f"codex-profile: {plan.codex_state}")
     print(f"codex-detail: {plan.codex_detail}")
+    hooks = getattr(plan, "hooks", None)
+    if hooks is not None:
+        for registry in hooks.registries:
+            print(f"{registry.host}-user-hooks: {registry.status} ({registry.path}; {registry.detail})")
+        print("hook-activation: registration only; a new session loads the hooks and "
+              "doctor must prove they run (not proven by this registry)")
+        for advisory in hooks.advisories:
+            print(f"hook-duplicate: {advisory}")
     print(f"claude-project-allowlist: {plan.claude_state}")
     print(f"claude-detail: {plan.claude_detail}")
     print(
@@ -406,6 +427,7 @@ def apply_setup(plan: SetupPlan) -> bool:
         plan.directory_state == "blocked"
         or plan.codex_state == "blocked"
         or plan.claude_state == "blocked"
+        or getattr(plan, "hooks", None) is not None and plan.hooks.blocked is not None
         or plan.candidate_validation_state == "blocked"
         or plan.project_declaration_state == "blocked"
         or plan.task_identity_state == "blocked"
@@ -419,6 +441,8 @@ def apply_setup(plan: SetupPlan) -> bool:
             if plan.codex_state == "blocked"
             else plan.claude_detail
             if plan.claude_state == "blocked"
+            else plan.hooks.blocked.detail
+            if getattr(plan, "hooks", None) is not None and plan.hooks.blocked is not None
             else plan.task_identity_detail
             if plan.task_identity_state == "blocked"
             else _directory_setup_state(plan.resolution.path)[1]
@@ -473,6 +497,8 @@ def apply_setup(plan: SetupPlan) -> bool:
         wrote = apply_codex_configuration(plan.codex_plan, active) or wrote
         wrote = apply_codex_user_rules(plan.user_rules, active) or wrote
         wrote = apply_claude_project_allowlist(plan.claude_plan, active) or wrote
+        if getattr(plan, "hooks", None) is not None:
+            wrote = apply_hooks(plan.hooks, active) or wrote
         if plan.candidate_validation_proposal is not None:
             active.replace("candidate-validation", plan.candidate_validation_path,
                            json_bytes(plan.candidate_validation_proposal), mode=0o600)

@@ -175,7 +175,7 @@ class HostRepeatabilityTest(unittest.TestCase):
         self.assertEqual(intent['result'], dict(done=True))
         names = sorted(intent['effects'])
         for expected in ('backup:codex-config', 'file:codex-config', 'file:codex-rules',
-                         'directory:cardine-root', 'file:claude-allowlist'):
+                         'directory:cardine-root', 'file:claude-allowlist', 'file:claude-hooks', 'file:codex-hooks'):
             self.assertIn(expected, names)
         self.assertTrue(any(name.startswith('symlink:skill:') for name in names))
         return home, names
@@ -203,6 +203,84 @@ class HostRepeatabilityTest(unittest.TestCase):
                                      ['config.toml', 'config.toml.cardine.bak'])
                     self.assertEqual(self.run_setup(home).returncode, 0)
                     self.assertEqual(self.tree(home), expected)
+
+    def seed_registries(self, home):
+        foreign = {'type': 'command', 'command': '/usr/local/bin/my-own-hook'}
+        duplicate = {'hooks': [{'type': 'command', 'command': 'cardine hook stop-audit --host claude', 'timeout': 5}]}
+        (home / '.claude').mkdir()
+        (home / '.claude/settings.json').write_text(json.dumps(
+            {'model': 'x', 'hooks': {'Stop': [duplicate, {'hooks': [foreign]}, duplicate]}}))
+        (home / '.codex/hooks.json').write_text(json.dumps(
+            {'hooks': {'PreToolUse': [{'matcher': 'Bash', 'hooks': [foreign]}]}}))
+        return home
+
+    def test_hook_registries_replay_to_a_fresh_install_and_keep_foreign_entries_and_backups(self):
+        reference = self.seed_registries(self.make_home())
+        self.assertEqual(self.run_setup(reference).returncode, 0)
+        expected = self.tree(reference)
+        settings = json.loads(expected['.claude/settings.json'])
+        self.assertEqual(settings['model'], 'x')
+        self.assertEqual([len(group['hooks']) for group in settings['hooks']['Stop']], [1, 1])
+        self.assertIn(b'my-own-hook', expected['.codex/hooks.json'])
+        self.assertIn(b'my-own-hook', expected['.claude/settings.json.cardine.bak'])
+        self.assertIn(b'my-own-hook', expected['.codex/hooks.json.cardine.bak'])
+        for name in ('claude-hooks', 'codex-hooks'):
+            for seam in (f'before_backup:{name}', f'after_backup:{name}', f'before_file:{name}', f'after_file:{name}'):
+                with self.subTest(seam=seam):
+                    home = self.seed_registries(self.make_home())
+                    self.assertEqual(self.run_setup(home, seam).returncode, 93)
+                    interrupted = receipts._load_intent(self.receipt(home))
+                    self.assertIsNone(interrupted['result'])
+                    finished = self.run_setup(home)
+                    self.assertEqual(finished.returncode, 0, finished.stdout + finished.stderr)
+                    self.assertEqual(receipts._load_intent(self.receipt(home))['operation_id'], interrupted['operation_id'])
+                    self.assertEqual(self.tree(home), expected)
+                    self.assertEqual(sorted(path.name for path in (home / '.codex').glob('hooks.json*')),
+                                     ['hooks.json', 'hooks.json.cardine.bak'])
+                    self.assertEqual(self.run_setup(home).returncode, 0)
+                    self.assertEqual(self.tree(home), expected)
+
+    def test_hook_registries_edited_between_a_kill_and_its_retry_are_preserved(self):
+        for seam, target in (('after_backup:claude-hooks', '.claude/settings.json'),
+                             ('before_file:codex-hooks', '.codex/hooks.json'),
+                             ('after_file:claude-hooks', '.claude/settings.json')):
+            with self.subTest(seam=seam):
+                home = self.seed_registries(self.make_home())
+                self.assertEqual(self.run_setup(home, seam).returncode, 93)
+                path = home / target
+                path.write_text(path.read_text().replace('{', '{"edited": true, ', 1))
+                snapshot, recorded = self.tree(home), self.receipt(home).read_bytes()
+                refused = self.run_setup(home)
+                self.assertNotEqual(refused.returncode, 0, refused.stdout)
+                self.assertEqual(self.tree(home), snapshot)
+                self.assertEqual(self.receipt(home).read_bytes(), recorded)
+                self.assertIsNone(receipts._load_intent(self.receipt(home))['result'])
+
+    def test_a_linked_registry_or_directory_is_refused_without_writing_through(self):
+        for label in ('file', 'directory'):
+            with self.subTest(label=label):
+                home = self.make_home()
+                outside = self.base / f'outside-hooks-{self.count}'
+                outside.mkdir()
+                if label == 'file':
+                    (home / '.codex/hooks.json').symlink_to(outside / 'hooks.json')
+                else:
+                    (home / '.claude').symlink_to(outside)
+                snapshot = self.tree(home)
+                self.assertNotEqual(self.run_setup(home).returncode, 0)
+                self.assertEqual(list(outside.iterdir()), [])
+                self.assertEqual(self.tree(home), snapshot)
+                self.assertFalse(self.receipt(home).exists())
+
+    def test_a_registry_edited_between_the_plan_and_apply_is_refused_before_any_write(self):
+        home = self.seed_registries(self.make_home())
+        plan = self.planned(home)
+        (home / '.codex/hooks.json').write_text('{"hooks": {}}\n')
+        snapshot = self.tree(home)
+        with self.assertRaisesRegex(CardineError, 'codex-hooks changed since it was planned'):
+            setup.apply_setup(plan)
+        self.assertEqual(self.tree(home), snapshot)
+        self.assertFalse(self.receipt(home).exists())
 
     def test_user_edits_between_a_kill_and_its_retry_are_preserved(self):
         for seam, target, edit in (

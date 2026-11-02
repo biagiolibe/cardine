@@ -151,13 +151,7 @@ def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan, operation: Ope
         return True
 
 
-def claude_hook_duplicate_advisories(project_root: Path, home: Path) -> tuple[str, ...]:
-    """Report direct hook registrations when the Cardine Claude plugin is enabled.
-
-    This is deliberately advisory and read-only: Cardine never writes Claude
-    hook registrations, so a hand-written duplicate must remain the user's
-    choice to remove.
-    """
+def _claude_settings(project_root: Path, home: Path) -> list[tuple[Path, object]]:
     paths = (home / ".claude/settings.json", project_root / ".claude/settings.json",
              project_root / ".claude/settings.local.json")
     parsed: list[tuple[Path, object]] = []
@@ -166,16 +160,34 @@ def claude_hook_duplicate_advisories(project_root: Path, home: Path) -> tuple[st
             continue
         try:
             parsed.append((path, json.loads(path.read_text(encoding="utf-8"))))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             continue
-    plugin_enabled = any(
-        isinstance(settings, dict)
-        and isinstance(settings.get("enabledPlugins"), dict)
-        and any("meridian" in str(name).lower() and enabled is True
-                for name, enabled in settings["enabledPlugins"].items())
-        for _path, settings in parsed
-    )
-    if not plugin_enabled:
+    return parsed
+
+
+def _legacy_plugin_enabled(parsed: list[tuple[Path, object]]) -> list[Path]:
+    return [path for path, settings in parsed
+            if isinstance(settings, dict) and isinstance(settings.get("enabledPlugins"), dict)
+            and any("meridian" in str(name).lower() and enabled is True
+                    for name, enabled in settings["enabledPlugins"].items())]
+
+
+def claude_legacy_plugin_advisories(project_root: Path, home: Path) -> tuple[str, ...]:
+    """The enabled legacy plugin registers its own hooks next to the user registration; advisory only."""
+    return tuple(f"{path}: the enabled legacy plugin registers its own hooks and runs them "
+                 "next to the user-level Cardine hooks; disable it for one invocation per event"
+                 for path in _legacy_plugin_enabled(_claude_settings(project_root, home)))
+
+
+def claude_hook_duplicate_advisories(project_root: Path, home: Path) -> tuple[str, ...]:
+    """Report direct hook registrations when the Cardine Claude plugin is enabled.
+
+    This is deliberately advisory and read-only: setup writes only its own
+    user-level registrations (`hosts/hooks.py`), so a hand-written duplicate
+    in a project or plugin must remain the user's choice to remove.
+    """
+    parsed = _claude_settings(project_root, home)
+    if not _legacy_plugin_enabled(parsed):
         return ()
     advisories: list[str] = []
     for path, settings in parsed:

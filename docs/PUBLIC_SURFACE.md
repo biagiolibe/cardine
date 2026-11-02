@@ -105,6 +105,7 @@ including command containers and nested subcommands.
 | `cardine execution ready-check` | Stable |
 | `cardine execution validate` | Stable |
 | `cardine hook` | Host-facing |
+| `cardine hook briefing` | Host-facing |
 | `cardine hook read-guard` | Host-facing |
 | `cardine hook stop-audit` | Host-facing |
 
