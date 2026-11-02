@@ -15,6 +15,7 @@ from cardine.lifecycle import engine, receipts
 from cardine.shared.errors import CardineError
 from cardine.worktree.checkout import inspect_task_worktree, prepare_task_worktree
 import worktree_support as support
+from fixture_restore_support import ReadySnapshot
 
 
 class CleanupTest(support.BoundedWorktreeLifecycleFixture):
@@ -340,37 +341,42 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
             fixture.doCleanups()
 
     def test_every_effect_boundary_replays_identically(self):
+        # The outer setUp built the integrated fixture once; it is saved before
+        # any scenario touches the remote and restored in place for each one.
+        snapshot = ReadySnapshot(self.root)
+        self.addCleanup(snapshot.close)
+        self.addCleanup(os.chdir, self.previous_cwd)
+        first = True
         for label in ('cleanup_push', 'cleanup_remote', 'cleanup_worktree', 'cleanup_placeholder',
                       'cleanup_branch', 'cleanup_lifecycle'):
             for side in ('before', 'after'):
                 with self.subTest(point=side + '_' + label):
-                    fixture = CleanupTest('test_recorded_remote_is_compare_deleted')
-                    fixture.setUp()
-                    try:
-                        fixture.own_remote()
-                        fixture.kill(side + '_' + label)
-                        path = candidate.operation_path(fixture.locations, 'cleanup')
-                        original = receipts._load_intent(path)
-                        # Every effect retry independently rejects foreign ownership.
-                        foreign = json.loads(json.dumps(original))
-                        foreign['binding']['task'] = '057'
-                        receipts._save_intent(path, foreign)
-                        with self.assertRaises(CardineError):
-                            fixture.finish()
-                        receipts._save_intent(path, original)
-                        # Changed actual inputs cannot be covered by the old receipt.
-                        fixture.git('remote', 'set-url', 'origin', '/foreign')
-                        with self.assertRaises(CardineError):
-                            fixture.finish()
-                        fixture.git('remote', 'set-url', 'origin', str(fixture.origin))
-                        first = fixture.finish()
-                        self.assertEqual(fixture.finish()['merge_commit'], first['merge_commit'])
-                        self.assertEqual(fixture.remote(), fixture.landed)
-                        self.assertIsNone(fixture.remote('task-056'))
-                        self.assertFalse(fixture.git('branch', '--list', 'task-056').stdout)
-                    finally:
-                        fixture.tearDown()
-                        fixture.doCleanups()
+                    if not first:
+                        snapshot.restore()
+                        os.chdir(self.primary)
+                    first = False
+                    self.locations = candidate.locations_for('056', self.primary)
+                    self.own_remote()
+                    self.kill(side + '_' + label)
+                    path = candidate.operation_path(self.locations, 'cleanup')
+                    original = receipts._load_intent(path)
+                    # Every effect retry independently rejects foreign ownership.
+                    foreign = json.loads(json.dumps(original))
+                    foreign['binding']['task'] = '057'
+                    receipts._save_intent(path, foreign)
+                    with self.assertRaises(CardineError):
+                        self.finish()
+                    receipts._save_intent(path, original)
+                    # Changed actual inputs cannot be covered by the old receipt.
+                    self.git('remote', 'set-url', 'origin', '/foreign')
+                    with self.assertRaises(CardineError):
+                        self.finish()
+                    self.git('remote', 'set-url', 'origin', str(self.origin))
+                    result = self.finish()
+                    self.assertEqual(self.finish()['merge_commit'], result['merge_commit'])
+                    self.assertEqual(self.remote(), self.landed)
+                    self.assertIsNone(self.remote('task-056'))
+                    self.assertFalse(self.git('branch', '--list', 'task-056').stdout)
 
 
 if __name__ == '__main__':

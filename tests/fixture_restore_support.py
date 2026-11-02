@@ -53,6 +53,30 @@ class RestorableFixture:
         shutil.copytree(source, target, symlinks=True)
 
 
+class ReadySnapshot:
+    """A private copy of a live tree, restored into the same absolute path.
+
+    Unlike RestorableFixture it never touches a shared fixture's own copy: the
+    snapshot lives in a temporary directory removed by `close`.
+    """
+
+    def __init__(self, live):
+        self.live = Path(live)
+        self._base = Path(tempfile.mkdtemp(prefix='cardine-ready-')).resolve()
+        self._copy = self._base / 'copy'
+        shutil.copytree(self.live, self._copy, symlinks=True)
+
+    def restore(self):
+        # The process must not stand inside the tree that is deleted.
+        os.chdir(self._base)
+        shutil.rmtree(self.live)
+        shutil.copytree(self._copy, self.live, symlinks=True)
+
+    def close(self):
+        os.chdir(self._base.parent)
+        shutil.rmtree(self._base, ignore_errors=True)
+
+
 def tree_digest(directory):
     """Digest of every path, mode, link target and file byte below a directory."""
     digest = hashlib.sha256()
