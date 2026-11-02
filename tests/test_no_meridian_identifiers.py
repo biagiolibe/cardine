@@ -104,7 +104,7 @@ ALLOWLIST = (
     ),
     Allowance(
         2, "9",
-        r"(?:scripts/(?:check_repository|align_queue)|src/cardine/hosts/setup|tests/(?:cardine_cli_support|synthetic_upgrade_support|test_(?:codex_rules|codex_worktree_hooks|codex_read_guard|execution_evidence|integration_projections|stop_audit|template_marker_heading|cardine_upgrade_lifecycle)))\.py",
+        r"(?:scripts/(?:check_repository|align_queue)|tests/(?:cardine_cli_support|synthetic_upgrade_support|test_(?:codex_rules|codex_worktree_hooks|codex_read_guard|execution_evidence|integration_projections|stop_audit|template_marker_heading|cardine_upgrade_lifecycle)))\.py",
         OLD + r'''(?=\s+(?:worktree|execution|locations|audit|upgrade|adopt|review|codex|task|hook|Reviewer-Integrator)|["'][,\n\)])''',
     ),
     Allowance(

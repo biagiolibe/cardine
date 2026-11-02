@@ -17,6 +17,7 @@ from unittest import mock
 from cardine.hosts import claude as owner_hosts_claude
 from cardine.hosts import codex as owner_hosts_codex
 from cardine.hosts import hooks as owner_hosts_hooks
+from cardine.hosts import permissions
 from cardine.hosts import setup as owner_hosts_setup
 
 
@@ -169,6 +170,143 @@ class HostDoctorTest(unittest.TestCase):
         self.assertIn("claude-command-policy: unverified", done.stdout)
         self.assertIn("hook-invocation: ready", done.stdout)
         self.assertEqual(snapshot(self.root), before)
+
+    # -- runtime role proofs (D3) -------------------------------------------------
+
+    def policy(self, host: str, role: str) -> permissions.RolePolicy:
+        common = self.project / ".git"
+        if host == "claude":
+            return owner_hosts_claude.claude_role_policy(role, self.project, self.project, common)
+        return owner_hosts_codex.codex_role_policy(role, self.project, self.worktrees, self.project, common)
+
+    @staticmethod
+    def host_table(policy: permissions.RolePolicy, flip: str | None = None, hide: str | None = None):
+        """A fake host that reports the expected decision for every probe, optionally wrong or unobservable."""
+        table = {}
+        for name, (tool, tool_input, expected) in permissions.probe_matrix(policy.role, policy.host).items():
+            table[(tool, json.dumps(tool_input, sort_keys=True))] = (
+                None if name == hide else ("allow" if expected == "deny" else "deny") if name == flip else expected)
+        return lambda tool, tool_input: table[(tool, json.dumps(tool_input, sort_keys=True))]
+
+    def test_a_complete_host_proof_enforces_each_role_on_both_hosts(self) -> None:
+        for host in ("claude", "codex"):
+            for role in permissions.ROLES:
+                policy = self.policy(host, role)
+                result = owner_hosts_setup.prove_role_policy(policy, self.host_table(policy))
+                with self.subTest(host=host, role=role):
+                    self.assertEqual(result.state, "ready")
+                    self.assertTrue(permissions.proof_enforces(policy, result.proof))
+
+    def test_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control(self) -> None:
+        for host in ("claude", "codex"):
+            for role in permissions.ROLES:
+                policy = self.policy(host, role)
+                for name, (_tool, _input, expected) in permissions.probe_matrix(role, host).items():
+                    result = owner_hosts_setup.prove_role_policy(policy, self.host_table(policy, flip=name))
+                    with self.subTest(host=host, role=role, probe=name):
+                        self.assertTrue(result.state.startswith("unsupported (D3)"), result.state)
+                        self.assertFalse(permissions.proof_enforces(policy, result.proof))
+                        self.assertEqual(result.gaps, (("not denied " if expected == "deny" else "false deny ") + name,))
+
+    def test_an_unobservable_probe_leaves_no_proof(self) -> None:
+        policy = self.policy("codex", "implementer")
+        result = owner_hosts_setup.prove_role_policy(policy, self.host_table(policy, hide="edit-state"))
+        self.assertIsNone(result.proof)
+        self.assertIn("unobserved edit-state", result.state)
+
+    def test_an_interrupted_proof_promotes_nothing_writes_nothing_and_repeats_identically(self) -> None:
+        policy = self.policy("codex", "reviewer")
+        complete = self.host_table(policy)
+        fresh = owner_hosts_setup.prove_role_policy(policy, complete)
+        before = snapshot(self.root)
+        total = len(permissions.probe_matrix("reviewer", "codex"))
+        for stop in range(total):
+            calls = []
+
+            def interrupted(tool, tool_input, stop=stop, calls=calls):
+                if len(calls) == stop:
+                    raise owner_hosts_setup.ProbeInterrupted("timeout")
+                calls.append(1)
+                return complete(tool, tool_input)
+
+            result = owner_hosts_setup.prove_role_policy(policy, interrupted)
+            with self.subTest(stop=stop):
+                self.assertIsNone(result.proof)
+                self.assertTrue(result.state.startswith("unverified"))
+                self.assertEqual(snapshot(self.root), before)
+                self.assertEqual(owner_hosts_setup.prove_role_policy(policy, complete), fresh)
+
+        def killed(tool, tool_input):
+            raise KeyboardInterrupt
+
+        with self.assertRaises(KeyboardInterrupt):
+            owner_hosts_setup.prove_role_policy(policy, killed)
+        self.assertEqual(snapshot(self.root), before)
+
+    def test_a_proof_of_another_policy_digest_does_not_enforce(self) -> None:
+        policy = self.policy("codex", "implementer")
+        proof = owner_hosts_setup.prove_role_policy(policy, self.host_table(policy)).proof
+        other = owner_hosts_codex.codex_role_policy(
+            "implementer", self.project, self.worktrees, self.project / "other", self.project / ".git")
+        self.assertNotEqual(other.digest, policy.digest)
+        self.assertTrue(permissions.proof_enforces(policy, proof))
+        self.assertFalse(permissions.proof_enforces(other, proof))
+
+    def test_claude_role_launch_is_unsupported_and_never_inferred_from_settings(self) -> None:
+        plan = owner_hosts_claude.plan_claude_project_allowlist(self.project)
+        self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(plan))
+        report = owner_hosts_setup.host_doctor("claude", self.project, self.config, self.worktrees, home=self.home)
+        for role in permissions.ROLES:
+            self.assertEqual(report["role-launch-" + role], "unsupported (D3): no host decision probe")
+
+    def test_codex_without_installed_role_rules_is_not_ready(self) -> None:
+        report = owner_hosts_setup.host_doctor("codex", self.project, self.config, self.worktrees, home=self.home)
+        for role in permissions.ROLES:
+            self.assertEqual(report["role-launch-" + role], "approval-required: role rules not installed")
+
+    def fake_codex(self, body: str) -> str:
+        path = self.bin / "fake-codex"
+        path.write_text("#!/bin/sh\n" + body, encoding="utf-8")
+        path.chmod(0o755)
+        return str(path)
+
+    def test_codex_evaluator_maps_only_a_forbidden_decision_to_deny(self) -> None:
+        rules = (self.root / "x.rules",)
+        for output, expected in (('{"decision":"forbidden"}', "deny"), ('{"decision":"allow"}', "allow"),
+                                 ('{"matchedRules":[]}', "allow")):
+            evaluate = owner_hosts_setup.codex_decision_evaluator(self.fake_codex(f"echo '{output}'\n"), rules)
+            with self.subTest(output=output):
+                self.assertEqual(evaluate("shell", {"command": "git status"}), expected)
+        evaluate = owner_hosts_setup.codex_decision_evaluator(self.fake_codex("echo '{}'\n"), rules)
+        self.assertIsNone(evaluate("apply_patch", {"file_path": ".cardine/tasks/001.json"}))
+        for body in ("exit 1\n", "echo not-json\n"):
+            evaluate = owner_hosts_setup.codex_decision_evaluator(self.fake_codex(body), rules)
+            with self.subTest(body=body), self.assertRaises(owner_hosts_setup.ProbeInterrupted):
+                evaluate("shell", {"command": "git status"})
+
+    @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
+    def test_real_codex_policy_is_declared_unsupported_with_its_gaps_named(self) -> None:
+        for role in permissions.ROLES:
+            path = owner_hosts_codex.role_rules_path(self.home / ".codex", role)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(owner_hosts_codex._role_rules_text(role), encoding="utf-8")
+        before = snapshot(self.root)
+        report = owner_hosts_setup.host_doctor("codex", self.project, self.config, self.worktrees, home=self.home)
+        self.assertEqual(snapshot(self.root), before)
+        for role in permissions.ROLES:
+            self.assertTrue(report["role-launch-" + role].startswith("unsupported (D3): "), report["role-launch-" + role])
+        policy = self.policy("codex", "implementer")
+        layers = (owner_hosts_codex.role_rules_path(self.home / ".codex", "implementer"),)
+        evaluate = owner_hosts_setup.codex_decision_evaluator(shutil.which("codex"), layers)
+        matrix = permissions.probe_matrix("implementer", "codex")
+        for name in ("push-main", "verdict-developer", "cancel"):
+            self.assertEqual(evaluate(*matrix[name][:2]), "deny", name)
+        for name in ("inspect-status", "commit", "task-close"):
+            self.assertEqual(evaluate(*matrix[name][:2]), "allow", name)
+        result = owner_hosts_setup.prove_role_policy(policy, evaluate)
+        self.assertFalse(permissions.proof_enforces(policy, result.proof))
+        self.assertIn("unobserved edit-state", result.gaps)
+        self.assertIn("not denied redirect", result.gaps)  # a host fact: execpolicy has no redirect rule
 
 
 if __name__ == "__main__":

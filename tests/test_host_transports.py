@@ -6,7 +6,7 @@ import time
 import unittest
 from unittest.mock import patch
 
-from cardine.hosts import claude, codex, permissions
+from cardine.hosts import claude, codex, permissions, setup
 from cardine.hosts.launch import host_adapter
 from cardine.hosts.transports import ClaudeTransport, CodexTransport
 from cardine.lifecycle import receipts
@@ -150,6 +150,40 @@ class HostTransportsTest(unittest.TestCase):
                     self.launch(host)
                 self.assertEqual([p.name for p in host.directory.iterdir()], ['credentials.json'])
                 self.assertEqual(self.runs(), [])
+
+    @staticmethod
+    def doctor_proofs(policies, wrong=None, hidden=None):
+        """Proofs as doctor produces them from a fake host; a role maps to None when the run is incomplete."""
+        proofs = {}
+        for role, policy in policies.items():
+            def evaluate(tool, tool_input, role=role, policy=policy):
+                for name, (probe_tool, probe_input, expected) in permissions.probe_matrix(role, policy.host).items():
+                    if (probe_tool, probe_input) == (tool, tool_input):
+                        if (role, name) == hidden:
+                            return None
+                        return ('allow' if expected == 'deny' else 'deny') if (role, name) == wrong else expected
+            proofs[role] = setup.prove_role_policy(policy, evaluate).proof
+        return {role: proof for role, proof in proofs.items() if proof is not None}
+
+    def test_role_activation_follows_only_the_proof_doctor_produced(self):
+        for name in ('claude', 'codex'):
+            host = self.transport(name)
+            cases = (
+                ('complete', self.doctor_proofs(host.policies), {'implementer': True, 'reviewer': True}),
+                ('wrong decision', self.doctor_proofs(host.policies, wrong=('reviewer', 'push-main')),
+                 {'implementer': name == 'claude', 'reviewer': False}),
+                ('unobserved probe', self.doctor_proofs(host.policies, hidden=('implementer', 'edit-state')),
+                 {'implementer': False, 'reviewer': name == 'claude'}),
+            )
+            for label, proofs, expected in cases:
+                host.proofs = proofs
+                with self.subTest(host=name, case=label):
+                    self.assertEqual({role: host.profile(role).enforced for role in permissions.ROLES}, expected)
+            host.proofs = self.doctor_proofs(host.policies, wrong=('reviewer', 'push-main'))
+            with self.assertRaises(CardineStop) as caught:
+                self.launch(host)
+            self.assertEqual(caught.exception.code, 'COMMAND_REFUSED')
+            self.assertEqual(self.runs(), [])
 
     def test_running_writer_is_polled_without_writes_and_blocks_a_second_session(self):
         host = self.transport('codex')

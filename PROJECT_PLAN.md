@@ -181,7 +181,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 133 — Enforce protected paths and Claude role restrictions (H5a).
 - `[x]` 134 — Realize the Codex role policy and profiles (H5b).
 - `[x]` 135 — Wire the concrete host transports to issued roles (H5c).
-- `[ ]` 136 — Prove roles at runtime in doctor and update the host contract (H5d).
+- `[x]` 136 — Prove roles at runtime in doctor and update the host contract (H5d).
 - `[x]` 137 — Restore the run engine fixtures in place instead of rebuilding them.
 - `[x]` 138 — Restore the remaining heavy fixtures in place.
 - `[x]` 139 — Reuse the ready cleanup fixture and measure the real savings.
