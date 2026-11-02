@@ -27,6 +27,10 @@ ROLES = ("implementer", "reviewer")
 PROTECTED_BRANCHES = ("main", "master")
 STAGE = re.compile(r"^\..+\.stage$")  # adjacent `.<filename>.<operation>.<index>.stage`
 NATIVE_WRITE_TOOLS = ("Edit", "Write", "MultiEdit", "NotebookEdit")
+HOSTS = ("claude", "codex")
+# Codex edits files through its patch tool and runs commands through its shell tool.
+CODEX_NATIVE_WRITE_TOOLS = ("apply_patch",)
+CODEX_SHELL = "shell"
 
 # Action prefixes as non-option CLI words, matched as an ordered subsequence so
 # reordered options and option values cannot hide them.
@@ -454,10 +458,10 @@ def evaluate_tool(tool: str, tool_input, *, role: str, roots, cwd: Path) -> Deci
     """Native tool call: edits, and the shell, are evaluated; unknown tools naming a protected path are refused."""
     if role not in ROLES or not isinstance(tool_input, dict):
         return _deny("unparsable tool call or unknown role")
-    if tool == "Bash":
+    if tool in ("Bash", CODEX_SHELL):
         return evaluate_command(tool_input.get("command"), role=role, roots=roots, cwd=cwd)
     paths = [tool_input[key] for key in ("file_path", "notebook_path", "path") if key in tool_input]
-    if tool in NATIVE_WRITE_TOOLS:
+    if tool in NATIVE_WRITE_TOOLS or tool in CODEX_NATIVE_WRITE_TOOLS:
         if role == "reviewer":
             return _deny("reviewers are read-only: " + tool)
         if not paths or not all(isinstance(path, str) and path for path in paths):
@@ -472,10 +476,24 @@ def evaluate_tool(tool: str, tool_input, *, role: str, roots, cwd: Path) -> Deci
 
 # -- Role profiles and host-evaluated proof ----------------------------------
 
-def probe_matrix(role: str) -> dict[str, tuple]:
-    """Probes a host must evaluate: name -> (tool, input, expected 'deny' | 'allow')."""
+def probe_matrix(role: str, host: str = "claude") -> dict[str, tuple]:
+    """Probes a host must evaluate: name -> (tool, input, expected 'deny' | 'allow').
+
+    Probe names and expectations are host-neutral; only the native tool names
+    differ per host (the decision table), so one proof shape serves both hosts.
+    """
     if role not in ROLES:
         raise CardineError("unknown role: " + role)
+    if host not in HOSTS:
+        raise CardineError("unknown host: " + host)
+    matrix = _base_probe_matrix(role)
+    if host == "claude":
+        return matrix
+    return {name: (CODEX_SHELL if tool == "Bash" else CODEX_NATIVE_WRITE_TOOLS[0], tool_input, verdict)
+            for name, (tool, tool_input, verdict) in matrix.items()}
+
+
+def _base_probe_matrix(role: str) -> dict[str, tuple]:
     state, evidence = ".cardine/tasks/001.json", ".cardine/evidence/001.json"
     deny = {
         "push-main": ("Bash", {"command": "git push origin main"}, "deny"),
@@ -545,6 +563,6 @@ def proof_enforces(policy: RolePolicy, proof: HostProof | None) -> bool:
     """True only for a complete host proof of this exact policy; text and partial proofs never qualify."""
     if not isinstance(proof, HostProof):
         return False
-    expected = {name: verdict for name, (_t, _i, verdict) in probe_matrix(policy.role).items()}
+    expected = {name: verdict for name, (_t, _i, verdict) in probe_matrix(policy.role, policy.host).items()}
     return (proof.host == policy.host and proof.identity == policy.identity and proof.digest == policy.digest
             and proof.decisions == expected)

@@ -12,9 +12,10 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from cardine.hosts import claude, permissions
+from cardine.hosts import claude, codex, permissions
 from cardine.lifecycle import delivery, receipts, validation
 from cardine.integration import candidate
+from cardine.shared.errors import CardineError
 from cardine.tasks.state_core import state_path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +34,22 @@ def boundary(name):
         os._exit(93)
 receipts.boundary = boundary
 claude.apply_claude_project_allowlist(claude.plan_claude_project_allowlist(project))
+'''
+
+
+CODEX_CHILD = '''
+import os, sys, tempfile
+from pathlib import Path
+from cardine.hosts import codex
+from cardine.lifecycle import receipts
+home, seam = Path(sys.argv[1]), sys.argv[2]
+tempfile.tempdir = sys.argv[3]
+def boundary(name):
+    if name == seam:
+        os._exit(93)
+receipts.boundary = boundary
+plan = codex.plan_codex_role_policies(home / ".codex/config.toml", home / ".codex", home / "worktrees")
+codex.apply_codex_role_policies(plan)
 '''
 
 
@@ -396,6 +413,214 @@ class RolePolicyTest(Fixture):
             self.assertFalse(permissions.proof_enforces(policy, policy.settings))  # settings text is not a proof
             self.assertFalse(claude.claude_role_profile(policy, None).enforced)
             self.assertTrue(claude.claude_role_profile(policy, self.host_proof(policy)).enforced)
+
+
+class CodexRolePolicyTest(Fixture):
+    def setUp(self) -> None:
+        super().setUp()
+        self.home = self.base / "home"
+        (self.home / ".codex").mkdir(parents=True)
+        self.worktrees = self.home / "worktrees"
+        self.config = self.home / ".codex/config.toml"
+
+    def plan(self, home: Path | None = None):
+        home = home or self.home
+        return codex.plan_codex_role_policies(home / ".codex/config.toml", home / ".codex", home / "worktrees")
+
+    def policy(self, role: str, worktree: Path | None = None):
+        return codex.codex_role_policy(role, self.project, self.worktrees, worktree or self.external, self.common)
+
+    def install(self) -> None:
+        self.assertTrue(codex.apply_codex_role_policies(self.plan()))
+
+    def host_proof(self, policy, **change):
+        decisions = {}
+        for name, (tool, tool_input, _expected) in permissions.probe_matrix(policy.role, "codex").items():
+            observed = permissions.evaluate_tool(tool, tool_input, role=policy.role, roots=self.roots, cwd=self.external)
+            decisions[name] = "allow" if observed.allowed else "deny"
+        decisions.update(change.pop("decisions", {}))
+        fields = dict(host="codex", identity=policy.identity, digest=policy.digest, decisions=decisions)
+        return permissions.HostProof(**{**fields, **change})
+
+    def test_the_host_decision_table_translates_tools_and_keeps_claude_unchanged(self) -> None:
+        for role in permissions.ROLES:
+            claude_matrix, codex_matrix = permissions.probe_matrix(role), permissions.probe_matrix(role, "codex")
+            self.assertEqual(claude_matrix, permissions.probe_matrix(role, "claude"))
+            self.assertEqual(set(claude_matrix), set(codex_matrix))
+            self.assertEqual({tool for tool, _i, _v in codex_matrix.values()}, {"shell", "apply_patch"})
+            for name, (tool, tool_input, verdict) in claude_matrix.items():
+                self.assertEqual((codex_matrix[name][1], codex_matrix[name][2]), (tool_input, verdict))
+            for name, (tool, tool_input, verdict) in codex_matrix.items():
+                observed = permissions.evaluate_tool(tool, tool_input, role=role, roots=self.roots, cwd=self.external)
+                self.assertEqual("allow" if observed.allowed else "deny", verdict, name)
+        with self.assertRaises(CardineError):
+            permissions.probe_matrix("implementer", "gemini")
+
+    def test_roots_are_bounded_and_the_policy_is_deterministic_without_credentials(self) -> None:
+        implementer, reviewer = self.policy("implementer"), self.policy("reviewer")
+        self.assertEqual(implementer, self.policy("implementer"))
+        self.assertEqual({implementer.identity, reviewer.identity}, {"cardine-implementer", "cardine-reviewer"})
+        self.assertNotEqual(implementer.digest, reviewer.digest)
+        self.assertNotEqual(implementer.digest, self.policy("implementer", self.base / "elsewhere/task-002").digest)
+        for policy in (implementer, reviewer):
+            self.assertEqual(policy.settings["profile"]["workspace_roots"], {str(self.worktrees.resolve()): True})
+            self.assertEqual(policy.settings["profile"]["extends"], ":workspace")
+            text = json.dumps(policy.settings).lower()
+            for secret in ("token", "credential", "secret", "password", "api_key"):
+                self.assertNotIn(secret, text)
+        for unsafe in (Path("/"), Path.home()):
+            with self.assertRaises(CardineError):
+                codex.codex_role_policy("implementer", self.project, unsafe, self.external, self.common)
+            self.assertEqual(codex.plan_codex_role_policies(self.config, self.home / ".codex", unsafe).status, "blocked")
+        with self.assertRaises(CardineError):
+            codex.codex_role_policy("coordinator", self.project, self.worktrees, self.external, self.common)
+
+    def test_direct_main_push_is_denied_for_both_roles_and_never_in_the_coordinator_rules(self) -> None:
+        for role in permissions.ROLES:
+            rules = "\n".join(codex.role_rule_lines(role))
+            for target in ("main", "+main", "HEAD:main", "HEAD:refs/heads/main", "master"):
+                self.assertIn(f'"git", "push", "origin", "{target}"], decision="forbidden"', rules)
+            self.assertNotIn('decision="allow"', rules)
+            self.assertIn('"cardine", "worktree", "integrate"', rules)
+        self.assertIn('"cardine", "review", "verdict"', "\n".join(codex.role_rule_lines("implementer")))
+        self.assertNotIn('"cardine", "review", "verdict"', "\n".join(codex.role_rule_lines("reviewer")))
+        self.assertNotIn('"main"', codex.CODEX_USER_RULES)  # the coordinator's authorized main push stays unforbidden
+        self.assertNotIn("cardine-roles", codex.CODEX_USER_RULES)
+        self.assertNotEqual(codex.role_rules_path(self.home / ".codex", "implementer").parent, self.home / ".codex/rules")
+
+    def test_install_replaces_blocks_and_rules_and_preserves_user_text(self) -> None:
+        user = '# mine\nmodel = "x"\n\n[tools]\nweb = true # keep\n'
+        self.config.write_text(user)
+        plan = self.plan()
+        self.assertEqual(plan.status, "approval-required")
+        self.install()
+        text = self.config.read_text()
+        self.assertTrue(text.startswith(user))
+        parsed = __import__("tomllib").loads(text)
+        for role in permissions.ROLES:
+            profile = parsed["permissions"][f"cardine-{role}"]
+            self.assertEqual(profile["workspace_roots"], {str(self.worktrees.resolve()): True})
+            self.assertEqual(profile["extends"], ":workspace")
+            rules = codex.role_rules_path(self.home / ".codex", role)
+            self.assertEqual(rules.read_text(), codex._role_rules_text(role))
+            self.assertEqual(stat.S_IMODE(rules.stat().st_mode), 0o600)
+        self.assertNotIn("default_permissions", parsed)
+        self.assertEqual(self.config.with_name("config.toml.cardine-backup-1").read_text(), user)
+        self.assertEqual(self.plan().status, "ready")
+        self.assertFalse(codex.apply_codex_role_policies(self.plan()))
+        intent = receipts._load_intent(receipts.host_path("codex-roles", self.config))
+        self.assertEqual(set(intent["effects"].values()), {"done"})
+
+    def test_an_owned_older_root_is_replaced_with_a_backup(self) -> None:
+        self.install()
+        other = self.home / "other-worktrees"
+        plan = codex.plan_codex_role_policies(self.config, self.home / ".codex", other)
+        self.assertEqual(plan.status, "approval-required")
+        old = self.config.read_text()
+        codex.apply_codex_role_policies(plan)
+        self.assertIn(str(other.resolve()), self.config.read_text())
+        self.assertNotIn(str(self.worktrees.resolve()), self.config.read_text())
+        self.assertEqual(self.config.with_name("config.toml.cardine-backup-1").read_text(), old)
+        self.assertEqual(codex.plan_codex_role_policies(self.config, self.home / ".codex", other).status, "ready")
+
+    def test_read_only_checks_repeat_without_any_write(self) -> None:
+        self.config.write_text('model = "x"\n')
+        before, mtimes = snapshot(self.base), {p: p.stat().st_mtime_ns for p in self.base.rglob("*")}
+        first, second = self.plan(), self.plan()
+        self.assertEqual((first.status, first.proposed_config, first.rules), (second.status, second.proposed_config, second.rules))
+        self.assertEqual(snapshot(self.base), before)
+        self.assertEqual({p: p.stat().st_mtime_ns for p in self.base.rglob("*")}, mtimes)
+        self.assertFalse(list(self.base.rglob("*cardine-backup*")))
+        self.assertFalse((self.home / ".codex" / codex.ROLE_RULES_DIRECTORY).exists())
+
+    def test_shared_and_foreign_profiles_block_everything_and_are_preserved(self) -> None:
+        cases = {
+            "foreign profile": '[permissions.cardine-reviewer]\nextends = ":workspace"\n',
+            "damaged markers": "# CARDINE:BEGIN role-permissions-implementer v1\n",
+            "edited block": None,
+            "malformed": "[permissions\n",
+        }
+        for label, text in cases.items():
+            with self.subTest(label), tempfile.TemporaryDirectory() as raw:
+                home = Path(raw).resolve()
+                (home / ".codex").mkdir()
+                config = home / ".codex/config.toml"
+                if text is None:
+                    config.write_text(codex._role_block("implementer", home / "worktrees").replace("extends", "# x\nextends") + "\n")
+                else:
+                    config.write_text(text)
+                before = snapshot(home)
+                plan = self.plan(home)
+                self.assertEqual(plan.status, "blocked", plan.detail)
+                with self.assertRaises(CardineError):
+                    codex.apply_codex_role_policies(plan)
+                self.assertEqual(snapshot(home), before)
+        with tempfile.TemporaryDirectory() as raw:  # foreign or symlinked role rules
+            home = Path(raw).resolve()
+            rules = codex.role_rules_path(home / ".codex", "reviewer")
+            rules.parent.mkdir(parents=True)
+            for make in (lambda: rules.write_text("# mine\n"), lambda: rules.symlink_to(home / "target")):
+                make()
+                self.assertEqual(self.plan(home).status, "blocked")
+                rules.unlink()
+        with tempfile.TemporaryDirectory() as raw:  # the shared base profile and its selection are never touched
+            home = Path(raw).resolve()
+            (home / ".codex").mkdir()
+            base = '[permissions.cardine-worktrees]\nextends = ":workspace"\n'
+            (home / ".codex/config.toml").write_text('default_permissions = "cardine-worktrees"\n\n' + base)
+            plan = self.plan(home)
+            codex.apply_codex_role_policies(plan)
+            self.assertTrue((home / ".codex/config.toml").read_text().startswith('default_permissions = "cardine-worktrees"\n\n' + base))
+
+    def test_no_broad_fallback_when_either_profile_is_incomplete(self) -> None:
+        policies = {role: self.policy(role) for role in permissions.ROLES}
+        proofs = {role: self.host_proof(policies[role]) for role in permissions.ROLES}
+        self.install()
+        ready = self.plan()
+        self.assertTrue(all(p.enforced for p in codex.codex_role_profiles(ready, policies, proofs).values()))
+        for broken in (self.plan(self.base / "empty-home"), codex.CodexRolePlan("blocked", self.config, "x", "", None, ())):
+            self.assertFalse(any(p.enforced for p in codex.codex_role_profiles(broken, policies, proofs).values()))
+        for missing in permissions.ROLES:
+            partial = {role: proof for role, proof in proofs.items() if role != missing}
+            profiles = codex.codex_role_profiles(ready, policies, partial)
+            self.assertEqual({role: p.enforced for role, p in profiles.items()}, {"implementer": False, "reviewer": False})
+        self.assertFalse(any(p.enforced for p in codex.codex_role_profiles(ready, {"implementer": policies["implementer"]}, proofs).values()))
+
+    def test_only_a_complete_host_proof_enforces_never_the_rendered_text(self) -> None:
+        for role in permissions.ROLES:
+            policy = self.policy(role)
+            self.assertTrue(codex.codex_role_profile(policy, self.host_proof(policy)).enforced)
+            self.assertFalse(codex.codex_role_profile(policy, None).enforced)
+            self.assertFalse(codex.codex_role_profile(policy, policy.settings).enforced)
+            self.assertFalse(codex.codex_role_profile(policy, self.host_proof(policy, host="claude")).enforced)
+            self.assertFalse(codex.codex_role_profile(policy, self.host_proof(policy, digest="0" * 64)).enforced)
+            self.assertFalse(codex.codex_role_profile(policy, self.host_proof(policy, decisions={"push-main": "allow"})).enforced)
+            partial = self.host_proof(policy)
+            partial.decisions.pop("push-reordered")
+            self.assertFalse(codex.codex_role_profile(policy, partial).enforced)
+            self.assertFalse(permissions.proof_enforces(policy, self.host_proof(policy, host="claude")))
+
+    def test_every_interruption_converges_to_a_fresh_install(self) -> None:
+        fresh = self.base / "fresh"
+        (fresh / ".codex").mkdir(parents=True)
+        codex.apply_codex_role_policies(self.plan(fresh))
+        tree = lambda home: {p.relative_to(home).as_posix(): p.read_bytes().replace(str(home).encode(), b"<home>")
+                             for p in sorted((home / ".codex").rglob("*")) if p.is_file()}
+        expected = tree(fresh)
+        seams = [f"{when}:{kind}" for kind in ("codex-roles-config", "codex-roles-rules-implementer", "codex-roles-rules-reviewer")
+                 for when in ("before_file", "after_file")]
+        for seam in seams:
+            with self.subTest(seam=seam):
+                victim = self.base / ("victim-" + seam.replace(":", "-"))
+                (victim / ".codex").mkdir(parents=True)
+                run = lambda name: subprocess.run(
+                    [sys.executable, "-c", CODEX_CHILD, str(victim), name, str(self.base / "receipts")],
+                    capture_output=True, text=True, env={**os.environ, "PYTHONPATH": str(ROOT / "src")})
+                self.assertEqual(run(seam).returncode, 93)
+                finished = run("never")
+                self.assertEqual(finished.returncode, 0, finished.stderr)
+                self.assertEqual(tree(victim), expected)
+                self.assertEqual(self.plan(victim).status, "ready")
 
 
 if __name__ == "__main__":
