@@ -426,6 +426,8 @@ def build_parser() -> CardineArgumentParser:
 
     hook = subparsers.add_parser("hook", help="run a Cardine host hook entry point")
     hook_sub = hook.add_subparsers(dest="hook_command", required=True)
+    briefing = hook_sub.add_parser("briefing", help="print the status-only turn briefing (UserPromptSubmit hook)")
+    briefing.add_argument("--host", choices=("claude", "codex"), required=True)
     read_guard = hook_sub.add_parser("read-guard", help="apply the advisory-safe read guard")
     read_guard.add_argument("--host", choices=("claude", "codex"), required=True)
     stop_audit = hook_sub.add_parser("stop-audit", help="record `BLOCKED <CODE>` reports that no command emitted (Stop hook)")
@@ -436,13 +438,19 @@ def build_parser() -> CardineArgumentParser:
 
 def _run_hook(arguments: argparse.Namespace) -> int:
     """Dispatch advisory hooks without loading lifecycle or release commands."""
+    if arguments.hook_command == "briefing":
+        from cardine.hosts.briefing import briefing_main
+
+        return briefing_main(["--host", arguments.host])
     if arguments.hook_command == "read-guard":
         from cardine.hosts.read_guard import read_guard_main
 
         return read_guard_main(arguments.host)
-    from cardine.hosts.stop_audit import stop_audit_main
+    if arguments.hook_command == "stop-audit":
+        from cardine.hosts.stop_audit import stop_audit_main
 
-    return stop_audit_main(arguments.host)
+        return stop_audit_main(arguments.host)
+    raise SystemExit(f"unknown hook: {arguments.hook_command}")
 
 
 def _run_cli(journal: LifecycleJournalEntry) -> int:
