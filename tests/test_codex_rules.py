@@ -238,9 +238,9 @@ class CodexRoleRulesDecisionTableTest(unittest.TestCase):
         for role in ("implementer", "reviewer"):
             for line in codex.role_rule_lines(role):
                 self.assertRegex(line, PREFIX_RULE)
-            path = codex.role_rules_path(Path("/home/u/.codex"), role)
+            path = codex.role_rules_path(Path("codex-home"), role)
             self.assertNotEqual(path.parent.name, "rules")
-            self.assertEqual(path.parent.parent, Path("/home/u/.codex"))
+            self.assertEqual(path.parent.parent, Path("codex-home"))
 
 
 if __name__ == "__main__":
