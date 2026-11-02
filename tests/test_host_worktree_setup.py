@@ -739,12 +739,14 @@ class WorktreeRootSetupTest(unittest.TestCase):
         claude_plan = owner_hosts_claude.plan_claude_project_allowlist(project)
         self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(claude_plan))
         ready = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
-        self.assertEqual(ready["claude-project-allowlist"], "ready")
+        self.assertEqual(ready["claude-project-allowlist"], "installed")
 
     def _trusted_project_with_rules(self, rules_text: str) -> tuple[Path, Path]:
         project = self.home / "project"
         (project / ".codex/rules").mkdir(parents=True)
         (project / ".codex/rules/meridian.rules").write_text(rules_text, encoding="utf-8")
+        (self.home / ".codex/rules").mkdir(parents=True, exist_ok=True)
+        (self.home / ".codex/rules/cardine.rules").write_text(owner_hosts_codex.CODEX_USER_RULES, encoding="utf-8")
         root = self.home / "root"
         root.mkdir()
         self.codex_config.parent.mkdir(parents=True, exist_ok=True)
@@ -759,8 +761,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
         project, root = self._trusted_project_with_rules(rules)
         ready = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(ready["lifecycle-command-policy"], "ready")
-        for key in ("archive-rename-policy", "inspection-command-policy", "validation-command-policy"):
+        for key in ("archive-rename-policy", "inspection-command-policy"):
             self.assertEqual(ready[key], "ready", key)
+        self.assertNotIn("validation-command-policy", ready)
 
     @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_codex_doctor_names_the_gap_for_rules_without_the_closure_block(self) -> None:
@@ -769,10 +772,10 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertNotEqual(legacy, rules)
         project, root = self._trusted_project_with_rules(legacy)
         gaps = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
-        self.assertEqual(gaps["lifecycle-command-policy"], "blocked")
+        self.assertEqual(gaps["lifecycle-command-policy"], "ready")  # the user layer allows `cardine worktree`
         self.assertEqual(gaps["archive-rename-policy"], "gap: git mv")
         self.assertTrue(gaps["inspection-command-policy"].startswith("gap: "))
-        self.assertTrue(gaps["validation-command-policy"].startswith("gap: "))
+        self.assertNotIn("validation-command-policy", gaps)
 
     def test_claude_allowlist_covers_only_the_declared_command_surface(self) -> None:
         allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
@@ -781,8 +784,6 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "Bash(cardine worktree evidence:*)",
             "Bash(cardine worktree closure-status:*)",
             "Bash(cardine worktree integrate stage:*)",
-            "Bash(python3 scripts/check_repository.py)",
-            "Bash(python3 -m unittest discover -s tests)",
             "Bash(git mv tasks/:*)",
             "Bash(ls:*)",
             "Bash(grep:*)",
@@ -798,6 +799,8 @@ class WorktreeRootSetupTest(unittest.TestCase):
             self.assertNotIn(f"Bash(python3 scripts/cardine_cli.py execution {subcommand}:*)", allowlist)
         for retired in ("evidence", "investigate", "handoff-check"):
             self.assertNotIn(f"Bash(cardine execution {retired}:*)", allowlist)
+        for adopter_test in ("scripts/", "unittest", "run_tests", "pytest"):
+            self.assertFalse(any(adopter_test in command for command in allowlist), adopter_test)
         for unrelated in ("Bash(git mv:*)", "Bash(mv:*)", "Bash(sed:*)", "Bash(rg:*)", "Bash(find:*)"):
             self.assertNotIn(unrelated, allowlist)
         self.assertNotIn("Bash(cardine execution reconcile:*)", allowlist)

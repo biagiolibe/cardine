@@ -42,10 +42,6 @@ CLAUDE_PROJECT_ALLOWLIST = (
     "Bash(cardine execution ready-check:*)",
     "Bash(cardine execution preflight:*)",
     "Bash(cardine execution contract:*)",
-    "Bash(python3 scripts/check_repository.py)",
-    "Bash(python3 scripts/run_tests.py --parallel)",
-    "Bash(python3 -m unittest discover -s tests)",
-    "Bash(python3 -m unittest discover -s tests -q)",
     "Bash(git mv tasks/:*)",
     "Bash(set -o pipefail)",
     "Bash(ls:*)",
@@ -115,7 +111,7 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
             "ready",
             settings_path,
             None,
-            "project command allowlist and deny rules are already effective",
+            "project command allowlist and deny rules are already installed; installation is not host enforcement",
             current_text,
         )
     proposed = copy.deepcopy(settings)

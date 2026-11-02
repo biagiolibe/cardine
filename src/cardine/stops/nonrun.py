@@ -30,12 +30,10 @@ def diagnostic_invocation(arguments: object) -> bool:
     command = getattr(arguments, "command", None)
     if command in {"upgrade", "setup"}:
         return bool(getattr(arguments, "check", False)) and not getattr(arguments, "apply", False)
+    if command == "doctor":
+        return True
     if command == "codex":
-        subcommand = getattr(arguments, "codex_command", None)
-        return subcommand in {"doctor", "worktree-path"} or (
-            subcommand == "configure" and bool(getattr(arguments, "check", False))
-            and not getattr(arguments, "apply", False)
-        )
+        return getattr(arguments, "codex_command", None) == "worktree-path"
     return False
 
 

@@ -22,6 +22,7 @@ from unittest.mock import patch
 from cardine_cli_support import ROOT
 from cardine import cli
 from cardine.hosts import codex
+from cardine.hosts import setup as hosts_setup
 from cardine.shared.constants import ENTRY_ROUTER_PATH, PROTOCOL_VERSION
 from cardine.shared.errors import CardineStop
 from cardine.shared.journal import LifecycleJournalEntry
@@ -74,8 +75,7 @@ class NonrunCausesTest(unittest.TestCase):
                                      expected if diagnostic else 'OS_ACCESS_FAILED')
         for argv, safe in ((['setup', '--check'], True), (['setup', '--apply'], False),
                            (['upgrade', '--check'], True), (['upgrade', '--apply'], False),
-                           (['codex', 'configure', '--check'], True),
-                           (['codex', 'configure', '--apply'], False),
+                           (['doctor', '--host', 'codex'], True),
                            (['self-update', '--apply'], False)):
             self.assertEqual(diagnostic_invocation(cli.build_parser().parse_args(argv)), safe)
 
@@ -83,8 +83,8 @@ class NonrunCausesTest(unittest.TestCase):
         for number, code in ((errno.ENOENT, 'OS_PATH_MISSING'), (errno.EBUSY, 'OS_PATH_BUSY'),
                              (errno.EACCES, 'OS_ACCESS_FAILED')):
             stderr = io.StringIO()
-            argv = ['cardine', 'codex', 'configure', '--check', '--config', '/tmp/a b;input.toml']
-            with patch.object(sys, 'argv', argv), patch.object(codex, 'plan_codex_configuration',
+            argv = ['cardine', 'setup', '--check', '--config', '/tmp/a b;input.toml']
+            with patch.object(sys, 'argv', argv), patch.object(hosts_setup, 'plan_codex_configuration',
                     side_effect=OSError(number, 'injected')), contextlib.redirect_stderr(stderr):
                 self.assertEqual(cli._run_cli(LifecycleJournalEntry()), 2 if number == errno.EACCES else 0)
             self.assertIn(code, stderr.getvalue())

@@ -109,6 +109,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/tasks/preflight.py", "check_dependencies", "<dynamic>"): ("passthrough", "valid task order and pending dependencies are nonhuman; cancelled or failed results retain guardrails"),
     ("src/cardine/tasks/preflight.py", "execution_preflight", "<dynamic>"): ("passthrough", "valid task order and pending dependencies are nonhuman; cancelled or failed results retain guardrails"),
     ("src/cardine/cli.py", "_run_cli", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
+    ("src/cardine/cli.py", "main", "COMMAND_REFUSED"): ("guardrail", "removed `codex doctor` and `codex configure` are refused with the setup and doctor migration; nothing runs"),
     ("src/cardine/cli.py", "_run_cli", "COMMAND_REFUSED"): ("guardrail", "unknown input/state or damaged host markers; non-run OS classification is audited in stops/nonrun.py"),
     ("src/cardine/cli.py", "_run_cli", "OS_ACCESS_FAILED"): ("split", "explicit read-only missing/busy errno; denied or uncertain effect residue remains a guardrail"),
     ("src/cardine/cli.py", "_run_cli", "WRONG_WORKTREE"): ("guardrail", "missing, mismatched, dirty-foreign or unproven task location"),
