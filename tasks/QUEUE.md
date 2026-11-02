@@ -56,5 +56,5 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[x]` | 132 | Unify doctor and drop adopter test-command assumptions (H4d) | 🔴 P1 | 131 | [132](done/132-unified-doctor.md) |
 | `[x]` | 133 | Enforce protected paths and Claude role restrictions (H5a) | 🔴 P1 | 132, 137 | [133](done/133-claude-role-permissions.md) |
 | `[x]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](done/134-codex-role-policy.md) |
-| `[ ]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](135-host-transports.md) |
+| `[x]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](done/135-host-transports.md) |
 | `[ ]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](136-doctor-role-proofs.md) |

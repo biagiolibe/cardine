@@ -74,6 +74,14 @@ class ClaudeProfileAdapter(ProfileAdapter):
         super().__init__('claude', transport, credential)
 
 
+def host_adapter(host, transport, credential):
+    """Bind a concrete transport to its own host; a mismatched or unknown host never launches."""
+    adapter = {'codex': CodexProfileAdapter, 'claude': ClaudeProfileAdapter}.get(host)
+    if adapter is None or getattr(transport, 'host', None) != host:
+        raise CardineError('host transport does not match the requested host: ' + str(host))
+    return adapter(transport, credential)
+
+
 @scoped_command
 def launch_run_request(locations, request, *, adapter):
     """Adapt a Stable work envelope to the existing idempotent role launch.
