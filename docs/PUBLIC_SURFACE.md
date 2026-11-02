@@ -55,10 +55,9 @@ including command containers and nested subcommands.
 | `cardine locations` | Stable |
 | `cardine project` | Stable |
 | `cardine setup` | Stable |
+| `cardine doctor` | Stable |
 | `cardine codex` | Stable |
-| `cardine codex configure` | Stable |
 | `cardine codex worktree-path` | Stable |
-| `cardine codex doctor` | Stable |
 | `cardine worktree` | Stable |
 | `cardine worktree path` | Stable |
 | `cardine worktree prepare` | Stable |

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cardine_cli_support import CLI, ROOT
+import os
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,28 @@ import cardine.shared.errors as shared_errors
 from cardine.hosts import codex as owner_hosts_codex
 from cardine.hosts import setup as owner_hosts_setup
 import cardine_cli
+
+
+RETIRED_CONFIGURE_DRIVER = """
+import sys
+from pathlib import Path
+from cardine.hosts.codex import apply_codex_configuration, plan_codex_configuration, print_codex_configuration_plan
+from cardine.shared.errors import CardineError
+mode, root, config = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3])
+try:
+    plan = plan_codex_configuration(config, root)
+    print_codex_configuration_plan(plan)
+    if mode == "--apply":
+        changed = apply_codex_configuration(plan)
+        if changed and plan.status in ("repair-required", "repair-and-replace-required"):
+            print("result: ownership metadata repaired" + (" and root replaced" if plan.status == "repair-and-replace-required" else "")
+                  + "; this does not prove the running session loaded the profile, so start a fresh Codex session and probe it")
+        else:
+            print("result: updated; restart Codex and select the profile" if changed else "result: no-op")
+except CardineError as error:
+    print(f"BLOCKED COMMAND_REFUSED: {error}", file=sys.stderr)
+    raise SystemExit(2)
+"""
 
 
 class CodexProfileRepairTest(unittest.TestCase):
@@ -56,9 +79,10 @@ class CodexProfileRepairTest(unittest.TestCase):
         )
 
     def run_cli(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+        # `cardine codex configure` was removed (D4); its library body stays covered here.
         return subprocess.run(
-            [sys.executable, str(CLI), "codex", "configure", *arguments,
-             "--worktree-root", str(self.worktrees), "--config", str(self.config)],
+            [sys.executable, "-c", RETIRED_CONFIGURE_DRIVER, *arguments, str(self.worktrees), str(self.config)],
+            env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
             text=True,
             capture_output=True,
             check=False,

@@ -50,6 +50,20 @@ def main() -> int:
     if preview_args[:1] == ["run"] or review_preview:
         from cardine.lifecycle.engine import run_preview_cli
         return run_preview_cli(preview_args[1:])
+    if preview_args[:2] in (["codex", "configure"], ["codex", "doctor"]):
+        # Removed without alias (D4): refuse with the migration, whatever follows.
+        from cardine.shared.journal import LifecycleJournalEntry
+        from cardine.stops.render import emit_diagnostic, stop_error
+
+        replacement = "cardine setup --check|--apply" if preview_args[1] == "configure" else "cardine doctor --host codex"
+        refused = stop_error(
+            "COMMAND_REFUSED",
+            f"`cardine codex {preview_args[1]}` was removed; use {replacement} (unified `cardine setup` and `cardine doctor`)",
+        )
+        journal = LifecycleJournalEntry()
+        exit_code = emit_diagnostic(refused, journal)
+        journal.write(exit_code)
+        return exit_code
     if preview_args[:1] == ["hook"]:
         try:
             Path.cwd()
@@ -192,23 +206,18 @@ def build_parser() -> CardineArgumentParser:
     )
     setup.add_argument("--config", type=Path, default=Path.home() / ".codex/config.toml", help=argparse.SUPPRESS)
 
-    codex = subparsers.add_parser("codex", help="configure and diagnose Codex task-worktree access")
+    codex = subparsers.add_parser("codex", help="derive Codex task-worktree paths")
     codex_sub = codex.add_subparsers(dest="codex_command", required=True)
-    codex_configure = codex_sub.add_parser("configure", help="plan or apply a bounded Codex permission profile")
-    codex_configure_group = codex_configure.add_mutually_exclusive_group(required=True)
-    codex_configure_group.add_argument("--check", action="store_true")
-    codex_configure_group.add_argument("--apply", action="store_true")
-    codex_configure.add_argument("--worktree-root", type=Path)
-    codex_configure.add_argument("--config", type=Path, default=Path.home() / ".codex/config.toml", help=argparse.SUPPRESS)
-    codex_configure.add_argument("--requirements", type=Path, help=argparse.SUPPRESS)
     codex_path = codex_sub.add_parser("worktree-path", help="derive one repository-qualified task worktree path")
     codex_path.add_argument("task_id")
     codex_path.add_argument("--project", type=Path, default=Path.cwd())
     codex_path.add_argument("--worktree-root", type=Path)
-    codex_doctor_parser = codex_sub.add_parser("doctor", help="report Codex host capabilities separately")
-    codex_doctor_parser.add_argument("--project", type=Path, default=Path.cwd())
-    codex_doctor_parser.add_argument("--worktree-root", type=Path)
-    codex_doctor_parser.add_argument("--config", type=Path, default=Path.home() / ".codex/config.toml", help=argparse.SUPPRESS)
+    doctor = subparsers.add_parser("doctor", help="report host capabilities separately for one host")
+    doctor.add_argument("--host", choices=("claude", "codex"), required=True)
+    doctor.add_argument("--project", type=Path, default=Path.cwd())
+    doctor.add_argument("--worktree-root", type=Path)
+    doctor.add_argument("--config", type=Path, default=Path.home() / ".codex/config.toml", help=argparse.SUPPRESS)
+    doctor.add_argument("--home", type=Path, help=argparse.SUPPRESS)
 
     worktree = subparsers.add_parser("worktree", help="run the bounded host-neutral task-worktree lifecycle")
     worktree_sub = worktree.add_subparsers(dest="worktree_command", required=True)
@@ -454,8 +463,7 @@ def _run_hook(arguments: argparse.Namespace) -> int:
 
 
 def _run_cli(journal: LifecycleJournalEntry) -> int:
-    from cardine.hosts.codex import apply_codex_configuration, plan_codex_configuration, print_codex_configuration_plan
-    from cardine.hosts.setup import apply_setup, codex_doctor, plan_setup, print_setup_plan
+    from cardine.hosts.setup import apply_setup, host_doctor, plan_setup, print_setup_plan
     from cardine.integration.evidence import measured_validation_report
     from cardine.integration.merge import abort_task_integration, cleanup_task_worktree, finalize_task_integration, stage_task_integration
     from cardine.lifecycle.closure import advance_task_closure
@@ -600,43 +608,23 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             if arguments.apply:
                 changed = apply_setup(plan)
                 print("result: updated; restart Codex" if changed else "result: no-op")
+        elif arguments.command == "doctor":
+            report = host_doctor(
+                arguments.host,
+                project_root,
+                arguments.config.expanduser().resolve(),
+                resolve_worktree_root(arguments.worktree_root).path,
+                framework_root=framework_root,
+                home=arguments.home,
+            )
+            for capability, status in report.items():
+                print(f"{capability}: {status}")
         elif arguments.command == "codex":
             resolved_root = resolve_worktree_root(arguments.worktree_root)
-            if arguments.codex_command == "configure":
-                plan = plan_codex_configuration(
-                    arguments.config.expanduser().resolve(),
-                    resolved_root.path,
-                    arguments.requirements.expanduser().resolve() if arguments.requirements else None,
-                )
-                print_codex_configuration_plan(plan)
-                if arguments.apply:
-                    changed = apply_codex_configuration(plan)
-                    if changed and plan.status in ("repair-required", "repair-and-replace-required"):
-                        action = (
-                            "ownership metadata repaired and root replaced"
-                            if plan.status == "repair-and-replace-required"
-                            else "ownership metadata repaired"
-                        )
-                        print(
-                            f"result: {action}; this does not prove the running session loaded "
-                            "the profile, so start a fresh Codex session and probe it"
-                        )
-                    else:
-                        print("result: updated; restart Codex and select the profile" if changed else "result: no-op")
-            elif arguments.codex_command == "worktree-path":
-                path = task_worktree_path(project_root, resolved_root.path, arguments.task_id)
-                validate_worktree_collision(project_root, path, arguments.task_id)
-                print("DEPRECATED: use `cardine worktree path`", file=sys.stderr)
-                print(path)
-            else:
-                report = codex_doctor(
-                    project_root,
-                    arguments.config.expanduser().resolve(),
-                    resolved_root.path,
-                    framework_root=framework_root,
-                )
-                for capability, status in report.items():
-                    print(f"{capability}: {status}")
+            path = task_worktree_path(project_root, resolved_root.path, arguments.task_id)
+            validate_worktree_collision(project_root, path, arguments.task_id)
+            print("DEPRECATED: use `cardine worktree path`", file=sys.stderr)
+            print(path)
         elif arguments.command == "worktree":
             if arguments.worktree_command == "active":
                 print(json.dumps(active_worktree_task(Path.cwd()) or {}, sort_keys=True))

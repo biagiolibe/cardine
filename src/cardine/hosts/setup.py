@@ -8,7 +8,7 @@ from cardine.worktree.paths import repository_identity
 
 from cardine.hosts.claude import apply_claude_project_allowlist
 from cardine.hosts.effects import host_operation
-from cardine.hosts.hooks import HooksPlan, apply_hooks, plan_hooks
+from cardine.hosts.hooks import HooksPlan, _commands, apply_hooks, hook_command, plan_hooks, registry_path
 from cardine.lifecycle import receipts
 from cardine.hosts.claude import claude_hook_duplicate_advisories
 from cardine.hosts.claude import plan_claude_project_allowlist
@@ -46,6 +46,7 @@ from pathlib import Path
 import difflib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -554,21 +555,21 @@ CODEX_CLOSURE_POLICY_PROBES = (
             (("rg", "--pre", "cat", "x"), None),
         ),
     ),
-    (
-        "validation-command-policy",
-        (
-            (("python3", "scripts/check_repository.py"), "allow"),
-            (("python3", "-m", "unittest", "discover", "-s", "tests", "-q"), "allow"),
-            (("set", "-o", "pipefail"), "allow"),
-        ),
-    ),
 )
+
+
+def _execpolicy_argv(codex_executable: str, rules: tuple[Path, ...], command: tuple[str, ...]) -> list[str]:
+    """Ask the host to evaluate the installed combined policy, one `--rules` per layer."""
+    argv = [codex_executable, "execpolicy", "check"]
+    for path in rules:
+        argv += ["--rules", str(path)]
+    return [*argv, "--", *command]
 
 
 def _codex_policy_probe_state(
     command_policy: str,
     codex_executable: str | None,
-    rules: Path,
+    rules: tuple[Path, ...],
     probes: tuple[tuple[tuple[str, ...], str | None], ...],
 ) -> str:
     """Report `ready` only when every probe returns its expected decision."""
@@ -577,7 +578,7 @@ def _codex_policy_probe_state(
     gaps = []
     for command, expected in probes:
         checked = subprocess.run(
-            [codex_executable, "execpolicy", "check", "--rules", str(rules), "--", *command],
+            _execpolicy_argv(codex_executable, rules, command),
             text=True,
             capture_output=True,
             check=False,
@@ -629,10 +630,15 @@ def codex_doctor(
         for path, settings in parsed.get("projects", {}).items()
     )
     result["project-trust"] = "ready" if trusted else "approval-required"
-    rules = project_root / ".codex/rules/meridian.rules"
-    result["command-policy"] = "ready" if rules.is_file() and trusted else ("approval-required" if rules.is_file() else "blocked")
+    home = (home or Path.home()).expanduser().resolve()
+    # The installed combined policy: the user layer plus any legacy project layer.
+    rules = tuple(
+        path for path in (home / ".codex/rules/cardine.rules", project_root / ".codex/rules/meridian.rules")
+        if path.is_file()
+    )
+    result["command-policy"] = "ready" if rules and trusted else ("approval-required" if rules else "blocked")
     claude_plan = plan_claude_project_allowlist(project_root)
-    result["claude-project-allowlist"] = claude_plan.status
+    result["claude-project-allowlist"] = "installed" if claude_plan.status == "ready" else claude_plan.status
     try:
         validation_state, _fragments = candidate_validation_declaration(project_root)
         result["candidate-validation-commands"] = (
@@ -658,7 +664,7 @@ def codex_doctor(
         decisions: list[str | None] = []
         for probe in probes:
             checked = subprocess.run(
-                [codex_executable, "execpolicy", "check", "--rules", str(rules), "--", "meridian", "worktree", *probe],
+                _execpolicy_argv(codex_executable, rules, ("cardine", "worktree", *probe)),
                 text=True,
                 capture_output=True,
                 check=False,
@@ -677,16 +683,10 @@ def codex_doctor(
         )
     root_write = "approval-required"
     if result["permission-model"] in ("ready", "repair-required", "repair-and-replace-required") and worktree_root.is_dir():
-        try:
-            descriptor, probe_name = tempfile.mkstemp(prefix=".cardine-codex-probe-", dir=worktree_root)
-            os.close(descriptor)
-            Path(probe_name).unlink()
-            root_write = "ready"
-        except OSError:
-            root_write = "blocked"
+        # Read-only: a probe file here would write outside the fixture on every run.
+        root_write = "ready" if os.access(worktree_root, os.W_OK | os.X_OK) else "blocked"
     result["worktree-root-write"] = root_write
     result["git-metadata"] = "ready" if lifecycle_policy == "ready" else "approval-required"
-    home = (home or Path.home()).expanduser().resolve()
     framework_root = (framework_root or SCRIPTS_ROOT.parent).expanduser().resolve()
     try:
         result["user-command-policy"] = plan_codex_user_rules(home / ".codex/rules/cardine.rules").status
@@ -701,7 +701,61 @@ def codex_doctor(
         if Path(cardine_root_value).expanduser().resolve() == framework_root
         else "mismatch"
     )
+    result["hook-invocation"] = probe_hook_invocation("codex", home)
     return result
+
+
+def claude_doctor(project_root: Path, *, home: Path | None = None) -> dict[str, str]:
+    """Claude has no host command-decision probe, so enforcement is never inferred from settings."""
+    home = (home or Path.home()).expanduser().resolve()
+    plan = plan_claude_project_allowlist(project_root)
+    return {
+        "claude-project-allowlist": "installed" if plan.status == "ready" else plan.status,
+        "claude-command-policy": "unverified",
+        "hook-invocation": probe_hook_invocation("claude", home),
+    }
+
+
+def host_doctor(host: str, project_root: Path, config_path: Path, worktree_root: Path, **options) -> dict[str, str]:
+    if host == "claude":
+        return claude_doctor(project_root, home=options.get("home"))
+    return codex_doctor(project_root, config_path, worktree_root, **options)
+
+
+_PROBE_LINES = 2000
+
+
+def probe_hook_invocation(host: str, home: Path, *, timeout: int = 30) -> str:
+    """Run the registered read-guard hook on a sentinel file inside a throwaway fixture.
+
+    Reads the registration only to find the command; the verdict is the hook's
+    observed deny. An interrupted or failed probe reports `unverified` and
+    persists nothing, so it can never record effective success.
+    """
+    registry = registry_path(home, host)
+    try:
+        document = json.loads(registry.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "missing"
+    wanted = hook_command(host, "read-guard")
+    if wanted not in set(_commands(document.get("hooks") if isinstance(document, dict) else None)):
+        return "missing"
+    argv = shlex.split(wanted)
+    executable = shutil.which(argv[0])
+    if executable is None:
+        return "unverified: cardine is not on PATH"
+    with tempfile.TemporaryDirectory(prefix="cardine-doctor-") as fixture:
+        root = Path(fixture).resolve()
+        (root / "PROJECT_WORKFLOW.md").write_text("probe\n", encoding="utf-8")
+        (root / "sentinel.txt").write_text("line\n" * _PROBE_LINES, encoding="utf-8")
+        tool_input = {"file_path": str(root / "sentinel.txt")} if host == "claude" else {"command": "cat sentinel.txt"}
+        payload = {"tool_name": "Read" if host == "claude" else "Bash", "tool_input": tool_input, "cwd": str(root)}
+        try:
+            completed = subprocess.run([executable, *argv[1:]], input=json.dumps(payload), text=True,
+                                       capture_output=True, cwd=root, timeout=timeout, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            return "unverified: probe interrupted"
+    return "ready" if completed.returncode == 2 and '"deny"' in completed.stdout else "unverified: no deny observed"
 
 
 def proposed_project_identity(project_root: Path) -> dict[str, str]:
