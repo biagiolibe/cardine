@@ -1,7 +1,9 @@
 """Kill host setup writes at every effect boundary in disposable homes and repeat the command."""
 import contextlib
 import io
+import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -32,6 +34,25 @@ plan = setup.plan_setup(None, home / 'codex/config.toml',
                         home=home, framework_root=framework, project_root=home / 'project')
 setup.apply_setup(plan)
 '''
+DECLARING_CHILD = '''
+import json, os, sys, tempfile
+from pathlib import Path
+from cardine.hosts import setup
+from cardine.lifecycle import receipts
+home, seam, framework = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
+tempfile.tempdir = sys.argv[4]
+options = json.loads(sys.argv[5])
+def boundary(name):
+    if name == seam:
+        os._exit(93)
+receipts.boundary = boundary
+root = None if options['root'] is None else home / options['root']
+plan = setup.plan_setup(root, home / 'codex/config.toml', task_identity=options['identity'],
+                        environment={'HOME': str(home), 'XDG_CONFIG_HOME': str(home / 'xdg')},
+                        home=home, framework_root=framework, project_root=home / 'project')
+setup.apply_setup(plan)
+'''
+IDENTITY_HASH = re.compile(rb'(?i)(?<=project[ -])[0-9a-f]{12}')
 FOREIGN_CONFIG = '# foreign settings\nmodel = "test"\n'
 FOREIGN_RULES = '# user rule\nprefix_rule(pattern=["ls"], decision="allow")\n'
 
@@ -369,6 +390,179 @@ class HostRepeatabilityTest(unittest.TestCase):
         self.assertFalse(claude.apply_claude_project_allowlist(claude.plan_claude_project_allowlist(project)))
         intent = receipts._load_intent(receipts.host_path('claude-allowlist', project / '.claude/settings.local.json'))
         self.assertEqual((intent['result'], set(intent['effects'].values())), (dict(done=True), {'done'}))
+
+
+    # Setup orchestration (H4b): the worktree root, its user configuration and the
+    # project declarations replay to a fresh install and stay pinned to their plan.
+    SCENARIOS = {
+        'custom-root': dict(root='work/trees', identity='milestone', seed=None),
+        'default-root': dict(root=None, identity='opaque', seed=None),
+        'config-removed': dict(root=None, identity=None, seed='default'),
+    }
+
+    def make_declaring_home(self, seed=None):
+        home = self.make_home()
+        project = home / 'project'
+        subprocess.run(['git', 'init', '-q', str(project)], check=True)
+        if seed == 'default':
+            (home / 'xdg/cardine').mkdir(parents=True)
+            (home / 'xdg/cardine/config.json').write_text(
+                '{"version": 1, "worktreeRoot": "%s"}\n' % (home / '.cardine/worktrees'))
+        return home
+
+    def run_declaring(self, home, scenario, seam='', **override):
+        options = json.dumps({**self.SCENARIOS[scenario], **override})
+        return subprocess.run(
+            [sys.executable, '-c', DECLARING_CHILD, str(home), seam, str(ROOT), str(self.base / 'receipts'), options],
+            capture_output=True, text=True, timeout=60,
+            env={**os.environ, 'HOME': str(home), 'PYTHONPATH': str(ROOT / 'src')})
+
+    def declaring_receipt(self, home, scenario):
+        root = self.SCENARIOS[scenario]['root']
+        return receipts.host_path('setup', home / (root or '.cardine/worktrees'))
+
+    def declaring_tree(self, home):
+        return {path: mode for path, mode in self.modes(home).items() if not path.startswith('project/.git/')}
+
+    def modes(self, home):
+        found = {}
+        for path in sorted(home.rglob('*')):
+            if path.is_symlink() or '.git' in path.relative_to(home).parts[:2]:
+                continue
+            found[path.relative_to(home).as_posix()] = (
+                path.stat().st_mode & 0o777, None if path.is_dir() else IDENTITY_HASH.sub(b'<hash>', path.read_bytes().replace(str(home).encode(), b'<home>')))
+        return found
+
+    def declaring_reference(self, scenario):
+        home = self.make_declaring_home(self.SCENARIOS[scenario]['seed'])
+        finished = self.run_declaring(home, scenario)
+        self.assertEqual(finished.returncode, 0, finished.stdout + finished.stderr)
+        intent = receipts._load_intent(self.declaring_receipt(home, scenario))
+        self.assertEqual((intent['result'], set(intent['effects'].values())), (dict(done=True), {'done'}))
+        return home, sorted(intent['effects'])
+
+    def test_root_config_and_declarations_replay_to_a_fresh_install_with_private_modes(self):
+        expected_effects = {
+            'custom-root': {'directory:cardine-root', 'file:worktree-config', 'file:project-declaration',
+                            'file:task-identity', 'file:candidate-validation'},
+            'default-root': {'directory:cardine-root', 'file:project-declaration', 'file:task-identity',
+                            'file:candidate-validation'},
+            'config-removed': {'directory:cardine-root', 'file:worktree-config', 'file:project-declaration',
+                               'file:candidate-validation'},
+        }
+        for scenario, required in expected_effects.items():
+            reference, names = self.declaring_reference(scenario)
+            self.assertLessEqual(required, set(names), scenario)
+            expected = self.declaring_tree(reference)
+            root = reference / (self.SCENARIOS[scenario]['root'] or '.cardine/worktrees')
+            self.assertEqual(root.stat().st_mode & 0o777, 0o700)
+            for private in ('project/.cardine/project.json', 'project/.cardine/candidate-validation.json'):
+                self.assertEqual((reference / private).stat().st_mode & 0o777, 0o600)
+            config = reference / 'xdg/cardine/config.json'
+            self.assertEqual(config.exists(), scenario == 'custom-root')
+            if config.exists():
+                self.assertEqual(config.stat().st_mode & 0o777, 0o600)
+            for name in names:
+                for when in ('before', 'after'):
+                    with self.subTest(scenario=scenario, seam=f'{when}_{name}'):
+                        home = self.make_declaring_home(self.SCENARIOS[scenario]['seed'])
+                        self.assertEqual(self.run_declaring(home, scenario, f'{when}_{name}').returncode, 93)
+                        interrupted = receipts._load_intent(self.declaring_receipt(home, scenario))
+                        self.assertIsNone(interrupted['result'])
+                        finished = self.run_declaring(home, scenario)
+                        self.assertEqual(finished.returncode, 0, finished.stdout + finished.stderr)
+                        final = receipts._load_intent(self.declaring_receipt(home, scenario))
+                        self.assertEqual(final['operation_id'], interrupted['operation_id'])
+                        self.assertEqual(self.declaring_tree(home), expected)
+                        self.assertEqual(self.run_declaring(home, scenario).returncode, 0)
+                        self.assertEqual(self.declaring_tree(home), expected)
+
+
+    def test_a_retry_with_a_changed_plan_is_pinned_to_the_original_plan(self):
+        reference, _names = self.declaring_reference('custom-root')
+        expected = self.declaring_tree(reference)
+        for seam in ('after_directory:cardine-root', 'after_file:worktree-config', 'after_file:task-identity'):
+            for label, override in (('identity', dict(identity='opaque')), ('dropped-identity', dict(identity=None))):
+                with self.subTest(seam=seam, change=label):
+                    home = self.make_declaring_home()
+                    self.assertEqual(self.run_declaring(home, 'custom-root', seam).returncode, 93)
+                    pending = self.declaring_receipt(home, 'custom-root')
+                    interrupted = receipts._load_intent(pending)
+                    snapshot = self.declaring_tree(home)
+                    retry = self.run_declaring(home, 'custom-root', **override)
+                    self.assertNotEqual(retry.returncode, 0, retry.stdout)
+                    self.assertIn('different owner or inputs', retry.stderr)
+                    self.assertIsNone(receipts._load_intent(pending)['result'])
+                    self.assertEqual(receipts._load_intent(pending)['operation_id'], interrupted['operation_id'])
+                    self.assertEqual(self.declaring_tree(home), snapshot)
+                    # The original command still finishes exactly the original plan.
+                    self.assertEqual(self.run_declaring(home, 'custom-root').returncode, 0)
+                    self.assertEqual(self.declaring_tree(home), expected)
+
+    def test_a_retry_with_another_root_leaves_the_pending_operation_untouched(self):
+        home = self.make_declaring_home()
+        self.assertEqual(self.run_declaring(home, 'custom-root', 'after_file:worktree-config').returncode, 93)
+        pending = self.declaring_receipt(home, 'custom-root')
+        recorded = pending.read_bytes()
+        self.run_declaring(home, 'custom-root', root='work/elsewhere')
+        self.assertEqual(pending.read_bytes(), recorded)
+        self.assertIsNone(receipts._load_intent(pending)['result'])
+
+    def test_edited_declarations_and_config_are_preserved_between_a_kill_and_its_retry(self):
+        for seam, target, edit in (
+                ('after_file:worktree-config', 'xdg/cardine/config.json', '{"version": 1, "worktreeRoot": "/elsewhere"}\n'),
+                ('after_file:project-declaration', 'project/.cardine/project.json', '{"edited": true}\n'),
+                ('after_file:task-identity', 'project/.cardine/task-identity.json', '{"version": 1, "mode": "opaque"}\n'),
+                ('after_file:candidate-validation', 'project/.cardine/candidate-validation.json', '{"edited": true}\n')):
+            with self.subTest(seam=seam):
+                home = self.make_declaring_home()
+                self.assertEqual(self.run_declaring(home, 'custom-root', seam).returncode, 93)
+                (home / target).write_text(edit)
+                pending = self.declaring_receipt(home, 'custom-root')
+                recorded, snapshot = pending.read_bytes(), self.declaring_tree(home)
+                self.assertNotEqual(self.run_declaring(home, 'custom-root').returncode, 0)
+                self.assertEqual((home / target).read_text(), edit)
+                self.assertEqual((pending.read_bytes(), self.declaring_tree(home)), (recorded, snapshot))
+                self.assertIsNone(receipts._load_intent(pending)['result'])
+
+    def test_symlinked_roots_configs_and_declaration_directories_are_refused_without_writing(self):
+        for label in ('config-directory', 'declaration-directory', 'config-file', 'declaration-file'):
+            with self.subTest(label=label):
+                home = self.make_declaring_home()
+                outside = self.base / f'outside-{self.count}'
+                outside.mkdir()
+                link = {'config-directory': home / 'xdg/cardine', 'declaration-directory': home / 'project/.cardine',
+                        'config-file': home / 'xdg/cardine/config.json',
+                        'declaration-file': home / 'project/.cardine/project.json'}[label]
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(outside / 'target' if label.endswith('file') else outside)
+                snapshot = self.declaring_tree(home)
+                refused = self.run_declaring(home, 'custom-root')
+                self.assertNotEqual(refused.returncode, 0, refused.stdout)
+                self.assertEqual(list(outside.iterdir()), [])
+                self.assertEqual(self.declaring_tree(home), snapshot)
+
+    def test_inputs_changed_between_the_plan_and_apply_are_refused_before_any_write(self):
+        edits = {
+            'config': ('xdg/cardine/config.json', '{"version": 1, "worktreeRoot": "/elsewhere"}\n'),
+            'candidate-validation': ('project/.cardine/candidate-validation.json', '{"version": 1, "commands": []}\n'),
+            'project': ('project/.cardine/project.json', '{"version": 1, "project": {"name": "X", "slug": "x"}}\n'),
+            'task-identity': ('project/.cardine/task-identity.json', '{"version": 1, "mode": "opaque"}\n'),
+        }
+        for label, (target, text) in edits.items():
+            with self.subTest(label=label):
+                home = self.make_declaring_home()
+                plan = setup.plan_setup(home / 'work/trees', home / 'codex/config.toml', task_identity='milestone',
+                                        environment={'HOME': str(home), 'XDG_CONFIG_HOME': str(home / 'xdg')},
+                                        home=home, framework_root=ROOT, project_root=home / 'project')
+                (home / target).parent.mkdir(parents=True, exist_ok=True)
+                (home / target).write_text(text)
+                snapshot = self.declaring_tree(home)
+                with self.assertRaises(CardineError):
+                    setup.apply_setup(plan)
+                self.assertEqual(self.declaring_tree(home), snapshot)
+                self.assertFalse((home / 'work/trees').exists())
+                self.assertFalse(self.declaring_receipt(home, 'custom-root').exists())
 
 
 if __name__ == '__main__':

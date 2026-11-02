@@ -6,6 +6,7 @@ explicit consent its `--apply` flag represents.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -14,13 +15,19 @@ from cardine.lifecycle.file_operation import Operation, operation
 
 
 @contextmanager
-def host_operation(kind: str, anchor: Path, operation_in: Operation | None = None):
-    """Yield the caller's operation, or serialize and open one anchored at `anchor`."""
+def host_operation(kind: str, anchor: Path, operation_in: Operation | None = None,
+                   request: Mapping[str, str | None] | None = None):
+    """Yield the caller's operation, or serialize and open one anchored at `anchor`.
+
+    `request` names the choices the plan was computed from. They join the owner
+    binding, so a retry made with other choices cannot finish a pending operation
+    with a mixture of two plans; it is refused until the original command reruns.
+    """
     if operation_in is not None:
         yield operation_in
         return
     anchor = Path(anchor).resolve()
-    with operation(receipts.host_path(kind, anchor), dict(kind=kind, anchor=str(anchor))) as active:
+    with operation(receipts.host_path(kind, anchor), dict(kind=kind, anchor=str(anchor), **(request or {}))) as active:
         yield active
 
 

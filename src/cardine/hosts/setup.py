@@ -31,6 +31,8 @@ from cardine.shared.git import _run_git
 from cardine.shared.git import primary_project_root
 from cardine.shared.jsonio import json_bytes
 from cardine.shared.models import SetupPlan
+from dataclasses import dataclass, field
+import hashlib
 from cardine.shared.project import parse_project_declaration
 from cardine.shared.project import read_project_declaration
 from cardine.tasks.identity import parse_task_identity_policy
@@ -48,6 +50,56 @@ import subprocess
 import tempfile
 import tomllib
 from cardine.shared.paths import SCRIPTS_ROOT
+
+
+@dataclass(frozen=True)
+class PinnedSetupPlan(SetupPlan):
+    """A setup plan plus the digest of every user-owned file it was computed from."""
+
+    inputs: Mapping[str, str | None] = field(default_factory=dict)
+
+
+def _input_digest(path: Path) -> str | None:
+    """Digest of what a setup input holds now; a link or directory is a distinct value, never followed."""
+    if path.is_symlink():
+        return "link:" + os.readlink(path)
+    if path.is_dir():
+        return "directory"
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except FileNotFoundError:
+        return None
+
+
+def _plan_inputs(plan: SetupPlan) -> dict[str, str | None]:
+    return {
+        "worktree-config": _input_digest(plan.resolution.config_path),
+        "candidate-validation": _input_digest(plan.candidate_validation_path),
+        "project-declaration": _input_digest(plan.project_declaration_path),
+        "task-identity": _input_digest(plan.task_identity_path),
+        "worktree-root": plan.directory_state,
+    }
+
+
+def _refuse_linked_write_paths(plan: SetupPlan) -> None:
+    """Setup writes through no link: not a target, its directory, or the directory above it."""
+    targets = [plan.resolution.config_path, plan.candidate_validation_path,
+               plan.project_declaration_path, plan.task_identity_path]
+    for target in targets:
+        for path in (target, target.parent, target.parent.parent):
+            if path.is_symlink():
+                raise CardineError(f"refusing to write through a symlink: {path}")
+
+
+def _revalidate_plan(plan: SetupPlan) -> None:
+    """Refuse before the first write when an input changed after it was planned."""
+    pinned = getattr(plan, "inputs", None)
+    if pinned is None:
+        return
+    current = _plan_inputs(plan)
+    for name, digest in pinned.items():
+        if current[name] != digest:
+            raise CardineError(f"{name} changed since it was planned; rerun --check")
 
 
 def plan_setup(
@@ -262,7 +314,7 @@ def plan_setup(
         repository_root = Path(repository_probe.stdout.strip()).resolve()
         if resolution.path == repository_root or repository_root in resolution.path.parents:
             warnings.append("resolved root is inside the current repository and is unsuitable for machine setup")
-    return SetupPlan(
+    plan = SetupPlan(
         user_rules,
         resolution,
         codex_config,
@@ -293,6 +345,8 @@ def plan_setup(
         tuple(changes),
         tuple(warnings),
     )
+    return PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__),
+                           inputs=_plan_inputs(plan))
 
 
 def print_setup_plan(plan: SetupPlan) -> None:
@@ -370,13 +424,20 @@ def apply_setup(plan: SetupPlan) -> bool:
             else _directory_setup_state(plan.resolution.path)[1]
         )
         raise CardineError(f"setup is blocked: {detail}")
-    # Revalidate the user-owned file before any setup mutation.
+    # Revalidate every user-owned input before any setup mutation.
+    _refuse_linked_write_paths(plan)
+    _revalidate_plan(plan)
     fresh_rules = plan_codex_user_rules(plan.user_rules.path)
     if (fresh_rules.current_text != plan.user_rules.current_text
         or fresh_rules.legacy_text != plan.user_rules.legacy_text):
         raise CardineError("Codex user rules changed since planning; rerun --check")
     root = plan.resolution.path
-    with host_operation("setup", root) as active:
+    request = {
+        "task_identity": plan.task_identity_mode,
+        "project": str(plan.project_declaration_path.parent.parent),
+        "codex_config": str(plan.codex_config),
+    }
+    with host_operation("setup", root, request=request) as active:
         # Check all recorded destinations and pin this migration's outputs before
         # any host write; a retry cannot silently adopt changes to pending files.
         active.targets("before")

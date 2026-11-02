@@ -175,7 +175,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 127 — Rename the plugin metadata and stop shipping product auto-hooks (H3c).
 - `[x]` 128 — Route the entry routers and register the managed templates (H3d).
 - `[x]` 129 — Name the Codex rules and profile for Cardine with a bounded migration (H4a).
-- `[ ]` 130 — Orchestrate setup on Cardine paths without real-home apply (H4b).
+- `[x]` 130 — Orchestrate setup on Cardine paths without real-home apply (H4b).
 - `[ ]` 131 — Register user-level hooks on both hosts without duplicates (H4c).
 - `[ ]` 132 — Unify doctor and drop adopter test-command assumptions (H4d).
 - `[ ]` 133 — Enforce protected paths and Claude role restrictions (H5a).

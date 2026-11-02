@@ -51,7 +51,7 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[x]` | 127 | Rename the plugin metadata and stop shipping product auto-hooks (H3c) | 🔴 P1 | 126 | [127](done/127-plugin-metadata.md) |
 | `[x]` | 128 | Route the entry routers and register the managed templates (H3d) | 🔴 P1 | 127 | [128](done/128-router-routes.md) |
 | `[x]` | 129 | Name the Codex rules and profile for Cardine with a bounded migration (H4a) | 🔴 P1 | 128 | [129](done/129-codex-rules-naming.md) |
-| `[ ]` | 130 | Orchestrate setup on Cardine paths without real-home apply (H4b) | 🔴 P1 | 129 | [130](130-setup-orchestration.md) |
+| `[x]` | 130 | Orchestrate setup on Cardine paths without real-home apply (H4b) | 🔴 P1 | 129 | [130](done/130-setup-orchestration.md) |
 | `[ ]` | 131 | Register user-level hooks on both hosts without duplicates (H4c) | 🔴 P1 | 130 | [131](131-user-hook-registration.md) |
 | `[ ]` | 132 | Unify doctor and drop adopter test-command assumptions (H4d) | 🔴 P1 | 131 | [132](132-unified-doctor.md) |
 | `[ ]` | 133 | Enforce protected paths and Claude role restrictions (H5a) | 🔴 P1 | 132, 137 | [133](133-claude-role-permissions.md) |
