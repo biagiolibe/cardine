@@ -34,7 +34,7 @@ and relevant configuration layer.
 | Profile | Distribution path | Notes |
 |---|---|---|
 | Claude Code plugin session | Claude plugin, `CLAUDE.md`, slash commands, plugin hooks | Plugin lifecycle and the native `Read` tool are distinct from Codex shell execution. |
-| Codex project session | `AGENTS.md`, optional Codex skill, project `.codex/` files | Project hooks and rules require the project's Codex configuration layer to be trusted. |
+| Codex project session | `AGENTS.md`, optional Codex skill, project `.codex/` files | Historical profile (Codex CLI 0.155.1 and earlier probes): project hooks and rules require the project's Codex configuration layer to be trusted. The product now installs user-level Cardine rules and hooks instead; see the work item 9 section. |
 | Codex plugin session | Codex plugin hook/configuration plus `AGENTS.md` | Plugin hooks also require trust; `PLUGIN_ROOT` is available and `CLAUDE_PLUGIN_ROOT` remains a compatibility variable. |
 | Host-neutral CLI | `bin/meridian` and managed project files | The CLI may be common, but PATH, current directory, sandbox, and approval behavior remain host-specific. |
 
@@ -44,10 +44,10 @@ and relevant configuration layer.
 |---|---|---|---|
 | Workflow router and language policy | `CLAUDE.md` supplies the route and policy. | `AGENTS.md` supplies the route and policy; a skill is an optional reusable layer. | Fresh-session evidence of the auto-loaded entry point, route selection, and policy salience. Byte equality alone is insufficient. |
 | Managed entry-point integrity | Template/generator tests preserve expected `CLAUDE.md` content. | Template/generator tests preserve expected `AGENTS.md` content. | Static generator and audit tests plus one host-session route fixture per release that changes routing. |
-| Queue and language briefing | `UserPromptSubmit` hook is an advisory salience aid. | No equivalent adapter is distributed. | Claude: plugin-hook invocation fixture. Codex: retain `unsupported` unless a trusted adapter and probe are shipped. |
+| Queue and language briefing | Work item 9: a user-level `UserPromptSubmit` adapter over the one status service; advisory salience aid. | Work item 9 (D2): a user-level turn event adapter over the same status service, `unverified` until doctor proves the event and the trusted user hook loader with a probe; below the verified minimum runtime the briefing is reported unavailable. | Claude: user-hook invocation fixture. Codex: a doctor probe of the turn event and trust; no project hook copy and no session adapter. |
 | Authority excerpts and execution budgets | Available through the Meridian CLI when the plugin root resolves it. | Available through the Meridian CLI when `MERIDIAN_ROOT`/PATH and cwd resolve it. | Per-profile bootstrap/doctor check proving the exact command can be found and executed from a project subdirectory. |
 | Large-file read guard | Existing plugin hook targets the native `Read` tool; unit tests cover its policy semantics. | The governed-SDD `.codex/hooks.json` adapter intercepts recognised Bash reads after project-hook trust. | Native payload fixture and real hook invocation for Claude; recorded Codex payload, parser table, denial fixture, trust proof, and no false-deny regression for Codex. |
-| Command approval policy | No Meridian-managed, project-scoped equivalent is currently shipped. | `templates/workflows/governed-sdd/.codex/rules/meridian.rules` is distributed on upgrade, but it is effective only after project-layer trust. | A decision table evaluated by the host plus a real trusted-project chain test. Approval evidence does not prove sandbox access. |
+| Command approval policy | Cardine installs a user-level project allowlist through consented `cardine setup`; installation is not effect. Doctor reports `unverified` because Claude exposes no host decision probe. | User rules `~/.codex/rules/cardine.rules` plus, for historical installs, the project layer `templates/workflows/governed-sdd/.codex/rules/meridian.rules`; the project layer is effective only after project-layer trust. Doctor asks `codex execpolicy check` for each decision. | A decision table evaluated by the host plus a real trusted-project chain test. Approval evidence does not prove sandbox access. |
 | Trust activation | Must be observed for the installed plugin/hook definition. | Local rules/hooks are inactive until the project layer and current hook definition are trusted. | An activation check that distinguishes missing, untrusted, trusted, and effective states. |
 | Shell and chained commands | Host-specific behavior must not be inferred from rule text. | Codex CLI 0.155.1 trusted-project probe: an all-allowed `&&` chain ran without a prompt; a force-push chain was refused; an unmatched later `git rebase` segment still ran. Governed sessions must issue one command per call. | A fixture for simple command, chain, pipe, redirection, and unsupported syntax, with the expected allow/deny behavior recorded per host. |
 | Sandbox and Git operations | Permission and filesystem outcomes depend on the runtime environment. | Approval rules cannot override filesystem sandboxing, network restrictions, or Git worktree restrictions. | A host-specific preflight that reports whether the intended Git/filesystem operation is executable, needs approval, or is unavailable. |
@@ -195,7 +195,7 @@ by itself promote a host integration to `enforced`.
 
 ## Machine setup and worktree-root resolution
 
-Every `meridian worktree` and `meridian codex` command resolves one root in
+Every `meridian worktree` command resolves one root in
 this order: explicit `--worktree-root`, `MERIDIAN_WORKTREE_ROOT`, the version-1
 user configuration, then `~/.meridian/worktrees`. The user configuration is
 `$XDG_CONFIG_HOME/meridian/config.json`, falling back to
@@ -224,9 +224,11 @@ overwritten silently.
 The normal flow is:
 
 1. Install Meridian and put `meridian` on `PATH`.
-2. Once per machine, run `meridian setup --check`, review the plan, run
-   `meridian setup --apply`, and restart Codex. Claude Code needs no host
-   configuration.
+2. Once per machine, run `cardine setup --check`, review the plan, run
+   `cardine setup --apply`, and restart Codex. Both hosts receive user-level
+   hook and policy setup under the same preview and consent; Claude Code also
+   needs it (work item 9), so the earlier statement that Claude needs no host
+   configuration is retired.
 3. For a new project, run `meridian init`; lifecycle commands resolve the
    machine root without a project setting.
 4. For an existing project, run `meridian upgrade --check` and then the
@@ -238,7 +240,8 @@ The normal flow is:
 ## Codex task-worktree permission profile
 
 Meridian supports one Codex permission model for shared task worktrees: the
-beta permission-profile model. `meridian codex configure --check` resolves the
+beta permission-profile model. `cardine setup --check` (formerly `meridian codex
+configure --check`; see the removal note below) resolves the
 machine root, parses the user configuration, and prints the exact
 managed profile block without writing it. `--apply` is the only write path. It
 creates a restrictive backup before the first changed write and atomically
@@ -296,8 +299,8 @@ The Codex rules allow `meridian worktree evidence` and `closure-status`, `git mv
 the repository validation commands (`python3 scripts/check_repository.py`,
 `python3 -m unittest discover -s tests`, `set -o pipefail`), and read-only
 inspection (`ls`, `cat`, `head`, `tail`, `wc`, `pwd`, `grep`). Each group is a
-separate doctor fact: `archive-rename-policy`, `inspection-command-policy`, and
-`validation-command-policy`, reported as `ready` or `gap: <command>`.
+separate doctor fact: `archive-rename-policy` and `inspection-command-policy`,
+reported as `ready` or `gap: <command>`.
 
 Execpolicy prefixes match only leading literal tokens, and the most restrictive
 matching decision wins. A command with no matching rule returns no decision and
@@ -316,11 +319,15 @@ keeps Codex's normal approval flow. Consequences:
 - The test and check commands execute project code by design; the rule does
   not widen what the sandbox permits.
 
-Delivery: Codex rules arrive through `meridian upgrade --check` and `--apply`
-(managed file `.codex/rules/meridian.rules`); the Claude Code allowlist arrives
-through consented `meridian setup`, which is additive.
+Delivery: Codex rules arrive through `cardine setup` as the user-level file
+`~/.codex/rules/cardine.rules`; historical project installs keep the managed
+`.codex/rules/meridian.rules` until `upgrade` migrates them. The Claude Code
+allowlist arrives through consented `cardine setup`, which is additive.
+Adopter test commands are neither allowed nor probed, so doctor reports no
+`validation-command-policy` fact (the earlier statement that it reported that
+fact is retired).
 
-`meridian codex doctor` reports project trust, the selected permission model,
+`cardine doctor --host codex` (formerly `meridian codex doctor`) reports project trust, the selected permission model,
 effective worktree-root write access, command-policy availability, and Git
 metadata separately. It also reports `profile-ownership` (`ready`,
 `repair-required`, `repair-and-replace-required`, `blocked`, or `not-applicable`) as its own line, independent
@@ -330,11 +337,55 @@ resolved roots differ. Static configuration is not host-execution evidence.
 project execpolicy rules control approval decisions but cannot widen the
 filesystem sandbox.
 
+## Removed Codex commands (D4)
+
+`cardine codex doctor` and `cardine codex configure` were removed without
+aliases (ADR decision 1, developer decision D4 of 2026-10-27). Invoking either
+exits with status 2 and a migration message naming `cardine setup` and
+`cardine doctor`. The historical `meridian codex ...` descriptions above are kept
+for the observations they record, not as current commands.
+
+## Role launch proofs (work item 9, D3)
+
+Engine role launches (implementer and reviewer) require an effective host
+profile. The states of the matrix above apply per host profile, and for roles
+only a host-evaluated observation promotes `unverified` to `enforced`:
+
+| Rule | Behavior |
+|---|---|
+| Source of proof | `cardine doctor` asks the host to evaluate every probe of the shared matrix (`permissions.probe_matrix`): direct main push, reordered options, developer verdict, implementer review submission, protected-path writes through native tools, redirects, chains, pipes, interpreter writes, wrappers and symlink destinations, plus false-deny controls (inspection, source edits, commit, task close). Reading rule, policy or settings text is never a proof. |
+| Completeness | A proof exists only when the host observed every probe. A probe the host cannot evaluate, or an interrupted run, yields no proof. A proof enforces only when each decision equals the expected one and its digest equals the digest of the policy being launched. |
+| Persistence | Doctor persists nothing. Probes are read-only and repeat against the same policy digest with the same result; an interrupted run leaves no state that a later run could mistake for success. |
+| Activation | The launch adapter refuses a role whose profile is not enforced (`COMMAND_REFUSED`). Codex enforces both role profiles or neither. |
+| D3 | A host whose native policy doctor cannot show to enforce the protected paths and role actions is `unsupported` for role launches. No guarded transport adapter is built. Doctor reports `role-launch-<role>` as `ready`, `unsupported (D3): <gaps>`, `unverified: <reason>` or `approval-required: <reason>`. |
+
+Observed on 2026-11-03 (disposable home, Codex CLI 0.165.0, Claude Code
+2.1.316, installed role rules from `cardine-roles/`):
+
+| Profile | Observation | State |
+|---|---|---|
+| Codex 0.165.0, `execpolicy check`, role rules | Forbidden decisions for `git push origin main`, `+main` and `HEAD:main`, `cardine cancel`, and, in the implementer rules only, the developer verdict and review submission. No decision for reordered push options (`git -C . push --force ...`), `cardine --project . worktree integrate ...`, or any redirect, chain, pipe, copy, move, remove, in-place edit, symlink, interpreter or wrapper probe. Native file writes (`apply_patch`) have no execpolicy decision. | Role launches `unsupported` (D3): prefix rules alone do not enforce the protected paths. |
+| Claude Code 2.1.316 | No deterministic host decision probe exists; a model-driven session is not a probe. | Role launches `unsupported` (D3); never inferred from settings. |
+
+Both hosts keep their role profiles unenforced until a complete proof exists.
+Two command lines assumed by `hosts/transports.py` remain unverified: Claude
+accepts `-p` and `--settings <file>` (present in `claude --help`), but Codex
+0.165.0 documents `--profile` as a `$CODEX_HOME/<name>.config.toml` layer, not
+the `[permissions.<name>]` table that the role profiles use, and no flag
+loads `cardine-roles/<role>.rules` into a role session. No role launch can pass
+doctor today, so no real role session was started; the evidence above comes
+from `execpolicy check` and CLI help only.
+
+Historical probes above keep their original profiles (Codex CLI 0.155.1 and
+0.159.2, Claude Code 2.1.278 to 2.1.287); none is asserted for a later version.
+
 ## Host-neutral worktree lifecycle
 
 `meridian worktree path|prepare|check|integrate|cleanup` is the canonical
 lifecycle surface for Codex, Claude Code, and direct-terminal use. Codex rules
 may allow only those action prefixes; Claude uses its own permission adapter.
+Lifecycle commands are spelled `cardine worktree ...`; the `meridian` spelling
+is the historical name of the same surface.
 The commands validate the current canonical project, task identity, configured
 root, repository-qualified path, branch, state, lease ownership, and evidence
 before changing Git metadata. They never execute project-controlled commands.

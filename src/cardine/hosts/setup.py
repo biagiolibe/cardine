@@ -6,7 +6,9 @@ from cardine.shared.layout import names
 
 from cardine.worktree.paths import repository_identity
 
+from cardine.hosts import permissions
 from cardine.hosts.claude import apply_claude_project_allowlist
+from cardine.hosts.claude import claude_role_policy
 from cardine.hosts.effects import host_operation
 from cardine.hosts.hooks import HooksPlan, _commands, apply_hooks, hook_command, plan_hooks, registry_path
 from cardine.lifecycle import receipts
@@ -16,6 +18,8 @@ from cardine.hosts.codex import _configuration_backup
 from cardine.hosts.codex import _codex_profile_divergence
 from cardine.hosts.codex import apply_codex_configuration
 from cardine.hosts.codex import apply_codex_user_rules
+from cardine.hosts.codex import codex_role_policy
+from cardine.hosts.codex import role_rules_path
 from cardine.hosts.codex import plan_codex_configuration
 from cardine.hosts.codex import plan_codex_user_rules
 from cardine.hosts.skills import _aggregate_skill_state
@@ -44,6 +48,7 @@ from cardine.worktree.storage import resolve_worktree_root
 from collections.abc import Mapping
 from pathlib import Path
 import difflib
+import re
 import json
 import os
 import shlex
@@ -702,6 +707,7 @@ def codex_doctor(
         else "mismatch"
     )
     result["hook-invocation"] = probe_hook_invocation("codex", home)
+    result.update(role_launch_states("codex", project_root, worktree_root, home, executable=codex_executable))
     return result
 
 
@@ -713,6 +719,7 @@ def claude_doctor(project_root: Path, *, home: Path | None = None) -> dict[str, 
         "claude-project-allowlist": "installed" if plan.status == "ready" else plan.status,
         "claude-command-policy": "unverified",
         "hook-invocation": probe_hook_invocation("claude", home),
+        **role_launch_states("claude", project_root, home, home),
     }
 
 
@@ -720,6 +727,126 @@ def host_doctor(host: str, project_root: Path, config_path: Path, worktree_root:
     if host == "claude":
         return claude_doctor(project_root, home=options.get("home"))
     return codex_doctor(project_root, config_path, worktree_root, **options)
+
+
+# -- Runtime role proofs (D3) --------------------------------------------------
+#
+# A role profile is enforced only when the host itself reports the expected
+# decision for every probe of the matrix under the installed policy. Nothing
+# here persists a probe or a result: an interrupted run leaves no state, and a
+# rerun asks the host again against the same policy digest.
+
+_SHELL_SYNTAX = re.compile(r"[|&;<>$`()\n]|\s['\"]")
+
+
+class ProbeInterrupted(Exception):
+    """The host could not be asked; the run is incomplete and proves nothing."""
+
+
+@dataclass(frozen=True)
+class RoleProofResult:
+    role: str
+    state: str  # ready | unsupported: <gaps> | unverified: <reason> | approval-required: <reason>
+    proof: permissions.HostProof | None
+    gaps: tuple[str, ...] = ()
+
+
+def codex_decision_evaluator(codex_executable: str, rules: tuple[Path, ...], *, timeout: int = 30):
+    """Ask `codex execpolicy check` for the decision on a shell probe, under the installed rule layers.
+
+    Returns `deny` only for a `forbidden` decision. Codex cannot evaluate a
+    native file write, so those probes return None and stay unobserved.
+    """
+    def evaluate(tool: str, tool_input: dict) -> str | None:
+        if tool != permissions.CODEX_SHELL:
+            return None
+        command = tool_input.get("command", "")
+        words = ("bash", "-lc", command) if _SHELL_SYNTAX.search(command) else tuple(shlex.split(command))
+        try:
+            checked = subprocess.run(_execpolicy_argv(codex_executable, rules, words), text=True,
+                                     capture_output=True, check=False, timeout=timeout)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise ProbeInterrupted(type(error).__name__) from error
+        try:
+            document = json.loads(checked.stdout) if checked.returncode == 0 else None
+        except json.JSONDecodeError:
+            document = None
+        if not isinstance(document, dict):
+            raise ProbeInterrupted("no decision document")
+        return "deny" if document.get("decision") == "forbidden" else "allow"
+
+    return evaluate
+
+
+def prove_role_policy(policy: permissions.RolePolicy, evaluate) -> RoleProofResult:
+    """Run the whole probe matrix through `evaluate(tool, input) -> 'deny' | 'allow' | None`.
+
+    A proof exists only when the host observed every probe; it enforces only
+    when each observed decision equals the expected one. Read-only and
+    repeatable: nothing is written, so an interruption cannot promote anything.
+    """
+    matrix = permissions.probe_matrix(policy.role, policy.host)
+    observed: dict[str, str] = {}
+    unobserved: list[str] = []
+    try:
+        for name, (tool, tool_input, _expected) in matrix.items():
+            verdict = evaluate(tool, tool_input)
+            if verdict in ("deny", "allow"):
+                observed[name] = verdict
+            else:
+                unobserved.append(name)
+    except ProbeInterrupted as error:
+        return RoleProofResult(policy.role, f"unverified: probe interrupted ({error})", None)
+    gaps = tuple(("not denied " if matrix[name][2] == "deny" else "false deny ") + name
+                 for name, verdict in observed.items() if verdict != matrix[name][2])
+    gaps += tuple("unobserved " + name for name in unobserved)
+    if unobserved:  # An incomplete run is never a proof.
+        return RoleProofResult(policy.role, "unsupported (D3): " + ", ".join(gaps[:4]) + _more(gaps), None, gaps)
+    proof = permissions.HostProof(policy.host, policy.identity, policy.digest, observed)
+    if permissions.proof_enforces(policy, proof):
+        return RoleProofResult(policy.role, "ready", proof)
+    return RoleProofResult(policy.role, "unsupported (D3): " + ", ".join(gaps[:4]) + _more(gaps), proof, gaps)
+
+
+def _more(gaps: tuple[str, ...]) -> str:
+    return f" (+{len(gaps) - 4} more)" if len(gaps) > 4 else ""
+
+
+def role_launch_states(host: str, project_root: Path, worktree_root: Path, home: Path, *,
+                       executable: str | None = None, evaluate=None) -> dict[str, str]:
+    """Doctor facts `role-launch-<role>`: `ready` only from a complete host-evaluated proof.
+
+    The policy is the representative one for this project; a launch recomputes
+    its own policy and needs a proof of that exact digest.
+    """
+    states: dict[str, str] = {}
+    for role in permissions.ROLES:
+        key = "role-launch-" + role
+        try:
+            common = project_root / ".git"
+            if host == "claude":
+                policy = claude_role_policy(role, project_root, project_root, common)
+            else:
+                policy = codex_role_policy(role, project_root, worktree_root, project_root, common)
+        except CardineError:
+            states[key] = "blocked"
+            continue
+        if evaluate is not None:
+            states[key] = prove_role_policy(policy, evaluate).state
+        elif host == "claude":
+            # Claude exposes no host decision probe: never inferred from settings text.
+            states[key] = "unsupported (D3): no host decision probe"
+        else:
+            role_file = role_rules_path(home / ".codex", role)
+            layers = tuple(path for path in (role_file, home / ".codex/rules/cardine.rules",
+                                             project_root / ".codex/rules/meridian.rules") if path.is_file())
+            if not role_file.is_file():
+                states[key] = "approval-required: role rules not installed"
+            elif not executable:
+                states[key] = "unverified: codex is not on PATH"
+            else:
+                states[key] = prove_role_policy(policy, codex_decision_evaluator(executable, layers)).state
+    return states
 
 
 _PROBE_LINES = 2000
