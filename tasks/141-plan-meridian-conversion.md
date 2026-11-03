@@ -24,7 +24,7 @@ last line of a list.
 
 ## Acceptance Criteria
 
-- [ ] `docs/CONVERSION_PLAN.md` exists, in English, and contains the sections
+- [x] `docs/CONVERSION_PLAN.md` exists, in English, and contains the sections
   below.
   - **Adopt target.** The command surface of `cardine adopt` with its preview
     and apply modes, for both cases of decision 10: a project without Cardine
@@ -78,16 +78,16 @@ last line of a list.
     At least: the review path while role launches stay unsupported, and whether
     conversion of the private projects is part of work item 10 or of the field
     trial of work item 13.
-- [ ] Every test the plan describes runs against disposable projects and
+- [x] Every test the plan describes runs against disposable projects and
   disposable home directories. No row applies setup to the real home directory;
   the steps on the maintainer's machine are listed for the developer.
-- [ ] The plan checks its rows against `docs/RUN_ENGINE_PLAN.md`,
+- [x] The plan checks its rows against `docs/RUN_ENGINE_PLAN.md`,
   `docs/HOST_INTEGRATION_PLAN.md`, `docs/HOST_CAPABILITY_CONTRACT.md`, and
   `docs/RENAME_PLAN.md` and names any conflict instead of resolving it silently.
-- [ ] This task changes `docs/CONVERSION_PLAN.md` only, besides its own record,
+- [x] This task changes `docs/CONVERSION_PLAN.md` only, besides its own record,
   handoff, and state file. Any disposable project it runs stays outside the
   repository.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -96,9 +96,9 @@ last line of a list.
   worktree` line of `.codex/rules/local.rules`. No task runs the checkout's
   `setup --apply` against the real home directory or creates `.cardine/` in this
   repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/141.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/141.json`, which only
   the installed `meridian task close 141` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
