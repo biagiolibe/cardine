@@ -157,11 +157,11 @@ The review record is `tasks/reviews/<ID>.md`.
 
 | ID | Where | Text read | Written by | Decision driven | Class | Destination |
 |----|-------|-----------|------------|-----------------|-------|-------------|
-| T-27 | `integration/projections.py::_queue_task_rows:36-61`, `_QUEUE_TASK_ROW:67`; callers `tasks/audit.py:33`, `tasks/importer.py:43`, `projections.py:364,391,465,524` | Queue checkbox and `Status` cells | A person, or older tooling | Which rows exist and what status they hold | GV | **SS6** (projection mutation route), **SS5** (audit, importer). **Task 069 removed** the projection mutation callers; `_queue_task_rows` remains for the explicit importer. |
+| T-27 | `integration/projections.py::_queue_task_rows:36-61`, `_QUEUE_TASK_ROW:67`; callers `tasks/audit.py:33`, `tasks/importer.py:43`, `projections.py:364,391,465,524` | Queue checkbox and `Status` cells | A person, or older tooling | Which rows exist and what status they hold | GV | **SS6** (projection mutation route), **SS5** (audit, importer). **Task 069 removed** the projection mutation callers; `_queue_task_rows` remains for the explicit importer. **Left the product by tasks 143 and 144**: `_queue_task_rows` lives in `cardine.legacy` (exempt) and no product file reads it; `ALLOWED` in `tests/test_product_prose_readers.py` is empty. |
 | T-28 | `integration/projections.py::_governed_completion_row:106-232`, called by `projections.py:526` and `merge.py:101` | `ID`, `Status`, and `Review` columns, the record, and the review record | People | Accepts or refuses completion of a queue row; rewrites its status cell | GV | **SS6**. **Removed by task 069**: `_governed_completion_row` and its callers no longer exist. |
 | T-29 | `integration/projections.py::_apply_task_completion_rows:508-566` (plan row pattern at 541-551), `_completed_task_row:25`, `_queue_section_completion:249`, `_queue_section_decisions:354`, `_archive_completed_queue_sections:418`, `_relink_archived_task_row:479` | Queue and plan rows (`[x]`, `done`), section tables | People | `integrate stage` edits and archives queue sections and plan rows | GV | **SS6** ("remove phase archival as lifecycle machinery"); the renderer of SS4 supplies the replacement. **Removed by task 069**: queue/plan status mutation, relinking, and phase archival no longer exist. |
 | T-30 | `tasks/audit.py::audit_task_state_projections:19-67` | Queue and archive rows, record `Status:` | People | `ADVISORY` drift results in `cardine audit` | GV | **SS5** ("Projection drift and import"). |
-| T-31 | `tasks/importer.py::import_task_states:26-178`, reached from `cli.py:776` (`cardine task state`) | Queue rows, record `Status`, `Review`, `Class`, review attempt headings | People and agents | Infers a task's status and verdict and writes a state file | AP | **SS5** ("isolate importer"). Recommendation: move it to `cardine.legacy` and remove it from the product `task` namespace, so the guard keeps only three allowlist categories. |
+| T-31 | `tasks/importer.py::import_task_states:26-178`, reached from `cli.py:776` (`cardine task state`) | Queue rows, record `Status`, `Review`, `Class`, review attempt headings | People and agents | Infers a task's status and verdict and writes a state file | AP | **SS5** ("isolate importer"). Recommendation: move it to `cardine.legacy` and remove it from the product `task` namespace, so the guard keeps only three allowlist categories. **Left the product by tasks 143 and 144**: the importer lives in `cardine.legacy.importer` (exempt), only `cardine.legacy.snapshot` reaches it, and the product `task` namespace no longer routes to it. |
 | T-32 | `console/snapshot.py::_branch_facts:418,443`, `_build_snapshot:667-668`; `shared/console_workflow.py::parse_queue:75-123` | Queue table | People | Console task list and lifecycle | GV | **SS7**. |
 | T-33 | `console/snapshot.py::_branch_facts:431,452`, `_build_snapshot:724,749,842` (the `legacy` flag); `shared/console_workflow.py::record_status:169` | Record `Status:` when no state exists | Cardine (projection) | Console status when `state is None` | GV | **SS7** ("prose fallbacks"). |
 | T-34 | `console/snapshot.py::_build_snapshot:748`; `console/models.py:100,145-147` | Record `Review:` string `REQUIRED`/`NOT REQUIRED` | A person | Whether the console offers `Review <ID>` | HC | **SS7**; state holds it. |
@@ -417,8 +417,9 @@ lands.
 
 ### RE7b disposition (task 115)
 
-The known-violation table now holds only work item 9's T-46 and T-47 and work
-item 10's importer keys (T-27, T-31 and the importer's T-25 reads). The
+The known-violation table now holds only work item 9's T-46 and T-47. Work
+item 10's importer keys (T-27, T-31 and the importer's T-25 reads) left it when
+tasks 143 and 144 moved the importer under `cardine.legacy`. The
 creation-input parsers of T-03 and T-15 (`validate_host_impact_declaration`,
 `host_impact_*`, `require_named_validation_commands`, `validation_commands`)
 are exact keys of the permanent contract-creation class: task 085 froze every

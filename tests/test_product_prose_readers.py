@@ -30,14 +30,15 @@ ALLOWED: dict[str, str] = {}
 
 
 class ProductProseReaderTest(unittest.TestCase):
-    def test_static_search_finds_only_the_documented_remaining_readers(self) -> None:
+    def test_static_search_finds_no_product_prose_reader(self) -> None:
         tracked = subprocess.run(["git", "ls-files", "--", *SCOPE], cwd=ROOT, capture_output=True,
                                  text=True, check=True).stdout.split()
         pattern = re.compile(SEARCH)
         hits = sorted(name for name in tracked
                       if name.endswith(".py") and not name.startswith("src/cardine/legacy/")
                       and pattern.search((ROOT / name).read_text(encoding="utf-8")))
-        self.assertEqual(hits, sorted(ALLOWED))
+        self.assertEqual(ALLOWED, {})
+        self.assertEqual(hits, [])
 
     def test_product_console_and_briefing_import_no_queue_or_prose_parser(self) -> None:
         for relative in ("src/cardine/console/snapshot.py", "src/cardine/console/state.py",

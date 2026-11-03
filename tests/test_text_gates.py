@@ -272,10 +272,11 @@ class TextGateTest(unittest.TestCase):
 
 
 class ResidualRatchetTest(unittest.TestCase):
-    """RE7b: only work items 9 and 10 may still hold a known violation."""
+    """RE7b: only work item 9 may still hold a known violation."""
 
-    def test_residual_set_is_work_item_nine_and_ten_only(self):
+    def test_residual_set_is_work_item_nine_only(self):
         self.assertLessEqual(set(KNOWN_VIOLATIONS.values()), {"T-46", "T-47"})
+        self.assertFalse({"T-27", "T-31"} & set(KNOWN_VIOLATIONS.values()))
         for key, entry in KNOWN_VIOLATIONS.items():
             path = key[0]
             if entry == "T-46":
