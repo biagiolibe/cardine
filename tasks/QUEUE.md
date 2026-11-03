@@ -44,7 +44,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[ ]` | 144 | Bring the prose reader ratchets to zero (C1c) | 🔴 P1 | 143 | [144](144-prose-ratchets-to-zero.md) |
 | `[x]` | 145 | Classify and fix the fresh task start failure (C3a) | 🔴 P1 | 141 | [145](done/145-fresh-task-start.md) |
 | `[x]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](done/146-run-performs-worktree-step.md) |
-| `[ ]` | 147 | Prove a no-review delivery to landing (C3c) | 🔴 P1 | 146 | [147](147-disposable-delivery-proof.md) |
+| `[x]` | 147 | Prove a no-review delivery to landing (C3c) | 🔴 P1 | 146 | [147](done/147-disposable-delivery-proof.md) |
 | `[ ]` | 148 | Align the run help with its behavior (C3d) | 🟡 P2 | 146 | [148](148-align-run-help.md) |
 | `[ ]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](149-field-case-runs.md) |
 | `[ ]` | 150 | Add the developer channel for verdict, cancel, and abort (C4a) | 🔴 P1 | 146 | [150](150-developer-channel.md) |
