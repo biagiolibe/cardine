@@ -82,8 +82,6 @@ including command containers and nested subcommands.
 | `cardine task transition` | Stable |
 | `cardine task outcome` | Stable |
 | `cardine task close` | Stable |
-| `cardine task state` | Stable |
-| `cardine task state import` | Stable |
 | `cardine task identity` | Stable |
 | `cardine task identity check` | Internal |
 | `cardine task identity next` | Stable |

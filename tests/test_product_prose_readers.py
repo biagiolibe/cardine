@@ -25,17 +25,8 @@ NAMES = (r"parse_queue|record_status|record_review|handoff_status|latest_review_
 SEARCH = rf"\b(?:{NAMES})\b|read_task_field\([^)]*\"Status\""
 SCOPE = ("src", "scripts")
 
-# Every remaining hit and its reason. A ratchet: the set can only shrink. Moving these under
-# `cardine.legacy` is blocked by the import-graph test of the installation snapshot, which forbids
-# a product import of `cardine.legacy`, and by the plan, which keeps the explicit import isolated
-# until work item 10.
-ALLOWED = {
-    "src/cardine/tasks/importer.py": (
-        "the explicit `cardine task state import` reads a legacy record's Status and the queue rows once to "
-        "register state; it is never called as missing-state recovery (tests/test_task_status_gates.py)"),
-    "src/cardine/integration/projections.py": "defines `_queue_task_rows`, whose only caller is the importer",
-    "scripts/cardine_cli.py": "re-exports `_queue_task_rows` for the importer's tests; reads nothing itself",
-}
+# Every remaining hit and its reason. A ratchet: the set can only shrink, and it is empty.
+ALLOWED: dict[str, str] = {}
 
 
 class ProductProseReaderTest(unittest.TestCase):

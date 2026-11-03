@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from project_config_support import write_project_config
 from task_contract_support import contract_record, VALIDATION
 
@@ -14,7 +15,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import cardine_cli
 from cardine.tasks import transitions as owner_tasks_transitions
 import cardine.tasks.state as task_state
-from cardine.shared.errors import CardineStop
+from cardine.legacy.importer import import_task_states
+from cardine.shared.errors import CardineError, CardineStop
 from cardine.stops import render as owner_stops_render
 
 
@@ -48,9 +50,13 @@ class TaskStateImportTest(unittest.TestCase):
         return record
 
     def cli(self, *args):
-        return subprocess.run([sys.executable, str(ROOT / "scripts/cardine_cli.py"), "--framework-root", str(ROOT),
-                               "task", "state", "import", *args, "--project", str(self.root), "--format", "json"],
-                              capture_output=True, text=True)
+        """Call the importer as `adopt` will; a stop is the refusal a caller sees."""
+        ids = [item for item in args if not item.startswith("--")]
+        try:
+            report = import_task_states(self.root, ids, apply="--apply" in args, include_terminal="--include-terminal" in args)
+        except CardineError as error:
+            return SimpleNamespace(returncode=2, stdout="", stderr=str(error))
+        return SimpleNamespace(returncode=0, stdout=json.dumps(report), stderr="")
 
     def test_preview_apply_repeat_and_subset_preserve_text(self):
         record = self.add_task("001", "in_progress")

@@ -365,7 +365,6 @@ PUBLICATION_ALLOWLIST = {'hosts/setup.py': ["(root / 'PROJECT_WORKFLOW.md').writ
                       'os.replace(temporary, path)'],
  'tasks/contract_update.py': ['_write_json_atomic(path, state)'],
  'tasks/creation.py': ["guard.open('a')"],
- 'tasks/importer.py': ["path.open('x', encoding='utf-8')"],
  'tasks/preflight.py': ["task_file.write_text(reconciled, encoding='utf-8')"],
  'tasks/state_core.py': ["os.fdopen(descriptor, 'wb')", 'os.replace(temporary, path)'],
  'tasks/status_render.py': ["os.fdopen(descriptor, 'wb')",

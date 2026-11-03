@@ -1,8 +1,4 @@
-"""Read-only queue row reader kept for the explicit state import.
-
-Task status is never written to the queue or the plan here: the generated views
-come from validated task state (see `cardine.tasks.status_render`).
-"""
+"""Read-only queue row reader of a legacy project, for its conversion."""
 
 from __future__ import annotations
 
@@ -12,8 +8,7 @@ from cardine.tasks.identity import _clean_queue_id
 def _queue_task_rows(contents: str) -> list[dict[str, object]]:
     """Read task rows by the named ID and Status columns of each pipe table.
 
-    Archival and state import share this reader so both find the same rows and
-    IDs. Column order, heading level, and status wording are not interpreted.
+    Column order, heading level, and status wording are not interpreted.
     """
     rows: list[dict[str, object]] = []
     headers: list[str] = []

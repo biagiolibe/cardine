@@ -50,7 +50,7 @@ from cardine.shared.models import (
 from cardine.shared.text import read_task_field
 from cardine.stops.render import stop_error
 from cardine.tasks.identity import resolve_project_locations, resolve_task_identity as _resolve_task_identity
-from cardine.tasks.importer import legacy_identity_context
+from cardine.legacy.importer import legacy_identity_context
 
 from cardine.tasks.state import read_task_state, state_path, review_is_required
 from cardine.templates.mode import detect_mode

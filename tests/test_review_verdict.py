@@ -128,7 +128,7 @@ class ReviewVerdictTest(unittest.TestCase):
         self.path.unlink()
         self.commit()
         missing = self.cli("APPROVE")
-        self.assertEqual(missing.returncode, 0)
+        self.assertEqual(missing.returncode, 2)
         self.assertIn("TASK_STATE_MISSING", missing.stderr)
         self.assertFalse(self.path.exists())
 

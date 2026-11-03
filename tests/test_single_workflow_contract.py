@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from cardine_cli_support import CLI
 from cardine.tasks.contract import resolve_task_contract
-from cardine.tasks.importer import import_task_states
+from cardine.legacy.importer import import_task_states
 from cardine.tasks.state import TaskStateInvalid, validate_task_state
 from cardine.shared.errors import CardineError
 from project_config_support import write_project_config
@@ -211,18 +211,13 @@ class SingleWorkflowContractTest(unittest.TestCase):
             self.resolve()
 
     def test_import_cli_preserves_snapshot_after_preset_defaults_and_record_change(self):
-        command = [sys.executable, str(ROOT / 'scripts/cardine_cli.py'), 'task', 'state', 'import',
-                   '001', '--project', str(self.root), '--format', 'json', '--apply']
-        result = subprocess.run(command, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        import_task_states(self.root, ['001'], apply=True)
         path = self.root / '.cardine/tasks/001.json'
         before = path.read_bytes()
         digest = json.loads(before)['contract']['projectDigest']
         self.configure('governed', taskDefaults={'validationRetryLimit': 7})
         self.record('Review: required\n')
-        again = subprocess.run(command, capture_output=True, text=True)
-        self.assertEqual(again.returncode, 0, again.stderr)
-        self.assertEqual(json.loads(again.stdout)['tasks'][0]['action'], 'skip-existing')
+        self.assertEqual(import_task_states(self.root, ['001'], apply=True)['tasks'][0]['action'], 'skip-existing')
         self.assertEqual(path.read_bytes(), before)
         self.assertNotEqual(self.resolve()['projectDigest'], digest)
         self.record(task_id='002')

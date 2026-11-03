@@ -17,7 +17,7 @@ import cardine_cli
 from cardine.tasks import status_render
 import cardine.shared.errors as shared_errors
 from cardine.tasks import identity as owner_tasks_identity
-from cardine.tasks import importer as owner_tasks_importer
+from cardine.legacy import importer as owner_tasks_importer
 
 SHA = "a" * 40
 AT = "2026-10-14T12:00:00Z"

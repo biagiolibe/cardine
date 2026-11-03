@@ -347,15 +347,6 @@ def build_parser() -> CardineArgumentParser:
     close.add_argument("task_id")
     close.add_argument("--project", type=Path, default=Path.cwd())
     close.add_argument("--format", choices=("json",), default="json")
-    state = task_sub.add_parser("state", help="explicit task-state adoption")
-    state_sub = state.add_subparsers(dest="state_command", required=True)
-    state_import = state_sub.add_parser("import", help="preview or create state for legacy tasks")
-    state_import.add_argument("task_ids", nargs="*")
-    state_import.add_argument("--apply", action="store_true")
-    state_import.add_argument("--include-terminal", action="store_true",
-                              help="also propose state for terminal tasks")
-    state_import.add_argument("--project", type=Path, default=Path.cwd())
-    state_import.add_argument("--format", choices=("json",), default="json")
     identity = task_sub.add_parser("identity", help="resolve the project-selected task identity policy")
     identity_sub = identity.add_subparsers(dest="identity_command", required=True)
     identity_check = identity_sub.add_parser("check", description="Framework-internal: no compatibility promise.", help="validate and print one resolved task identity (framework-internal)")
@@ -478,7 +469,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
     from cardine.stops.registry import load_stop_registry
     from cardine.stops.render import emit_diagnostic, outcome_for_code, format_stop, stop_error
     from cardine.tasks.identity import next_milestone_task_identity, resolve_project_locations, resolve_task_identity, task_identity_json
-    from cardine.tasks.importer import import_task_states
     from cardine.tasks.preflight import execution_contract, execution_preflight, readiness_check, reconcile_execution_contract
     from cardine.tasks.recording import run_validation
     from cardine.tasks.state import state_path
@@ -782,9 +772,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 print(json.dumps(record_spike_outcome(project_root, arguments.task_id, arguments.outcome), sort_keys=True))
             elif arguments.task_command == "close":
                 print(json.dumps(close_task(project_root, arguments.task_id), sort_keys=True))
-            elif arguments.task_command == "state":
-                print(json.dumps(import_task_states(project_root, arguments.task_ids, apply=arguments.apply,
-                                                  include_terminal=arguments.include_terminal), sort_keys=True))
             elif arguments.identity_command == "check":
                 resolved = resolve_task_identity(project_root, arguments.task_id, "existing")
                 print(json.dumps(task_identity_json(project_root, resolved), sort_keys=True))
