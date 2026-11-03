@@ -352,3 +352,11 @@ Authority: `docs/HOST_INTEGRATION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item
 | `[x]` | 134 | Realize the Codex role policy and profiles (H5b) | 🔴 P1 | 133 | [134](done/134-codex-role-policy.md) |
 | `[x]` | 135 | Wire the concrete host transports to issued roles (H5c) | 🔴 P1 | 134, 137 | [135](done/135-host-transports.md) |
 | `[x]` | 136 | Prove roles at runtime in doctor and update the host contract (H5d) | 🔴 P1 | 135 | [136](done/136-doctor-role-proofs.md) |
+
+### Phase 30 — Meridian conversion: planning
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 10 and decision 10.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 141 | Plan the Meridian conversion and cardine adopt (work item 10) | 🔴 P1 | 136 | [141](done/141-plan-meridian-conversion.md) |
