@@ -6,8 +6,8 @@ changes no code. It was written by task 141 from the files on `main` at commit
 files; they supersede the older tables of `docs/RENAME_PLAN.md`.
 
 The coordinator generates one task record per row of section 9 and applies the
-outcome of section 8 to `PROJECT_PLAN.md`. Nothing here is decided that section
-10 lists as a question.
+outcome of section 8 to `PROJECT_PLAN.md`. Section 10 records the developer's
+decisions of 2026-11-03, and rows C3f, C4a, C4b, and C5e follow from them.
 
 ## 1. What was verified, and how
 
@@ -85,7 +85,7 @@ caller supplies name, slug, preset, language, identity mode, and validation
 | Managed copies of the installation | Replaced by the single template set. Text outside `MERIDIAN:BEGIN/END` blocks is kept; the router preamble is regenerated; a non-placeholder `## Commands` block is carried over. `docs/CONTEXT_BUDGET_POLICY.md` becomes `docs/CONTEXT_READING_POLICY.md`. |
 | `tasks/QUEUE.md`, `PROJECT_PLAN.md` | Queue regenerated from task states; any non-open row is appended verbatim to `tasks/QUEUE_ARCHIVE.md`. |
 | Shared-source files (`hooks/*`, `.codex/hooks.json`) | Not converted. They belong to the Meridian plugin source, not to an adopter. The report lists them; this repository removes them in row C7b. |
-| `.meridian/` itself | Pending DD3. |
+| `.meridian/` itself | Removed (DD3). History stays in Git. |
 
 Archive that Cardine ignores: `tasks/done/`, `tasks/handoffs/`, review records,
 `tasks/QUEUE_ARCHIVE.md`.
@@ -94,7 +94,7 @@ Refusals (guardrails, each needing a registry entry in
 `capabilities/stop-codes-v1.json`, added by row C2c): dirty tree; any `[/]` row;
 a registered `task-*` worktree; an active integration lease; a record the
 translator cannot make complete. A Governed project is flagged: its tasks
-default to required review, which cannot be recorded today (section 7).
+default to required review, which cannot be recorded before row C4a (section 7).
 
 ## 3. Legacy readers
 
@@ -127,9 +127,8 @@ marker readers, `load_meridian_snapshot`), `meridian_locations.py`,
   `_primary_checkout`, `_read_text`, `_load_snapshot`, which exist only in
   `legacy/snapshot.py` and `console/snapshot.py`.
 - **What stays.** The importer, the prose parsers of `console_workflow.py`, and
-  the installation readers stay while `adopt` exists. ADR decision 14 says
-  `cardine.legacy` can be deleted after item 10; that conflicts with converting
-  Contoso and Fabrikam in the field trial (K2, DD2).
+  the installation readers stay while `adopt` exists (DD2; K2 is resolved by the
+  ADR amendment of 2026-11-03).
 
 ## 4. Inventory of this repository (at `4e3773d`)
 
@@ -139,12 +138,12 @@ marker readers, `load_meridian_snapshot`), `meridian_locations.py`,
 
 | Part | Files | Disposition |
 | --- | --- | --- |
-| `manifest.json` | 1 | Removed or archived (DD3). `.cardine/manifest.json` replaces it. |
-| `baselines/1.4.0/` | 9 | Same as the manifest. |
-| `probes/meridian-self-hosting/` | 3 | Removed or archived (DD3); `scripts/check_repository.py:77-79` requires them today (C5a). |
+| `manifest.json` | 1 | Removed (DD3). `.cardine/manifest.json` replaces it. |
+| `baselines/1.4.0/` | 9 | Removed (DD3). |
+| `probes/meridian-self-hosting/` | 3 | Removed (DD3); `scripts/check_repository.py:77-79` requires them today (C5a). |
 | `candidate-validation.json` | 1 | Converted to `validation.candidate`. |
 | `flow-targets.json` | 1 | Converted (copied). |
-| `tasks/<id>.json` | 139 | Closed-task state; ignored by Cardine; archived or removed (DD3). |
+| `tasks/<id>.json` | 139 | Closed-task state; ignored by Cardine; removed (DD3). |
 
 ### Paths the installation owns (13)
 
@@ -220,12 +219,14 @@ home directory.
 - **S5** After CI is green: `git switch main`,
   `git merge --ff-only cardine-switch`, `git push origin main`.
 - **S6** Verify: `cardine status`, `cardine doctor`.
-- **S7** Machine, after S6: remove the Meridian plugin, `~/.local/share/meridian`,
-  the `MERIDIAN_ROOT` and `PATH` lines, and the Meridian blocks under `~/.codex`;
-  install Cardine (`pipx install --editable <clone>` until PyPI carries a
-  release); `cardine setup --check`, review, then `cardine setup --apply`;
-  restart Codex. Until S7 the old plugin hooks still call `meridian`; until then
-  work stays with the developer.
+- **S7** Machine, after S6: install Cardine (`pipx install --editable <clone>`
+  until PyPI carries a release); `cardine setup --check`, review, then `cardine
+  setup --apply`; disable the Meridian plugin for this repository only, by the
+  means row C5e proves; restart Codex. The Meridian checkout, its `PATH` lines,
+  and the user-level plugin stay, because other projects on this machine run on
+  Meridian until their conversion. Their removal is ADR decision 10, after the
+  last conversion. Until S7 the plugin hooks still call `meridian` in this
+  repository; until then work stays with the developer.
 
 ### Interrupted or failed conversion
 
@@ -239,7 +240,7 @@ branch.
 
 Valid until the first Cardine delivery is pushed to `main`. If C7a fails
 before landing: `git revert --no-edit <switch commit>` (history stays intact; no
-reset), then reverse S7 (reinstall the plugin and `MERIDIAN_ROOT`). The revert
+reset), then re-enable the plugin for this repository. The revert
 restores `.meridian/`, the managed copies, and the original open records,
 because the switch is one commit. After C7a lands, the repository moves forward
 with Cardine tasks; a return would need the developer to revert the delivery
@@ -247,8 +248,9 @@ too.
 
 ### Constraint from section 7
 
-While no verdict can be recorded, the first Cardine task must need no review,
-and recovery of a failed first delivery is maintainer work.
+Reviewer sessions still cannot record a verdict, and row C4a gives the developer
+the channel. The first Cardine task needs no review, so that the first delivery
+exercises the shortest path.
 
 ## 6. Proof before touching the originals
 
@@ -277,7 +279,7 @@ Field-trial cases of decision 10, step 5:
 
 | Case | Path that can deliver it | State |
 | --- | --- | --- |
-| Required review, one round of requested changes | None. No verdict can be recorded. | Finding; DD1 |
+| Required review, one round of requested changes | None today. Developer channel (DD1). | C4a, C4b |
 | No review | `run` skips the review step (`resolve_run`); proof absent (O2) | C3b, C3c |
 | Spike | `Class: SPIKE` and `task outcome` exist; not exercised | C3e |
 | `Authority` citing an ADR, declared code surface | Contract fields and `enforce_scope` exist; `adr show` needs a log (O9) | C3e, DD5 |
@@ -293,8 +295,8 @@ the family and closes with the last one.
 | Deferred row | Assigned to |
 | --- | --- |
 | Rename the managed copy of `CONTEXT_BUDGET_POLICY.md` | C2d (the converter renames it; executed at CS) |
-| Call product functions in-process; 38 tests start the CLI as a subprocess | Family C8 |
-| Import product modules directly in 64 adapter modules; merge duplicate helpers | Family C8 (helpers: C7f, verified in C8j) |
+| Call product functions in-process; 38 tests start the CLI as a subprocess | Family C8, after 0.9 |
+| Import product modules directly in 64 adapter modules; merge duplicate helpers | Family C8, after 0.9 (helpers: C7f, verified in C8j) |
 | Move `task state import` and `_queue_task_rows` | C1b, C1c |
 
 Current counts differ from the quoted ones. Adapter importers: 66 modules
@@ -330,7 +332,7 @@ Hours are estimates; rows are sized by files. Each row lists its files, at most
 | C2a / 3h | Meridian: read model `LegacyProject` (open rows, closed ids, ADR log, configuration). | `src/cardine/legacy/conversion_reader.py`, `tests/conversion_fixture.py`, `tests/test_conversion_reader.py` | Synthetic Lean and Governed projects: `[ ]`, `[x]`, `[/]`, duplicate ids, no queue, ADR log with and without ids. | None (read-only; the reader opens only declared paths). | C1c |
 | C2b / 3h | Meridian: record translator (section 2), diagnostics instead of invented fields. | `src/cardine/adopt/records.py`, `tests/test_adopt_records.py` | Output passes contract parsing, `task new`, and a start without hand `reconcile` in a disposable project. | None (pure). | C2a, C3a |
 | C2c / 3h | Meridian: `plan_adopt` (pure), `project.json` mapping, refusals, stop-registry entries. | `src/cardine/adopt/plan.py`, `src/cardine/adopt/config.py`, `capabilities/stop-codes-v1.json`, `tests/test_adopt_plan.py`, `tests/test_stop_registry.py` | Same bytes on repeat; both cases; refusals (dirty, `[/]`, worktree, lease). | `before_adopt_plan` (nothing written). | C2b |
-| C2d / 3h | Meridian: `apply_adopt` on the `apply_init` writer; release of managed copies; rename of the budget policy. Assumes DD3. | `src/cardine/adopt/apply.py`, `src/cardine/adopt/release.py`, `tests/test_adopt_apply.py`, `tests/test_adopt_interruption.py` | Idempotent rerun; interrupt at every boundary then rerun gives the same tree; unmarked text kept. | `before_adopt_declare`, `before_adopt_write:<path>` (each file), `before_adopt_state:<id>` (each task), `before_adopt_release:<path>` (each removal), `before_adopt_result`, `after_adopt_result`. | C2c, DD3 |
+| C2d / 3h | Meridian: `apply_adopt` on the `apply_init` writer; release of managed copies and removal of `.meridian/` (DD3); rename of the budget policy. | `src/cardine/adopt/apply.py`, `src/cardine/adopt/release.py`, `tests/test_adopt_apply.py`, `tests/test_adopt_interruption.py` | Idempotent rerun; interrupt at every boundary then rerun gives the same tree; unmarked text kept. | `before_adopt_declare`, `before_adopt_write:<path>` (each file), `before_adopt_state:<id>` (each task), `before_adopt_release:<path>` (each removal), `before_adopt_result`, `after_adopt_result`. | C2c |
 | C2e / 3h | Meridian: rehearsal on a clone, verifier, receipt; `--apply` requires it. | `src/cardine/adopt/rehearsal.py`, `src/cardine/adopt/verify.py`, `tests/test_adopt_rehearsal.py` | Original tree digest unchanged; failing rehearsal blocks apply; scratch under a disposable home. | `before_rehearsal_clone`, `after_rehearsal_clone`, `before_rehearsal_verify`, `before_rehearsal_receipt`; rerun rebuilds the copy. | C2d |
 | C2f / 2h | Meridian: `cardine adopt` parser, exit codes, docs, slash command. | `src/cardine/cli.py`, `commands/cardine-adopt.md`, `docs/PUBLIC_SURFACE.md`, `docs/ADOPT_COMMANDS.md`, `tests/test_adopt_cli.py` | Parser, envelope, exit codes 0, 2, 64; `--check` writes nothing. | None beyond C2d and C2e. | C2e |
 | C3a / 2h | Meridian: classify O7 (record, receipt, start sequence) and fix it. | `tests/test_execution_start_fresh_task.py`, plus files the failing test names (at most 9) | A fresh task created by `task new` starts and `run` continues without a hand edit. | Per file the fix touches. | 141 |
@@ -342,51 +344,53 @@ Hours are estimates; rows are sized by files. Each row lists its files, at most
 | C5b / 2h | Meridian: group 3 and 5 allowance entries bind only while the path exists. | `tests/test_no_meridian_identifiers.py` | Present and absent states; unrelated stale entries still fail. | None. | C5a |
 | C5c / 2h | Meridian: tests that read the live checkout's `.meridian/` use fixtures. | `tests/test_legacy_meridian_installation.py`, `tests/test_template_manifest.py`, `tests/test_status_legacy_boundary.py` | Same assertions on a synthetic installation. | None. | C1a |
 | C5d / 2h | Meridian: tests that execute this checkout's shell hooks run only while the files exist. | `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | Present and absent states. | None. | C1a |
-| C6a / 2h | Meridian: rehearsal on a clone of this repository; evidence in the handoff. The last task Meridian closes. | `tasks/handoffs/<id>.md` | Receipt, verifier output, unchanged original digest. | None. | C2f, C3c, C3d, C3e, C5a, C5b, C5c, C5d, DD1, DD3 |
+| C3f / 3h | Meridian: agent-driven delivery in a disposable project. The agent executing this task follows only what `cardine run` prints, from queued to landed, with a local bare remote. Every point where it needed knowledge the output did not give is a finding. | `tasks/handoffs/<id>.md` | No test file. The handoff records the sequence of `run` outputs, the landed commit, and the findings. | None in this repository; the disposable run is repeated from scratch if interrupted. | C3c, C3d, C3e, C4b |
+| C4a / 3h | Meridian: developer channel in `authorize()` for the owner verdict, `cancel`, and `abort`: interactive terminal on stdin and stdout, explicit confirmation of task and commit, refused otherwise. Reviewer-session verdicts stay refused. | `src/cardine/lifecycle/control.py`, `src/cardine/lifecycle/control_abort.py`, `src/cardine/review/verdict.py`, `src/cardine/cli.py`, `docs/RUN_COMMANDS.md`, `docs/HOST_CAPABILITY_CONTRACT.md`, `tests/test_developer_channel.py`, `tests/test_review_verdict.py` | Each action under a pseudo-terminal: accepted, wrong confirmation, no terminal, reviewer session refused. Host rule probes still deny the three commands to agents. | Before and after the confirmation; the existing receipts of verdict, cancel, and abort stay the durable effects, and a rerun converges. | C3b |
+| C4b / 3h | Meridian: the `review` step of `run` stops looping into the preview (O3): it returns the reviewer work request and the developer's verdict command. A disposable required-review task reaches landing through one round of requested changes. | `src/cardine/lifecycle/engine.py`, `src/cardine/cli.py`, `docs/RUN_COMMANDS.md`, `tests/test_run_required_review.py`, `tests/run_delivery_support.py`, plus at most 3 files | Queued to landed with `CHANGES_REQUESTED`, a fix, then `APPROVE`; a verdict on a stale commit is refused. | Each verdict; rerun after a kill before and after each one. | C3c, C4a |
+| C5e / 3h | Meridian: coexistence on one machine. `cardine setup` no longer removes the known Meridian block from the Codex user rules while Meridian stays installed; it reports it. In a disposable home with both tools, a converted project and a Meridian project each get only their own tool's hooks and briefing; the plugin's local-scope disable is proved or replaced. | `src/cardine/hosts/codex.py`, `src/cardine/hosts/setup.py`, `tests/test_host_coexistence.py`, `tests/test_codex_user_rules.py`, `docs/HOST_CAPABILITY_CONTRACT.md` | Both homes and both projects; Meridian's rules byte-identical after `setup --apply`; a Meridian hook defect in a converted project is recorded for S7, not fixed in Meridian. | The existing setup write boundaries; a rerun converges. | C1a |
+| C6a / 2h | Meridian: rehearsal on a clone of this repository; evidence in the handoff. The last task Meridian closes. | `tasks/handoffs/<id>.md` | Receipt, verifier output, unchanged original digest. | None. | C2f, C3f, C4b, C5a, C5b, C5c, C5d, C5e |
 | CS / developer | Neither tool: the switch, steps S1 to S7. | None in a task | See section 5. | Section 5. | C6a |
 | C7a / 2h | Cardine: first delivery. Delete the installation-conditional branches that the switch made unreachable. | `scripts/check_repository.py`, `tests/test_check_repository.py` | Full suite and repository check. | Cardine's own (rule 4). | CS |
 | C7b / 2h | Cardine: remove the shell hooks and their tests. | `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `.codex/hooks.json`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | Suite passes without them. | Cardine's own. | C7a |
-| C7c / 2h | Cardine: delete group 3 and 5 allowances; remove the `meridian worktree` line of `local.rules`; settle the archive allowance (DD3). | `tests/test_no_meridian_identifiers.py`, `.codex/rules/local.rules` | The guard passes. | Cardine's own. | C7b, DD3 |
+| C7c / 2h | Cardine: delete group 3 and 5 allowances; remove the `meridian worktree` line of `local.rules`; delete the allowances of the removed `.meridian/` (DD3). | `tests/test_no_meridian_identifiers.py`, `.codex/rules/local.rules` | The guard passes. | Cardine's own. | C7b |
 | C7e / 2h | Cardine: stop `integration/evidence.py` proposing this repository's script. | `src/cardine/integration/evidence.py`, `tests/test_ci_evidence.py` | Proposal is empty without that script, unchanged with it. | Cardine's own. | C7a |
-| C7f / 3h | Cardine: delete `legacy/snapshot.py`, `load_meridian_snapshot`, and their tests (subject to DD2 for the rest of legacy). | `src/cardine/legacy/snapshot.py`, `src/cardine/legacy/meridian_installation.py`, `tests/test_status_legacy_boundary.py`, `tests/test_legacy_meridian_installation.py` | Suite passes; helper pairs defined once. | Cardine's own. | C7c, DD2 |
-| C8a to C8i / 3h each | Cardine: tests call product functions in-process and import product modules directly (appendix A). Support modules last. | The batch of appendix A (10 files each; C8i has 3). | The batch passes unchanged in meaning. | Cardine's own. | C7f |
-| C8j / 1h | Cardine: confirm each helper is defined once; delete `scripts/cardine_cli.py` if no importer remains. | `scripts/cardine_cli.py`, `tests/test_cardine_cli_entry.py` | `grep` finds no importer. | Cardine's own. | C8i |
+| C7f / 3h | Cardine: delete `legacy/snapshot.py`, `load_meridian_snapshot`, and their tests; the rest of legacy stays (DD2). | `src/cardine/legacy/snapshot.py`, `src/cardine/legacy/meridian_installation.py`, `tests/test_status_legacy_boundary.py`, `tests/test_legacy_meridian_installation.py` | Suite passes; helper pairs defined once. | Cardine's own. | C7c |
+| C8a to C8i / 3h each | Cardine, after 0.9: tests call product functions in-process and import product modules directly (appendix A). Support modules last. | The batch of appendix A (10 files each; C8i has 3). | The batch passes unchanged in meaning. | Cardine's own. | C7f |
+| C8j / 1h | Cardine, after 0.9: confirm each helper is defined once; delete `scripts/cardine_cli.py` if no importer remains. | `scripts/cardine_cli.py`, `tests/test_cardine_cli_entry.py` | `grep` finds no importer. | Cardine's own. | C8i |
 
-Rows from DD1 are added when it is answered.
+Row identifiers keep their family when a row is added, so C4 and C3f appear out
+of order; dependencies, not the table's order, fix the sequence.
 
 ## 10. Developer decisions
 
-Left undecided. A row marked with a DD waits for it.
+Decided by the developer on 2026-11-03. The ADR records the amendments.
 
-**DD1: the review path while role launches stay unsupported.** Options:
-(a) a developer-only verdict channel that needs the developer's presence, no
-host role boundary; fastest, but outside the declared 1.0 boundary and adds a
-row. (b) Finish the Codex role proof (`docs/HOST_CAPABILITY_CONTRACT.md`);
-needs host features not shown today, and Claude stays unsupported. (c) Ship
-without a review path and mark required-review as unsupported; decision 10,
-step 5 then blocks 1.0 on case 1, and Governed projects (review required by
-default) cannot land tasks.
+**DD1: the review path while role launches stay unsupported.** Option (a): a
+developer channel, from an interactive terminal, with an explicit confirmation of
+the task and the commit. It covers the owner verdict, `cancel`, and `abort`, all
+of which O4 shows refused. A reviewer session can still review, but only the
+developer records the verdict. This is presence, not authenticity (ADR decision
+14, rule 2). Rows C4a and C4b.
 
-**DD2: does `cardine.legacy` survive 1.0 and does converting the private
-projects belong to item 10 or item 13?** If it belongs to 13, the readers
-and `adopt` stay through the field trial and C7f deletes only the snapshot path.
-If it belongs to 10, one more conversion row set is needed and the ADR sentence
-on deleting legacy after item 10 holds.
+**DD2: `cardine.legacy` and the private projects.** Converting the private
+projects belongs to item 13, as part of the field trial. The readers and `adopt`
+stay, because decision 7 has `adopt` handle Meridian projects. Row C7f deletes
+only the snapshot path.
 
-**DD3: what happens to `.meridian/` at the switch.** Remove it (history lives in
-git; `adopt` no longer sees a Meridian project; group 3 allowances disappear) or
-keep `tasks/`, `baselines/`, and `probes/` as an archive (identifier-guard
-allowance moves to group 4; `manifest.json` must go anyway or `adopt` detects
-Meridian again).
+**DD3: `.meridian/` at the switch.** Removed. History stays in Git; closed records
+stay in `tasks/done/`. `adopt` then no longer detects a Meridian project, and
+group 3 allowances disappear with row C7c.
 
-**DD4: CI declaration.** `ci: none`, or provider `github` with required checks.
-`validate.yml` triggers on `pull_request` and pushes to `main` only, so a
-task-branch push starts no CI and `ciBeforeLanding` could not be satisfied.
+**DD4: CI declaration.** `ci: none`, consistent with task 027 and with decision
+11, where CI before landing is an option. `validate.yml` keeps running on `main`.
+S4 still uses a pull request to obtain CI on the switch commit.
 
-**DD5: ADR log.** Build `docs/ARCHITECTURE_DECISIONS.md` from the six standalone
-files, or leave them in place and cite them by path in `Authority`. The first
-needs a numbering decision; the second keeps case 4 of the field trial on path
-citations.
+**DD5: ADR log.** The six standalone files stay in place and are cited by path in
+`Authority`. No renumbering. The field trial proves `adr show` on a project that
+has a log.
+
+**Family C8.** Outside the path to 0.9, because it unblocks neither 0.9 nor 1.0.
+Its rows stay in this plan and are written as records after 0.9.
 
 ## 11. Cross-check against the other plans
 
@@ -396,7 +400,8 @@ Conflicts are named, not resolved.
   and the module "removed by item 10". The converter is a product command;
   C1a replaces the rule.
 - **K2** ADR decision 14 (legacy deleted after item 10) against decision 10,
-  step 5 (conversion of Contoso and Fabrikam on 0.9). DD2.
+  step 5 (conversion of Contoso and Fabrikam on 0.9). Resolved: DD2 and the ADR
+  amendment of 2026-11-03.
 - **K3** `docs/RUN_COMMANDS.md` ("performs") against the `run` help and O2.
   `docs/RUN_ENGINE_PLAN.md` row RE1a is a pure preview; no later row is shown to
   add the worktree and start steps. C3b, C3d.
@@ -409,6 +414,12 @@ Conflicts are named, not resolved.
 - **K6** `docs/RENAME_PLAN.md` item 9 handling of the Codex rules name against
   O8 (`init` still writes `.codex/rules/meridian.rules`). C2d decides the name
   only after the maintainer confirms the intended one.
+- **K8** The first version of step S7 removed Meridian from the whole machine,
+  against ADR decision 10 ("Projects stay on Meridian 1.4.x until their
+  conversion"). Resolved: S7 and the ADR amendment of 2026-11-03, row C5e.
+- **K9** `src/cardine/hosts/codex.py` plans to remove the known Meridian block
+  from the Codex user rules (`legacy_proposed`, task 129), which would break
+  Meridian projects on the same machine. Row C5e.
 - **K7** ADR work item 10 says items 11 and 12 run on Cardine; both depend on
   the first Cardine delivery succeeding (section 5, return to Meridian).
 

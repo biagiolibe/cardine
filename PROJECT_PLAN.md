@@ -28,20 +28,15 @@ the named work item finds it on `main`.
 
 | Item | Target | Source |
 |------|--------|--------|
-| A runnable recovery command for `EVIDENCE_INCOMPLETE`, proved by an end-to-end test | Work item 8 | `tasks/handoffs/030.md`, proposal 1 |
-| Split the mixed guardrail codes by cause, so that safe subcases become recoverable | Work item 8 | `tasks/handoffs/030.md`, proposal 2 |
-| Remove the budget lines from the per-turn queue briefing | Work item 9 | `tasks/handoffs/035.md` |
-| The queue briefing drops every queued task when a title contains an apostrophe (`xargs: unterminated quote`); add a regression test | Work item 9 | Coordinator finding, 2026-10-19 |
-| Rename this repository's managed copy of `CONTEXT_BUDGET_POLICY.md`; the templates are renamed by row SW5 of `docs/SINGLE_WORKFLOW_PLAN.md` | Work item 10 | `tasks/handoffs/035.md`, `docs/SINGLE_WORKFLOW_PLAN.md` |
+| A runnable recovery command for `EVIDENCE_INCOMPLETE`, proved by an end-to-end test | Row C3c | `tasks/handoffs/030.md`, proposal 1 |
+| Rename this repository's managed copy of `CONTEXT_BUDGET_POLICY.md`; the templates are renamed by row SW5 of `docs/SINGLE_WORKFLOW_PLAN.md` | Row C2d | `tasks/handoffs/035.md`, `docs/SINGLE_WORKFLOW_PLAN.md` |
 | Delete `MERIDIAN_ROOT`, `bin/`, `scripts/upgrade_project.sh`, and the old release scripts instead of keeping them renamed | Decision 9 and work item 12 | `docs/RENAME_PLAN.md`, choice 6 |
-| Add `cardine init` (decision 8), replacing the copy steps of the init slash command that task 055 rewrites | Work item 9 | Task 055 record |
-| Remove this repository's own scripts (`python3 scripts/check_repository.py`, `python3 scripts/run_tests.py --parallel`, `python3 -m unittest discover -s tests`) from the product's Claude allowlist (`src/cardine/hosts/claude.py`) and Codex rule probes (`src/cardine/hosts/setup.py`). Cardine ships rules only for its own commands, the lifecycle's Git commands, and the deny list; an adopter's test and validation commands stay in that project's own host configuration | Work item 9 | Coordinator finding, 2026-10-24 |
-| Defer the CLI's heavy imports (`http.client`, `ssl`, `email`, used only by self-update and release) to the commands that need them; startup is 110 ms against 24 ms for bare Python, and per-turn hooks pay it | Work item 9 | Coordinator code analysis, 2026-10-25 |
-| Call product functions in-process in the tests that exercise logic rather than the executable; 38 tests start the CLI as a subprocess | Work item 10 | Coordinator code analysis, 2026-10-25 |
-| Import product modules directly in the 64 test modules that still go through the `scripts/cardine_cli.py` adapter, and merge the remaining duplicate helpers (`_worktrees`, `_primary_checkout`, `_read_text`, `_load_snapshot`) of the modules still marked as extracted from the legacy CLI | Work item 10 | Coordinator code analysis, 2026-10-25 |
-| Move `cardine task state import` (`tasks/importer.py`) and its queue reader `_queue_task_rows` (`integration/projections.py`, re-exported by `scripts/cardine_cli.py`) into the conversion that rebuilds `cardine adopt`, so that the three documented exceptions of `tests/test_product_prose_readers.py` and entries T-27 and T-31 of `docs/TEXT_GATE_INVENTORY.md` reach zero | Work item 10 | `tasks/handoffs/070.md`; coordinator decision, 2026-10-22 |
+| Remove this repository's own scripts (`python3 scripts/check_repository.py`, `python3 scripts/run_tests.py --parallel`, `python3 -m unittest discover -s tests`) from the product's Claude allowlist (`src/cardine/hosts/claude.py`) and Codex rule probes (`src/cardine/hosts/setup.py`). Cardine ships rules only for its own commands, the lifecycle's Git commands, and the deny list; an adopter's test and validation commands stay in that project's own host configuration. The allowlists are clean; `integration/evidence.py` still proposes this repository's script | Row C7e | Coordinator finding, 2026-10-24 |
+| Call product functions in-process in the tests that exercise logic rather than the executable; 38 tests start the CLI as a subprocess | Family C8, after 0.9 | Coordinator code analysis, 2026-10-25 |
+| Import product modules directly in the 64 test modules that still go through the `scripts/cardine_cli.py` adapter, and merge the remaining duplicate helpers (`_worktrees`, `_primary_checkout`, `_read_text`, `_load_snapshot`) of the modules still marked as extracted from the legacy CLI | Family C8, after 0.9; helpers in row C7f | Coordinator code analysis, 2026-10-25 |
+| Move `cardine task state import` (`tasks/importer.py`) and its queue reader `_queue_task_rows` (`integration/projections.py`, re-exported by `scripts/cardine_cli.py`) into the conversion that rebuilds `cardine adopt`, so that the three documented exceptions of `tests/test_product_prose_readers.py` and entries T-27 and T-31 of `docs/TEXT_GATE_INVENTORY.md` reach zero | Rows C1b, C1c | `tasks/handoffs/070.md`; coordinator decision, 2026-10-22 |
 | Protect the installation surface (manifest, marker baselines, capability and probe evidence, upgrade recovery) against coherent project-file forgery, row FI1 | After 1.0 | `docs/FORGERY_INVENTORY.md`, F-E; ADR decision 14, rule 2, as amended on 2026-10-23 |
-| The governed skills route `Accept` to `docs/workflows/LIFECYCLE.md`, which the single template set no longer installs | Work item 9 | `tasks/handoffs/055.md` |
+| Write the records of rows C7a to C7f in Meridian format before boundary B1, so that `adopt` converts real open tasks | Row C6a | `docs/CONVERSION_PLAN.md`, section 5 |
 
 ## Active Delivery
 
@@ -187,3 +182,26 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 139 — Reuse the ready cleanup fixture and measure the real savings.
 - `[x]` 140 — Balance test shards by measured duration without reducing coverage.
 - `[x]` 141 — Plan the Meridian conversion and cardine adopt (work item 10).
+- `[ ]` 142 — Limit legacy imports to the adopt package (C1a).
+- `[ ]` 143 — Move the importer and queue reader under legacy (C1b).
+- `[ ]` 144 — Bring the prose reader ratchets to zero (C1c).
+- `[ ]` 145 — Classify and fix the fresh task start failure (C3a).
+- `[ ]` 146 — Make run perform the contract and worktree steps (C3b).
+- `[ ]` 147 — Prove a no-review delivery to landing (C3c).
+- `[ ]` 148 — Align the run help with its behavior (C3d).
+- `[ ]` 149 — Prove the spike, authority, and resume cases (C3e).
+- `[ ]` 150 — Add the developer channel for verdict, cancel, and abort (C4a).
+- `[ ]` 151 — Deliver a required-review task through the developer channel (C4b).
+- `[ ]` 152 — Deliver a disposable task with an agent following run (C3f).
+- `[ ]` 153 — Add the read model of a Meridian project (C2a).
+- `[ ]` 154 — Translate open records for adopt (C2b).
+- `[ ]` 155 — Plan the adoption as a pure function (C2c).
+- `[ ]` 156 — Apply the adoption and release the managed copies (C2d).
+- `[ ]` 157 — Rehearse the adoption on a clone (C2e).
+- `[ ]` 158 — Expose the cardine adopt command (C2f).
+- `[ ]` 159 — Make the installation checks conditional (C5a).
+- `[ ]` 160 — Bind identifier allowances to existing paths (C5b).
+- `[ ]` 161 — Move live installation tests to fixtures (C5c).
+- `[ ]` 162 — Run the shell hook tests only while the hooks exist (C5d).
+- `[ ]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).
+- `[ ]` 164 — Rehearse the conversion of this repository (C6a).

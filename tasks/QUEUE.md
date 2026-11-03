@@ -32,3 +32,33 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 31 — Meridian conversion: before the switch
+
+Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 and decision 10; developer decisions DD1–DD5 of 2026-11-03.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 142 | Limit legacy imports to the adopt package (C1a) | 🔴 P1 | 141 | [142](142-legacy-import-rule.md) |
+| `[ ]` | 143 | Move the importer and queue reader under legacy (C1b) | 🔴 P1 | 142 | [143](143-move-importer-to-legacy.md) |
+| `[ ]` | 144 | Bring the prose reader ratchets to zero (C1c) | 🔴 P1 | 143 | [144](144-prose-ratchets-to-zero.md) |
+| `[ ]` | 145 | Classify and fix the fresh task start failure (C3a) | 🔴 P1 | 141 | [145](145-fresh-task-start.md) |
+| `[ ]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](146-run-performs-worktree-step.md) |
+| `[ ]` | 147 | Prove a no-review delivery to landing (C3c) | 🔴 P1 | 146 | [147](147-disposable-delivery-proof.md) |
+| `[ ]` | 148 | Align the run help with its behavior (C3d) | 🟡 P2 | 146 | [148](148-align-run-help.md) |
+| `[ ]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](149-field-case-runs.md) |
+| `[ ]` | 150 | Add the developer channel for verdict, cancel, and abort (C4a) | 🔴 P1 | 146 | [150](150-developer-channel.md) |
+| `[ ]` | 151 | Deliver a required-review task through the developer channel (C4b) | 🔴 P1 | 147, 150 | [151](151-required-review-delivery.md) |
+| `[ ]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](152-agent-driven-delivery.md) |
+| `[ ]` | 153 | Add the read model of a Meridian project (C2a) | 🔴 P1 | 144 | [153](153-conversion-reader.md) |
+| `[ ]` | 154 | Translate open records for adopt (C2b) | 🔴 P1 | 153, 145 | [154](154-adopt-record-translator.md) |
+| `[ ]` | 155 | Plan the adoption as a pure function (C2c) | 🔴 P1 | 154 | [155](155-adopt-plan.md) |
+| `[ ]` | 156 | Apply the adoption and release the managed copies (C2d) | 🔴 P1 | 155 | [156](156-adopt-apply.md) |
+| `[ ]` | 157 | Rehearse the adoption on a clone (C2e) | 🔴 P1 | 156 | [157](157-adopt-rehearsal.md) |
+| `[ ]` | 158 | Expose the cardine adopt command (C2f) | 🔴 P1 | 157 | [158](158-adopt-command.md) |
+| `[ ]` | 159 | Make the installation checks conditional (C5a) | 🔴 P1 | 144 | [159](159-conditional-installation-checks.md) |
+| `[ ]` | 160 | Bind identifier allowances to existing paths (C5b) | 🔴 P1 | 159 | [160](160-conditional-identifier-allowances.md) |
+| `[ ]` | 161 | Move live installation tests to fixtures (C5c) | 🔴 P1 | 142 | [161](161-live-installation-test-fixtures.md) |
+| `[ ]` | 162 | Run the shell hook tests only while the hooks exist (C5d) | 🔴 P1 | 142 | [162](162-conditional-shell-hook-tests.md) |
+| `[ ]` | 163 | Prove Meridian and Cardine coexist on one machine (C5e) | 🔴 P1 | 142 | [163](163-tool-coexistence.md) |
+| `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163 | [164](164-rehearse-this-repository.md) |

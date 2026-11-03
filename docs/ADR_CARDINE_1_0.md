@@ -24,7 +24,12 @@ the plugin, and the Codex rules from work item 5b to work item 9. Decision
 holds against weak and strong agents, were proposed and accepted on
 2026-10-22. On 2026-10-23 the developer set the trust boundary of decision
 14, rule 2, at the host's permission system and left the installation
-surface outside it until after 1.0.*
+surface outside it until after 1.0. On 2026-11-03 the developer decided the
+questions of `docs/CONVERSION_PLAN.md`: a developer channel records verdicts,
+cancel, and abort while role launches are unsupported (decision 14, rule 2);
+`cardine.legacy` stays while `cardine adopt` reads Meridian projects; and the
+maintainer's machine keeps Meridian until the last project is converted
+(decision 10).*
 
 ## Context
 
@@ -349,7 +354,9 @@ CLI. `cardine doctor` checks that the plugin and the CLI versions match.
 7. **Archive Meridian.** Add a README notice, make the repository read-only, and
    remove the Meridian plugin from its marketplace.
 
-On the maintainer's machine:
+On the maintainer's machine, after the last project is converted (amended on
+2026-11-03; until then both tools coexist, and a converted project disables
+the Meridian plugin at its own scope):
 
 - remove the Meridian plugin, `~/.local/share/meridian`, the `MERIDIAN_ROOT`
   and `PATH` lines, and the Meridian blocks under `~/.codex`;
@@ -549,7 +556,8 @@ integrity check is the right gate.
 
 The reader of an installed Meridian under `cardine.legacy` keeps its prose
 parsing until work item 10, because it serves the coordinator of this
-repository. No product command calls it.
+repository. No product command calls it until then. From work item 10 only
+`cardine adopt` calls it (amended on 2026-11-03).
 
 One check keeps this true: a static test lists every product read of record,
 handoff, report, queue, or plan text and fails on a new one outside the
@@ -612,6 +620,13 @@ Five rules follow:
      developer's presence) can later sign the same receipts; it is not part
      of 1.0.
 
+   **Developer channel (amended on 2026-11-03).** While a host cannot prove
+   its role profiles, reviewer sessions cannot record a verdict. The developer
+   records it, and runs cancel and abort, from an interactive terminal with an
+   explicit confirmation of the task and the commit. Host rules deny these
+   commands to agents. This is presence, not authenticity: the declared limit
+   above applies unchanged.
+
    The installation surface (the manifest, marker baselines, and capability
    evidence) is outside this boundary until after 1.0. Those files describe
    the installed templates and do not decide whether a task lands.
@@ -634,7 +649,8 @@ agent can forge among the artifacts gates trust, and every stop code and
 journal stop the tool could resolve itself. Their results set the scope of
 the work item 8 tasks. Rule 4 becomes an acceptance criterion of every work
 item 8 task that performs effects. The surface of options and modules is
-reviewed after work item 10, when `cardine.legacy` can be deleted.
+reviewed after work item 10. `cardine.legacy` stays while `cardine adopt`
+reads Meridian projects (decision 7; amended on 2026-11-03).
 
 ## Work items to 0.9
 
