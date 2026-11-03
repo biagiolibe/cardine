@@ -85,10 +85,18 @@ def execution_preflight(project_root: Path, task_id: str, *, options: dict | Non
 def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) -> str:
     """Refresh only a nonterminal task's generated execution-contract block."""
     task_file = find_task_file(project_root, task_id)
+    from cardine.lifecycle.receipts import pending_operation, replay_operation, task_lock
+    if apply and pending_operation(project_root, task_id):
+        # An interrupted reconcile converges by replaying its own intent.
+        with task_lock(project_root, task_id):
+            if pending_operation(project_root, task_id):
+                replay_operation(project_root, task_id, kind="contract_revision")
+        return f"Execution reconciliation applied for {task_id}: {task_file.relative_to(project_root)}"
     text = task_file.read_text(encoding="utf-8")
     from cardine.tasks.state import read_task_state
     from cardine.templates.mode import detect_mode
-    status = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error, require_contract=True)["status"]
+    state = read_task_state(project_root, task_id, detect_mode(project_root), stop_factory=stop_error, require_contract=True)
+    status = state["status"]
     if status in ("done", "cancelled"):
         return f"Execution reconciliation skipped for terminal task {task_id} ({status})"
     if status not in ("queued", "in_progress"):
@@ -117,7 +125,16 @@ def reconcile_execution_contract(project_root: Path, task_id: str, apply: bool) 
         return f"Execution reconciliation already current for {task_id}: {task_file.relative_to(project_root)}"
     if not apply:
         return f"Execution reconciliation required for {task_id}: {task_file.relative_to(project_root)} (rerun with --apply)"
-    task_file.write_text(reconciled, encoding="utf-8")
+    if "run" in state:
+        # The creation receipt covers the record's bytes; a bare write would make
+        # every later receipt check refuse the reconciled record.
+        from copy import deepcopy
+        from cardine.lifecycle.receipts import write_operation
+        with task_lock(project_root, task_id):
+            write_operation(project_root, task_id, deepcopy(state), kind="contract_revision", previous=deepcopy(state),
+                            files={task_file.relative_to(project_root).as_posix(): reconciled.encode("utf-8")})
+    else:
+        task_file.write_text(reconciled, encoding="utf-8")
     return f"Execution reconciliation applied for {task_id}: {task_file.relative_to(project_root)}"
 
 
