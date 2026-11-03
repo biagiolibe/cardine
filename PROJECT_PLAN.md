@@ -182,7 +182,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 139 — Reuse the ready cleanup fixture and measure the real savings.
 - `[x]` 140 — Balance test shards by measured duration without reducing coverage.
 - `[x]` 141 — Plan the Meridian conversion and cardine adopt (work item 10).
-- `[ ]` 142 — Limit legacy imports to the adopt package (C1a).
+- `[x]` 142 — Limit legacy imports to the adopt package (C1a).
 - `[ ]` 143 — Move the importer and queue reader under legacy (C1b).
 - `[ ]` 144 — Bring the prose reader ratchets to zero (C1c).
 - `[x]` 145 — Classify and fix the fresh task start failure (C3a).

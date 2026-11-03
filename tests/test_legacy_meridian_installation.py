@@ -324,13 +324,15 @@ class MarkerAndIsolationTest(unittest.TestCase):
             count += len(expected)
         self.assertGreater(count, 0)
 
-    def test_import_graph_has_no_product_consumer_of_legacy(self):
+    @staticmethod
+    def legacy_import_violations(root):
+        """Return `path:line` of every product import of `cardine.legacy` outside the allowed packages."""
         violations = []
         for directory in ("src/cardine", "scripts", "hooks"):
-            for path in (ROOT / directory).rglob("*.py"):
-                if path.is_relative_to(ROOT / "src/cardine/legacy"):
+            for path in (root / directory).rglob("*.py"):
+                if path.is_relative_to(root / "src/cardine/legacy") or path.is_relative_to(root / "src/cardine/adopt"):
                     continue
-                module = ".".join(path.relative_to(ROOT / "src").with_suffix("").parts) if directory == "src/cardine" else ""
+                module = ".".join(path.relative_to(root / "src").with_suffix("").parts) if directory == "src/cardine" else ""
                 for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
                     targets = []
                     if isinstance(node, ast.Import):
@@ -342,8 +344,33 @@ class MarkerAndIsolationTest(unittest.TestCase):
                             base = ".".join(package[:len(package) - node.level + 1] + ([base] if base else []))
                         targets = [base] + [f"{base}.{alias.name}" for alias in node.names]
                     if any(target == "cardine.legacy" or target.startswith("cardine.legacy.") for target in targets):
-                        violations.append(f"{path.relative_to(ROOT)}:{node.lineno}")
-        self.assertEqual(violations, [])
+                        violations.append(str(path.relative_to(root)) + f":{node.lineno}")
+        return violations
+
+    def test_import_graph_limits_legacy_consumers_to_adopt(self):
+        self.assertTrue((ROOT / "src/cardine/adopt/__init__.py").is_file())
+        self.assertEqual(self.legacy_import_violations(ROOT), [])
+
+    def test_import_graph_rejects_other_product_module_importing_legacy(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name, text in {
+                "src/cardine/legacy/reader.py": "VALUE = 1\n",
+                "src/cardine/adopt/convert.py": "from cardine.legacy import reader\n",
+                "src/cardine/tasks/ok.py": "import cardine.shared\n",
+                "src/cardine/tasks/bad_absolute.py": "from cardine.legacy.reader import VALUE\n",
+                "src/cardine/tasks/bad_relative.py": "from ..legacy import reader\n",
+                "scripts/bad_script.py": "import cardine.legacy.reader\n",
+            }.items():
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding="utf-8")
+            self.assertEqual(
+                sorted(self.legacy_import_violations(root)),
+                ["scripts/bad_script.py:1", "src/cardine/tasks/bad_absolute.py:1", "src/cardine/tasks/bad_relative.py:1"],
+            )
 
 
 if __name__ == "__main__":
