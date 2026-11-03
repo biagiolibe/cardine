@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from cardine.shared.git import scoped_command
 
+import contextlib
 import json
+import os
 import shlex
 from pathlib import Path
 from collections.abc import Iterable
@@ -294,6 +296,8 @@ def dispatch_run(locations: RunLocations) -> dict:
         result = (resolve_run(RunFacts(locations.task_id, locations.primary, 'cancelled'))
                   if active['status'] == 'cancelled' else run_integration_step(locations))
         if result is None and active['status'] != 'cancelled':
+            result = run_worktree_step(locations, active)
+        if result is None and active['status'] != 'cancelled':
             result = run_validation_step(locations)
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
@@ -304,6 +308,63 @@ def dispatch_run(locations: RunLocations) -> dict:
         # successful progress or an automatic repair inferred from its prose.
         result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)))
     return result
+
+
+@contextlib.contextmanager
+def _inside(project: Path):
+    """`worktree prepare` verifies the current directory; `run --project` may start elsewhere."""
+    previous = Path.cwd()
+    os.chdir(project)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
+
+
+def _start_pending(root: Path, task_id: str) -> bool:
+    """True when an intact intent is exactly this step's interrupted start transition."""
+    from cardine.lifecycle import receipts
+    if not receipts.pending_operation(root, task_id):
+        return False
+    try:
+        intent = receipts._load_intent(receipts._intent_path(root, task_id))
+        kind = intent['state']['run']['receipts'][-1]['kind']
+        expected = 'transition:' + receipts.digest(receipts.encoded(dict(target='in_progress')))
+        return (intent['task_id'] == task_id and intent['state']['status'] == 'in_progress'
+                and kind == expected)
+    except (CardineError, KeyError, IndexError, TypeError):
+        return False
+
+
+@scoped_command
+def run_worktree_step(locations: RunLocations, active: dict) -> dict | None:
+    """Perform the contract-to-worktree boundary once; a rerun converges on it.
+
+    Prepare is idempotent over its owned receipt, and execution start replays its
+    own interrupted transition, so a killed earlier call needs no special case.
+    A task that already left `queued` in its worktree has nothing to do here.
+    """
+    from cardine.lifecycle import receipts
+    from cardine.lifecycle.commands import execution_start
+    from cardine.worktree.checkout import prepare_task_worktree
+    task_id = locations.task_id
+    if (locations.worktree.is_dir() and active['status'] != 'queued'
+            and not _start_pending(locations.worktree, task_id)):
+        return None
+    with _inside(locations.primary):
+        if locations.worktree.is_dir() and _start_pending(locations.worktree, task_id):
+            worktree = locations.worktree  # Prepared earlier; only the owned start is replayed.
+        else:
+            worktree = Path(prepare_task_worktree(task_id, locations.root, locations.primary)['worktree'])
+            receipts.boundary('after_run_prepare')
+    with _inside(worktree):
+        started = execution_start(worktree, task_id, context=locations)
+    receipts.boundary('after_run_execution_start')
+    argv = ['cardine', 'run', task_id, '--project', str(locations.primary)]
+    return envelope(task_id, str(locations.primary), step='worktree', action='execution-start',
+                    next_command=command_reference(argv, 'Obtain committed implementation and acceptance evidence'),
+                    evidence=[dict(kind='worktree', path=str(worktree),
+                                   identity=str(started['commit']))])
 
 
 @scoped_command

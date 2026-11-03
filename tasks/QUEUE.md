@@ -43,7 +43,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[ ]` | 143 | Move the importer and queue reader under legacy (C1b) | 🔴 P1 | 142 | [143](143-move-importer-to-legacy.md) |
 | `[ ]` | 144 | Bring the prose reader ratchets to zero (C1c) | 🔴 P1 | 143 | [144](144-prose-ratchets-to-zero.md) |
 | `[x]` | 145 | Classify and fix the fresh task start failure (C3a) | 🔴 P1 | 141 | [145](done/145-fresh-task-start.md) |
-| `[ ]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](146-run-performs-worktree-step.md) |
+| `[x]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](done/146-run-performs-worktree-step.md) |
 | `[ ]` | 147 | Prove a no-review delivery to landing (C3c) | 🔴 P1 | 146 | [147](147-disposable-delivery-proof.md) |
 | `[ ]` | 148 | Align the run help with its behavior (C3d) | 🟡 P2 | 146 | [148](148-align-run-help.md) |
 | `[ ]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](149-field-case-runs.md) |
