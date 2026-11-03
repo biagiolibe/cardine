@@ -126,8 +126,9 @@ def advance_task_closure(
                                             Path(str(inspection["worktree"])), require_tracked=True)
             except CardineStop as error:
                 resume = stop_resume(error.code, task_id=task, project=project_root)
-                return result("C6", "resolve", commands=[resume], stop_code=error.code,
-                              stop_detail=error_detail(error), resume=resume, blocked=True)
+                human = load_stop_registry()[error.code].get("human_decision") is True
+                return result("C6", "human" if human else "resolve", commands=[] if human else [resume],
+                              stop_code=error.code, stop_detail=error_detail(error), resume=resume, blocked=True)
             try:
                 staged = stage_task_integration(task, worktree_root, None, project_root)
             except CardineStop as error:

@@ -50,7 +50,6 @@ from cardine.templates.catalog import manifest_workflow_mode, _parse_catalog_sur
 from cardine.shared import project as shared_project
 from cardine.shared.paths import SCRIPTS_ROOT
 from cardine.tasks.state import TaskStateInvalid, machine, read_task_state, state_path, validate_task_state
-from cardine.integration.projections import _queue_task_rows
 from cardine.release.update import fetch_latest_release, run_self_update, claude_user_settings_path, plugin_marketplace_ref, plugin_ref_report, run_self_check
 from cardine.review.verdict import record_review_verdict, _review_verdict_projection, _review_attempt_text
 from cardine.shared.context import _context_path_references, _context_relative_references, _context_phase_reads, _context_router, _context_routed_workflow, _context_file_record, _context_configuration, _context_threshold, context_router_files, context_size_report, format_context_size_report
@@ -87,7 +86,6 @@ from cardine.hosts.skills import _directory_setup_state, CODEX_SKILL_NAMES, _fra
 from cardine.shared.flow import FLOW_TARGETS_PATH, FLOW_TARGETS_VERSION, FLOW_ORIGINS, FLOW_ORIGIN_PATTERN, FLOW_JOURNAL_TIME, FLOW_UNCODED, _flow_time, _flow_read_journal, _flow_origin, _flow_median, _flow_targets, _flow_tasks, flow_report, format_flow_report, _flow_duration
 from cardine.tasks.audit import audit_task_state_projections
 from cardine.tasks.contract import profile_digest, contract_digest, contract_requires_execution_commands, PREFLIGHT_HEADINGS, NORMAL_PREFLIGHT_HEADINGS, SPIKE_PREFLIGHT_FIELDS, HOST_IMPACT_STATES, HOST_IMPACT_EVIDENCE_CATEGORIES, host_impact_section, host_impact_field, host_impact_required_profiles, validate_host_impact_declaration, execution_entries, verify_execution_evidence
-from cardine.tasks.importer import import_task_states
 from cardine.templates.upgrade import plan_upgrade, complete_profile_surfaces, apply_plan, apply_upgrade
 from cardine.cli import CardineArgumentParser, ShowVersionAction, main, build_parser, _run_cli
 

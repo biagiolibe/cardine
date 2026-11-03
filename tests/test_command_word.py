@@ -47,6 +47,8 @@ class CommandWordTest(unittest.TestCase):
             baseline[code] = {"human_decision": False, "resolution": "recoverable"}
         for code in ("SELF_UPDATE_INPUT_INVALID", "OS_PATH_MISSING"):
             baseline[code] = {"human_decision": False, "resolution": "failing-work"}
+        # C1b: state is never recreated from prose, so a missing state stops for the developer.
+        baseline["TASK_STATE_MISSING"] = {"human_decision": True, "resolution": "guardrail"}
         # N3 retires the final completion-prose emitters, including host prose.
         for code in ("HANDOFF_REPORT_MISSING", "HANDOFF_FIELDS_MISSING", "HANDOFF_FIELD_FORMAT",
                      "HANDOFF_TASK_MISMATCH", "HANDOFF_VALIDATION_FAILING",

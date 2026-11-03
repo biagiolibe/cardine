@@ -248,17 +248,6 @@ def allowed(key: Key) -> bool:
 KNOWN_VIOLATIONS: dict[Key, str] = {
     ('src/cardine/hosts/read_guard.py', 'evaluate_targets', 'named-reader', 'threshold_for'): 'T-46',
     ('src/cardine/hosts/stop_audit.py', 'audit', 'named-reader', 'final_message'): 'T-47',
-    ('src/cardine/tasks/importer.py', '<module>', 'named-reader', '_queue_task_rows'): 'T-31',
-    ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'read_task_field'): 'T-31',
-    ('src/cardine/tasks/importer.py', '<module>', 'named-reader', 'resolve_task_contract'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'disk-text', 'read_text:queue_path'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'disk-text', 'read_text:review_path'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'disk-text', 'read_text:task_path'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'named-reader', '_queue_task_rows'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'named-reader', 'read_task_field'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'named-reader', 'record_status'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'import_task_states', 'named-reader', 'resolve_task_contract'): 'T-31',
-    ('src/cardine/tasks/importer.py', 'legacy_identity_context', 'disk-text', 'read_text:queue_path'): 'T-31',
 }
 
 
@@ -286,27 +275,23 @@ class ResidualRatchetTest(unittest.TestCase):
     """RE7b: only work items 9 and 10 may still hold a known violation."""
 
     def test_residual_set_is_work_item_nine_and_ten_only(self):
-        self.assertLessEqual(set(KNOWN_VIOLATIONS.values()), {"T-46", "T-47", "T-27", "T-31", "T-25"})
+        self.assertLessEqual(set(KNOWN_VIOLATIONS.values()), {"T-46", "T-47"})
         for key, entry in KNOWN_VIOLATIONS.items():
             path = key[0]
-            if entry in ("T-27", "T-31", "T-25"):
-                self.assertEqual(path, "src/cardine/tasks/importer.py", key)
-            elif entry == "T-46":
+            if entry == "T-46":
                 self.assertEqual(path, "src/cardine/hosts/read_guard.py", key)
             else:
                 self.assertEqual(path, "src/cardine/hosts/stop_audit.py", key)
 
-    def test_importer_is_reached_only_by_the_explicit_state_command_and_legacy(self):
-        # Work item 10 moves it to cardine.legacy; until then no run-engine
-        # module, hook or console reader may import it.
+    def test_importer_is_reached_only_inside_legacy(self):
+        # `cardine adopt` becomes its one product caller when work item 10 builds it.
         importers = set()
         for path in (ROOT / "src/cardine").rglob("*.py"):
             relative = path.relative_to(ROOT).as_posix()
-            if relative != "src/cardine/tasks/importer.py" and "cardine.tasks.importer" in path.read_text(encoding="utf-8"):
+            if relative != "src/cardine/legacy/importer.py" and "cardine.legacy.importer" in path.read_text(encoding="utf-8"):
                 importers.add(relative)
-        self.assertEqual(importers, {"src/cardine/cli.py", "src/cardine/legacy/snapshot.py"})
-        cli = (ROOT / "src/cardine/cli.py").read_text(encoding="utf-8")
-        self.assertEqual(cli.count("import_task_states("), 1)
+        self.assertEqual(importers, {"src/cardine/legacy/snapshot.py"})
+        self.assertNotIn("import_task_states", (ROOT / "src/cardine/cli.py").read_text(encoding="utf-8"))
 
     def test_allowlist_exceptions_are_exact_and_named(self):
         # No wildcard beyond the three permanent classes, and no function-wide

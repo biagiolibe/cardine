@@ -72,7 +72,7 @@ unmerged or protected branch stay guardrails.
 ## Internal diagnostic surfaces
 
 `worktree prepare|check|repair-base|advance|integrate stage|finalize|abort|cleanup`,
-`execution start|preflight|validate|deliver`, `task transition|state import` and
+`execution start|preflight|validate|deliver`, `task transition` and
 `task close` remain available for diagnosis and manual recovery. They are not
 the supported path: `run` uses their library functions and the same outcome
 classification.

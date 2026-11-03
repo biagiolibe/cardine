@@ -40,7 +40,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 142 | Limit legacy imports to the adopt package (C1a) | 🔴 P1 | 141 | [142](done/142-legacy-import-rule.md) |
-| `[ ]` | 143 | Move the importer and queue reader under legacy (C1b) | 🔴 P1 | 142 | [143](143-move-importer-to-legacy.md) |
+| `[x]` | 143 | Move the importer and queue reader under legacy (C1b) | 🔴 P1 | 142 | [143](done/143-move-importer-to-legacy.md) |
 | `[ ]` | 144 | Bring the prose reader ratchets to zero (C1c) | 🔴 P1 | 143 | [144](144-prose-ratchets-to-zero.md) |
 | `[x]` | 145 | Classify and fix the fresh task start failure (C3a) | 🔴 P1 | 141 | [145](done/145-fresh-task-start.md) |
 | `[x]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](done/146-run-performs-worktree-step.md) |

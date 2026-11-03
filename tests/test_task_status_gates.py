@@ -9,7 +9,8 @@ from unittest import mock
 
 from project_config_support import write_project_config
 from task_contract_support import contract_record, write_state, VALIDATION, freeze_record
-from cardine.tasks import preflight, transitions, audit, importer
+from cardine.legacy import importer
+from cardine.tasks import preflight, transitions, audit
 from cardine.tasks.identity import resolve_task_identity
 from cardine.shared.errors import CardineStop
 

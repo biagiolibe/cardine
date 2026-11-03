@@ -138,7 +138,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/release/update.py", "_run_self_update", "<dynamic>"): ("passthrough", "non-run errno classifier; pending apply retries retain the receipt-pinned target"),
     ("src/cardine/release/update.py", "_run_self_update.refuse", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/review/verdict.py", "record_review_verdict", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
-    ("src/cardine/tasks/importer.py", "import_task_states.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
+    ("src/cardine/legacy/importer.py", "import_task_states.invalid", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/tasks/preflight.py", "check_dependencies", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),
     ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STATUS_REJECTED"): ("guardrail", "cancelled task or failed/cancelled landed dependency retains authority"),
     ("src/cardine/tasks/state.py", "read_task_state", "TASK_STATE_INTERRUPTED"): ("split", "intact plain transition intent and no live writer"),

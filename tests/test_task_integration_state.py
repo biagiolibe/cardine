@@ -438,13 +438,9 @@ class TaskIntegrationStateTest(unittest.TestCase):
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING" if missing else "TASK_STATE_INVALID")
                 self.assertIn(".cardine/tasks/056.json", result["stop_detail"])
                 if missing:
-                    command = shlex.split(result["commands"][0])
-                    self.assertEqual(command[:4], ["cardine", "task", "state", "import"])
-                    self.assertEqual(command[command.index("cardine"):command.index("cardine") + 4],
-                                     ["cardine", "task", "state", "import"])
-                    self.assertEqual(command[command.index("--project") + 1], str(self.worker))
-                    self.assertEqual(len(result["commands"]), 1)
-                    self.assertEqual(result["resume"], " && ".join(result["commands"]))
+                    self.assertEqual(result["action_required"], "human")
+                    self.assertEqual(result["commands"], [])
+                    self.assertIn(str(self.worker), result["resume"])
                 for path, tree in before.items():
                     self.assertEqual(self.git("write-tree", cwd=path).stdout, tree)
                 self.assertFalse(owner_worktree_storage._merge_head_path(self.primary).exists())
@@ -459,7 +455,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.assertTrue(blocked)
         self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
 
-    def test_advance_missing_state_recovery_commands_run_unchanged(self):
+    def test_advance_missing_state_stops_for_the_developer(self):
         self.start(workflow="single", preset="lean")
         handoff = self.worker / "tasks/handoffs/056.md"
         handoff.parent.mkdir(exist_ok=True)
@@ -478,23 +474,23 @@ class TaskIntegrationStateTest(unittest.TestCase):
                     "056", self.worktree_root, supplied_project=self.primary)
                 self.assertTrue(blocked)
                 self.assertEqual(result["stop_code"], "TASK_STATE_MISSING")
-                self.assertIn("task state import 056", result["resume"])
+                self.assertIn(".cardine/tasks/056.json", result["resume"])
                 self.assertNotIn("task transition", result["resume"])
-                self.assertEqual(result["commands"], [result["resume"]])
+                self.assertEqual(result["commands"], [])
                 self.assertFalse((self.worker / ".cardine/tasks/056.json").exists())
                 self.assertEqual(self.git("write-tree", cwd=self.worker).stdout, before)
 
 
-    def test_advance_governed_missing_state_keeps_import_resume(self):
+    def test_advance_governed_missing_state_names_the_state_file(self):
         self.start()
         result, blocked = owner_lifecycle_closure.advance_task_closure(
             "056", self.worktree_root, supplied_project=self.primary)
         self.assertTrue(blocked)
-        # Both presets now use the same contract-aware closure recovery.
-        self.assertIn("task state import 056", result["resume"])
+        # Both presets stop the same way: state is never recreated from prose.
+        self.assertIn(".cardine/tasks/056.json", result["resume"])
         self.assertNotIn("task close 056", result["resume"])
         self.assertNotIn("worktree advance 056", result["resume"])
-        self.assertEqual(result["resume"], " && ".join(result["commands"]))
+        self.assertEqual(result["commands"], [])
 
     def test_advance_terminal_state_reaches_stage(self):
         self.start(workflow="single", preset="lean")
@@ -512,7 +508,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_missing_state_resume_selects_registered_worktree(self):
         self.start()
         resume = owner_stops_render.stop_resume("TASK_STATE_MISSING", task_id="056", project=self.primary)
-        self.assertEqual(shlex.split(resume)[shlex.split(resume).index("--project") + 1], str(self.worker))
+        self.assertIn(f" in {self.worker} ", resume)
         (self.worker / ".cardine/tasks").mkdir()
         error = self.assert_stop("TASK_STATE_MISSING", ".cardine/tasks/056.json")
         self.assertIn(resume, str(error))

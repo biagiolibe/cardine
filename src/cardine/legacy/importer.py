@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import re
 
-from cardine.integration.projections import _queue_task_rows
+from cardine.legacy.queue_rows import _queue_task_rows
 from cardine.shared.errors import CardineError
 from cardine.shared.git import git_output
 from cardine.shared.text import read_task_field

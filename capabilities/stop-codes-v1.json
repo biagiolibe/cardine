@@ -482,13 +482,13 @@
         "governed-sdd"
       ],
       "emitter": "shared task-state reader; `cardine task transition`; worktree advance C6",
-      "human_decision": false,
-      "resume": "cardine task state import {task_id} --project {project} --apply --include-terminal",
+      "human_decision": true,
+      "resume": "restore .cardine/tasks/{task_id}.json in {project} from Git history or, for a project not yet converted, run cardine adopt; then rerun the same cardine command",
       "tool_hint": "cardine task transition",
       "kind": "stop",
-      "summary": "a task has no tracked state file; closure recovery creates in_progress state, commits it, verifies closure through task close, then advances; a record at any path recreates only its missing state; state import remains available; recovery uses the registered task worktree when present",
+      "summary": "a task has no tracked state file; state is never recreated from prose, so the developer restores it from Git history or converts the project; the named path uses the registered task worktree when present",
       "test": "tests.test_machine_task_state.MachineTaskStateTest.test_missing_stop",
-      "resolution": "recoverable"
+      "resolution": "guardrail"
     },
     {
       "code": "TASK_STATE_INVALID",
