@@ -164,6 +164,11 @@ class ModuleInventoryTest(unittest.TestCase):
         for name in graph:
             visit(name, [])
 
+    def test_adopt_package_exists_and_defines_nothing_yet(self):
+        init = ROOT / "src/cardine/adopt/__init__.py"
+        self.assertIn("cardine.adopt", package_graph())
+        self.assertEqual(list(definitions(ast.parse(init.read_text(encoding="utf-8")))), [])
+
     def test_all_tracked_python_files_fit_line_budget(self):
         tracked = subprocess.check_output(
             ["git", "ls-files", "--", "src", "scripts", "tests"],
