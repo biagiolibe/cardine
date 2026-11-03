@@ -19,8 +19,8 @@ disposable end-to-end run of a no-review task to landing with a local bare remot
 
 ## Acceptance Criteria
 
-- [ ] Row C3c is implemented as its line in the excerpt describes it.
-- [ ] Only the files in the row's files column are edited, together with
+- [x] Row C3c is implemented as its line in the excerpt describes it.
+- [x] Only the files in the row's files column are edited, together with
   this task's own record and its archive, handoff, and state file. A test
   file outside the column may change only to update an expectation that this
   change made stale, without new behavior, and the handoff lists it. A
@@ -32,16 +32,16 @@ disposable end-to-end run of a no-review task to landing with a local bare remot
   check that required it. Any other file, or a change that adds behavior
   beyond that adaptation, stops the task before editing it and names the
   file, so that the coordinator splits the row.
-- [ ] The row's tests exist and pass: Queued to landed and cleaned; `EVIDENCE_INCOMPLETE` recovered through `run`.
-- [ ] Rule 4 of decision 14: Commit, state write, merge, push, cleanup.
-- [ ] Every test runs against disposable projects and disposable home
+- [x] The row's tests exist and pass: Queued to landed and cleaned; `EVIDENCE_INCOMPLETE` recovered through `run`.
+- [x] Rule 4 of decision 14: Commit, state write, merge, push, cleanup.
+- [x] Every test runs against disposable projects and disposable home
   directories. No step runs `setup --apply` against the real home directory or
   writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -50,16 +50,16 @@ disposable end-to-end run of a no-review task to landing with a local bare remot
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/147.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/147.json`, which only
   the installed `meridian task close 147` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
