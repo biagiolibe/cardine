@@ -32,3 +32,11 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 | 🟢 P3 | Optimization / Polish |
 
 ## 🏃 Active Queue
+
+### Phase 30 — Meridian conversion: planning
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work item 10 and decision 10.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 141 | Plan the Meridian conversion and cardine adopt (work item 10) | 🔴 P1 | 136 | [141](141-plan-meridian-conversion.md) |
