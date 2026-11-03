@@ -600,7 +600,8 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
         before = path.read_bytes()
         result = self.run_cli('worktree', 'prepare', '056', '--project', str(self.project),
                               '--worktree-root', str(self.worktree_root), '--format', 'json')
-        self.assertEqual(result.returncode, 0)
+        # TASK_STATE_MISSING is a guardrail that needs the developer, so the command exits 2.
+        self.assertEqual(result.returncode, 2)
         self.assertIn('TASK_STATE_MISSING', result.stderr)
         self.assertEqual(path.read_bytes(), before)
 
