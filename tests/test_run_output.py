@@ -171,30 +171,36 @@ class RunPreviewConsumerTests(fixtures.RunLocationTests):
         executable.chmod(0o755)
         environment = {**os.environ, 'PATH': str(bindir) + os.pathsep + os.environ['PATH'],
                        'PYTHONPATH': str(ROOT / 'src'), 'CARDINE_WORKTREE_ROOT': str(self.base / 'worktrees')}
-        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        def snapshot():
+            # `run` now creates the task worktree and branch, which live under .git.
+            return {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*')
+                    if p.is_file() and '.git' not in p.relative_to(self.root).parts}
+        before = snapshot()
         first = subprocess.run(['cardine', 'run', '001', '--project', str(self.root)],
                                cwd=self.base, env=environment, text=True, capture_output=True, check=True)
         result = json.loads(first.stdout)
+        self.assertEqual((result['step'], result['action']), ('worktree', 'execution-start'))
+        # The emitted text runs unchanged, including shell metacharacters. The
+        # started task then stops on this fixture's missing frozen code surface.
         second = subprocess.run(result['next']['command'], shell=True, cwd=self.base,
-                                env=environment, text=True, capture_output=True, check=True)
-        self.assertEqual(first.stdout, second.stdout)
-        self.assertEqual(first.stderr + second.stderr, '')
+                                env=environment, text=True, capture_output=True)
+        self.assertEqual(json.loads(second.stdout)['task_id'], '001')
+        self.assertNotEqual(json.loads(second.stdout)['action'], 'execution-start')
         review = resolve_run(RunFacts('001', self.root, 'in_progress', contract_ready=True,
                                      worktree_ready=True, implementation_delivered=True,
                                      validation_passed=True))
         reviewed = subprocess.run(review['next']['command'], shell=True, cwd=self.base,
-                                  env=environment, text=True, capture_output=True, check=True)
+                                  env=environment, text=True, capture_output=True)
         # The adapter cannot bless caller-supplied progress: absent verified
-        # receipts, both commands safely return the contract-check preview.
-        self.assertEqual(reviewed.stdout, first.stdout)
-        self.assertEqual(reviewed.stderr, '')
+        # receipts, both commands safely return the same step.
+        self.assertEqual(reviewed.stdout, second.stdout)
+        self.assertEqual(reviewed.stderr, second.stderr)
         global_option = subprocess.run(['cardine', '--framework-root', str(ROOT), 'run', '001',
                                        '--project', str(self.root)], cwd=self.base, env=environment,
-                                      text=True, capture_output=True, check=True)
-        self.assertEqual(global_option.stdout, first.stdout)
+                                      text=True, capture_output=True)
+        self.assertEqual(global_option.stdout, second.stdout)
         self.assertFalse((self.base / 'SENTINEL').exists())
-        after = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
-        self.assertEqual(before, after)
+        self.assertEqual(before, snapshot())
 
 
 if __name__ == '__main__':

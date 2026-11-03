@@ -273,6 +273,7 @@ class ReplayInventoryTest(unittest.TestCase):
         "src/cardine/integration/finalize.py": ["test_run_integration.CandidateTest.test_finalize_every_effect_boundary_returns_the_same_commit"],
         "src/cardine/integration/candidate.py": ["test_run_integration.CandidateTest.test_candidate_result_boundaries_replay_once"],
         "src/cardine/integration/residue.py": ["test_run_recovery.RunRecoveryTest.assert_residue_clear_converges"],
+        "src/cardine/lifecycle/engine.py": ["test_run_worktree_step.RunWorktreeStepTest.test_rerun_after_a_kill_converges"],
         "src/cardine/lifecycle/delivery.py": ["test_run_delivery.RunDeliveryTest.test_all_delivery_boundaries_converge_once_and_keep_original_source"],
         "src/cardine/worktree/checkout.py": ["test_run_preparation.RunPreparationTest.test_resume_receipt_survives_both_effect_boundaries"],
         "src/cardine/worktree/preparation.py": ["test_run_preparation.RunPreparationTest.test_preparation_all_effect_boundaries_converge_without_state_transition"],
