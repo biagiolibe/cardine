@@ -11,7 +11,7 @@ from cardine.adopt.records import translate_record
 from cardine.legacy.conversion_reader import read_legacy_project
 from cardine.legacy.meridian_installation import is_meridian_installation
 from cardine.lifecycle import receipts
-from cardine.shared.git import canonical_git_common_dir, git_output, parse_worktree_records
+from cardine.shared.git import _run_git, canonical_git_common_dir, git_output, parse_worktree_records
 from cardine.templates.init import plan_init
 
 
@@ -39,28 +39,30 @@ def plan_adopt(project: Path, framework: Path, *, name=None, slug=None, preset=N
     receipts.boundary("before_adopt_plan")
     root = Path(project).resolve()
     legacy_case = is_meridian_installation(root)
+    refusals = []
+    git_probe = _run_git(root, "rev-parse", "--show-toplevel") if root.is_dir() else None
+    if git_probe is not None and git_probe.returncode == 0:
+        if git_output(root, "status", "--porcelain", "--untracked-files=all"):
+            refusals.append("ADOPT_DIRTY")
+        records = parse_worktree_records(git_output(root, "worktree", "list", "--porcelain"))
+        if any(item.get("branch", "").startswith("refs/heads/task-") for item in records):
+            refusals.append("ADOPT_WORKTREE")
+        common = canonical_git_common_dir(root)
+        if any((common / lease_name).exists() for lease_name in ("meridian-integration.lock", "meridian-integration.json")):
+            refusals.append("ADOPT_LEASE")
     missing = [key for key, value in (("name", name), ("slug", slug),
                ("language", language), ("validation", validation)) if value is None]
     if not legacy_case:
         missing += [key for key, value in (("preset", preset), ("task_identity", task_identity)) if value is None]
         if missing:
-            return AdoptPlan("A", {}, (), tuple(missing), (), {})
+            return AdoptPlan("A", {}, (), tuple(missing), tuple(refusals), {})
         init = plan_init(root, framework, name=name, slug=slug, preset=preset,
                          language=language, task_identity=task_identity, validation=validation)
-        return AdoptPlan("A", init.outputs, (), (), (), {})
+        return AdoptPlan("A", init.outputs, (), (), tuple(refusals), {})
     legacy = read_legacy_project(root)
     diagnostics = list(legacy.diagnostics)
-    refusals = []
-    if git_output(root, "status", "--porcelain", "--untracked-files=all"):
-        refusals.append("ADOPT_DIRTY")
     if legacy.in_progress_rows:
         refusals.append("ADOPT_IN_PROGRESS")
-    records = parse_worktree_records(git_output(root, "worktree", "list", "--porcelain"))
-    if any(item.get("branch", "").startswith("refs/heads/task-") for item in records):
-        refusals.append("ADOPT_WORKTREE")
-    common = canonical_git_common_dir(root)
-    if any((common / lease_name).exists() for lease_name in ("meridian-integration.lock", "meridian-integration.json")):
-        refusals.append("ADOPT_LEASE")
     outputs = {}
     dropped = {}
     if name is not None and slug is not None:

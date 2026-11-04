@@ -60,6 +60,11 @@ class AdoptPlanTest(unittest.TestCase):
         self.assertEqual(tree_digest(self.base), before)
         self.assertIn('validation', plan_adopt(self.root, ROOT).missing)
 
+    def test_case_a_refuses_dirty_git_project(self):
+        (self.root / 'untracked').write_text('change')
+        plan = plan_adopt(self.root, ROOT, **self.choices(), preset='lean', task_identity='opaque')
+        self.assertIn('ADOPT_DIRTY', plan.refusals)
+
     def test_case_b_and_mapping_repeat(self):
         self.legacy()
         before = tree_digest(self.base)
