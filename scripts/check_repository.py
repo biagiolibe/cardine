@@ -71,13 +71,40 @@ REQUIRED_FILES = (
     "skills/cardine-delivery/SKILL.md",
 )
 # MERIDIAN-INSTALLATION-CHECK
-INSTALLED_MERIDIAN_RECORDS = (
-    "hooks/hooks.json",  # MERIDIAN-INSTALLATION-CHECK
-    "hooks/queue-briefing.sh",  # MERIDIAN-INSTALLATION-CHECK
-    ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",  # MERIDIAN-INSTALLATION-CHECK
-    ".meridian/probes/meridian-self-hosting/claude-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
-    ".meridian/probes/meridian-self-hosting/codex-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
+# The installation checks run only when a manifest exists. Each state names the
+# manifest and the records that its installation must hold.
+INSTALLATION_STATES = (
+    (
+        ".meridian/manifest.json",  # MERIDIAN-INSTALLATION-CHECK
+        (
+            "hooks/hooks.json",  # MERIDIAN-INSTALLATION-CHECK
+            "hooks/queue-briefing.sh",  # MERIDIAN-INSTALLATION-CHECK
+            ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",  # MERIDIAN-INSTALLATION-CHECK
+            ".meridian/probes/meridian-self-hosting/claude-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
+            ".meridian/probes/meridian-self-hosting/codex-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
+        ),
+    ),
+    (
+        ".cardine/manifest.json",
+        (
+            "hooks/hooks.json",
+            "hooks/queue-briefing.sh",
+            ".cardine/probes/cardine-self-hosting/host-neutral-ci-v1.json",
+            ".cardine/probes/cardine-self-hosting/claude-project-v1.json",
+            ".cardine/probes/cardine-self-hosting/codex-project-v1.json",
+        ),
+    ),
 )
+
+
+def installation_state(root: Path = ROOT) -> tuple[Path, tuple[str, ...]] | None:
+    """Return the manifest and required records of the installed state, or None."""
+    for manifest, records in INSTALLATION_STATES:
+        if (root / manifest).is_file():
+            return root / manifest, records
+    return None
+
+
 LANGUAGE_POLICY_FILES = ("templates/single/LANGUAGE_POLICY.md",)
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^]]*\]\(([^)]+)\)")
 RETIRED_GOVERNED_REVIEW_PHRASES = (
@@ -93,8 +120,8 @@ def fail(message: str) -> None:
 
 
 def check_required_files() -> None:
-    # MERIDIAN-INSTALLATION-CHECK
-    for name in (*REQUIRED_FILES, *INSTALLED_MERIDIAN_RECORDS):
+    state = installation_state(ROOT)
+    for name in (*REQUIRED_FILES, *(state[1] if state else ())):
         if not (ROOT / name).is_file():
             fail(f"required file is missing: {name}")
 
@@ -408,9 +435,9 @@ def managed_stop_text_files(root: Path) -> list[Path]:
     separately. Edited copies still undergo the checkout registry check.
     """
     paths = set((root / "templates").rglob("*.md"))
-    manifest = root / ".meridian/manifest.json"  # MERIDIAN-INSTALLATION-CHECK
-    if manifest.is_file():
-        managed = json.loads(manifest.read_text(encoding="utf-8")).get("managedFiles", {})
+    state = installation_state(root)
+    if state:
+        managed = json.loads(state[0].read_text(encoding="utf-8")).get("managedFiles", {})
         for name, digest in managed.items():
             path = root / name
             if name.endswith(".md") and path.is_file():
@@ -902,8 +929,10 @@ def check_capability_required_versions(root: Path = ROOT) -> None:
 
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
     """Check recorded installation digests without consulting the product catalog."""
-    # MERIDIAN-INSTALLATION-CHECK
-    manifest = json.loads((root / ".meridian/manifest.json").read_text(encoding="utf-8"))
+    state = installation_state(root)
+    if state is None:
+        return []
+    manifest = json.loads(state[0].read_text(encoding="utf-8"))
     managed_files = manifest["managedFiles"]
     diagnostics = [
         diagnostic

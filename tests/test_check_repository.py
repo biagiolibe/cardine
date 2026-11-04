@@ -1028,6 +1028,75 @@ class ManagedDigestTest(unittest.TestCase):
         self.assertIn("Never join it with `&&` or `;`", profile)
 
 
+class ConditionalInstallationChecksTest(unittest.TestCase):
+    """The installation checks follow the manifest, on synthetic roots."""
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+
+    def write(self, name: str, text: str = "") -> None:
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def install(self, manifest: str, digest: str | None = None) -> str:
+        body = {"managedFiles": {} if digest is None else {"docs/Managed.md": digest}}
+        self.write(manifest, json.dumps(body))
+        return manifest
+
+    def required_missing(self) -> list[str]:
+        with patch.object(cr, "ROOT", self.root):
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+                cr.check_required_files()
+        return [line for line in output.getvalue().splitlines() if line.startswith("FAIL")]
+
+    def test_no_manifest_selects_no_installation_check(self) -> None:
+        self.assertIsNone(cr.installation_state(self.root))
+        self.assertEqual(cr.managed_digest_diagnostics(self.root), [])
+        cr.check_managed_digests(self.root)
+        self.assertEqual(cr.managed_stop_text_files(self.root), [])
+        for record in (*cr.INSTALLATION_STATES[0][1], *cr.INSTALLATION_STATES[1][1]):
+            self.assertFalse((self.root / record).exists())
+
+    def test_absent_manifest_does_not_require_installed_records(self) -> None:
+        for name in cr.REQUIRED_FILES:
+            self.write(name)
+        with patch.object(cr, "ROOT", self.root):
+            cr.check_required_files()
+
+    def test_each_manifest_requires_its_own_records(self) -> None:
+        for manifest, records in cr.INSTALLATION_STATES:
+            with self.subTest(manifest=manifest):
+                self.install(manifest)
+                self.assertEqual(cr.installation_state(self.root), (self.root / manifest, records))
+                for name in (*cr.REQUIRED_FILES, *records[:-1]):
+                    self.write(name)
+                self.assertIn(f"FAIL: required file is missing: {records[-1]}", self.required_missing())
+                self.write(records[-1])
+                with patch.object(cr, "ROOT", self.root):
+                    cr.check_required_files()
+                shutil.rmtree(self.root)
+                self.root.mkdir()
+
+    def test_legacy_manifest_wins_when_both_exist(self) -> None:
+        legacy = self.install(".meridian/manifest.json")  # MERIDIAN-INSTALLATION-CHECK
+        self.install(".cardine/manifest.json")
+        self.assertEqual(cr.installation_state(self.root)[0], self.root / legacy)
+
+    def test_edited_managed_copy_is_checked_in_each_state(self) -> None:
+        for manifest, _records in cr.INSTALLATION_STATES:
+            with self.subTest(manifest=manifest):
+                self.install(manifest, hashlib.sha256(b"original").hexdigest())
+                self.write("docs/Managed.md", "edited")
+                self.assertEqual(cr.managed_stop_text_files(self.root), [self.root / "docs/Managed.md"])
+                self.write("docs/Managed.md", "original")
+                self.assertEqual(cr.managed_stop_text_files(self.root), [])
+                (self.root / manifest).unlink()
+
+
 class StopCodeRegistryCheckTest(unittest.TestCase):
     TEST_NAME = "tests.test_emit.EmitTest.test_tool_line"
 
