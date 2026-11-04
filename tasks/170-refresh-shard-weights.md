@@ -11,7 +11,7 @@
 ## Objective
 
 `tests/shard_durations.json` was measured on 2026-10-30 with 1,900 tests. After tasks
-165 to 169 the weights are wrong, and unbalanced shards cost wall time. Measure again and
+166 to 169 the weights are wrong, and unbalanced shards cost wall time. Measure again and
 report the result of this phase.
 
 ## Acceptance Criteria
@@ -88,7 +88,7 @@ justify. Other rows of the queue.
 
 ## Dependencies
 
-- **Depends on**: 165, 166, 167, 168, 169
+- **Depends on**: 166, 167, 168, 169
 - **Blocks**: none
 
 ## Developer decisions given in advance
