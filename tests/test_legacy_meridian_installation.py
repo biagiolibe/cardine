@@ -219,11 +219,11 @@ class InstallationTest(RepoCase):
         self.assertEqual(result, 2)
         self.assertIn("capability profile is not present in the catalog", output.getvalue())
 
-    def test_explicit_reader_still_reads_checkout_installation(self):
-        snapshot = installation.load_meridian_snapshot(ROOT)
+    def test_explicit_reader_still_reads_synthetic_installation(self):
+        snapshot = installation.load_meridian_snapshot(self.project)
         self.assertGreater(snapshot.done_count, 0)
-        self.assertTrue(installation.is_meridian_installation(ROOT))
-        self.assertEqual(installation.read_task_state_file(ROOT, "048")["status"], "DONE")
+        self.assertTrue(installation.is_meridian_installation(self.project))
+        self.assertEqual(installation.read_task_state_file(self.project, "001")["status"], "DONE")
 
     def test_literal_names_and_json_readers_ignore_product_context(self):
         layout = installation.MERIDIAN_INSTALLATION_NAMES
@@ -275,12 +275,12 @@ class InstallationTest(RepoCase):
         self.assertEqual({task.task_id for task in snapshot.tasks}, expected)
         self.assertIsNone(execution_assets_adapter.get())
 
-    def test_snapshot_still_reads_this_repository(self):
-        snapshot = installation.load_meridian_snapshot(ROOT)
-        self.assertEqual(snapshot.project, ROOT.resolve())
-        self.assertEqual(snapshot.queue, ROOT / "tasks/QUEUE.md")
-        records = {path.stem: installation.read_task_state_file(ROOT, path.stem)
-                   for path in (ROOT / ".meridian/tasks").glob("*.json")}
+    def test_snapshot_still_reads_synthetic_installation(self):
+        snapshot = installation.load_meridian_snapshot(self.project)
+        self.assertEqual(snapshot.project, self.project.resolve())
+        self.assertEqual(snapshot.queue, self.project / "tasks/QUEUE.md")
+        records = {path.stem: installation.read_task_state_file(self.project, path.stem)
+                   for path in (self.project / ".meridian/tasks").glob("*.json")}
         self.assertTrue(records, "the installation contains task records even with an empty queue")
         self.assertEqual(snapshot.done_count, sum(record["status"] == "DONE"
                                                 for record in records.values()))

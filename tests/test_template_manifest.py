@@ -317,11 +317,11 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertEqual(return_code, 2, output.getvalue())
             self.assertIn("CI_GATE profile=unknown-profile worst=FAIL", output.getvalue())
 
-    def test_live_manifest_has_no_host_claim_or_machine_specific_path(self) -> None:
+    def test_synthetic_manifest_has_no_host_claim_or_machine_specific_path(self) -> None:
         # MERIDIAN-INSTALLATION-CHECK
-        manifest_text = (ROOT / ".meridian/manifest.json").read_text(encoding="utf-8")
-        manifest = json.loads(manifest_text)
-        capabilities = manifest["capabilityProfiles"]["meridian-self-hosting"]["capabilities"]  # MERIDIAN-INSTALLATION-CHECK
+        manifest = self.manifest()
+        manifest_text = json.dumps(manifest)
+        capabilities = manifest["capabilityProfiles"]["cardine-self-hosting"]["capabilities"]
         self.assertNotIn(str(Path.home()), manifest_text)
         for declaration in capabilities.values():
             for activation in declaration["hostActivation"].values():

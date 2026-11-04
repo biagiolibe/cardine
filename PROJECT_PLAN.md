@@ -201,7 +201,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 158 — Expose the cardine adopt command (C2f).
 - `[x]` 159 — Make the installation checks conditional (C5a).
 - `[ ]` 160 — Bind identifier allowances to existing paths (C5b).
-- `[ ]` 161 — Move live installation tests to fixtures (C5c).
+- `[x]` 161 — Move live installation tests to fixtures (C5c).
 - `[ ]` 162 — Run the shell hook tests only while the hooks exist (C5d).
 - `[ ]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).
 - `[ ]` 164 — Rehearse the conversion of this repository (C6a).
