@@ -146,7 +146,7 @@ ALLOWLIST = (
     ),
     Allowance(
         5, "10",
-        r"src/cardine/legacy/(?:" + OLD + r"_installation|" + OLD + r"_locations|snapshot)\.py",
+        r"src/cardine/legacy/(?:" + OLD + r"_installation|" + OLD + r"_locations|snapshot|conversion_reader)\.py",
     ),
     Allowance(
         5, "10",
@@ -154,7 +154,7 @@ ALLOWLIST = (
     ),
     Allowance(
         5, "10",
-        r"tests/test_(?:legacy_marker_syntax|status_legacy_boundary)\.py",
+        r"tests/(?:test_(?:legacy_marker_syntax|status_legacy_boundary|conversion_reader)|conversion_fixture)\.py",
     ),
     Allowance(
         5, "10",

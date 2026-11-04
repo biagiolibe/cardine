@@ -17,6 +17,8 @@ import cardine_cli  # noqa: E402
 from cardine.shared import git as shared_git  # noqa: E402
 from cardine.tasks import identity as owner_tasks_identity
 from cardine.worktree import checkout as owner_worktree_checkout
+# Imported here so its `_git_worktrees` binding is never taken under the patch below.
+from cardine.worktree import preparation as _preparation  # noqa: F401
 
 
 class TaskStateLookupTest(unittest.TestCase):

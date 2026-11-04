@@ -50,7 +50,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[ ]` | 150 | Add the developer channel for verdict, cancel, and abort (C4a) | 🔴 P1 | 146 | [150](150-developer-channel.md) |
 | `[ ]` | 151 | Deliver a required-review task through the developer channel (C4b) | 🔴 P1 | 147, 150 | [151](151-required-review-delivery.md) |
 | `[ ]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](152-agent-driven-delivery.md) |
-| `[ ]` | 153 | Add the read model of a Meridian project (C2a) | 🔴 P1 | 144 | [153](153-conversion-reader.md) |
+| `[x]` | 153 | Add the read model of a Meridian project (C2a) | 🔴 P1 | 144 | [153](done/153-conversion-reader.md) |
 | `[ ]` | 154 | Translate open records for adopt (C2b) | 🔴 P1 | 153, 145 | [154](154-adopt-record-translator.md) |
 | `[ ]` | 155 | Plan the adoption as a pure function (C2c) | 🔴 P1 | 154 | [155](155-adopt-plan.md) |
 | `[ ]` | 156 | Apply the adoption and release the managed copies (C2d) | 🔴 P1 | 155 | [156](156-adopt-apply.md) |
