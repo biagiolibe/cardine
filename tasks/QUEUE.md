@@ -46,7 +46,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[x]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](done/146-run-performs-worktree-step.md) |
 | `[x]` | 147 | Prove a no-review delivery to landing (C3c) | 🔴 P1 | 146 | [147](done/147-disposable-delivery-proof.md) |
 | `[x]` | 148 | Align the run help with its behavior (C3d) | 🟡 P2 | 146 | [148](done/148-align-run-help.md) |
-| `[ ]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](149-field-case-runs.md) |
+| `[x]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](done/149-field-case-runs.md) |
 | `[ ]` | 150 | Add the developer channel for verdict, cancel, and abort (C4a) | 🔴 P1 | 146 | [150](150-developer-channel.md) |
 | `[ ]` | 151 | Deliver a required-review task through the developer channel (C4b) | 🔴 P1 | 147, 150 | [151](151-required-review-delivery.md) |
 | `[ ]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](152-agent-driven-delivery.md) |

@@ -29,7 +29,9 @@ KILLED = 77
 class DisposableDelivery:
     """One queued no-review task, a bare origin, and a private home directory."""
 
-    def __init__(self):
+    def __init__(self, *, spike=False, surface='- `src/**`', authority=None, files=None, setup=None):
+        self.spike, self.surface, self.authority, self.setup = spike, surface, authority, setup
+        self.files = files or {'src/result.py': 'result = 1\n'}
         self.directory = Path(tempfile.mkdtemp(prefix='cardine-delivery-')).resolve()
         self.root = self.directory / 'project'
         self.origin = self.directory / 'origin.git'
@@ -55,8 +57,12 @@ class DisposableDelivery:
         write_project_config(self.root, 'lean', validation=deepcopy(VALIDATION))
         self.git('add', '.')
         self.git('commit', '-m', 'Initial policy')
-        create_task(self.root, TASK, contract_record().replace(
-            'Change the documented deliverable only.', '- `src/**`'))
+        record = contract_record(spike=self.spike).replace('Change the documented deliverable only.', self.surface)
+        if self.authority:
+            record = record.replace('ADR example, decision 1.', self.authority)
+        if self.setup:
+            self.setup(self.root)
+        create_task(self.root, TASK, record)
         self.git('add', '.')
         self.git('commit', '-m', 'Create task')
         self.git('remote', 'add', 'origin', str(self.origin))
@@ -82,11 +88,15 @@ class DisposableDelivery:
     def run(self):
         return dispatch_run(self.locations)
 
-    def commit_implementation(self, text='result = 1\n'):
+    def write_files(self, worker, files=None):
+        for name, text in (files or self.files).items():
+            (worker / name).parent.mkdir(parents=True, exist_ok=True)
+            (worker / name).write_text(text)
+
+    def commit_implementation(self, text=None):
         """Play the implementer: write the declared deliverable and commit it in the worktree."""
         worker = self.locations.worktree
-        (worker / 'src').mkdir(exist_ok=True)
-        (worker / 'src/result.py').write_text(text)
+        self.write_files(worker, None if text is None else {next(iter(self.files)): text})
         self.git('add', '.', cwd=worker)
         self.git('commit', '-m', 'Implement result', cwd=worker)
         return worker
