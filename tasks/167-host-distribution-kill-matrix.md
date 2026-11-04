@@ -72,8 +72,9 @@ that differ.
 
 ## Technical Context
 
-- This is the one task in this phase where boundaries are sampled rather than kept.
-  It does not set a precedent for other matrices.
+- The developer approved this reduction on 2026-11-04. It is the one task in this phase
+  where boundaries are sampled rather than kept, and it sets no precedent for other
+  matrices.
 - If `worktree advance` stops because another task holds the integration lease
   in the primary checkout, that is not a decision for the developer: wait
   until the other integration finalizes or aborts, then rerun the same
