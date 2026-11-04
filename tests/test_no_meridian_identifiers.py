@@ -149,6 +149,10 @@ ALLOWLIST = (
         r"src/cardine/legacy/(?:" + OLD + r"_installation|" + OLD + r"_locations|snapshot|conversion_reader)\.py",
     ),
     Allowance(
+        5, "kept: the conversion package, while adopt exists (DD2)",
+        r"(?:src/cardine/adopt/.*|tests/test_adopt_[^/]*)\.py",
+    ),
+    Allowance(
         5, "10",
         r"tests/test_legacy_" + OLD + r"_installation\.py",
     ),

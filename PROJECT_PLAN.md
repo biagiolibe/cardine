@@ -194,7 +194,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 151 — Deliver a required-review task through the developer channel (C4b).
 - `[ ]` 152 — Deliver a disposable task with an agent following run (C3f).
 - `[x]` 153 — Add the read model of a Meridian project (C2a).
-- `[ ]` 154 — Translate open records for adopt (C2b).
+- `[x]` 154 — Translate open records for adopt (C2b).
 - `[ ]` 155 — Plan the adoption as a pure function (C2c).
 - `[ ]` 156 — Apply the adoption and release the managed copies (C2d).
 - `[ ]` 157 — Rehearse the adoption on a clone (C2e).

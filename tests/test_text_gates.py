@@ -184,7 +184,8 @@ def scan(root: Path) -> set[Key]:
 # and key exemptions stay narrow: a runtime call to a creation helper violates it.
 ALLOWLIST = {
     "contract-creation": {
-        "files": {"src/cardine/tasks/creation.py"},
+        # The adoption translator prepares creation input for `task new`.
+        "files": {"src/cardine/tasks/creation.py", "src/cardine/adopt/records.py"},
         "functions": {
             ("src/cardine/tasks/contract.py", "_contract_field"),
             ("src/cardine/tasks/contract.py", "task_contract_options"),
