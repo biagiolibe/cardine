@@ -100,7 +100,7 @@ def _inside(root: Path, relative: Path) -> Path:
     return path
 
 
-def _read_json_object(path: Path) -> dict[str, object] | None:
+def _read_declared_json(path: Path) -> dict[str, object] | None:
     if not path.exists():
         return None
     try:
@@ -139,8 +139,8 @@ def read_legacy_project(project: Path) -> LegacyProject:
         declaration = read_project_declaration(root)
         identity_mode = read_installation_identity_policy(root).mode
     names = MERIDIAN_INSTALLATION_NAMES
-    candidate = _read_json_object(_inside(root, names.candidate_validation_path))
-    flow_targets = _read_json_object(_inside(root, names.flow_targets_path))
+    candidate = _read_declared_json(_inside(root, names.candidate_validation_path))
+    flow_targets = _read_declared_json(_inside(root, names.flow_targets_path))
 
     queue = _inside(root, locations.queue)
     rows: tuple[LegacyQueueRow, ...] = ()
