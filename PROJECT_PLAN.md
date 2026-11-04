@@ -188,7 +188,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 145 — Classify and fix the fresh task start failure (C3a).
 - `[x]` 146 — Make run perform the contract and worktree steps (C3b).
 - `[x]` 147 — Prove a no-review delivery to landing (C3c).
-- `[ ]` 148 — Align the run help with its behavior (C3d).
+- `[x]` 148 — Align the run help with its behavior (C3d).
 - `[ ]` 149 — Prove the spike, authority, and resume cases (C3e).
 - `[ ]` 150 — Add the developer channel for verdict, cancel, and abort (C4a).
 - `[ ]` 151 — Deliver a required-review task through the developer channel (C4b).

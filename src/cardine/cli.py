@@ -105,7 +105,10 @@ def build_parser() -> CardineArgumentParser:
     init.add_argument("--task-identity", choices=("opaque", "milestone"), required=True)
     init.add_argument("--validation", type=Path, required=True,
                       help="JSON file containing commands, baseline and candidate choices; empty lists are explicit")
-    run = subparsers.add_parser("run", help="preview the next bounded lifecycle step (read-only)")
+    run = subparsers.add_parser("run", help="perform the next bounded lifecycle step of a task and print one JSON result",
+                                description="Resolve the earliest unsatisfied step (contract, worktree, implementation, validation, "
+                                "review, candidate, landing), perform it, and print one JSON object. Rerun the printed "
+                                "next command until the task is done or a guardrail stops it.")
     run.add_argument("task_id")
     run.add_argument("--project", type=Path)
 
@@ -297,8 +300,8 @@ def build_parser() -> CardineArgumentParser:
     worktree_cleanup.add_argument("--worktree-root", type=Path)
     worktree_cleanup.add_argument("--format", choices=("json",), required=True)
 
-    review = subparsers.add_parser("review", help="preview independent review or record commit-bound verdicts",
-                                  epilog="cardine review <ID> --project <root> provides a read-only run preview.")
+    review = subparsers.add_parser("review", help="run the next step toward independent review or record commit-bound verdicts",
+                                  epilog="cardine review <ID> --project <root> runs the same step as cardine run <ID>.")
     review_sub = review.add_subparsers(dest="review_command", required=True)
     verdict = review_sub.add_parser("verdict", help="record a verdict and its task-state transition")
     verdict.add_argument("task_id")
