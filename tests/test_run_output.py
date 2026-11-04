@@ -192,7 +192,8 @@ class RunPreviewConsumerTests(fixtures.RunLocationTests):
         reviewed = subprocess.run(review['next']['command'], shell=True, cwd=self.base,
                                   env=environment, text=True, capture_output=True)
         # The owner command cannot record a verdict without a terminal.
-        self.assertNotEqual(reviewed.returncode, 0)
+        self.assertEqual(reviewed.returncode, 2)
+        self.assertIn('review requires the task branch', reviewed.stderr)
         global_option = subprocess.run(['cardine', '--framework-root', str(ROOT), 'run', '001',
                                        '--project', str(self.root)], cwd=self.base, env=environment,
                                       text=True, capture_output=True)
