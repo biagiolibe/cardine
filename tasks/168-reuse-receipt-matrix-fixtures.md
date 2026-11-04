@@ -122,6 +122,19 @@ revalidation in the same turn; do not stop to report the fix.
   `capabilities/stop-codes-v1.json` of the primary checkout's `main` has
   `human_decision: false`: run the command the stop names, once. If it stops
   again with the same code, stop.
+- A test outside the files this record lists that inventories what the
+  repository contains (boundary modules, stop codes, allowances, markers, module
+  bindings) and fails only because this task added an item: add that one item, naming
+  the real test or owner the inventory asks for, and list the file in the handoff. This
+  is not a change of scope. Removing an item, or widening a pattern beyond the new
+  item, is.
+- A measurement the record asks the handoff to report: use in-process Python
+  (wrap `subprocess.Popen` to count, read `resource.getrusage(RUSAGE_CHILDREN)` for
+  CPU), never a tool that needs privileges. If one still cannot be obtained, say so in
+  the handoff; that is not a stop.
+- Before stopping for a change of scope, finish everything else, commit it, and run
+  the repository check and the affected tests, so that one stop names every file
+  needed. Do not stop once per file.
 - The deny list, `RULE_CONFLICT`, every guardrail, and a change of scope
   remain stops.
 
