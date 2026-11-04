@@ -1082,7 +1082,7 @@ class ConditionalInstallationChecksTest(unittest.TestCase):
                 self.root.mkdir()
 
     def test_legacy_manifest_wins_when_both_exist(self) -> None:
-        legacy = self.install(".meridian/manifest.json")
+        legacy = self.install(".meridian/manifest.json")  # MERIDIAN-INSTALLATION-CHECK
         self.install(".cardine/manifest.json")
         self.assertEqual(cr.installation_state(self.root)[0], self.root / legacy)
 
