@@ -62,3 +62,16 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[ ]` | 162 | Run the shell hook tests only while the hooks exist (C5d) | 🔴 P1 | 142 | [162](162-conditional-shell-hook-tests.md) |
 | `[ ]` | 163 | Prove Meridian and Cardine coexist on one machine (C5e) | 🔴 P1 | 142 | [163](163-tool-coexistence.md) |
 | `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163 | [164](164-rehearse-this-repository.md) |
+
+### Phase 32 — Test suite cost
+
+Authority: the developer's request of 2026-11-04 and the coordinator's measurements in each record. The counted validation keeps running the whole suite.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 165 | Run one full test suite at a time on a machine | 🟡 P2 | — | [165](165-serialize-full-suite-runs.md) |
+| `[ ]` | 166 | Reuse the prepared state in the integration and cleanup tests | 🟡 P2 | — | [166](166-reuse-delivered-fixtures.md) |
+| `[ ]` | 167 | Reduce the cost of the host plugin kill matrix | 🟡 P2 | — | [167](167-host-distribution-kill-matrix.md) |
+| `[ ]` | 168 | Reuse the prepared state in the receipt and recovery matrices | 🟡 P2 | — | [168](168-reuse-receipt-matrix-fixtures.md) |
+| `[ ]` | 169 | Reuse Git reads that a command cannot have changed | 🟡 P2 | — | [169](169-fewer-repeated-git-reads.md) |
+| `[ ]` | 170 | Refresh the shard weights after the test cost work | 🟡 P2 | 165, 166, 167, 168, 169 | [170](170-refresh-shard-weights.md) |
