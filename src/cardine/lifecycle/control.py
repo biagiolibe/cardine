@@ -2,8 +2,14 @@
 
 The injected host must authorize the exact operation or issued session. No
 adapter is installed here and neither CLI flags nor environment role labels
-create developer authority. Work item 9 owns real host installation.
+create developer authority. The only other developer authority is the
+interactive terminal channel: stdin and stdout are both a terminal and the
+developer types the task and commit back. It covers the owner verdict, cancel
+and abort; a reviewer-session verdict is never confirmed by a terminal. The
+channel claims no authenticity against an agent that obtains a terminal on
+purpose (ADR decision 14, rule 2).
 """
+import sys
 from copy import deepcopy
 from pathlib import Path
 
@@ -21,10 +27,40 @@ def host_adapter():
     return None
 
 
+# One constant principal, so a rerun after the confirmation binds the same
+# command and converges instead of recording a second operation.
+TERMINAL_PRINCIPAL = dict(host='terminal', profile='developer', session_id='developer-terminal', role='developer')
+
+
+def _interactive():
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def _confirm_on_terminal(action, binding):
+    """Return an error text when the developer does not confirm; never writes state."""
+    expected = binding['task_id'] + ' ' + binding['source']
+    receipts.boundary('before_developer_confirmation')
+    print(f"Developer confirmation for {action} of task {binding['task_id']} at commit {binding['source']}.")
+    print(f"Type '{expected}' to confirm; anything else refuses.", flush=True)
+    try:
+        typed = sys.stdin.readline()
+    except (OSError, UnicodeDecodeError):
+        typed = ''
+    receipts.boundary('after_developer_confirmation')
+    if typed.strip() != expected:
+        return 'developer confirmation did not match task and commit'
+    return None
+
+
 def authorize(adapter, action, binding, *, session=None):
     adapter = adapter or host_adapter()
     if adapter is None:
-        raise stop_error('COMMAND_REFUSED', 'host role boundary unavailable: authorized channel required')
+        if session is not None or not _interactive():
+            raise stop_error('COMMAND_REFUSED', 'host role boundary unavailable: authorized channel required')
+        refusal = _confirm_on_terminal(action, binding)
+        if refusal:
+            raise stop_error('COMMAND_REFUSED', refusal)
+        return dict(TERMINAL_PRINCIPAL)
     adapter.require('verdict' if session else 'developer' if action != 'abort' else 'abort')
     method = getattr(adapter.transport, 'authorize_operation', None)
     from cardine.shared.git import invalidate_facts

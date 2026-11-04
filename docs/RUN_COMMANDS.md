@@ -11,7 +11,7 @@ is not a template: no installed router or role read set includes it.
 | --- | --- |
 | `cardine run <TASK-ID> [--project <path>]` | Resolve the earliest unsatisfied step from the task state, perform it (it changes the repository: worktree, commits, state, merge, push), and print one JSON object. It is not a preview. `cardine review <TASK-ID>` runs the same step. |
 | `cardine status [--project <path>] [--all] [--write] [--format text\|json]` | Read-only view of every task; `--write` regenerates the status views. |
-| `cardine review verdict <TASK-ID> {APPROVE,CHANGES_REQUESTED,BLOCKED} [--request-id <id>] [--owner] [--body <markdown>] [--project <path>]` | Record a verdict bound to the issued reviewer request. `--owner` is the developer-only channel. |
+| `cardine review verdict <TASK-ID> {APPROVE,CHANGES_REQUESTED,BLOCKED} [--request-id <id>] [--owner] [--body <markdown>] [--project <path>]` | Record a verdict bound to the issued reviewer request. `--owner` is the developer channel: it needs an interactive terminal and a typed confirmation (see below). |
 | `cardine cancel <TASK-ID> --reason <text> [--project <path>]` | Record a terminal cancelled state. It deletes no work and satisfies no dependency. |
 | `cardine abort <TASK-ID> [--project <path>]` | Restore only the caller-owned integration candidate and lease. The task stays resumable. |
 
@@ -68,6 +68,21 @@ Every outcome code comes from `capabilities/stop-codes-v1.json`.
 An interrupted effect is resumed by the same command that was interrupted. A
 live foreign operation, a corrupt or foreign state, denied access and an
 unmerged or protected branch stay guardrails.
+
+## Developer channel
+
+The owner verdict (`review verdict --owner`), `cancel` and `abort` are
+confirmed by the developer at an interactive terminal. Both stdin and stdout
+must be a terminal. The command prints the action, the task and the commit,
+and proceeds only when the developer types `<task-id> <commit>` exactly. A
+missing terminal, a wrong or empty answer, or end of input is refused as
+`COMMAND_REFUSED` before any state is written. A reviewer-session verdict is
+never confirmed this way. There is no flag or environment variable that skips
+the prompt. Agents run without a terminal, so they are refused. The
+confirmation happens before the effect; the existing receipts stay the durable
+record, and rerunning the same command after an interruption converges.
+An agent that deliberately obtains a terminal is the declared limit of ADR
+decision 14, rule 2.
 
 ## Internal diagnostic surfaces
 
