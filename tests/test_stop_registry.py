@@ -50,6 +50,15 @@ class StopRegistryTest(unittest.TestCase):
         from cardine.stops.causes import EMITTER_CAUSES
         self.assertEqual(scan_emitters(), set(EMITTER_CAUSES))
 
+    def test_adoption_refusals_are_registered(self):
+        registry = load_stop_registry()
+        for code in ("ADOPT_DIRTY", "ADOPT_IN_PROGRESS", "ADOPT_WORKTREE", "ADOPT_LEASE", "ADOPT_RECORD"):
+            with self.subTest(code=code):
+                entry = registry[code]
+                self.assertEqual((entry["class"], entry["resolution"], entry["human_decision"]),
+                                 ("tool", "failing-work", False))
+                self.assertIn("cardine adopt --check", entry["resume"])
+
     def test_consolidated_negatives_keep_human_authority_and_cause_detail(self):
         registry = load_stop_registry()
         for code in ("REVIEW_NOT_APPROVED", "UNDECLARED_VALIDATION_COMMANDS", "RULE_CONFLICT"):
