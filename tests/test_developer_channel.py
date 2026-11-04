@@ -52,6 +52,8 @@ class Terminal(unittest.TestCase):
     def setUp(self):
         self.home = tempfile.TemporaryDirectory()
         self.addCleanup(self.home.cleanup)
+        # Fixtures chdir into temporary projects; never leak a cwd into later tests.
+        self.addCleanup(os.chdir, ROOT)
 
     def environment(self):
         return {**os.environ, 'HOME': self.home.name,
