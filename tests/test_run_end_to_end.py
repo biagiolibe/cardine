@@ -126,11 +126,6 @@ class StepMatrixTest(unittest.TestCase):
                     argv = result["next"]["argv"]
                     self.assertEqual(shlex.split(result["next"]["command"]), argv)
                     self.assertIn(WEIRD, argv)
-                    if argv[1:2] == ["review"]:
-                        # The reviewer handoff is routed by `main` before argparse, like `run`.
-                        self.assertEqual((argv[3], argv[5:]), ("--project", []))
-                        self.assertFalse(argv[2].startswith("-") or argv[2] == "verdict")
-                        continue
                     with mock.patch.object(parser, "error", side_effect=AssertionError(argv)):
                         parser.parse_args(argv[1:])
             seen = [step for index, step in enumerate(seen) if index == 0 or step != seen[index - 1]]

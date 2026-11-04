@@ -29,8 +29,8 @@ KILLED = 77
 class DisposableDelivery:
     """One queued no-review task, a bare origin, and a private home directory."""
 
-    def __init__(self, *, spike=False, surface='- `src/**`', authority=None, files=None, setup=None):
-        self.spike, self.surface, self.authority, self.setup = spike, surface, authority, setup
+    def __init__(self, *, spike=False, surface='- `src/**`', authority=None, files=None, setup=None, review=False):
+        self.spike, self.surface, self.authority, self.setup, self.review = spike, surface, authority, setup, review
         self.files = files or {'src/result.py': 'result = 1\n'}
         self.directory = Path(tempfile.mkdtemp(prefix='cardine-delivery-')).resolve()
         self.root = self.directory / 'project'
@@ -55,6 +55,12 @@ class DisposableDelivery:
         subprocess.run(['git', 'init', '--bare', '-b', 'main', str(self.origin)], check=True, capture_output=True)
         self.git('init', '-b', 'main')
         write_project_config(self.root, 'lean', validation=deepcopy(VALIDATION))
+        if self.review:
+            import json
+            config = self.root / '.cardine/project.json'
+            data = json.loads(config.read_text())
+            data['taskDefaults'] = {'review': 'required'}
+            config.write_text(json.dumps(data))
         self.git('add', '.')
         self.git('commit', '-m', 'Initial policy')
         record = contract_record(spike=self.spike).replace('Change the documented deliverable only.', self.surface)

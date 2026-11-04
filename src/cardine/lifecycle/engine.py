@@ -167,11 +167,14 @@ def resolve_run(facts: RunFacts) -> dict:
     if not facts.validation_passed:
         return result("validation", "Run the complete current validation command set")
     if facts.review_required and not facts.review_approved:
-        if facts.review_pending:
-            return result("review", "Wait for the independent review", outcome="waiting", poll=10)
-        review_argv = ["cardine", "review", facts.task_id, "--project", str(facts.project)]
+        review_root = facts.review_work.worktree if facts.review_work else facts.project
+        review_argv = ["cardine", "review", "verdict", facts.task_id, "APPROVE", "--owner",
+                       "--project", str(review_root)]
         return envelope(facts.task_id, str(facts.project), step="review",
-                        next_command=command_reference(review_argv, "Obtain independent approval"),
+                        outcome="waiting" if facts.review_pending else "next",
+                        retry_after_seconds=10 if facts.review_pending else 0,
+                        next_command=command_reference(review_argv,
+                            "Developer: choose APPROVE, CHANGES_REQUESTED or BLOCKED after review"),
                         work=facts.review_work.as_json() if facts.review_work else None)
     if facts.ci_pending:
         return result("candidate", "Poll required CI checks for the delivered source", outcome="waiting", poll=10)
