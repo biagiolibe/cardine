@@ -345,6 +345,16 @@ exits with status 2 and a migration message naming `cardine setup` and
 `cardine doctor`. The historical `meridian codex ...` descriptions above are kept
 for the observations they record, not as current commands.
 
+## Developer channel (work item 10, DD1)
+
+Without an injected host adapter, the owner verdict, `cancel` and `abort` are
+authorized by an interactive terminal: stdin and stdout are both a terminal and
+the developer types the task and commit back. The principal is the constant
+`terminal/developer`, so a rerun binds the same command. Reviewer-session
+verdicts stay refused. The host rules keep denying all three commands to
+agents; the channel does not widen them. It makes no claim of authenticity
+against an agent that obtains a terminal on purpose (decision 14, rule 2).
+
 ## Role launch proofs (work item 9, D3)
 
 Engine role launches (implementer and reviewer) require an effective host

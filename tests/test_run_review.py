@@ -121,7 +121,7 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
             with self.subTest(credential=credential, owner=owner), self.assertRaises(CardineError):
                 self.verdict(credential=credential, owner=owner)
             self.assertEqual(self.state(), before)
-        with self.assertRaises(CardineError):
+        with patch('cardine.lifecycle.control._interactive', return_value=False), self.assertRaises(CardineError):
             record_review_verdict(self.root, '001', 'APPROVE', owner=True)
         developer = CodexProfileAdapter(self.host, 'developer-channel')
         result = record_review_verdict(self.root, '001', 'APPROVE', owner=True, adapter=developer)
@@ -194,7 +194,7 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
         before = self.state()
         result = subprocess.run([sys.executable, str(ROOT/'scripts/cardine_cli.py'),
             'review', 'verdict', '001', 'APPROVE', '--owner', '--project', str(self.root)],
-            cwd=self.root, capture_output=True, text=True)
+            cwd=self.root, capture_output=True, text=True, stdin=subprocess.DEVNULL)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertIn('host role boundary unavailable', result.stderr)
         self.assertEqual(self.state(), before)

@@ -307,13 +307,13 @@ def build_parser() -> CardineArgumentParser:
     verdict.add_argument("task_id")
     verdict.add_argument("verdict", choices=("APPROVE", "CHANGES_REQUESTED", "BLOCKED"))
     verdict.add_argument("--request-id", help="issued independent review request identity")
-    verdict.add_argument("--owner", action="store_true")
+    verdict.add_argument("--owner", action="store_true", help="developer verdict; requires an interactive terminal and typed confirmation")
     verdict.add_argument("--body", default="", help="free-form review Markdown")
     verdict.add_argument("--project", type=Path, default=Path.cwd())
     verdict.add_argument("--format", choices=("json",), default="json")
 
     for name in ('cancel', 'abort'):
-        control = subparsers.add_parser(name, help='host-authorized ' + name)
+        control = subparsers.add_parser(name, help='developer-confirmed ' + name + ' (interactive terminal)')
         control.add_argument('task_id')
         control.add_argument('--project', type=Path)
         if name == 'cancel':
