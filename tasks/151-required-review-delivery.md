@@ -33,16 +33,6 @@ the `review` step of `run` stops looping into the preview (O3): it returns the r
   beyond that adaptation, stops the task before editing it and names the
   file, so that the coordinator splits the row.
 - [ ] The row's tests exist and pass: Queued to landed with `CHANGES_REQUESTED`, a fix, then `APPROVE`; a verdict on a stale commit is refused.
-- [ ] After `CHANGES_REQUESTED`, the return to `in_progress` followed by
-  `execution start` continues when the task's own state update is the only
-  uncommitted change, and a test proves it. `_execution_worktree` in
-  `src/cardine/lifecycle/execution.py` tolerates that update only from `queued`
-  today, by reading of the code; installed Meridian 1.4.1 has the same condition
-  and stopped a real project there with `dirty-worktree` on 2026-11-04. If the
-  test reproduces the stop, extend the tolerance to exactly one transition from
-  `changes_requested` to `in_progress`, as one of the row's "at most 3 files";
-  any other uncommitted change still stops. If it does not reproduce, leave the
-  code unchanged and say why in the handoff.
 - [ ] Rule 4 of decision 14: Each verdict; rerun after a kill before and after each one.
 - [ ] Every test runs against disposable projects and disposable home
   directories. No step runs `setup --apply` against the real home directory or
