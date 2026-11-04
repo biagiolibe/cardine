@@ -475,6 +475,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "REVIEW_LOOP_EXHAUSTED", "SELF_UPDATE_PLUGIN_CACHE", "SELF_UPDATE_DIRTY",
             "SELF_UPDATE_BRANCH", "SELF_UPDATE_TARGET", "SELF_UPDATE_VERIFY",
             "SELF_UPDATE_INPUT_INVALID", "OS_PATH_MISSING", "OS_PATH_BUSY", "UPGRADE_OUTPUT_PENDING",
+            "ADOPT_DIRTY", "ADOPT_IN_PROGRESS", "ADOPT_WORKTREE", "ADOPT_LEASE", "ADOPT_RECORD",
         )
         self.assertEqual(set(registry), set(closure) | set(gates) | set(remaining))
         self.assertEqual(
