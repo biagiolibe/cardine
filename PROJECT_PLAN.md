@@ -191,7 +191,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 148 — Align the run help with its behavior (C3d).
 - `[x]` 149 — Prove the spike, authority, and resume cases (C3e).
 - `[x]` 150 — Add the developer channel for verdict, cancel, and abort (C4a).
-- `[ ]` 151 — Deliver a required-review task through the developer channel (C4b).
+- `[x]` 151 — Deliver a required-review task through the developer channel (C4b).
 - `[ ]` 152 — Deliver a disposable task with an agent following run (C3f).
 - `[x]` 153 — Add the read model of a Meridian project (C2a).
 - `[x]` 154 — Translate open records for adopt (C2b).

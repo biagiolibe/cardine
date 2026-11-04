@@ -33,7 +33,7 @@ Both presets (`lean` and `governed`) use the same steps.
 | `worktree` | Prepare and verify the task branch and worktree, then start execution. |
 | `implementation` | Return the agent work request; accept delivery only after a complete committed implementation. |
 | `validation` | Execute the declared and baseline commands and record their real exit codes. |
-| `review` | Hand the validated commit to an independent reviewer and check the exact verdict. Skipped when the contract requires no review. |
+| `review` | Return the reviewer work request and an owner verdict command for the validated commit. Choose `APPROVE`, `CHANGES_REQUESTED`, or `BLOCKED` after review; run the command from an interactive terminal. Skipped when the contract requires no review. |
 | `candidate` | Stage the direct candidate, validate it, and persist tree-bound evidence. |
 | `landing` | Finalize, push `main`, verify the remote result, and clean up. |
 

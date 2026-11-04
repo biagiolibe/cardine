@@ -152,3 +152,7 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Completion evidence
+
+Implementation and validation evidence are recorded in `tasks/handoffs/151.md`.
