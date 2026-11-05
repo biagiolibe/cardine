@@ -19,47 +19,47 @@ faster by the same amount.
 
 ## Acceptance Criteria
 
-- [ ] **Narrow invalidation.** `write_state_bytes` calls a new
+- [x] **Narrow invalidation.** `write_state_bytes` calls a new
   `invalidate_tree_facts()` in `src/cardine/shared/git.py`. It keeps only Git reads of
   `rev-parse`, `merge-base`, `rev-list`, `for-each-ref`, `log`, `cat-file`,
   `check-ref-format`, `ls-remote`, `worktree list`, `remote`, and `config`. Status, diff,
   `ls-files`, `show`, and every `scoped_observation` entry are discarded, as today.
-- [ ] **Stable reads.** Within a command scope, these survive effects run by `_run_git`:
+- [x] **Stable reads.** Within a command scope, these survive effects run by `_run_git`:
   `check-ref-format --branch`, and `merge-base --is-ancestor` with two full object IDs,
   exit 0 or 1 only; and, per resolved root, `rev-parse --git-common-dir` and `rev-parse
   --git-path`, success only, discarded by any worktree effect. A call with an explicit `env`
   is not reused.
-- [ ] **Missing scopes.** `stage_task_integration` and `receipts.write_operation` are
+- [x] **Missing scopes.** `stage_task_integration` and `receipts.write_operation` are
   `@scoped_command`. Any read made before waiting for the integration lease or a task lock
   is discarded once the wait ends, so that a waiter never decides from a value read before
   it waited. Add this invalidation if the code does not already do it.
-- [ ] Tests prove each case fails safe, in `tests/test_command_context.py`: after a state file
+- [x] Tests prove each case fails safe, in `tests/test_command_context.py`: after a state file
   write a ref read is reused and `status` is not; after a commit `rev-parse HEAD` is new; after
   `worktree add` or `worktree remove` the list and path reads are new; an ancestry result on
   a full object ID is reused across an effect and one on a branch name is not; a failed
   read is not reused after an effect; a second process moving `main` during a lock wait is seen by the waiter.
-- [ ] The ceilings in `tests/test_command_context.py` are lowered to the new measured
+- [x] The ceilings in `tests/test_command_context.py` are lowered to the new measured
   values, each with its previous value in the comment. No ceiling rises. No gate reads a
   reused value that the rule above discards.
-- [ ] The handoff reports Git calls before and after for
+- [x] The handoff reports Git calls before and after for
   `test_run_cleanup.CleanupTest.test_push_cleanup_and_identical_repeat`, and the full
   clean-clone result. Authority and receipt checks (`require_authority`,
   `observed_authority`) get no other caching in this task.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -68,16 +68,16 @@ faster by the same amount.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/169.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/169.json`, which only
   the installed `meridian task close 169` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
