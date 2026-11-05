@@ -180,6 +180,7 @@ def scan_repository(root: Path, allowlist=ALLOWLIST) -> tuple[list[str], Counter
         cwd=root, check=True, capture_output=True,
     ).stdout.decode("utf-8").split("\0")
     used = Counter()
+    present = set()
     failures = []
     compiled = [(re.compile(entry.paths), re.compile(entry.pattern) if entry.pattern else None)
                 for entry in allowlist]
@@ -211,9 +212,10 @@ def scan_repository(root: Path, allowlist=ALLOWLIST) -> tuple[list[str], Counter
 
     for name in sorted(set(listed) - {""}):
         path = root / name
-        inspect(name, 0, "<path>")
         if not path.is_file():
             continue
+        present.update(index for index, (paths, _) in enumerate(compiled) if paths.fullmatch(name))
+        inspect(name, 0, "<path>")
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
         except UnicodeDecodeError:
@@ -221,12 +223,33 @@ def scan_repository(root: Path, allowlist=ALLOWLIST) -> tuple[list[str], Counter
         for number, line in enumerate(lines, 1):
             inspect(name, number, line, lines[number - 2] if number > 1 else "")
     for index, entry in enumerate(allowlist):
-        if not used[index]:
+        if not used[index] and (entry.group not in (3, 5) or index in present):
             failures.append(f"unused allowlist entry {index}: group {entry.group}, {entry.removal}, {entry.paths}")
     return failures, used
 
 
 class IdentifierGuardTest(unittest.TestCase):
+    def test_conditional_allowances_require_use_only_when_a_matching_file_exists(self):
+        with tempfile.TemporaryDirectory(prefix="cardine-conditional-guard-") as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            for group in (3, 5):
+                with self.subTest(group=group):
+                    allowance = Allowance(group, "10", r"retired/.*\.py", OLD)
+                    path = root / "retired/example.py"
+                    path.parent.mkdir(exist_ok=True)
+                    self.assertEqual(scan_repository(root, (allowance,))[0], [])
+                    path.write_text(OLD + "\n")
+                    self.assertEqual(scan_repository(root, (allowance,))[0], [])
+                    path.write_text("Cardine\n")
+                    self.assertTrue(any("unused allowlist entry" in failure
+                                        for failure in scan_repository(root, (allowance,))[0]))
+                    path.unlink()
+                    self.assertEqual(scan_repository(root, (allowance,))[0], [])
+            stale = Allowance(2, "9", r"missing/.*")
+            self.assertTrue(any("unused allowlist entry" in failure
+                                for failure in scan_repository(root, (stale,))[0]))
+
     def test_repository_has_no_unallowed_identifiers_or_stale_allowances(self):
         failures, _ = scan_repository(ROOT)
         self.assertEqual(failures, [], "\n".join(failures))
