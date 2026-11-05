@@ -19,15 +19,15 @@ agent-driven delivery in a disposable project. The agent executing this task fol
 
 ## Acceptance Criteria
 
-- [ ] Row C3f is implemented as its line in the excerpt describes it.
-- [ ] This task changes only its own record, archive, handoff, and state file. Any
+- [x] Row C3f is implemented as its line in the excerpt describes it.
+- [x] This task changes only its own record, archive, handoff, and state file. Any
   disposable project stays outside the repository, under a disposable home.
   A product defect found here is a finding in the handoff for the coordinator,
   who writes a new row; it is not fixed in this task.
-- [ ] The row's evidence is in the handoff: No test file. The handoff records the sequence of `run` outputs, the landed commit, and the findings.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The row's evidence is in the handoff: No test file. The handoff records the sequence of `run` outputs, the landed commit, and the findings.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -36,9 +36,9 @@ agent-driven delivery in a disposable project. The agent executing this task fol
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/152.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/152.json`, which only
   the installed `meridian task close 152` writes.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
