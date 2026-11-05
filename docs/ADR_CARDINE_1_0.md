@@ -221,8 +221,9 @@ In Cardine 1.0:
   attempt fails without running the complete set. It can never pass an
   attempt; only a passing run of the complete command set does, so a test that
   fails only in the full run's order is never recorded as intermittent.
-  Quick failures count toward a separate limit, 10 by default and configurable
-  like N, which resets only when a complete set passes. Measured on this
+  A variant that confirms a failure of the complete run in the same attempt
+  counts toward N. Any other quick failure counts toward a separate limit, 10 by
+  default and configurable like N, which resets only when a complete set passes. Measured on this
   repository: a failed attempt ran the complete suite twice, up to 74 minutes
   each.
 - **Removed:**

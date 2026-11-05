@@ -94,6 +94,13 @@ validation retry limit of 3.
   failures have a limit of their own.
 - Why the counter resets only on a passing complete set: a reset on each new commit
   would let an agent loop on cheap failures without end.
+- A variant that runs after a failed complete run in the same attempt is task 171's case
+  and counts toward `validationRetryLimit`. Only the quick commands that run before the
+  complete set (a variant on the next attempt, and preflight) are quick failures.
+- The per-task override goes through `task_contract_options` in `src/cardine/tasks/contract.py`
+  and the `taskDefaults` checks in `src/cardine/shared/project.py`, as for
+  `validationRetryLimit`. `src/cardine/tasks/preflight.py` (`execution_preflight`) is an
+  unrelated readiness check: leave it as it is.
 - `VALIDATION_RETRY_LIMIT` is reused, so `capabilities/stop-codes-v1.json` does not
   change. If its registry entry's text must name the new limit, that is a stale
   expectation under the standing clauses, not a scope change.
