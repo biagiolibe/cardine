@@ -1,4 +1,5 @@
 """Measured candidates and replay across the finalize effect boundaries (RE5b)."""
+import atexit
 import json
 import os
 from pathlib import Path
@@ -17,9 +18,12 @@ from cardine.tasks.state import state_path
 from cardine.worktree.storage import _lifecycle_paths
 from cardine.tasks.identity import resolve_task_identity
 import worktree_support as support
+from fixture_restore_support import ReadySnapshot
 
 
 class CandidateTest(support.BoundedWorktreeLifecycleFixture):
+    _ready = None
+
     def setUp(self):
         super().setUp()
         environment = mock.patch.dict(os.environ, {'PYTHONPATH': str(ROOT / 'src')})
@@ -27,6 +31,12 @@ class CandidateTest(support.BoundedWorktreeLifecycleFixture):
         self.addCleanup(environment.stop)
 
     def ready(self, command=None):
+        if command is None and CandidateTest._ready is not None:
+            snapshot, worker, staged = CandidateTest._ready
+            snapshot.restore()
+            os.chdir(self.primary)
+            self.worker = worker
+            return dict(staged)
         if command:
             from task_contract_support import freeze_record
             from project_config_support import write_project_config
@@ -41,7 +51,12 @@ class CandidateTest(support.BoundedWorktreeLifecycleFixture):
         self.git('add', '.', cwd=self.worker)
         self.git('commit', '-m', 'implement', cwd=self.worker)
         self.measure(self.worker)
-        return merge.stage_task_integration('056', self.worktree_root, None, self.primary)
+        staged = merge.stage_task_integration('056', self.worktree_root, None, self.primary)
+        if command is None:
+            snapshot = ReadySnapshot(self.root)
+            atexit.register(snapshot.close)
+            CandidateTest._ready = (snapshot, self.worker, staged)
+        return staged
 
     def paths(self):
         return _lifecycle_paths(self.primary, resolve_task_identity(self.primary, '056', 'existing'))
@@ -456,41 +471,39 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
     def test_candidate_result_boundaries_replay_once(self):
         points = [prefix + label for label in ('candidate_intent', 'candidate_logs', 'candidate_result')
                   for prefix in ('before_', 'after_')] + ['after_intent']
+        self.ready('exit 7')
+        snapshot = ReadySnapshot(self.root)
+        self.addCleanup(snapshot.close)
+        self.addCleanup(os.chdir, self.previous_cwd)
         for point in points:
             with self.subTest(point=point):
-                fixture = CandidateTest()
-                fixture.setUp()
-                try:
-                    fixture.ready('exit 7')
-                    fixture.kill(point, 'candidate')
-                    first = fixture.run_candidate()
-                    self.assertEqual(fixture.run_candidate(), first)
-                    self.assertEqual(first['consecutiveFailures'], 1)
-                    merge.abort_task_integration('056', fixture.primary)
-                finally:
-                    fixture.tearDown()
-                    fixture.doCleanups()
+                snapshot.restore()
+                os.chdir(self.primary)
+                self.kill(point, 'candidate')
+                first = self.run_candidate()
+                self.assertEqual(self.run_candidate(), first)
+                self.assertEqual(first['consecutiveFailures'], 1)
+                merge.abort_task_integration('056', self.primary)
 
     def test_finalize_every_effect_boundary_returns_the_same_commit(self):
+        self.ready()
+        self.run_candidate()
+        snapshot = ReadySnapshot(self.root)
+        self.addCleanup(snapshot.close)
+        self.addCleanup(os.chdir, self.previous_cwd)
         for label in ('finalize_intent', 'finalize_commit', 'finalize_result',
                       'finalize_json_unlink', 'finalize_lease_unlink', 'finalize_worker_restore'):
             for prefix in ('before_', 'after_'):
                 point = prefix + label
                 with self.subTest(point=point):
-                    fixture = CandidateTest()
-                    fixture.setUp()
-                    try:
-                        fixture.ready()
-                        fixture.run_candidate()
-                        fixture.kill(point, 'finalize')
-                        first = fixture.finalize()
-                        self.assertEqual(fixture.finalize(), first)
-                        self.assertEqual(fixture.git('status', '--porcelain', cwd=fixture.worker).stdout, '')
-                        self.assertEqual(fixture.git('rev-list', '--count', '--merges', 'main').stdout.strip(), '1')
-                        self.assertFalse(fixture.paths()[1].exists() or fixture.paths()[2].exists())
-                    finally:
-                        fixture.tearDown()
-                        fixture.doCleanups()
+                    snapshot.restore()
+                    os.chdir(self.primary)
+                    self.kill(point, 'finalize')
+                    first = self.finalize()
+                    self.assertEqual(self.finalize(), first)
+                    self.assertEqual(self.git('status', '--porcelain', cwd=self.worker).stdout, '')
+                    self.assertEqual(self.git('rev-list', '--count', '--merges', 'main').stdout.strip(), '1')
+                    self.assertFalse(self.paths()[1].exists() or self.paths()[2].exists())
 
     def test_interrupted_result_rejects_changed_inputs_and_foreign_owner(self):
         self.ready()

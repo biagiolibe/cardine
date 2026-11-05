@@ -205,7 +205,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 162 — Run the shell hook tests only while the hooks exist (C5d).
 - `[ ]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).
 - `[ ]` 164 — Rehearse the conversion of this repository (C6a).
-- `[ ]` 166 — Reuse the prepared state in the integration and cleanup tests.
+- `[x]` 166 — Reuse the prepared state in the integration and cleanup tests.
 - `[ ]` 167 — Reduce the cost of the host plugin kill matrix.
 - `[ ]` 168 — Reuse the prepared state in the receipt and recovery matrices.
 - `[ ]` 169 — Reuse Git reads that a command cannot have changed.

@@ -1,4 +1,5 @@
 """Delivery/cleanup with a real bare origin, exact refs and killed subprocesses."""
+import atexit
 import json
 import os
 from pathlib import Path
@@ -19,9 +20,18 @@ from fixture_restore_support import ReadySnapshot
 
 
 class CleanupTest(support.BoundedWorktreeLifecycleFixture):
+    _finalized = None
+
     def setUp(self):
         super().setUp()
         self.origin = self.root / 'origin.git'
+        if CleanupTest._finalized is not None:
+            snapshot, fields = CleanupTest._finalized
+            snapshot.restore()
+            os.chdir(self.primary)
+            self.__dict__.update(fields)
+            self.locations = candidate.locations_for('056', self.primary)
+            return
         subprocess.run(['git', 'init', '--bare', '-b', 'main', str(self.origin)], check=True, capture_output=True)
         self.git('remote', 'add', 'origin', str(self.origin))
         self.git('push', 'origin', 'main')
@@ -34,6 +44,9 @@ class CleanupTest(support.BoundedWorktreeLifecycleFixture):
         candidate.run_candidate_validation('056', self.primary)
         self.landed = merge.finalize_task_integration('056', None, self.primary)['merge_commit']
         self.locations = candidate.locations_for('056', self.primary)
+        snapshot = ReadySnapshot(self.root)
+        atexit.register(snapshot.close)
+        CleanupTest._finalized = (snapshot, dict(worker=self.worker, landed=self.landed))
 
     def finish(self):
         return cleanup.finish_delivery(self.locations)

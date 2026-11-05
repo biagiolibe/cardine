@@ -18,20 +18,20 @@ and runs the same assertions.
 
 ## Acceptance Criteria
 
-- [ ] In `tests/test_run_cleanup.py`, `setUp` builds the finalized state once and
+- [x] In `tests/test_run_cleanup.py`, `setUp` builds the finalized state once and
   later tests restore it. Coordinator prototype: processes for the module went from
   18,268 to 8,692, child CPU from 437 s to 240 s, with all 22 tests passing.
-- [ ] `tests/test_run_integration.py` reuses a prepared state in its boundary matrices:
+- [x] `tests/test_run_integration.py` reuses a prepared state in its boundary matrices:
   `test_finalize_every_effect_boundary_returns_the_same_commit` (544 s measured) and
   `test_candidate_result_boundaries_replay_once` (320 s), and in `ready()` when
   `command` is `None`. `tests/test_run_ci.py` does the same if its `setUp` repeats
   the same preparation.
-- [ ] No test or subtest is removed, and no assertion changes meaning. The coverage
+- [x] No test or subtest is removed, and no assertion changes meaning. The coverage
   `total` is unchanged. Each subtest of a matrix still starts from a restored tree.
-- [ ] Modules pass in both orders within one process (each of the edited modules first
+- [x] Modules pass in both orders within one process (each of the edited modules first
   and last), so that no state leaks between tests. The handoff gives process counts
   and child CPU before and after for each edited module, measured the same way.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
@@ -40,11 +40,11 @@ and runs the same assertions.
 - [ ] Every test runs against disposable projects and disposable home
   directories. No step runs `setup --apply` against the real home directory or
   writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -53,16 +53,16 @@ and runs the same assertions.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/166.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/166.json`, which only
   the installed `meridian task close 166` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -146,3 +146,9 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Execution evidence
+
+The validation and measurement results, and the disclosed exception for the
+earlier development runs, are recorded in `tasks/handoffs/166.md`. The
+developer directed Resume after that exception was reported.
