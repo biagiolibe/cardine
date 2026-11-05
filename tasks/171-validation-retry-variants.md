@@ -37,8 +37,12 @@ per command, which can end an attempt early but never pass it.
 - [ ] **One-sided rerun, candidate validation.** The same rule holds in
   `src/cardine/integration/candidate.py`, with the variant found through the command's
   ID in the frozen contract.
-- [ ] Each variant round is recorded with its commands, exit statuses, and logs, like a
-  complete round, and appears in the handoff's `Measured validation` section. Interrupted
+- [ ] Each task-validation variant round is recorded with its commands, exit statuses,
+  and logs and appears in the handoff's `Measured validation` section. Candidate
+  variant rounds are recorded with commands, exit statuses, and output in
+  `run.candidateValidation.runs`, like complete rounds; candidate validation does
+  not write the handoff, preserving the validated integration tree. (Coordinator
+  decision, 2026-11-05.) Interrupted
   and replayed attempts converge as today: kill tests cover the new round in both loops.
 - [ ] Tests in a new `tests/test_validation_quick_commands.py` prove, with cheap literal
   commands, for task and candidate validation: a variant exiting 1 ends the attempt

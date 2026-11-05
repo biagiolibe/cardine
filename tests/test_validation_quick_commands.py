@@ -2,6 +2,7 @@
 from copy import deepcopy
 from pathlib import Path
 import shlex
+import json
 import os
 import subprocess
 import sys
@@ -13,6 +14,7 @@ from cardine.lifecycle import receipts
 from cardine.lifecycle.validation import run_task_validation
 from cardine.integration.candidate import run_candidate_validation
 from cardine.integration import merge
+from cardine.tasks.state import state_path
 import test_run_delivery
 import worktree_support as support
 from project_config_support import write_project_config
@@ -86,6 +88,10 @@ class RetryTaskTest(unittest.TestCase):
         self.assertEqual([r[0]['exitStatus'] for r in result['runs']], [1, 1])
         self.assertEqual(result['phase'], 'failed')
         self.assertEqual(result['consecutiveFailures'], 1)
+        handoff = (self.worker / 'tasks/handoffs/001.md').read_text()
+        self.assertIn('Round 2:', handoff)
+        self.assertIn('`exit 1`', handoff)
+        self.assertIn(result['runs'][1][0]['log'], handoff)
 
     def test_successful_variant_cannot_pass_a_failing_complete_set(self):
         result = self.attempt('exit 1', 'exit 0')
@@ -148,9 +154,15 @@ class RetryCandidateTest(support.BoundedWorktreeLifecycleFixture):
         return run_candidate_validation('056', self.primary)
 
     def test_variant_exit_one_ends_attempt(self):
-        result = self.attempt('exit 1', 'exit 1')
+        result = self.attempt('exit 1', 'printf retry-output; printf retry-error >&2; exit 1')
         self.assertEqual([r[-1]['exitStatus'] for r in result['runs']], [1, 1])
         self.assertEqual(result['phase'], 'failed')
+        state = json.loads(state_path(self.worker, '056').read_text())
+        self.assertEqual(state['run']['candidateValidation']['runs'], result['runs'])
+        variant = state['run']['candidateValidation']['runs'][1][0]
+        self.assertEqual(variant['command'], 'printf retry-output; printf retry-error >&2; exit 1')
+        self.assertEqual((variant['exitStatus'], variant['stdout'], variant['stderr']),
+                         (1, 'retry-output', 'retry-error'))
 
     def test_variant_zero_does_not_pass_failing_full_set(self):
         result = self.attempt('exit 1', 'exit 0')
