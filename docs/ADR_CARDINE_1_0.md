@@ -29,7 +29,9 @@ questions of `docs/CONVERSION_PLAN.md`: a developer channel records verdicts,
 cancel, and abort while role launches are unsupported (decision 14, rule 2);
 `cardine.legacy` stays while `cardine adopt` reads Meridian projects; and the
 maintainer's machine keeps Meridian until the last project is converted
-(decision 10).*
+(decision 10). On 2026-11-05 the developer amended decisions 5 and 12: after a
+failure, declared quick commands can end an attempt early, only the complete
+command set can pass it, and quick failures have a limit of their own.*
 
 ## Context
 
@@ -138,6 +140,7 @@ Meridian's workflows established:
 | Blocking dependencies | yes | yes |
 | `spike` class | available | available |
 | Validation retry limit | 3 | 3 |
+| Quick failure limit (amended on 2026-11-05) | 10 | 10 |
 
 `cardine init` asks for the preset. `lean` replaces Lean Delivery and is the
 default for new projects. `governed` reproduces today's Governed SDD
@@ -211,6 +214,17 @@ In Cardine 1.0:
   the failures. N defaults to 3 and is configurable per project and per task.
   The counter lives in the task's state file and is bound to the attempt. The
   agent records nothing.
+- **New (amended on 2026-11-05):** a project can declare quick commands. A
+  retry variant reruns only what its command found failing, for example
+  `--last-failed`. A preflight command is a fast check run before the complete
+  set. A quick command can only end an attempt early: when it fails, the
+  attempt fails without running the complete set. It can never pass an
+  attempt; only a passing run of the complete command set does, so a test that
+  fails only in the full run's order is never recorded as intermittent.
+  Quick failures count toward a separate limit, 10 by default and configurable
+  like N, which resets only when a complete set passes. Measured on this
+  repository: a failed attempt ran the complete suite twice, up to 74 minutes
+  each.
 - **Removed:**
   - the self-reported counters: evidence captures, context expansions, and
     investigation scope;
@@ -483,7 +497,13 @@ state to pass a gate, changes scope, or decides in place of a review.
 The validation retry limit of decision 5 also covers intermittent failures.
 A failed validation run is rerun once automatically. If the rerun passes,
 the handoff records the test as intermittent and the attempt does not count.
-If it fails, the attempt counts toward N.
+If it fails, the attempt counts toward N. Amended on 2026-11-05: when a
+failed command declares a retry variant, the variant runs first. Exit 1
+means the failures remain, and the attempt counts toward N without a second
+complete run. Exit 0, or any other status, leaves the decision to the
+complete rerun. On the next attempt, a command that failed last time runs its
+variant before anything else, and declared preflight commands run before the
+complete set.
 
 For unattended runs, decisions that need a person are taken before the run,
 in the task contract. The `Expected code surface` bounds what the agent may

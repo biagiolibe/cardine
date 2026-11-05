@@ -65,7 +65,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 
 ### Phase 32 — Test suite cost
 
-Authority: the developer's request of 2026-11-04 and the coordinator's measurements in each record. The counted validation keeps running the whole suite.
+Authority: the developer's request of 2026-11-04 and the coordinator's measurements in each record. The counted validation keeps running the whole suite. Rows 171 and 172: ADR decisions 5 and 12 as amended on 2026-11-05.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
@@ -74,3 +74,5 @@ Authority: the developer's request of 2026-11-04 and the coordinator's measureme
 | `[ ]` | 168 | Reuse the prepared state in the receipt and recovery matrices | 🟡 P2 | — | [168](168-reuse-receipt-matrix-fixtures.md) |
 | `[ ]` | 169 | Reuse Git reads that a command cannot have changed | 🟡 P2 | — | [169](169-fewer-repeated-git-reads.md) |
 | `[ ]` | 170 | Refresh the shard weights after the test cost work | 🟡 P2 | 166, 167, 168, 169 | [170](170-refresh-shard-weights.md) |
+| `[ ]` | 171 | Rerun only the failing commands through declared retry variants | 🟡 P2 | — | [171](171-validation-retry-variants.md) |
+| `[ ]` | 172 | Run declared quick checks first and limit their failures separately | 🟡 P2 | 171 | [172](172-validation-quick-checks.md) |

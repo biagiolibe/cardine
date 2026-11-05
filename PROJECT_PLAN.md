@@ -210,3 +210,5 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 168 — Reuse the prepared state in the receipt and recovery matrices.
 - `[ ]` 169 — Reuse Git reads that a command cannot have changed.
 - `[ ]` 170 — Refresh the shard weights after the test cost work.
+- `[ ]` 171 — Rerun only the failing commands through declared retry variants.
+- `[ ]` 172 — Run declared quick checks first and limit their failures separately.
