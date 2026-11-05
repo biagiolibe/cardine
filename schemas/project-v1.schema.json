@@ -205,6 +205,17 @@
               "$ref": "#/$defs/commandReferences"
             }
           }
+        },
+        "retry": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "\\S"
+          }
         }
       }
     }

@@ -45,6 +45,13 @@ identity. Cancellation and inconclusive spikes never satisfy dependencies.
 Initialization requires owner-selected literal validation commands. Every
 baseline/candidate entry references a declared command ID, and all three
 candidate outcomes must be present. An empty list is an explicit choice.
+An optional `validation.retry` object maps command IDs to nonempty literal retry
+variants. After a complete run fails, variants for failed commands run in
+command declaration order. Exit 1 confirms failure and ends the attempt; exit
+0 or any other status triggers a complete rerun. A variant never passes an
+attempt: only a passing complete command set can do that. Omitted variants
+retain the complete rerun behavior.
+
 Candidate validation always adds `git diff --check`. Task commands supplement
 the baseline. Retry limits are positive integers; the future runner owns their
 automatic counting. Context reading guards and evidence tiers remain available

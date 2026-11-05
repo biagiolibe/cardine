@@ -118,7 +118,7 @@ def _publish(root, task_id, intent, state):
         f'- Evidence: `{path}`',
         '- Intermittent commands: ' + (', '.join(item['id'] for item in progress['intermittent']) or 'none'),
         '- Scoped skips: ' + ('; '.join(item['id'] + ': ' + item['reason'] for item in progress['inputs']['skips']) or 'none'),
-        *[f'- Round {index + 1}: ' + '; '.join(f'{item["id"]}: exit {item["exitStatus"]}' for item in run)
+        *[f'- Round {index + 1}: ' + '; '.join(f'{item["id"]}: `{item["command"]}`, exit {item["exitStatus"]}, log `{item["log"]}`' for item in run)
           for index, run in enumerate(progress['runs'])]]) + '\n'
     pattern = r'^## Measured validation\s*\n.*?(?=^## |\Z)'
     rendered = re.sub(pattern, lambda _: section + '\n', text, flags=re.MULTILINE | re.DOTALL) if re.search(
@@ -212,7 +212,27 @@ def run_task_validation(root, task_id, *, context=None):
         if receipts.state_digest(state) != intent['before']:
             raise CardineError('validation input state changed')
         runs = intent['runs']
-        while len(runs) < 2 and (not runs or any(item['exitStatus'] != 0 for item in runs[-1])):
+        retry = state['contract']['validation'].get('retry', {})
+        variants = {}
+        if runs:
+            failed = {item['id'] for item in runs[0] if item['exitStatus'] != 0}
+            variants = {key: retry[key] for key in state['contract']['validation']['commands'] if key in failed and key in retry}
+        while True:
+            if not runs:
+                round_commands = current['commands']
+            elif all(item['exitStatus'] == 0 for item in runs[0]):
+                break
+            else:
+                failed = {item['id'] for item in runs[0] if item['exitStatus'] != 0}
+                variants = {key: retry[key] for key in state['contract']['validation']['commands'] if key in failed and key in retry}
+                if variants and len(runs) == 1:
+                    round_commands = variants
+                elif variants and len(runs) == 2 and any(item['exitStatus'] == 1 for item in runs[1]):
+                    break
+                elif len(runs) == (2 if variants else 1):
+                    round_commands = current['commands']
+                else:
+                    break
             before_run = _execution_state(root, task_id, context=context)
             if (inputs(root, task_id, before_run, base, dict(os.environ)) != current
                     or receipts.state_digest(before_run) != intent['before']):
@@ -220,7 +240,7 @@ def run_task_validation(root, task_id, *, context=None):
                 raise stop_error('VALIDATION_FAILED', 'Validation inputs changed before the full rerun; start a fresh attempt',
                                  task_id=task_id, project=root)
             results = []
-            for key, command in current['commands'].items():
+            for key, command in round_commands.items():
                 status, stdout, stderr, out_truncated, err_truncated = execute_command(command, root, environment, descriptor)
                 results.append(dict(id=key, command=command, exitStatus=status,
                      commit=git_output(root, 'rev-parse', 'HEAD'), sourceDigest=current['sourceDigest'],
@@ -241,10 +261,9 @@ def run_task_validation(root, task_id, *, context=None):
             intent = dict(intent, runs=runs)
             receipts._save_intent(path, intent)
             receipts.boundary('after_validation_logs')
-            if all(item['exitStatus'] == 0 for item in results):
-                break
-        passed = all(item['exitStatus'] == 0 for item in runs[-1])
-        intermittent = [item for item in runs[0] if item['exitStatus'] != 0] if passed and len(runs) == 2 else []
+        complete_last = len(runs) == 1 or not variants or len(runs) == 3
+        passed = complete_last and all(item['exitStatus'] == 0 for item in runs[-1])
+        intermittent = [item for item in runs[0] if item['exitStatus'] != 0] if passed and len(runs) > 1 else []
         count = 0 if passed else failures + 1
         progress = dict(attemptId=intent['attemptId'], inputs=current, runs=runs,
                         phase='passed' if passed else 'failed', consecutiveFailures=count,

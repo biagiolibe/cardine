@@ -123,6 +123,14 @@ class SingleWorkflowConfigTest(unittest.TestCase):
             with self.subTest(validation=validation), self.assertRaises(CardineError):
                 parse_project_declaration(self.declaration(validation=validation))
 
+    def test_retry_variants_require_known_ids_and_nonempty_commands(self):
+        policy = self.validation()
+        policy['retry'] = {'repo': 'python3 retry.py'}
+        self.assertEqual(parse_project_declaration(self.declaration(validation=policy))['validation'], policy)
+        for retry in ({'missing': 'true'}, {'repo': ''}, {'repo': '  '}, {'repo': 1}, [], None):
+            with self.subTest(retry=retry), self.assertRaises(CardineError):
+                parse_project_declaration(self.declaration(validation={**policy, 'retry': retry}))
+
     def test_explicit_empty_validation_is_different_from_absent(self):
         empty = {"commands": {}, "baseline": [],
                  "candidate": {"REUSE": [], "BOUNDED": [], "FULL": []}}

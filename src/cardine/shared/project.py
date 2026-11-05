@@ -51,7 +51,7 @@ def _validate_task_defaults(value: object) -> None:
 
 
 def _validate_validation(value: object) -> None:
-    if not isinstance(value, dict) or set(value) != {"commands", "baseline", "candidate"}:
+    if not isinstance(value, dict) or not {"commands", "baseline", "candidate"} <= set(value) or set(value) - {"commands", "baseline", "candidate", "retry"}:
         raise CardineError("project declaration key 'validation' must contain commands, baseline and candidate")
     commands = value["commands"]
     if not isinstance(commands, dict) or not all(
@@ -59,6 +59,12 @@ def _validate_validation(value: object) -> None:
         for key, command in commands.items()
     ):
         raise CardineError("validation.commands must map nonempty IDs to nonempty literal commands")
+    retry = value.get("retry", {})
+    if not isinstance(retry, dict) or not all(
+        key in commands and isinstance(command, str) and command.strip()
+        for key, command in retry.items()
+    ):
+        raise CardineError("validation.retry must map known IDs to nonempty literal commands")
     candidate = value["candidate"]
     if not isinstance(candidate, dict) or set(candidate) != {"REUSE", "BOUNDED", "FULL"}:
         raise CardineError("validation.candidate must declare REUSE, BOUNDED and FULL")
