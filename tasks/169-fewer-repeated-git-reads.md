@@ -144,6 +144,20 @@ revalidation in the same turn; do not stop to report the fix.
   committed implementation that the agent considers complete. Test runs
   during implementation are development, not attempts, however many fail.
   An unfinished implementation is never a reason to stop: finish it first.
+- Before the first clean-clone, run `python3 scripts/check_repository.py` and one
+  `python3 scripts/run_tests.py --parallel` with `--module` for each edited test module
+  and for the repository guards: `test_module_inventory`, `test_layout`,
+  `test_no_meridian_identifiers`, `test_text_gates`, `test_stop_registry`,
+  `test_command_word`, and `test_run_end_to_end.ReplayInventoryTest`. The guards take
+  under a minute and catch most failures that a clean-clone would find.
+- Let a started clean-clone finish; do not interrupt it to restart after a change. Its
+  failure record lists every failure at once, so fix them all together.
+- After a failed clean-clone, do not start another one at once. Fix, commit, and run
+  `python3 scripts/run_tests.py --parallel --last-failed`, which reads the failures that
+  clean-clone recorded for this worktree, and a `--module` run for each module the fix
+  touched. Only when both pass, run the clean-clone again as the next counted attempt.
+  Judge whether a failure is intermittent with `--last-failed` on the unchanged tree,
+  not with a new clean-clone.
 - A `BLOCKED <CODE>` from a Meridian command whose entry in
   `capabilities/stop-codes-v1.json` of the primary checkout's `main` has
   `human_decision: false`: run the command the stop names, once. If it stops
