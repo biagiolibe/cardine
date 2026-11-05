@@ -208,7 +208,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 166 — Reuse the prepared state in the integration and cleanup tests.
 - `[x]` 167 — Reduce the cost of the host plugin kill matrix.
 - `[x]` 168 — Reuse the prepared state in the receipt and recovery matrices.
-- `[ ]` 169 — Reuse Git reads that a command cannot have changed.
+- `[x]` 169 — Reuse Git reads that a command cannot have changed.
 - `[ ]` 170 — Refresh the shard weights after the test cost work.
 - `[ ]` 171 — Rerun only the failing commands through declared retry variants.
 - `[ ]` 172 — Run declared quick checks first and limit their failures separately.

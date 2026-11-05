@@ -17,6 +17,7 @@ from cardine.worktree.storage import _lifecycle_paths
 from cardine.worktree.storage import _merge_head_path
 from cardine.shared.jsonio import _read_json_object
 from cardine.integration.evidence import _remove_owned_file
+from cardine.shared.git import scoped_command
 from cardine.shared.git import _run_git
 from cardine.worktree.paths import _task_worktree_path_for_identity
 from cardine.worktree.storage import _verified_lifecycle_project
@@ -160,6 +161,7 @@ def _regenerate_status_views(project_root: Path) -> dict[str, object]:
     return {"status": "REGENERATED", "paths": changed, "command": command, "warning": None}
 
 
+@scoped_command
 def stage_task_integration(
     task_id: str,
     worktree_root: Path | None,

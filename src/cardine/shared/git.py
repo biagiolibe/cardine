@@ -6,6 +6,7 @@ from cardine.shared.layout import PRODUCT_NAMES
 
 import contextlib
 import contextvars
+import re
 import subprocess
 from copy import deepcopy
 from functools import wraps
@@ -22,14 +23,59 @@ _READ_COMMANDS = {"rev-parse", "show", "rev-list", "merge-base", "diff", "ls-fil
 _FACTS = contextvars.ContextVar("cardine_command_facts", default=None)
 
 
+def _stable(key, *, worktree=False):
+    if not isinstance(key, tuple) or len(key) < 3 or key[0] != "git":
+        return False
+    args = key[2]
+    if args[:2] == ("check-ref-format", "--branch") and len(args) == 3:
+        return True
+    if (len(args) == 4 and args[:2] == ("merge-base", "--is-ancestor")
+            and all(re.fullmatch(r"(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})", oid) for oid in args[2:])):
+        return True
+    return (not worktree and args[:2] in (("rev-parse", "--git-common-dir"),
+                                          ("rev-parse", "--git-path")))
+
+
+def _survives(key, result, *, worktree=False):
+    return (_stable(key, worktree=worktree)
+            and (result.returncode == 0 or result.returncode == 1
+                 and key[2][:2] == ("merge-base", "--is-ancestor")))
+
+
 def invalidate_facts():
-    """End the read-only pass before a Git or filesystem effect."""
+    """Forget all observations at an external or arbitrary effect seam."""
     facts = _FACTS.get()
     if facts is not None:
         facts.clear()
     shared = _SHARED_WORKTREES.get()
     if shared is not None:
         shared.clear()
+
+
+def _invalidate_git_effect(*, worktree=False):
+    """Retain only facts that this Git effect cannot change."""
+    facts = _FACTS.get()
+    if facts is not None:
+        for key in list(facts):
+            if not _survives(key, facts[key], worktree=worktree):
+                del facts[key]
+    shared = _SHARED_WORKTREES.get()
+    if shared is not None:
+        shared.clear()
+
+
+def invalidate_tree_facts():
+    """Discard observations affected by a state-file write."""
+    facts = _FACTS.get()
+    if facts is not None:
+        keep = {"rev-parse", "merge-base", "rev-list", "for-each-ref", "log",
+                "cat-file", "check-ref-format", "ls-remote", "remote", "config"}
+        for key in list(facts):
+            if (not isinstance(key, tuple) or len(key) < 3 or key[0] != "git"
+                    or not (key[2][0] in keep or key[2] == ("worktree", "list", "--porcelain"))
+                    or facts[key].returncode != 0 and not _survives(key, facts[key])):
+                del facts[key]
+
 
 
 @contextlib.contextmanager
@@ -96,8 +142,8 @@ def _run_git(project_root: Path | None, *arguments: str, text=True,
     """The sole product Git subprocess gateway (legacy installation excluded)."""
     readonly = _read_only(arguments)
     if not readonly:
-        invalidate_facts()
-    facts = _FACTS.get() if readonly else None
+        _invalidate_git_effect(worktree=arguments[:1] == ("worktree",))
+    facts = _FACTS.get() if readonly and env is None else None
     root = Path(project_root).resolve() if project_root is not None else None
     if readonly:
         # Optional index refreshes are writes, even for status. Timeout and
@@ -116,6 +162,20 @@ def _run_git(project_root: Path | None, *arguments: str, text=True,
                             timeout=timeout, env=env)
     if facts is not None:
         facts[key] = result
+        if (_stable(key) and observed_args[:2] == ("merge-base", "--is-ancestor")
+                and result.returncode in (0, 1)):
+            shared = _SHARED_WORKTREES.get()
+            records = shared.get(root) if shared is not None else None
+            if records is None:
+                listing_key = (key[0], root, ("worktree", "list", "--porcelain"), *key[3:])
+                listing_result = facts.get(listing_key)
+                if listing_result is not None and listing_result.returncode == 0:
+                    listing = listing_result.stdout if text else listing_result.stdout.decode()
+                    records = parse_worktree_records(listing)
+            for record in records or ():
+                if "worktree" in record:
+                    alias = (key[0], Path(record["worktree"]).resolve(), *key[2:])
+                    facts[alias] = result
         if result.returncode == 0 and arguments == ("worktree", "list", "--porcelain"):
             listing = result.stdout if text else result.stdout.decode()
             for record in parse_worktree_records(listing):
