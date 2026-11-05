@@ -34,9 +34,10 @@ rehearsal on a clone, verifier, receipt; `--apply` requires it.
   file, so that the coordinator splits the row.
 - [ ] The row's tests exist and pass: Original tree digest unchanged; failing rehearsal blocks apply; scratch under a disposable home.
 - [ ] Rule 4 of decision 14: `before_rehearsal_clone`, `after_rehearsal_clone`, `before_rehearsal_verify`, `before_rehearsal_receipt`; rerun rebuilds the copy.
-- [ ] Every test runs against disposable projects and disposable home
-  directories. No step runs `setup --apply` against the real home directory or
-  writes real host configuration.
+- [ ] Tests that need a home directory create a disposable one themselves. Run the
+  validation commands with the inherited environment, as written; never wrap them in a
+  temporary home, and a run that inherited the real home is not a stop. No step runs
+  `setup --apply` against the real home directory or writes real host configuration.
 - [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
 - [ ] Every source and test file stays below 1,500 lines.
 - [ ] This repository's own lifecycle keeps running on the installed Meridian
