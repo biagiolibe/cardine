@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from fixture_restore_support import ReadySnapshot
 
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
@@ -79,12 +80,14 @@ else:
         self.assertEqual(result.returncode, 77, result.stderr)
 
     def test_creation_killed_before_and_after_all_four_boundaries(self):
+        previous_cwd = Path.cwd()
+        self.addCleanup(os.chdir, previous_cwd)
+        snapshot = ReadySnapshot(self.root)
+        self.addCleanup(snapshot.close)
         for point in POINTS:
-            with self.subTest(point=point), tempfile.TemporaryDirectory() as directory:
-                self.root = Path(directory).resolve()
-                self.record = self.root / 'tasks/001.md'
-                self.path = self.root / '.cardine/tasks/001.json'
-                write_project_config(self.root, 'lean', validation=deepcopy(VALIDATION))
+            with self.subTest(point=point):
+                snapshot.restore()
+                os.chdir(previous_cwd)
                 self.kill(point)
                 intent = receipts._intent_path(self.root, '001')
                 before = receipts._load_intent(intent)['state'] if intent.exists() else None
@@ -100,15 +103,17 @@ else:
                 self.assertEqual(list(self.root.rglob('*.stage')), [])
 
     def test_revision_killed_before_and_after_all_four_boundaries(self):
+        self.create()
+        original = self.state()['run']['receipts'][0]
+        self.record.write_text(self.text.replace('## Objective', 'Review: required\n## Objective'))
+        previous_cwd = Path.cwd()
+        self.addCleanup(os.chdir, previous_cwd)
+        snapshot = ReadySnapshot(self.root)
+        self.addCleanup(snapshot.close)
         for point in POINTS:
-            with self.subTest(point=point), tempfile.TemporaryDirectory() as directory:
-                self.root = Path(directory).resolve()
-                self.record = self.root / 'tasks/001.md'
-                self.path = self.root / '.cardine/tasks/001.json'
-                write_project_config(self.root, 'lean', validation=deepcopy(VALIDATION))
-                self.create()
-                original = self.state()['run']['receipts'][0]
-                self.record.write_text(self.text.replace('## Objective', 'Review: required\n## Objective'))
+            with self.subTest(point=point):
+                snapshot.restore()
+                os.chdir(previous_cwd)
                 self.kill(point, revision=True)
                 update_task_contract(self.root, '001')
                 state = self.state()
@@ -463,8 +468,14 @@ retry_writer(Path(sys.argv[1]), json.loads(Path(sys.argv[2]).read_text()))
             retry_writer(root, proposal(kind, state_first))
         self.assertTrue(observed, family)
         self.assertEqual(len(observed), len(set(observed)), family)
+        previous_cwd = Path.cwd()
+        self.addCleanup(os.chdir, previous_cwd)
+        snapshot = ReadySnapshot(root)
+        self.addCleanup(snapshot.close)
         for point in observed:
             with self.subTest(kind=family, point=point):
+                snapshot.restore()
+                os.chdir(previous_cwd)
                 item = proposal(kind, state_first)
                 proposal_path.write_text(json.dumps(item))
                 original_receipts = item['previous']['run']['receipts']
