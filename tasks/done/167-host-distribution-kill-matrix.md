@@ -19,32 +19,32 @@ that differ.
 
 ## Acceptance Criteria
 
-- [ ] The test kills before and after every copy of a synthetic payload of 3 files
+- [x] The test kills before and after every copy of a synthetic payload of 3 files
   (first, middle, last in copy order), with the same checks as today: exit 93,
   intent retained, resume keeps the operation ID, identical inventory, no stage
   directory, identical repeat, foreign file untouched.
-- [ ] The same checks run on the real `plugin.payload()` for the `assembly` and
+- [x] The same checks run on the real `plugin.payload()` for the `assembly` and
   `publication` boundaries and for the first and last real copy.
-- [ ] Before reducing, confirm that the copy path of `scripts/build_host_plugin.py` does
+- [x] Before reducing, confirm that the copy path of `scripts/build_host_plugin.py` does
   not branch on a file's name or type. If it does, each such case keeps a boundary in
   the test, and the handoff names it.
-- [ ] A deliberately broken resume on a middle copy of the synthetic payload makes the
+- [x] A deliberately broken resume on a middle copy of the synthetic payload makes the
   test fail. The handoff reports this mutation check. The coverage `total` is
   unchanged, and the handoff reports the test's time before and after.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Every test runs against disposable projects and disposable home
+- [x] Every test runs against disposable projects and disposable home
   directories. No step runs `setup --apply` against the real home directory or
   writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -53,16 +53,16 @@ that differ.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/167.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/167.json`, which only
   the installed `meridian task close 167` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

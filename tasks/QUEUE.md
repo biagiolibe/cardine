@@ -70,7 +70,7 @@ Authority: the developer's request of 2026-11-04 and the coordinator's measureme
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[x]` | 166 | Reuse the prepared state in the integration and cleanup tests | 🟡 P2 | — | [166](done/166-reuse-delivered-fixtures.md) |
-| `[ ]` | 167 | Reduce the cost of the host plugin kill matrix | 🟡 P2 | — | [167](167-host-distribution-kill-matrix.md) |
+| `[x]` | 167 | Reduce the cost of the host plugin kill matrix | 🟡 P2 | — | [167](done/167-host-distribution-kill-matrix.md) |
 | `[ ]` | 168 | Reuse the prepared state in the receipt and recovery matrices | 🟡 P2 | — | [168](168-reuse-receipt-matrix-fixtures.md) |
 | `[ ]` | 169 | Reuse Git reads that a command cannot have changed | 🟡 P2 | — | [169](169-fewer-repeated-git-reads.md) |
 | `[ ]` | 170 | Refresh the shard weights after the test cost work | 🟡 P2 | 166, 167, 168, 169 | [170](170-refresh-shard-weights.md) |
