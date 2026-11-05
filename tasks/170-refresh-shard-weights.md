@@ -89,7 +89,7 @@ justify. Other rows of the queue.
 
 ## Dependencies
 
-- **Depends on**: 166, 167, 168, 169
+- **Depends on**: 166, 167, 168, 169, 173
 - **Blocks**: none
 
 ## Developer decisions given in advance
