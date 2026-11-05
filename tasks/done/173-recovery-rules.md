@@ -23,25 +23,25 @@ person.
 
 ## Acceptance Criteria
 
-- [ ] **Pure rules.** Each of the four decisions has a rule function that takes a frozen
+- [x] **Pure rules.** Each of the four decisions has a rule function that takes a frozen
   dataclass of facts and returns the same value as today: a stop code, a boolean, or the
   residue dictionary or `None`. A rule function performs no I/O, imports no Git helper,
   and reads no clock or environment. The public functions keep their names, signatures,
   and results, so their callers in `src/cardine/integration/merge.py`,
   `src/cardine/integration/cleanup.py`, and `src/cardine/worktree/closure_status.py`
   do not change.
-- [ ] **Readers keep short-circuits.** A reader gathers only the facts its rule needs on
+- [x] **Readers keep short-circuits.** A reader gathers only the facts its rule needs on
   that path, in the same order as today. For example, it reads `MERGE_HEAD` only when the
   merge head file exists and the lease matches. No path makes a Git call or file read that
   it does not make today, and the subprocess ceilings of `tests/test_command_context.py`
   hold unchanged.
-- [ ] **Rule tests.** A new `tests/test_recovery_rules.py` covers every branch of every
+- [x] **Rule tests.** A new `tests/test_recovery_rules.py` covers every branch of every
   rule with literal facts: each lease mismatch, unreadable lease, live writer, matching
   and mismatching merge head; each cleanup condition; origin absent, equal, behind, and
   diverged; and each residue refusal (foreign owner, changed authority, wrong file set,
   wrong kind, wrong status, changed source, changed or symlinked staged bytes, foreign
   status line). It creates no repository and starts no process.
-- [ ] **Real-Git tests kept per outcome.** In `tests/test_run_recovery.py`, these move to
+- [x] **Real-Git tests kept per outcome.** In `tests/test_run_recovery.py`, these move to
   rule tests and leave the module, listed in the handoff:
   - the four `test_lease_without_ownership_proof_stays_held` subtests other than
     "other task", which stays as an end-to-end proof that a mismatched lease is held;
@@ -53,24 +53,24 @@ person.
   Every other test in the module stays as it is. Each removed check has a rule test
   with the same input and the same expected result, and the handoff maps each one to
   its replacement.
-- [ ] The handoff gives process counts and child CPU for `tests/test_run_recovery.py`
+- [x] The handoff gives process counts and child CPU for `tests/test_run_recovery.py`
   before and after, measured the same way, and the coverage `total` before and after,
   with the difference explained by the moved checks and the new rule tests.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -79,16 +79,16 @@ person.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/173.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/173.json`, which only
   the installed `meridian task close 173` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

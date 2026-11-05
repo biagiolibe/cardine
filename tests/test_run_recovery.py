@@ -211,10 +211,6 @@ class RunRecoveryTest(unittest.TestCase):
         self._stage_ready_task_with_origin(local_ahead=True)
         for label, write in (
             ("other task", lambda: self.lease(task_id="057")),
-            ("other branch", lambda: self.lease(branch="task-057")),
-            ("other project", lambda: self.lease(project=str(self.root / "elsewhere"))),
-            ("missing fields", lambda: self.lease_text(json.dumps({"task_id": "056"}))),
-            ("corrupt json", lambda: self.lease_text("{not json")),
         ):
             with self.subTest(label):
                 lease = write()
@@ -236,15 +232,6 @@ class RunRecoveryTest(unittest.TestCase):
         result = self.run_cli(*self._stage_args())
         self.assertTrue(result.stderr.startswith("BLOCKED LEASE_HELD:"), result.stderr)
         self.assertTrue(lease.exists())
-
-    def test_staged_merge_that_no_longer_matches_the_lease_stays_held(self) -> None:
-        self._stage_ready_task_with_origin(local_ahead=True)
-        self.enter_project()
-        lease = self.lease(main_commit="0" * 40)
-        merge_head = owner_storage._merge_head_path(self.project)
-        merge_head.write_text(self.git("rev-parse", "main") + "\n", encoding="utf-8")
-        self.addCleanup(lambda: merge_head.unlink(missing_ok=True))
-        self.assertEqual(causes.lease_stop_code(self.project, self.identity(), lease), "LEASE_HELD")
 
     def test_foreign_merge_with_an_owned_lease_is_never_aborted(self) -> None:
         self._stage_ready_task_with_origin(local_ahead=True)
@@ -671,10 +658,6 @@ class RunRecoveryTest(unittest.TestCase):
                         result.stderr)
         self.assertEqual(self.git("rev-parse", "task-056"), tip)
         self.assertTrue(worktree.is_dir())
-        common = (self.project / self.git("rev-parse", "--git-common-dir")).resolve()
-        self.assertEqual(causes.cleanup_branch_stop_code(self.project, "task-056", tip, common), "CLEANUP_BLOCKED")
-        self.git("checkout", "-b", "side")
-        self.assertEqual(causes.cleanup_branch_stop_code(self.project, "task-056", tip, common), "CLEANUP_BLOCKED")
 
     def test_unpushed_main_is_a_pending_push_and_diverged_main_is_blocked(self) -> None:
         self.landed_task(origin=True)

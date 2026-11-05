@@ -76,4 +76,4 @@ Authority: the developer's request of 2026-11-04 and the coordinator's measureme
 | `[ ]` | 170 | Refresh the shard weights after the test cost work | 🟡 P2 | 166, 167, 168, 169, 173 | [170](170-refresh-shard-weights.md) |
 | `[ ]` | 171 | Rerun only the failing commands through declared retry variants | 🟡 P2 | — | [171](171-validation-retry-variants.md) |
 | `[ ]` | 172 | Run declared quick checks first and limit their failures separately | 🟡 P2 | 171 | [172](172-validation-quick-checks.md) |
-| `[ ]` | 173 | Separate the recovery rules from their Git reads | 🟡 P2 | — | [173](173-recovery-rules.md) |
+| `[x]` | 173 | Separate the recovery rules from their Git reads | 🟡 P2 | — | [173](done/173-recovery-rules.md) |

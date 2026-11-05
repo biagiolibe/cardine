@@ -10,6 +10,7 @@ Recognition is a same-user fact about this checkout, not proof of authorship.
 from __future__ import annotations
 
 from pathlib import Path
+from dataclasses import dataclass, replace
 
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
@@ -17,35 +18,74 @@ from cardine.shared.git import canonical_git_common_dir, git_output, invalidate_
 from cardine.tasks.state_core import state_path
 
 
+@dataclass(frozen=True)
+class ResidueFacts:
+    pending: bool = True
+    valid: bool = True
+    owner_matches: bool = True
+    authority_matches: bool = True
+    files_match: bool = True
+    kind_matches: bool = True
+    status_matches: bool = True
+    source_matches: bool = True
+    staged_symlink: bool = False
+    staged_bytes_match: bool = True
+    status_lines_valid: bool = True
+    intent: str = ""
+    staged: tuple[tuple[str, str], ...] = ()
+    intent_digest: str = ""
+
+
+def resolve_landing_residue(facts: ResidueFacts) -> dict[str, object] | None:
+    if not all((facts.pending, facts.valid, facts.owner_matches, facts.authority_matches,
+                facts.files_match, facts.kind_matches, facts.status_matches, facts.source_matches,
+                not facts.staged_symlink, facts.staged_bytes_match, facts.status_lines_valid)):
+        return None
+    staged = dict(facts.staged)
+    return {'intent': facts.intent, 'staged': staged, 'intent_digest': facts.intent_digest,
+            'paths': {facts.intent, *staged}}
+
+
 def landing_residue(root: Path, task_id: str) -> dict[str, object] | None:
     """Read-only: the exact owned residue of an interrupted landing write, or None."""
     root = Path(root).resolve()
-    if not receipts.pending_operation(root, task_id):
-        return None
+    facts = ResidueFacts(pending=bool(receipts.pending_operation(root, task_id)))
+    if not facts.pending:
+        return resolve_landing_residue(facts)
     intent_path = receipts._intent_path(root, task_id)
     try:
         intent = receipts._load_intent(intent_path)
         state = intent['state']
         last = state['run']['receipts'][-1]
         name = state_path(root, task_id).relative_to(root).as_posix()
-        if (intent['task_id'] != task_id or intent['authority'] != receipts.require_authority(root)
-                or set(intent['files']) != {name} or last['kind'] != 'landing_state'
-                or state['status'] != 'done' or last['source'] != git_output(root, 'rev-parse', 'HEAD')):
+        facts = replace(facts, owner_matches=intent['task_id'] == task_id)
+        if resolve_landing_residue(facts) is None:
+            return None
+        facts = replace(facts, authority_matches=intent['authority'] == receipts.require_authority(root),
+                        files_match=set(intent['files']) == {name}, kind_matches=last['kind'] == 'landing_state',
+                        status_matches=state['status'] == 'done')
+        if resolve_landing_residue(facts) is None:
+            return None
+        facts = replace(facts, source_matches=last['source'] == git_output(root, 'rev-parse', 'HEAD'))
+        if resolve_landing_residue(facts) is None:
             return None
         staged = {}
         for item in intent['files'].values():
             path = receipts.safe_path(root, item['staged'])
-            if path.is_symlink() or (path.exists() and receipts.digest(path.read_bytes()) != item['digest']):
-                return None
+            if path.is_symlink():
+                return resolve_landing_residue(replace(facts, staged_symlink=True))
+            if path.exists() and receipts.digest(path.read_bytes()) != item['digest']:
+                return resolve_landing_residue(replace(facts, staged_bytes_match=False))
             staged[item['staged']] = item['digest']
     except (CardineError, KeyError, IndexError, TypeError):
-        return None
-    owned = {intent_path.relative_to(root).as_posix(), *staged}
+        return resolve_landing_residue(replace(facts, valid=False))
+    intent_name = intent_path.relative_to(root).as_posix()
+    owned = {intent_name, *staged}
     for line in git_output(root, 'status', '--porcelain', '--untracked-files=all').splitlines():
         if not line.startswith('?? ') or line[3:] not in owned:
-            return None
-    return {'intent': intent_path.relative_to(root).as_posix(), 'staged': staged,
-            'intent_digest': receipts.digest(intent_path.read_bytes()), 'paths': owned}
+            return resolve_landing_residue(replace(facts, status_lines_valid=False))
+    return resolve_landing_residue(replace(facts, intent=intent_name, staged=tuple(staged.items()),
+                                            intent_digest=receipts.digest(intent_path.read_bytes())))
 
 
 def recover_landing_residue(root: Path, task_id: str) -> bool:

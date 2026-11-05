@@ -212,4 +212,4 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 170 — Refresh the shard weights after the test cost work.
 - `[ ]` 171 — Rerun only the failing commands through declared retry variants.
 - `[ ]` 172 — Run declared quick checks first and limit their failures separately.
-- `[ ]` 173 — Separate the recovery rules from their Git reads.
+- `[x]` 173 — Separate the recovery rules from their Git reads.
