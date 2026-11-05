@@ -26,6 +26,9 @@ tempfile.tempdir = sys.argv[2]
 def boundary(name):
     if name == sys.argv[4]: os._exit(93)
 receipts.boundary = boundary
+if sys.argv[5] == 'synthetic':
+    plugin.payload = lambda root=plugin.ROOT: {
+        'first.txt': b'first', 'middle.txt': b'middle', 'last.txt': b'last'}
 plugin.build(Path(sys.argv[3]))
 '''
 
@@ -53,9 +56,9 @@ class HostDistributionTest(unittest.TestCase):
         return {**os.environ, 'HOME': str(home), 'CLAUDE_CONFIG_DIR': str(home / '.claude'),
                 'DISABLE_AUTOUPDATER': '1', 'XDG_CONFIG_HOME': str(home / '.config')}
 
-    def run_build(self, home, seam=''):
+    def run_build(self, home, seam='', payload='real'):
         return subprocess.run([sys.executable, '-c', CHILD, str(ROOT), str(self.scratch),
-                               str(home / 'plugin'), seam], cwd=home,
+                               str(home / 'plugin'), seam, payload], cwd=home,
                               env=self.environment(home), capture_output=True, text=True, timeout=30)
 
     def test_distribution_resolves_exactly_two_skills_and_five_commands_without_hooks(self):
@@ -69,27 +72,35 @@ class HostDistributionTest(unittest.TestCase):
         self.assertTrue((ROOT / 'hooks/hooks.json').is_file())
 
     def test_kill_before_and_after_every_copy_and_publication_converges(self):
-        reference = self.home()
-        self.assertEqual(self.run_build(reference).returncode, 0)
-        expected = plugin.inventory(reference / 'plugin')
-        names = ['assembly', *(f'copy:{name}' for name in plugin.payload()), 'publication']
-        for name in names:
-            for when in ('before', 'after'):
-                with self.subTest(seam=f'{when}_{name}'):
-                    home = self.home()
-                    killed = self.run_build(home, f'{when}_{name}')
-                    self.assertEqual(killed.returncode, 93, killed.stderr)
-                    receipt = receipts.host_path('host-plugin', home / 'plugin')
-                    intent = receipts._load_intent(receipt)
-                    self.assertIsNone(intent['result'])
-                    resumed = self.run_build(home)
-                    self.assertEqual(resumed.returncode, 0, resumed.stderr)
-                    self.assertEqual(receipts._load_intent(receipt)['operation_id'], intent['operation_id'])
-                    self.assertEqual(plugin.inventory(home / 'plugin'), expected)
-                    self.assertFalse((home / '.plugin.cardine-stage').exists())
-                    self.assertEqual(self.run_build(home).returncode, 0)
-                    self.assertEqual(plugin.inventory(home / 'plugin'), expected)
-                    self.assertEqual((home / 'foreign').read_text(), 'user-owned content\n')
+        real_names = list(plugin.payload())
+        shell = next(name for name in real_names if name.endswith('.sh'))
+        cases = {
+            'synthetic': ['copy:first.txt', 'copy:middle.txt', 'copy:last.txt'],
+            'real': list(dict.fromkeys(['assembly', f'copy:{real_names[0]}',
+                                        'copy:bin/cardine', f'copy:{shell}',
+                                        f'copy:{real_names[-1]}', 'publication'])),
+        }
+        for payload, names in cases.items():
+            reference = self.home()
+            self.assertEqual(self.run_build(reference, payload=payload).returncode, 0)
+            expected = plugin.inventory(reference / 'plugin')
+            for name in names:
+                for when in ('before', 'after'):
+                    with self.subTest(payload=payload, seam=f'{when}_{name}'):
+                        home = self.home()
+                        killed = self.run_build(home, f'{when}_{name}', payload)
+                        self.assertEqual(killed.returncode, 93, killed.stderr)
+                        receipt = receipts.host_path('host-plugin', home / 'plugin')
+                        intent = receipts._load_intent(receipt)
+                        self.assertIsNone(intent['result'])
+                        resumed = self.run_build(home, payload=payload)
+                        self.assertEqual(resumed.returncode, 0, resumed.stderr)
+                        self.assertEqual(receipts._load_intent(receipt)['operation_id'], intent['operation_id'])
+                        self.assertEqual(plugin.inventory(home / 'plugin'), expected)
+                        self.assertFalse((home / '.plugin.cardine-stage').exists())
+                        self.assertEqual(self.run_build(home, payload=payload).returncode, 0)
+                        self.assertEqual(plugin.inventory(home / 'plugin'), expected)
+                        self.assertEqual((home / 'foreign').read_text(), 'user-owned content\n')
 
     def test_checks_repeat_without_writes_including_receipt(self):
         home = self.home()
