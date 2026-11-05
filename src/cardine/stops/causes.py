@@ -10,6 +10,7 @@ directory); it is not authorship proof and never grants authority.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from cardine.shared.errors import CardineError
@@ -20,63 +21,97 @@ from cardine.shared.models import ResolvedTaskIdentity
 from cardine.worktree.storage import _merge_head_path
 
 
-def lease_stop_code(project_root: Path, identity: ResolvedTaskIdentity, lease_path: Path) -> str:
-    """`LEASE_INTERRUPTED` for this task's own idle lease, else `LEASE_HELD`.
+@dataclass(frozen=True)
+class LeaseFacts:
+    readable: bool = True
+    task_matches: bool = True
+    branch_matches: bool = True
+    project_matches: bool = True
+    writer_live: bool = False
+    merge_exists: bool = False
+    main_matches: bool = True
+    merge_matches: bool = True
 
-    A lease held by another task, an unreadable or mismatched lease, a live
-    writer, or a staged merge that no longer matches the lease stays a
-    guardrail: existence alone proves neither liveness nor permission to abort.
-    """
-    from cardine.lifecycle.receipts import operation_live
-    try:
-        lease = _read_json_object(lease_path, "integration lease")
-    except CardineError:
-        return "LEASE_HELD"
-    if (
-        lease.get("task_id") != identity.canonical_id
-        or lease.get("branch") != identity.branch_name
-        or lease.get("project") != str(project_root)
-        or operation_live(project_root, identity.canonical_id)
-    ):
-        return "LEASE_HELD"
-    if _merge_head_path(project_root).exists() and (
-        git_output(project_root, "rev-parse", "HEAD") != lease.get("main_commit")
-        or git_output(project_root, "rev-parse", "MERGE_HEAD") != git_output(
-            project_root, "rev-parse", f"refs/heads/{identity.branch_name}")
-    ):
+
+def resolve_lease(facts: LeaseFacts) -> str:
+    if (not facts.readable or not facts.task_matches or not facts.branch_matches
+            or not facts.project_matches or facts.writer_live
+            or (facts.merge_exists and (not facts.main_matches or not facts.merge_matches))):
         return "LEASE_HELD"
     return "LEASE_INTERRUPTED"
 
 
-def cleanup_branch_stop_code(
-    project_root: Path, branch: str, task_commit: str | None, common_dir: Path,
-) -> str:
-    """`CLEANUP_PARTIAL` when the worktree is gone and only a merged branch remains.
+def lease_stop_code(project_root: Path, identity: ResolvedTaskIdentity, lease_path: Path) -> str:
+    """Classify an idle owned lease without reading beyond a failed proof."""
+    from cardine.lifecycle.receipts import operation_live
+    try:
+        lease = _read_json_object(lease_path, "integration lease")
+    except CardineError:
+        return resolve_lease(LeaseFacts(readable=False))
+    facts = LeaseFacts(task_matches=lease.get("task_id") == identity.canonical_id,
+                       branch_matches=lease.get("branch") == identity.branch_name,
+                       project_matches=lease.get("project") == str(project_root))
+    if resolve_lease(facts) == "LEASE_HELD":
+        return resolve_lease(facts)
+    facts = replace(facts, writer_live=operation_live(project_root, identity.canonical_id))
+    if resolve_lease(facts) == "LEASE_HELD":
+        return resolve_lease(facts)
+    facts = replace(facts, merge_exists=_merge_head_path(project_root).exists())
+    if facts.merge_exists:
+        facts = replace(facts, main_matches=git_output(project_root, "rev-parse", "HEAD") == lease.get("main_commit"))
+        if facts.main_matches:
+            facts = replace(facts, merge_matches=git_output(project_root, "rev-parse", "MERGE_HEAD") == git_output(
+                project_root, "rev-parse", f"refs/heads/{identity.branch_name}"))
+    return resolve_lease(facts)
 
-    The worktree removal already happened, so rerunning the identical cleanup is
-    the next effect, not a repeat. An unmerged or reused branch, a primary
-    checkout off main, or an unwritable Git directory stays `CLEANUP_BLOCKED`.
-    """
-    if task_commit is None or not os.access(common_dir, os.W_OK | os.X_OK):
-        return "CLEANUP_BLOCKED"
-    if git_output(project_root, "branch", "--show-current") != "main":
-        return "CLEANUP_BLOCKED"
-    if _run_git(project_root, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}").stdout.strip() != task_commit:
-        return "CLEANUP_BLOCKED"
-    if _run_git(project_root, "merge-base", "--is-ancestor", task_commit, "main").returncode != 0:
-        return "CLEANUP_BLOCKED"
-    return "CLEANUP_PARTIAL"
+
+@dataclass(frozen=True)
+class CleanupFacts:
+    has_commit: bool = True
+    writable: bool = True
+    on_main: bool = True
+    branch_matches: bool = True
+    merged: bool = True
+
+
+def resolve_cleanup_branch(facts: CleanupFacts) -> str:
+    return "CLEANUP_PARTIAL" if all((facts.has_commit, facts.writable, facts.on_main,
+                                      facts.branch_matches, facts.merged)) else "CLEANUP_BLOCKED"
+
+
+def cleanup_branch_stop_code(project_root: Path, branch: str, task_commit: str | None, common_dir: Path) -> str:
+    facts = CleanupFacts(has_commit=task_commit is not None)
+    if facts.has_commit:
+        facts = replace(facts, writable=os.access(common_dir, os.W_OK | os.X_OK))
+    if resolve_cleanup_branch(facts) == "CLEANUP_PARTIAL":
+        facts = replace(facts, on_main=git_output(project_root, "branch", "--show-current") == "main")
+    if resolve_cleanup_branch(facts) == "CLEANUP_PARTIAL":
+        facts = replace(facts, branch_matches=_run_git(project_root, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}").stdout.strip() == task_commit)
+    if resolve_cleanup_branch(facts) == "CLEANUP_PARTIAL":
+        facts = replace(facts, merged=_run_git(project_root, "merge-base", "--is-ancestor", task_commit, "main").returncode == 0)
+    return resolve_cleanup_branch(facts)
+
+
+@dataclass(frozen=True)
+class OriginFacts:
+    exists: bool = True
+    equal: bool = False
+    ancestor: bool = False
+
+
+def resolve_main_ahead(facts: OriginFacts) -> bool:
+    return facts.exists and not facts.equal and facts.ancestor
 
 
 def main_ahead_of_origin(project_root: Path) -> bool:
-    """True only when origin/main is a proper ancestor of local main (a push is pending)."""
     remote = _run_git(project_root, "rev-parse", "--verify", "--quiet", "refs/remotes/origin/main")
-    if remote.returncode != 0:
-        return False
-    main = git_output(project_root, "rev-parse", "main")
-    return remote.stdout.strip() != main and _run_git(
-        project_root, "merge-base", "--is-ancestor", "refs/remotes/origin/main", "main",
-    ).returncode == 0
+    facts = OriginFacts(exists=remote.returncode == 0)
+    if facts.exists:
+        main = git_output(project_root, "rev-parse", "main")
+        facts = replace(facts, equal=remote.stdout.strip() == main)
+        if not facts.equal:
+            facts = replace(facts, ancestor=_run_git(project_root, "merge-base", "--is-ancestor", "refs/remotes/origin/main", "main").returncode == 0)
+    return resolve_main_ahead(facts)
 
 
 # Executable inventory of every emitter of the worktree, state, lease, order and
