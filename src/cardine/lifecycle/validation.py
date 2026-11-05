@@ -96,6 +96,12 @@ def _host_observations(contract, runs):
             for profile, status in contract['hostImpact']['profiles'].items() if status == 'enforced']
 
 
+def _failed_quick(progress):
+    """IDs that failed in the quick rounds of a recorded attempt."""
+    runs = progress.get('runs', [])[:progress.get('quickRounds', 0)]
+    return list(dict.fromkeys(item['id'] for run in runs for item in run if item['exitStatus'] != 0))
+
+
 def _publish(root, task_id, intent, state):
     if (inputs(root, task_id, state, state['run']['delivery']['base'], dict(os.environ)) != intent['inputs']
             or receipts.require_authority(root) != intent['authority']):
@@ -108,6 +114,7 @@ def _publish(root, task_id, intent, state):
     updated['run']['validation'] = progress
     if 'candidateValidation' in updated['run']:
         updated['run']['candidateValidation']['consecutiveFailures'] = progress['consecutiveFailures']
+        updated['run']['candidateValidation']['quickFailures'] = progress['quickFailures']
     from cardine.tasks.identity import resolve_task_identity
     import re
     handoff = resolve_task_identity(root, task_id, 'existing').handoff_path.relative_to(root).as_posix()
@@ -116,6 +123,7 @@ def _publish(root, task_id, intent, state):
     section = '\n'.join(['## Measured validation', '',
         f'- Attempt: `{progress["attemptId"]}`; result: {progress["phase"]}',
         f'- Evidence: `{path}`',
+        f'- Quick rounds: {progress.get("quickRounds", 0)}; quick failures: {progress.get("quickFailures", 0)}',
         '- Intermittent commands: ' + (', '.join(item['id'] for item in progress['intermittent']) or 'none'),
         '- Scoped skips: ' + ('; '.join(item['id'] + ': ' + item['reason'] for item in progress['inputs']['skips']) or 'none'),
         *[f'- Round {index + 1}: ' + '; '.join(f'{item["id"]}: `{item["command"]}`, exit {item["exitStatus"]}, log `{item["log"]}`' for item in run)
@@ -172,12 +180,16 @@ def run_task_validation(root, task_id, *, context=None):
         environment = dict(os.environ)
         current = inputs(root, task_id, state, base, environment)
         previous = state.get('run', {}).get('validation', {})
-        from cardine.tasks.validation import failure_count
+        from cardine.tasks.validation import (failure_count, quick_failure_count, quick_failure_limit,
+                                              quick_failed, quick_limit_error, quick_plan)
         failures = failure_count(state)
         limit = state['contract']['options']['validationRetryLimit']
+        quick_count, quick_limit = quick_failure_count(state), quick_failure_limit(state)
         if failures >= limit:
             raise stop_error('VALIDATION_RETRY_LIMIT', json.dumps(previous.get('runs', [])),
                              task_id=task_id, project=root)
+        if quick_count >= quick_limit:
+            raise quick_limit_error(task_id, root, quick_limit, _failed_quick(previous))
         if intent and intent['phase'] not in ('complete', 'invalidated') and intent['inputs'] != current:
             raise CardineError('validation inputs changed during interrupted attempt')
         if intent and intent['phase'] == 'publish':
@@ -190,6 +202,8 @@ def run_task_validation(root, task_id, *, context=None):
             if intent['progress']['consecutiveFailures'] >= limit:
                 raise stop_error('VALIDATION_RETRY_LIMIT', json.dumps(intent['progress']['runs']),
                                  task_id=task_id, project=root)
+            if intent['progress']['quickFailures'] >= quick_limit:
+                raise quick_limit_error(task_id, root, quick_limit, _failed_quick(intent['progress']))
             return verified_validation(root, task_id, state)
         existing = verified_validation(root, task_id, state)
         if (existing is not None and (existing["phase"] != "passed"
@@ -204,8 +218,13 @@ def run_task_validation(root, task_id, *, context=None):
             raise stop_error('ACCEPTANCE_UNMET', 'Missing acceptance deliverables: ' + ', '.join(missing),
                              task_id=task_id, project=root)
         if intent is None or intent['phase'] in ('complete', 'invalidated'):
+            policy = state['contract']['validation']
+            plan = quick_plan(policy.get('retry', {}), policy.get('preflight', []),
+                              [key for key in current['commands'] if key in previous.get('lastFailed', [])],
+                              policy['commands'])
             intent = dict(task_id=task_id, root=str(root), authority=authority, inputs=current,
-                          attemptId=uuid.uuid4().hex, phase='process', runs=[], before=receipts.state_digest(state))
+                          attemptId=uuid.uuid4().hex, phase='process', runs=[], before=receipts.state_digest(state),
+                          quick=[dict(kind=kind, commands=[list(item) for item in commands]) for kind, commands in plan])
             receipts.boundary('before_validation_intent')
             receipts._save_intent(path, intent)
             receipts.boundary('after_validation_intent')
@@ -213,23 +232,30 @@ def run_task_validation(root, task_id, *, context=None):
             raise CardineError('validation input state changed')
         runs = intent['runs']
         retry = state['contract']['validation'].get('retry', {})
+        quick = intent.get('quick', [])
+        kinds, rounds = [item['kind'] for item in quick], len(quick)
         variants = {}
-        if runs:
-            failed = {item['id'] for item in runs[0] if item['exitStatus'] != 0}
+        if runs[rounds:]:
+            failed = {item['id'] for item in runs[rounds] if item['exitStatus'] != 0}
             variants = {key: retry[key] for key in state['contract']['validation']['commands'] if key in failed and key in retry}
         while True:
-            if not runs:
+            if quick_failed(kinds, runs):
+                break  # A quick failure ends the attempt before the complete set.
+            rest = runs[rounds:]
+            if len(runs) < rounds:
+                round_commands = dict(quick[len(runs)]['commands'])
+            elif not rest:
                 round_commands = current['commands']
-            elif all(item['exitStatus'] == 0 for item in runs[0]):
+            elif all(item['exitStatus'] == 0 for item in rest[0]):
                 break
             else:
-                failed = {item['id'] for item in runs[0] if item['exitStatus'] != 0}
+                failed = {item['id'] for item in rest[0] if item['exitStatus'] != 0}
                 variants = {key: retry[key] for key in state['contract']['validation']['commands'] if key in failed and key in retry}
-                if variants and len(runs) == 1:
+                if variants and len(rest) == 1:
                     round_commands = variants
-                elif variants and len(runs) == 2 and any(item['exitStatus'] == 1 for item in runs[1]):
+                elif variants and len(rest) == 2 and any(item['exitStatus'] == 1 for item in rest[1]):
                     break
-                elif len(runs) == (2 if variants else 1):
+                elif len(rest) == (2 if variants else 1):
                     round_commands = current['commands']
                 else:
                     break
@@ -261,12 +287,22 @@ def run_task_validation(root, task_id, *, context=None):
             intent = dict(intent, runs=runs)
             receipts._save_intent(path, intent)
             receipts.boundary('after_validation_logs')
-        complete_last = len(runs) == 1 or not variants or len(runs) == 3
-        passed = complete_last and all(item['exitStatus'] == 0 for item in runs[-1])
-        intermittent = [item for item in runs[0] if item['exitStatus'] != 0] if passed and len(runs) > 1 else []
-        count = 0 if passed else failures + 1
+        rest = runs[rounds:]
+        quick_hit = quick_failed(kinds, runs)
+        if quick_hit:
+            passed, intermittent, count = False, [], failures
+            quick_new, last_failed = quick_count + 1, list(previous.get('lastFailed', []))
+        else:
+            complete_last = len(rest) == 1 or not variants or len(rest) == 3
+            passed = complete_last and all(item['exitStatus'] == 0 for item in rest[-1])
+            intermittent = [item for item in rest[0] if item['exitStatus'] != 0] if passed and len(rest) > 1 else []
+            count = 0 if passed else failures + 1
+            quick_new = 0 if passed else quick_count
+            last_failed = [] if passed else [item['id'] for item in (rest[-1] if complete_last else rest[0])
+                                             if item['exitStatus'] != 0]
         progress = dict(attemptId=intent['attemptId'], inputs=current, runs=runs,
                         phase='passed' if passed else 'failed', consecutiveFailures=count,
+                        quickFailures=quick_new, quickRounds=min(rounds, len(runs)), lastFailed=last_failed,
                         intermittent=intermittent, evidence=names().execution_evidence_path(task_id).as_posix(),
                         hostObservations=_host_observations(state['contract'], runs),
                         acceptanceReferences=[dict(path=name, digest=receipts.digest(receipts.safe_path(root, name).read_bytes()))
@@ -282,4 +318,6 @@ def run_task_validation(root, task_id, *, context=None):
         receipts.boundary('after_validation_result')
         if count >= limit:
             raise stop_error('VALIDATION_RETRY_LIMIT', json.dumps(runs), task_id=task_id, project=root)
+        if quick_hit and quick_new >= quick_limit:
+            raise quick_limit_error(task_id, root, quick_limit, _failed_quick(progress))
         return verified_validation(root, task_id, state)

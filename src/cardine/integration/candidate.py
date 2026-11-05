@@ -16,7 +16,8 @@ from cardine.shared.errors import CardineError
 from cardine.shared.git import git_output, _run_git, scoped_command, invalidate_facts
 from cardine.shared.jsonio import _read_json_object
 from cardine.tasks.identity import resolve_task_identity
-from cardine.tasks.validation import environment_identity, failure_count
+from cardine.tasks.validation import (environment_identity, failure_count, quick_failed, quick_failure_count,
+                                      quick_failure_limit, quick_limit_error, quick_plan)
 from cardine.stops.render import stop_error
 from cardine.worktree.storage import _lifecycle_paths, _merge_head_path
 
@@ -87,6 +88,11 @@ def require_budget(state, task_id, root):
     if failure_count(state) >= state['contract']['options']['validationRetryLimit']:
         raise stop_error('VALIDATION_RETRY_LIMIT', 'Task and candidate validation allowance exhausted',
                          task_id=task_id, project=root)
+    if quick_failure_count(state) >= quick_failure_limit(state):
+        progress = state['run'].get('candidateValidation') or {}
+        runs = progress.get('runs', [])[:progress.get('quickRounds', 0)]
+        raise quick_limit_error(task_id, root, quick_failure_limit(state),
+                                list(dict.fromkeys(item['command'] for run in runs for item in run if item['exitStatus'] != 0)))
 
 
 def verified_candidate(locations, *, read_only=False):
@@ -126,8 +132,15 @@ def run_candidate_validation(task_id, project):
             return existing
         require_budget(state, task_id, root)
         if intent is None:
+            policy = state['contract']['validation']
+            last = state['run'].get('candidateValidation', {}).get('lastFailed', [])
+            plan = quick_plan(policy.get('retry', {}), policy.get('preflight', []),
+                              [key for key, command in policy['commands'].items()
+                               if command in last and command in binding['commands']],
+                              policy['commands'])
             intent = dict(binding=binding, phase='process', attemptId=uuid.uuid4().hex,
-                          before=receipts.state_digest(state), runs=[])
+                          before=receipts.state_digest(state), runs=[],
+                          quick=[dict(kind=kind, commands=[list(item) for item in commands]) for kind, commands in plan])
             receipts.boundary('before_candidate_intent')
             receipts._save_intent(path, intent)
             receipts.boundary('after_candidate_intent')
@@ -136,21 +149,28 @@ def run_candidate_validation(task_id, project):
         runs = intent['runs']
         policy = state['contract']['validation']
         retry = policy.get('retry', {})
+        quick = intent.get('quick', [])
+        kinds, rounds = [item['kind'] for item in quick], len(quick)
         variants = []
         while intent['phase'] == 'process':
-            if not runs:
+            if quick_failed(kinds, runs):
+                break  # A quick failure ends the attempt before the complete set.
+            rest = runs[rounds:]
+            if len(runs) < rounds:
+                round_commands = [command for _, command in quick[len(runs)]['commands']]
+            elif not rest:
                 round_commands = binding['commands']
-            elif all(item['exitStatus'] == 0 for item in runs[0]):
+            elif all(item['exitStatus'] == 0 for item in rest[0]):
                 break
             else:
-                failed = {item['command'] for item in runs[0] if item['exitStatus'] != 0}
+                failed = {item['command'] for item in rest[0] if item['exitStatus'] != 0}
                 variants = [retry[key] for key, command in policy['commands'].items()
                             if command in failed and key in retry]
-                if variants and len(runs) == 1:
+                if variants and len(rest) == 1:
                     round_commands = variants
-                elif variants and len(runs) == 2 and any(item['exitStatus'] == 1 for item in runs[1]):
+                elif variants and len(rest) == 2 and any(item['exitStatus'] == 1 for item in rest[1]):
                     break
-                elif len(runs) == (2 if variants else 1):
+                elif len(rest) == (2 if variants else 1):
                     round_commands = binding['commands']
                 else:
                     break
@@ -169,12 +189,23 @@ def run_candidate_validation(task_id, project):
             receipts._save_intent(path, intent)
             receipts.boundary('after_candidate_logs')
         if intent['phase'] == 'process':
-            complete_last = len(runs) == 1 or not variants or len(runs) == 3
-            passed = complete_last and all(r['exitStatus'] == 0 for r in runs[-1])
+            rest = runs[rounds:]
+            previous = state['run'].get('candidateValidation', {})
+            if quick_failed(kinds, runs):
+                passed, failures, quick_new = False, failure_count(state), quick_failure_count(state) + 1
+                intermittent, last_failed = [], list(previous.get('lastFailed', []))
+            else:
+                complete_last = len(rest) == 1 or not variants or len(rest) == 3
+                passed = complete_last and all(r['exitStatus'] == 0 for r in rest[-1])
+                failures = 0 if passed else failure_count(state) + 1
+                quick_new = 0 if passed else quick_failure_count(state)
+                intermittent = [r for r in rest[0] if r['exitStatus'] != 0] if passed and len(rest) > 1 else []
+                last_failed = [] if passed else [r['command'] for r in (rest[-1] if complete_last else rest[0])
+                                                 if r['exitStatus'] != 0]
             progress = dict(attemptId=intent['attemptId'], binding=binding, runs=runs,
-                phase='passed' if passed else 'failed',
-                consecutiveFailures=0 if passed else failure_count(state) + 1,
-                intermittent=[r for r in runs[0] if r['exitStatus'] != 0] if passed and len(runs) > 1 else [])
+                phase='passed' if passed else 'failed', consecutiveFailures=failures,
+                quickFailures=quick_new, quickRounds=min(rounds, len(runs)), lastFailed=last_failed,
+                intermittent=intermittent)
             intent = dict(intent, phase='publish', progress=progress)
             receipts._save_intent(path, intent)
         progress = intent['progress']
@@ -188,6 +219,7 @@ def run_candidate_validation(task_id, project):
             # Both phases consume one allowance; a passing complete set resets it.
             if 'validation' in updated['run']:
                 updated['run']['validation']['consecutiveFailures'] = progress['consecutiveFailures']
+                updated['run']['validation']['quickFailures'] = progress['quickFailures']
             receipts.boundary('before_candidate_result')
             receipts.write_operation(worker, task_id, updated, previous=current, kind='candidate-validation')
             receipts.boundary('after_candidate_result')

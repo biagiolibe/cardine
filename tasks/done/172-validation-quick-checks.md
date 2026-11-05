@@ -19,49 +19,49 @@ validation retry limit of 3.
 
 ## Acceptance Criteria
 
-- [ ] **Declaration.** `validation.preflight` is an optional list of unique declared
+- [x] **Declaration.** `validation.preflight` is an optional list of unique declared
   command IDs, and `taskDefaults.quickFailureLimit` is a positive integer, 10 in both
   presets. `src/cardine/shared/project.py`, `schemas/project-v1.schema.json`, and
   `schemas/task-state-v1.schema.json` accept both and freeze them in the contract, with
   the same per-task override as `validationRetryLimit`. A declaration without them
   validates as today.
-- [ ] **Order of an attempt**, task and candidate validation: first the variant of every
+- [x] **Order of an attempt**, task and candidate validation: first the variant of every
   command whose last complete run in this task, of the same kind, failed; then the
   preflight commands; then the complete set. Any quick command exiting non-zero ends the
   attempt there, as a quick failure. A variant exiting with a status other than 0 or 1 is
   not a quick failure: the attempt continues to the complete set.
-- [ ] **Separate limit.** Quick failures count in their own counter, shared by task and
+- [x] **Separate limit.** Quick failures count in their own counter, shared by task and
   candidate validation like `failure_count`. Only a passing complete set resets it; a new
   commit or attempt does not. They never count toward `validationRetryLimit`. Reaching
   `quickFailureLimit` stops with `VALIDATION_RETRY_LIMIT`, whose detail names the quick
   failure limit and lists the failed quick commands.
-- [ ] A passing attempt still requires a passing complete set in its last round. The
+- [x] A passing attempt still requires a passing complete set in its last round. The
   first attempt of a task, and the first candidate attempt, run no variant.
-- [ ] Each quick round is recorded like the rounds of task 171, appears in the handoff's
+- [x] Each quick round is recorded like the rounds of task 171, appears in the handoff's
   `Measured validation` section, and converges after an interruption, proved by kill
   tests.
-- [ ] Tests in `tests/test_validation_quick_commands.py` prove, with cheap literal
+- [x] Tests in `tests/test_validation_quick_commands.py` prove, with cheap literal
   commands: the order above; a failing variant or preflight runs no complete set and
   leaves `validationRetryLimit` untouched; the quick counter survives a new commit, resets
   only on a passing complete set, and stops at its limit with the detail above; a project
   without quick commands behaves as after task 171.
-- [ ] `docs/PROJECT_DECLARATION.md` documents `validation.preflight`, `quickFailureLimit`,
+- [x] `docs/PROJECT_DECLARATION.md` documents `validation.preflight`, `quickFailureLimit`,
   and the order of an attempt.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -70,16 +70,16 @@ validation retry limit of 3.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/172.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/172.json`, which only
   the installed `meridian task close 172` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

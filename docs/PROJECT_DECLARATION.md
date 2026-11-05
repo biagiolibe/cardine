@@ -31,6 +31,7 @@ selects policy. Missing or malformed configuration is an error.
 | `authorityRequired` | false | true |
 | `expectedCodeSurfaceRequired` | false | true |
 | `validationRetryLimit` | 3 | 3 |
+| `quickFailureLimit` | 10 | 10 |
 | `landingMode` | `direct` | `direct` |
 | `ciBeforeLanding` | false | false |
 
@@ -51,6 +52,23 @@ command declaration order. Exit 1 confirms failure and ends the attempt; exit
 0 or any other status triggers a complete rerun. A variant never passes an
 attempt: only a passing complete command set can do that. Omitted variants
 retain the complete rerun behavior.
+
+An optional `validation.preflight` list names unique declared command IDs, such
+as fast inventory tests, that run before the complete set. Task and candidate
+validation order each attempt the same way: first the retry variant of every
+command whose last complete run of the same kind failed; then the preflight
+commands; then the complete set. The first attempt of a task, and the first
+candidate attempt, run no variant. A preflight command exiting non-zero, or a
+variant exiting 1, ends the attempt as a quick failure and runs no complete set.
+A variant exiting with another status is not a quick failure: the attempt
+continues. Quick failures count in their own counter, limited by
+`quickFailureLimit` (a positive integer, overridable per task like
+`validationRetryLimit`), shared by task and candidate validation. They never
+count toward `validationRetryLimit`. Only a passing complete set resets the
+counter; a new commit does not. Reaching the limit stops with
+`VALIDATION_RETRY_LIMIT`, naming the quick failure limit and the failed quick
+commands. A passing attempt still requires a passing complete set in its last
+round. Each quick round is recorded and listed under `Measured validation`.
 
 Candidate validation always adds `git diff --check`. Task commands supplement
 the baseline. Retry limits are positive integers; the future runner owns their

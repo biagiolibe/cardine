@@ -108,3 +108,41 @@ def failure_count(state):
     """The one measured retry allowance shared by task and candidate attempts."""
     return max(state.get('run', {}).get(key, {}).get('consecutiveFailures', 0)
                for key in ('validation', 'candidateValidation'))
+
+
+def quick_failure_count(state):
+    """The separate allowance for quick-command failures, shared like failure_count."""
+    return max(state.get('run', {}).get(key, {}).get('quickFailures', 0)
+               for key in ('validation', 'candidateValidation'))
+
+
+def quick_failure_limit(state):
+    return state['contract']['options'].get('quickFailureLimit', 10)
+
+
+def quick_plan(retry, preflight, failed, ordered):
+    """Quick rounds an attempt runs before its complete set, in this order.
+
+    `ordered` maps declared IDs to commands; `failed` holds the IDs whose last
+    complete run failed. A variant round exists only when one has a variant.
+    """
+    variants = [(key, retry[key]) for key in ordered if key in failed and key in retry]
+    rounds = [('variant', variants)] if variants else []
+    if preflight:
+        rounds.append(('preflight', [(key, ordered[key]) for key in preflight]))
+    return rounds
+
+
+def quick_failed(kinds, runs):
+    """True once a recorded quick round failed: a variant only by exit 1, preflight by any non-zero."""
+    for kind, run in zip(kinds, runs):
+        statuses = [item['exitStatus'] for item in run]
+        if (kind == 'variant' and 1 in statuses) or (kind == 'preflight' and any(statuses)):
+            return True
+    return False
+
+
+def quick_limit_error(task_id, root, limit, failed):
+    return stop_error('VALIDATION_RETRY_LIMIT',
+                      f'Quick failure limit {limit} reached; failed quick commands: ' + (', '.join(failed) or 'none recorded'),
+                      task_id=task_id, project=root)
