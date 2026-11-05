@@ -711,6 +711,86 @@
       "summary": "Git merge failed without an unmerged textual conflict",
       "resolution": "recoverable",
       "test": "tests.test_run_integration.CandidateTest.test_textual_conflict_and_transient_git_failure_are_distinct"
+    },
+    {
+      "code": "ADOPT_DIRTY",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "adopt",
+      "emitter": "cardine.adopt.plan.plan_adopt",
+      "human_decision": false,
+      "resume": "commit or discard the project changes and rerun cardine adopt --check",
+      "kind": "stop",
+      "summary": "the project has uncommitted changes",
+      "test": "tests.test_adopt_plan.AdoptPlanTest.test_dirty_refusal",
+      "resolution": "failing-work"
+    },
+    {
+      "code": "ADOPT_IN_PROGRESS",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "adopt",
+      "emitter": "cardine.adopt.plan.plan_adopt",
+      "human_decision": false,
+      "resume": "finish or stop the active task and rerun cardine adopt --check",
+      "kind": "stop",
+      "summary": "a task is in progress",
+      "test": "tests.test_adopt_plan.AdoptPlanTest.test_in_progress_refusal",
+      "resolution": "failing-work"
+    },
+    {
+      "code": "ADOPT_WORKTREE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "adopt",
+      "emitter": "cardine.adopt.plan.plan_adopt",
+      "human_decision": false,
+      "resume": "close and clean up the task worktree and rerun cardine adopt --check",
+      "kind": "stop",
+      "summary": "a task worktree remains registered",
+      "test": "tests.test_adopt_plan.AdoptPlanTest.test_worktree_refusal",
+      "resolution": "failing-work"
+    },
+    {
+      "code": "ADOPT_LEASE",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "adopt",
+      "emitter": "cardine.adopt.plan.plan_adopt",
+      "human_decision": false,
+      "resume": "finish or abort the integration and rerun cardine adopt --check",
+      "kind": "stop",
+      "summary": "an integration lease or staged integration exists",
+      "test": "tests.test_adopt_plan.AdoptPlanTest.test_lease_refusal",
+      "resolution": "failing-work"
+    },
+    {
+      "code": "ADOPT_RECORD",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "adopt",
+      "emitter": "cardine.adopt.plan.plan_adopt",
+      "human_decision": false,
+      "resume": "correct the reported conversion diagnostics and rerun cardine adopt --check",
+      "kind": "stop",
+      "summary": "a project not yet converted has incomplete conversion input",
+      "test": "tests.test_adopt_plan.AdoptPlanTest.test_record_refusal",
+      "resolution": "failing-work"
     }
   ]
 }

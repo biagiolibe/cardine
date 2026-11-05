@@ -56,6 +56,9 @@ class CommandWordTest(unittest.TestCase):
             baseline.pop(code)
         # RE5b distinguishes a transient Git failure from a textual conflict.
         baseline['GIT_OPERATION_FAILED'] = {'human_decision': False, 'resolution': 'recoverable'}
+        # C2c adds conversion refusals, each resolved by correcting the input.
+        for code in ("ADOPT_DIRTY", "ADOPT_IN_PROGRESS", "ADOPT_WORKTREE", "ADOPT_LEASE", "ADOPT_RECORD"):
+            baseline[code] = {"human_decision": False, "resolution": "failing-work"}
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []

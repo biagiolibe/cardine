@@ -52,7 +52,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[ ]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](152-agent-driven-delivery.md) |
 | `[x]` | 153 | Add the read model of a Meridian project (C2a) | 🔴 P1 | 144 | [153](done/153-conversion-reader.md) |
 | `[x]` | 154 | Translate open records for adopt (C2b) | 🔴 P1 | 153, 145 | [154](done/154-adopt-record-translator.md) |
-| `[ ]` | 155 | Plan the adoption as a pure function (C2c) | 🔴 P1 | 154 | [155](155-adopt-plan.md) |
+| `[x]` | 155 | Plan the adoption as a pure function (C2c) | 🔴 P1 | 154 | [155](done/155-adopt-plan.md) |
 | `[ ]` | 156 | Apply the adoption and release the managed copies (C2d) | 🔴 P1 | 155 | [156](156-adopt-apply.md) |
 | `[ ]` | 157 | Rehearse the adoption on a clone (C2e) | 🔴 P1 | 156 | [157](157-adopt-rehearsal.md) |
 | `[ ]` | 158 | Expose the cardine adopt command (C2f) | 🔴 P1 | 157 | [158](158-adopt-command.md) |
