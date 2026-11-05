@@ -19,55 +19,55 @@ per command, which can end an attempt early but never pass it.
 
 ## Acceptance Criteria
 
-- [ ] **Declaration.** `.cardine/project.json` accepts an optional `validation.retry`
+- [x] **Declaration.** `.cardine/project.json` accepts an optional `validation.retry`
   object that maps a declared command ID to a nonempty literal command.
   `_validate_validation` in `src/cardine/shared/project.py` and
   `schemas/project-v1.schema.json` accept it and reject an unknown ID, an empty
   command, and any other new key. A declaration without it validates as today.
-- [ ] **Freeze.** Task creation copies `retry` into the frozen contract, and
+- [x] **Freeze.** Task creation copies `retry` into the frozen contract, and
   `schemas/task-state-v1.schema.json` accepts it. `inputs()` in
   `src/cardine/tasks/validation.py` includes the variants in `commandDigest`, so an attempt
   binds the variants it ran. A task created without `retry` keeps its digest unchanged.
-- [ ] **One-sided rerun, task validation.** After a failed complete run, each failed
+- [x] **One-sided rerun, task validation.** After a failed complete run, each failed
   command that has a variant runs its variant first, in declaration order. If any variant
   exits 1, the attempt fails now and counts once toward the validation retry limit, with
   no second complete run. If every variant exits 0, or any exits with another status, the
   complete set reruns once and decides, exactly as today. A failed command without a
   variant keeps today's behavior. A passing attempt's last round is always a complete set.
-- [ ] **One-sided rerun, candidate validation.** The same rule holds in
+- [x] **One-sided rerun, candidate validation.** The same rule holds in
   `src/cardine/integration/candidate.py`, with the variant found through the command's
   ID in the frozen contract.
-- [ ] Each task-validation variant round is recorded with its commands, exit statuses,
+- [x] Each task-validation variant round is recorded with its commands, exit statuses,
   and logs and appears in the handoff's `Measured validation` section. Candidate
   variant rounds are recorded with commands, exit statuses, and output in
   `run.candidateValidation.runs`, like complete rounds; candidate validation does
   not write the handoff, preserving the validated integration tree. (Coordinator
   decision, 2026-11-05.) Interrupted
   and replayed attempts converge as today: kill tests cover the new round in both loops.
-- [ ] Tests in a new `tests/test_validation_quick_commands.py` prove, with cheap literal
+- [x] Tests in a new `tests/test_validation_quick_commands.py` prove, with cheap literal
   commands, for task and candidate validation: a variant exiting 1 ends the attempt
   after one complete run; a variant exiting 0 leads to a complete rerun that decides
   both ways; a variant exiting 2 leads to a complete rerun; an order-dependent failure
   whose variant passes is never accepted without a passing complete run; no variant
   declared keeps two complete runs. `tests/test_single_workflow_config.py` covers the
   declaration checks.
-- [ ] `docs/PROJECT_DECLARATION.md` documents `validation.retry`, the meaning of exit 1, 0,
+- [x] `docs/PROJECT_DECLARATION.md` documents `validation.retry`, the meaning of exit 1, 0,
   and any other status, and that only a complete set passes an attempt.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -76,16 +76,16 @@ per command, which can end an attempt early but never pass it.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/171.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/171.json`, which only
   the installed `meridian task close 171` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
