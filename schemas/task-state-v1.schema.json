@@ -236,6 +236,11 @@
                 "pattern": "\\S"
               }
             },
+            "retry": {
+              "type": "object",
+              "propertyNames": {"type": "string", "pattern": "\\S"},
+              "additionalProperties": {"type": "string", "pattern": "\\S"}
+            },
             "baseline": {
               "type": "array",
               "uniqueItems": true,

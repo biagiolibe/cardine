@@ -134,10 +134,28 @@ def run_candidate_validation(task_id, project):
         if receipts.state_digest(state) != intent['before']:
             raise CardineError('candidate state changed during validation')
         runs = intent['runs']
-        while intent['phase'] == 'process' and len(runs) < 2 and (
-                not runs or any(r['exitStatus'] != 0 for r in runs[-1])):
+        policy = state['contract']['validation']
+        retry = policy.get('retry', {})
+        variants = []
+        while intent['phase'] == 'process':
+            if not runs:
+                round_commands = binding['commands']
+            elif all(item['exitStatus'] == 0 for item in runs[0]):
+                break
+            else:
+                failed = {item['command'] for item in runs[0] if item['exitStatus'] != 0}
+                variants = [retry[key] for key, command in policy['commands'].items()
+                            if command in failed and key in retry]
+                if variants and len(runs) == 1:
+                    round_commands = variants
+                elif variants and len(runs) == 2 and any(item['exitStatus'] == 1 for item in runs[1]):
+                    break
+                elif len(runs) == (2 if variants else 1):
+                    round_commands = binding['commands']
+                else:
+                    break
             results = []
-            for command in binding['commands']:
+            for command in round_commands:
                 status, out, err, out_cut, err_cut = execute_command(command, root, dict(os.environ), descriptor)
                 results.append(dict(command=command, exitStatus=status, stdout=out, stderr=err,
                                     stdoutTruncated=out_cut, stderrTruncated=err_cut))
@@ -151,11 +169,12 @@ def run_candidate_validation(task_id, project):
             receipts._save_intent(path, intent)
             receipts.boundary('after_candidate_logs')
         if intent['phase'] == 'process':
-            passed = all(r['exitStatus'] == 0 for r in runs[-1])
+            complete_last = len(runs) == 1 or not variants or len(runs) == 3
+            passed = complete_last and all(r['exitStatus'] == 0 for r in runs[-1])
             progress = dict(attemptId=intent['attemptId'], binding=binding, runs=runs,
                 phase='passed' if passed else 'failed',
                 consecutiveFailures=0 if passed else failure_count(state) + 1,
-                intermittent=[r for r in runs[0] if r['exitStatus'] != 0] if passed and len(runs) == 2 else [])
+                intermittent=[r for r in runs[0] if r['exitStatus'] != 0] if passed and len(runs) > 1 else [])
             intent = dict(intent, phase='publish', progress=progress)
             receipts._save_intent(path, intent)
         progress = intent['progress']

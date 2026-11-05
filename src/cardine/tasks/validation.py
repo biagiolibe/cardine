@@ -45,11 +45,14 @@ def inputs(root, task_id, state, base, environment, *, operation_paths=()):
     paths = enforce_scope(root, state, base, owned=_execution_owned_paths(root, task_id) | set(operation_paths))
     commands, skips = resolved_commands(state['contract'], paths)
     delivery = state.get('run', {}).get('delivery', {})
+    identity = dict(commands=commands, skips=skips)
+    if 'retry' in state['contract']['validation']:
+        identity['retry'] = state['contract']['validation']['retry']
     return dict(contractDigest=receipts.digest(receipts.encoded(state['contract'])),
                 source=delivery.get('source', ''), sourceDigest=execution_source_digest(root, task_id, operation_paths=operation_paths),
                 sourceTree=delivery.get('sourceTree', ''), cwd=str(root),
                 commands=commands, skips=skips,
-                commandDigest=receipts.digest(receipts.encoded(dict(commands=commands, skips=skips))),
+                commandDigest=receipts.digest(receipts.encoded(identity)),
                 environmentDigest=environment_identity(environment))
 
 
