@@ -7,7 +7,7 @@ Progress lives only in the task state's ``run`` object.
 """
 from __future__ import annotations
 
-from cardine.shared.git import _run_git, invalidate_facts
+from cardine.shared.git import _run_git, invalidate_facts, scoped_command
 
 from contextlib import contextmanager
 from copy import deepcopy
@@ -488,6 +488,7 @@ def reauthorize_task(root, task_id):
         return write_operation(root, task_id, state, kind='reauthorization', previous=state)
 
 
+@scoped_command
 def write_operation(root, task_id, state, *, kind, files=None, previous=None, state_first=False):
     """Caller holds task_lock. Persist intent, stage exact bytes, publish result."""
     from cardine.tasks.state_core import state_path

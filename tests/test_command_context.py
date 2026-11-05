@@ -42,11 +42,11 @@ class CommandContextTest(unittest.TestCase):
         with patch.object(engine, 'resolve_run_locations', wraps=engine.resolve_run_locations) as resolve:
             result, calls = self.measured(fixture.deliver)
         self.assertEqual(resolve.call_count, 1)
-        self.assertLessEqual(len(calls), 80)  # Before: 161.
+        self.assertLessEqual(len(calls), 44)  # Before: 80.
         with patch.object(receipts, '_durable', side_effect=AssertionError('no-op wrote bytes')):
             replay, calls = self.measured(fixture.deliver)
         self.assertEqual(replay, result)
-        self.assertLessEqual(len(calls), 42)  # Before: 84.
+        self.assertLessEqual(len(calls), 29)  # Before: 42.
         self.assertFalse(any('add' in call or 'commit' in call for call in calls))
         _, calls = self.measured(fixture.state)
         self.assertLessEqual(len(calls), 5)
@@ -55,7 +55,7 @@ class CommandContextTest(unittest.TestCase):
         self.assertLessEqual(len(calls), 26)  # Receipt-bound source and committed delivery proof (RE7a).
         preparation = self.fixture(test_run_preparation, 'RunPreparationTest')
         _, calls = self.measured(preparation.prepare)
-        self.assertLessEqual(len(calls), 18)  # Before: 46.
+        self.assertLessEqual(len(calls), 17)  # Before: 18.
 
     def test_git_effect_invalidates_refs_and_worktree_registration(self):
         fixture = self.fixture(test_run_preparation, 'RunPreparationTest')
@@ -80,6 +80,80 @@ class CommandContextTest(unittest.TestCase):
             write_state_bytes(path, receipts.encoded(value))
             self.assertNotEqual(read_project_declaration(fixture.root), first)
             self.assertTrue(git.git_output(fixture.root, 'status', '--porcelain'))
+
+    def test_tree_write_preserves_refs_but_not_status(self):
+        fixture = self.fixture(test_run_preparation, 'RunPreparationTest')
+        def exercise():
+            with git.command_scope():
+                git.git_output(fixture.root, 'rev-parse', 'HEAD')
+                git.git_output(fixture.root, 'status', '--porcelain')
+                write_state_bytes(fixture.root / 'new-state', b'changed')
+                git.git_output(fixture.root, 'rev-parse', 'HEAD')
+                self.assertIn('new-state', git.git_output(fixture.root, 'status', '--porcelain'))
+        _, calls = self.measured(exercise)
+        self.assertEqual(sum('rev-parse' in c for c in calls), 1)
+        self.assertEqual(sum('status' in c for c in calls), 2)
+
+    def test_stable_facts_and_failures(self):
+        fixture = self.fixture(test_run_preparation, 'RunPreparationTest')
+        oid = fixture.git('rev-parse', 'HEAD')
+        def exercise():
+            with git.command_scope():
+                for _ in range(2):
+                    git._run_git(fixture.root, 'check-ref-format', '--branch', 'task-001')
+                    git._run_git(fixture.root, 'merge-base', '--is-ancestor', oid, oid)
+                    git._run_git(fixture.root, 'merge-base', '--is-ancestor', 'main', oid)
+                    git._run_git(fixture.root, 'rev-parse', '--git-common-dir')
+                    git._run_git(fixture.root, 'rev-parse', '--git-path', 'index')
+                    git._run_git(fixture.root, 'rev-parse', '--verify', 'missing-ref')
+                    git._run_git(fixture.root, 'check-ref-format', '--branch', 'task-001', env={})
+                    git.invalidate_facts()
+        _, calls = self.measured(exercise)
+        self.assertEqual(sum('check-ref-format' in c for c in calls), 3)
+        self.assertEqual(sum('merge-base' in c and 'main' not in c for c in calls), 1)
+        self.assertEqual(sum('merge-base' in c and 'main' in c for c in calls), 2)
+        self.assertEqual(sum('--git-common-dir' in c for c in calls), 1)
+        self.assertEqual(sum('--git-path' in c for c in calls), 1)
+        self.assertEqual(sum('missing-ref' in c for c in calls), 2)
+
+    def test_worktree_effect_discards_list_and_path_facts(self):
+        fixture = self.fixture(test_run_preparation, 'RunPreparationTest')
+        worktree = fixture.root.parent / 'extra'
+        def exercise():
+            with git.command_scope():
+                for action in ('add', 'remove'):
+                    git._git_worktrees(fixture.root)
+                    git.git_output(fixture.root, 'rev-parse', '--git-path', 'index')
+                    args = ('worktree', 'add', '--detach', str(worktree)) if action == 'add' else ('worktree', 'remove', str(worktree))
+                    git.git_output(fixture.root, *args)
+                    git._git_worktrees(fixture.root)
+                    git.git_output(fixture.root, 'rev-parse', '--git-path', 'index')
+        _, calls = self.measured(exercise)
+        self.assertEqual(sum('list' in c and 'worktree' in c for c in calls), 3)
+        self.assertEqual(sum('--git-path' in c for c in calls), 3)
+
+    def test_lease_wait_observes_another_process_moving_main(self):
+        import json
+        from types import SimpleNamespace
+        from cardine.integration import candidate
+        fixture = self.fixture(test_run_preparation, 'RunPreparationTest')
+        lease = fixture.root / 'lease.json'
+        lease.write_text(json.dumps({'task_id': 'other', 'project': str(fixture.root),
+                                     'branch': 'task-other'}))
+        locations = SimpleNamespace(primary=fixture.root, task_id='001')
+        def release(_seconds):
+            subprocess.run(['git', '-C', str(fixture.root), 'commit', '--allow-empty',
+                            '-m', 'Move main'], check=True, capture_output=True)
+            lease.unlink()
+        with git.command_scope(), patch.object(candidate, 'resolve_task_identity'), \
+                patch.object(candidate, '_lifecycle_paths', return_value=(None, lease, None)):
+            before = git.git_output(fixture.root, 'rev-parse', 'main')
+            git.git_output(fixture.root, 'rev-parse', '--git-common-dir')
+            self.assertTrue(candidate.wait_for_lease(locations, sleep=release, clock=lambda: 0))
+            self.assertNotEqual(git.git_output(fixture.root, 'rev-parse', 'main'), before)
+            with patch.object(git.subprocess, 'run', wraps=subprocess.run) as run:
+                git.git_output(fixture.root, 'rev-parse', '--git-common-dir')
+                self.assertEqual(run.call_count, 1)
 
     def test_scope_reads_once_and_never_survives_the_next_command(self):
         fixture = self.fixture(test_run_preparation, 'RunPreparationTest')
