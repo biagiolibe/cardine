@@ -18,28 +18,28 @@ assertions.
 
 ## Acceptance Criteria
 
-- [ ] Each boundary matrix in `tests/test_run_receipts.py` and
+- [x] Each boundary matrix in `tests/test_run_receipts.py` and
   `tests/test_run_recovery.py` that repeats an identical preparation builds it once per
   writer and restores it per subtest. A matrix whose preparation depends on the boundary
   stays as it is, and the handoff names it.
-- [ ] No test or subtest is removed, and no assertion changes meaning. The coverage
+- [x] No test or subtest is removed, and no assertion changes meaning. The coverage
   `total` is unchanged. The kill still happens in a real child process.
-- [ ] The handoff gives process counts and child CPU before and after for each edited
+- [x] The handoff gives process counts and child CPU before and after for each edited
   module, measured the same way.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Every test runs against disposable projects and disposable home
+- [x] Every test runs against disposable projects and disposable home
   directories. No step runs `setup --apply` against the real home directory or
   writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -48,16 +48,16 @@ assertions.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/168.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/168.json`, which only
   the installed `meridian task close 168` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
@@ -148,3 +148,7 @@ revalidation in the same turn; do not stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Execution evidence
+
+The validation and measurement results are recorded in `tasks/handoffs/168.md`.

@@ -7,6 +7,7 @@ every ambiguous, corrupt, foreign, live or denied case keeps its guardrail code.
 from __future__ import annotations
 
 import ast
+import atexit
 import fcntl
 import json
 import os
@@ -33,6 +34,9 @@ from cardine.worktree import storage as owner_storage
 from project_config_support import write_project_config
 from stop_recovery_support import ROOT, resume_from, run_recovery as _run_recovery
 from task_contract_support import VALIDATION, contract_record, seal_state, write_state
+from fixture_restore_support import ReadySnapshot
+
+READY_MATRICES = {}
 
 def run_recovery(command, cwd, worktree_root=None):
     return _run_recovery(command, cwd, worktree_root, control_host=True)
@@ -286,7 +290,7 @@ class RunRecoveryTest(unittest.TestCase):
         self.kill_writer(script, point, str(self.worktree_root), str(self.project))
 
     def assert_stage_kill_recovers(self, point: str) -> None:
-        self._stage_ready_task_with_origin(local_ahead=True)
+        self.restore_matrix("stage", lambda: self._stage_ready_task_with_origin(local_ahead=True))
         self.enter_project()
         head = self.git("rev-parse", "HEAD")
         self.kill_stage(point)
@@ -369,7 +373,7 @@ class RunRecoveryTest(unittest.TestCase):
         self.kill_writer(script, point, str(self.worktree_root), str(self.project))
 
     def assert_residue_clear_converges(self, point: str) -> None:
-        head = self.residue_ready()
+        head = self.restore_matrix("residue", self.residue_ready)
         self.assertTrue(self.residue_paths())
         self.kill_residue(point)
         restaged = self.run_cli(*self._stage_args())
@@ -379,6 +383,22 @@ class RunRecoveryTest(unittest.TestCase):
         self.assertEqual(self.git("rev-parse", "HEAD"), head)
         self.assertEqual(self.residue_paths(), [])
         self.assertEqual(receipts._load_intent(self.residue_record())["result"], "verified")
+
+    def restore_matrix(self, name, build):
+        """Restore one prepared boundary matrix at its original absolute path."""
+        if name not in READY_MATRICES:
+            record = build()
+            snapshot = ReadySnapshot(self.root)
+            READY_MATRICES[name] = snapshot, record
+            atexit.register(snapshot.close)
+        else:
+            snapshot, record = READY_MATRICES[name]
+            previous = Path.cwd()
+            snapshot.restore()
+            os.chdir(previous)
+            if name == "residue":
+                self.enter_project()
+        return record
 
     def test_changed_residue_bytes_stay_dirty_and_are_preserved(self) -> None:
         self.residue_ready()
