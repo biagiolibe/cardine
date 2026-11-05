@@ -49,7 +49,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[x]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](done/149-field-case-runs.md) |
 | `[x]` | 150 | Add the developer channel for verdict, cancel, and abort (C4a) | 🔴 P1 | 146 | [150](done/150-developer-channel.md) |
 | `[x]` | 151 | Deliver a required-review task through the developer channel (C4b) | 🔴 P1 | 147, 150 | [151](done/151-required-review-delivery.md) |
-| `[ ]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](152-agent-driven-delivery.md) |
+| `[x]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](done/152-agent-driven-delivery.md) |
 | `[x]` | 153 | Add the read model of a Meridian project (C2a) | 🔴 P1 | 144 | [153](done/153-conversion-reader.md) |
 | `[x]` | 154 | Translate open records for adopt (C2b) | 🔴 P1 | 153, 145 | [154](done/154-adopt-record-translator.md) |
 | `[x]` | 155 | Plan the adoption as a pure function (C2c) | 🔴 P1 | 154 | [155](done/155-adopt-plan.md) |
