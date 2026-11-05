@@ -141,6 +141,10 @@
           "type": "integer",
           "minimum": 1
         },
+        "quickFailureLimit": {
+          "type": "integer",
+          "minimum": 1
+        },
         "landingMode": {
           "enum": [
             "direct"
@@ -216,6 +220,9 @@
             "type": "string",
             "pattern": "\\S"
           }
+        },
+        "preflight": {
+          "$ref": "#/$defs/commandReferences"
         }
       }
     }

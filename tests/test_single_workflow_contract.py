@@ -61,7 +61,7 @@ class SingleWorkflowContractTest(unittest.TestCase):
         options = self.resolve()['options']
         self.assertEqual(options, {'review': 'not_required', 'authorityRequired': False,
                                   'expectedCodeSurfaceRequired': False, 'validationRetryLimit': 2,
-                                  'landingMode': 'direct', 'ciBeforeLanding': False})
+                                  'quickFailureLimit': 10, 'landingMode': 'direct', 'ciBeforeLanding': False})
 
     def test_required_fields_can_be_raised_or_lowered(self):
         for preset, value in (('lean', True), ('governed', False)):

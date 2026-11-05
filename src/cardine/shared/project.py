@@ -25,6 +25,7 @@ def preset_task_defaults(preset: str) -> dict[str, object]:
         "authorityRequired": governed,
         "expectedCodeSurfaceRequired": governed,
         "validationRetryLimit": 3,
+        "quickFailureLimit": 10,
         "landingMode": "direct",
         "ciBeforeLanding": False,
     }
@@ -41,7 +42,7 @@ def _validate_task_defaults(value: object) -> None:
             valid = option in ("required", "not_required")
         elif key == "landingMode":
             valid = option == "direct"
-        elif key == "validationRetryLimit":
+        elif key in ("validationRetryLimit", "quickFailureLimit"):
             valid = type(option) is int and option >= 1
         else:
             valid = type(option) is bool
@@ -51,7 +52,7 @@ def _validate_task_defaults(value: object) -> None:
 
 
 def _validate_validation(value: object) -> None:
-    if not isinstance(value, dict) or not {"commands", "baseline", "candidate"} <= set(value) or set(value) - {"commands", "baseline", "candidate", "retry"}:
+    if not isinstance(value, dict) or not {"commands", "baseline", "candidate"} <= set(value) or set(value) - {"commands", "baseline", "candidate", "retry", "preflight"}:
         raise CardineError("project declaration key 'validation' must contain commands, baseline and candidate")
     commands = value["commands"]
     if not isinstance(commands, dict) or not all(
@@ -68,7 +69,8 @@ def _validate_validation(value: object) -> None:
     candidate = value["candidate"]
     if not isinstance(candidate, dict) or set(candidate) != {"REUSE", "BOUNDED", "FULL"}:
         raise CardineError("validation.candidate must declare REUSE, BOUNDED and FULL")
-    for key, references in [("baseline", value["baseline"]), *candidate.items()]:
+    quick = [("preflight", value["preflight"])] if "preflight" in value else []
+    for key, references in [("baseline", value["baseline"]), *quick, *candidate.items()]:
         if (not isinstance(references, list)
                 or not all(isinstance(item, str) and item in commands for item in references)
                 or len(references) != len(set(references))):

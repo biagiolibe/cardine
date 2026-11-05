@@ -198,6 +198,10 @@
               "type": "integer",
               "minimum": 1
             },
+            "quickFailureLimit": {
+              "type": "integer",
+              "minimum": 1
+            },
             "landingMode": {
               "enum": [
                 "direct"
@@ -240,6 +244,11 @@
               "type": "object",
               "propertyNames": {"type": "string", "pattern": "\\S"},
               "additionalProperties": {"type": "string", "pattern": "\\S"}
+            },
+            "preflight": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"type": "string", "minLength": 1}
             },
             "baseline": {
               "type": "array",
@@ -905,6 +914,18 @@
             "consecutiveFailures": {
               "type": "integer",
               "minimum": 0
+            },
+            "quickFailures": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "quickRounds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lastFailed": {
+              "type": "array",
+              "items": {"type": "string"}
             },
             "intermittent": {
               "type": "array",
@@ -1618,6 +1639,18 @@
             "consecutiveFailures": {
               "type": "integer",
               "minimum": 0
+            },
+            "quickFailures": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "quickRounds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lastFailed": {
+              "type": "array",
+              "items": {"type": "string"}
             },
             "intermittent": {
               "type": "array",

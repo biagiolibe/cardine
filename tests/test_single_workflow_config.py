@@ -43,7 +43,8 @@ class SingleWorkflowConfigTest(unittest.TestCase):
                 self.assertEqual(resolved["taskDefaults"], {
                     "review": "required" if governed else "not_required",
                     "authorityRequired": governed, "expectedCodeSurfaceRequired": governed,
-                    "validationRetryLimit": 3, "landingMode": "direct", "ciBeforeLanding": False})
+                    "validationRetryLimit": 3, "quickFailureLimit": 10,
+                    "landingMode": "direct", "ciBeforeLanding": False})
                 self.assertEqual(resolved["taskIdentity"], {"mode": "opaque"})
                 overrides = {"review": "not_required" if governed else "required",
                              "authorityRequired": not governed,
