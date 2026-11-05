@@ -24,7 +24,7 @@ faster by the same amount.
   `rev-parse`, `merge-base`, `rev-list`, `for-each-ref`, `log`, `cat-file`,
   `check-ref-format`, `ls-remote`, `worktree list`, `remote`, and `config`. Status, diff,
   `ls-files`, `show`, and every `scoped_observation` entry are discarded, as today.
-- [ ] **Stable reads.** Within a command scope, these survive `invalidate_facts`:
+- [ ] **Stable reads.** Within a command scope, these survive effects run by `_run_git`:
   `check-ref-format --branch`, and `merge-base --is-ancestor` with two full object IDs,
   exit 0 or 1 only; and, per resolved root, `rev-parse --git-common-dir` and `rev-parse
   --git-path`, success only, discarded by any worktree effect. A call with an explicit `env`
@@ -37,7 +37,7 @@ faster by the same amount.
   write a ref read is reused and `status` is not; after a commit `rev-parse HEAD` is new; after
   `worktree add` or `worktree remove` the list and path reads are new; an ancestry result on
   a full object ID is reused across an effect and one on a branch name is not; a failed
-  read is not reused; a second process moving `main` during a lock wait is seen by the waiter.
+  read is not reused after an effect; a second process moving `main` during a lock wait is seen by the waiter.
 - [ ] The ceilings in `tests/test_command_context.py` are lowered to the new measured
   values, each with its previous value in the comment. No ceiling rises. No gate reads a
   reused value that the rule above discards.
@@ -121,6 +121,13 @@ justify. Other rows of the queue.
 
 - **Depends on**: none
 - **Blocks**: 170
+
+## Coordinator decision — 2026-11-05
+
+`invalidate_facts()` clears every fact at external effect seams. Stable reads survive
+only Git effects run by `_run_git`. Failed reads may be cached within a read-only
+pass but never survive invalidation; full-object-ID ancestry exit 1 is a stable
+result. No additional source files are in scope.
 
 ## Developer decisions given in advance
 

@@ -42,7 +42,7 @@ class CommandContextTest(unittest.TestCase):
         with patch.object(engine, 'resolve_run_locations', wraps=engine.resolve_run_locations) as resolve:
             result, calls = self.measured(fixture.deliver)
         self.assertEqual(resolve.call_count, 1)
-        self.assertLessEqual(len(calls), 44)  # Before: 80.
+        self.assertLessEqual(len(calls), 47)  # Before: 80.
         with patch.object(receipts, '_durable', side_effect=AssertionError('no-op wrote bytes')):
             replay, calls = self.measured(fixture.deliver)
         self.assertEqual(replay, result)
@@ -107,7 +107,7 @@ class CommandContextTest(unittest.TestCase):
                     git._run_git(fixture.root, 'rev-parse', '--git-path', 'index')
                     git._run_git(fixture.root, 'rev-parse', '--verify', 'missing-ref')
                     git._run_git(fixture.root, 'check-ref-format', '--branch', 'task-001', env={})
-                    git.invalidate_facts()
+                    git._run_git(fixture.root, 'config', '--local', 'test.effect', 'yes')
         _, calls = self.measured(exercise)
         self.assertEqual(sum('check-ref-format' in c for c in calls), 3)
         self.assertEqual(sum('merge-base' in c and 'main' not in c for c in calls), 1)
