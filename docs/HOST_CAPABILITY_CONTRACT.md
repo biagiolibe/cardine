@@ -470,6 +470,7 @@ given home and environment are read.
 | Surface | Behavior while the legacy tool is installed | Evidence |
 |---------|---------------------------------------------|----------|
 | Legacy Codex user rules (`~/.codex/rules/default.rules`) | The known legacy block is kept byte-identical and setup reports that it kept it. Once the tool is gone, the exact block is removed as before and foreign bytes stay. | `tests/test_host_coexistence.py`, `tests/test_codex_user_rules.py` |
+| Codex permission profile | The selected Cardine profile grants both the Cardine worktree root and the legacy worktree root while the legacy tool is installed. The legacy root follows its environment, user configuration, and default precedence. After removal, setup proposes removing that root. | `tests/test_host_codex_repair.py`, `tests/test_host_coexistence.py` |
 | Rerun | A second `setup --apply` changes nothing. | `tests/test_host_coexistence.py` |
 | Briefing and hooks | The Cardine briefing, read guard, and stop audit act only in a project with a Cardine declaration. The legacy briefing script is silent in a converted project that has no legacy queue. | `tests/test_host_coexistence.py` |
 
@@ -491,6 +492,7 @@ without it, auto-detection can disable the plugin at user scope for every
 project. No live probe ran in this task; the live check belongs to the
 developer at S7.
 
-Finding recorded for step S7, not changed here: setup still migrates the
-legacy Codex permission profile in `~/.codex/config.toml` to the Cardine one
-while the legacy tool stays installed. The coordinator plans that separately.
+The legacy tool's `codex doctor` and `setup --check` report a profile divergence
+after Cardine selects its profile; this is expected during coexistence. Do not
+run `meridian setup --apply` after `cardine setup --apply` during coexistence.
+If it is run, Cardine setup reports and repairs a re-added known legacy block.

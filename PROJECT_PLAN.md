@@ -206,7 +206,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).
 - `[x]` 174 — Declare the capability profile at init.
 - `[x]` 175 — Rehearse the adoption without patching the process.
-- `[ ]` 176 — Keep the legacy worktree root in the Codex permission profile.
+- `[x]` 176 — Keep the legacy worktree root in the Codex permission profile.
 - `[x]` 177 — Translate Validation sections as the Cardine contract reads them.
 - `[ ]` 164 — Rehearse the conversion of this repository (C6a).
 - `[ ]` 178 — Delete the unreachable installation branches (C7a).

@@ -148,7 +148,7 @@ def _toml_quote(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def _codex_managed_block(worktree_root: Path) -> str:
+def _codex_managed_block(worktree_root: Path, legacy_root: Path | None = None) -> str:
     root = str(worktree_root.expanduser().resolve())
     return "\n".join(
         [
@@ -160,7 +160,8 @@ def _codex_managed_block(worktree_root: Path) -> str:
             'extends = ":workspace"',
             "",
             f"[permissions.{CODEX_PERMISSION_PROFILE}.workspace_roots]",
-            f"{_toml_quote(root)} = true",
+            *[f"{_toml_quote(value)} = true" for value in dict.fromkeys(
+                [root] + ([str(legacy_root.resolve())] if legacy_root is not None else []))],
             CODEX_MANAGED_END,
         ]
     )
@@ -192,21 +193,21 @@ def _without_top_level_default_permissions(text: str) -> str:
     return "".join(lines)
 
 
-def _codex_expected_profile(root: Path) -> dict[str, object]:
+def _codex_expected_profile(root: Path, legacy_root: Path | None = None) -> dict[str, object]:
     return {
         "description": "Workspace access plus Cardine-managed task worktrees.",
         "extends": ":workspace",
-        "workspace_roots": {str(root): True},
+        "workspace_roots": {str(path): True for path in (root, legacy_root) if path is not None},
     }
 
 
-def _codex_profile_divergence(parsed: dict[str, object], root: Path) -> list[str]:
+def _codex_profile_divergence(parsed: dict[str, object], root: Path, legacy_root: Path | None = None) -> list[str]:
     """Name every field where the parsed profile differs from the one expected profile."""
     permissions = parsed.get("permissions")
     profile = permissions.get(CODEX_PERMISSION_PROFILE) if isinstance(permissions, dict) else None
     if not isinstance(profile, dict):
         return ["profile shape"]
-    expected = _codex_expected_profile(root)
+    expected = _codex_expected_profile(root, legacy_root)
     differences = [
         key for key in sorted(set(profile) | set(expected)) if profile.get(key) != expected.get(key)
     ]
@@ -289,17 +290,17 @@ def _without_codex_profile_text(text: str) -> str:
 
 
 def _plan_codex_ownership_repair(
-    config_path: Path, text: str, parsed: dict[str, object], root: Path
+    config_path: Path, text: str, parsed: dict[str, object], root: Path, legacy_root: Path | None = None
 ) -> CodexConfigurationPlan:
     """Plan an ownership-metadata repair, or raise unless the profile is an exact semantic match."""
-    differences = _codex_profile_divergence(parsed, root)
+    differences = _codex_profile_divergence(parsed, root, legacy_root)
     if differences:
         raise CardineError(
             f"Codex permission profile {CODEX_PERMISSION_PROFILE!r} exists without intact Cardine ownership "
             f"markers and differs from the expected profile in: {', '.join(differences)}; reconcile it manually"
         )
     stripped = _without_codex_profile_text(text)
-    proposed = _replace_codex_managed_block(stripped, _codex_managed_block(root))
+    proposed = _replace_codex_managed_block(stripped, _codex_managed_block(root, legacy_root))
     try:
         reparsed = tomllib.loads(proposed)
     except tomllib.TOMLDecodeError as error:
@@ -322,7 +323,7 @@ def _plan_codex_ownership_repair(
 
 
 def _plan_codex_ownership_repair_and_root_replacement(
-    config_path: Path, text: str, parsed: dict[str, object], root: Path
+    config_path: Path, text: str, parsed: dict[str, object], root: Path, legacy_root: Path | None = None
 ) -> CodexConfigurationPlan | None:
     """Plan the one safe combined recovery, or return None for a normal refusal.
 
@@ -333,7 +334,7 @@ def _plan_codex_ownership_repair_and_root_replacement(
     """
     permissions = parsed.get("permissions")
     profile = permissions.get(CODEX_PERMISSION_PROFILE) if isinstance(permissions, dict) else None
-    expected = _codex_expected_profile(root)
+    expected = _codex_expected_profile(root, legacy_root)
     if (
         parsed.get("default_permissions") != CODEX_PERMISSION_PROFILE
         or not isinstance(profile, dict)
@@ -349,7 +350,7 @@ def _plan_codex_ownership_repair_and_root_replacement(
         return None
 
     stripped = _without_codex_profile_text(text)
-    proposed = _replace_codex_managed_block(stripped, _codex_managed_block(root))
+    proposed = _replace_codex_managed_block(stripped, _codex_managed_block(root, legacy_root))
     try:
         reparsed = tomllib.loads(proposed)
     except tomllib.TOMLDecodeError as error:
@@ -377,17 +378,13 @@ def plan_codex_configuration(
     config_path: Path,
     worktree_root: Path,
     requirements_path: Path | None = None,
+    *, legacy_root: Path | None = None, legacy_installed: bool = False,
 ) -> CodexConfigurationPlan:
     root = worktree_root.expanduser().resolve()
+    expected_legacy = legacy_root if legacy_installed else None
     if root == Path(root.anchor) or root == Path.home().resolve():
         raise CardineError("worktree root must not authorize the filesystem root or the user's home")
     text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
-    try:
-        parsed = tomllib.loads(text)
-    except tomllib.TOMLDecodeError as error:
-        raise CardineError(f"malformed Codex TOML at {config_path}: {error}") from error
-    if "sandbox_mode" in parsed or "sandbox_workspace_write" in parsed:
-        raise CardineError("legacy Codex sandbox settings conflict with permission profiles")
     if requirements_path is not None and requirements_path.is_file():
         try:
             requirements = tomllib.loads(requirements_path.read_text(encoding="utf-8"))
@@ -395,9 +392,45 @@ def plan_codex_configuration(
             raise CardineError(f"malformed managed Codex requirements at {requirements_path}: {error}") from error
         allowed = requirements.get("allowed_permission_profiles")
         if isinstance(allowed, dict) and allowed.get(CODEX_PERMISSION_PROFILE) is not True:
-            raise CardineError(
-                f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}"
-            )
+            raise CardineError(f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}")
+    legacy_begin = "# MERIDIAN:BEGIN worktree-permissions v1"
+    legacy_end = "# MERIDIAN:END worktree-permissions"
+    if legacy_begin in text and CODEX_MANAGED_BEGIN in text:
+        def span(begin: str, end: str) -> str:
+            if text.count(begin) != 1 or text.count(end) != 1 or text.find(end) < text.find(begin):
+                raise CardineError("both profiles have damaged ownership markers; reconcile them manually")
+            return text[text.index(begin):text.index(end) + len(end)]
+        old = span(legacy_begin, legacy_end)
+        current = span(CODEX_MANAGED_BEGIN, CODEX_MANAGED_END)
+        try:
+            old_parsed, current_parsed = tomllib.loads(old), tomllib.loads(current)
+            old_roots = old_parsed["permissions"]["meri" + "dian-worktrees"]["workspace_roots"]
+            current_roots = current_parsed["permissions"][CODEX_PERMISSION_PROFILE]["workspace_roots"]
+            old_root = Path(next(iter(old_roots)))
+            current_paths = list(current_roots)
+            known_old = (_codex_managed_block(old_root).replace(CODEX_MANAGED_BEGIN, legacy_begin)
+                         .replace(CODEX_MANAGED_END, legacy_end).replace(CODEX_PERMISSION_PROFILE, "meri" + "dian-worktrees")
+                         .replace("Cardine-managed", "Meridian-managed"))
+            known_current = _codex_managed_block(Path(current_paths[0]), Path(current_paths[1]) if len(current_paths) == 2 else None)
+            if (len(old_roots) != 1 or old_roots[str(old_root)] is not True
+                or (legacy_root is not None and old_root != legacy_root)
+                or len(current_paths) not in (1, 2) or current != known_current or old != known_old
+                or (len(current_paths) == 2 and set(current_paths) != {str(root), str(legacy_root)})):
+                raise ValueError("unknown profile")
+            proposed = text.replace(current, "", 1).replace(old, _codex_managed_block(root, expected_legacy), 1)
+            proposed_parsed = tomllib.loads(proposed)
+            if "sandbox_mode" in proposed_parsed or "sandbox_workspace_write" in proposed_parsed:
+                raise ValueError("legacy sandbox settings")
+        except (KeyError, IndexError, TypeError, ValueError, StopIteration, tomllib.TOMLDecodeError) as error:
+            raise CardineError("both profiles are not known owned blocks; reconcile them manually") from error
+        return CodexConfigurationPlan("approval-required", config_path, root, "permission-profile", proposed,
+                                      "remove the known legacy profile and restore the Cardine profile", text)
+    try:
+        parsed = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as error:
+        raise CardineError(f"malformed Codex TOML at {config_path}: {error}") from error
+    if "sandbox_mode" in parsed or "sandbox_workspace_write" in parsed:
+        raise CardineError("legacy Codex sandbox settings conflict with permission profiles")
     permissions = parsed.get("permissions", {})
     if not isinstance(permissions, dict):
         raise CardineError("Codex permissions must be a table")
@@ -412,15 +445,17 @@ def plan_codex_configuration(
         roots = legacy_profile.get("workspace_roots") if isinstance(legacy_profile, dict) else None
         if not isinstance(roots, dict) or len(roots) != 1 or list(roots.values()) != [True]:
             raise CardineError("legacy Codex profile has unknown ownership or changed roots; reconcile it manually")
-        legacy_root = Path(next(iter(roots)))
-        legacy_block = (_codex_managed_block(legacy_root)
+        block_root = Path(next(iter(roots)))
+        if legacy_root is not None and block_root != legacy_root:
+            raise CardineError("legacy Codex profile root differs from the resolved root; reconcile it manually")
+        legacy_block = (_codex_managed_block(block_root)
                         .replace(CODEX_MANAGED_BEGIN, legacy_begin)
                         .replace(CODEX_MANAGED_END, legacy_end)
                         .replace(CODEX_PERMISSION_PROFILE, legacy_name)
                         .replace("Cardine-managed", "Meridian-managed"))
         if text.count(legacy_block) != 1 or parsed.get("default_permissions") != legacy_name:
             raise CardineError("legacy Codex profile has changed or lost ownership markers; reconcile it manually")
-        proposed = text.replace(legacy_block, _codex_managed_block(root), 1)
+        proposed = text.replace(legacy_block, _codex_managed_block(root, expected_legacy), 1)
         try:
             tomllib.loads(proposed)
         except tomllib.TOMLDecodeError as error:
@@ -429,24 +464,28 @@ def plan_codex_configuration(
                                       proposed, "migrate the owned Meridian profile", text)
     managed_present = CODEX_MANAGED_BEGIN in text or CODEX_MANAGED_END in text
     if existing_profile is not None and not _codex_markers_intact(text):
-        replacement = _plan_codex_ownership_repair_and_root_replacement(config_path, text, parsed, root)
+        replacement = _plan_codex_ownership_repair_and_root_replacement(config_path, text, parsed, root, expected_legacy)
         if replacement is not None:
             return replacement
-        return _plan_codex_ownership_repair(config_path, text, parsed, root)
+        return _plan_codex_ownership_repair(config_path, text, parsed, root, expected_legacy)
     if managed_present and not _codex_markers_intact(text):
         raise CardineError("Codex configuration contains an incomplete or damaged Cardine-managed block")
     if existing_profile is not None and managed_present:
         roots = existing_profile.get("workspace_roots") if isinstance(existing_profile, dict) else None
         enabled = [name for name, value in roots.items() if value is True] if isinstance(roots, dict) else []
-        if len(enabled) != 1:
+        allowed = {str(root)} | ({str(legacy_root)} if legacy_root is not None else set())
+        if len(enabled) not in (1, 2) or (len(enabled) == 2 and set(enabled) != allowed):
             raise CardineError("Cardine Codex profile has changed; reconcile it manually")
-        old_block = _codex_managed_block(Path(enabled[0]))
+        old_block = _codex_managed_block(Path(enabled[0]), Path(enabled[1]) if len(enabled) == 2 else None)
         if text.count(old_block) != 1:
             raise CardineError("Cardine Codex profile block has changed; reconcile it manually")
+        if old_block == _codex_managed_block(root, expected_legacy) and set(roots) == set(enabled):
+            return CodexConfigurationPlan("ready", config_path, root, "permission-profile", None,
+                                          "requested profile is already effective")
     base_text = text
     if "default_permissions" in parsed and not managed_present:
         base_text = _without_top_level_default_permissions(text)
-    proposed = _replace_codex_managed_block(base_text, _codex_managed_block(root))
+    proposed = _replace_codex_managed_block(base_text, _codex_managed_block(root, expected_legacy))
     try:
         tomllib.loads(proposed)
     except tomllib.TOMLDecodeError as error:
@@ -479,7 +518,7 @@ def print_codex_configuration_plan(plan: CodexConfigurationPlan) -> None:
         )
     elif plan.proposed_text is not None:
         print("proposed-change:")
-        print(_codex_managed_block(plan.worktree_root))
+        print(plan.proposed_text, end="" if plan.proposed_text.endswith("\n") else "\n")
 
 
 def _write_exclusive_backup(path: Path, backup: Path) -> None:
