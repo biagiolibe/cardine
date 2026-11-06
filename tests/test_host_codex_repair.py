@@ -140,12 +140,26 @@ class CodexProfileRepairTest(unittest.TestCase):
             owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=self.root / "other")
         self.assertEqual(self.config.read_text(), original)
         self.config.write_text(owner_hosts_codex._codex_managed_block(self.worktrees, legacy) + "\n" + block + "\n")
+        both = self.config.read_text()
+        requirements = self.root / "requirements.toml"
+        requirements.write_text('[allowed_permission_profiles]\ncardine-worktrees = false\n')
+        with self.assertRaisesRegex(shared_errors.CardineError, "requirements"):
+            owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, requirements,
+                                                       legacy_root=legacy, legacy_installed=True)
+        self.config.write_text('sandbox_mode = "workspace-write"\n' + both)
+        with self.assertRaisesRegex(shared_errors.CardineError, "reconcile them manually"):
+            owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                                                       legacy_installed=True)
+        self.config.write_text(both)
         restored = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
                                                               legacy_installed=True)
         self.assertIn("remove the known legacy profile", restored.detail)
         owner_hosts_codex.apply_codex_configuration(restored)
         self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
                          legacy_installed=True).status, "ready")
+        self.assertIsNone(owner_hosts_setup._codex_expected_root_mismatch(self.config, self.worktrees, legacy))
+        self.assertIsNotNone(owner_hosts_setup._codex_expected_root_mismatch(self.config, self.worktrees,
+                                                                          self.root / "other"))
         removal = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy)
         self.assertEqual(removal.status, "approval-required")
         owner_hosts_codex.apply_codex_configuration(removal)

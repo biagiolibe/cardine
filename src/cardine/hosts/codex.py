@@ -385,6 +385,14 @@ def plan_codex_configuration(
     if root == Path(root.anchor) or root == Path.home().resolve():
         raise CardineError("worktree root must not authorize the filesystem root or the user's home")
     text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
+    if requirements_path is not None and requirements_path.is_file():
+        try:
+            requirements = tomllib.loads(requirements_path.read_text(encoding="utf-8"))
+        except tomllib.TOMLDecodeError as error:
+            raise CardineError(f"malformed managed Codex requirements at {requirements_path}: {error}") from error
+        allowed = requirements.get("allowed_permission_profiles")
+        if isinstance(allowed, dict) and allowed.get(CODEX_PERMISSION_PROFILE) is not True:
+            raise CardineError(f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}")
     legacy_begin = "# MERIDIAN:BEGIN worktree-permissions v1"
     legacy_end = "# MERIDIAN:END worktree-permissions"
     if legacy_begin in text and CODEX_MANAGED_BEGIN in text:
@@ -410,8 +418,10 @@ def plan_codex_configuration(
                 or (len(current_paths) == 2 and set(current_paths) != {str(root), str(legacy_root)})):
                 raise ValueError("unknown profile")
             proposed = text.replace(current, "", 1).replace(old, _codex_managed_block(root, expected_legacy), 1)
-            tomllib.loads(proposed)
-        except (KeyError, TypeError, ValueError, StopIteration, tomllib.TOMLDecodeError) as error:
+            proposed_parsed = tomllib.loads(proposed)
+            if "sandbox_mode" in proposed_parsed or "sandbox_workspace_write" in proposed_parsed:
+                raise ValueError("legacy sandbox settings")
+        except (KeyError, IndexError, TypeError, ValueError, StopIteration, tomllib.TOMLDecodeError) as error:
             raise CardineError("both profiles are not known owned blocks; reconcile them manually") from error
         return CodexConfigurationPlan("approval-required", config_path, root, "permission-profile", proposed,
                                       "remove the known legacy profile and restore the Cardine profile", text)
@@ -421,16 +431,6 @@ def plan_codex_configuration(
         raise CardineError(f"malformed Codex TOML at {config_path}: {error}") from error
     if "sandbox_mode" in parsed or "sandbox_workspace_write" in parsed:
         raise CardineError("legacy Codex sandbox settings conflict with permission profiles")
-    if requirements_path is not None and requirements_path.is_file():
-        try:
-            requirements = tomllib.loads(requirements_path.read_text(encoding="utf-8"))
-        except tomllib.TOMLDecodeError as error:
-            raise CardineError(f"malformed managed Codex requirements at {requirements_path}: {error}") from error
-        allowed = requirements.get("allowed_permission_profiles")
-        if isinstance(allowed, dict) and allowed.get(CODEX_PERMISSION_PROFILE) is not True:
-            raise CardineError(
-                f"managed Codex requirements do not allow permission profile {CODEX_PERMISSION_PROFILE!r}"
-            )
     permissions = parsed.get("permissions", {})
     if not isinstance(permissions, dict):
         raise CardineError("Codex permissions must be a table")
