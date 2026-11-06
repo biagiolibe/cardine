@@ -262,6 +262,7 @@ class ReplayInventoryTest(unittest.TestCase):
 
     REPLAY = {
         "src/cardine/adopt/apply.py": ["test_adopt_interruption.ConversionTest.test_interrupt_at_each_adoption_boundary"],
+        "src/cardine/adopt/rehearsal.py": ["test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions"],
         "src/cardine/adopt/plan.py": ["test_adopt_plan.AdoptPlanTest.test_before_plan_interruption_writes_nothing"],
         "src/cardine/templates/init.py": ["test_init.InitTest.test_every_effect_and_plan_and_result_boundary_converges"],
         "src/cardine/integration/records.py": ["test_run_integration.CandidateTest.test_closure_record_commit_boundaries_converge"],
