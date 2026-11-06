@@ -18,6 +18,7 @@ from cardine.shared.project import parse_project_declaration, project_validation
 from cardine.tasks.state import STATUSES
 from cardine.tasks.status_render import input_digest, render_queue, render_plan_region, splice_region
 from cardine.templates.files import latest_migration_to, managed_files
+from cardine.templates.adoption import declare_capability_profile
 from cardine.templates.manifest import manifest_bytes
 from cardine.templates.migrations import migration_ids
 from cardine.templates.roots import single_template_root
@@ -124,12 +125,15 @@ def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: s
     files = managed_files(framework, "single")
     for item in files:
         outputs[(names().baselines_path / baseline / item.target).as_posix()] = item.source.read_bytes()
-    outputs[names().manifest_path.as_posix()] = manifest_bytes({
+    manifest = {
         "frameworkVersion": version, "protocolVersion": PROTOCOL_VERSION, "workflowMode": "single",
         "workflowBaselineVersion": baseline,
         "managedFiles": {item.target.as_posix(): receipts.digest(item.source.read_bytes()) for item in files},
         "appliedMigrations": migration_ids(framework, "0.0.0", baseline),
-    }, framework)
+    }
+    profile = "lean-delivery-consumer" if preset == "lean" else "governed-sdd-consumer"
+    manifest = declare_capability_profile(manifest, root, framework, profile, outputs)
+    outputs[names().manifest_path.as_posix()] = manifest_bytes(manifest, framework)
     model = {"preset": preset, "totals": dict.fromkeys((*STATUSES, "total"), 0), "tasks": []}
     digest = input_digest(root, {root / declaration: outputs[declaration]}, set())
     outputs["tasks/QUEUE.md"] = render_queue(model, digest).encode()

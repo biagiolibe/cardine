@@ -1,5 +1,7 @@
 """Conversion interruption tests use disposable projects and home directories."""
 import os
+import contextlib
+import io
 import hashlib
 import json
 from pathlib import Path
@@ -18,6 +20,9 @@ from cardine.adopt.plan import plan_adopt
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
 from cardine.tasks.contract import contract_digest
+from cardine.templates.adoption import bootstrap_capability_profile
+from cardine.templates.audit import audit_declared_capabilities, run_audit
+from cardine.templates.manifest import load_manifest
 from conversion_fixture import queue_text, write_meridian_project
 from task_contract_support import contract_record, VALIDATION
 
@@ -65,6 +70,18 @@ class ConversionTest(unittest.TestCase):
     def test_conversion_and_repeat(self):
         self.assertTrue(apply_adopt(self.root, self.plan, ROOT))
         self.assertFalse(apply_adopt(self.root, self.plan, ROOT))
+        manifest = load_manifest(self.root, ROOT)
+        profile_id = 'lean-delivery-consumer'
+        self.assertEqual(set(manifest['capabilityProfiles']), {profile_id})
+        self.assertEqual(manifest, bootstrap_capability_profile(self.root, ROOT, profile_id, apply=False))
+        results, _ = audit_declared_capabilities(self.root, ROOT, 'single')
+        self.assertNotIn('FAIL', {result.status for result in results})
+        self.assertNotIn('declaration/legacy-compatibility', {result.identity for result in results})
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(run_audit(self.root, ROOT, 'single'), 1)
+        identities = [line.split(' — ', 1)[0].split() for line in output.getvalue().splitlines() if ' — ' in line]
+        self.assertNotIn('FAIL', {item[0] for item in identities})
+        self.assertNotIn('declaration/legacy-compatibility', {item[1] for item in identities})
         self.assertFalse((self.root / '.meridian').exists())
         self.assertTrue((self.root / '.cardine/tasks/001.json').is_file())
         self.assertIn('Keep this narrative.', (self.root / 'PROJECT_PLAN.md').read_text())
