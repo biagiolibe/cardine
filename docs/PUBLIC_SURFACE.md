@@ -42,6 +42,7 @@ including command containers and nested subcommands.
 
 | Command | Tier |
 |---------|------|
+| `cardine adopt` | Stable |
 | `cardine run` | Stable |
 | `cardine cancel` | Stable |
 | `cardine abort` | Stable |
@@ -128,7 +129,7 @@ list of entries. Changes follow the versioning and deprecation rules above.
 
 ## Project conversion
 
-Conversion of projects without Cardine and of existing installations returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
+`cardine adopt` plans, rehearses, and applies conversion of projects without Cardine and existing legacy installations. See [Adoption commands](ADOPT_COMMANDS.md).
 
 Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow`,
 `generate-entry-routers`, and `agent-evals`. They are internal development
