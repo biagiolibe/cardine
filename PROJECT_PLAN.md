@@ -208,6 +208,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 175 — Rehearse the adoption without patching the process.
 - `[x]` 176 — Keep the legacy worktree root in the Codex permission profile.
 - `[x]` 177 — Translate Validation sections as the Cardine contract reads them.
+- `[ ]` 183 — Convert this repository so that its own checks pass.
 - `[ ]` 164 — Rehearse the conversion of this repository (C6a).
 - `[ ]` 178 — Delete the unreachable installation branches (C7a).
 - `[ ]` 179 — Remove the shell hooks and their tests (C7b).

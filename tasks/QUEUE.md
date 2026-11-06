@@ -65,7 +65,8 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[x]` | 175 | Rehearse the adoption without patching the process | 🔴 P1 | 157 | [175](done/175-rehearsal-without-patching.md) |
 | `[x]` | 176 | Keep the legacy worktree root in the Codex permission profile | 🔴 P1 | 163 | [176](done/176-codex-profile-coexistence.md) |
 | `[x]` | 177 | Translate Validation sections as the Cardine contract reads them | 🔴 P1 | — | [177](done/177-adopt-validation-sections.md) |
-| `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175, 177 | [164](164-rehearse-this-repository.md) |
+| `[ ]` | 183 | Convert this repository so that its own checks pass | 🔴 P1 | — | [183](183-converted-repository-checks.md) |
+| `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175, 177, 183 | [164](164-rehearse-this-repository.md) |
 
 ### Phase 32 — Meridian conversion: after the switch
 
