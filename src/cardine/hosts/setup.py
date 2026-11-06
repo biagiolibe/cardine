@@ -127,6 +127,27 @@ def _legacy_tool_installed(home: Path, environment: Mapping[str, str]) -> bool:
                 or (home / ".claude/plugins/cache" / _LEGACY).is_dir())
 
 
+def _legacy_worktree_root(home: Path, environment: Mapping[str, str]) -> Path:
+    value = environment.get(_LEGACY.upper() + "_WORKTREE_ROOT")
+    if not value:
+        base = Path(environment["XDG_CONFIG_HOME"]) if environment.get("XDG_CONFIG_HOME") else home / ".config"
+        path = base / _LEGACY / "config.json"
+        if path.is_file():
+            try:
+                value = json.loads(path.read_text(encoding="utf-8")).get("worktreeRoot")
+            except (ValueError, AttributeError) as error:
+                raise CardineError(f"invalid legacy configuration at {path}; reconcile it manually") from error
+    if value and not isinstance(value, str):
+        raise CardineError("invalid legacy worktreeRoot; reconcile it manually")
+    if value and (value == "~" or value.startswith("~/")):
+        root = home / value[2:] if value != "~" else home
+    else:
+        root = Path(value).resolve() if value else home / ("." + _LEGACY) / "worktrees"
+    if root == home or root == Path(root.anchor):
+        raise CardineError("legacy worktree root must not be the home or filesystem root; reconcile it manually")
+    return root
+
+
 def plan_setup(
     worktree_root: Path | None,
     codex_config: Path,
@@ -141,7 +162,7 @@ def plan_setup(
     home = (home or Path.home()).expanduser().resolve()
     framework_root = (framework_root or SCRIPTS_ROOT.parent).expanduser().resolve()
     project_root = primary_project_root((project_root or Path.cwd()).expanduser().resolve())
-    environment = environment or os.environ
+    environment = os.environ if environment is None else environment
     if task_identity not in (None, "opaque", "milestone"):
         raise CardineError(f"unsupported task identity mode: {task_identity!r}")
     resolution = resolve_worktree_root(
@@ -162,16 +183,21 @@ def plan_setup(
     else:
         config_action = "write"
 
+    legacy_installed = _legacy_tool_installed(home, environment)
+    legacy_root = _legacy_worktree_root(home, environment)
     user_rules = plan_codex_user_rules(home / ".codex/rules/cardine.rules",
-                                       legacy_tool_installed=_legacy_tool_installed(home, environment))
+                                       legacy_tool_installed=legacy_installed)
     directory_state, directory_change = _directory_setup_state(resolution.path)
     codex_plan: CodexConfigurationPlan | None = None
     try:
-        codex_plan = plan_codex_configuration(codex_config, resolution.path)
+        codex_plan = plan_codex_configuration(codex_config, resolution.path, legacy_root=legacy_root,
+                                              legacy_installed=legacy_installed)
         codex_state = _setup_codex_state(codex_plan)
+        if codex_state == "blocked" and codex_plan.status == "approval-required":
+            codex_state = "different-root"
         if codex_state == "blocked":
             parsed = tomllib.loads(codex_plan.current_text or "")
-            differences = _codex_profile_divergence(parsed, resolution.path)
+            differences = _codex_profile_divergence(parsed, resolution.path, legacy_root if legacy_installed else None)
             codex_detail = (
                 "owned Codex profile has unexpected divergence in: "
                 + ", ".join(differences)
@@ -395,6 +421,12 @@ def print_setup_plan(plan: SetupPlan) -> None:
     print(f"directory: {plan.directory_state}")
     print(f"codex-profile: {plan.codex_state}")
     print(f"codex-detail: {plan.codex_detail}")
+    if plan.codex_plan is not None and plan.codex_plan.proposed_text is not None:
+        print("codex-proposed-change:")
+        print("".join(difflib.unified_diff(
+            (plan.codex_plan.current_text or "").splitlines(keepends=True),
+            plan.codex_plan.proposed_text.splitlines(keepends=True),
+            fromfile=str(plan.codex_config), tofile=str(plan.codex_config) + " (planned)")), end="")
     hooks = getattr(plan, "hooks", None)
     if hooks is not None:
         for registry in hooks.registries:
@@ -619,8 +651,13 @@ def codex_doctor(
     environment: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
     result: dict[str, str] = {}
+    home = (home or Path.home()).expanduser().resolve()
+    environment = os.environ if environment is None else environment
+    legacy_root = _legacy_worktree_root(home, environment)
+    legacy_installed = _legacy_tool_installed(home, environment)
     try:
-        plan = plan_codex_configuration(config_path, worktree_root)
+        plan = plan_codex_configuration(config_path, worktree_root, legacy_root=legacy_root,
+                                        legacy_installed=legacy_installed)
         result["permission-model"] = plan.status
         result["profile-ownership"] = (
             "ready"

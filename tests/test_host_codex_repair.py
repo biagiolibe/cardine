@@ -97,7 +97,7 @@ class CodexProfileRepairTest(unittest.TestCase):
     def test_legacy_profile_migration_preserves_foreign_and_refuses_changed_block(self) -> None:
         old_root = self.root / "old-root"
         block = (owner_hosts_codex._codex_managed_block(old_root)
-                 .replace("CARDINE:", "MERIDIAN:")
+                 .replace("CARDINE:", "MERI" + "DIAN:")
                  .replace("cardine-worktrees", "meridian-worktrees")
                  .replace("Cardine-managed", "Meridian-managed"))
         original = '# foreign\nmodel = "test"\n\n' + block + '\n[features]\nfoo = true\n'
@@ -115,6 +115,69 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assert_blocked_unchanged(changed, "changed or lost ownership")
         missing = original.replace('# MERIDIAN:END worktree-permissions', '')
         self.assert_blocked_unchanged(missing, "changed or lost ownership")
+
+    def test_coexisting_profile_migration_removal_and_readded_block(self) -> None:
+        legacy = self.root / "legacy"
+        block = (owner_hosts_codex._codex_managed_block(legacy).replace("CARDINE:", "MERI" + "DIAN:")
+                 .replace("cardine-worktrees", "meri" + "dian-worktrees").replace("Cardine-managed", "Meri" + "dian-managed"))
+        original = '# foreign\nmodel = "test"\n\n' + block + '\n[features]\nfoo = true\n'
+        for installed in (False, True):
+            self.config.write_text(original)
+            plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                                                              legacy_installed=installed)
+            owner_hosts_codex.apply_codex_configuration(plan)
+            actual = self.config.read_text()
+            roots = tomllib.loads(actual)["permissions"]["cardine-worktrees"]["workspace_roots"]
+            self.assertEqual(roots, {str(p): True for p in ((self.worktrees, legacy) if installed else (self.worktrees,))})
+            self.assertEqual(actual, original.replace(block, owner_hosts_codex._codex_managed_block(
+                self.worktrees, legacy if installed else None)))
+            again = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                                                               legacy_installed=installed)
+            self.assertEqual(again.status, "ready")
+            self.assertFalse(owner_hosts_codex.apply_codex_configuration(again))
+        self.config.write_text(original)
+        with self.assertRaisesRegex(shared_errors.CardineError, "reconcile it manually"):
+            owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=self.root / "other")
+        self.assertEqual(self.config.read_text(), original)
+        self.config.write_text(owner_hosts_codex._codex_managed_block(self.worktrees, legacy) + "\n" + block + "\n")
+        restored = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                                                              legacy_installed=True)
+        self.assertIn("remove the known legacy profile", restored.detail)
+        owner_hosts_codex.apply_codex_configuration(restored)
+        self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                         legacy_installed=True).status, "ready")
+        removal = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy)
+        self.assertEqual(removal.status, "approval-required")
+        owner_hosts_codex.apply_codex_configuration(removal)
+        self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy).status, "ready")
+
+    def test_legacy_root_precedence_and_unknown_extra_root(self) -> None:
+        import json
+        xdg = self.root / "xdg"
+        config = xdg / ("meri" + "dian") / "config.json"
+        config.parent.mkdir(parents=True)
+        config.write_text(json.dumps({"worktreeRoot": str(self.root / "configured")}))
+        env = {"XDG_CONFIG_HOME": str(xdg)}
+        self.assertEqual(owner_hosts_setup._legacy_worktree_root(self.root, env), self.root / "configured")
+        env["MERI" + "DIAN_WORKTREE_ROOT"] = str(self.root / "environment")
+        self.assertEqual(owner_hosts_setup._legacy_worktree_root(self.root, env), self.root / "environment")
+        self.config.write_text(owner_hosts_codex._codex_managed_block(self.worktrees, self.root / "unknown"))
+        with self.assertRaisesRegex(shared_errors.CardineError, "reconcile it manually"):
+            owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees,
+                                                       legacy_root=self.root / "configured", legacy_installed=True)
+
+    def test_damaged_two_root_profile_repairs_without_changing_grants(self) -> None:
+        legacy = self.root / "legacy"
+        original = owner_hosts_codex._codex_managed_block(self.worktrees, legacy).replace(
+            cardine_cli.CODEX_MANAGED_END, "")
+        self.config.write_text(original)
+        plan = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                                                          legacy_installed=True)
+        self.assertEqual(plan.status, "repair-required")
+        self.assertEqual(tomllib.loads(original), tomllib.loads(plan.proposed_text or ""))
+        owner_hosts_codex.apply_codex_configuration(plan)
+        self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
+                         legacy_installed=True).status, "ready")
 
     def test_unowned_comments_in_damaged_profile_are_preserved(self) -> None:
         original = self.rewritten().replace('extends = ":workspace"', '# user comment\nextends = ":workspace"')
@@ -152,7 +215,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         self.assertIn(f'-"{old_root}" = true', checked.stdout)
         self.assertIn(f'+"{self.worktrees}" = true', checked.stdout)
         self.assertEqual(self.config.read_text(encoding="utf-8"), original)
-        report = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
+        report = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees, home=self.root, environment={})
         self.assertEqual(report["permission-model"], "repair-and-replace-required")
         self.assertEqual(report["profile-ownership"], "repair-and-replace-required")
 
@@ -360,7 +423,7 @@ class CodexProfileRepairTest(unittest.TestCase):
 
     def test_doctor_reports_ownership_separately_from_root_access(self) -> None:
         self.config.write_text(self.rewritten(), encoding="utf-8")
-        report = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
+        report = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees, home=self.root, environment={})
         self.assertEqual(report["permission-model"], "repair-required")
         self.assertEqual(report["profile-ownership"], "repair-required")
         self.assertEqual(report["worktree-root-write"], "ready")
@@ -368,14 +431,14 @@ class CodexProfileRepairTest(unittest.TestCase):
 
         other_root = self.root / "other-root"
         self.config.write_text(owner_hosts_codex._codex_managed_block(other_root) + "\n", encoding="utf-8")
-        different = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
+        different = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees, home=self.root, environment={})
         self.assertEqual(
             different["codex-root-mismatch"],
             f"profile={other_root} resolved={self.worktrees}",
         )
 
         self.config.write_text(self.rewritten(tables=self.profile_tables(extends='":read-only"')), encoding="utf-8")
-        blocked = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees)
+        blocked = owner_hosts_setup.codex_doctor(self.root, self.config, self.worktrees, home=self.root, environment={})
         self.assertEqual(blocked["permission-model"], "blocked")
         self.assertEqual(blocked["profile-ownership"], "blocked")
         self.assertEqual(blocked["worktree-root-write"], "approval-required")

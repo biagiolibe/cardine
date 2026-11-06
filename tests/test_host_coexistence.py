@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 import os
 from pathlib import Path
 import subprocess
@@ -56,6 +57,10 @@ class CoexistenceTest(unittest.TestCase):
         self.assertIsNone(plan.user_rules.legacy_proposed)
         self.assertTrue(any("kept byte-identical" in warning for warning in plan.warnings), plan.warnings)
         setup.apply_setup(plan)
+        profile = tomllib.loads((self.home / ".codex/config.toml").read_text())
+        self.assertEqual(profile["default_permissions"], "cardine-worktrees")
+        self.assertEqual(profile["permissions"]["cardine-worktrees"]["workspace_roots"],
+                         {str(plan.resolution.path): True, str(self.home / ("." + LEGACY) / "worktrees"): True})
         self.assertEqual(self.rules.read_bytes(), original)
         self.assertTrue((self.home / ".codex/rules/cardine.rules").is_file())
         settled = self.tree()
