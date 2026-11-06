@@ -62,6 +62,6 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[x]` | 162 | Run the shell hook tests only while the hooks exist (C5d) | 🔴 P1 | 142 | [162](done/162-conditional-shell-hook-tests.md) |
 | `[x]` | 163 | Prove Meridian and Cardine coexist on one machine (C5e) | 🔴 P1 | 142 | [163](done/163-tool-coexistence.md) |
 | `[x]` | 174 | Declare the capability profile at init | 🔴 P1 | 157 | [174](done/174-init-capability-profile.md) |
-| `[ ]` | 175 | Rehearse the adoption without patching the process | 🔴 P1 | 157 | [175](175-rehearsal-without-patching.md) |
+| `[x]` | 175 | Rehearse the adoption without patching the process | 🔴 P1 | 157 | [175](done/175-rehearsal-without-patching.md) |
 | `[ ]` | 176 | Keep the legacy worktree root in the Codex permission profile | 🔴 P1 | 163 | [176](176-codex-profile-coexistence.md) |
 | `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175 | [164](164-rehearse-this-repository.md) |

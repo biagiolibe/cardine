@@ -19,21 +19,16 @@ and add a guard so that no product module imports `unittest`.
 
 ## Acceptance Criteria
 
-- [ ] **Explicit receipt root.** `receipts.host_path(kind, target)` in
-  `src/cardine/lifecycle/receipts.py` gains an optional keyword `base`. When it is `None`,
-  the result is byte-for-byte today's path. `apply_adopt` in `src/cardine/adopt/apply.py`
-  gains optional keywords `receipt_root` and `env`. With `receipt_root`, it places its
-  host receipt under that directory. With `env`, its own Git subprocesses
-  (`_run_git` calls) run with that environment. When both are omitted, every caller sees
-  today's behavior.
-- [ ] **No process patching.** `rehearse_adoption` passes the scratch directory as
-  `receipt_root` and the disposable environment as `env` to `apply_adopt`, and passes
-  `env` to `verify_adoption` as today. It no longer imports `unittest`, and it never
-  assigns to `os.environ` or to an attribute of another module.
+- [ ] **Process isolation.** Keep `receipts.host_path` and `apply_adopt` signatures
+  and Git behavior unchanged. Extract receipt-compatible `encode_plan` and
+  `decode_plan` functions. Apply the encoded plan in a child process using the
+  disposable home, worktree root, and temporary directory; pass that environment
+  to the verifier. The parent never modifies `os.environ` or another module's
+  attributes. A failed child raises `CardineError` with its stderr.
 - [ ] **Tests.** In `tests/test_adopt_rehearsal.py`:
   - `os.environ` is equal before and after a passing rehearsal, and before and after a
     rehearsal interrupted at each of its four boundaries;
-  - while the copy is being applied, its `adopt` host receipt lies under the scratch
+  - while the copy is being applied, its `adopt` host receipt lies under the scratch temporary
     directory, and no receipt for the copy exists under `tempfile.gettempdir()`.
 - [ ] **Guard.** `tests/test_module_inventory.py` gains a test that parses every module
   under `src/` with `ast` and fails if any `import` or `from ... import` names `unittest`

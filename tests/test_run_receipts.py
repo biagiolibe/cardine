@@ -336,7 +336,8 @@ else:
         self.assertEqual(receipts.require_authority(self.root), observed)
 
 
-PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["receipts._durable(receipt, (json.dumps({'version': 1, 'binding': binding, 'verification': verified}, sort_keys=True) + '\\n').encode())"],
+PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["plan_path.write_text(json.dumps(encode_plan(plan)), encoding='utf-8')",
+                                           "receipts._durable(receipt, (json.dumps({'version': 1, 'binding': binding, 'verification': verified}, sort_keys=True) + '\\n').encode())"],
                           'adopt/verify.py': ["proposal.write_text(f'ID: {task_id}\\n## Objective\\nVerify task creation.\\n## Acceptance Criteria\\nVerified.\\n## Validation\\nnone\\n## Dependencies\\nnone\\n')"],
                           'hosts/setup.py': ["(root / 'sentinel.txt').write_text('line\\n' * _PROBE_LINES, encoding='utf-8')",
                                           '(root / names().project_declaration_path).write_text(\'{"version": 1, "preset": "lean"}\', encoding=\'utf-8\')',],
