@@ -59,6 +59,7 @@ def verify_adoption(root: Path, framework: Path, expected_tasks: int, *, env=Non
         raise CardineError(f"rehearsal task count or status mismatch: {status['diagnostics']}")
     for ident in validation['baseline']:
         _run(['sh', '-c', validation['commands'][ident]], root, env=env)
+    _run(['git', 'switch', '-C', 'main'], root, env=env)
     _run(['git', 'add', '-A'], root, env=env)
     _run(['git', 'add', '-f', '.cardine'], root, env=env)
     _run(['git', '-c', 'user.name=Cardine rehearsal', '-c',
