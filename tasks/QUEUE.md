@@ -64,4 +64,17 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[x]` | 174 | Declare the capability profile at init | 🔴 P1 | 157 | [174](done/174-init-capability-profile.md) |
 | `[x]` | 175 | Rehearse the adoption without patching the process | 🔴 P1 | 157 | [175](done/175-rehearsal-without-patching.md) |
 | `[ ]` | 176 | Keep the legacy worktree root in the Codex permission profile | 🔴 P1 | 163 | [176](176-codex-profile-coexistence.md) |
-| `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175 | [164](164-rehearse-this-repository.md) |
+| `[ ]` | 177 | Translate Validation sections as the Cardine contract reads them | 🔴 P1 | — | [177](177-adopt-validation-sections.md) |
+| `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175, 177 | [164](164-rehearse-this-repository.md) |
+
+### Phase 32 — Meridian conversion: after the switch
+
+Authority: `docs/CONVERSION_PLAN.md`, rows C7a to C7f and section 5. These rows run under Cardine after the switch; they are written in Meridian format so that `cardine adopt` converts them.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 178 | Delete the unreachable installation branches (C7a) | 🔴 P1 | 164 | [178](178-first-cardine-delivery.md) |
+| `[ ]` | 179 | Remove the shell hooks and their tests (C7b) | 🔴 P1 | 178 | [179](179-remove-shell-hooks.md) |
+| `[ ]` | 180 | Delete the Meridian identifier allowances (C7c) | 🔴 P1 | 179 | [180](180-remove-meridian-allowances.md) |
+| `[ ]` | 181 | Stop proposing this repository's script as evidence (C7e) | 🔴 P1 | 178 | [181](181-evidence-without-repository-script.md) |
+| `[ ]` | 182 | Delete the legacy snapshot reader (C7f) | 🔴 P1 | 180 | [182](182-delete-legacy-snapshot.md) |
