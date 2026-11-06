@@ -47,7 +47,7 @@ remove the shell hooks and their tests.
 
 | File | Role |
 |------|------|
-| `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `.codex/hooks.json`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | The files this row edits, as the plan lists them. |
+| `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | The files this row edits, as the plan lists them. |
 
 ## Authority excerpt
 
@@ -57,7 +57,7 @@ document:
 
 > From `docs/CONVERSION_PLAN.md`, row C7b:
 >
-> | C7b / 2h | Cardine: remove the shell hooks and their tests. | `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `.codex/hooks.json`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | Suite passes without them. | Cardine's own. | C7a |
+> | C7b / 2h | Cardine: remove the shell hooks and their tests. | `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | Suite passes without them. | Cardine's own. | C7a |
 
 ## Technical Context
 
@@ -82,7 +82,7 @@ document:
 
 ## Out of scope
 
-Other rows of the plan, the switch steps that belong to the developer, the
+Removing `.codex/hooks.json`: after the switch it is the managed copy of the Cardine template (task 183). Other rows of the plan, the switch steps that belong to the developer, the
 documentation of work item 11, and the release script of work item 12.
 
 ## Dependencies

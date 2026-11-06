@@ -84,7 +84,7 @@ caller supplies name, slug, preset, language, identity mode, and validation
 | ADR log | Converted only if a log file exists: headings normalized to `ADR-<n>`. Standalone ADR files are left in place and reported (DD5). |
 | Managed copies of the installation | Replaced by the single template set. Text outside `MERIDIAN:BEGIN/END` blocks is kept; the router preamble is regenerated; a non-placeholder `## Commands` block is carried over. `docs/CONTEXT_BUDGET_POLICY.md` becomes `docs/CONTEXT_READING_POLICY.md`. |
 | `tasks/QUEUE.md`, `PROJECT_PLAN.md` | Queue regenerated from task states; any non-open row is appended verbatim to `tasks/QUEUE_ARCHIVE.md`. |
-| Shared-source files (`hooks/*`, `.codex/hooks.json`) | Not converted. They belong to the Meridian plugin source, not to an adopter. The report lists them; this repository removes them in row C7b. |
+| Shared-source files (`hooks/*`) | Not converted. They belong to the Meridian plugin source, not to an adopter. The report lists them; this repository removes them in row C7b. `.codex/hooks.json` is a managed copy of both tools and is replaced by the Cardine template. |
 | `.meridian/` itself | Removed (DD3). History stays in Git. |
 
 Archive that Cardine ignores: `tasks/done/`, `tasks/handoffs/`, review records,
@@ -156,7 +156,7 @@ is in `managedFiles` but in no capability `managedSurface`.
 | `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md` | Converted (template copies). |
 | `docs/CONTEXT_BUDGET_POLICY.md` | Converted to `docs/CONTEXT_READING_POLICY.md`. |
 | `.codex/rules/meridian.rules` | Replaced by the rules file the template set installs (O8: still Meridian-named; row C2d checks the name). |
-| `.codex/hooks.json`, `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh` | Removed (row C7b). Replaced by the user-level `cardine hook` entries of `cardine setup`. |
+| `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh` | Removed (row C7b). Replaced by the user-level `cardine hook` entries of `cardine setup`. |
 | `.codex/rules/local.rules` (the `meridian worktree` line) | Removed (row C7c); the project's validation allowances stay in the project's own host configuration. |
 
 ### Guards of those paths
@@ -351,7 +351,7 @@ Hours are estimates; rows are sized by files. Each row lists its files, at most
 | C6a / 2h | Meridian: rehearsal on a clone of this repository; evidence in the handoff. The last task Meridian closes. | `tasks/handoffs/<id>.md` | Receipt, verifier output, unchanged original digest. | None. | C2f, C3f, C4b, C5a, C5b, C5c, C5d, C5e |
 | CS / developer | Neither tool: the switch, steps S1 to S7. | None in a task | See section 5. | Section 5. | C6a |
 | C7a / 2h | Cardine: first delivery. Delete the installation-conditional branches that the switch made unreachable. | `scripts/check_repository.py`, `tests/test_check_repository.py` | Full suite and repository check. | Cardine's own (rule 4). | CS |
-| C7b / 2h | Cardine: remove the shell hooks and their tests. | `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `.codex/hooks.json`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | Suite passes without them. | Cardine's own. | C7a |
+| C7b / 2h | Cardine: remove the shell hooks and their tests. | `hooks/hooks.json`, `hooks/queue-briefing.sh`, `hooks/read-guard.sh`, `tests/test_queue_briefing.py`, `tests/test_read_guard.py`, `tests/test_codex_worktree_hooks.py`, `tests/test_codex_read_guard.py` | Suite passes without them. | Cardine's own. | C7a |
 | C7c / 2h | Cardine: delete group 3 and 5 allowances; remove the `meridian worktree` line of `local.rules`; delete the allowances of the removed `.meridian/` (DD3). | `tests/test_no_meridian_identifiers.py`, `.codex/rules/local.rules` | The guard passes. | Cardine's own. | C7b |
 | C7e / 2h | Cardine: stop `integration/evidence.py` proposing this repository's script. | `src/cardine/integration/evidence.py`, `tests/test_ci_evidence.py` | Proposal is empty without that script, unchanged with it. | Cardine's own. | C7a |
 | C7f / 3h | Cardine: delete `legacy/snapshot.py`, `load_meridian_snapshot`, and their tests; the rest of legacy stays (DD2). | `src/cardine/legacy/snapshot.py`, `src/cardine/legacy/meridian_installation.py`, `tests/test_status_legacy_boundary.py`, `tests/test_legacy_meridian_installation.py` | Suite passes; helper pairs defined once. | Cardine's own. | C7c |

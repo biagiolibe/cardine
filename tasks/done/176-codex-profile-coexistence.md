@@ -24,36 +24,36 @@ worktree root, and later setup runs must recognize that root exactly, without gu
 
 ## Acceptance Criteria
 
-- [ ] **Two roots while the legacy tool is installed.** When the legacy tool is
+- [x] **Two roots while the legacy tool is installed.** When the legacy tool is
   installed (the check that task 163 added in `src/cardine/hosts/setup.py`), migrating
   the known legacy block produces the Cardine block with `default_permissions =
   "cardine-worktrees"` and a `workspace_roots` table that holds exactly two keys set to
   `true`: the Cardine worktree root and the legacy worktree root. Text outside the two
   blocks stays byte-identical, as today.
-- [ ] **The legacy root is resolved, not remembered.** The legacy root is computed with
+- [x] **The legacy root is resolved, not remembered.** The legacy root is computed with
   the legacy tool's own precedence: the `MERIDIAN_WORKTREE_ROOT` variable of the
   environment passed in; otherwise `worktreeRoot` from
   `<XDG_CONFIG_HOME or home/.config>/meridian/config.json`; otherwise
   `<home>/.meridian/worktrees`. The function reads only the home and environment it is
   given, like task 163's check. Migration refuses with a "reconcile it manually" error,
   and writes nothing, when the root in the legacy block differs from the resolved one.
-- [ ] **Ownership checks know the second root.** Every check that compares the
+- [x] **Ownership checks know the second root.** Every check that compares the
   Cardine block with its expected content uses the same expected profile, so a
   second run of `setup --check` reports the profile as ready and `setup --apply`
   changes nothing. This covers `_codex_profile_divergence`, the marker and ownership
   repair paths, and `codex_profile_root_mismatch`. While the legacy tool is installed,
   the expected profile has both roots. Otherwise it has only the Cardine root. Any
   other extra root is divergence, as today.
-- [ ] **Removal after the legacy tool.** When the legacy tool is no longer installed
+- [x] **Removal after the legacy tool.** When the legacy tool is no longer installed
   and the Cardine block still lists the resolved legacy root, `setup --check` proposes
   removing it, and `setup --apply` removes it (approval required, like every profile
   change). A rerun then converges.
-- [ ] **Re-added legacy block.** If the known legacy block is present again next to an
+- [x] **Re-added legacy block.** If the known legacy block is present again next to an
   intact Cardine block, for example because `meridian setup --apply` ran after Cardine's
   setup, `setup --check` reports both profiles and the exact remedy, and `setup --apply`
   removes the known legacy block and restores the expected Cardine block. A legacy block
   that is not the known one keeps today's refusal.
-- [ ] **Tests** in `tests/test_host_codex_repair.py`, each in a disposable home:
+- [x] **Tests** in `tests/test_host_codex_repair.py`, each in a disposable home:
   - migration with the legacy tool installed (two roots) and without it (one root,
     today's result);
   - a rerun is a no-op;
@@ -66,29 +66,29 @@ worktree root, and later setup runs must recognize that root exactly, without gu
   In `tests/test_host_coexistence.py`: after `setup --apply` in a home with both tools,
   the Cardine profile lists both roots, so a Meridian project's worktree root and a
   converted project's worktree root are both writable roots of the selected profile.
-- [ ] **Documentation.** `docs/HOST_CAPABILITY_CONTRACT.md` records the two-root
+- [x] **Documentation.** `docs/HOST_CAPABILITY_CONTRACT.md` records the two-root
   profile and that the legacy tool's own `codex doctor` and `setup --check` then report
   a divergence on its profile, which is expected. It also records that
   `meridian setup --apply` must not be run after `cardine setup --apply` during
   coexistence, and that Cardine's setup repairs it if it happens.
-- [ ] **Recorded for S7.** The handoff states the exact `cardine setup --check`
+- [x] **Recorded for S7.** The handoff states the exact `cardine setup --check`
   output expected on the developer's machine for step S7, derived from the tests,
   without running setup against the real home directory.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -97,22 +97,23 @@ worktree root, and later setup runs must recognize that root exactly, without gu
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/176.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/176.json`, which only
   the installed `meridian task close 176` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
 | File | Role |
 |------|------|
 | `src/cardine/hosts/codex.py`, `src/cardine/hosts/setup.py` | Expected profile, migration, repair, and the legacy root. |
+| `src/cardine/hosts/skills.py` | Coordinator scope amendment: compare the optional legacy root in the existing mismatch helper. |
 | `tests/test_host_codex_repair.py`, `tests/test_host_coexistence.py` | The tests. |
 | `docs/HOST_CAPABILITY_CONTRACT.md` | The coexistence note. |
 
