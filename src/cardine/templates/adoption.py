@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from cardine.shared.constants import STRICT_DIGEST_PROFILES
+import hashlib
+
+from cardine.shared.constants import CAPABILITY_MARKER, PROJECT_EDITABLE_MANAGED_PATHS, STRICT_DIGEST_PROFILES
 from cardine.shared.errors import CardineError
-from cardine.shared.hashing import sha256
 from cardine.shared.models import CatalogCapability
-from cardine.templates.audit import _digest_exempt
 from cardine.templates.catalog import load_capability_catalog
 from cardine.templates.catalog import manifest_workflow_mode
 from cardine.templates.manifest import canonical_manifest
@@ -22,6 +22,7 @@ def _capability_declaration(
     required_version: int,
     managed_files: dict[str, object],
     strict: bool,
+    contents: dict[str, bytes] | None = None,
 ) -> dict[str, object]:
     """One profile capability declaration built from the catalog surface and the
     files on disk; records managed-copy digests into `managed_files`."""
@@ -32,15 +33,19 @@ def _capability_declaration(
         form = surface.forms[0]
         surfaces.append({"path": surface.path, "form": form})
         path = project_root / surface.path
-        if form != "declaration-only" and not path.is_file():
+        data = None
+        if form != "declaration-only":
+            data = contents.get(surface.path) if contents is not None else (path.read_bytes() if path.is_file() else None)
+        if form != "declaration-only" and data is None:
             complete = False
             continue
         if form != "declaration-only":
-            digest = sha256(path)
+            digest = hashlib.sha256(data).hexdigest()
             digest_exempt = (
                 form == "managed-copy"
                 and not strict
-                and _digest_exempt(surface.path, path)
+                and (surface.path in PROJECT_EDITABLE_MANAGED_PATHS
+                     or CAPABILITY_MARKER.search(data.decode("utf-8")) is not None)
             )
             if form == "managed-copy":
                 recorded = managed_files.get(surface.path)
@@ -92,6 +97,15 @@ def bootstrap_capability_profile(
     stronger evidence.
     """
     manifest = load_manifest(project_root, framework_root)
+    updated = declare_capability_profile(manifest, project_root, framework_root, profile_id)
+    if apply:
+        write_manifest(project_root, updated, framework_root)
+    return updated
+
+
+def declare_capability_profile(manifest, project_root: Path, framework_root: Path, profile_id: str,
+                               contents: dict[str, bytes] | None = None) -> dict[str, object]:
+    """Build a profile from a project tree or its planned file bytes."""
     catalog = load_capability_catalog(framework_root)
     profile = catalog.profile(profile_id)
     if profile is None:
@@ -104,7 +118,7 @@ def bootstrap_capability_profile(
         capability = catalog.capability(capability_id)
         assert capability is not None
         declarations[capability_id] = _capability_declaration(
-            project_root, capability, required_version, managed_files, strict
+            project_root, capability, required_version, managed_files, strict, contents
         )
     updated = canonical_manifest(manifest)
     profiles = dict(updated.get("capabilityProfiles", {}))
@@ -115,6 +129,4 @@ def bootstrap_capability_profile(
     updated["capabilityProfiles"] = profiles
     updated["managedFiles"] = dict(sorted(managed_files.items()))
     validate_manifest(updated, catalog)
-    if apply:
-        write_manifest(project_root, updated, framework_root)
     return updated

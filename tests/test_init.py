@@ -19,6 +19,8 @@ from cardine.shared.errors import CardineError
 from cardine.shared.project import resolve_project_configuration
 from cardine.tasks.status import load_task_status
 from cardine.tasks.status_render import stale_views
+from cardine.templates.adoption import bootstrap_capability_profile
+from cardine.templates.audit import audit_declared_capabilities, run_audit
 from cardine.templates.init import apply_init, init_cli, plan_init
 from cardine.templates.manifest import load_manifest
 
@@ -106,7 +108,19 @@ class InitTest(unittest.TestCase):
                     self.assertEqual(model["diagnostics"], [])
                     self.assertEqual(model["totals"]["total"], 0)
                     self.assertEqual(stale_views(root), [])
-                    self.assertEqual(load_manifest(root, ROOT)["workflowMode"], "single")
+                    manifest = load_manifest(root, ROOT)
+                    profile = "lean-delivery-consumer" if preset == "lean" else "governed-sdd-consumer"
+                    self.assertEqual(set(manifest["capabilityProfiles"]), {profile})
+                    self.assertEqual(manifest, bootstrap_capability_profile(root, ROOT, profile, apply=False))
+                    results, _ = audit_declared_capabilities(root, ROOT, "single")
+                    self.assertNotIn("FAIL", {result.status for result in results})
+                    self.assertNotIn("declaration/legacy-compatibility", {result.identity for result in results})
+                    with contextlib.redirect_stdout(io.StringIO()) as output:
+                        self.assertEqual(run_audit(root, ROOT, "single"), 1)
+                    identities = [line.split(" — ", 1)[0].split() for line in output.getvalue().splitlines() if " — " in line]
+                    self.assertNotIn("FAIL", {item[0] for item in identities})
+                    self.assertNotIn("declaration/legacy-compatibility", {item[1] for item in identities})
+                    self.assertEqual(manifest["workflowMode"], "single")
                     self.assertTrue((root / "tasks/done").is_dir())
                     self.assertIn('`Italian`', (root / "LANGUAGE_POLICY.md").read_text())
                     self.assertEqual(list((root / ".cardine/tasks").iterdir()), [])
@@ -202,6 +216,8 @@ class InitTest(unittest.TestCase):
 import os, sys, tempfile
 from pathlib import Path
 from cardine.lifecycle import receipts
+from cardine.templates.adoption import bootstrap_capability_profile
+from cardine.templates.audit import audit_declared_capabilities, run_audit
 from cardine.templates.init import apply_init, plan_init
 import json
 tempfile.tempdir = sys.argv[3]
