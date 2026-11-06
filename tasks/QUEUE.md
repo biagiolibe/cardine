@@ -86,5 +86,5 @@ Authority: `docs/ADR_CARDINE_1_0.md`, work items 11 and 12. The plans can be wri
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 184 | Plan the documentation (work item 11) | 🟡 P2 | — | [184](184-documentation-plan.md) |
+| `[x]` | 184 | Plan the documentation (work item 11) | 🟡 P2 | — | [184](done/184-documentation-plan.md) |
 | `[ ]` | 185 | Plan the release script (work item 12) | 🟡 P2 | — | [185](185-release-plan.md) |
