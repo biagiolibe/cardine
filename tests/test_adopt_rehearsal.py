@@ -35,9 +35,7 @@ class RehearsalTest(unittest.TestCase):
         self.scratch_root = home / 'worktrees'
         original_host_path = receipts.host_path
         self.original_host_path = original_host_path
-        self.host_path = lambda kind, target, **kwargs: (original_host_path(kind, target, **kwargs)
-            if kwargs.get('base') is not None else self.receipt if kind == 'adopt-rehearsal'
-            else base / (kind + '.json'))
+        self.host_path = lambda kind, target: self.receipt if kind == 'adopt-rehearsal' else base / (kind + '.json')
         self.git('init', '-q', '-b', 'main')
         (self.root / 'README').write_text('source\n')
         self.git('add', '.')
@@ -56,7 +54,8 @@ class RehearsalTest(unittest.TestCase):
             self.assertTrue(Path(env['HOME']).is_dir())
             self.assertEqual(expected, 0)
             scratch = root.parent
-            self.assertTrue(receipts.host_path('adopt', root, base=scratch).is_file())
+            name = 'adopt-' + receipts.digest(str(root.resolve()).encode()) + '.json'
+            self.assertTrue((scratch / 'tmp/cardine-operations' / name).is_file())
             self.assertFalse(self.original_host_path('adopt', root).exists())
             seen.append(root)
             return {'tasks': 0}

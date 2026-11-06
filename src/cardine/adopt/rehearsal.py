@@ -4,10 +4,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 
-from cardine.adopt.apply import apply_adopt
+from cardine.adopt.apply import apply_adopt, decode_plan, encode_plan
 from cardine.adopt.verify import verify_adoption
 from cardine.legacy.conversion_reader import read_legacy_project
 from cardine.lifecycle import receipts
@@ -46,8 +48,10 @@ def rehearse_adoption(project: Path, plan, framework: Path):
         clone = scratch / 'project'
         env = os.environ.copy()
         env.update(HOME=str(scratch / 'home'), XDG_CONFIG_HOME=str(scratch / 'home/config'),
-                   CARDINE_WORKTREE_ROOT=str(scratch / 'worktrees'))
+                   CARDINE_WORKTREE_ROOT=str(scratch / 'worktrees'),
+                   TMPDIR=str(scratch / 'tmp'), PYTHONPATH=str(framework / 'src'))
         (scratch / 'home').mkdir()
+        (scratch / 'tmp').mkdir()
         receipts.boundary('before_rehearsal_clone')
         result = _run_git(None, 'clone', '--no-hardlinks', '--no-local', str(root), str(clone), env=env)
         if result.returncode:
@@ -55,7 +59,13 @@ def rehearse_adoption(project: Path, plan, framework: Path):
         _git(clone, 'checkout', '--detach', binding['head'])
         receipts.boundary('after_rehearsal_clone')
         expected = len(read_legacy_project(root).open_rows) if plan.case == 'B' else 0
-        apply_adopt(clone, plan, framework, receipt_root=scratch, env=env)
+        plan_path = scratch / 'plan.json'
+        plan_path.write_text(json.dumps(encode_plan(plan)), encoding='utf-8')
+        result = subprocess.run([sys.executable, '-m', 'cardine.adopt.rehearsal',
+                                 str(clone), str(plan_path), str(framework)],
+                                cwd=clone, env=env, text=True, capture_output=True)
+        if result.returncode:
+            raise CardineError(f"rehearsal apply failed: {result.stderr.strip()}")
         receipts.boundary('before_rehearsal_verify')
         verified = verify_adoption(clone, framework, expected, env=env)
         if _binding(root, plan) != binding:
@@ -78,3 +88,8 @@ def apply_rehearsed_adoption(project: Path, plan, framework: Path):
     if _binding(root, plan) != binding:
         raise CardineError('source changed after rehearsal')
     return apply_adopt(root, plan, framework)
+
+
+if __name__ == '__main__':
+    apply_adopt(Path(sys.argv[1]), decode_plan(json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))),
+                Path(sys.argv[3]))

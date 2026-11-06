@@ -48,16 +48,27 @@ def _encode_outputs(outputs):
     return {name: base64.b64encode(value).decode('ascii') for name, value in outputs.items()}
 
 
-def _saved_plan(receipt):
+def encode_plan(plan) -> dict:
+    return {'case': plan.case, 'outputs': _encode_outputs(plan.outputs),
+            'diagnostics': list(plan.diagnostics), 'missing': list(plan.missing),
+            'refusals': list(plan.refusals),
+            'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()}}
+
+
+def decode_plan(data):
     from cardine.adopt.plan import AdoptPlan
+    return AdoptPlan(data['case'], {k: base64.b64decode(v) for k, v in data['outputs'].items()},
+                     tuple(data['diagnostics']), tuple(data['missing']), tuple(data['refusals']),
+                     {k: tuple(v) for k, v in data['dropped_dependencies'].items()})
+
+
+def _saved_plan(receipt):
     if not receipt.exists():
         raise CardineError('no interrupted adoption plan; plan adoption first')
     saved = receipts._load_intent(receipt).get('adoption', {}).get('plan')
     if not saved:
         raise CardineError('interrupted adoption receipt lacks its original plan')
-    return AdoptPlan(saved['case'], {k: base64.b64decode(v) for k, v in saved['outputs'].items()},
-                     tuple(saved['diagnostics']), tuple(saved['missing']), tuple(saved['refusals']),
-                     {k: tuple(v) for k, v in saved['dropped_dependencies'].items()})
+    return decode_plan(saved)
 
 
 def _task_state(root, task_id, record):
@@ -122,15 +133,14 @@ def _views(root, original_plan):
     return {queue: render_queue(model, digest).encode(), plan: splice_region(original_plan, region)}
 
 
-def apply_adopt(project: Path, plan, framework: Path | None = None, *, receipt_root=None, env=None) -> bool:
+def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
     """Apply the exact plan supplied by the caller, or resume its interruption.
 
     An interrupted operation can be resumed with ``plan=None``; its recorded
     original plan remains bound to the operation owner.
     """
     root = Path(project).resolve()
-    receipt = (receipts.host_path('adopt', root) if receipt_root is None
-               else receipts.host_path('adopt', root, base=receipt_root))
+    receipt = receipts.host_path('adopt', root)
     if plan is None:
         plan = _saved_plan(receipt)
     if plan.missing or plan.refusals:
@@ -156,14 +166,10 @@ def apply_adopt(project: Path, plan, framework: Path | None = None, *, receipt_r
         receipts.boundary('before_adopt_declare')
         payload = active.intent.get('adoption')
         if payload is None:
-            from cardine.shared.git import _run_git
-            probe = _run_git(root, 'rev-parse', '--show-toplevel', env=env)
-            if probe.returncode == 0:
-                status = _run_git(root, 'status', '--porcelain', '--untracked-files=all', env=env)
-                if status.returncode:
-                    raise CardineError(status.stderr.strip() or 'git status failed')
-                if status.stdout.strip():
-                    raise CardineError('adoption requires a clean project')
+            from cardine.shared.git import _run_git, git_output
+            probe = _run_git(root, 'rev-parse', '--show-toplevel')
+            if probe.returncode == 0 and git_output(root, 'status', '--porcelain', '--untracked-files=all'):
+                raise CardineError('adoption requires a clean project')
             if plan.case == 'A':
                 outputs, tasks, removals, directories = dict(plan.outputs), {}, [], []
             elif plan.case == 'B' and framework is not None:
@@ -185,10 +191,7 @@ def apply_adopt(project: Path, plan, framework: Path | None = None, *, receipt_r
                     raise CardineError(f'adoption conflicts with existing path: {name}')
             payload = {'outputs': _encode_outputs(outputs), 'tasks': tasks, 'removals': removals,
                        'directories': directories, 'before': before,
-                       'plan': {'case': plan.case, 'outputs': _encode_outputs(plan.outputs),
-                                'diagnostics': list(plan.diagnostics), 'missing': list(plan.missing),
-                                'refusals': list(plan.refusals),
-                                'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()}}}
+                       'plan': encode_plan(plan)}
             if plan.case == 'B':
                 old_plan = _target(root, locations.get('plan', 'PROJECT_PLAN.md'))
                 payload['original_plan'] = base64.b64encode(old_plan.read_bytes() if old_plan.exists() else b'').decode('ascii')
