@@ -129,7 +129,9 @@ def _legacy_tool_installed(home: Path, environment: Mapping[str, str]) -> bool:
 def _legacy_worktree_root(home: Path, environment: Mapping[str, str]) -> Path:
     value = environment.get(_LEGACY.upper() + "_WORKTREE_ROOT")
     if not value:
-        base = Path(environment["XDG_CONFIG_HOME"]) if environment.get("XDG_CONFIG_HOME") else home / ".config"
+        xdg = environment.get("XDG_CONFIG_HOME")
+        base = (home / xdg[2:] if xdg and xdg.startswith("~/") else home if xdg == "~"
+                else Path(xdg).resolve() if xdg else home / ".config")
         path = base / _LEGACY / "config.json"
         if path.is_file():
             try:
