@@ -1,6 +1,7 @@
 """Conversion interruption tests use disposable projects and home directories."""
 import os
 import hashlib
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -30,7 +31,8 @@ class ConversionTest(unittest.TestCase):
         self.root.mkdir()
         home = base / 'home'
         home.mkdir()
-        self.env = patch.dict(os.environ, HOME=str(home), CARDINE_WORKTREE_ROOT=str(base / 'worktrees'))
+        self.env = patch.dict(os.environ, HOME=str(home), CARDINE_ROOT=str(ROOT),
+                              CARDINE_WORKTREE_ROOT=str(base / 'worktrees'))
         self.env.start()
         self.addCleanup(self.env.stop)
         def git(*args):
@@ -85,6 +87,20 @@ class ConversionTest(unittest.TestCase):
         with self.assertRaises(CardineError):
             apply_adopt(self.root, self.plan, ROOT)
         self.assertFalse(state.exists())
+
+    def test_converted_task_starts_without_reconcile(self):
+        apply_adopt(self.root, self.plan, ROOT)
+        subprocess.run(['git', 'add', '.'], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(['git', 'commit', '-qm', 'Adopt'], cwd=self.root, check=True, capture_output=True)
+        command = [str(ROOT / 'bin/cardine')]
+        prepared = subprocess.run(command + ['worktree', 'prepare', '001', '--project', str(self.root),
+                                             '--format', 'json'], cwd=self.root, capture_output=True, text=True)
+        self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+        worktree = Path(json.loads(prepared.stdout)['worktree'])
+        started = subprocess.run(command + ['execution', 'start', '001', '--project', '.', '--format', 'json'],
+                                 cwd=worktree, capture_output=True, text=True)
+        self.assertEqual(started.returncode, 0, started.stdout + started.stderr)
+        self.assertTrue(json.loads(started.stdout)['started'])
 
     def test_resume_from_saved_plan(self):
         def interrupt(name):
