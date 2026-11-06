@@ -471,7 +471,7 @@ given home and environment are read.
 |---------|---------------------------------------------|----------|
 | Legacy Codex user rules (`~/.codex/rules/default.rules`) | The known legacy block is kept byte-identical and setup reports that it kept it. Once the tool is gone, the exact block is removed as before and foreign bytes stay. | `tests/test_host_coexistence.py`, `tests/test_codex_user_rules.py` |
 | Rerun | A second `setup --apply` changes nothing. | `tests/test_host_coexistence.py` |
-| Briefing | The Cardine briefing is silent in a project without a Cardine declaration. The legacy briefing script is silent in a converted project that has no legacy queue. | `tests/test_host_coexistence.py` |
+| Briefing and hooks | The Cardine briefing, read guard, and stop audit act only in a project with a Cardine declaration. The legacy briefing script is silent in a converted project that has no legacy queue. | `tests/test_host_coexistence.py` |
 
 Own hooks only: `cardine hook read-guard` and `cardine hook stop-audit` act
 only where the project declaration (`.cardine/project.json`) exists in the
