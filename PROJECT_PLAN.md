@@ -198,7 +198,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 155 — Plan the adoption as a pure function (C2c).
 - `[x]` 156 — Apply the adoption and release the managed copies (C2d).
 - `[x]` 157 — Rehearse the adoption on a clone (C2e).
-- `[ ]` 158 — Expose the cardine adopt command (C2f).
+- `[x]` 158 — Expose the cardine adopt command (C2f).
 - `[x]` 159 — Make the installation checks conditional (C5a).
 - `[x]` 160 — Bind identifier allowances to existing paths (C5b).
 - `[x]` 161 — Move live installation tests to fixtures (C5c).

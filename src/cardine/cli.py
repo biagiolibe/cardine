@@ -23,6 +23,10 @@ class CardineArgumentParser(argparse.ArgumentParser):
     """Use sysexits-style usage status for machine-oriented namespaces."""
 
     def error(self, message: str) -> None:
+        if " adopt" in self.prog:
+            print(json.dumps({"version": 1, "command": "adopt", "outcome": "invalid",
+                              "plan": None, "result": None, "diagnostics": [message]}, sort_keys=True))
+            self.exit(64)
         if " task identity" in self.prog or " worktree" in self.prog:
             self.print_usage(sys.stderr)
             self.exit(64, f"{self.prog}: error: {message}\n")
@@ -64,6 +68,8 @@ def main() -> int:
         exit_code = emit_diagnostic(refused, journal)
         journal.write(exit_code)
         return exit_code
+    if preview_args[:1] == ["adopt"]:
+        return _adopt_cli()
     if preview_args[:1] == ["hook"]:
         try:
             Path.cwd()
@@ -77,6 +83,39 @@ def main() -> int:
     exit_code = _run_cli(journal)
     journal.write(exit_code)
     return exit_code
+
+
+def _adopt_cli() -> int:
+    """Run adoption without writing a lifecycle journal during a check."""
+    from cardine.adopt.plan import plan_adopt
+    from cardine.adopt.rehearsal import apply_rehearsed_adoption, rehearse_adoption
+
+    args = build_parser().parse_args()
+    result = {"version": 1, "command": "adopt", "outcome": "done", "plan": None,
+              "result": None, "diagnostics": []}
+    try:
+        validation = json.loads(args.validation.read_text(encoding="utf-8")) if args.validation else None
+        ci = json.loads(args.ci.read_text(encoding="utf-8")) if args.ci else "none"
+        plan = plan_adopt(args.project, args.framework_root, name=args.name, slug=args.slug,
+                          preset=args.preset, language=args.language, task_identity=args.task_identity,
+                          validation=validation, ci=ci)
+        result["plan"] = json.loads(plan.bytes())
+        if plan.refusals or (not args.check and plan.missing):
+            result["outcome"] = "blocked"
+            result["diagnostics"] = list(plan.refusals) + [f"missing: {item}" for item in plan.missing]
+            code = 2
+        else:
+            if args.rehearse:
+                result["result"] = rehearse_adoption(args.project, plan, args.framework_root)
+            elif args.apply:
+                result["result"] = apply_rehearsed_adoption(args.project, plan, args.framework_root)
+            code = 0
+    except (CardineError, OSError, ValueError, KeyError, TypeError, UnicodeError) as error:
+        result["outcome"] = "blocked"
+        result["diagnostics"] = [str(error)]
+        code = 2
+    print(json.dumps(result, sort_keys=True))
+    return code
 
 
 def build_parser() -> CardineArgumentParser:
@@ -93,6 +132,19 @@ def build_parser() -> CardineArgumentParser:
         help="print the framework SemVer, including prerelease and build metadata",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    adopt = subparsers.add_parser("adopt", help="plan, rehearse, or apply project conversion")
+    adopt.add_argument("--project", type=Path, required=True)
+    adopt_mode = adopt.add_mutually_exclusive_group(required=True)
+    adopt_mode.add_argument("--check", action="store_true")
+    adopt_mode.add_argument("--rehearse", action="store_true")
+    adopt_mode.add_argument("--apply", action="store_true")
+    adopt.add_argument("--name")
+    adopt.add_argument("--slug")
+    adopt.add_argument("--preset", choices=("lean", "governed"))
+    adopt.add_argument("--language")
+    adopt.add_argument("--task-identity", choices=("opaque", "milestone"))
+    adopt.add_argument("--validation", type=Path)
+    adopt.add_argument("--ci", type=Path)
     init = subparsers.add_parser("init", help="preview or apply a configured project bootstrap")
     init.add_argument("--project", type=Path, required=True)
     init_mode = init.add_mutually_exclusive_group(required=True)

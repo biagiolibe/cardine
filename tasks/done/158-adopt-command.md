@@ -19,8 +19,8 @@ design.
 
 ## Acceptance Criteria
 
-- [ ] Row C2f is implemented as its line in the excerpt describes it.
-- [ ] Only the files in the row's files column are edited, together with
+- [x] Row C2f is implemented as its line in the excerpt describes it.
+- [x] Only the files in the row's files column are edited, together with
   this task's own record and its archive, handoff, and state file. A test
   file outside the column may change only to update an expectation that this
   change made stale, without new behavior, and the handoff lists it. A
@@ -32,17 +32,17 @@ design.
   check that required it. Any other file, or a change that adds behavior
   beyond that adaptation, stops the task before editing it and names the
   file, so that the coordinator splits the row.
-- [ ] The row's tests exist and pass: Parser, envelope, exit codes 0, 2, 64; `--check` writes nothing.
-- [ ] Rule 4 of decision 14: None beyond C2d and C2e.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] The row's tests exist and pass: Parser, envelope, exit codes 0, 2, 64; `--check` writes nothing.
+- [x] Rule 4 of decision 14: None beyond C2d and C2e.
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -51,16 +51,16 @@ design.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/158.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/158.json`, which only
   the installed `meridian task close 158` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

@@ -100,7 +100,7 @@ class CardineCliTests(unittest.TestCase):
                     environment["CARDINE_ROOT"] = str(other_root)
                 for arguments, code in [
                     (["--version"], 0), (["--help"], 0), (["--unknown"], 2),
-                    (["adopt"], 2), (["finalize-adoption"], 2),
+                    (["adopt"], 64), (["finalize-adoption"], 2),
                     (["worktree", "--unknown"], 64),
                     (["--framework-root", str(ROOT), "--version"], 0),
                 ]:

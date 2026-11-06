@@ -1,7 +1,11 @@
 ---
-description: "Conversion availability during Cardine development"
+description: "Plan and convert a project to Cardine"
 ---
 
-# Project conversion
+# Project adoption
 
-Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
+Run `cardine adopt --project <path> --check` first and inspect its JSON plan and missing inputs. Supply the requested inputs, then use `--rehearse` to verify a disposable clone and `--apply` to convert the clean project. See `docs/ADOPT_COMMANDS.md` for the options and exit statuses.
+
+```bash
+${CLAUDE_PLUGIN_ROOT}/bin/cardine adopt --project . --check
+```

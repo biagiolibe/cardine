@@ -58,9 +58,8 @@ class TemplateCommandTest(unittest.TestCase):
         self.assertEqual(findings_for("`cardine worktree integrate staging`"),
                          ["docs/EXAMPLE.md:1: unknown command `cardine worktree integrate staging`"])
 
-    def test_the_adopt_command_that_no_longer_exists_is_reported(self) -> None:
-        self.assertEqual(findings_for("Do not run `cardine adopt`."),
-                         ["docs/EXAMPLE.md:1: unknown command `cardine adopt`"])
+    def test_the_adopt_command_is_recognized(self) -> None:
+        self.assertEqual(findings_for("Run `cardine adopt`."), [])
 
     def test_arguments_flags_and_placeholders_end_the_command(self) -> None:
         for text in ("`cardine run <TASK-ID> --project .`", "`cardine adr show ADR-0001`", "`cardine status --write`",
@@ -193,8 +192,8 @@ class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase)
                 self.assertEqual(findings_for(text), [])
         parsed = {name: [cr.cardine_cli.build_parser().parse_args(route) for route in self.routes(name)]
                   for name in self.texts}
-        self.assertEqual(parsed["adopt"], [])
-        self.assertIn("no conversion command", self.texts["adopt"])
+        self.assertEqual([p.command for p in parsed["adopt"]], ["adopt"])
+        self.assertTrue(parsed["adopt"][0].check)
         self.assertEqual([p.command for p in parsed["upgrade"]], ["upgrade"] * 3)
         self.assertTrue(parsed["upgrade"][0].check)
         self.assertTrue(parsed["upgrade"][1].apply)
