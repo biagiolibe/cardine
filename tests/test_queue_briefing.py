@@ -21,6 +21,11 @@ from project_config_support import write_project_config
 ROOT = Path(__file__).resolve().parents[1]
 HOOK = ROOT / "hooks" / "queue-briefing.sh"  # MERIDIAN-INSTALLATION-CHECK
 
+
+def hook_present(root: Path = ROOT) -> bool:
+    """The shell hook belongs to this checkout only until it is removed."""
+    return (root / "hooks" / "queue-briefing.sh").is_file()  # MERIDIAN-INSTALLATION-CHECK
+
 GOVERNED_HEADER = (
     "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n"
     "|---:|---|---|---|---|---|---|\n"
@@ -37,6 +42,7 @@ def run_hook(cwd: Path, environment: dict[str, str] | None = None, hook: Path | 
         )
 
 
+@unittest.skipUnless(hook_present(), "hooks/queue-briefing.sh is absent from this checkout")
 class QueueBriefingTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -446,6 +452,17 @@ class QueueBriefingTest(unittest.TestCase):
                     "In progress: TASK-002",
                     "Diagnostics: 1; run cardine status",  # TASK-003 names a missing dependency
                 ])
+
+
+class HookPresenceTest(unittest.TestCase):
+    def test_presence_follows_the_hook_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertFalse(hook_present(root))
+            # MERIDIAN-INSTALLATION-CHECK
+            (root / "hooks").mkdir()
+            (root / "hooks" / "queue-briefing.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+            self.assertTrue(hook_present(root))
 
 
 if __name__ == "__main__":

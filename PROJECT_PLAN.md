@@ -202,7 +202,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 159 — Make the installation checks conditional (C5a).
 - `[x]` 160 — Bind identifier allowances to existing paths (C5b).
 - `[x]` 161 — Move live installation tests to fixtures (C5c).
-- `[ ]` 162 — Run the shell hook tests only while the hooks exist (C5d).
+- `[x]` 162 — Run the shell hook tests only while the hooks exist (C5d).
 - `[ ]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).
 - `[ ]` 174 — Declare the capability profile at init.
 - `[ ]` 175 — Rehearse the adoption without patching the process.

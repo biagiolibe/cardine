@@ -21,6 +21,11 @@ from installation_fixture import copy_hook, hook_environment
 ROOT = Path(__file__).resolve().parents[1]
 HOOK = ROOT / "hooks" / "read-guard.sh"  # MERIDIAN-INSTALLATION-CHECK
 
+
+def hook_present(root: Path = ROOT) -> bool:
+    """The shell hook belongs to this checkout only until it is removed."""
+    return (root / "hooks" / "read-guard.sh").is_file()  # MERIDIAN-INSTALLATION-CHECK
+
 GOVERNED_HEADER = (
     "| Order | ID | Priority | Status | Dependencies |\n|---:|---|---|---|---|\n"
 )
@@ -36,6 +41,7 @@ def run_hook(payload: dict | str) -> subprocess.CompletedProcess[str]:
         )
 
 
+@unittest.skipUnless(hook_present(), "hooks/read-guard.sh is absent from this checkout")
 class ReadGuardTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -271,6 +277,17 @@ class PythonReadGuardTest(unittest.TestCase):
             shell = {"tool_name": "Bash", "cwd": str(self.project),
                      "tool_input": {"command": f"cat {target}"}}
             self.assertEqual(decision(native, "claude")[0], decision(shell)[0])
+
+
+class HookPresenceTest(unittest.TestCase):
+    def test_presence_follows_the_hook_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertFalse(hook_present(root))
+            # MERIDIAN-INSTALLATION-CHECK
+            (root / "hooks").mkdir()
+            (root / "hooks" / "read-guard.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+            self.assertTrue(hook_present(root))
 
 
 if __name__ == "__main__":

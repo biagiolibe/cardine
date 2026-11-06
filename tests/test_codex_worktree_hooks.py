@@ -20,6 +20,11 @@ from cardine.shared import journal as owner_shared_journal
 CLI = ROOT / "scripts/cardine_cli.py"
 
 
+def hooks_config_present(root: Path = ROOT) -> bool:
+    """The checkout's Codex hook definitions exist only until they are removed."""
+    return (root / ".codex/hooks.json").is_file()  # MERIDIAN-INSTALLATION-CHECK
+
+
 class CodexWorktreeHooksTest(unittest.TestCase):
     def run_hook(self, name: str, cwd: Path, payload: dict) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
@@ -58,6 +63,7 @@ class CodexWorktreeHooksTest(unittest.TestCase):
                 self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
                 self.assertFalse(cwd.exists())
 
+    @unittest.skipUnless(hooks_config_present(), ".codex/hooks.json is absent from this checkout")
     def test_primary_project_definitions_process_worktree_payloads(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             primary = Path(directory) / "primary"
@@ -97,6 +103,17 @@ class CodexWorktreeHooksTest(unittest.TestCase):
                     self.assertEqual(json.loads(done.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
             written = json.loads(journal.read_text().splitlines()[-1])
             self.assertEqual((written["host"], written["result"]), ("codex", "unbacked_block"))
+
+
+class HooksConfigPresenceTest(unittest.TestCase):
+    def test_presence_follows_the_hooks_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.assertFalse(hooks_config_present(root))
+            # MERIDIAN-INSTALLATION-CHECK
+            (root / ".codex").mkdir()
+            (root / ".codex/hooks.json").write_text("{}\n", encoding="utf-8")
+            self.assertTrue(hooks_config_present(root))
 
 
 if __name__ == "__main__":
