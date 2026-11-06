@@ -6,11 +6,13 @@ from pathlib import Path
 import subprocess
 
 from cardine.shared.errors import CardineError
+from cardine.shared.git import _run_git
 from cardine.templates.init import apply_init, plan_init
 
 
 def _run(args, root, *, env=None):
-    result = subprocess.run(args, cwd=root, env=env, text=True, capture_output=True)
+    result = (_run_git(root, *args[1:], env=env) if args[0] == 'git' else
+              subprocess.run(args, cwd=root, env=env, text=True, capture_output=True))
     if result.returncode:
         raise CardineError(f"rehearsal command failed ({result.returncode}): {args!r}\n{result.stdout}{result.stderr}")
     return result.stdout

@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
 import tempfile
 
 from cardine.adopt.apply import apply_adopt
@@ -13,11 +12,12 @@ from cardine.adopt.verify import verify_adoption
 from cardine.legacy.conversion_reader import read_legacy_project
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
+from cardine.shared.git import _run_git
 from cardine.worktree.storage import resolve_worktree_root
 
 
 def _git(root, *args):
-    result = subprocess.run(['git', *args], cwd=root, text=True, capture_output=True)
+    result = _run_git(root, *args)
     if result.returncode:
         raise CardineError(f"rehearsal git failed: {result.stderr.strip()}")
     return result.stdout.strip()
@@ -49,8 +49,7 @@ def rehearse_adoption(project: Path, plan, framework: Path):
                    CARDINE_WORKTREE_ROOT=str(scratch / 'worktrees'))
         (scratch / 'home').mkdir()
         receipts.boundary('before_rehearsal_clone')
-        result = subprocess.run(['git', 'clone', '--no-hardlinks', '--no-local', str(root), str(clone)],
-                                env=env, capture_output=True, text=True)
+        result = _run_git(None, 'clone', '--no-hardlinks', '--no-local', str(root), str(clone), env=env)
         if result.returncode:
             raise CardineError(f"rehearsal clone failed: {result.stderr.strip()}")
         _git(clone, 'checkout', '--detach', binding['head'])

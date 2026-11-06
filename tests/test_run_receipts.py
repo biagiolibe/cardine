@@ -336,7 +336,9 @@ else:
         self.assertEqual(receipts.require_authority(self.root), observed)
 
 
-PUBLICATION_ALLOWLIST = {'hosts/setup.py': ["(root / 'PROJECT_WORKFLOW.md').write_text('probe\\n', encoding='utf-8')",
+PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["receipts._durable(receipt, (json.dumps({'version': 1, 'binding': binding, 'verification': verified}, sort_keys=True) + '\\n').encode())"],
+                          'adopt/verify.py': ["proposal.write_text(f'ID: {task_id}\\n## Objective\\nVerify task creation.\\n## Acceptance Criteria\\nVerified.\\n## Validation\\nnone\\n## Dependencies\\nnone\\n')"],
+                          'hosts/setup.py': ["(root / 'PROJECT_WORKFLOW.md').write_text('probe\\n', encoding='utf-8')",
                           "(root / 'sentinel.txt').write_text('line\\n' * _PROBE_LINES, encoding='utf-8')"],
  # Host-owned session records (request, session, launch, credential digests); never task state.
  'hosts/transports.py': ["open(temporary, 'wb')", "os.fdopen(descriptor, 'wb')",
