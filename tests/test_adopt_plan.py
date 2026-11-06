@@ -11,6 +11,8 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 from cardine.adopt.plan import plan_adopt
+from cardine.adopt.apply import encode_plan, decode_plan
+from cardine.tasks.evidence import require_named_validation_commands
 from cardine.lifecycle import receipts
 from conversion_fixture import queue_text, write_meridian_project
 from task_contract_support import contract_record, VALIDATION
@@ -76,6 +78,25 @@ class AdoptPlanTest(unittest.TestCase):
         self.assertEqual(config['ci'], 'none')
         self.assertEqual(config['taskIdentity']['mode'], 'opaque')
         self.assertEqual(tree_digest(self.base), before)
+
+    def test_validation_drops_are_planned_and_saved(self):
+        write_meridian_project(self.root, queue=queue_text([('[ ]', '001', 'Task')]))
+        source = contract_record('001').replace(
+            '## Expected code surface\nChange the documented deliverable only.\n', '')
+        source = source.replace("- `task-check`: `python3 -c 'pass'`",
+                                "- `task-check`: `python3 -c 'pass'`\n"
+                                "- `meridian audit --project .`\n\nA paragraph follows.")
+        (self.root / 'tasks/001.md').write_text(source)
+        self.commit()
+        plan = plan_adopt(self.root, ROOT, **self.choices())
+        self.assertNotIn('ADOPT_RECORD', plan.refusals)
+        self.assertEqual(plan.dropped_validation, {'001': ('meridian audit --project .',)})
+        self.assertEqual(json.loads(plan.bytes())['dropped_validation'], {'001': ['meridian audit --project .']})
+        require_named_validation_commands(plan.outputs['tasks/001.md'].decode())
+        saved = encode_plan(plan)
+        self.assertEqual(decode_plan(saved).dropped_validation, plan.dropped_validation)
+        del saved['dropped_validation']
+        self.assertEqual(decode_plan(saved).dropped_validation, {})
 
     def test_candidate_and_defaults_mapping(self):
         candidate = {'version': 1, 'state': 'declared', 'outcomes': {

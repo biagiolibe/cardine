@@ -81,13 +81,31 @@ class AdoptRecordsTest(unittest.TestCase):
         for source, expected in [
             (self.record().replace('`docs/result.md`', '`../outside`'), 'Relevant Files'),
             (self.record().replace('`docs/result.md`', 'Some source files'), 'Relevant Files'),
-            (self.record().replace("python3 -c 'pass'", 'meridian audit --project .'), 'Meridian command'),
+            (self.record().replace("python3 -c 'pass'", 'meridian audit --project .'), 'no translatable commands'),
             (self.record().replace('`002`, `003`', '`unknown`'), 'unknown dependencies'),
             (self.record().replace('## Out of scope', '## Other'), 'missing Out of scope'),
         ]:
             with self.subTest(expected=expected):
                 result = translate_record(source, open_ids={'001', '002'}, closed_ids={'003'})
                 self.assertIsNone(result.text)
+                self.assertIn(expected, ' '.join(result.diagnostics))
+
+    def test_validation_prose_and_dropped_commands(self):
+        source = self.record().replace(
+            "- `python3 -c 'pass'`",
+            "- `first`: `echo first`\n- `meridian audit --project .`\n"
+            "- `last`: `echo last`\n\nA paragraph follows.\n")
+        result = translate_record(source, open_ids={'001', '002'}, closed_ids={'003'})
+        self.assertEqual(result.diagnostics, ())
+        self.assertEqual(result.dropped_validation, ('meridian audit --project .',))
+        self.assertIn("- `first`: `echo first`\n- `last`: `echo last`\n\nA paragraph follows.\n", result.text)
+
+    def test_indented_and_malformed_validation_entries(self):
+        for entry, expected in (("  - `echo indented`", 'no translatable commands'),
+                                ("- echo malformed", 'cannot translate')):
+            with self.subTest(entry=entry):
+                source = self.record().replace("- `python3 -c 'pass'`", entry)
+                result = translate_record(source, open_ids={'001', '002'}, closed_ids={'003'})
                 self.assertIn(expected, ' '.join(result.diagnostics))
 
     def test_profile_revision_is_derived_from_supplied_bytes(self):
