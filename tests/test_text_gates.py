@@ -195,6 +195,8 @@ ALLOWLIST = {
             ("src/cardine/cli.py", "_run_cli.task_new"),
         },
         "keys": {
+            # Adoption freezes translated input when it creates the task state.
+            ("src/cardine/adopt/apply.py", "_task_state", "named-reader", "resolve_task_contract"),
             ("src/cardine/tasks/contract_update.py", "<module>", "named-reader", "resolve_task_contract"),
             # Creation-input parsers (T-03, T-15): task 085 froze every runtime
             # consumer on the snapshot; these helpers only validate the record

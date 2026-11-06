@@ -261,6 +261,7 @@ class ReplayInventoryTest(unittest.TestCase):
     """Every module that crosses an effect boundary has an executable replay test."""
 
     REPLAY = {
+        "src/cardine/adopt/apply.py": ["test_adopt_interruption.ConversionTest.test_interrupt_at_each_adoption_boundary"],
         "src/cardine/adopt/plan.py": ["test_adopt_plan.AdoptPlanTest.test_before_plan_interruption_writes_nothing"],
         "src/cardine/templates/init.py": ["test_init.InitTest.test_every_effect_and_plan_and_result_boundary_converges"],
         "src/cardine/integration/records.py": ["test_run_integration.CandidateTest.test_closure_record_commit_boundaries_converge"],
