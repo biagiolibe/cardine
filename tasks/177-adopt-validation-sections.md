@@ -28,22 +28,22 @@ record of this repository contains, so `cardine adopt --rehearse` stops with
 
 ## Acceptance Criteria
 
-- [ ] **Entries as the contract reads them.** Only a line of the Validation section
+- [x] **Entries as the contract reads them.** Only a line of the Validation section
   that starts with `- ` is an entry. Every other line, prose or blank, is kept verbatim
   and in place in the translated section. An entry that is neither ``- `id`: `command` ``
   nor ``- `command` `` is still a diagnostic, as today.
-- [ ] **Meridian entries dropped and reported.** An entry whose command starts with the
+- [x] **Meridian entries dropped and reported.** An entry whose command starts with the
   program `meridian` is removed from the translated section and recorded in a new field
   `RecordTranslation.dropped_validation`, a tuple of the dropped commands in record
   order. It is no longer a diagnostic. A section left with no command at all is still
   the diagnostic `Validation: no translatable commands`.
-- [ ] **Visible in the plan.** `AdoptPlan` in `src/cardine/adopt/plan.py` gains
+- [x] **Visible in the plan.** `AdoptPlan` in `src/cardine/adopt/plan.py` gains
   `dropped_validation: dict[str, tuple[str, ...]]`, keyed by task ID like
   `dropped_dependencies`, with an empty default so that existing constructors keep
   working. `AdoptPlan.bytes()` and the plan saved in the adoption receipt by
   `encode_plan` and `decode_plan` in `src/cardine/adopt/apply.py` include it; decoding a
   saved plan without the key yields an empty dictionary.
-- [ ] **Tests.** `tests/test_adopt_records.py` covers: a section with a list and a
+- [x] **Tests.** `tests/test_adopt_records.py` covers: a section with a list and a
   following paragraph translates with the paragraph unchanged; a `meridian` entry among
   others is dropped and reported while the others keep their IDs; a section of only
   `meridian` entries gives the no-commands diagnostic; an indented or malformed entry is
@@ -51,21 +51,21 @@ record of this repository contains, so `cardine adopt --rehearse` stops with
   record has both kinds, planned without `ADOPT_RECORD`, with the drop listed under
   `dropped_validation` for that task. The translated record of that test passes
   `require_named_validation_commands`.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -74,16 +74,16 @@ record of this repository contains, so `cardine adopt --rehearse` stops with
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/177.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/177.json`, which only
   the installed `meridian task close 177` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 
