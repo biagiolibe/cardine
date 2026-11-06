@@ -53,34 +53,34 @@ failure it removes.
 
 ## Acceptance Criteria
 
-- [ ] **Unchanged copies.** When a file that a `plan_init` output replaces is a Meridian
+- [x] **Unchanged copies.** When a file that a `plan_init` output replaces is a Meridian
   managed file whose bytes match its `managedFiles` digest, the output is the Cardine
   template alone. A `## Commands` block of that file is carried over only when it
   contains no `[` placeholder, as row C2d requires.
-- [ ] **Edited copies.** When the digest does not match, the carried text is the text
+- [x] **Edited copies.** When the digest does not match, the carried text is the text
   outside `MERIDIAN` blocks minus every blank-line-separated block that equals a block of
   the Meridian baseline copy of the same file. Before comparing, whitespace runs are
   collapsed, and the baseline's `[Project Name]` matches any text. When no baseline
   copy exists, today's behavior applies. This one rule replaces the AGENTS.md and
   CLAUDE.md preamble special case and also applies to `docs/CONTEXT_BUDGET_POLICY.md`.
-- [ ] **Project files.** An existing file that is not a Meridian managed file and has no
+- [x] **Project files.** An existing file that is not a Meridian managed file and has no
   `MERIDIAN` marker is left byte-for-byte unchanged: the conversion writes no output
   for it.
-- [ ] **Manifest.** `managedFiles` of the converted `.cardine/manifest.json` lists only
+- [x] **Manifest.** `managedFiles` of the converted `.cardine/manifest.json` lists only
   paths the conversion writes. A capability `managedSurface` keeps every path it
   declares. A declared surface that the conversion did not write is a refusal with a
   diagnostic, never a silent drop.
-- [ ] **Queue links.** `render_queue` takes the queue's project-relative path, and each
+- [x] **Queue links.** `render_queue` takes the queue's project-relative path, and each
   record link is relative to that file's directory. Its three callers
   (`status_render.py`, `adopt/apply.py`, `templates/init.py`) pass the path they write.
   A test renders a queue under `tasks/` and resolves every link to an existing record.
-- [ ] **Repository check, Cardine state.** The `.cardine/manifest.json` state requires
+- [x] **Repository check, Cardine state.** The `.cardine/manifest.json` state requires
   no records beyond its manifest. For that state, `managed_digest_diagnostics` reports
   only the FAIL results of the product's checks in `src/cardine/templates/audit.py`
   (`audit_managed_copy_digests` and the installation results of
   `audit_declared_capabilities`), so it applies the same exemptions as `cardine audit`.
   The Meridian state keeps its current comparison unchanged.
-- [ ] **Tests.**
+- [x] **Tests.**
   - `tests/test_adopt_apply.py` covers points 1 to 4 on a synthetic Meridian
     installation whose managed copies match their digests: no `MERIDIAN` text and no
     unregistered stop code in any converted file; an unchanged project file; an edited
@@ -89,7 +89,7 @@ failure it removes.
   - `tests/test_check_repository.py` covers the Cardine state on a synthetic root: a
     managed copy with appended project prose under a capability marker passes, and a
     drifted markerless copy fails.
-- [ ] **Rehearsal evidence.** On a disposable clone of the implementation commit, with a
+- [x] **Rehearsal evidence.** On a disposable clone of the implementation commit, with a
   disposable `HOME`, `TMPDIR`, and `CARDINE_WORKTREE_ROOT`, run `python3 -m cardine.cli
   adopt --project <clone> --rehearse --name Cardine --slug cardine --language Italian
   --validation <file>`, with `PYTHONPATH` set to the worktree's `src`. The validation
@@ -98,21 +98,21 @@ failure it removes.
   audit summary. Its `diagnostics` are empty. If it stops on a further defect, fix it
   in the files listed here, rerun, and list it in the handoff. A defect in another file
   is a change of scope.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] The subprocess ceilings of `tests/test_command_context.py` still hold.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] The subprocess ceilings of `tests/test_command_context.py` still hold.
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -121,16 +121,16 @@ failure it removes.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/183.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/183.json`, which only
   the installed `meridian task close 183` writes.
-- [ ] A test expectation that this task makes stale is updated in this task
+- [x] A test expectation that this task makes stale is updated in this task
   without weakening any other assertion. The parallel suite reports the
   same coverage `total` before and after the task, except for new or
   deliberately removed tests, which the handoff lists with their reason.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 
 ## Relevant Files
@@ -140,6 +140,7 @@ failure it removes.
 | `src/cardine/adopt/release.py`, `src/cardine/tasks/status_render.py`, `src/cardine/adopt/apply.py`, `src/cardine/templates/init.py` | Conversion outputs and the queue view. |
 | `scripts/check_repository.py` | The Cardine installation state of the repository check. |
 | `tests/test_adopt_apply.py`, `tests/test_check_repository.py` | The tests. |
+| `tests/test_adopt_interruption.py`, `tests/test_no_meridian_identifiers.py` | Fixture and identifier allowance added by coordinator scope amendment. |
 
 ## Technical Context
 
