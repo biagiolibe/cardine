@@ -14,6 +14,7 @@ class RecordTranslation:
     text: str | None
     diagnostics: tuple[str, ...]
     dropped_dependencies: tuple[str, ...]
+    dropped_validation: tuple[str, ...] = ()
 
 
 def _section(text: str, name: str):
@@ -91,29 +92,36 @@ def translate_record(text: str, *, open_ids, closed_ids, profile: bytes | None =
             diagnostics.append(f'Relevant Files: {error}')
     validation = _section(result, 'Validation')
     if validation:
-        entries = []
-        for line in validation.group(1).splitlines():
-            line = line.strip()
-            if not line:
+        lines = []
+        dropped_validation = []
+        commands = 0
+        for line in validation.group(1).splitlines(keepends=True):
+            content = line.rstrip('\r\n')
+            if not content.startswith('- '):
+                lines.append(line)
                 continue
-            named = re.fullmatch(r'- `([^`]+)`: `([^`]+)`', line)
-            plain = re.fullmatch(r'- `([^`]+)`', line)
+            named = re.fullmatch(r'- `([^`]+)`: `([^`]+)`', content)
+            plain = re.fullmatch(r'- `([^`]+)`', content)
             if named:
                 ident, command = named.groups()
             elif plain:
                 command = plain.group(1)
                 ident = 'adopt-' + hashlib.sha256(command.encode()).hexdigest()[:16]
             else:
-                diagnostics.append(f'Validation: cannot translate {line!r}')
+                diagnostics.append(f'Validation: cannot translate {content!r}')
                 continue
             if re.match(r'^meridian(?:\s|$)', command):
-                diagnostics.append(f'Validation: Meridian command requires replacement: {command}')
+                dropped_validation.append(command)
                 continue
-            entries.append(f'- `{ident}`: `{command}`')
-        if entries:
-            result = _replace(result, validation, 'Validation', '\n'.join(entries))
+            commands += 1
+            ending = line[len(content):]
+            lines.append(f'- `{ident}`: `{command}`' + ending)
+        if commands:
+            result = result[:validation.start(1)] + ''.join(lines) + result[validation.end(1):]
         else:
             diagnostics.append('Validation: no translatable commands')
+    else:
+        dropped_validation = []
     if profile is not None:
         # The profile bytes are supplied by the caller; no reconcile mutation is
         # needed between task creation and the first start.
@@ -134,4 +142,4 @@ def translate_record(text: str, *, open_ids, closed_ids, profile: bytes | None =
                 diagnostics.append(f'missing {field}')
         if not (_contract_field(result, 'Relevant Files') or _contract_field(result, 'Technical Context')):
             diagnostics.append('missing Relevant Files or Technical Context')
-    return RecordTranslation(None if diagnostics else result, tuple(diagnostics), tuple(dropped))
+    return RecordTranslation(None if diagnostics else result, tuple(diagnostics), tuple(dropped), tuple(dropped_validation))
