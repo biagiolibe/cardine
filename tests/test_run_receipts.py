@@ -338,8 +338,8 @@ else:
 
 PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["receipts._durable(receipt, (json.dumps({'version': 1, 'binding': binding, 'verification': verified}, sort_keys=True) + '\\n').encode())"],
                           'adopt/verify.py': ["proposal.write_text(f'ID: {task_id}\\n## Objective\\nVerify task creation.\\n## Acceptance Criteria\\nVerified.\\n## Validation\\nnone\\n## Dependencies\\nnone\\n')"],
-                          'hosts/setup.py': ["(root / 'PROJECT_WORKFLOW.md').write_text('probe\\n', encoding='utf-8')",
-                          "(root / 'sentinel.txt').write_text('line\\n' * _PROBE_LINES, encoding='utf-8')"],
+                          'hosts/setup.py': ["(root / 'sentinel.txt').write_text('line\\n' * _PROBE_LINES, encoding='utf-8')",
+                                          '(root / names().project_declaration_path).write_text(\'{"version": 1, "preset": "lean"}\', encoding=\'utf-8\')',],
  # Host-owned session records (request, session, launch, credential digests); never task state.
  'hosts/transports.py': ["open(temporary, 'wb')", "os.fdopen(descriptor, 'wb')",
                          'os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 384)',
