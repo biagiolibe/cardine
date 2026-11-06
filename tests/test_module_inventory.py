@@ -50,6 +50,15 @@ def package_graph():
 
 
 class ModuleInventoryTest(unittest.TestCase):
+    def test_product_modules_do_not_import_unittest(self):
+        for path in sorted((ROOT / "src").rglob("*.py")):
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                names = ([alias.name for alias in node.names] if isinstance(node, ast.Import)
+                         else [node.module or ""] if isinstance(node, ast.ImportFrom) else [])
+                for name in names:
+                    self.assertFalse(name == "unittest" or name.startswith("unittest."),
+                                     f"{path.relative_to(ROOT)}:{node.lineno}: {name}")
+
     def test_baseline_bindings_have_exactly_one_definition(self):
         baseline = json.loads((ROOT / "tests/fixtures/module_split_baseline.json").read_text())
         self.assertEqual(baseline["commit"], "ceb84fdd88d2e0819ab42f6b1d6e5266fffff8fd")

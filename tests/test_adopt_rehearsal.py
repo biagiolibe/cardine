@@ -33,7 +33,11 @@ class RehearsalTest(unittest.TestCase):
         self.addCleanup(environment.stop)
         self.receipt = base / 'receipt.json'
         self.scratch_root = home / 'worktrees'
-        self.host_path = lambda kind, target: self.receipt if kind == 'adopt-rehearsal' else base / (kind + '.json')
+        original_host_path = receipts.host_path
+        self.original_host_path = original_host_path
+        self.host_path = lambda kind, target, **kwargs: (original_host_path(kind, target, **kwargs)
+            if kwargs.get('base') is not None else self.receipt if kind == 'adopt-rehearsal'
+            else base / (kind + '.json'))
         self.git('init', '-q', '-b', 'main')
         (self.root / 'README').write_text('source\n')
         self.git('add', '.')
@@ -51,6 +55,9 @@ class RehearsalTest(unittest.TestCase):
             self.assertTrue(str(root).startswith(str(self.scratch_root)))
             self.assertTrue(Path(env['HOME']).is_dir())
             self.assertEqual(expected, 0)
+            scratch = root.parent
+            self.assertTrue(receipts.host_path('adopt', root, base=scratch).is_file())
+            self.assertFalse(self.original_host_path('adopt', root).exists())
             seen.append(root)
             return {'tasks': 0}
         with patch.object(receipts, 'host_path', side_effect=self.host_path), \
@@ -60,10 +67,13 @@ class RehearsalTest(unittest.TestCase):
                 def interrupt(name):
                     if name == boundary:
                         raise RuntimeError(name)
+                environment_before = dict(os.environ)
                 with patch.object(receipts, 'boundary', interrupt), self.assertRaises(RuntimeError):
                     rehearse_adoption(self.root, self.plan, ROOT)
+                self.assertEqual(dict(os.environ), environment_before)
                 self.assertFalse(self.receipt.exists())
                 rehearse_adoption(self.root, self.plan, ROOT)
+                self.assertEqual(dict(os.environ), environment_before)
                 self.assertTrue(self.receipt.exists())
             self.assertEqual(len(seen), len(set(seen)))
         self.assertEqual(tree_digest(self.root), before)

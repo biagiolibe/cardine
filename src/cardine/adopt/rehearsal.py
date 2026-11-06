@@ -55,13 +55,9 @@ def rehearse_adoption(project: Path, plan, framework: Path):
         _git(clone, 'checkout', '--detach', binding['head'])
         receipts.boundary('after_rehearsal_clone')
         expected = len(read_legacy_project(root).open_rows) if plan.case == 'B' else 0
-        # The writer and its host receipts must also use the disposable home and temp root.
-        from unittest.mock import patch
-        with patch.dict(os.environ, env, clear=True), patch.object(receipts, 'host_path',
-                side_effect=lambda kind, target: scratch / (kind + '-' + receipts.digest(str(target).encode()) + '.json')):
-            apply_adopt(clone, plan, framework)
-            receipts.boundary('before_rehearsal_verify')
-            verified = verify_adoption(clone, framework, expected, env=env)
+        apply_adopt(clone, plan, framework, receipt_root=scratch, env=env)
+        receipts.boundary('before_rehearsal_verify')
+        verified = verify_adoption(clone, framework, expected, env=env)
         if _binding(root, plan) != binding:
             raise CardineError('source changed during rehearsal')
         receipts.boundary('before_rehearsal_receipt')

@@ -122,14 +122,15 @@ def _views(root, original_plan):
     return {queue: render_queue(model, digest).encode(), plan: splice_region(original_plan, region)}
 
 
-def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
+def apply_adopt(project: Path, plan, framework: Path | None = None, *, receipt_root=None, env=None) -> bool:
     """Apply the exact plan supplied by the caller, or resume its interruption.
 
     An interrupted operation can be resumed with ``plan=None``; its recorded
     original plan remains bound to the operation owner.
     """
     root = Path(project).resolve()
-    receipt = receipts.host_path('adopt', root)
+    receipt = (receipts.host_path('adopt', root) if receipt_root is None
+               else receipts.host_path('adopt', root, base=receipt_root))
     if plan is None:
         plan = _saved_plan(receipt)
     if plan.missing or plan.refusals:
@@ -155,10 +156,14 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
         receipts.boundary('before_adopt_declare')
         payload = active.intent.get('adoption')
         if payload is None:
-            from cardine.shared.git import _run_git, git_output
-            probe = _run_git(root, 'rev-parse', '--show-toplevel')
-            if probe.returncode == 0 and git_output(root, 'status', '--porcelain', '--untracked-files=all'):
-                raise CardineError('adoption requires a clean project')
+            from cardine.shared.git import _run_git
+            probe = _run_git(root, 'rev-parse', '--show-toplevel', env=env)
+            if probe.returncode == 0:
+                status = _run_git(root, 'status', '--porcelain', '--untracked-files=all', env=env)
+                if status.returncode:
+                    raise CardineError(status.stderr.strip() or 'git status failed')
+                if status.stdout.strip():
+                    raise CardineError('adoption requires a clean project')
             if plan.case == 'A':
                 outputs, tasks, removals, directories = dict(plan.outputs), {}, [], []
             elif plan.case == 'B' and framework is not None:
