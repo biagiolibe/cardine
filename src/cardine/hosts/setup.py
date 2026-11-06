@@ -28,6 +28,7 @@ from cardine.hosts.skills import _framework_skill_links
 from cardine.hosts.skills import _setup_codex_state
 from cardine.hosts.skills import _stale_codex_skill_warnings
 from cardine.hosts.skills import _remove_old_skill_links
+from cardine.hosts.skills import codex_profile_root_mismatch
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.evidence import proposed_candidate_validation_declaration
 from cardine.shared.errors import CardineError
@@ -147,26 +148,6 @@ def _legacy_worktree_root(home: Path, environment: Mapping[str, str]) -> Path:
     if root == home or root == Path(root.anchor):
         raise CardineError("legacy worktree root must not be the home or filesystem root; reconcile it manually")
     return root
-
-
-def _codex_expected_root_mismatch(config_path: Path, resolved_root: Path,
-                                legacy_root: Path | None = None) -> str | None:
-    if not config_path.is_file():
-        return None
-    try:
-        parsed = tomllib.loads(config_path.read_text(encoding="utf-8"))
-        roots = parsed["permissions"]["cardine-worktrees"]["workspace_roots"]
-    except (OSError, tomllib.TOMLDecodeError, KeyError, TypeError):
-        return None
-    if not isinstance(roots, dict):
-        return None
-    enabled = {str(Path(value).expanduser().resolve()) for value, allowed in roots.items() if allowed is True}
-    expected = {str(resolved_root)} | ({str(legacy_root)} if legacy_root is not None else set())
-    if enabled != expected:
-        if len(enabled) == 1 and legacy_root is None:
-            return f"profile={next(iter(enabled))} resolved={resolved_root}"
-        return f"profile={sorted(enabled)} resolved={sorted(expected)}"
-    return None
 
 
 def plan_setup(
@@ -486,7 +467,7 @@ def print_setup_plan(plan: SetupPlan) -> None:
                 planned_legacy = extra[0]
         except (KeyError, TypeError, tomllib.TOMLDecodeError):
             pass
-    mismatch = _codex_expected_root_mismatch(plan.codex_config, plan.resolution.path, planned_legacy)
+    mismatch = codex_profile_root_mismatch(plan.codex_config, plan.resolution.path, legacy_root=planned_legacy)
     if mismatch:
         print(f"codex-root-mismatch: {mismatch}")
     print(f"codex-skill-links: {plan.skill_links_state}")
@@ -699,7 +680,8 @@ def codex_doctor(
     except CardineError:
         result["permission-model"] = "blocked"
         result["profile-ownership"] = "blocked"
-    mismatch = _codex_expected_root_mismatch(config_path, worktree_root, legacy_root if legacy_installed else None)
+    mismatch = codex_profile_root_mismatch(config_path, worktree_root,
+                                           legacy_root=legacy_root if legacy_installed else None)
     if mismatch:
         result["codex-root-mismatch"] = mismatch
     text = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""

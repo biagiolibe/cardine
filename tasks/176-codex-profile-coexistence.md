@@ -113,6 +113,7 @@ worktree root, and later setup runs must recognize that root exactly, without gu
 | File | Role |
 |------|------|
 | `src/cardine/hosts/codex.py`, `src/cardine/hosts/setup.py` | Expected profile, migration, repair, and the legacy root. |
+| `src/cardine/hosts/skills.py` | Coordinator scope amendment: compare the optional legacy root in the existing mismatch helper. |
 | `tests/test_host_codex_repair.py`, `tests/test_host_coexistence.py` | The tests. |
 | `docs/HOST_CAPABILITY_CONTRACT.md` | The coexistence note. |
 

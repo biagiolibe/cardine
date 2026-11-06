@@ -161,7 +161,8 @@ def _setup_codex_state(plan: CodexConfigurationPlan) -> str:
     return "unconfigured"
 
 
-def codex_profile_root_mismatch(config_path: Path, resolved_root: Path) -> str | None:
+def codex_profile_root_mismatch(config_path: Path, resolved_root: Path, *,
+                                legacy_root: Path | None = None) -> str | None:
     if not config_path.is_file():
         return None
     try:
@@ -174,6 +175,11 @@ def codex_profile_root_mismatch(config_path: Path, resolved_root: Path) -> str |
     if not isinstance(roots, dict):
         return None
     enabled = [Path(value).expanduser().resolve() for value, allowed in roots.items() if allowed is True]
+    if legacy_root is not None:
+        expected = {resolved_root, legacy_root}
+        if set(enabled) != expected:
+            return f"profile={sorted(map(str, enabled))} resolved={sorted(map(str, expected))}"
+        return None
     if len(enabled) == 1 and enabled[0] != resolved_root:
         return f"profile={enabled[0]} resolved={resolved_root}"
     return None

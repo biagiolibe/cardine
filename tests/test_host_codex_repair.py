@@ -13,6 +13,7 @@ from pathlib import Path
 import cardine.shared.errors as shared_errors
 from cardine.hosts import codex as owner_hosts_codex
 from cardine.hosts import setup as owner_hosts_setup
+from cardine.hosts import skills as owner_hosts_skills
 import cardine_cli
 
 
@@ -157,9 +158,7 @@ class CodexProfileRepairTest(unittest.TestCase):
         owner_hosts_codex.apply_codex_configuration(restored)
         self.assertEqual(owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy,
                          legacy_installed=True).status, "ready")
-        self.assertIsNone(owner_hosts_setup._codex_expected_root_mismatch(self.config, self.worktrees, legacy))
-        self.assertIsNotNone(owner_hosts_setup._codex_expected_root_mismatch(self.config, self.worktrees,
-                                                                          self.root / "other"))
+        self.assertIsNone(owner_hosts_skills.codex_profile_root_mismatch(self.config, self.worktrees, legacy_root=legacy))
         removal = owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees, legacy_root=legacy)
         self.assertEqual(removal.status, "approval-required")
         owner_hosts_codex.apply_codex_configuration(removal)
@@ -179,6 +178,17 @@ class CodexProfileRepairTest(unittest.TestCase):
         with self.assertRaisesRegex(shared_errors.CardineError, "reconcile it manually"):
             owner_hosts_codex.plan_codex_configuration(self.config, self.worktrees,
                                                        legacy_root=self.root / "configured", legacy_installed=True)
+
+    def test_root_mismatch_checks_both_expected_roots(self) -> None:
+        legacy = self.root / "legacy"
+        block = owner_hosts_codex._codex_managed_block(self.worktrees, legacy)
+        self.config.write_text(block)
+        self.assertIsNone(owner_hosts_skills.codex_profile_root_mismatch(self.config, self.worktrees, legacy_root=legacy))
+        self.config.write_text(owner_hosts_codex._codex_managed_block(self.worktrees))
+        self.assertIsNotNone(owner_hosts_skills.codex_profile_root_mismatch(self.config, self.worktrees, legacy_root=legacy))
+        self.config.write_text(block.replace(cardine_cli.CODEX_MANAGED_END,
+                                            f'"{self.root / "extra"}" = true\n' + cardine_cli.CODEX_MANAGED_END))
+        self.assertIsNotNone(owner_hosts_skills.codex_profile_root_mismatch(self.config, self.worktrees, legacy_root=legacy))
 
     def test_damaged_two_root_profile_repairs_without_changing_grants(self) -> None:
         legacy = self.root / "legacy"
