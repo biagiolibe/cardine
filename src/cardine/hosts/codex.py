@@ -474,12 +474,12 @@ def plan_codex_configuration(
         roots = existing_profile.get("workspace_roots") if isinstance(existing_profile, dict) else None
         enabled = [name for name, value in roots.items() if value is True] if isinstance(roots, dict) else []
         allowed = {str(root)} | ({str(legacy_root)} if legacy_root is not None else set())
-        if len(enabled) not in (1, 2) or len(enabled) != len(roots) or (len(enabled) == 2 and set(enabled) != allowed):
+        if len(enabled) not in (1, 2) or (len(enabled) == 2 and set(enabled) != allowed):
             raise CardineError("Cardine Codex profile has changed; reconcile it manually")
         old_block = _codex_managed_block(Path(enabled[0]), Path(enabled[1]) if len(enabled) == 2 else None)
         if text.count(old_block) != 1:
             raise CardineError("Cardine Codex profile block has changed; reconcile it manually")
-        if old_block == _codex_managed_block(root, expected_legacy):
+        if old_block == _codex_managed_block(root, expected_legacy) and set(roots) == set(enabled):
             return CodexConfigurationPlan("ready", config_path, root, "permission-profile", None,
                                           "requested profile is already effective")
     base_text = text

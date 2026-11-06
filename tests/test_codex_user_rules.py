@@ -189,7 +189,7 @@ setup.apply_setup(plan)
             home = base / name
             (home / '.codex/rules').mkdir(parents=True)
             (home / 'project').mkdir()
-            root = home / 'worktrees'
+            root = home / ('.' + 'meri' + 'dian') / 'worktrees'
             block = (owner_hosts_codex._codex_managed_block(root)
                      .replace('CARDINE:', 'MERIDIAN:')
                      .replace('cardine-worktrees', 'meridian-worktrees')
