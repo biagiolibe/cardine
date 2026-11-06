@@ -14,6 +14,18 @@ from cardine.templates.init import plan_init
 _MARKER = re.compile(r"<!-- MERIDIAN:(BEGIN(?:\s+[^>]*?)?|END) -->")
 
 
+def _checked(root: Path, name) -> Path:
+    relative = Path(name)
+    if relative.is_absolute() or not relative.parts or '..' in relative.parts:
+        raise CardineError(f'unsafe adoption path: {name}')
+    path = root
+    for part in relative.parts:
+        path = path / part
+        if path.is_symlink():
+            raise CardineError(f'refusing a symlink in adoption path: {path}')
+    return path
+
+
 def strip_managed_blocks(text: str) -> str:
     """Remove complete Meridian blocks, preserving every unmarked byte.
 
@@ -43,10 +55,12 @@ def strip_managed_blocks(text: str) -> str:
 
 def conversion_outputs(root: Path, framework: Path, plan):
     """Pin the replacement files, task records and releases before any writes."""
+    if (root / '.meridian').is_symlink():
+        raise CardineError('refusing a symlinked Meridian installation')
     legacy = read_legacy_project(root)
-    manifest = json.loads((root / '.meridian/manifest.json').read_text(encoding='utf-8'))
+    manifest = json.loads(_checked(root, '.meridian/manifest.json').read_text(encoding='utf-8'))
     config = json.loads(plan.outputs['.cardine/project.json'])
-    policy = root / 'LANGUAGE_POLICY.md'
+    policy = _checked(root, 'LANGUAGE_POLICY.md')
     text = policy.read_text(encoding='utf-8') if policy.exists() else ''
     match = re.search(r'\*\*Conversation language:\*\*\s*`([^`]+)`', text)
     if not match:
@@ -61,12 +75,12 @@ def conversion_outputs(root: Path, framework: Path, plan):
     for name in ('PROJECT_PLAN.md', 'tasks/QUEUE.md', 'docs/ARCHITECTURE_DECISIONS.md'):
         outputs.pop(name, None)
     for name, content in list(outputs.items()):
-        path = root / name
+        path = _checked(root, name)
         if not path.is_file() or name.startswith('.cardine/'):
             continue
         old = path.read_text(encoding='utf-8')
         if name in ('AGENTS.md', 'CLAUDE.md'):
-            baseline = root / '.meridian/baselines' / str(manifest.get('workflowBaselineVersion', '')) / name
+            baseline = _checked(root, Path('.meridian/baselines') / str(manifest.get('workflowBaselineVersion', '')) / name)
             if baseline.is_file():
                 base = baseline.read_text(encoding='utf-8')
                 first = _MARKER.search(base)
@@ -80,14 +94,14 @@ def conversion_outputs(root: Path, framework: Path, plan):
         if remainder.strip():
             outputs[name] = content.rstrip() + b'\n\n' + remainder.encode()
     outputs.update(plan.outputs)
-    queue = root / legacy.locations.queue
+    queue = _checked(root, legacy.locations.queue)
     lines = queue.read_text(encoding='utf-8').splitlines(keepends=True)
     closed = [lines[row.line - 1] for row in legacy.rows if row.state != 'open']
-    archive = root / 'tasks/QUEUE_ARCHIVE.md'
+    archive = _checked(root, 'tasks/QUEUE_ARCHIVE.md')
     if closed:
         existing = archive.read_bytes() if archive.exists() else b'# Queue Archive\n\n'
         outputs['tasks/QUEUE_ARCHIVE.md'] = existing + ''.join(closed).encode()
-    budget = root / 'docs/CONTEXT_BUDGET_POLICY.md'
+    budget = _checked(root, 'docs/CONTEXT_BUDGET_POLICY.md')
     if budget.is_file():
         name = 'docs/CONTEXT_READING_POLICY.md'
         remainder = strip_managed_blocks(budget.read_text(encoding='utf-8'))
@@ -110,11 +124,14 @@ def conversion_outputs(root: Path, framework: Path, plan):
             outputs[name] = text.encode('utf-8')
     removals = []
     meridian = root / '.meridian'
+    directories = ['.meridian']
     for path in sorted(meridian.rglob('*')):
         if path.is_symlink():
             raise CardineError(f'refusing a symlink in Meridian installation: {path}')
         if path.is_file():
             removals.append(path.relative_to(root).as_posix())
+        elif path.is_dir():
+            directories.append(path.relative_to(root).as_posix())
     if budget.is_file():
         removals.append('docs/CONTEXT_BUDGET_POLICY.md')
-    return outputs, tasks, sorted(removals)
+    return outputs, tasks, sorted(removals), sorted(directories, key=lambda name: (-len(Path(name).parts), name))

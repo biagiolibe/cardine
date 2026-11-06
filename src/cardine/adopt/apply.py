@@ -146,6 +146,9 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
                 for name in payload['removals']:
                     if _target(root, name).exists():
                         raise CardineError(f'completed adoption removal reappeared: {name}')
+                for name in ('.cardine/tasks', 'tasks/done'):
+                    if not _target(root, name).is_dir():
+                        raise CardineError(f'completed adoption directory is missing: {name}')
                 for task_id, record in sorted(payload['tasks'].items()):
                     _verify_task(root, task_id, record)
                 return False
@@ -157,9 +160,9 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             if probe.returncode == 0 and git_output(root, 'status', '--porcelain', '--untracked-files=all'):
                 raise CardineError('adoption requires a clean project')
             if plan.case == 'A':
-                outputs, tasks, removals = dict(plan.outputs), {}, []
+                outputs, tasks, removals, directories = dict(plan.outputs), {}, [], []
             elif plan.case == 'B' and framework is not None:
-                outputs, tasks, removals = conversion_outputs(root, Path(framework), plan)
+                outputs, tasks, removals, directories = conversion_outputs(root, Path(framework), plan)
             else:
                 raise CardineError('adoption needs a recognized case and framework path')
             paths = set(outputs) | set(removals)
@@ -169,10 +172,13 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             store = _target(root, '.cardine/tasks')
             if store.exists() and (not store.is_dir() or any(store.iterdir())):
                 raise CardineError('adoption requires an empty task state store')
+            if tasks and _target(root, '.cardine/receipt-authority.json').exists():
+                raise CardineError('adoption conflicts with existing receipt authority')
             for name in outputs:
                 if before[name] is not None and (plan.case == 'A' or name.startswith('.cardine/')):
                     raise CardineError(f'adoption conflicts with existing path: {name}')
-            payload = {'outputs': _encode_outputs(outputs), 'tasks': tasks, 'removals': removals, 'before': before,
+            payload = {'outputs': _encode_outputs(outputs), 'tasks': tasks, 'removals': removals,
+                       'directories': directories, 'before': before,
                        'plan': {'case': plan.case, 'outputs': _encode_outputs(plan.outputs),
                                 'diagnostics': list(plan.diagnostics), 'missing': list(plan.missing),
                                 'refusals': list(plan.refusals),
@@ -197,6 +203,7 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
         if payload['tasks']:
             authority = root / '.cardine/receipt-authority.json'
             if not authority.exists():
+                receipts.boundary('before_adopt_write:.cardine/receipt-authority.json')
                 receipts.authorize_project(root, accepted=receipts.observed_authority(root), new=True)
             for task_id, record in sorted(payload['tasks'].items()):
                 receipts.boundary(f'before_adopt_state:{task_id}')
@@ -215,15 +222,12 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
         for name in payload['removals']:
             receipts.boundary(f'before_adopt_release:{name}')
             active.run(name, None)
-        if plan.case == 'B':
-            directory = root / '.meridian'
-            def prune():
-                if directory.exists():
-                    for path in sorted(directory.rglob('*'), key=lambda p: len(p.parts), reverse=True):
-                        if path.is_dir() and not path.is_symlink():
-                            path.rmdir()
-                    directory.rmdir()
-            active.effect('release-meridian-directories', prune, lambda: not directory.exists())
+        for name in payload['directories']:
+            directory = _target(root, name)
+            receipts.boundary(f'before_adopt_release:{name}')
+            active.effect('release-directory:' + name,
+                          lambda path=directory: path.rmdir() if path.exists() else None,
+                          lambda path=directory: not path.exists())
         receipts.boundary('before_adopt_result')
     receipts.boundary('after_adopt_result')
     return True

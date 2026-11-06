@@ -38,7 +38,8 @@ class ConversionTest(unittest.TestCase):
         git('init', '-q', '-b', 'main')
         git('config', 'user.name', 'Test')
         git('config', 'user.email', 'test@example.invalid')
-        write_meridian_project(self.root, queue=queue_text([('[ ]', '001', 'Task'), ('[x]', '002', 'Done')]))
+        write_meridian_project(self.root, queue=queue_text([
+            ('[ ]', '001', 'Task'), ('[ ]', '002', 'Dependent'), ('[x]', '003', 'Done')]))
         (self.root / 'LANGUAGE_POLICY.md').write_text('# Language\n\n**Conversation language:** `English`\n')
         (self.root / 'AGENTS.md').write_text('# Custom preamble\n\nKeep this instruction.\n\n'
             '<!-- MERIDIAN:BEGIN capability=old v1 -->\nold rule\n<!-- MERIDIAN:END -->\n')
@@ -50,6 +51,9 @@ class ConversionTest(unittest.TestCase):
         (self.root / 'PROJECT_PLAN.md').write_text('# Project plan\n\nKeep this narrative.\n')
         (self.root / 'tasks/001.md').write_text(contract_record('001').replace(
             '## Expected code surface\nChange the documented deliverable only.\n', ''))
+        (self.root / 'tasks/002.md').write_text(contract_record('002').replace(
+            '## Expected code surface\nChange the documented deliverable only.\n', '').replace(
+            '## Dependencies\nnone', '## Dependencies\n- Depends on: `001`'))
         git('add', '.')
         git('commit', '-qm', 'Fixture')
         self.plan = plan_adopt(self.root, ROOT, name='Example', slug='example',
@@ -62,7 +66,11 @@ class ConversionTest(unittest.TestCase):
         self.assertFalse((self.root / '.meridian').exists())
         self.assertTrue((self.root / '.cardine/tasks/001.json').is_file())
         self.assertIn('Keep this narrative.', (self.root / 'PROJECT_PLAN.md').read_text())
-        self.assertIn('002', (self.root / 'tasks/QUEUE_ARCHIVE.md').read_text())
+        self.assertIn('003', (self.root / 'tasks/QUEUE_ARCHIVE.md').read_text())
+        from cardine.tasks.status import load_task_status
+        model = load_task_status(self.root)
+        dependent = next(row for row in model['tasks'] if row['id'] == '002')
+        self.assertEqual(dependent['blocked_by'], ['001'])
         self.assertIn('Keep this instruction.', (self.root / 'AGENTS.md').read_text())
         self.assertIn('Keep this note.', (self.root / 'docs/CONTEXT_READING_POLICY.md').read_text())
         self.assertFalse((self.root / 'docs/CONTEXT_BUDGET_POLICY.md').exists())
@@ -122,14 +130,17 @@ class ConversionTest(unittest.TestCase):
                 self.fail('conversion did not converge')
         self.assertIn('before_adopt_declare', seen)
         self.assertIn('before_adopt_state:001', seen)
+        self.assertIn('before_adopt_state:002', seen)
         self.assertIn('before_adopt_release:.meridian/manifest.json', seen)
         self.assertIn('before_adopt_result', seen)
         self.assertIn('after_adopt_result', seen)
         receipt = receipts._load_intent(receipts.host_path('adopt', self.root))
         payload = receipt['adoption']
         self.assertEqual({name.removeprefix('before_adopt_write:') for name in seen
-                          if name.startswith('before_adopt_write:')}, set(payload['outputs']))
+                          if name.startswith('before_adopt_write:')},
+                         set(payload['outputs']) | {'.cardine/receipt-authority.json'})
         self.assertEqual({name.removeprefix('before_adopt_release:') for name in seen
-                          if name.startswith('before_adopt_release:')}, set(payload['removals']))
+                          if name.startswith('before_adopt_release:')},
+                         set(payload['removals']) | set(payload['directories']))
         self.assertFalse(apply_adopt(self.root, self.plan, ROOT))
         self.assertFalse((self.root / '.meridian').exists())
