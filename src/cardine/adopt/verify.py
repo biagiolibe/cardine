@@ -27,7 +27,7 @@ def _audit(root, command, env):
         elif len(fields) >= 2 and fields[0] in {'PASS', 'FAIL', 'ADVISORY', 'UNVERIFIED', 'NOT_APPLICABLE'}:
             pairs.append((fields[0], fields[1]))
     if result.returncode not in (0, 1) or len(summaries) != 1 or not pairs:
-        raise CardineError(f'audit could not be evaluated ({result.returncode}): {result.stdout}{result.stderr}')
+        raise CardineError(f'audit failed or could not be evaluated ({result.returncode}): {result.stdout}{result.stderr}')
     return {'exit': result.returncode, 'summary': summaries[0], 'pairs': sorted(set(pairs))}
 
 
@@ -60,6 +60,7 @@ def verify_adoption(root: Path, framework: Path, expected_tasks: int, *, env=Non
     for ident in validation['baseline']:
         _run(['sh', '-c', validation['commands'][ident]], root, env=env)
     _run(['git', 'add', '-A'], root, env=env)
+    _run(['git', 'add', '-f', '.cardine'], root, env=env)
     _run(['git', '-c', 'user.name=Cardine rehearsal', '-c',
           'user.email=rehearsal@example.invalid', 'commit', '--allow-empty', '-qm', 'Rehearse adoption'], root, env=env)
     for task in tasks:
