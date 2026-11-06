@@ -1,5 +1,6 @@
 """Rehearsal isolates the source and gates application on verification."""
 import os
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -72,6 +73,39 @@ class RehearsalTest(unittest.TestCase):
             result = rehearse_adoption(self.root, self.plan, ROOT)
         self.assertEqual(result['tasks'], 0)
         self.assertTrue(self.receipt.is_file())
+        evidence = json.loads(self.receipt.read_text())['verification']['audit']
+        self.assertIn('SUMMARY', evidence['copy']['summary'])
+        self.assertIn('SUMMARY', evidence['reference']['summary'])
+        self.assertTrue(evidence['copy']['pairs'])
+
+    def test_tampered_copy_blocks_apply(self):
+        from cardine.adopt.verify import verify_adoption
+        def tamper(root, framework, expected, *, env):
+            (root / '.codex/hooks.json').write_text('tampered')
+            return verify_adoption(root, framework, expected, env=env)
+        before = tree_digest(self.root)
+        with patch.object(receipts, 'host_path', side_effect=self.host_path), \
+             patch('cardine.adopt.rehearsal.verify_adoption', side_effect=tamper):
+            with self.assertRaisesRegex(CardineError, 'audit failed'):
+                apply_rehearsed_adoption(self.root, self.plan, ROOT)
+        self.assertEqual(tree_digest(self.root), before)
+        self.assertFalse(self.receipt.exists())
+
+    def test_extra_nonpass_audit_result_blocks_apply(self):
+        from cardine.adopt import verify
+        original = verify._audit
+        def inject(root, command, env):
+            result = original(root, command, env)
+            if root.name == 'project':
+                result['pairs'].append(('UNVERIFIED', 'injected-check'))
+            return result
+        before = tree_digest(self.root)
+        with patch.object(receipts, 'host_path', side_effect=self.host_path), \
+             patch.object(verify, '_audit', side_effect=inject):
+            with self.assertRaisesRegex(CardineError, 'injected-check'):
+                apply_rehearsed_adoption(self.root, self.plan, ROOT)
+        self.assertEqual(tree_digest(self.root), before)
+        self.assertFalse(self.receipt.exists())
 
     def test_failure_blocks_apply_and_changed_head_invalidates_receipt(self):
         before = tree_digest(self.root)
