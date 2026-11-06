@@ -13,6 +13,8 @@ from unittest.mock import patch
 from cardine_cli_support import ROOT
 from project_config_support import write_project_config
 from cardine.hosts import codex, setup
+from cardine.hosts import claude as claude_host
+from cardine.hosts import read_guard, stop_audit
 
 LEGACY = "meri" + "dian"  # the retired product name, composed so the identifier guard stays strict
 FOREIGN_RULES = '# foreign\r\nprefix_rule(pattern=["other"], decision="allow")\r\n'
@@ -98,6 +100,54 @@ class CoexistenceTest(unittest.TestCase):
         result = subprocess.run(["bash", str(script)], cwd=self.converted, env=environment,
                                 input="{}", text=True, capture_output=True, timeout=30, check=False)
         self.assertEqual((result.returncode, result.stdout), (0, ""), result.stderr)
+
+    def test_the_read_guard_acts_only_where_the_declaration_exists(self):
+        for project, denied in ((self.converted, True), (self.legacy_project, False)):
+            (project / "big.txt").write_text("".join(f"{n}\n" for n in range(3000)))
+            payload = {"tool_name": "Read", "tool_input": {"file_path": str(project / "big.txt")}, "cwd": str(project)}
+            with self.subTest(project=project.name):
+                allowed, _reason = read_guard.decision(payload, "claude")
+                self.assertEqual(allowed, not denied)
+
+    def test_the_stop_audit_appends_nothing_without_the_declaration(self):
+        payload = {"cwd": str(self.legacy_project), "last_assistant_message": "BLOCKED COMMAND_REFUSED"}
+        with patch.object(stop_audit, "final_message", side_effect=AssertionError("audited a legacy project")):
+            self.assertEqual(stop_audit.audit(payload), [])
+
+    def settings(self, scope, enabled):
+        path = {"user": self.home / ".claude/settings.json",
+                "project": self.converted / ".claude/settings.json",
+                "local": self.converted / ".claude/settings.local.json"}[scope]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"enabledPlugins": {f"{LEGACY}@{LEGACY}": enabled}}))
+        return path
+
+    def advisories(self):
+        found = claude_host.claude_legacy_plugin_advisories(self.converted, self.home)
+        self.assertEqual(claude_host.claude_hook_duplicate_advisories(self.converted, self.home) == (), True)
+        return found
+
+    def test_a_local_disable_wins_over_project_and_user_enablement(self):
+        for enabled_scope in ("user", "project"):
+            with self.subTest(enabled=enabled_scope):
+                self.settings(enabled_scope, True)
+                self.settings("local", False)
+                self.assertEqual(self.advisories(), ())
+                for path in (self.home / ".claude/settings.json", self.converted / ".claude/settings.json",
+                             self.converted / ".claude/settings.local.json"):
+                    path.unlink(missing_ok=True)
+
+    def test_an_effective_enablement_names_the_deciding_file(self):
+        user = self.settings("user", True)
+        found = self.advisories()
+        self.assertEqual(len(found), 1)
+        self.assertIn(str(user), found[0])
+        user.unlink()
+        self.settings("user", False)
+        local = self.settings("local", True)
+        found = self.advisories()
+        self.assertEqual(len(found), 1)
+        self.assertIn(str(local), found[0])
 
 
 if __name__ == "__main__":

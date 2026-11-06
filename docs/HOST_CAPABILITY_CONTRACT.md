@@ -473,17 +473,24 @@ given home and environment are read.
 | Rerun | A second `setup --apply` changes nothing. | `tests/test_host_coexistence.py` |
 | Briefing | The Cardine briefing is silent in a project without a Cardine declaration. The legacy briefing script is silent in a converted project that has no legacy queue. | `tests/test_host_coexistence.py` |
 
-Findings recorded for step S7, not fixed in the legacy tool:
+Own hooks only: `cardine hook read-guard` and `cardine hook stop-audit` act
+only where the project declaration (`.cardine/project.json`) exists in the
+working directory. In a legacy project, one with `PROJECT_WORKFLOW.md` and no
+declaration, the read guard allows and the stop audit appends nothing.
 
-- `cardine hook read-guard` and `cardine hook stop-audit` decide by the
-  presence of `PROJECT_WORKFLOW.md`, which a legacy project also has. In a
-  legacy project the Cardine read guard therefore denies an unranged large
-  read next to the legacy guard. Observed in a scratch project; the fix is in
-  `src/cardine/hosts/read_guard.py` and `src/cardine/hosts/stop_audit.py`.
-- The Claude legacy-plugin advisory (`hosts/claude.py`) counts a plugin as
-  enabled when any settings layer says `true`; it ignores a `false` in
-  `.claude/settings.local.json`. The host's own precedence for a local-scope
-  disable is not proved by any offline test, and no live probe has run.
-- Setup still migrates the legacy Codex permission profile in
-  `~/.codex/config.toml` to the Cardine one. The row covers the user rules
-  only, so this is reported, not changed.
+Plugin disable. Claude Code combines `enabledPlugins` key by key: for each
+plugin id, the value from the highest-precedence file that names it applies,
+in the order local (`.claude/settings.local.json`) > project
+(`.claude/settings.json`) > user (`~/.claude/settings.json`). Sources:
+<https://code.claude.com/docs/en/plugins/loading.md> (section "Find where a
+plugin is enabled") and <https://code.claude.com/docs/en/plugins/install.md>.
+The Cardine advisories apply the same precedence and report only an effective
+`true`, naming the file that decides it. The means for step S7 is
+`claude plugin disable <id> --scope local`, with an explicit `--scope local`:
+without it, auto-detection can disable the plugin at user scope for every
+project. No live probe ran in this task; the live check belongs to the
+developer at S7.
+
+Finding recorded for step S7, not changed here: setup still migrates the
+legacy Codex permission profile in `~/.codex/config.toml` to the Cardine one
+while the legacy tool stays installed. The coordinator plans that separately.

@@ -21,6 +21,7 @@ from cardine.shared.journal import JOURNAL_NAME, JOURNAL_ROTATED_NAME, JOURNAL_V
 from cardine.stops.registry import load_stop_registry
 from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import flow as owner_shared_flow
+from cardine.shared.layout import names
 
 # The keyword stays a separate literal so the repository's uncoded-stop scan sees a verdict value, not a stop line.
 BLOCKED_LINE = re.compile(r"^[\s>*_`-]*" + "BLOCKED" + r" ([A-Z][A-Z0-9_]*)\b", re.MULTILINE)
@@ -112,7 +113,7 @@ def audit(payload: dict, now: datetime | None = None, host: str = "claude") -> l
     """Append one line per unbacked or declared code once per event identity; return the appended lines."""
     now = now or datetime.now(timezone.utc)
     cwd = Path(payload["cwd"])
-    if not (cwd / "PROJECT_WORKFLOW.md").is_file():
+    if not (cwd / names().project_declaration_path).is_file():
         return []
     message = final_message(payload)
     codes = list(dict.fromkeys(BLOCKED_LINE.findall(message)))

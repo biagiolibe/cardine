@@ -53,6 +53,7 @@ class ReadGuardTest(unittest.TestCase):
         self.addCleanup(environment.stop)
         (self.project / "tasks").mkdir()
         # MERIDIAN-INSTALLATION-CHECK
+        write_project_config(self.project)
         (self.project / "PROJECT_WORKFLOW.md").write_text(
             "<!-- CARDINE:BEGIN capability=execution-assets v1 -->\n<!-- CARDINE:END -->\n"
             "Task files live under `tasks/`; queue is `tasks/QUEUE.md`.\n\n## Roles\n",
@@ -203,6 +204,7 @@ class PythonReadGuardTest(unittest.TestCase):
         environment.start()
         self.addCleanup(environment.stop)
         (self.project / "PROJECT_WORKFLOW.md").write_text("LEAN_DELIVERY\n", encoding="utf-8")
+        write_project_config(self.project)
         self.target = self.project / "big.txt"
         self.target.write_text("line\n" * 500, encoding="utf-8")
 

@@ -885,7 +885,8 @@ def probe_hook_invocation(host: str, home: Path, *, timeout: int = 30) -> str:
         return "unverified: cardine is not on PATH"
     with tempfile.TemporaryDirectory(prefix="cardine-doctor-") as fixture:
         root = Path(fixture).resolve()
-        (root / "PROJECT_WORKFLOW.md").write_text("probe\n", encoding="utf-8")
+        (root / names().project_declaration_path).parent.mkdir()
+        (root / names().project_declaration_path).write_text('{"version": 1, "preset": "lean"}', encoding="utf-8")
         (root / "sentinel.txt").write_text("line\n" * _PROBE_LINES, encoding="utf-8")
         tool_input = {"file_path": str(root / "sentinel.txt")} if host == "claude" else {"command": "cat sentinel.txt"}
         payload = {"tool_name": "Read" if host == "claude" else "Bash", "tool_input": tool_input, "cwd": str(root)}

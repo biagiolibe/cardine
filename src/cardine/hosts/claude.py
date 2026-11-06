@@ -215,10 +215,21 @@ def _claude_settings(project_root: Path, home: Path) -> list[tuple[Path, object]
 
 
 def _legacy_plugin_enabled(parsed: list[tuple[Path, object]]) -> list[Path]:
-    return [path for path, settings in parsed
-            if isinstance(settings, dict) and isinstance(settings.get("enabledPlugins"), dict)
-            and any("meridian" in str(name).lower() and enabled is True
-                    for name, enabled in settings["enabledPlugins"].items())]
+    """Files that decide an effective `true` for a legacy plugin id.
+
+    Claude Code combines `enabledPlugins` key by key: for each plugin id the
+    highest-precedence file that names it wins (local > project > user), and
+    `parsed` is ordered user, project, local.
+    """
+    decided: dict[str, tuple[Path, bool]] = {}
+    for path, settings in parsed:
+        plugins = settings.get("enabledPlugins") if isinstance(settings, dict) else None
+        if not isinstance(plugins, dict):
+            continue
+        for name, enabled in plugins.items():
+            if "meridian" in str(name).lower() and isinstance(enabled, bool):
+                decided[str(name)] = (path, enabled)
+    return list(dict.fromkeys(path for path, enabled in decided.values() if enabled))
 
 
 def claude_legacy_plugin_advisories(project_root: Path, home: Path) -> tuple[str, ...]:
