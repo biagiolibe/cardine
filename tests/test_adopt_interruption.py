@@ -102,6 +102,27 @@ class ConversionTest(unittest.TestCase):
         self.assertEqual(started.returncode, 0, started.stdout + started.stderr)
         self.assertTrue(json.loads(started.stdout)['started'])
 
+    def test_preserves_custom_project_locations(self):
+        work = self.root / 'work'
+        work.mkdir()
+        (self.root / 'tasks/QUEUE.md').rename(work / 'QUEUE.md')
+        (self.root / 'tasks/001.md').rename(work / '001.md')
+        (self.root / 'tasks/002.md').rename(work / '002.md')
+        (self.root / 'PROJECT_PLAN.md').rename(work / 'PLAN.md')
+        declaration = {'version': 1, 'preset': 'lean', 'locations': {
+            'queue': 'work/QUEUE.md', 'plan': 'work/PLAN.md', 'taskRoots': ['work']}}
+        (self.root / '.meridian/project.json').write_text(json.dumps(declaration))
+        subprocess.run(['git', 'add', '-A'], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(['git', 'commit', '-qm', 'Customize locations'], cwd=self.root, check=True, capture_output=True)
+        plan = plan_adopt(self.root, ROOT, name='Example', slug='example',
+                          language='English', validation=VALIDATION)
+        self.assertEqual(plan.refusals, ())
+        apply_adopt(self.root, plan, ROOT)
+        config = json.loads((self.root / '.cardine/project.json').read_text())
+        self.assertEqual(config['locations']['taskRoots'], ['work'])
+        self.assertIn('002', (work / 'QUEUE.md').read_text())
+        self.assertIn('Keep this narrative.', (work / 'PLAN.md').read_text())
+
     def test_resume_from_saved_plan(self):
         def interrupt(name):
             if name == 'before_adopt_state:001':

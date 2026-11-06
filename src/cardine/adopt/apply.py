@@ -167,7 +167,8 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
                 raise CardineError('adoption needs a recognized case and framework path')
             paths = set(outputs) | set(removals)
             if plan.case == 'B':
-                paths.update(('PROJECT_PLAN.md', 'tasks/QUEUE.md'))
+                locations = json.loads(outputs['.cardine/project.json']).get('locations', {})
+                paths.update((locations.get('plan', 'PROJECT_PLAN.md'), locations.get('queue', 'tasks/QUEUE.md')))
             before = {name: file_digest(_target(root, name)) for name in paths}
             store = _target(root, '.cardine/tasks')
             if store.exists() and (not store.is_dir() or any(store.iterdir())):
@@ -184,7 +185,7 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
                                 'refusals': list(plan.refusals),
                                 'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()}}}
             if plan.case == 'B':
-                old_plan = root / 'PROJECT_PLAN.md'
+                old_plan = _target(root, locations.get('plan', 'PROJECT_PLAN.md'))
                 payload['original_plan'] = base64.b64encode(old_plan.read_bytes() if old_plan.exists() else b'').decode('ascii')
             active.intent['adoption'] = payload
             active._save()

@@ -94,6 +94,14 @@ def conversion_outputs(root: Path, framework: Path, plan):
         if remainder.strip():
             outputs[name] = content.rstrip() + b'\n\n' + remainder.encode()
     outputs.update(plan.outputs)
+    locations = legacy.locations
+    config['locations'] = {'queue': locations.queue.as_posix(),
+                           'taskRoots': [path.as_posix() for path in locations.task_roots],
+                           'adrLog': locations.adr_log.as_posix(),
+                           'handoffRoot': locations.handoff_root.as_posix(),
+                           'reviewRoot': locations.review_root.as_posix(),
+                           'plan': locations.plan.as_posix()}
+    outputs['.cardine/project.json'] = (json.dumps(config, indent=2, sort_keys=True) + '\n').encode()
     queue = _checked(root, legacy.locations.queue)
     lines = queue.read_text(encoding='utf-8').splitlines(keepends=True)
     closed = [lines[row.line - 1] for row in legacy.rows if row.state != 'open']
