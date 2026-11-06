@@ -87,7 +87,7 @@ installation surface deferred after 1.0.
 
 ## Dependencies
 
-- **Depends on**: 158, 152, 151, 159, 160, 161, 162, 163
+- **Depends on**: 158, 152, 151, 159, 160, 161, 162, 163, 174, 175
 - **Blocks**: the switch
 
 ## Developer decisions given in advance

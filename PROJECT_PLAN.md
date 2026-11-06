@@ -204,6 +204,8 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 161 — Move live installation tests to fixtures (C5c).
 - `[ ]` 162 — Run the shell hook tests only while the hooks exist (C5d).
 - `[ ]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).
+- `[ ]` 174 — Declare the capability profile at init.
+- `[ ]` 175 — Rehearse the adoption without patching the process.
 - `[ ]` 164 — Rehearse the conversion of this repository (C6a).
 - `[x]` 166 — Reuse the prepared state in the integration and cleanup tests.
 - `[x]` 167 — Reduce the cost of the host plugin kill matrix.
