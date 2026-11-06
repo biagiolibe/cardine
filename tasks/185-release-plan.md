@@ -48,6 +48,9 @@ This task changes no other file.
     question with options and consequences, left undecided. At least: the PyPI project
     name and its availability (checked read-only), trusted publishing versus a token,
     and the first version number Cardine publishes.
+- [ ] `tests/test_no_meridian_identifiers.py` allows the new plan: `RELEASE_PLAN\.md`
+  is added to the alternation of design documents under `docs/` that already lists
+  `CONVERSION_PLAN\.md`, and nothing else in that file changes.
 - [ ] The plan cites every count and line from the files on `main` at the commit it
   names, and states that commit.
 - [ ] Only the files under Relevant Files are edited, together with this
@@ -76,6 +79,7 @@ This task changes no other file.
 | File | Role |
 |------|------|
 | `docs/RELEASE_PLAN.md` | The new plan this task writes. |
+| `tests/test_no_meridian_identifiers.py` | The identifier guard's allowance for the plan. |
 
 ## Technical Context
 
@@ -152,8 +156,9 @@ revalidation in the same turn; do not stop to report the fix.
 - `python3 scripts/check_repository.py`
 - `meridian profile doctor meridian-self-hosting --project .`
 - `meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
+- `python3 scripts/run_tests.py --parallel --module test_no_meridian_identifiers`
 - `git diff --check`
 
-This task changes one document only. Under the validation-scoping rule of
+This task changes one document and one guard allowance. Under the validation-scoping rule of
 `PROJECT_WORKFLOW.md`, it skips the test suites and records that skip in the
 handoff.
