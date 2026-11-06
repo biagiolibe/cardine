@@ -200,7 +200,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 157 — Rehearse the adoption on a clone (C2e).
 - `[ ]` 158 — Expose the cardine adopt command (C2f).
 - `[x]` 159 — Make the installation checks conditional (C5a).
-- `[ ]` 160 — Bind identifier allowances to existing paths (C5b).
+- `[x]` 160 — Bind identifier allowances to existing paths (C5b).
 - `[x]` 161 — Move live installation tests to fixtures (C5c).
 - `[ ]` 162 — Run the shell hook tests only while the hooks exist (C5d).
 - `[ ]` 163 — Prove Meridian and Cardine coexist on one machine (C5e).

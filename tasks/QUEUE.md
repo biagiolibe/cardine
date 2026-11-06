@@ -57,7 +57,7 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[ ]` | 157 | Rehearse the adoption on a clone (C2e) | 🔴 P1 | 156 | [157](157-adopt-rehearsal.md) |
 | `[ ]` | 158 | Expose the cardine adopt command (C2f) | 🔴 P1 | 157 | [158](158-adopt-command.md) |
 | `[x]` | 159 | Make the installation checks conditional (C5a) | 🔴 P1 | 144 | [159](done/159-conditional-installation-checks.md) |
-| `[ ]` | 160 | Bind identifier allowances to existing paths (C5b) | 🔴 P1 | 159 | [160](160-conditional-identifier-allowances.md) |
+| `[x]` | 160 | Bind identifier allowances to existing paths (C5b) | 🔴 P1 | 159 | [160](done/160-conditional-identifier-allowances.md) |
 | `[x]` | 161 | Move live installation tests to fixtures (C5c) | 🔴 P1 | 142 | [161](done/161-live-installation-test-fixtures.md) |
 | `[ ]` | 162 | Run the shell hook tests only while the hooks exist (C5d) | 🔴 P1 | 142 | [162](162-conditional-shell-hook-tests.md) |
 | `[ ]` | 163 | Prove Meridian and Cardine coexist on one machine (C5e) | 🔴 P1 | 142 | [163](163-tool-coexistence.md) |
