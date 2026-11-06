@@ -375,3 +375,12 @@ Authority: the developer's request of 2026-11-04 and the coordinator's measureme
 | `[x]` | 171 | Rerun only the failing commands through declared retry variants | 🟡 P2 | — | [171](done/171-validation-retry-variants.md) |
 | `[x]` | 172 | Run declared quick checks first and limit their failures separately | 🟡 P2 | 171 | [172](done/172-validation-quick-checks.md) |
 | `[x]` | 173 | Separate the recovery rules from their Git reads | 🟡 P2 | — | [173](done/173-recovery-rules.md) |
+
+### Phase 33 — Plans for work items 11 and 12
+
+Authority: `docs/ADR_CARDINE_1_0.md`, work items 11 and 12. The plans can be written before the switch; their rows run under Cardine.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 184 | Plan the documentation (work item 11) | 🟡 P2 | — | [184](done/184-documentation-plan.md) |
+| `[x]` | 185 | Plan the release script (work item 12) | 🟡 P2 | — | [185](done/185-release-plan.md) |

@@ -79,12 +79,3 @@ Authority: `docs/CONVERSION_PLAN.md`, rows C7a to C7f and section 5. These rows 
 | `[ ]` | 180 | Delete the Meridian identifier allowances (C7c) | 🔴 P1 | 179 | [180](180-remove-meridian-allowances.md) |
 | `[ ]` | 181 | Stop proposing this repository's script as evidence (C7e) | 🔴 P1 | 178 | [181](181-evidence-without-repository-script.md) |
 | `[ ]` | 182 | Delete the legacy snapshot reader (C7f) | 🔴 P1 | 180 | [182](182-delete-legacy-snapshot.md) |
-
-### Phase 33 — Plans for work items 11 and 12
-
-Authority: `docs/ADR_CARDINE_1_0.md`, work items 11 and 12. The plans can be written before the switch; their rows run under Cardine.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 184 | Plan the documentation (work item 11) | 🟡 P2 | — | [184](done/184-documentation-plan.md) |
-| `[ ]` | 185 | Plan the release script (work item 12) | 🟡 P2 | — | [185](185-release-plan.md) |

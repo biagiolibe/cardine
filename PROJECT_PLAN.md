@@ -216,7 +216,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 181 — Stop proposing this repository's script as evidence (C7e).
 - `[ ]` 182 — Delete the legacy snapshot reader (C7f).
 - `[x]` 184 — Plan the documentation (work item 11).
-- `[ ]` 185 — Plan the release script (work item 12).
+- `[x]` 185 — Plan the release script (work item 12).
 - `[x]` 166 — Reuse the prepared state in the integration and cleanup tests.
 - `[x]` 167 — Reduce the cost of the host plugin kill matrix.
 - `[x]` 168 — Reuse the prepared state in the receipt and recovery matrices.
