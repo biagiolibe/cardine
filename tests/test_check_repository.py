@@ -1061,6 +1061,31 @@ class ConditionalInstallationChecksTest(unittest.TestCase):
         for record in (*cr.INSTALLATION_STATES[0][1], *cr.INSTALLATION_STATES[1][1]):
             self.assertFalse((self.root / record).exists())
 
+    def test_cardine_digest_checks_match_product_exemptions(self) -> None:
+        from cardine.templates.init import plan_init
+        validation = {'commands': {'test': 'true'}, 'baseline': ['test'],
+                      'candidate': {'REUSE': [], 'BOUNDED': ['test'], 'FULL': ['test']}}
+        self.root = self.root.resolve()
+        plan = plan_init(self.root, ROOT, name='Example', slug='example', preset='lean',
+                         language='Italian', task_identity='opaque', validation=validation)
+        for name, content in plan.outputs.items():
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+        manifest_path = self.root / '.cardine/manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        marker_file = next(name for name in manifest['managedFiles']
+                           if (self.root / name).is_file() and '<!-- CARDINE:BEGIN' in (self.root / name).read_text())
+        with (self.root / marker_file).open('a') as stream:
+            stream.write('\nProject prose.\n')
+        self.assertEqual(cr.managed_digest_diagnostics(self.root), [])
+        markerless = next(name for name in manifest['managedFiles']
+                          if (self.root / name).is_file() and name not in cr.owner_templates_audit.declared_managed_copy_paths(manifest, ROOT)
+                          and cr.owner_templates_audit.is_markerless_managed_copy_digest_audited(self.root, name, set()))
+        with (self.root / markerless).open('a') as stream:
+            stream.write('\nDrift.\n')
+        self.assertTrue(any(markerless in item for item in cr.managed_digest_diagnostics(self.root)))
+
     def test_absent_manifest_does_not_require_installed_records(self) -> None:
         for name in cr.REQUIRED_FILES:
             self.write(name)
@@ -1074,8 +1099,9 @@ class ConditionalInstallationChecksTest(unittest.TestCase):
                 self.assertEqual(cr.installation_state(self.root), (self.root / manifest, records))
                 for name in (*cr.REQUIRED_FILES, *records[:-1]):
                     self.write(name)
-                self.assertIn(f"FAIL: required file is missing: {records[-1]}", self.required_missing())
-                self.write(records[-1])
+                if records:
+                    self.assertIn(f"FAIL: required file is missing: {records[-1]}", self.required_missing())
+                    self.write(records[-1])
                 with patch.object(cr, "ROOT", self.root):
                     cr.check_required_files()
                 shutil.rmtree(self.root)

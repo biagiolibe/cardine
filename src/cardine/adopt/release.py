@@ -53,6 +53,22 @@ def strip_managed_blocks(text: str) -> str:
     return "".join(parts)
 
 
+def _project_remainder(root: Path, name: str, old: str, manifest: dict) -> str:
+    managed = manifest.get('managedFiles', {})
+    commands = re.search(r'^## Commands\s*\n.*?(?=^## |\Z)', old, re.M | re.S)
+    keep_commands = commands.group(0) if commands and '[' not in commands.group(0) else ''
+    if hashlib.sha256(old.encode()).hexdigest() == managed.get(name):
+        return keep_commands
+    remainder = strip_managed_blocks(old)
+    baseline = _checked(root, Path('.meridian/baselines') / str(manifest.get('workflowBaselineVersion', '')) / name)
+    if baseline.is_file():
+        blocks = re.split(r'\n\s*\n', strip_managed_blocks(baseline.read_text(encoding='utf-8')))
+        patterns = [re.escape(' '.join(block.split())).replace(re.escape('[Project Name]'), '.*?') for block in blocks if block.strip()]
+        remainder = '\n\n'.join(block for block in re.split(r'\n\s*\n', remainder)
+                                if not any(re.fullmatch(pattern, ' '.join(block.split())) for pattern in patterns))
+    return remainder
+
+
 def conversion_outputs(root: Path, framework: Path, plan):
     """Pin the replacement files, task records and releases before any writes."""
     if (root / '.meridian').is_symlink():
@@ -79,18 +95,10 @@ def conversion_outputs(root: Path, framework: Path, plan):
         if not path.is_file() or name.startswith('.cardine/'):
             continue
         old = path.read_text(encoding='utf-8')
-        if name in ('AGENTS.md', 'CLAUDE.md'):
-            baseline = _checked(root, Path('.meridian/baselines') / str(manifest.get('workflowBaselineVersion', '')) / name)
-            if baseline.is_file():
-                base = baseline.read_text(encoding='utf-8')
-                first = _MARKER.search(base)
-                if first and old.startswith(base[:first.start()]):
-                    preamble = old[:first.start()]
-                    commands = re.search(r'^## Commands\s*\n.*?(?=^## |\Z)', preamble, re.M | re.S)
-                    old = old[first.start():]
-                    if commands:
-                        old = commands.group(0) + old
-        remainder = strip_managed_blocks(old)
+        if name not in manifest.get('managedFiles', {}) and not _MARKER.search(old):
+            outputs.pop(name)
+            continue
+        remainder = _project_remainder(root, name, old, manifest)
         if remainder.strip():
             outputs[name] = content.rstrip() + b'\n\n' + remainder.encode()
     outputs.update(plan.outputs)
@@ -112,7 +120,7 @@ def conversion_outputs(root: Path, framework: Path, plan):
     budget = _checked(root, 'docs/CONTEXT_BUDGET_POLICY.md')
     if budget.is_file():
         name = 'docs/CONTEXT_READING_POLICY.md'
-        remainder = strip_managed_blocks(budget.read_text(encoding='utf-8'))
+        remainder = _project_remainder(root, 'docs/CONTEXT_BUDGET_POLICY.md', budget.read_text(encoding='utf-8'), manifest)
         if remainder.strip():
             outputs[name] = outputs[name].rstrip() + b'\n\n' + remainder.encode()
     tasks = {}
@@ -130,6 +138,16 @@ def conversion_outputs(root: Path, framework: Path, plan):
             text = re.sub(r'(?m)^(- Profile revision: `sha256:)[0-9a-f]{64}(`)$',
                           lambda match: match.group(1) + digest + match.group(2), text)
             outputs[name] = text.encode('utf-8')
+    cardine_manifest = json.loads(outputs['.cardine/manifest.json'])
+    declared = {surface['path'] for profile in cardine_manifest.get('capabilityProfiles', {}).values()
+                for declaration in profile.get('capabilities', {}).values()
+                for surface in declaration.get('managedSurface', [])}
+    missing = declared - outputs.keys()
+    if missing:
+        raise CardineError(f'declared surfaces not written by conversion: {sorted(missing)}')
+    cardine_manifest['managedFiles'] = {name: digest for name, digest in cardine_manifest['managedFiles'].items()
+                                        if name in outputs}
+    outputs['.cardine/manifest.json'] = (json.dumps(cardine_manifest, indent=2, sort_keys=True) + '\n').encode()
     removals = []
     meridian = root / '.meridian'
     directories = ['.meridian']
