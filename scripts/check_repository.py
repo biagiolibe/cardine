@@ -86,13 +86,7 @@ INSTALLATION_STATES = (
     ),
     (
         ".cardine/manifest.json",
-        (
-            "hooks/hooks.json",
-            "hooks/queue-briefing.sh",
-            ".cardine/probes/cardine-self-hosting/host-neutral-ci-v1.json",
-            ".cardine/probes/cardine-self-hosting/claude-project-v1.json",
-            ".cardine/probes/cardine-self-hosting/codex-project-v1.json",
-        ),
+        (),
     ),
 )
 
@@ -934,6 +928,12 @@ def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
         return []
     manifest = json.loads(state[0].read_text(encoding="utf-8"))
     managed_files = manifest["managedFiles"]
+    if state[0].parent.name == ".cardine":
+        declared = owner_templates_audit.declared_managed_copy_paths(manifest, ROOT)
+        results = owner_templates_audit.audit_managed_copy_digests(root, managed_files, declared)
+        capability_results, _ = owner_templates_audit.audit_declared_capabilities(root, ROOT, manifest["workflowMode"])
+        results.extend(result for result in capability_results if result.identity.endswith("/installation"))
+        return [result.detail for result in results if result.status == "FAIL"]
     diagnostics = [
         diagnostic
         for _relative, diagnostic in owner_templates_audit.managed_copy_drift(root, managed_files)

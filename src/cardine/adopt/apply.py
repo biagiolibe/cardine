@@ -132,7 +132,7 @@ def _views(root, original_plan):
     region = render_plan_region(model, digest)
     if original_plan and b'<!-- cardine-status:begin -->' not in original_plan:
         original_plan = original_plan.rstrip() + b'\n\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n'
-    return {queue: render_queue(model, digest).encode(), plan: splice_region(original_plan, region)}
+    return {queue: render_queue(model, digest, queue).encode(), plan: splice_region(original_plan, region)}
 
 
 def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:

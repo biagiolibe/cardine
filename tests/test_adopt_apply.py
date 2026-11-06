@@ -4,11 +4,17 @@ import os
 from pathlib import Path
 import unittest
 import tempfile
+import hashlib
+import json
+import re
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 
-from cardine.adopt.release import strip_managed_blocks
+from cardine.adopt.release import conversion_outputs, strip_managed_blocks
+from cardine.tasks.status_render import render_queue
+from cardine.tasks.state import STATUSES
 from cardine.adopt.apply import apply_adopt
 from cardine.adopt.plan import AdoptPlan
 from cardine.lifecycle import receipts
@@ -16,6 +22,59 @@ from cardine.shared.errors import CardineError
 
 
 class ReleaseMarkersTest(unittest.TestCase):
+    def test_conversion_preserves_only_project_owned_blocks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def write(name, value):
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(value)
+            marker = '<!-- MERIDIAN:BEGIN capability=x v1 -->\nmanaged\n<!-- MERIDIAN:END -->'
+            unchanged = 'old release\n' + marker + '\n'
+            baseline = 'Hello [Project Name]\n\n' + marker + '\n'
+            edited = 'Hello Example\n\n' + marker + '\n\nMy own block.\n'
+            write('AGENTS.md', unchanged)
+            write('CLAUDE.md', edited)
+            write('README.md', 'Project README\n')
+            write('LANGUAGE_POLICY.md', '**Conversation language:** `Italian`\n')
+            write('tasks/QUEUE.md', '# Queue\n')
+            write('.meridian/baselines/1/CLAUDE.md', baseline)
+            manifest = {'workflowBaselineVersion': '1', 'managedFiles': {
+                'AGENTS.md': hashlib.sha256(unchanged.encode()).hexdigest(),
+                'CLAUDE.md': hashlib.sha256(b'original').hexdigest()}}
+            write('.meridian/manifest.json', json.dumps(manifest))
+            config = {'project': {'name': 'Example', 'slug': 'example'}, 'preset': 'lean',
+                      'taskIdentity': {'mode': 'opaque'}, 'validation': {}}
+            plan = SimpleNamespace(outputs={'.cardine/project.json': json.dumps(config).encode()})
+            initial = SimpleNamespace(outputs={'AGENTS.md': b'Cardine agent\n', 'CLAUDE.md': b'Cardine agent\n',
+                'README.md': b'template\n', '.cardine/manifest.json': json.dumps({'managedFiles': {
+                    'AGENTS.md': 'a', 'CLAUDE.md': 'b', 'README.md': 'c'}}).encode()})
+            locations = SimpleNamespace(queue=Path('tasks/QUEUE.md'), task_roots=[Path('tasks')],
+                adr_log=Path('docs/ADR.md'), handoff_root=Path('tasks/handoffs'),
+                review_root=Path('tasks/reviews'), plan=Path('PROJECT_PLAN.md'))
+            legacy = SimpleNamespace(locations=locations, rows=[], open_rows=[])
+            with patch('cardine.adopt.release.plan_init', return_value=initial), \
+                 patch('cardine.adopt.release.read_legacy_project', return_value=legacy):
+                outputs, _, _, _ = conversion_outputs(root, root, plan)
+            self.assertEqual(outputs['AGENTS.md'], b'Cardine agent\n')
+            self.assertEqual(outputs['CLAUDE.md'], b'Cardine agent\n\nMy own block.\n')
+            self.assertNotIn('README.md', outputs)
+            self.assertNotIn('README.md', json.loads(outputs['.cardine/manifest.json'])['managedFiles'])
+            self.assertFalse(any(b'MERIDIAN' in content or b'BLOCKED ' in content for content in outputs.values()))
+
+    def test_queue_links_resolve_from_queue_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record = root / 'tasks/1-example.md'
+            record.parent.mkdir()
+            record.touch()
+            model = {'preset': 'lean', 'totals': dict.fromkeys((*STATUSES, 'total'), 0),
+                     'tasks': [{'status': 'queued', 'record': 'tasks/1-example.md', 'id': '1', 'title': 'Example',
+                                'dependencies': [], 'blocked_by': [], 'startable': True}]}
+            queue = render_queue(model, 'digest', 'tasks/QUEUE.md')
+            for link in re.findall(r'\]\(([^)]+)\)', queue):
+                self.assertTrue((root / 'tasks' / link).is_file())
+
     def test_preserves_unmarked_text_exactly(self):
         source = ('before\n<!-- MERIDIAN:BEGIN capability=example v1 -->\n'
                   'managed\n<!-- MERIDIAN:END -->\nafter\n')

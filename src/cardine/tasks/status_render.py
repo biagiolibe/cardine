@@ -53,7 +53,7 @@ def _totals(model: dict) -> str:
     return "Totals: " + ", ".join(f"{key}={model['totals'][key]}" for key in (*STATUSES, "total"))
 
 
-def render_queue(model: dict, digest: str) -> str:
+def render_queue(model: dict, digest: str, queue_path: str | Path) -> str:
     """Open tasks only; totals still count every validated task."""
     lines = ["# Task Execution Queue", "", *_header(digest), "", f"Preset: {model['preset']}", _totals(model), "",
              "| Status | ID | Title | Depends on | Blocked by | Startable | File |",
@@ -61,7 +61,8 @@ def render_queue(model: dict, digest: str) -> str:
     for row in model["tasks"]:
         if row["status"] in ("done", "cancelled"):
             continue
-        record = f"[{Path(row['record']).name}]({row['record']})" if row["record"] else "-"
+        record = (f"[{Path(row['record']).name}]({Path(os.path.relpath(row['record'], Path(queue_path).parent)).as_posix()})"
+                  if row["record"] else "-")
         lines.append(f"| {row['status']} | {_cell(row['id'])} | {_cell(row['title'])} | {_cell(', '.join(row['dependencies']) or '-')} "
                      f"| {_cell(', '.join(row['blocked_by']) or '-')} | {str(row['startable']).lower()} | {record} |")
     return "\n".join(lines) + "\n"
@@ -119,7 +120,7 @@ def _render_views(project_root: Path) -> tuple[dict, Path, Path, bytes, bytes, b
     queue, plan = _view_paths(root, config)
     digest = input_digest(root, inputs, {queue, plan})
     old_queue, old_plan = _read(queue), _read(plan)
-    return (model, queue, plan, render_queue(model, digest).encode(),
+    return (model, queue, plan, render_queue(model, digest, queue.relative_to(root)).encode(),
             splice_region(old_plan, render_plan_region(model, digest)), old_queue, old_plan)
 
 

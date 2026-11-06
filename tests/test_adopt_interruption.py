@@ -55,6 +55,13 @@ class ConversionTest(unittest.TestCase):
             '# Local context\n\nKeep this note.\n<!-- MERIDIAN:BEGIN capability=old v1 -->\n'
             'old budget\n<!-- MERIDIAN:END -->\n')
         (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('# Legacy profile\n')
+        manifest_path = self.root / '.meridian/manifest.json'
+        manifest = json.loads(manifest_path.read_text())
+        manifest['managedFiles'] = {
+            name: hashlib.sha256((self.root / name).read_bytes()).hexdigest()
+            for name in ('LANGUAGE_POLICY.md', 'PROJECT_WORKFLOW.md', 'docs/EXECUTION_EVIDENCE_PROFILE.md')
+        }
+        manifest_path.write_text(json.dumps(manifest))
         (self.root / 'PROJECT_PLAN.md').write_text('# Project plan\n\nKeep this narrative.\n')
         (self.root / 'tasks/001.md').write_text(contract_record('001').replace(
             '## Expected code surface\nChange the documented deliverable only.\n', ''))
