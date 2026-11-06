@@ -458,3 +458,32 @@ The full clean-clone run records failures in the originating worktree.
 `--last-failed` and `--module` require `--parallel`, are mutually exclusive,
 and cannot be combined with `--clean-clone`. An absent, empty, or entirely
 obsolete failure record runs no tests and exits with status 2.
+
+## Coexistence with the legacy tool on one machine
+
+Until the last project is converted, the legacy tool stays installed next to
+Cardine. `cardine setup` treats the legacy tool as installed when its
+checkout variable names an existing directory, `~/.local/share/<legacy>`
+exists, or its plugin cache exists under `~/.claude/plugins/cache`. Only the
+given home and environment are read.
+
+| Surface | Behavior while the legacy tool is installed | Evidence |
+|---------|---------------------------------------------|----------|
+| Legacy Codex user rules (`~/.codex/rules/default.rules`) | The known legacy block is kept byte-identical and setup reports that it kept it. Once the tool is gone, the exact block is removed as before and foreign bytes stay. | `tests/test_host_coexistence.py`, `tests/test_codex_user_rules.py` |
+| Rerun | A second `setup --apply` changes nothing. | `tests/test_host_coexistence.py` |
+| Briefing | The Cardine briefing is silent in a project without a Cardine declaration. The legacy briefing script is silent in a converted project that has no legacy queue. | `tests/test_host_coexistence.py` |
+
+Findings recorded for step S7, not fixed in the legacy tool:
+
+- `cardine hook read-guard` and `cardine hook stop-audit` decide by the
+  presence of `PROJECT_WORKFLOW.md`, which a legacy project also has. In a
+  legacy project the Cardine read guard therefore denies an unranged large
+  read next to the legacy guard. Observed in a scratch project; the fix is in
+  `src/cardine/hosts/read_guard.py` and `src/cardine/hosts/stop_audit.py`.
+- The Claude legacy-plugin advisory (`hosts/claude.py`) counts a plugin as
+  enabled when any settings layer says `true`; it ignores a `false` in
+  `.claude/settings.local.json`. The host's own precedence for a local-scope
+  disable is not proved by any offline test, and no live probe has run.
+- Setup still migrates the legacy Codex permission profile in
+  `~/.codex/config.toml` to the Cardine one. The row covers the user rules
+  only, so this is reported, not changed.
