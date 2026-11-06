@@ -33,41 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 31 — Meridian conversion: before the switch
-
-Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 and decision 10; developer decisions DD1–DD5 of 2026-11-03.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 142 | Limit legacy imports to the adopt package (C1a) | 🔴 P1 | 141 | [142](done/142-legacy-import-rule.md) |
-| `[x]` | 143 | Move the importer and queue reader under legacy (C1b) | 🔴 P1 | 142 | [143](done/143-move-importer-to-legacy.md) |
-| `[x]` | 144 | Bring the prose reader ratchets to zero (C1c) | 🔴 P1 | 143 | [144](done/144-prose-ratchets-to-zero.md) |
-| `[x]` | 145 | Classify and fix the fresh task start failure (C3a) | 🔴 P1 | 141 | [145](done/145-fresh-task-start.md) |
-| `[x]` | 146 | Make run perform the contract and worktree steps (C3b) | 🔴 P1 | 145 | [146](done/146-run-performs-worktree-step.md) |
-| `[x]` | 147 | Prove a no-review delivery to landing (C3c) | 🔴 P1 | 146 | [147](done/147-disposable-delivery-proof.md) |
-| `[x]` | 148 | Align the run help with its behavior (C3d) | 🟡 P2 | 146 | [148](done/148-align-run-help.md) |
-| `[x]` | 149 | Prove the spike, authority, and resume cases (C3e) | 🔴 P1 | 147 | [149](done/149-field-case-runs.md) |
-| `[x]` | 150 | Add the developer channel for verdict, cancel, and abort (C4a) | 🔴 P1 | 146 | [150](done/150-developer-channel.md) |
-| `[x]` | 151 | Deliver a required-review task through the developer channel (C4b) | 🔴 P1 | 147, 150 | [151](done/151-required-review-delivery.md) |
-| `[x]` | 152 | Deliver a disposable task with an agent following run (C3f) | 🔴 P1 | 147, 148, 149, 151 | [152](done/152-agent-driven-delivery.md) |
-| `[x]` | 153 | Add the read model of a Meridian project (C2a) | 🔴 P1 | 144 | [153](done/153-conversion-reader.md) |
-| `[x]` | 154 | Translate open records for adopt (C2b) | 🔴 P1 | 153, 145 | [154](done/154-adopt-record-translator.md) |
-| `[x]` | 155 | Plan the adoption as a pure function (C2c) | 🔴 P1 | 154 | [155](done/155-adopt-plan.md) |
-| `[x]` | 156 | Apply the adoption and release the managed copies (C2d) | 🔴 P1 | 155 | [156](done/156-adopt-apply.md) |
-| `[x]` | 157 | Rehearse the adoption on a clone (C2e) | 🔴 P1 | 156 | [157](done/157-adopt-rehearsal.md) |
-| `[x]` | 158 | Expose the cardine adopt command (C2f) | 🔴 P1 | 157 | [158](done/158-adopt-command.md) |
-| `[x]` | 159 | Make the installation checks conditional (C5a) | 🔴 P1 | 144 | [159](done/159-conditional-installation-checks.md) |
-| `[x]` | 160 | Bind identifier allowances to existing paths (C5b) | 🔴 P1 | 159 | [160](done/160-conditional-identifier-allowances.md) |
-| `[x]` | 161 | Move live installation tests to fixtures (C5c) | 🔴 P1 | 142 | [161](done/161-live-installation-test-fixtures.md) |
-| `[x]` | 162 | Run the shell hook tests only while the hooks exist (C5d) | 🔴 P1 | 142 | [162](done/162-conditional-shell-hook-tests.md) |
-| `[x]` | 163 | Prove Meridian and Cardine coexist on one machine (C5e) | 🔴 P1 | 142 | [163](done/163-tool-coexistence.md) |
-| `[x]` | 174 | Declare the capability profile at init | 🔴 P1 | 157 | [174](done/174-init-capability-profile.md) |
-| `[x]` | 175 | Rehearse the adoption without patching the process | 🔴 P1 | 157 | [175](done/175-rehearsal-without-patching.md) |
-| `[x]` | 176 | Keep the legacy worktree root in the Codex permission profile | 🔴 P1 | 163 | [176](done/176-codex-profile-coexistence.md) |
-| `[x]` | 177 | Translate Validation sections as the Cardine contract reads them | 🔴 P1 | — | [177](done/177-adopt-validation-sections.md) |
-| `[x]` | 183 | Convert this repository so that its own checks pass | 🔴 P1 | — | [183](done/183-converted-repository-checks.md) |
-| `[ ]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175, 177, 183 | [164](164-rehearse-this-repository.md) |
-
 ### Phase 32 — Meridian conversion: after the switch
 
 Authority: `docs/CONVERSION_PLAN.md`, rows C7a to C7f and section 5. These rows run under Cardine after the switch; they are written in Meridian format so that `cardine adopt` converts them.
