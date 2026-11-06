@@ -136,7 +136,7 @@ def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: s
     outputs[names().manifest_path.as_posix()] = manifest_bytes(manifest, framework)
     model = {"preset": preset, "totals": dict.fromkeys((*STATUSES, "total"), 0), "tasks": []}
     digest = input_digest(root, {root / declaration: outputs[declaration]}, set())
-    outputs["tasks/QUEUE.md"] = render_queue(model, digest).encode()
+    outputs["tasks/QUEUE.md"] = render_queue(model, digest, "tasks/QUEUE.md").encode()
     outputs["PROJECT_PLAN.md"] = splice_region(outputs["PROJECT_PLAN.md"], render_plan_region(model, digest))
     directories = {root, root / "tasks/done", root / names().tasks_path}
     for relative in outputs:
