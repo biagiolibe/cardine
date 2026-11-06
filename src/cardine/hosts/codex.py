@@ -62,7 +62,7 @@ prefix_rule(pattern=["ps"], decision="allow")
 CODEX_USER_RULES = LEGACY_CODEX_USER_RULES.replace('# MERIDIAN:', '# CARDINE:')
 
 
-def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
+def plan_codex_user_rules(path: Path, *, legacy_tool_installed: bool = False) -> CodexUserRulesPlan:
     # Read bytes so CRLF and missing final newlines in foreign rules survive.
     text = path.read_bytes().decode("utf-8") if path.exists() else ""
     markers = list(re.finditer(r"(?m)^.*# CARDINE:(?:BEGIN|END) codex-user-rules[^\r\n]*", text))
@@ -109,7 +109,11 @@ def plan_codex_user_rules(path: Path) -> CodexUserRulesPlan:
     legacy_text = legacy_path.read_bytes().decode("utf-8") if legacy_path and legacy_path.exists() else ""
     legacy_proposed = None
     if legacy_path and legacy_text.count(LEGACY_CODEX_USER_RULES) == 1 and legacy_text.count("# MERIDIAN:BEGIN codex-user-rules") == 1 and legacy_text.count("# MERIDIAN:END codex-user-rules") == 1:
-        legacy_proposed = legacy_text.replace(LEGACY_CODEX_USER_RULES, "", 1)
+        if legacy_tool_installed:
+            # The retired tool still reads this block; removing it would change its policy.
+            warnings.append(f"{legacy_path}: the known legacy rules block is kept byte-identical while the legacy tool stays installed")
+        else:
+            legacy_proposed = legacy_text.replace(LEGACY_CODEX_USER_RULES, "", 1)
     elif legacy_path and "# MERIDIAN:" in legacy_text and "codex-user-rules" in legacy_text:
         warnings.append(f"{legacy_path}: legacy rules differ from the known owned block; preserved")
     return CodexUserRulesPlan(path, status, text, None if status == "ready" else proposed,

@@ -137,6 +137,21 @@ class CodexUserRulesTest(unittest.TestCase):
         owner_hosts_codex.apply_codex_user_rules(plan)
         self.assertEqual(legacy.read_bytes(), modified)
 
+    def test_legacy_rules_are_kept_and_reported_while_the_legacy_tool_is_installed(self):
+        legacy = self.rules.with_name("default.rules")
+        legacy.parent.mkdir(parents=True, exist_ok=True)
+        original = ("# before\r\n" + owner_hosts_codex.LEGACY_CODEX_USER_RULES + "# after\r\n").encode()
+        legacy.write_bytes(original)
+        plan = owner_hosts_codex.plan_codex_user_rules(self.rules, legacy_tool_installed=True)
+        self.assertIsNone(plan.legacy_proposed)
+        self.assertEqual([w for w in plan.warnings if "kept byte-identical" in w and str(legacy) in w], list(plan.warnings))
+        self.assertTrue(owner_hosts_codex.apply_codex_user_rules(plan))
+        self.assertEqual(legacy.read_bytes(), original)
+        self.assertEqual(self.rules.read_text(), owner_hosts_codex.CODEX_USER_RULES)
+        again = owner_hosts_codex.plan_codex_user_rules(self.rules, legacy_tool_installed=True)
+        self.assertFalse(owner_hosts_codex.apply_codex_user_rules(again))
+        self.assertEqual(legacy.read_bytes(), original)
+
     def test_setup_refuses_symlinked_codex_directory_before_host_writes(self):
         outside = self.home / 'outside'
         outside.mkdir()

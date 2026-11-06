@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import cardine_cli  # noqa: E402
 from cardine.hosts import stop_audit
+from project_config_support import write_project_config
 from cardine.shared import journal as owner_shared_journal
 from cardine.shared import flow as owner_shared_flow
 
@@ -28,6 +29,7 @@ class StopAuditTest(unittest.TestCase):
         self.project = Path(self.temporary.name).resolve()
         subprocess.run(["git", "init", "-q", "-b", "main", str(self.project)], check=True)
         (self.project / "PROJECT_WORKFLOW.md").write_text("workflow\n", encoding="utf-8")
+        write_project_config(self.project)
         self.journal = self.project / ".git" / owner_shared_journal.JOURNAL_NAME
 
     def tearDown(self) -> None:
@@ -227,7 +229,7 @@ class StopAuditTest(unittest.TestCase):
         for _ in range(2):
             stop_audit.audit(payload, NOW, host="codex")
         self.assertFalse((self.project / ".meridian").exists())
-        self.assertEqual(sorted(path.name for path in self.project.iterdir() if path.name != ".git"), ["PROJECT_WORKFLOW.md"])
+        self.assertEqual(sorted(path.name for path in self.project.iterdir() if path.name != ".git"), [".cardine", "PROJECT_WORKFLOW.md"])
 
     def test_compatibility_script_delegates_to_the_host_module(self) -> None:
         import runpy

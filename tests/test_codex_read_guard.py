@@ -32,6 +32,7 @@ class CodexReadGuardTest(unittest.TestCase):
         self.addCleanup(environment.stop)
         (self.project / "tasks").mkdir()
         (self.project / "PROJECT_WORKFLOW.md").write_text("workflow\n", encoding="utf-8")
+        write_project_config(self.project)
 
     def tearDown(self) -> None:
         self.temporary.cleanup()

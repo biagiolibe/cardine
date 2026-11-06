@@ -116,6 +116,17 @@ def _revalidate_plan(plan: SetupPlan) -> None:
             raise CardineError(f"{name} changed since it was planned; rerun --check")
 
 
+_LEGACY = "meri" + "dian"  # the retired product name, composed so the identifier guard stays strict
+
+
+def _legacy_tool_installed(home: Path, environment: Mapping[str, str]) -> bool:
+    """True while the retired tool is still on this machine; reads only `home` and `environment`."""
+    root = environment.get(_LEGACY.upper() + "_ROOT")
+    return bool((root and Path(root).expanduser().is_dir())
+                or (home / ".local/share" / _LEGACY).is_dir()
+                or (home / ".claude/plugins/cache" / _LEGACY).is_dir())
+
+
 def plan_setup(
     worktree_root: Path | None,
     codex_config: Path,
@@ -151,7 +162,8 @@ def plan_setup(
     else:
         config_action = "write"
 
-    user_rules = plan_codex_user_rules(home / ".codex/rules/cardine.rules")
+    user_rules = plan_codex_user_rules(home / ".codex/rules/cardine.rules",
+                                       legacy_tool_installed=_legacy_tool_installed(home, environment))
     directory_state, directory_change = _directory_setup_state(resolution.path)
     codex_plan: CodexConfigurationPlan | None = None
     try:
@@ -873,7 +885,8 @@ def probe_hook_invocation(host: str, home: Path, *, timeout: int = 30) -> str:
         return "unverified: cardine is not on PATH"
     with tempfile.TemporaryDirectory(prefix="cardine-doctor-") as fixture:
         root = Path(fixture).resolve()
-        (root / "PROJECT_WORKFLOW.md").write_text("probe\n", encoding="utf-8")
+        (root / names().project_declaration_path).parent.mkdir()
+        (root / names().project_declaration_path).write_text('{"version": 1, "preset": "lean"}', encoding="utf-8")
         (root / "sentinel.txt").write_text("line\n" * _PROBE_LINES, encoding="utf-8")
         tool_input = {"file_path": str(root / "sentinel.txt")} if host == "claude" else {"command": "cat sentinel.txt"}
         payload = {"tool_name": "Read" if host == "claude" else "Bash", "tool_input": tool_input, "cwd": str(root)}

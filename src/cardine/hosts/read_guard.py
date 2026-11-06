@@ -18,6 +18,7 @@ from cardine.shared.context import _context_configuration, context_router_files
 from cardine.shared.errors import CardineError
 from cardine.worktree.checkout import active_worktree_task
 from cardine.shared import authority as owner_shared_authority
+from cardine.shared.layout import names
 
 
 DEFAULT_THRESHOLD = 400
@@ -199,7 +200,7 @@ def decision(payload: object, host: str = "codex") -> tuple[bool, str | None]:
 def evaluate_targets(cwd: Path, targets: list[ReadTarget], label: str) -> tuple[bool, str | None]:
     """Apply one read-only policy to either adapter's normalized targets."""
     project = cwd.resolve()
-    if not (project / "PROJECT_WORKFLOW.md").is_file():
+    if not (project / names().project_declaration_path).is_file():
         return True, None
     budget = threshold_for(project)
     total = 0
