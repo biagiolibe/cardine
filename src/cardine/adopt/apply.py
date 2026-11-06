@@ -52,14 +52,16 @@ def encode_plan(plan) -> dict:
     return {'case': plan.case, 'outputs': _encode_outputs(plan.outputs),
             'diagnostics': list(plan.diagnostics), 'missing': list(plan.missing),
             'refusals': list(plan.refusals),
-            'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()}}
+            'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()},
+            'dropped_validation': {k: list(v) for k, v in plan.dropped_validation.items()}}
 
 
 def decode_plan(data):
     from cardine.adopt.plan import AdoptPlan
     return AdoptPlan(data['case'], {k: base64.b64decode(v) for k, v in data['outputs'].items()},
                      tuple(data['diagnostics']), tuple(data['missing']), tuple(data['refusals']),
-                     {k: tuple(v) for k, v in data['dropped_dependencies'].items()})
+                     {k: tuple(v) for k, v in data['dropped_dependencies'].items()},
+                     {k: tuple(v) for k, v in data.get('dropped_validation', {}).items()})
 
 
 def _saved_plan(receipt):

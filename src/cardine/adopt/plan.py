@@ -1,7 +1,7 @@
 """Read-only adoption planning and guardrails."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 from pathlib import Path
@@ -24,12 +24,15 @@ class AdoptPlan:
     refusals: tuple[str, ...]
     dropped_dependencies: dict[str, tuple[str, ...]]
 
+    dropped_validation: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
     def bytes(self):
         value = {"case": self.case, "operations": [
             {"path": path, "digest": hashlib.sha256(data).hexdigest()}
             for path, data in sorted(self.outputs.items())],
             "diagnostics": self.diagnostics, "missing": self.missing,
-            "refusals": self.refusals, "dropped_dependencies": self.dropped_dependencies}
+            "refusals": self.refusals, "dropped_dependencies": self.dropped_dependencies,
+            "dropped_validation": self.dropped_validation}
         return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
 
 
@@ -65,6 +68,7 @@ def plan_adopt(project: Path, framework: Path, *, name=None, slug=None, preset=N
         refusals.append("ADOPT_IN_PROGRESS")
     outputs = {}
     dropped = {}
+    dropped_validation = {}
     if name is not None and slug is not None:
         config = map_config(legacy, name=name, slug=slug, validation=validation, ci=ci)
         outputs[".cardine/project.json"] = (json.dumps(config, indent=2, sort_keys=True) + "\n").encode()
@@ -97,6 +101,8 @@ def plan_adopt(project: Path, framework: Path, *, name=None, slug=None, preset=N
             outputs[matches[0].relative_to(root).as_posix()] = result.text.encode()
         if result.dropped_dependencies:
             dropped[task_id] = result.dropped_dependencies
+        if result.dropped_validation:
+            dropped_validation[task_id] = result.dropped_validation
     if any(not item.startswith("governed tasks require review") for item in diagnostics):
         refusals.append("ADOPT_RECORD")
-    return AdoptPlan("B", outputs, tuple(diagnostics), tuple(missing), tuple(refusals), dropped)
+    return AdoptPlan("B", outputs, tuple(diagnostics), tuple(missing), tuple(refusals), dropped, dropped_validation)

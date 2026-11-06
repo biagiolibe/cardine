@@ -207,7 +207,13 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 174 — Declare the capability profile at init.
 - `[x]` 175 — Rehearse the adoption without patching the process.
 - `[ ]` 176 — Keep the legacy worktree root in the Codex permission profile.
+- `[x]` 177 — Translate Validation sections as the Cardine contract reads them.
 - `[ ]` 164 — Rehearse the conversion of this repository (C6a).
+- `[ ]` 178 — Delete the unreachable installation branches (C7a).
+- `[ ]` 179 — Remove the shell hooks and their tests (C7b).
+- `[ ]` 180 — Delete the Meridian identifier allowances (C7c).
+- `[ ]` 181 — Stop proposing this repository's script as evidence (C7e).
+- `[ ]` 182 — Delete the legacy snapshot reader (C7f).
 - `[x]` 166 — Reuse the prepared state in the integration and cleanup tests.
 - `[x]` 167 — Reduce the cost of the host plugin kill matrix.
 - `[x]` 168 — Reuse the prepared state in the receipt and recovery matrices.
