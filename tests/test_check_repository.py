@@ -21,9 +21,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import check_repository as cr  # noqa: E402
 from cardine.templates import audit as owner_templates_audit
-from cardine.shared import layout, constants as shared_constants
-from dataclasses import replace
-from installation_fixture import InstallationFixture
 
 
 class RepositoryCheckTest(unittest.TestCase):
@@ -485,7 +482,6 @@ class GovernedLifecycleTextTest(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         shutil.copytree(ROOT / "templates", self.root / "templates")
-        # MERIDIAN-INSTALLATION-CHECK
         shutil.copy(ROOT / "PROJECT_WORKFLOW.md", self.root / "PROJECT_WORKFLOW.md")
         self.workflows = self.root / "templates/single"
 
@@ -540,7 +536,6 @@ class GovernedLifecycleTextTest(unittest.TestCase):
                 shutil.copy(ROOT / "templates/single" / relative, self.workflows / relative)
 
     def test_repository_copy_must_not_keep_the_smoke_line(self) -> None:
-        # MERIDIAN-INSTALLATION-CHECK
         path = self.root / "PROJECT_WORKFLOW.md"
         path.write_text(path.read_text(encoding="utf-8") + "\nProject integration smoke command: `none`.\n", encoding="utf-8")
         with self.assertRaises(SystemExit):
@@ -840,203 +835,6 @@ class MachinePathTest(unittest.TestCase):
         cr.check_no_machine_paths()
 
 
-# MERIDIAN-INSTALLATION-CHECK
-@unittest.skipUnless((ROOT / ".meridian").is_dir(), "reads the Meridian installation removed at the switch; deleted by task 178")
-class ManagedDigestTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.root = Path(self.temporary.name) / "project"
-        shutil.copytree(ROOT, self.root, ignore=shutil.ignore_patterns(".git", "__pycache__"))
-        # MERIDIAN-INSTALLATION-CHECK
-        self.target = self.root / "docs/CONTEXT_BUDGET_POLICY.md"
-
-    def tearDown(self) -> None:
-        self.temporary.cleanup()
-
-    def manifest(self) -> dict[str, object]:
-        # MERIDIAN-INSTALLATION-CHECK
-        return json.loads((self.root / ".meridian/manifest.json").read_text(encoding="utf-8"))
-
-    def write_manifest(self, manifest: dict[str, object]) -> None:
-        # MERIDIAN-INSTALLATION-CHECK
-        (self.root / ".meridian/manifest.json").write_text(
-            json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
-        )
-
-    def drift(self) -> None:
-        self.target.write_text(self.target.read_text(encoding="utf-8") + "\nDrift.\n", encoding="utf-8")
-
-    def test_no_drift_passes_without_writing(self) -> None:
-        # MERIDIAN-INSTALLATION-CHECK
-        before = (self.root / ".meridian/manifest.json").read_bytes()
-
-        cr.check_managed_digests(self.root)
-
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
-
-    def test_drift_names_file_digests_and_restore_instruction(self) -> None:
-        self.drift()
-        output = io.StringIO()
-
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.check_managed_digests(self.root)
-
-        message = output.getvalue()
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertIn("docs/CONTEXT_BUDGET_POLICY.md", message)
-        self.assertIn("expected", message)
-        self.assertIn("got", message)
-        self.assertIn("restore the managed copy from `main`", message)
-        self.assertNotIn("--write-managed-digests", message)
-
-    def test_stale_digest_evidence_fails(self) -> None:
-        manifest = self.manifest()
-        profiles = manifest["capabilityProfiles"]
-        assert isinstance(profiles, dict)
-        # MERIDIAN-INSTALLATION-CHECK
-        capabilities = profiles["meridian-self-hosting"]["capabilities"]
-        assert isinstance(capabilities, dict)
-        installation = capabilities["context-budgeting"]["installation"]
-        assert isinstance(installation, dict)
-        installation["evidence"][0] = "sha256:" + "0" * 64
-        self.write_manifest(manifest)
-        output = io.StringIO()
-
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.check_managed_digests(self.root)
-
-        self.assertIn("stale digest evidence", output.getvalue())
-
-    def test_missing_managed_file_fails(self) -> None:
-        self.target.unlink()
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.check_managed_digests(self.root)
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertIn("missing managed-copy surface docs/CONTEXT_BUDGET_POLICY.md", output.getvalue())
-
-    def test_missing_declared_digest_fails(self) -> None:
-        manifest = self.manifest()
-        # MERIDIAN-INSTALLATION-CHECK
-        manifest["managedFiles"].pop("docs/COMPLETION_REPORT_TEMPLATE.md")
-        self.write_manifest(manifest)
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
-            cr.check_managed_digests(self.root)
-        self.assertIn("has no managedFiles digest", output.getvalue())
-
-    def test_removed_writer_option_cannot_change_manifest(self) -> None:
-        self.drift()
-        # MERIDIAN-INSTALLATION-CHECK
-        before = (self.root / ".meridian/manifest.json").read_bytes()
-        result = subprocess.run(
-            [sys.executable, "scripts/check_repository.py", "--write-managed-digests"],
-            cwd=self.root, capture_output=True, text=True,
-        )
-        self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("unsupported repository-check option", result.stdout)
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
-
-    def test_repository_check_ignores_checkout_profile_surface_changes(self) -> None:
-        catalog_path = self.root / "capabilities/catalog-v1.json"
-        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-        catalog["capabilities"]["context-reading"]["managedSurfaces"][0]["path"] = (
-            "docs/FUTURE_CONTEXT_POLICY.md"
-        )
-        catalog_path.write_text(json.dumps(catalog, indent=2) + "\n", encoding="utf-8")
-        # MERIDIAN-INSTALLATION-CHECK
-        before = (self.root / ".meridian/manifest.json").read_bytes()
-        subprocess.run(["git", "init", "--quiet"], cwd=self.root, check=True)
-        subprocess.run(["git", "add", "."], cwd=self.root, check=True)
-
-        result = subprocess.run(
-            [sys.executable, "scripts/check_repository.py"],
-            cwd=self.root, capture_output=True, text=True,
-        )
-
-        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("Cardine repository checks passed.", result.stdout)
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertEqual(before, (self.root / ".meridian/manifest.json").read_bytes())
-
-    def test_repository_check_and_profile_doctor_agree_on_drift(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-            InstallationFixture().installed_project(project)
-            InstallationFixture().write_probes(project)
-            # MERIDIAN-INSTALLATION-CHECK: the repository checker reads its frozen layout.
-            (project / ".meridian").mkdir()
-            shutil.copyfile(project / ".cardine/manifest.json", project / ".meridian/manifest.json")  # MERIDIAN-INSTALLATION-CHECK
-            # MERIDIAN-INSTALLATION-CHECK
-            target = project / "docs/CONTEXT_READING_POLICY.md"
-            target.write_text(target.read_text(encoding="utf-8") + "\nDrift.\n", encoding="utf-8")
-            check_output = io.StringIO()
-            doctor_output = io.StringIO()
-            with contextlib.redirect_stdout(check_output), self.assertRaises(SystemExit):
-                cr.check_managed_digests(project)
-            with contextlib.redirect_stdout(doctor_output):
-                doctor_status = owner_templates_audit.profile_doctor(
-                    # MERIDIAN-INSTALLATION-CHECK
-                    project, ROOT, "cardine-self-hosting"
-                )
-
-            self.assertEqual(2, doctor_status, doctor_output.getvalue())
-            # MERIDIAN-INSTALLATION-CHECK
-            expected = "drifted managed-copy surface docs/CONTEXT_READING_POLICY.md"
-            self.assertIn(expected, check_output.getvalue())
-            self.assertIn(expected, doctor_output.getvalue())
-
-    def test_installation_checks_ignore_product_default_names(self) -> None:
-        self.drift()
-        manifest = self.manifest()
-        expected_digests = cr.managed_digest_diagnostics(self.root)
-        expected_texts = cr.managed_stop_text_files(self.root)
-        expected_drift = owner_templates_audit.managed_copy_drift(self.root, manifest["managedFiles"])
-        other = replace(layout.PRODUCT_NAMES, project_directory=".other")
-        with (
-            patch.object(layout, "PRODUCT_NAMES", other), layout.use(other),
-            patch.object(shared_constants, "PRODUCT_NAMES", other),
-            patch.object(shared_constants, "MANIFEST_PATH", other.manifest_path),
-            patch.object(cr, "ROOT", self.root),
-        ):
-            cr.check_required_files()
-            self.assertEqual(cr.managed_digest_diagnostics(self.root), expected_digests)
-            self.assertEqual(cr.managed_stop_text_files(self.root), expected_texts)
-            self.assertEqual(owner_templates_audit.managed_copy_drift(self.root, manifest["managedFiles"]), expected_drift)
-            with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
-                cr.check_managed_digests(self.root)
-            cr.check_stop_code_registry(self.root)
-
-    def test_completion_template_and_unchained_validation_rule_are_declared(self) -> None:
-        manifest = self.manifest()
-        managed_files = manifest["managedFiles"]
-        assert isinstance(managed_files, dict)
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertIn("docs/COMPLETION_REPORT_TEMPLATE.md", managed_files)
-
-        profiles = manifest["capabilityProfiles"]
-        assert isinstance(profiles, dict)
-        # MERIDIAN-INSTALLATION-CHECK
-        capabilities = profiles["meridian-self-hosting"]["capabilities"]
-        assert isinstance(capabilities, dict)
-        execution_evidence = capabilities["execution-evidence"]
-        assert isinstance(execution_evidence, dict)
-        surfaces = execution_evidence["managedSurface"]
-        assert isinstance(surfaces, list)
-        self.assertIn(
-            # MERIDIAN-INSTALLATION-CHECK
-            {"form": "managed-copy", "path": "docs/COMPLETION_REPORT_TEMPLATE.md"},
-            surfaces,
-        )
-
-        # MERIDIAN-INSTALLATION-CHECK
-        profile = (self.root / "docs/EXECUTION_EVIDENCE_PROFILE.md").read_text(encoding="utf-8")
-        self.assertIn("Run every validation command of record as its own command", profile)
-        self.assertIn("Never join it with `&&` or `;`", profile)
-
-
 class ConditionalInstallationChecksTest(unittest.TestCase):
     """The installation checks follow the manifest, on synthetic roots."""
 
@@ -1067,8 +865,6 @@ class ConditionalInstallationChecksTest(unittest.TestCase):
         self.assertEqual(cr.managed_digest_diagnostics(self.root), [])
         cr.check_managed_digests(self.root)
         self.assertEqual(cr.managed_stop_text_files(self.root), [])
-        for record in (*cr.INSTALLATION_STATES[0][1], *cr.INSTALLATION_STATES[1][1]):
-            self.assertFalse((self.root / record).exists())
 
     def test_cardine_digest_checks_match_product_exemptions(self) -> None:
         from cardine.templates.init import plan_init
@@ -1101,35 +897,20 @@ class ConditionalInstallationChecksTest(unittest.TestCase):
         with patch.object(cr, "ROOT", self.root):
             cr.check_required_files()
 
-    def test_each_manifest_requires_its_own_records(self) -> None:
-        for manifest, records in cr.INSTALLATION_STATES:
-            with self.subTest(manifest=manifest):
-                self.install(manifest)
-                self.assertEqual(cr.installation_state(self.root), (self.root / manifest, records))
-                for name in (*cr.REQUIRED_FILES, *records[:-1]):
-                    self.write(name)
-                if records:
-                    self.assertIn(f"FAIL: required file is missing: {records[-1]}", self.required_missing())
-                    self.write(records[-1])
-                with patch.object(cr, "ROOT", self.root):
-                    cr.check_required_files()
-                shutil.rmtree(self.root)
-                self.root.mkdir()
+    def test_manifest_selects_the_installation_check(self) -> None:
+        self.install(cr.INSTALLATION_MANIFEST)
+        self.assertEqual(cr.installation_state(self.root), self.root / cr.INSTALLATION_MANIFEST)
+        for name in cr.REQUIRED_FILES:
+            self.write(name)
+        with patch.object(cr, "ROOT", self.root):
+            cr.check_required_files()
 
-    def test_legacy_manifest_wins_when_both_exist(self) -> None:
-        legacy = self.install(".meridian/manifest.json")  # MERIDIAN-INSTALLATION-CHECK
-        self.install(".cardine/manifest.json")
-        self.assertEqual(cr.installation_state(self.root)[0], self.root / legacy)
-
-    def test_edited_managed_copy_is_checked_in_each_state(self) -> None:
-        for manifest, _records in cr.INSTALLATION_STATES:
-            with self.subTest(manifest=manifest):
-                self.install(manifest, hashlib.sha256(b"original").hexdigest())
-                self.write("docs/Managed.md", "edited")
-                self.assertEqual(cr.managed_stop_text_files(self.root), [self.root / "docs/Managed.md"])
-                self.write("docs/Managed.md", "original")
-                self.assertEqual(cr.managed_stop_text_files(self.root), [])
-                (self.root / manifest).unlink()
+    def test_edited_managed_copy_is_checked(self) -> None:
+        self.install(cr.INSTALLATION_MANIFEST, hashlib.sha256(b"original").hexdigest())
+        self.write("docs/Managed.md", "edited")
+        self.assertEqual(cr.managed_stop_text_files(self.root), [self.root / "docs/Managed.md"])
+        self.write("docs/Managed.md", "original")
+        self.assertEqual(cr.managed_stop_text_files(self.root), [])
 
 
 class StopCodeRegistryCheckTest(unittest.TestCase):
@@ -1187,8 +968,7 @@ class StopCodeRegistryCheckTest(unittest.TestCase):
         installed = self.root / "docs/INSTALLED_POLICY.md"
         installed.parent.mkdir()
         installed.write_text("Stop with BLOCKED RETIRED_STOP.\n", encoding="utf-8")
-        # MERIDIAN-INSTALLATION-CHECK
-        manifest = self.root / ".meridian/manifest.json"
+        manifest = self.root / ".cardine/manifest.json"
         manifest.parent.mkdir()
         manifest.write_text(json.dumps({"managedFiles": {
             "docs/INSTALLED_POLICY.md": hashlib.sha256(installed.read_bytes()).hexdigest(),

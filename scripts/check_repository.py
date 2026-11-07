@@ -70,33 +70,14 @@ REQUIRED_FILES = (
     "skills/cardine-project/SKILL.md",
     "skills/cardine-delivery/SKILL.md",
 )
-# MERIDIAN-INSTALLATION-CHECK
-# The installation checks run only when a manifest exists. Each state names the
-# manifest and the records that its installation must hold.
-INSTALLATION_STATES = (
-    (
-        ".meridian/manifest.json",  # MERIDIAN-INSTALLATION-CHECK
-        (
-            "hooks/hooks.json",  # MERIDIAN-INSTALLATION-CHECK
-            "hooks/queue-briefing.sh",  # MERIDIAN-INSTALLATION-CHECK
-            ".meridian/probes/meridian-self-hosting/host-neutral-ci-v1.json",  # MERIDIAN-INSTALLATION-CHECK
-            ".meridian/probes/meridian-self-hosting/claude-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
-            ".meridian/probes/meridian-self-hosting/codex-project-v1.json",  # MERIDIAN-INSTALLATION-CHECK
-        ),
-    ),
-    (
-        ".cardine/manifest.json",
-        (),
-    ),
-)
+# The installation checks run only when the manifest exists.
+INSTALLATION_MANIFEST = ".cardine/manifest.json"
 
 
-def installation_state(root: Path = ROOT) -> tuple[Path, tuple[str, ...]] | None:
-    """Return the manifest and required records of the installed state, or None."""
-    for manifest, records in INSTALLATION_STATES:
-        if (root / manifest).is_file():
-            return root / manifest, records
-    return None
+def installation_state(root: Path = ROOT) -> Path | None:
+    """Return the installed manifest, or None when the checkout has none."""
+    manifest = root / INSTALLATION_MANIFEST
+    return manifest if manifest.is_file() else None
 
 
 LANGUAGE_POLICY_FILES = ("templates/single/LANGUAGE_POLICY.md",)
@@ -114,8 +95,7 @@ def fail(message: str) -> None:
 
 
 def check_required_files() -> None:
-    state = installation_state(ROOT)
-    for name in (*REQUIRED_FILES, *(state[1] if state else ())):
+    for name in REQUIRED_FILES:
         if not (ROOT / name).is_file():
             fail(f"required file is missing: {name}")
 
@@ -423,15 +403,14 @@ STOP_LIST_TEST_FILES = (
 def managed_stop_text_files(root: Path) -> list[Path]:
     """Check checkout-owned text, excluding byte-identical installed copies.
 
-    # MERIDIAN-INSTALLATION-CHECK
-    The self-hosting manifest belongs to installed Meridian. Its unchanged
-    copies may name stops retired by this checkout; their digests are checked
-    separately. Edited copies still undergo the checkout registry check.
+    Unchanged installed copies may name stops retired by this checkout; their
+    digests are checked separately. Edited copies still undergo the checkout
+    registry check.
     """
     paths = set((root / "templates").rglob("*.md"))
-    state = installation_state(root)
-    if state:
-        managed = json.loads(state[0].read_text(encoding="utf-8")).get("managedFiles", {})
+    manifest = installation_state(root)
+    if manifest:
+        managed = json.loads(manifest.read_text(encoding="utf-8")).get("managedFiles", {})
         for name, digest in managed.items():
             path = root / name
             if name.endswith(".md") and path.is_file():
@@ -923,46 +902,16 @@ def check_capability_required_versions(root: Path = ROOT) -> None:
 
 def managed_digest_diagnostics(root: Path = ROOT) -> list[str]:
     """Check recorded installation digests without consulting the product catalog."""
-    state = installation_state(root)
-    if state is None:
+    manifest_path = installation_state(root)
+    if manifest_path is None:
         return []
-    manifest = json.loads(state[0].read_text(encoding="utf-8"))
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     managed_files = manifest["managedFiles"]
-    if state[0].parent.name == ".cardine":
-        declared = owner_templates_audit.declared_managed_copy_paths(manifest, ROOT)
-        results = owner_templates_audit.audit_managed_copy_digests(root, managed_files, declared)
-        capability_results, _ = owner_templates_audit.audit_declared_capabilities(root, ROOT, manifest["workflowMode"])
-        results.extend(result for result in capability_results if result.identity.endswith("/installation"))
-        return [result.detail for result in results if result.status == "FAIL"]
-    diagnostics = [
-        diagnostic
-        for _relative, diagnostic in owner_templates_audit.managed_copy_drift(root, managed_files)
-    ]
-    for profile in manifest.get("capabilityProfiles", {}).values():
-        for declaration in profile.get("capabilities", {}).values():
-            surfaces = declaration.get("managedSurface", [])
-            evidence = declaration.get("installation", {}).get("evidence", [])
-            surface_digests: set[str] = set()
-            for surface in surfaces:
-                form, relative = surface["form"], surface["path"]
-                if form == "declaration-only":
-                    continue
-                path = root / relative
-                if not path.is_file():
-                    if form == "managed-copy" and relative not in managed_files:
-                        diagnostics.append(f"missing managed-copy surface {relative}")
-                    continue
-                digest = cardine_cli.sha256(path)
-                surface_digests.add(f"sha256:{digest}")
-                if form == "managed-copy":
-                    if relative not in managed_files:
-                        diagnostics.append(f"managed-copy surface {relative} has no managedFiles digest")
-                    if f"sha256:{digest}" not in evidence:
-                        diagnostics.append(f"managed-copy surface {relative} lacks matching digest evidence")
-            for reference in evidence:
-                if reference.startswith("sha256:") and reference not in surface_digests:
-                    diagnostics.append(f"stale digest evidence {reference}")
-    return diagnostics
+    declared = owner_templates_audit.declared_managed_copy_paths(manifest, ROOT)
+    results = owner_templates_audit.audit_managed_copy_digests(root, managed_files, declared)
+    capability_results, _ = owner_templates_audit.audit_declared_capabilities(root, ROOT, manifest["workflowMode"])
+    results.extend(result for result in capability_results if result.identity.endswith("/installation"))
+    return [result.detail for result in results if result.status == "FAIL"]
 
 
 def check_managed_digests(root: Path = ROOT) -> None:
