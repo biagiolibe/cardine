@@ -1,0 +1,102 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "189"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/legacy/conversion_reader.py",
+      "tests/test_conversion_reader.py",
+      "tests/test_adopt_plan.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/191.md",
+    "title": "Task 191 \u2014 Treat archived queue rows as closed dependencies in adoption",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "d2ae5f4b600a4952d027cafb680bf2dde196a410c4d1cf3548054315ded601e0",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "d14d174c614d26b69b062ce17d5796588392204e70a8ed5dc7577e15f257aed7",
+        "digest": "6d347a6b9bf9bfe357b557c315545d73c97368e8ca50301c4381619ac2b8b405",
+        "inputs": {
+          ".cardine/tasks/191.json": null,
+          "tasks/191.md": null
+        },
+        "kind": "creation",
+        "operation_id": "2ff358b7ea54482fbcc5d710efeb7d4d",
+        "outputs": {
+          ".cardine/tasks/191.json": "883c102ccb50ed54ebf342e3137ce3d50406cc325faadb5f88f9eca536d20ff1",
+          "tasks/191.md": "981c8d1f9a3b64d7895f4d81f7e9c80e46dd0f6b2b6ce6db663085f0483e33e5"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "628954329bb984003c4b7a01826ac6056e635d5f",
+        "task_id": "191",
+        "tree": "77cd44026b35663071cb68d20fe965db2e764e3f",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "191",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
