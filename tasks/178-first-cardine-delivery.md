@@ -65,9 +65,9 @@ document:
   converts it as a real open task (section 5 of `docs/CONVERSION_PLAN.md`, order table).
   It runs only after the switch, with Cardine: `Proceed with 178` routes to `cardine
   run`. Never start it with the installed Meridian.
-- The plan's own dependency cell reads: CS. Before the switch the dependency is
-  expressed on task 164 (C6a), which closes before the switch; the converter drops a
-  dependency on a closed task and lists it in the adoption plan.
+- The plan's own dependency cell reads: CS. The record declares no task dependency:
+  task 164 (C6a) and task 186 closed before the switch, and the converter knows only the
+  rows of `tasks/QUEUE.md`, so a dependency on an archived row would stop the adoption.
 - Interruption boundaries: Cardine's own (rule 4). The task adds none of its own.
 - Developer decisions of 2026-11-03, binding on every row: DD1 to DD5 in section 1 of
   `docs/CONVERSION_PLAN.md`; in particular DD3 (`.meridian/` is removed at the switch)
@@ -87,7 +87,7 @@ documentation of work item 11, and the release script of work item 12.
 
 ## Dependencies
 
-- **Depends on**: 164
+- **Depends on**: None
 - **Blocks**: 179, 181
 
 ## Developer decisions given in advance

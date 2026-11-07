@@ -33,13 +33,21 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
+### Phase 31b — Meridian conversion: before the switch
+
+Authority: `docs/CONVERSION_PLAN.md`, section 5, rule 2. The switch commit must pass this repository's checks unedited.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[ ]` | 186 | Make the switch commit pass this repository's checks | 🔴 P1 | — | [186](186-switch-commit-passes-checks.md) |
+
 ### Phase 32 — Meridian conversion: after the switch
 
 Authority: `docs/CONVERSION_PLAN.md`, rows C7a to C7f and section 5. These rows run under Cardine after the switch; they are written in Meridian format so that `cardine adopt` converts them.
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 178 | Delete the unreachable installation branches (C7a) | 🔴 P1 | 164 | [178](178-first-cardine-delivery.md) |
+| `[ ]` | 178 | Delete the unreachable installation branches (C7a) | 🔴 P1 | — | [178](178-first-cardine-delivery.md) |
 | `[ ]` | 179 | Remove the shell hooks and their tests (C7b) | 🔴 P1 | 178 | [179](179-remove-shell-hooks.md) |
 | `[ ]` | 180 | Delete the Meridian identifier allowances (C7c) | 🔴 P1 | 179 | [180](180-remove-meridian-allowances.md) |
 | `[ ]` | 181 | Stop proposing this repository's script as evidence (C7e) | 🔴 P1 | 178 | [181](181-evidence-without-repository-script.md) |
