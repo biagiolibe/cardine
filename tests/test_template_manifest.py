@@ -804,6 +804,8 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertNotRegex(output, r"(?m)^FAIL\s")
             self.assertIn("SUMMARY worst=UNVERIFIED", output)
 
+    # MERIDIAN-INSTALLATION-CHECK
+    @unittest.skipUnless((ROOT / ".meridian").is_dir(), "reads the Meridian-era profile replaced at the switch")
     def test_live_execution_profile_has_no_unresolved_configuration_placeholder(self) -> None:
         # MERIDIAN-INSTALLATION-CHECK
         profile = (ROOT / "docs/EXECUTION_EVIDENCE_PROFILE.md").read_text(

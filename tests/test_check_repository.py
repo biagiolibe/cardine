@@ -829,10 +829,19 @@ class MachinePathTest(unittest.TestCase):
         self.track("other.md", self.FORBIDDEN["linux"].encode())
         self.assert_fails("other.md:1", allowed=frozenset({"frozen.md"}))
 
+    def test_cardine_task_state_may_record_its_authority_paths(self) -> None:
+        self.track(".cardine/tasks/178.json", self.FORBIDDEN["linux"].encode())
+        cr.check_no_machine_paths(self.root)
+
+        self.track(".cardine/project.json", self.FORBIDDEN["linux"].encode())
+        self.assert_fails(".cardine/project.json:1")
+
     def test_repository_has_no_machine_paths(self) -> None:
         cr.check_no_machine_paths()
 
 
+# MERIDIAN-INSTALLATION-CHECK
+@unittest.skipUnless((ROOT / ".meridian").is_dir(), "reads the Meridian installation removed at the switch; deleted by task 178")
 class ManagedDigestTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
