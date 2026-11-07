@@ -419,3 +419,11 @@ Authority: `docs/CONVERSION_PLAN.md`; `docs/ADR_CARDINE_1_0.md`, work item 10 an
 | `[x]` | 177 | Translate Validation sections as the Cardine contract reads them | 🔴 P1 | — | [177](done/177-adopt-validation-sections.md) |
 | `[x]` | 183 | Convert this repository so that its own checks pass | 🔴 P1 | — | [183](done/183-converted-repository-checks.md) |
 | `[x]` | 164 | Rehearse the conversion of this repository (C6a) | 🔴 P1 | 158, 152, 151, 159, 160, 161, 162, 163, 174, 175, 177, 183 | [164](done/164-rehearse-this-repository.md) |
+
+### Phase 31b — Meridian conversion: before the switch
+
+Authority: `docs/CONVERSION_PLAN.md`, section 5, rule 2. The switch commit must pass this repository's checks unedited.
+
+| Status | ID | Title | Priority | Depends on | File |
+|--------|----|-------|----------|------------|------|
+| `[x]` | 186 | Make the switch commit pass the repository checks | 🔴 P1 | — | [186](done/186-switch-commit-passes-checks.md) |

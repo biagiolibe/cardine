@@ -210,7 +210,7 @@ The work items to 0.9 are listed in the ADR.
 - `[x]` 177 — Translate Validation sections as the Cardine contract reads them.
 - `[x]` 183 — Convert this repository so that its own checks pass.
 - `[x]` 164 — Rehearse the conversion of this repository (C6a).
-- `[ ]` 186 — Make the switch commit pass the repository checks.
+- `[x]` 186 — Make the switch commit pass the repository checks.
 - `[ ]` 178 — Delete the unreachable installation branches (C7a).
 - `[ ]` 179 — Remove the shell hooks and their tests (C7b).
 - `[ ]` 180 — Restrict the identifier guard to the shipped surfaces (C7c).

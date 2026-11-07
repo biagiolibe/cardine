@@ -979,6 +979,8 @@ def check_managed_digests(root: Path = ROOT) -> None:
 # to a root, so they resolve on every machine. Absolute home-directory paths
 # exist only at runtime. Files listed here are frozen exceptions; none today.
 MACHINE_PATH_ALLOWED_FILES: frozenset[str] = frozenset()
+# Cardine task state records the receipt authority of the checkout that wrote it.
+MACHINE_PATH_ALLOWED_PATTERN = re.compile(r"\.cardine/tasks/[^/]+\.json")
 MACHINE_PATH_PATTERN = re.compile(
     r"/Users/[A-Za-z0-9_.-]+/"
     r"|/home/[A-Za-z0-9_.-]+/"
@@ -998,7 +1000,7 @@ def check_no_machine_paths(
         fail("cannot list tracked files to check for machine-specific paths")
     for name in listed.stdout.decode("utf-8").split("\0"):
         path = root / name
-        if not name or name in allowed or not path.is_file():
+        if not name or name in allowed or MACHINE_PATH_ALLOWED_PATTERN.fullmatch(name) or not path.is_file():
             continue
         try:
             text = path.read_text(encoding="utf-8")

@@ -125,11 +125,11 @@ Apply this diff as written. It is the whole change.
 
 ## Acceptance Criteria
 
-- [ ] The prototype diff is applied to the six files under Relevant Files, and nothing
+- [x] The prototype diff is applied to the six files under Relevant Files, and nothing
   else changes in them.
-- [ ] Before the switch, the new test and the guard pass, and no test is skipped by the
+- [x] Before the switch, the new test and the guard pass, and no test is skipped by the
   new conditions, because `.meridian/` exists.
-- [ ] **Conversion evidence.** Use a disposable clone of the implementation commit,
+- [x] **Conversion evidence.** Use a disposable clone of the implementation commit,
   with a disposable `HOME`, `TMPDIR`, and `CARDINE_WORKTREE_ROOT`. Run `python3 -m
   cardine.cli adopt --project <clone> --apply --name Cardine --slug cardine --language
   Italian --validation <file>` with `PYTHONPATH` set to the worktree's `src`. The
@@ -144,20 +144,20 @@ Apply this diff as written. It is the whole change.
 
   The handoff records the outcome and both result lines. Never run `--apply` on this
   repository or on the task worktree.
-- [ ] Only the files under Relevant Files are edited, together with this
+- [x] Only the files under Relevant Files are edited, together with this
   task's own record and its archive, handoff, and state file. A test file
   outside that list may change only to update an expectation that this change
   made stale, without new behavior, and the handoff lists it. Any other file,
   or new behavior beyond this record, stops the task before editing it and
   names the file.
-- [ ] Tests that need a home directory create a disposable one themselves. Run the
+- [x] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
   `setup --apply` against the real home directory or writes real host configuration.
-- [ ] Every source and test file stays below 1,500 lines.
-- [ ] This repository's own lifecycle keeps running on the installed Meridian
+- [x] Every source and test file stays below 1,500 lines.
+- [x] This repository's own lifecycle keeps running on the installed Meridian
   1.4.1.
-- [ ] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
+- [x] The frozen files stay unchanged: `CLAUDE.md`, `AGENTS.md`,
   `PROJECT_WORKFLOW.md`, `LANGUAGE_POLICY.md`,
   `docs/COMPLETION_REPORT_TEMPLATE.md`, `docs/CONTEXT_BUDGET_POLICY.md`,
   `docs/EXECUTION_EVIDENCE_PROFILE.md`, `docs/WORKTREE_LIFECYCLE.md`,
@@ -166,14 +166,14 @@ Apply this diff as written. It is the whole change.
   worktree` line of `.codex/rules/local.rules`. No task runs the
   checkout's `setup --apply` against the real home directory or creates
   `.cardine/` in this repository.
-- [ ] `.meridian/` is unchanged, except `.meridian/tasks/186.json`, which only
+- [x] `.meridian/` is unchanged, except `.meridian/tasks/186.json`, which only
   the installed `meridian task close 186` writes.
-- [ ] The parallel suite reports coverage `total=2164`, which is the 2163 tests of
+- [x] The parallel suite reports coverage `total=2164`, which is the 2163 tests of
   `main` plus the new test.
-- [ ] **Clean-clone validation.** After the implementation commit, run
+- [x] **Clean-clone validation.** After the implementation commit, run
   `python3 scripts/run_tests.py --parallel --clean-clone` from the clean
   task worktree and record its result line in the handoff.
-- [ ] Every command under Validation passes.
+- [x] Every command under Validation passes.
 
 ## Relevant Files
 

@@ -127,6 +127,19 @@ ALLOWLIST = (
         r"\." + OLD + r"/.*",
     ),
     Allowance(
+        6, "kept: Cardine baselines and manifest name the rules template until it is renamed",
+        r"\.cardine/baselines/[^/]+/\.codex/rules/" + OLD + r"\.rules",
+    ),
+    Allowance(
+        6, "kept: Cardine baselines and manifest name the rules template until it is renamed",
+        r"\.cardine/manifest\.json",
+        r"\.codex/rules/" + OLD + r"\.rules",
+    ),
+    Allowance(
+        6, "kept: task state repeats record paths and titles, like the records of group 4",
+        r"\.cardine/tasks/[^/]+\.json",
+    ),
+    Allowance(
         3, "10",
         r"\.codex/rules/local\.rules",
         r"^# (?:Project-local command approval additions for the " + OLD.capitalize() + r" task lifecycle\.|Kept outside the managed " + OLD + r"\.rules copy so `" + OLD + r" upgrade` does not|see drift\. Rules combine with " + OLD + r"\.rules and the most restrictive|Lifecycle commands that " + OLD + r"\.rules does not list yet\.)$",
@@ -223,7 +236,7 @@ def scan_repository(root: Path, allowlist=ALLOWLIST) -> tuple[list[str], Counter
         for number, line in enumerate(lines, 1):
             inspect(name, number, line, lines[number - 2] if number > 1 else "")
     for index, entry in enumerate(allowlist):
-        if not used[index] and (entry.group not in (3, 5) or index in present):
+        if not used[index] and (entry.group not in (3, 5, 6) or index in present):
             failures.append(f"unused allowlist entry {index}: group {entry.group}, {entry.removal}, {entry.paths}")
     return failures, used
 
@@ -233,7 +246,7 @@ class IdentifierGuardTest(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="cardine-conditional-guard-") as directory:
             root = Path(directory)
             subprocess.run(["git", "init", "-q", str(root)], check=True)
-            for group in (3, 5):
+            for group in (3, 5, 6):
                 with self.subTest(group=group):
                     allowance = Allowance(group, "10", r"retired/.*\.py", OLD)
                     path = root / "retired/example.py"

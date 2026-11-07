@@ -64,6 +64,8 @@ class CodexWorktreeHooksTest(unittest.TestCase):
                 self.assertFalse(cwd.exists())
 
     @unittest.skipUnless(hooks_config_present(), ".codex/hooks.json is absent from this checkout")
+    # MERIDIAN-INSTALLATION-CHECK
+    @unittest.skipUnless((ROOT / ".meridian").is_dir(), "reads the Meridian hook definitions replaced at the switch; removed by task 179")
     def test_primary_project_definitions_process_worktree_payloads(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             primary = Path(directory) / "primary"
