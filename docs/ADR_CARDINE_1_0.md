@@ -648,6 +648,23 @@ Five rules follow:
    commands to agents. This is presence, not authenticity: the declared limit
    above applies unchanged.
 
+   **Receipt authority (amended on 2026-11-07).** A receipt in tracked task
+   state records only portable authority: the policy digest and the accepted
+   `main`. A receipt is valid when its policy matches the accepted policy and
+   its accepted `main` is the accepted base or one of its ancestors. The
+   identity of the checkout, its Git common directory, the worktree root, and
+   the executing runtime live only in the ignored local
+   `.cardine/receipt-authority.json`. After a fresh clone or a Cardine update,
+   the developer re-accepts that file from an interactive terminal with
+   `cardine authorize`. The command first verifies every task state against
+   the observed authority and refuses while an operation is pending. Task JSON
+   never grants it. Receipts written before this amendment keep their local
+   keys, which their hash covers; verification ignores them. Bindings that
+   in-progress operations keep in task state are unchanged by this amendment.
+   Before it, machine paths were part of tracked state, a fresh clone had no
+   command to reauthorize, and any change to the Cardine runtime made every
+   existing task state unusable.
+
    The installation surface (the manifest, marker baselines, and capability
    evidence) is outside this boundary until after 1.0. Those files describe
    the installed templates and do not decide whether a task lands.

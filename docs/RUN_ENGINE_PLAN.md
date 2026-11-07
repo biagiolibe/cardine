@@ -320,6 +320,10 @@ it. Tracked state remains portable. A fresh clone verifies portable receipts
 against explicitly accepted policy or requires developer reauthorization; it
 never bootstraps authority from arbitrary task JSON. Receipts are separate
 from the best-effort journal, which is never a recovery authority.
+Amended on 2026-11-07 (decision 14, rule 2, "Receipt authority"): tracked
+receipts keep only the policy and accepted-main identities; project, common
+directory, root, worktree root, and runtime identity stay in the ignored local
+authority, which the developer re-accepts with `cardine authorize`.
 
 RE1c makes contract/dependency, preparation, transition and state readers
 reject uncovered or changed artifacts. RE3a/RE3b verify delivery and measured
