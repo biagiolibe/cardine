@@ -1,20 +1,57 @@
-# Task 180 — Delete the Meridian identifier allowances (C7c)
+# Task 180 — Restrict the identifier guard to the shipped surfaces (C7c)
 
 > **ID**: `180`
 > **Category**: Refactor
 > **Priority**: 🔴 P1
 > **Estimate**: ~2h
 > **Assigned to**: unassigned
-> **Session**: Records of rows C7, 2026-11-06
-> **Origin**: maintenance
+> **Session**: Records of rows C7, 2026-11-06; redesigned 2026-11-07
+> **Origin**: maintenance; developer decision of 2026-11-07
 
 ## Objective
 
 Implement row C7c of `docs/CONVERSION_PLAN.md`, work item 10 of
-`docs/ADR_CARDINE_1_0.md`, after the switch, under Cardine. The row fixes the scope,
-the files, and the tests; this record adds the developer's decisions and no design.
+`docs/ADR_CARDINE_1_0.md`, after the switch, under Cardine.
 
-delete group 3 and 5 allowances; remove the `meridian worktree` line of `local.rules`; delete the allowances of the removed `.meridian/` (DD3).
+Today `tests/test_no_meridian_identifiers.py` searches every tracked file for the old
+product name, so each new document, record, or state file that names it needs a
+hand-written allowance. On 2026-11-07 the developer decided to scan only what the
+product ships, where an occurrence means the product still depends on Meridian.
+
+1. **Scope.** `scan_repository` inspects only tracked files whose path fully matches
+   `(?:src|bin|capabilities|schemas|skills|commands|\.claude-plugin)/.*|pyproject\.toml`.
+   Documents, records, tests, scripts, `.cardine/`, and root files are not inspected.
+2. **Allowlist.** Keep only the entries whose occurrences lie in those surfaces, and
+   narrow their path expressions to those surfaces, dropping the `tests/`, `scripts/`,
+   and `docs/` alternatives. The coordinator measured the result on a converted clone
+   with task 186 applied. Fourteen entries are still used, and nothing else is flagged:
+   - the `skills|commands|.claude-plugin` path entry;
+   - the `BEGIN`/`END` marker entry for `worktree-permissions` and `codex-user-rules`;
+   - the five exact migration expressions of `src/cardine/hosts/codex.py`;
+   - the `.rules` filename entry;
+   - the `-lean-delivery`/`-governed-sdd` skill-name entry;
+   - the `src/cardine/hosts/skills.py` wildcard entry;
+   - the `src/cardine/hosts/claude.py` plugin-name entry;
+   - the `src/cardine/release/update.py` marketplace entry;
+   - the `src/cardine/legacy/` reader entry;
+   - the `src/cardine/adopt/` entry (DD2: `adopt` and the readers stay).
+
+   Delete every other entry, including all of groups 3 to 6, the group 1 self-path
+   entry, and the tag constants (`INSTALLATION_TAG`, `OLD_NAME_TAG`, `TEMPLATE_TAG`)
+   with their tag handling. The stale-entry rule becomes unconditional again: every
+   remaining entry must match an occurrence.
+3. **Tests of the guard.** Delete the tests of the removed mechanics: conditional
+   groups, future task records, and tags. Keep or adapt the others so that they
+   cover:
+   - an occurrence in a shipped file without an allowance fails;
+   - the same occurrence in `docs/`, `tasks/`, or `tests/` passes;
+   - a stale entry fails;
+   - the historical-profile expression is allowed only in its migration line.
+4. **`local.rules`.** Remove the `meridian worktree` line of `.codex/rules/local.rules`
+   and the comment lines that describe it, as the row already required.
+
+The tag comments that other test files still carry become inert text. Leave them:
+tasks 178, 179, and 182 delete most of them with their tests.
 
 ## Acceptance Criteria
 
@@ -25,7 +62,10 @@ delete group 3 and 5 allowances; remove the `meridian worktree` line of `local.r
   made stale, without new behavior, and the handoff lists it. Any other file, or new
   behavior beyond the row, stops the task before editing it and names the file, so
   that the coordinator splits the row.
-- [ ] The row's tests exist and pass: The guard passes.
+- [ ] The row's tests exist and pass: the guard passes; a seeded occurrence in a
+  shipped file fails; the same occurrence under `docs/` or `tasks/` passes.
+- [ ] `tests/test_no_meridian_identifiers.py` contains no allowance whose path
+  expression can match a path outside the shipped surfaces of point 1.
 - [ ] Tests that need a home directory create a disposable one themselves. Run the
   validation commands with the inherited environment, as written; never wrap them in a
   temporary home, and a run that inherited the real home is not a stop. No step runs
@@ -57,7 +97,7 @@ document:
 
 > From `docs/CONVERSION_PLAN.md`, row C7c:
 >
-> | C7c / 2h | Cardine: delete group 3 and 5 allowances; remove the `meridian worktree` line of `local.rules`; delete the allowances of the removed `.meridian/` (DD3). | `tests/test_no_meridian_identifiers.py`, `.codex/rules/local.rules` | The guard passes. | Cardine's own. | C7b |
+> | C7c / 2h | Cardine: restrict the identifier guard to the shipped surfaces (`src/`, `bin/`, `capabilities/`, `schemas/`, `skills/`, `commands/`, `.claude-plugin/`, `pyproject.toml`) and delete every allowance outside them, with groups 3 to 6 and the tags; remove the `meridian worktree` line of `local.rules`. | `tests/test_no_meridian_identifiers.py`, `.codex/rules/local.rules` | The guard passes; a seeded occurrence in a shipped file fails, one under `docs/` or `tasks/` passes. | Cardine's own. | C7b |
 
 ## Technical Context
 
@@ -65,9 +105,11 @@ document:
   converts it as a real open task (section 5 of `docs/CONVERSION_PLAN.md`, order table).
   It runs only after the switch, with Cardine: `Proceed with 180` routes to `cardine
   run`. Never start it with the installed Meridian.
-- The plan's own dependency cell reads: C7b. Before the switch the dependency is
-  expressed on task 164 (C6a), which closes before the switch; the converter drops a
-  dependency on a closed task and lists it in the adoption plan.
+- The plan's own dependency cell reads: C7b.
+- The original row deleted only groups 3 and 5. That left 123 tagged lines in 12 files
+  outside the row's files and the group 6 entries of task 186, so the guard could not
+  pass within the row. Restricting the scope removes the need for those entries
+  instead of moving them.
 - Interruption boundaries: Cardine's own. The task adds none of its own.
 - Developer decisions of 2026-11-03, binding on every row: DD1 to DD5 in section 1 of
   `docs/CONVERSION_PLAN.md`; in particular DD3 (`.meridian/` is removed at the switch)

@@ -49,6 +49,6 @@ Authority: `docs/CONVERSION_PLAN.md`, rows C7a to C7f and section 5. These rows 
 |--------|----|-------|----------|------------|------|
 | `[ ]` | 178 | Delete the unreachable installation branches (C7a) | 🔴 P1 | — | [178](178-first-cardine-delivery.md) |
 | `[ ]` | 179 | Remove the shell hooks and their tests (C7b) | 🔴 P1 | 178 | [179](179-remove-shell-hooks.md) |
-| `[ ]` | 180 | Delete the Meridian identifier allowances (C7c) | 🔴 P1 | 179 | [180](180-remove-meridian-allowances.md) |
+| `[ ]` | 180 | Restrict the identifier guard to the shipped surfaces (C7c) | 🔴 P1 | 179 | [180](180-remove-meridian-allowances.md) |
 | `[ ]` | 181 | Stop proposing this repository's script as evidence (C7e) | 🔴 P1 | 178 | [181](181-evidence-without-repository-script.md) |
 | `[ ]` | 182 | Delete the legacy snapshot reader (C7f) | 🔴 P1 | 180 | [182](182-delete-legacy-snapshot.md) |

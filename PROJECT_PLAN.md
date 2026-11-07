@@ -213,7 +213,7 @@ The work items to 0.9 are listed in the ADR.
 - `[ ]` 186 — Make the switch commit pass the repository checks.
 - `[ ]` 178 — Delete the unreachable installation branches (C7a).
 - `[ ]` 179 — Remove the shell hooks and their tests (C7b).
-- `[ ]` 180 — Delete the Meridian identifier allowances (C7c).
+- `[ ]` 180 — Restrict the identifier guard to the shipped surfaces (C7c).
 - `[ ]` 181 — Stop proposing this repository's script as evidence (C7e).
 - `[ ]` 182 — Delete the legacy snapshot reader (C7f).
 - `[x]` 184 — Plan the documentation (work item 11).
