@@ -62,6 +62,13 @@
     "validationScoping": []
   },
   "run": {
+    "delivery": {
+      "base": "7e3ac34aa443576afb51b63207c23bd27b1e6634",
+      "contractDigest": "ccbfdedadb98f5ae3bbbbd6be2dc7f071dcac8fcd02a40d6cc107b25857d0173",
+      "source": "5296f5ff9e6db4e704d183ec00b0b849df085db2",
+      "sourceDigest": "362f45aa005a79f2f1045be6e39786693404bcffa0665aca15ab18f205259872",
+      "sourceTree": "d27966615f9b3ffd116e431362b330e3504f1072"
+    },
     "pending": null,
     "receipts": [
       {
@@ -118,6 +125,33 @@
         "source": "7e3ac34aa443576afb51b63207c23bd27b1e6634",
         "task_id": "189",
         "tree": "9fab911e59aee6e3e894440cc605fdee8c7fafa8",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "d2ae5f4b600a4952d027cafb680bf2dde196a410c4d1cf3548054315ded601e0",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "ccbfdedadb98f5ae3bbbbd6be2dc7f071dcac8fcd02a40d6cc107b25857d0173",
+        "digest": "f582c12a413f326732446fe6c8f8ef43980bde2fa12d4cff54bff35930a751dc",
+        "inputs": {
+          ".cardine/tasks/189.json": "fe53a1c17cebc777dc771e437760662c3eacf28ee818d2391758a73120f2c8d1"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "155db4ceeb4b461e8dfbce8801904c24",
+        "outputs": {
+          ".cardine/tasks/189.json": "1646a92bf4677d538496db325d9162ee6faef69c8fb7483edb0e23c8edb0bcd9"
+        },
+        "predecessor": "a963cccb45b36fa50b295bc21f370b15dd02a0dc897f7cb82a7e03eb8c024c35",
+        "result": "verified",
+        "source": "5296f5ff9e6db4e704d183ec00b0b849df085db2",
+        "task_id": "189",
+        "tree": "d27966615f9b3ffd116e431362b330e3504f1072",
         "version": 1
       }
     ]
