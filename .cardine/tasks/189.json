@@ -1,0 +1,103 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/templates/init.py",
+      "src/cardine/adopt/plan.py",
+      "src/cardine/adopt/apply.py",
+      "tests/test_adopt_plan.py",
+      "tests/test_adopt_apply.py",
+      "tests/test_run_delivery_disposable.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "capability",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/189.md",
+    "title": "Task 189 \u2014 Adopt an existing repository that has no workflow",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "d2ae5f4b600a4952d027cafb680bf2dde196a410c4d1cf3548054315ded601e0",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "ccbfdedadb98f5ae3bbbbd6be2dc7f071dcac8fcd02a40d6cc107b25857d0173",
+        "digest": "d05a548c4e2f00bd6b1c3eaad4d175ac82af7fdcb43559e6d3745eba7d274c58",
+        "inputs": {
+          ".cardine/tasks/189.json": null,
+          "tasks/189.md": null
+        },
+        "kind": "creation",
+        "operation_id": "00135639c7314840a978078ddcb2e6f8",
+        "outputs": {
+          ".cardine/tasks/189.json": "65a145ebb935cc72893750d4306c28d170527fada54dcb95d7947601bfbaf8ed",
+          "tasks/189.md": "25c5ab4607ebe007ca6b12b2b2f77c2a65d32ceff74670c9d44017b446f98f5c"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "e3e2f8954c85cb897a2cfd6e35b04a407a16c60e",
+        "task_id": "189",
+        "tree": "42ea9bdd2ca89c20bb3e7353484659fa1e46131d",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "189",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
