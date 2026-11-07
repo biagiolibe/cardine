@@ -1,0 +1,99 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/console/launch.py",
+      "tests/test_run_console.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/192.md",
+    "title": "Task 192 \u2014 Let the console Run start the developer's agent session",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "d2ae5f4b600a4952d027cafb680bf2dde196a410c4d1cf3548054315ded601e0",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "3207c5f4cf3bfa754f48172adeae91e0f6a08447bd6eca14c75c84f8d68141b7",
+        "digest": "bcbe06af6619c979447e02b17d3e9c7bddd4084d2ad88b33c6a13fc362aa4c85",
+        "inputs": {
+          ".cardine/tasks/192.json": null,
+          "tasks/192.md": null
+        },
+        "kind": "creation",
+        "operation_id": "206f04df28d64fcea9d217e94c685a81",
+        "outputs": {
+          ".cardine/tasks/192.json": "5b5fc81796c4c7b61ddd8e9527cbdf2eba157fd6f879a66dbb5f9188b2f88dbe",
+          "tasks/192.md": "9a0c3363ef9ed3b6464d55205a18c34e8316b64bd31832c0d1b3ba0859daf0c4"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "8241c1e7671358b454ee5127317a5a026eeec25b",
+        "task_id": "192",
+        "tree": "888753ee68decd3fd30495a3cf97ee4e975493ac",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "192",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
