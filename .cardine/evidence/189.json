@@ -1,0 +1,46 @@
+{
+  "189": [
+    {
+      "attemptId": "7e827694445b4f638ee582577f65855f",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "16301b233c0d46c299dc162aefdb01354c137413",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/189.json#7e827694445b4f638ee582577f65855f/1/repository-check",
+      "round": 1,
+      "sourceDigest": "362f45aa005a79f2f1045be6e39786693404bcffa0665aca15ab18f205259872",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "7e827694445b4f638ee582577f65855f",
+      "command": "python3 scripts/run_tests.py --parallel --clean-clone",
+      "commit": "16301b233c0d46c299dc162aefdb01354c137413",
+      "exitStatus": 0,
+      "id": "adopt-32169894e045e78a",
+      "log": ".cardine/evidence/189.json#7e827694445b4f638ee582577f65855f/1/adopt-32169894e045e78a",
+      "round": 1,
+      "sourceDigest": "362f45aa005a79f2f1045be6e39786693404bcffa0665aca15ab18f205259872",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\nOK workers=8 ran=2170 failures=0 errors=0 skipped=12 time=1243.0s\ncoverage total=2170 digest=28fc5c7d881bfb870ea645a255b4ac20469cee94da19d104f8953ca802aba9ba shards=8 selected=2170\nclean-clone commit=16301b233c0d46c299dc162aefdb01354c137413 total=2170 digest=28fc5c7d881bfb870ea645a255b4ac20469cee94da19d104f8953ca802aba9ba outcome=OK\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "7e827694445b4f638ee582577f65855f",
+      "command": "git diff --check",
+      "commit": "16301b233c0d46c299dc162aefdb01354c137413",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/189.json#7e827694445b4f638ee582577f65855f/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "362f45aa005a79f2f1045be6e39786693404bcffa0665aca15ab18f205259872",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}

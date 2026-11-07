@@ -62,6 +62,33 @@ class AdoptPlanTest(unittest.TestCase):
         self.assertEqual(tree_digest(self.base), before)
         self.assertIn('validation', plan_adopt(self.root, ROOT).missing)
 
+    def test_case_a_fits_around_existing_project_files(self):
+        files = {'README.md': '# Ours\n', '.gitignore': 'build/\n', 'AGENTS.md': 'Use make.\n',
+                 'PROJECT_PLAN.md': '# Roadmap\n'}
+        for name, text in files.items():
+            (self.root / name).write_text(text)
+        self.commit()
+        before = tree_digest(self.base)
+        plan = plan_adopt(self.root, ROOT, **self.choices(), preset='lean', task_identity='opaque')
+        self.assertEqual((plan.refusals, plan.diagnostics), ((), ()))
+        self.assertNotIn('README.md', plan.outputs)
+        self.assertNotIn('.gitignore', plan.outputs)
+        self.assertTrue(plan.outputs['AGENTS.md'].endswith(b'\n\nUse make.\n'))
+        self.assertIn(b'CARDINE:BEGIN', plan.outputs['AGENTS.md'])
+        self.assertTrue(plan.outputs['PROJECT_PLAN.md'].startswith(b'# Roadmap\n\n<!-- cardine-status:begin -->'))
+        self.assertEqual(set(plan.existing), {'AGENTS.md', 'PROJECT_PLAN.md'})
+        self.assertEqual(tree_digest(self.base), before)
+
+    def test_case_a_refuses_paths_it_cannot_merge(self):
+        for name in ('tasks/QUEUE.md', '.codex/hooks.json'):
+            (self.root / name).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / name).write_text('{}\n')
+        self.commit()
+        plan = plan_adopt(self.root, ROOT, **self.choices(), preset='lean', task_identity='opaque')
+        self.assertIn('ADOPT_RECORD', plan.refusals)
+        self.assertEqual(plan.diagnostics, ('existing path conflicts with adoption: .codex/hooks.json',
+                                            'existing path conflicts with adoption: tasks/QUEUE.md'))
+
     def test_case_a_refuses_dirty_git_project(self):
         (self.root / 'untracked').write_text('change')
         plan = plan_adopt(self.root, ROOT, **self.choices(), preset='lean', task_identity='opaque')
