@@ -1,0 +1,44 @@
+{
+  "ci": "none",
+  "locations": {
+    "adrLog": "docs/ARCHITECTURE_DECISIONS.md",
+    "handoffRoot": "tasks/handoffs",
+    "plan": "PROJECT_PLAN.md",
+    "queue": "tasks/QUEUE.md",
+    "reviewRoot": "tasks/reviews",
+    "taskRoots": [
+      "tasks"
+    ]
+  },
+  "preset": "lean",
+  "project": {
+    "name": "Cardine",
+    "slug": "cardine"
+  },
+  "taskIdentity": {
+    "mode": "opaque"
+  },
+  "validation": {
+    "baseline": [
+      "repository-check"
+    ],
+    "candidate": {
+      "BOUNDED": [
+        "adopt-2a6132d9dfc5a78d"
+      ],
+      "FULL": [
+        "adopt-2a6132d9dfc5a78d",
+        "adopt-ae1cbbf1076d9cc4"
+      ],
+      "REUSE": [
+        "adopt-2a6132d9dfc5a78d"
+      ]
+    },
+    "commands": {
+      "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+      "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+      "repository-check": "python3 scripts/check_repository.py"
+    }
+  },
+  "version": 1
+}

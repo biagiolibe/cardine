@@ -1,24 +1,9 @@
 # Concise Completion Report
 
-Use this handoff after validation. Keep it short and make every deviation explicit.
-Save it at `tasks/handoffs/<TASK-ID>.md`.
+The completion report is free-form and optional: no heading or label is required, and nothing in it grants completion, validation, or review authority, because the engine measures those facts itself.
 
-```md
-## Completion Report — <TASK-ID>
+Advice: after validation, write a short handoff at the location `cardine locations` resolves (files changed, validation, deviations) and make every deviation explicit. Do not claim completion while validation fails or a criterion is unresolved. Name each command with its exit status, or the CI run for this exact commit, rather than a bare "passed".
 
-- Files changed: `<paths>`
-- Branch: `<task-branch>`
-- Worktree: `<task-worktree path relative to the worktree root>`
-- Validation: `<exact commands run with their exit status>`
-- Validation skips: `<none | test name — test-reported reason; reported by `command`>`
-- Manual verification: `<none | evidence and result>`
-- Acceptance criteria: `<all met | list criterion IDs/status>`
-- Budget usage: `<diagnostics; captures; context expansions; investigation scope>`
-- Isolated exploration: `<none | recorded question(s) and finding(s)>`
-- Rule discrepancies: `<none | rule, command result, and what was followed>` (optional)
-- Blockers/deviations: `<none | concrete issue and reason>`
-```
-
-A named sandbox skip is not a passing result for an unrelated failure. Record a
-skip only when the test itself names it, including the test-reported reason and
-the command that reported it; otherwise treat validation as failed.
+<!-- CARDINE:BEGIN capability=manual-verification-record v2 -->
+Advice: when the task declares `Manual verification: required`, name the screenshot path, the view checked, and the result (pass or fail); when it declares `none`, say so.
+<!-- CARDINE:END -->
