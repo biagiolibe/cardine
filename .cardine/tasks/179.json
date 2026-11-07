@@ -1,0 +1,106 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "178"
+    ],
+    "expectedCodeSurface": [
+      "hooks/hooks.json",
+      "hooks/queue-briefing.sh",
+      "hooks/read-guard.sh",
+      "tests/test_queue_briefing.py",
+      "tests/test_read_guard.py",
+      "tests/test_codex_worktree_hooks.py",
+      "tests/test_codex_read_guard.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "maintenance",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/179-remove-shell-hooks.md",
+    "title": "Task 179 \u2014 Remove the shell hooks and their tests (C7b)",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "d2ae5f4b600a4952d027cafb680bf2dde196a410c4d1cf3548054315ded601e0",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "593abebf5c566c4004731727200e90731b8eb60d750fc048d9a519f73aad5c4e",
+        "digest": "2782410364acdbbc3662057304654c41e7dfd767999bce12a0f593d3834adb38",
+        "inputs": {
+          ".cardine/tasks/179.json": null,
+          "tasks/179-remove-shell-hooks.md": "9186706bcd8caf77e1529a36669feec0893f08fa70cd977500126ea0e4cc34ba"
+        },
+        "kind": "creation",
+        "operation_id": "df975d6e32ef4624ad036ec4dc4db018",
+        "outputs": {
+          ".cardine/tasks/179.json": "ad082e745fc15c8122aed6e4bb9813e713db5eb8f3ce7ab85004b39be074a394",
+          "tasks/179-remove-shell-hooks.md": "9186706bcd8caf77e1529a36669feec0893f08fa70cd977500126ea0e4cc34ba"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+        "task_id": "179",
+        "tree": "b2b205167d58eff2c531eaad9e0a239f22cb350e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "179",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
