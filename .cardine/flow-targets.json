@@ -1,0 +1,15 @@
+{
+  "friction_share": {
+    "max_percent": 30,
+    "window": 20
+  },
+  "lead_time_regression": {
+    "max_percent": 10,
+    "window": 20
+  },
+  "unbacked_blocks": {
+    "max": 0,
+    "window": 20
+  },
+  "version": 1
+}

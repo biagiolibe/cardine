@@ -1,0 +1,180 @@
+{
+  "appliedMigrations": [],
+  "capabilityProfiles": {
+    "lean-delivery-consumer": {
+      "capabilities": {
+        "context-reading": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "path:docs/CONTEXT_READING_POLICY.md"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_READING_POLICY.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "execution-evidence": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "path:docs/COMPLETION_REPORT_TEMPLATE.md",
+              "path:docs/CONTEXT_READING_POLICY.md",
+              "path:docs/EXECUTION_EVIDENCE_PROFILE.md"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_READING_POLICY.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "docs/EXECUTION_EVIDENCE_PROFILE.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "docs/COMPLETION_REPORT_TEMPLATE.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "language-policy": {
+          "hostActivation": {
+            "claude-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            },
+            "codex-project": {
+              "evidence": [],
+              "notApplicableRationale": null,
+              "state": "UNVERIFIED"
+            }
+          },
+          "installation": {
+            "evidence": [
+              "path:LANGUAGE_POLICY.md"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "LANGUAGE_POLICY.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "minimal-read-only-status": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "path:docs/CONTEXT_READING_POLICY.md"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_READING_POLICY.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        },
+        "validation-scoping": {
+          "hostActivation": {},
+          "installation": {
+            "evidence": [
+              "path:PROJECT_WORKFLOW.md",
+              "path:docs/CONTEXT_READING_POLICY.md"
+            ],
+            "notApplicableRationale": null,
+            "state": "INSTALLED"
+          },
+          "managedSurface": [
+            {
+              "form": "managed-copy",
+              "path": "docs/CONTEXT_READING_POLICY.md"
+            },
+            {
+              "form": "managed-copy",
+              "path": "PROJECT_WORKFLOW.md"
+            }
+          ],
+          "requiredVersion": 1,
+          "verification": {
+            "evidence": [],
+            "notApplicableRationale": null,
+            "state": "UNVERIFIED",
+            "verifiedAt": null,
+            "verifierVersion": null
+          }
+        }
+      },
+      "profileVersion": 1
+    }
+  },
+  "frameworkVersion": "1.4.0",
+  "managedFiles": {
+    ".codex/hooks.json": "4048efe87dc00ab2a81c2e2f247f67d0e3febb37eb901f56fad5646a692d7c4f",
+    ".codex/rules/meridian.rules": "a9645a548667548a20d7ddf163d06c886f6a0198bb504e588a463d3dbc360944",
+    "AGENTS.md": "d1eec58f259d07f9c618db29e7df29570bc658359d575a82bdf18b65dd3c53d8",
+    "CLAUDE.md": "f5bbd2643f6f4673034605526086ab13572dad3108aa93f33c862bdf43622d7e",
+    "LANGUAGE_POLICY.md": "306ca679c116aaf1e6bb8aec61e449c582b1b9717a9b0f879678fc460a3547f1",
+    "PROJECT_WORKFLOW.md": "be207786ffab7a12b37be345554eea0300fe140646a5792fd0d0f11f13c7a42f",
+    "docs/AUDIT_PROMPT_READ_ONLY.md": "7c4240d0be05edbefa5b0146092aacf2ab219822bb18be79fcbdb00e23b68508",
+    "docs/CODE_ORGANIZATION.md": "b077c31c4052c0dd298f852c0c76ce1f24f6af1c8d434078b01557dc71bb5192",
+    "docs/COMPLETION_REPORT_TEMPLATE.md": "201272c016cb6d91bd8968d24ddbc2c9ec3daf7deb870336012a5aaf429e7804",
+    "docs/CONTEXT_READING_POLICY.md": "c2cde99a337c4d8d193ca019a691c9065afb825e57953695eea181607805e88f",
+    "docs/EXECUTION_EVIDENCE_PROFILE.md": "18c0c290487b0b8b9992181600d19ffac16f8c3958d5adbbd48f91724d713df0",
+    "docs/LIFECYCLE_ORCHESTRATION.md": "37399fa3c3aaf7733a82c3f240a6335d38afd92d5b806c0625fc2073dca4854c",
+    "docs/OPERATOR_PROMPTS.md": "057c1ee4210bc3dec5814ddaba79e55562035ff31aec9a7564fd09ca9640d91a",
+    "docs/REVIEW_RECORD_TEMPLATE.md": "2eb608a2b0ca7a779f4225d06bba772ea0e82a48b350e2d6d08e3705df72d0f0",
+    "docs/WORKTREE_LIFECYCLE.md": "98c8a36e26d21706150e1290276240021905295c2cca77060cc1055399e79a87",
+    "docs/workflows/IMPLEMENTATION.md": "883c4dc68e9c424cfbaee2e1883391485ed03f0e9f517ead50858aa1cfc69909",
+    "docs/workflows/REMEDIATION.md": "4709f4dc7aba590f43e902a691489670d4a93189a384473baa93da32b314c432",
+    "docs/workflows/REVIEW.md": "7eef675f0cb8573b43ed93330ca1eea28e5d9dd531a756b07135c89a616ca208"
+  },
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "1.4.0",
+  "workflowMode": "single"
+}

@@ -129,8 +129,7 @@ documentation of work item 11, and the release script of work item 12.
 
 ## Dependencies
 
-- **Depends on**: 179
-- **Blocks**: 182
+- Depends on: `179`
 
 ## Developer decisions given in advance
 
@@ -178,9 +177,20 @@ revalidation in the same turn; do not stop to report the fix.
 
 ## Validation
 
-- `python3 scripts/run_tests.py --parallel --clean-clone`
-- `git diff --check`
+- `adopt-32169894e045e78a`: `python3 scripts/run_tests.py --parallel --clean-clone`
+- `adopt-466c2f308b48c766`: `git diff --check`
 
 The clean-clone run executes `scripts/check_repository.py` and the parallel
 suite on a clone of the committed HEAD, so the task does not run them again
 in the worktree as counted validation.
+
+## Expected code surface
+
+- `tests/test_no_meridian_identifiers.py`
+- `.codex/rules/local.rules`
+
+## Execution contract — resolved
+
+- Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`
+- Profile revision: `sha256:18c0c290487b0b8b9992181600d19ffac16f8c3958d5adbbd48f91724d713df0`
+- Execution commands: `required via cardine execution`

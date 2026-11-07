@@ -1,0 +1,99 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "scripts/check_repository.py",
+      "tests/test_check_repository.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "maintenance",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/178-first-cardine-delivery.md",
+    "title": "Task 178 \u2014 Delete the unreachable installation branches (C7a)",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "21a257b09cf66f584144c46a668c208d8c8f4f06",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "6d5e3615a41d1b3a58b989c841cda635203a93cc28a84952c5c4a3a1569929ca",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "4c3665c54cab094a94d544b382c8ae9091139b08db28d120971fdbf68c5b20a0",
+        "digest": "483329f6cc2f805fb2933455e5dcf5372dd89c029dcae3e3400d1953d89b1b76",
+        "inputs": {
+          ".cardine/tasks/178.json": null,
+          "tasks/178-first-cardine-delivery.md": "5847bb09d01b716380e329e918e10722ee628eb34288d3cef7bb3d9fdb6bd155"
+        },
+        "kind": "creation",
+        "operation_id": "5184ac4b4b6f4d0eaafe067adcef692c",
+        "outputs": {
+          ".cardine/tasks/178.json": "4eaf7c1066302256f660401c5e266262164788784a4e94ff18d44b6c13a3239c",
+          "tasks/178-first-cardine-delivery.md": "5847bb09d01b716380e329e918e10722ee628eb34288d3cef7bb3d9fdb6bd155"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "21a257b09cf66f584144c46a668c208d8c8f4f06",
+        "task_id": "178",
+        "tree": "6a1eba161d9ed6364813585322121b15fb6a44a3",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "178",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

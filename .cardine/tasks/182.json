@@ -1,0 +1,103 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "180"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/legacy/snapshot.py",
+      "src/cardine/legacy/meridian_installation.py",
+      "tests/test_status_legacy_boundary.py",
+      "tests/test_legacy_meridian_installation.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "maintenance",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/182-delete-legacy-snapshot.md",
+    "title": "Task 182 \u2014 Delete the legacy snapshot reader (C7f)",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "21a257b09cf66f584144c46a668c208d8c8f4f06",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "6d5e3615a41d1b3a58b989c841cda635203a93cc28a84952c5c4a3a1569929ca",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "8eb477dfe68a00c7a1e481986ba6f741f9c3461d1b511e8afa08c1b57f0392ea",
+        "digest": "74277aab896102c9794e41847852ca131a08959c1caa0be0c1b94e57acbb1386",
+        "inputs": {
+          ".cardine/tasks/182.json": null,
+          "tasks/182-delete-legacy-snapshot.md": "b9ed805874cbe0857315d194922ed49871b336e35b066568548a8b78b0434540"
+        },
+        "kind": "creation",
+        "operation_id": "ddf7696cc1f4466d9254ebc290344f18",
+        "outputs": {
+          ".cardine/tasks/182.json": "4729cf6d5edb90fbd16a0987da5cb05f018438f6cfbe4bd351453065d7d09ec2",
+          "tasks/182-delete-legacy-snapshot.md": "b9ed805874cbe0857315d194922ed49871b336e35b066568548a8b78b0434540"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "21a257b09cf66f584144c46a668c208d8c8f4f06",
+        "task_id": "182",
+        "tree": "6a1eba161d9ed6364813585322121b15fb6a44a3",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "182",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

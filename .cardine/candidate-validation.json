@@ -1,0 +1,19 @@
+{
+  "outcomes": {
+    "BOUNDED": [
+      "python3 scripts/check_repository.py",
+      "git diff --check"
+    ],
+    "FULL": [
+      "python3 scripts/check_repository.py",
+      "python3 scripts/run_tests.py --parallel",
+      "git diff --check"
+    ],
+    "REUSE": [
+      "python3 scripts/check_repository.py",
+      "git diff --check"
+    ]
+  },
+  "state": "declared",
+  "version": 1
+}

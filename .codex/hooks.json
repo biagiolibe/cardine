@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "meridian hook read-guard --host codex",
+            "command": "cardine hook read-guard --host codex",
             "timeout": 10
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "meridian hook stop-audit --host codex",
+            "command": "cardine hook stop-audit --host codex",
             "timeout": 5
           }
         ]
