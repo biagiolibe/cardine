@@ -9,6 +9,7 @@
       "src/cardine/console/launch.py",
       "src/cardine/console/models.py",
       "tests/test_run_console.py",
+      "tests/test_console_launch.py",
       "tests/test_console_closure.py",
       "tests/test_console_snapshot.py",
       "tests/test_console_states.py"
@@ -69,6 +70,14 @@
       "changedFields": [
         "expectedCodeSurface"
       ]
+    },
+    {
+      "after": "sha256:c4cac72a348e9168de926f0696d37f6f86fa613e080e8592fdab67b1f28dd83c",
+      "at": "2026-11-07T23:51:23.254267Z",
+      "before": "sha256:498d394e7aa00150b8a2e409754b09329a24a98c6ffd9ca95cc411d64a4a9bfc",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
     }
   ],
   "run": {
@@ -125,6 +134,30 @@
         "source": "a995ee3e3f016ff4da40f10d3b59a155846c3e5d",
         "task_id": "192",
         "tree": "53abffb3653d260924e56dc94fc0366527eefb20",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "a995ee3e3f016ff4da40f10d3b59a155846c3e5d",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "f537f5c35c8bf6ac2f1ca28348afe2c02e83297c60700610ef5f42e5b5cbe333",
+        "digest": "37df9dded0bff68ec9eb6b28e65cbdc6405ad1e563fc7bde21321f263ab47b8e",
+        "inputs": {
+          ".cardine/tasks/192.json": "72070e3a8c721db9cbbb0463ae24ea825166a0c730a09ab81055437844d95e33",
+          "tasks/192.md": "a03eb2751d43f91e21e58360573cc0741240c509c64f3218ef3490043daed627"
+        },
+        "kind": "contract_revision",
+        "operation_id": "a888487204fb4edc8f4ca4356e6e9a59",
+        "outputs": {
+          ".cardine/tasks/192.json": "83dea36ecbce9dcfe82eeea0d974e062fee10ce40ae25e10cd575d522c78046b",
+          "tasks/192.md": "a03eb2751d43f91e21e58360573cc0741240c509c64f3218ef3490043daed627"
+        },
+        "predecessor": "48850bf5f9b270eaae7c67ffaea5827d2571e00a8535e8c38a67384adef45ed1",
+        "result": "verified",
+        "source": "969d6343433d2f2c87618091ec7b22f71ff0e48d",
+        "task_id": "192",
+        "tree": "21b3454ac763b7f775eab5baa9162d6af2829a77",
         "version": 1
       }
     ]
