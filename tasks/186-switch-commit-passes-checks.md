@@ -1,4 +1,4 @@
-# Task 186 — Make the switch commit pass this repository's checks
+# Task 186 — Make the switch commit pass the repository checks
 
 > **ID**: `186`
 > **Category**: Fix

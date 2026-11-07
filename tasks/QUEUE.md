@@ -39,7 +39,7 @@ Authority: `docs/CONVERSION_PLAN.md`, section 5, rule 2. The switch commit must 
 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
-| `[ ]` | 186 | Make the switch commit pass this repository's checks | 🔴 P1 | — | [186](186-switch-commit-passes-checks.md) |
+| `[ ]` | 186 | Make the switch commit pass the repository checks | 🔴 P1 | — | [186](186-switch-commit-passes-checks.md) |
 
 ### Phase 32 — Meridian conversion: after the switch
 
