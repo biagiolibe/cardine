@@ -102,7 +102,7 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         from cardine.tasks.preflight import execution_contract, execution_preflight
         record = self.root / 'tasks/002.md'
         (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
-        record.write_text(record.read_text() + execution_contract(self.root, '002') + '\n')
+        record.write_text(record.read_text().split('\n\n## Execution contract — resolved\n')[0] + '\n\n' + execution_contract(self.root, '002') + '\n')
         execution_preflight(self.root, '002')
         record.write_text(record.read_text() + '\nClass: spike\nReview: required\nDeliverable: docs/edited.md\n')
         execution_preflight(self.root, '002')
@@ -189,7 +189,7 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         from cardine.tasks.recording import run_validation
         (self.root / 'docs/EXECUTION_EVIDENCE_PROFILE.md').write_text('profile\n')
         record = self.root / 'tasks/002.md'
-        record.write_text(record.read_text() + execution_contract(self.root, '002') + '\n')
+        record.write_text(record.read_text().split('\n\n## Execution contract — resolved\n')[0] + '\n\n' + execution_contract(self.root, '002') + '\n')
         before = frozen_validation_commands(self.root, '002')
         self.assertEqual(frozen_validation_commands(self.root, 'task-002'), before)
         self.assertEqual(execution_contract(self.root, 'task-002'), execution_contract(self.root, '002'))

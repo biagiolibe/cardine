@@ -593,3 +593,7 @@ stop to report the fix.
 The clean-clone run executes `scripts/check_repository.py` and the parallel suite on a
 clone of the committed HEAD, so the task does not run them again in the worktree as
 counted validation.
+
+## Completion evidence
+
+The prototype was applied and validated as recorded in `tasks/handoffs/188.md`.

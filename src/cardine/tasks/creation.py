@@ -67,7 +67,7 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
                 intent = _load_intent(_intent_path(root, canonical))
                 name = str(record.relative_to(root))
                 proposal = intent['files'].get(name, {}).get('content')
-                if proposal is None or base64.b64decode(proposal) != text.encode('utf-8'):
+                if proposal is None or _proposal_text(base64.b64decode(proposal)) != _proposal_text(text.encode("utf-8")):
                     raise CardineError('changed creation input; replay requires the identical record')
                 replay_operation(root, canonical, kind='creation')
                 return {'id': canonical, 'record': name,
@@ -93,6 +93,7 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
                     raise CardineError('developer reauthorization required for existing task states')
                 authorize_project(root, accepted=observed_authority(root), new=True)
             require_authority(root)
+            text = _with_resolved_execution_contract(root, contract, text)
             write_operation(root, canonical, state, kind='creation',
                             files={str(record.relative_to(root)): text.encode('utf-8')})
             return {'id': canonical, 'record': str(record.relative_to(root)),
@@ -113,3 +114,18 @@ def validate_dependencies(root, task_id, contract):
                             stop_factory=lambda code, detail, **kwargs: CardineError(detail))
         except CardineError as error:
             raise CardineError(f"unknown or invalid dependency {dependency}: {error}") from error
+
+
+def _with_resolved_execution_contract(root, contract, text):
+    """Publish the record with its resolved execution block, so a worktree
+    prepared from the creation commit starts without a reconcile."""
+    from cardine.tasks.contract import contract_digest
+    from cardine.tasks.preflight import render_execution_contract
+    if contract_digest(text) is not None:
+        return text
+    return text.rstrip() + "\n\n" + render_execution_contract(root, contract["validation"]["baseline"]) + "\n"
+
+
+def _proposal_text(published: bytes) -> str:
+    """The proposal a published record came from, without its generated block."""
+    return published.decode("utf-8").split("\n\n## Execution contract — resolved\n", 1)[0].rstrip()

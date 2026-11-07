@@ -33,15 +33,6 @@ Authority for this queue: [docs/ADR_CARDINE_1_0.md](../docs/ADR_CARDINE_1_0.md),
 
 ## 🏃 Active Queue
 
-### Phase 31b — Meridian conversion: before the switch
-
-Authority: `docs/CONVERSION_PLAN.md`, section 5, rule 2. The switch commit must pass CI unedited.
-
-| Status | ID | Title | Priority | Depends on | File |
-|--------|----|-------|----------|------------|------|
-| `[x]` | 187 | Check path aliases only where the platform resolves them | 🔴 P1 | — | [187](done/187-path-alias-test-on-linux.md) |
-| `[ ]` | 188 | Deliver a task created by init and task new through run alone | 🔴 P1 | — | [188](188-fresh-task-lands-through-run.md) |
-
 ### Phase 32 — Meridian conversion: after the switch
 
 Authority: `docs/CONVERSION_PLAN.md`, rows C7a to C7f and section 5. These rows run under Cardine after the switch; they are written in Meridian format so that `cardine adopt` converts them.
