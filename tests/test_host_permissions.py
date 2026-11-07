@@ -115,8 +115,11 @@ class PathActionMatrixTest(Fixture):
                 self.assertFalse(self.decide("implementer", f"echo x > {path}"))
         real = str(self.external)
         bare = real.removeprefix("/private") if real.startswith(("/private/var/", "/private/tmp/")) else real
-        for spelling in (real, bare, "/private" + bare if not real.startswith("/private/") else real):
-            self.assertFalse(self.native("implementer", "Edit", file_path=f"{spelling}/{STATE}"), spelling)
+        # Check only the spellings that this platform resolves to the same directory:
+        # /tmp aliases /private/tmp on macOS, while on Linux /private/tmp is another path.
+        for spelling in {real, bare, "/private" + bare}:
+            if Path(spelling).resolve() == Path(real).resolve():
+                self.assertFalse(self.native("implementer", "Edit", file_path=f"{spelling}/{STATE}"), spelling)
         self.assertFalse(self.decide("implementer", "ln -s .cardine/tasks/001.json src/alias2"))
 
     def test_shell_writers_chains_pipes_and_redirects(self) -> None:
