@@ -228,6 +228,33 @@ home directory.
   last conversion. Until S7 the plugin hooks still call `meridian` in this
   repository; until then work stays with the developer.
 
+### Bootstrap after the switch (developer decision of 2026-11-07)
+
+The first integration under Cardine, task 189, met two defects that no task
+could fix through Cardine itself:
+
+- **Candidate validation** ran the validation commands in the primary checkout,
+  where the candidate is an uncommitted merge, so `run_tests.py --clean-clone`
+  refused every candidate. Then undoing the failed candidate needed the
+  developer channel, which an agent session cannot reach.
+- **Receipt authority** pinned the digest of the Cardine runtime in every
+  receipt, so updating the installed framework to get any fix made every
+  existing task state unusable. No command could re-accept it.
+
+The developer therefore landed by hand, once:
+
+1. `Integrate 189`: the staged candidate, unchanged, committed after the
+   integration lease was moved aside.
+2. One bootstrap commit with both fixes. Candidate validation runs in a
+   temporary worktree of a commit built from the candidate tree, and the engine
+   undoes its own failed candidate. Receipts carry only portable authority, and
+   `cardine authorize` re-accepts the local authority (decision 14, amended on
+   2026-11-07).
+
+After the bootstrap the developer updates the framework checkout and runs
+`cardine authorize --apply` once. From then on every change lands through
+Cardine; no further manual landing is planned.
+
 ### Interrupted or failed conversion
 
 `--apply` is receipt-covered: killing it leaves a partial working tree on the

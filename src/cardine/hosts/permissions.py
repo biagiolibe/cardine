@@ -35,7 +35,7 @@ CODEX_SHELL = "shell"
 # Action prefixes as non-option CLI words, matched as an ordered subsequence so
 # reordered options and option values cannot hide them.
 DEVELOPER_ONLY = (("cancel",), ("abort",), ("task", "contract"), ("task", "transition"),
-                  ("task", "state"), ("setup",), ("upgrade",), ("lock",), ("self-update",))
+                  ("task", "state"), ("setup",), ("upgrade",), ("lock",), ("self-update",), ("authorize",))
 INTEGRATION = (("worktree", "integrate"), ("worktree", "cleanup"), ("worktree", "advance"),
                ("worktree", "repair-base"))
 REVIEWER_DENIED = (("execution", "start"), ("execution", "deliver"), ("execution", "validate"),

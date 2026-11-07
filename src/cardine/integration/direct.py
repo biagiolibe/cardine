@@ -6,7 +6,7 @@ from pathlib import Path
 
 from cardine.integration.evidence import candidate_validation_declaration
 from cardine.integration.merge import (
-    abort_task_integration, cleanup_task_worktree, finalize_task_integration, stage_task_integration,
+    cleanup_task_worktree, finalize_task_integration, recover_task_integration, stage_task_integration,
 )
 from cardine.shared.jsonio import _read_json_object
 from cardine.tasks.identity import resolve_task_identity
@@ -43,7 +43,7 @@ class DirectLanding:
         return finalize_task_integration(task_id, validation, project)
 
     def reconcile_landing(self, task_id: str, project: Path) -> dict[str, object]:
-        return abort_task_integration(task_id, project)
+        return recover_task_integration(task_id, project)
 
     def finish_delivery(self, locations):
         from cardine.integration.cleanup import finish_delivery

@@ -248,6 +248,12 @@ def build_parser() -> CardineArgumentParser:
     project.add_argument("--field", choices=("project", "locations", "validation-scoping", "ci", "reviewer-author"))
     project.add_argument("--format", choices=("json", "text"), default="text")
 
+    authorize = subparsers.add_parser(
+        "authorize", help="re-accept this checkout and runtime for its task states (developer terminal)")
+    authorize_group = authorize.add_mutually_exclusive_group(required=True)
+    authorize_group.add_argument("--check", action="store_true")
+    authorize_group.add_argument("--apply", action="store_true")
+    authorize.add_argument("--project", type=Path, default=Path.cwd())
     setup = subparsers.add_parser("setup", help="plan or apply worktree, Codex, and project Claude Code setup")
     setup_group = setup.add_mutually_exclusive_group(required=True)
     setup_group.add_argument("--check", action="store_true")
@@ -641,6 +647,15 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 print(json.dumps(value, indent=2, sort_keys=True))
             else:
                 print(value)
+        elif arguments.command == "authorize":
+            from cardine.lifecycle.authorization import (apply_authorization, plan_authorization,
+                                                         print_authorization_plan)
+            plan = plan_authorization(arguments.project)
+            print_authorization_plan(plan)
+            if arguments.apply:
+                print("result: accepted" if apply_authorization(plan) else "result: no-op")
+            elif plan.status == "blocked":
+                return 1
         elif arguments.command == "setup":
             plan = plan_setup(
                 arguments.worktree_root,

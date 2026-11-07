@@ -45,7 +45,7 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
     ``recover`` remains a compatibility spelling. Durable intent, rather than the
     best-effort journal, owns the exact staged pair and never removes foreign work.
     """
-    from cardine.lifecycle.receipts import (authorize_project, observed_authority,
+    from cardine.lifecycle.receipts import (AUTHORIZE_HINT, authorize_project, observed_authority,
         pending_operation, replay_operation, require_authority, task_lock, write_operation)
     root = Path(project_root).resolve()
     with _creation_lock(root) as journal:
@@ -90,7 +90,8 @@ def create_task(project_root: Path, task_id: str, text: str, *, recover: bool = 
                 # Only a new empty project may pin its policy on creation. Existing
                 # portable/legacy states require explicit developer acceptance.
                 if states:
-                    raise CardineError('developer reauthorization required for existing task states')
+                    raise CardineError('developer reauthorization required for existing task states; '
+                                       + AUTHORIZE_HINT)
                 authorize_project(root, accepted=observed_authority(root), new=True)
             require_authority(root)
             text = _with_resolved_execution_contract(root, contract, text)

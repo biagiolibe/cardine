@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 from cardine.integration.merge import _integration_task_state
-from cardine.integration.merge import abort_task_integration
+from cardine.integration.merge import recover_task_integration
 from cardine.integration.merge import cleanup_task_worktree
 from cardine.integration.merge import finalize_task_integration
 from cardine.integration.merge import stage_task_integration
@@ -148,10 +148,10 @@ def advance_task_closure(
                 progress = run_candidate_validation(task, project_root)
             except CardineStop as error:
                 if error.code == 'VALIDATION_RETRY_LIMIT':
-                    abort_task_integration(task, project_root)
+                    recover_task_integration(task, project_root)
                 return stopped('C7', error.code, error_detail(error))
             if progress['phase'] != 'passed':
-                abort_task_integration(task, project_root)
+                recover_task_integration(task, project_root)
                 return result("C7", "resolve", stop_code="CANDIDATE_VALIDATION_FAILED", blocked=False)
             try:
                 finalize_task_integration(task, None, project_root)

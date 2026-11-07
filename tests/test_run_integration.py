@@ -83,6 +83,25 @@ else: finalize_task_integration('056', None, root)
             cwd=self.primary, env={**os.environ, 'PYTHONPATH': str(ROOT / 'src')}, capture_output=True, text=True)
         self.assertEqual(result.returncode, 97, result.stderr)
 
+    def test_commands_run_on_a_committed_candidate(self):
+        self.ready('git diff --quiet HEAD && git rev-parse -q --verify HEAD^2 && test -f feature.txt')
+        self.assertEqual(self.run_candidate()['phase'], 'passed')
+        listed = subprocess.run(['git', 'worktree', 'list', '--porcelain'], cwd=self.primary,
+                                capture_output=True, text=True, check=True).stdout
+        self.assertNotIn('cardine-candidate-', listed)
+
+    def test_engine_recovers_its_failed_candidate_without_a_developer_channel(self):
+        self.ready('exit 7')
+        self.assertEqual(self.run_candidate()['phase'], 'failed')
+        with mock.patch('cardine.lifecycle.control.host_adapter', return_value=None), \
+                mock.patch('cardine.lifecycle.control._interactive', return_value=False):
+            with self.assertRaisesRegex(CardineError, 'authorized channel required'):
+                merge.abort_task_integration('056', self.primary)
+            merge.recover_task_integration('056', self.primary)
+        self.assertFalse(self.paths()[1].exists())
+        self.assertFalse((self.primary / '.git' / 'MERGE_HEAD').exists())
+        self.assertTrue((self.worker / 'feature.txt').exists())
+
     def test_actual_results_and_repeat_do_not_rerun_commands(self):
         self.ready('printf candidate-output')
         first = self.run_candidate()

@@ -44,6 +44,7 @@ including command containers and nested subcommands.
 |---------|------|
 | `cardine adopt` | Stable |
 | `cardine run` | Stable |
+| `cardine authorize` | Stable |
 | `cardine cancel` | Stable |
 | `cardine abort` | Stable |
 | `cardine self-check` | Stable |

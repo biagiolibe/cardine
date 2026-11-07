@@ -425,6 +425,13 @@ def abort_task_integration(task_id: str, supplied_project: Path | None = None, *
     return abort_owned(task_id, supplied_project, adapter=adapter)
 
 
+def recover_task_integration(task_id: str, supplied_project: Path | None = None) -> dict[str, object]:
+    """Undo the engine's own staged candidate after a failed or mismatched validation."""
+    from cardine.lifecycle.control import ENGINE_PRINCIPAL
+    from cardine.lifecycle.control_abort import abort_owned
+    return abort_owned(task_id, supplied_project, principal=dict(ENGINE_PRINCIPAL))
+
+
 def cleanup_task_worktree(
     task_id: str,
     worktree_root: Path | None,

@@ -263,12 +263,11 @@ else:
             observed = dict(receipts.observed_authority(clone), accepted_main=accepted_main)
             receipts.authorize_project(clone, accepted=observed)
             receipts.verify_receipts(clone, state, portable=True)
-            with self.assertRaisesRegex(CardineError, 'reauthorization'):
-                receipts.verify_receipts(clone, state)
-            imported = receipts.reauthorize_task(clone, '001')
-            receipts.verify_receipts(clone, imported)
-            self.assertEqual(len(imported['run']['receipts']), 2)
-            self.assertEqual(receipts.reauthorize_task(clone, '001'), imported)
+            # Tracked receipts carry only portable authority; the accepted local file binds
+            # the clone, so the same state verifies without a bridge receipt.
+            self.assertEqual(set(state['run']['receipts'][-1]['authority']), set(receipts.PORTABLE_AUTHORITY))
+            receipts.verify_receipts(clone, state)
+            self.assertEqual(receipts.reauthorize_task(clone, '001'), state)
             state.pop('run')
             with self.assertRaisesRegex(CardineError, 'missing completed'):
                 receipts.verify_receipts(clone, state, portable=True)
@@ -355,6 +354,7 @@ PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["plan_path.write_text(json.dumps
  'integration/finalize.py': ["receipts._durable(target, base64.b64decode(output['content'], validate=True))"],
  'integration/merge.py': ['_write_json_atomic(integration_path, staged, exclusive=True)',
                           '_write_json_atomic(lease_path, lease, exclusive=True)'],
+ 'lifecycle/authorization.py': ['receipts._durable(plan.path, receipts.encoded(plan.accepted))'],
  'lifecycle/receipts.py': ['_durable(path, encoded(accepted))',
                            '_durable(path, encoded(dict(value, digest=digest(encoded(value)))))',
                            "_durable(path, encoded(intent['pending_state']))",

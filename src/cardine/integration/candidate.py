@@ -3,8 +3,10 @@
 The operation record detects uncovered edits within the same-user boundary; it
 is neither a signature nor proof of authorship. Commands run outside task locks.
 """
+from contextlib import contextmanager
 from copy import deepcopy
 import os
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -105,6 +107,26 @@ def verified_candidate(locations, *, read_only=False):
     return progress if progress['binding'] == staged_inputs(locations, state, read_only=read_only) else None
 
 
+@contextmanager
+def candidate_checkout(root, binding):
+    """A clean, committed checkout of the staged candidate, removed afterwards.
+
+    Commands that require a committed tree, such as a clean-clone run, cannot run
+    on the primary checkout, where the candidate is an uncommitted merge.
+    """
+    commit = git_output(root, 'commit-tree', binding['tree'], '-p', binding['main'], '-p', binding['source'],
+                        '-m', f"Candidate {binding['task_id']}")
+    with tempfile.TemporaryDirectory(prefix='cardine-candidate-') as scratch:
+        target = Path(scratch) / 'candidate'
+        git_output(root, 'worktree', 'add', '--quiet', '--detach', str(target), commit)
+        try:
+            yield target
+        finally:
+            _run_git(root, 'worktree', 'remove', '--force', str(target))
+            _run_git(root, 'worktree', 'prune')
+            invalidate_facts()
+
+
 @scoped_command
 def run_candidate_validation(task_id, project):
     locations = locations_for(task_id, project)
@@ -175,10 +197,14 @@ def run_candidate_validation(task_id, project):
                 else:
                     break
             results = []
-            for command in round_commands:
-                status, out, err, out_cut, err_cut = execute_command(command, root, dict(os.environ), descriptor)
-                results.append(dict(command=command, exitStatus=status, stdout=out, stderr=err,
-                                    stdoutTruncated=out_cut, stderrTruncated=err_cut))
+            with candidate_checkout(root, binding) as checkout:
+                for command in round_commands:
+                    status, out, err, out_cut, err_cut = execute_command(command, checkout, dict(os.environ), descriptor)
+                    results.append(dict(command=command, exitStatus=status, stdout=out, stderr=err,
+                                        stdoutTruncated=out_cut, stderrTruncated=err_cut))
+                if _run_git(checkout, 'diff', '--quiet', 'HEAD').returncode:
+                    raise stop_error('EVIDENCE_MISMATCH', 'candidate tree or main changed',
+                                     task_id=task_id, project=root)
             current, current_pending = operation_state(worker, task_id)
             if (current_pending or staged_inputs(locations, current) != binding
                     or receipts.state_digest(current) != intent['before']):

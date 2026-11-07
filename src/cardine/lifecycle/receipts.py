@@ -196,6 +196,21 @@ def observed_authority(root, *, context=None):
                 accepted_main=_git(Path(primary), 'rev-parse', '--verify', 'refs/heads/main'))
 
 
+# Tracked task state carries only these authority facts (decision 14, amended on
+# 2026-11-07). Machine paths and the runtime digest stay in the ignored local
+# `receipt-authority.json`, which `cardine authorize` re-accepts.
+PORTABLE_AUTHORITY = ('policy', 'accepted_main')
+AUTHORIZE_HINT = 'run `cardine authorize --check --project <primary-checkout>` from the developer terminal'
+
+
+def portable_authority(authority):
+    return {key: authority.get(key) for key in PORTABLE_AUTHORITY}
+
+
+def _local_authority_path(root):
+    return safe_path(root, f'{names().project_directory}/receipt-authority.json')
+
+
 def authorize_project(root, *, accepted, new=False):
     """Adapter for a separately authorized developer channel; never task JSON.
 
@@ -236,7 +251,7 @@ def require_authority(root, *, context=None):
     try:
         accepted = json.loads(path.read_bytes())
     except (OSError, ValueError) as error:
-        raise CardineError('developer reauthorization required: missing receipt authority') from error
+        raise CardineError('developer reauthorization required: missing receipt authority; ' + AUTHORIZE_HINT) from error
     # A linked task checkout uses the primary's authorization only after Git
     # proves membership; its own policy/runtime still have to match.
     if root != primary:
@@ -247,7 +262,7 @@ def require_authority(root, *, context=None):
     # Advancing main is ordinary delivery; it cannot replace the accepted base.
     if (not isinstance(accepted, dict) or set(accepted) != set(observed)
             or any(accepted.get(key) != observed[key] for key in observed if key != 'accepted_main')):
-        raise CardineError('developer reauthorization required: project/runtime/policy changed')
+        raise CardineError('developer reauthorization required: project/runtime/policy changed; ' + AUTHORIZE_HINT)
     base, main = accepted['accepted_main'], observed['accepted_main']
     if base != main:
         if base is None and main:
@@ -267,7 +282,8 @@ def _receipt_hash(receipt):
     return digest(encoded({k: v for k, v in receipt.items() if k != 'digest'}))
 
 
-def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref=None, artifact_names=None, context=None):
+def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref=None, artifact_names=None, context=None,
+                    accepted=None):
     """Verify chaining and current coverage against independently accepted policy.
 
     Portable verification still requires explicit local authorization. It relaxes
@@ -276,23 +292,30 @@ def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref
     root = Path(root).resolve()
     from cardine.tasks.state_core import validate_task_state
     validate_task_state(state, state['task_id'], 'single')
-    accepted = require_authority(root, context=context)
+    accepted = accepted if accepted is not None else require_authority(root, context=context)
     receipts = state.get('run', {}).get('receipts', [])
     if not receipts or state.get('run', {}).get('pending') is not None:
         raise CardineError('missing completed operation receipt')
     previous = None
     ids = set()
     coverage = {}
-    bridge = max((index for index, receipt in enumerate(receipts)
-                  if receipt['kind'] == 'reauthorization'), default=-1)
+    accepted_bases = set()
     for index, receipt in enumerate(receipts):
         if (receipt['task_id'] != state['task_id'] or receipt['predecessor'] != previous
                 or receipt['operation_id'] in ids or receipt['digest'] != _receipt_hash(receipt)):
             raise CardineError('invalid operation receipt chain')
+        # Only portable facts decide: older receipts also hold local keys, which the
+        # local authority file, not tracked state, now proves.
         authority = receipt['authority']
-        keys = ('runtime', 'policy', 'accepted_main') if portable or index < bridge else tuple(accepted)
-        if any(authority.get(key) != accepted.get(key) for key in keys):
-            raise CardineError('receipt authority differs from accepted policy; reauthorization required')
+        base = authority.get('accepted_main')
+        if authority.get('policy') != accepted.get('policy'):
+            raise CardineError('receipt authority differs from accepted policy; ' + AUTHORIZE_HINT)
+        if base != accepted.get('accepted_main') and base not in accepted_bases:
+            ancestor = _run_git(str(root), 'merge-base', '--is-ancestor', str(base),
+                                str(accepted.get('accepted_main')), text=False)
+            if not base or not accepted.get('accepted_main') or ancestor.returncode:
+                raise CardineError('receipt accepted main is not in the accepted history; ' + AUTHORIZE_HINT)
+            accepted_bases.add(base)
         if receipt['result'] != 'verified':
             raise CardineError('unknown operation result')
         ids.add(receipt['operation_id'])
@@ -483,7 +506,7 @@ def reauthorize_task(root, task_id):
             return replay_operation(root, task_id, kind='reauthorization')
         state = json.loads(state_path(root, task_id).read_bytes())
         verify_receipts(root, state, portable=True)
-        if state['run']['receipts'][-1]['authority'] == require_authority(root):
+        if state['run']['receipts'][-1]['authority'] == portable_authority(require_authority(root)):
             return state
         return write_operation(root, task_id, state, kind='reauthorization', previous=state)
 
@@ -519,7 +542,7 @@ def write_operation(root, task_id, state, *, kind, files=None, previous=None, st
     operation_id = uuid.uuid4().hex
     receipt = dict(version=1, task_id=task_id, operation_id=operation_id, kind=kind,
                    predecessor=receipts[-1]['digest'] if receipts else None,
-                   contract_digest=digest(encoded(state.get('contract'))), authority=authority,
+                   contract_digest=digest(encoded(state.get('contract'))), authority=portable_authority(authority),
                    source=_git(root, 'rev-parse', 'HEAD'), tree=_git(root, 'rev-parse', 'HEAD^{tree}'),
                    inputs=inputs, outputs=outputs, result='verified')
     receipt['digest'] = _receipt_hash(receipt)

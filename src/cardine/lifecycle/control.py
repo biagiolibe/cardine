@@ -32,6 +32,10 @@ def host_adapter():
 TERMINAL_PRINCIPAL = dict(host='terminal', profile='developer', session_id='developer-terminal', role='developer')
 
 
+# The engine undoing its own failed candidate: recovery, not a developer decision.
+ENGINE_PRINCIPAL = dict(host='cardine', profile='engine', session_id='candidate-recovery', role='engine')
+
+
 def _interactive():
     return sys.stdin.isatty() and sys.stdout.isatty()
 

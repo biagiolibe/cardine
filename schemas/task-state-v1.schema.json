@@ -605,13 +605,8 @@
                 "type": "object",
                 "additionalProperties": false,
                 "required": [
-                  "project",
-                  "common",
-                  "root",
-                  "runtime",
                   "policy",
-                  "accepted_main",
-                  "worktree_root"
+                  "accepted_main"
                 ],
                 "properties": {
                   "project": {

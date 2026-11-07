@@ -57,7 +57,8 @@ def _owned_landing_dirt(root, task_id):
 
 
 @scoped_command
-def abort_owned(task_id, project, *, adapter=None):
+def abort_owned(task_id, project, *, adapter=None, principal=None):
+    """Abort one owned candidate. ``principal`` is only the engine's own recovery."""
     from cardine.lifecycle.context import resolve_run_locations
     locations = resolve_run_locations(task_id, project)
     root = locations.primary
@@ -118,7 +119,7 @@ def abort_owned(task_id, project, *, adapter=None):
                 snapshot=_snapshot(root), authority=receipts.require_authority(worker))
         else:
             binding = saved['binding']
-        principal = authorize(adapter, 'abort', binding)
+        principal = principal or authorize(adapter, 'abort', binding)
         verify_control_inputs(worker, task_id, state, pending, binding)
         command = dict(binding=binding, principal=principal)
         operation_id = receipts.digest(receipts.encoded(command))
