@@ -151,7 +151,7 @@ ALLOWLIST = (
     ),
     Allowance(
         4, "kept: historical records; remove or narrow in work item 10 when this repository moves to Cardine and records stop naming installed " + OLD.capitalize(),
-        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|[0-9]{3}-[^/]+)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
+        r"(?:tasks/(?:done|handoffs)/.*|tasks/(?:QUEUE[^/]*|TASK_BLUEPRINT|[0-9]{3}(?:-[^/]+)?)\.md|PROJECT_PLAN\.md|CHANGELOG\.md|changelog\.d/.*|releases/.*|\.github/.*|README\.md|CONTRIBUTING\.md|WORKFLOW_GUIDE\.md|SECURITY\.md|CODE_OF_CONDUCT\.md|migrations/README\.md|tests/fixtures/release-[^/]+/.*)",
     ),
     Allowance(
         4, "kept: historical design and guides; guides replaced by 11",
@@ -299,6 +299,8 @@ class IdentifierGuardTest(unittest.TestCase):
             record = root / "tasks/999-future-record.md"
             record.parent.mkdir()
             record.write_text(OLD + "\n")
+            # Cardine names a record by its ID alone.
+            (root / "tasks/998.md").write_text(OLD + "\n")
             self.assertEqual(scan_repository(root, (allowance,))[0], [])
             for name in (
                 "tasks/notes.md", "tasks/99-short-id.md", "tasks/1000-long-id.md",
