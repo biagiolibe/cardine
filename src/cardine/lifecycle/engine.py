@@ -362,6 +362,13 @@ def run_worktree_step(locations: RunLocations, active: dict) -> dict | None:
             receipts.boundary('after_run_prepare')
     with _inside(worktree):
         started = execution_start(worktree, task_id, context=locations)
+        # Commit the state transition Cardine just wrote, so the implementer's
+        # own commit leaves a clean worktree (ADR decision 14, rule 3).
+        from cardine.shared.git import git_output
+        from cardine.tasks.state import state_path
+        relative = state_path(worktree, task_id).relative_to(worktree).as_posix()
+        if git_output(worktree, 'status', '--porcelain', '--', relative):
+            git_output(worktree, 'commit', '-q', '-m', f'Start task {task_id}', '--', relative)
     receipts.boundary('after_run_execution_start')
     argv = ['cardine', 'run', task_id, '--project', str(locations.primary)]
     return envelope(task_id, str(locations.primary), step='worktree', action='execution-start',
@@ -388,7 +395,7 @@ def run_validation_step(locations: RunLocations) -> dict | None:
     contract = state['contract'] if state else {}
     request = WorkRequest('implementer', root,
         receipts.digest(receipts.encoded(contract)),
-        tuple(contract.get('expectedCodeSurface', [])), tuple(contract.get('deliverables', [])),
+        tuple(contract.get('expectedCodeSurface', [])), _acceptance_references(contract),
         tuple(contract.get('validation', {}).get('baseline', [])), ('committed implementation delivery',))
     failed_candidate = state.get('run', {}).get('candidateValidation') if state else None
     if failed_candidate and failed_candidate['phase'] == 'failed':
@@ -401,6 +408,15 @@ def run_validation_step(locations: RunLocations) -> dict | None:
             result['diagnostics'] = [dict(code='CANDIDATE_VALIDATION_FAILED', message=json.dumps(failed_candidate['runs']))]
             return result
     pending = operation_path(root, task_id).exists()
+    if not pending and implementation_delivery(locations) is None and _committed_implementation(locations, state):
+        # A clean, committed change in scope is a delivery the tool can perform
+        # itself, so the agent needs no command beyond run (ADR decisions 6 and 14).
+        delivered = deliver_run_implementation(locations)
+        return envelope(task_id, str(locations.primary), step='implementation', outcome='progress',
+                        action='deliver', next_command=command_reference(
+                            ['cardine', 'run', task_id, '--project', str(locations.primary)],
+                            'Run the complete current validation command set'),
+                        evidence=[dict(kind='delivery', path=str(root), identity=str(delivered['commit']))])
     if not pending and implementation_delivery(locations) is None:
         return resolve_run(RunFacts(task_id, locations.primary, 'in_progress',
                            contract_ready=True, worktree_ready=True, implementation_work=request,
@@ -419,7 +435,7 @@ def run_validation_step(locations: RunLocations) -> dict | None:
     if not contract:
         contract = state['contract']
         request = WorkRequest('implementer', root, receipts.digest(receipts.encoded(contract)),
-            tuple(contract.get('expectedCodeSurface', [])), tuple(contract.get('deliverables', [])),
+            tuple(contract.get('expectedCodeSurface', [])), _acceptance_references(contract),
             tuple(contract['validation']['baseline']), ('committed implementation delivery',))
     passed = progress['phase'] == 'passed'
     from cardine.tasks.validation import host_observations_complete
@@ -574,7 +590,7 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     from cardine.lifecycle import receipts
     contract = state['contract']
     request = WorkRequest('implementer', locations.worktree, receipts.digest(receipts.encoded(contract)),
-        tuple(contract['expectedCodeSurface']), tuple(contract['deliverables']),
+        tuple(contract['expectedCodeSurface']), _acceptance_references(contract),
         tuple(contract['validation']['baseline']), ('repair candidate validation failure',))
     return envelope(task_id, str(root), step='implementation', outcome='iterate',
         action='abort-failed-candidate', work=request.as_json(),
@@ -588,3 +604,21 @@ def _candidate_finalize_next(locations):
         action='validate-candidate', next_command=command_reference(
             ['cardine', 'run', locations.task_id, '--project', str(locations.primary)],
             'Finalize the measured candidate'))
+
+
+def _acceptance_references(contract):
+    """Spike deliverables, or the record's criteria for a standard task."""
+    return tuple(contract.get('deliverables') or ()) or (contract['recordPath'] + '#acceptance-criteria',)
+
+
+def _committed_implementation(locations, state):
+    """A clean worktree whose commits since its base change a path Cardine does not own."""
+    from cardine.lifecycle.execution import _execution_location, _execution_owned_paths
+    from cardine.shared.git import git_output
+    root = locations.worktree
+    if state is None or state['status'] != 'in_progress' or git_output(root, 'status', '--porcelain'):
+        return False
+    base = str(_execution_location(root, locations.task_id, context=locations)['base_commit'])
+    owned = _execution_owned_paths(root, locations.task_id, context=locations)
+    changed = set(git_output(root, 'diff', '--name-only', base, 'HEAD').splitlines())
+    return bool(changed - owned)

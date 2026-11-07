@@ -100,7 +100,21 @@ class FreshTaskStartTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result
 
+    def change_profile(self, worktree):
+        profile = worktree / "docs" / "EXECUTION_EVIDENCE_PROFILE.md"
+        profile.write_text(profile.read_text(encoding="utf-8") + "\nChanged after task creation.\n", encoding="utf-8")
+        self.git("add", "-A", cwd=worktree)
+        self.git("commit", "-q", "-m", "Change the execution profile", cwd=worktree)
+
+    def test_fresh_record_starts_without_reconcile(self):
+        self.assertIn("- Profile revision:", (self.project / "tasks" / "001.md").read_text(encoding="utf-8"))
+        prepared = json.loads(self.cardine("worktree", "prepare", "001", "--project", str(self.project),
+                                           "--format", "json").stdout)
+        started = self.cardine("execution", "start", "001", "--project", ".", cwd=Path(prepared["worktree"]))
+        self.assertTrue(json.loads(started.stdout)["started"])
+
     def test_reconciled_record_starts_and_run_continues(self):
+        self.change_profile(self.project)
         prepared = json.loads(self.cardine("worktree", "prepare", "001", "--project", str(self.project),
                                            "--format", "json").stdout)
         worktree = Path(prepared["worktree"])
@@ -130,6 +144,7 @@ class FreshTaskStartTest(unittest.TestCase):
         self.assertIn("already current", again.stdout)
 
     def test_interrupted_reconcile_converges_on_rerun(self):
+        self.change_profile(self.project)
         prepared = json.loads(self.cardine("worktree", "prepare", "001", "--project", str(self.project),
                                            "--format", "json").stdout)
         worktree = Path(prepared["worktree"])

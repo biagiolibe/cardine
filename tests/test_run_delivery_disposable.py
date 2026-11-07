@@ -88,3 +88,91 @@ class DisposableDeliveryTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+INIT_RECORD = """# Task 001 — Document the defaults
+
+> **ID**: `001`
+> **Category**: Quick
+
+## Objective
+
+Document the defaults.
+
+## Acceptance Criteria
+
+- README.md lists the defaults.
+
+## Expected code surface
+
+- `README.md`
+
+## Dependencies
+
+None.
+
+## Validation
+
+- `whitespace`: `git diff --check HEAD~1`
+"""
+
+
+class InitializedProjectDeliveryTest(unittest.TestCase):
+    """A project from `init`, a task from `task new`, and an agent that only calls `run`."""
+
+    def test_quick_task_lands_through_run_alone(self):
+        import json, os, subprocess, sys, tempfile
+        from pathlib import Path
+        cardine = Path(__file__).resolve().parents[1] / 'bin' / 'cardine'
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            project, origin = base / 'project', base / 'origin.git'
+            for name in ('home', 'tmp', 'project'):
+                (base / name).mkdir()
+            env = {**os.environ, 'HOME': str(base / 'home'), 'TMPDIR': str(base / 'tmp'),
+                   'CARDINE_WORKTREE_ROOT': str(base / 'worktrees'),
+                   'GIT_CONFIG_GLOBAL': os.devnull, 'GIT_CONFIG_NOSYSTEM': '1',
+                   'GIT_AUTHOR_NAME': 'Init Test', 'GIT_AUTHOR_EMAIL': 'init@example.invalid',
+                   'GIT_COMMITTER_NAME': 'Init Test', 'GIT_COMMITTER_EMAIL': 'init@example.invalid'}
+
+            def call(*argv, cwd=project):
+                return subprocess.run(list(argv), cwd=cwd, env=env, text=True, capture_output=True, check=True).stdout
+
+            def commit(message, *paths, cwd=project):
+                call('git', 'add', *(paths or ('-A',)), cwd=cwd)
+                call('git', 'commit', '-q', '-m', message, cwd=cwd)
+
+            call('git', 'init', '-q', '--bare', '-b', 'main', str(origin), cwd=base)
+            call('git', 'init', '-q', '-b', 'main')
+            call('git', 'remote', 'add', 'origin', str(origin))
+            validation = base / 'validation.json'
+            validation.write_text(json.dumps({'commands': {'whitespace': 'git diff --check HEAD~1'},
+                'baseline': ['whitespace'], 'candidate': {'REUSE': [], 'BOUNDED': ['whitespace'],
+                                                          'FULL': ['whitespace']}}))
+            call(sys.executable, str(cardine), 'init', '--project', '.', '--apply', '--name', 'Example',
+                 '--slug', 'example', '--preset', 'lean', '--language', 'English',
+                 '--task-identity', 'opaque', '--validation', str(validation))
+            commit('Initialize Cardine')
+            record = base / 'proposal.md'
+            record.write_text(INIT_RECORD)
+            call(sys.executable, str(cardine), 'task', 'new', '001', '--quick', '--record', str(record),
+                 '--project', '.')
+            commit('Add task 001')
+            call('git', 'push', '-q', 'origin', 'main')
+            outcomes = []
+            for _ in range(10):
+                result = json.loads(call(sys.executable, str(cardine), 'run', '001', '--project', str(project)))
+                outcomes.append((result['step'], result['outcome']))
+                self.assertNotEqual(result['outcome'], 'blocked', result)
+                if result['outcome'] == 'done':
+                    break
+                self.assertEqual(result['next']['argv'][:2], ['cardine', 'run'], result)
+                work = result['work']
+                if work and work['role'] == 'implementer':
+                    worktree = Path(work['worktree'])
+                    readme = worktree / 'README.md'
+                    if 'Defaults' not in readme.read_text():
+                        readme.write_text(readme.read_text() + '\n## Defaults\n\n- `timeout`: 30 seconds.\n')
+                        commit('Document the defaults', 'README.md', cwd=worktree)
+            self.assertEqual(outcomes[-1], ('landing', 'done'), outcomes)
+            self.assertIn('## Defaults', call('git', '--git-dir', str(origin), 'show', 'main:README.md'))

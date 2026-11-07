@@ -22,6 +22,9 @@ from task_contract_support import contract_record, VALIDATION
 ROOT = Path(__file__).resolve().parents[1]
 
 
+from test_run_receipts import proposal_of
+
+
 class TaskCreationTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -57,7 +60,7 @@ class TaskCreationTest(unittest.TestCase):
         before = self.state.read_bytes()
         write_project_config(self.root, 'governed', validation=deepcopy(VALIDATION))
         self.assertEqual(self.state.read_bytes(), before)
-        self.assertEqual(self.record.read_text(), self.text)
+        self.assertEqual(proposal_of(self.record.read_text()), self.text.rstrip())
         self.assertNotIn('Status:', self.record.read_text())
         self.assertEqual(load_task_status(self.root)['totals']['queued'], 1)
 
@@ -262,7 +265,7 @@ class TaskCreationTest(unittest.TestCase):
         result = create_task(self.root, 'm1-core-001', text)
         self.assertEqual(result['id'], 'M1-CORE-001')
         self.assertTrue((self.root / result['record']).is_relative_to(self.root / 'work/items'))
-        self.assertEqual((self.root / result['record']).read_text(), text)
+        self.assertEqual(proposal_of((self.root / result['record']).read_text()), text.rstrip())
         self.assertTrue((self.root / result['state']).exists())
 
 

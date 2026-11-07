@@ -19,7 +19,12 @@ import re
 
 def execution_contract(project_root: Path, task_id: str) -> str:
     """Render the profile-derived execution block placed in a task at design time."""
-    commands = ", ".join(frozen_validation_commands(project_root, task_id)) or "none"
+    return render_execution_contract(project_root, frozen_validation_commands(project_root, task_id))
+
+
+def render_execution_contract(project_root: Path, baseline) -> str:
+    """Render the execution block for the given baseline validation IDs."""
+    commands = ", ".join(baseline) or "none"
     source = "docs/EXECUTION_EVIDENCE_PROFILE.md" if (project_root / "docs/EXECUTION_EVIDENCE_PROFILE.md").is_file() else ".cardine/project.json"
     return "\n".join((
         "## Execution contract — resolved",

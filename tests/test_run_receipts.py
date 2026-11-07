@@ -24,6 +24,13 @@ POINTS = ('before_intent', 'after_intent', 'before_staged_pair', 'after_staged_p
           'before_state_replace', 'after_state_replace', 'before_result_receipt', 'after_result_receipt')
 
 
+def proposal_of(record):
+    """The proposal part of a published record, before its resolved execution block."""
+    head, _, block = record.partition('\n\n## Execution contract — resolved\n')
+    assert '- Profile revision: `sha256:' in block
+    return head.rstrip()
+
+
 class RunReceiptsTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -98,7 +105,7 @@ else:
                 self.assertEqual(state['transitions'], [])
                 if before is not None:
                     self.assertEqual(state, before)
-                self.assertEqual(self.record.read_text(), self.text)
+                self.assertEqual(proposal_of(self.record.read_text()), self.text.rstrip())
                 self.assertFalse(intent.exists())
                 self.assertEqual(list(self.root.rglob('*.stage')), [])
 
