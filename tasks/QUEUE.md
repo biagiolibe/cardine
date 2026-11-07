@@ -40,6 +40,7 @@ Authority: `docs/CONVERSION_PLAN.md`, section 5, rule 2. The switch commit must 
 | Status | ID | Title | Priority | Depends on | File |
 |--------|----|-------|----------|------------|------|
 | `[ ]` | 187 | Check path aliases only where the platform resolves them | 🔴 P1 | — | [187](187-path-alias-test-on-linux.md) |
+| `[ ]` | 188 | Deliver a task created by init and task new through run alone | 🔴 P1 | — | [188](188-fresh-task-lands-through-run.md) |
 
 ### Phase 32 — Meridian conversion: after the switch
 
