@@ -92,12 +92,46 @@
         "task_id": "189",
         "tree": "42ea9bdd2ca89c20bb3e7353484659fa1e46131d",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "3ea64471e17043beb3ec496fc2515134ae5c924a",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "runtime": "d2ae5f4b600a4952d027cafb680bf2dde196a410c4d1cf3548054315ded601e0",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract_digest": "ccbfdedadb98f5ae3bbbbd6be2dc7f071dcac8fcd02a40d6cc107b25857d0173",
+        "digest": "a963cccb45b36fa50b295bc21f370b15dd02a0dc897f7cb82a7e03eb8c024c35",
+        "inputs": {
+          ".cardine/tasks/189.json": "a232ea6c9611e547e62343c86adf7d12221f39b5d0a9277b24d1afa85d08a96a"
+        },
+        "kind": "transition:d5e5ee87c83dffc39a04ff4ac07052132fc65c27920b5e438331787904029908",
+        "operation_id": "4f7d5d51f3cf4c84935d92916af378d7",
+        "outputs": {
+          ".cardine/tasks/189.json": "1136a762fd538832199f3d61e1a833fbe01d2a3474f6954a334659383c82671f"
+        },
+        "predecessor": "d05a548c4e2f00bd6b1c3eaad4d175ac82af7fdcb43559e6d3745eba7d274c58",
+        "result": "verified",
+        "source": "7e3ac34aa443576afb51b63207c23bd27b1e6634",
+        "task_id": "189",
+        "tree": "9fab911e59aee6e3e894440cc605fdee8c7fafa8",
+        "version": 1
       }
     ]
   },
-  "status": "queued",
+  "status": "in_progress",
   "task_id": "189",
-  "transitions": [],
+  "transitions": [
+    {
+      "at": "2026-11-07T21:00:21.804813Z",
+      "commit": "7e3ac34aa443576afb51b63207c23bd27b1e6634",
+      "from": "queued",
+      "to": "in_progress"
+    }
+  ],
   "version": 1,
   "workflow": "single"
 }
