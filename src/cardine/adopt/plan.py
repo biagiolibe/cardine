@@ -12,6 +12,9 @@ from cardine.legacy.conversion_reader import read_legacy_project
 from cardine.legacy.meridian_installation import is_meridian_installation
 from cardine.lifecycle import receipts
 from cardine.shared.git import _run_git, canonical_git_common_dir, git_output, parse_worktree_records
+from cardine.shared.atomic import file_digest
+from cardine.shared.layout import names
+from cardine.tasks.status_render import REGION_BEGIN, REGION_END
 from cardine.templates.init import plan_init
 
 
@@ -25,6 +28,8 @@ class AdoptPlan:
     dropped_dependencies: dict[str, tuple[str, ...]]
 
     dropped_validation: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    # Case A: digest of each existing file an output was fitted around, at planning.
+    existing: dict[str, str] = field(default_factory=dict)
 
     def bytes(self):
         value = {"case": self.case, "operations": [
@@ -33,7 +38,44 @@ class AdoptPlan:
             "diagnostics": self.diagnostics, "missing": self.missing,
             "refusals": self.refusals, "dropped_dependencies": self.dropped_dependencies,
             "dropped_validation": self.dropped_validation}
+        if self.existing:
+            value["existing"] = self.existing
         return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()
+
+
+def keep_project_files(root: Path, outputs: dict[str, bytes]) -> tuple[dict[str, bytes], dict[str, str], list[str]]:
+    """Fit the initial outputs around the files a project without a workflow already has.
+
+    A managed file keeps the project's text after the template. The plan keeps its
+    text and gains the generated status region. Any other existing file stays as
+    it is. Cardine state, the generated queue, and JSON files cannot merge and are
+    conflicts.
+    """
+    manifest = json.loads(outputs[names().manifest_path.as_posix()])
+    managed = set(manifest.get("managedFiles", {}))
+    result, existing, conflicts = {}, {}, []
+    for name, content in outputs.items():
+        path = root / name
+        if not path.exists() and not path.is_symlink():
+            result[name] = content
+            continue
+        if path.is_file() and not path.is_symlink():
+            existing[name] = file_digest(path)
+        if (name.startswith(names().project_directory + "/") or name == "tasks/QUEUE.md"
+              or name.endswith(".json") or path.is_symlink() or not path.is_file()):
+            conflicts.append(name)
+        elif name == "PROJECT_PLAN.md":
+            text = content.decode("utf-8")
+            region = text[text.index(REGION_BEGIN):text.index(REGION_END) + len(REGION_END)]
+            old = path.read_text(encoding="utf-8")
+            if REGION_BEGIN in old or REGION_END in old:
+                conflicts.append(name)
+            else:
+                result[name] = (old.rstrip() + "\n\n" + region + "\n").encode()
+        elif name in managed:
+            old = path.read_text(encoding="utf-8")
+            result[name] = content if not old.strip() else content.rstrip() + b"\n\n" + old.encode()
+    return result, {name: digest for name, digest in existing.items() if name in result}, sorted(conflicts)
 
 
 def plan_adopt(project: Path, framework: Path, *, name=None, slug=None, preset=None,
@@ -60,8 +102,14 @@ def plan_adopt(project: Path, framework: Path, *, name=None, slug=None, preset=N
         if missing:
             return AdoptPlan("A", {}, (), tuple(missing), tuple(refusals), {})
         init = plan_init(root, framework, name=name, slug=slug, preset=preset,
-                         language=language, task_identity=task_identity, validation=validation)
-        return AdoptPlan("A", init.outputs, (), (), tuple(refusals), {})
+                         language=language, task_identity=task_identity, validation=validation,
+                         refuse_existing=False)
+        outputs, existing, conflicts = keep_project_files(root, init.outputs)
+        if conflicts:
+            refusals.append("ADOPT_RECORD")
+        return AdoptPlan("A", outputs, tuple(f"existing path conflicts with adoption: {name}"
+                                             for name in conflicts), (), tuple(refusals), {},
+                         existing=existing)
     legacy = read_legacy_project(root)
     diagnostics = list(legacy.diagnostics)
     if legacy.in_progress_rows:

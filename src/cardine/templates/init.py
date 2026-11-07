@@ -83,8 +83,13 @@ def _binding(root: Path, outputs: dict[str, bytes]) -> dict:
 
 
 def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: str,
-              language: str, task_identity: str, validation: dict) -> InitPlan:
-    """Build all bytes without creating a directory, receipt, or generated view."""
+              language: str, task_identity: str, validation: dict,
+              refuse_existing: bool = True) -> InitPlan:
+    """Build all bytes without creating a directory, receipt, or generated view.
+
+    Adoption passes ``refuse_existing=False`` and decides itself what happens to
+    the project's existing files.
+    """
     receipts.boundary("before_init_plan")
     root = Path(project).absolute()
     if ".." in root.parts:
@@ -149,7 +154,8 @@ def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: s
         parent = parent.parent
     plan = InitPlan(root, outputs, tuple(sorted(directories, key=lambda p: (len(p.parts), str(p)))),
                     _binding(root, outputs), receipts.host_path("init", root))
-    _inspect(plan)
+    if refuse_existing:
+        _inspect(plan)
     receipts.boundary("after_init_plan")
     return plan
 

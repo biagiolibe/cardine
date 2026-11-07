@@ -114,6 +114,19 @@ class ApplyInitTest(unittest.TestCase):
                 self.assertEqual((root / 'dir/b.txt').read_bytes(), b'two')
                 self.assertFalse(apply_adopt(root, plan))
 
+    def test_writes_over_an_existing_file_only_as_planned(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'a.txt').write_text('ours')
+            digest = hashlib.sha256(b'ours').hexdigest()
+            plan = AdoptPlan('A', {'a.txt': b'template\n\nours'}, (), (), (), {}, existing={'a.txt': digest})
+            (root / 'a.txt').write_text('changed after planning')
+            with self.assertRaises(CardineError):
+                apply_adopt(root, plan)
+            (root / 'a.txt').write_text('ours')
+            self.assertTrue(apply_adopt(root, plan))
+            self.assertEqual((root / 'a.txt').read_bytes(), b'template\n\nours')
+
     def test_refuses_existing_file_and_changed_output(self):
         plan = AdoptPlan('A', {'a.txt': b'one'}, (), (), (), {})
         with tempfile.TemporaryDirectory() as directory:

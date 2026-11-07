@@ -53,7 +53,8 @@ def encode_plan(plan) -> dict:
             'diagnostics': list(plan.diagnostics), 'missing': list(plan.missing),
             'refusals': list(plan.refusals),
             'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()},
-            'dropped_validation': {k: list(v) for k, v in plan.dropped_validation.items()}}
+            'dropped_validation': {k: list(v) for k, v in plan.dropped_validation.items()},
+            'existing': dict(plan.existing)}
 
 
 def decode_plan(data):
@@ -61,7 +62,8 @@ def decode_plan(data):
     return AdoptPlan(data['case'], {k: base64.b64decode(v) for k, v in data['outputs'].items()},
                      tuple(data['diagnostics']), tuple(data['missing']), tuple(data['refusals']),
                      {k: tuple(v) for k, v in data['dropped_dependencies'].items()},
-                     {k: tuple(v) for k, v in data.get('dropped_validation', {}).items()})
+                     {k: tuple(v) for k, v in data.get('dropped_validation', {}).items()},
+                     dict(data.get('existing', {})))
 
 
 def _saved_plan(receipt):
@@ -189,7 +191,8 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             if tasks and _target(root, '.cardine/receipt-authority.json').exists():
                 raise CardineError('adoption conflicts with existing receipt authority')
             for name in outputs:
-                if before[name] is not None and (plan.case == 'A' or name.startswith('.cardine/')):
+                if before[name] is not None and (name.startswith('.cardine/') or (
+                        plan.case == 'A' and plan.existing.get(name) != before[name])):
                     raise CardineError(f'adoption conflicts with existing path: {name}')
             payload = {'outputs': _encode_outputs(outputs), 'tasks': tasks, 'removals': removals,
                        'directories': directories, 'before': before,

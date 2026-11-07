@@ -118,9 +118,15 @@ None.
 
 
 class InitializedProjectDeliveryTest(unittest.TestCase):
-    """A project from `init`, a task from `task new`, and an agent that only calls `run`."""
+    """A project from `init` or `adopt`, a task from `task new`, and an agent that only calls `run`."""
 
     def test_quick_task_lands_through_run_alone(self):
+        self.deliver_quick_task('init')
+
+    def test_existing_project_adopts_and_lands_through_run_alone(self):
+        self.deliver_quick_task('adopt')
+
+    def deliver_quick_task(self, bootstrap):
         import json, os, subprocess, sys, tempfile
         from pathlib import Path
         cardine = Path(__file__).resolve().parents[1] / 'bin' / 'cardine'
@@ -146,15 +152,32 @@ class InitializedProjectDeliveryTest(unittest.TestCase):
             call('git', 'init', '-q', '-b', 'main')
             call('git', 'remote', 'add', 'origin', str(origin))
             validation = base / 'validation.json'
-            validation.write_text(json.dumps({'commands': {'whitespace': 'git diff --check HEAD~1'},
+            check = 'git diff --check HEAD~1' if bootstrap == 'init' else 'git diff --check'
+            validation.write_text(json.dumps({'commands': {'whitespace': check},
                 'baseline': ['whitespace'], 'candidate': {'REUSE': [], 'BOUNDED': ['whitespace'],
                                                           'FULL': ['whitespace']}}))
-            call(sys.executable, str(cardine), 'init', '--project', '.', '--apply', '--name', 'Example',
-                 '--slug', 'example', '--preset', 'lean', '--language', 'English',
-                 '--task-identity', 'opaque', '--validation', str(validation))
+            choices = ('--name', 'Example', '--slug', 'example', '--preset', 'lean', '--language', 'English',
+                       '--task-identity', 'opaque', '--validation', str(validation))
+            existing = {'README.md': '# Example\n\nOur service.\n', '.gitignore': 'build/\n',
+                        'AGENTS.md': '# Agent notes\n\nUse the make targets.\n',
+                        'PROJECT_PLAN.md': '# Roadmap\n\n- Ship v2.\n'}
+            if bootstrap == 'init':
+                call(sys.executable, str(cardine), 'init', '--project', '.', '--apply', *choices)
+            else:
+                for name, text in existing.items():
+                    (project / name).write_text(text)
+                commit('Existing project')
+                adopted = json.loads(call(sys.executable, str(cardine), 'adopt', '--project', '.', '--apply', *choices))
+                self.assertEqual(adopted['outcome'], 'done', adopted)
+                for name in ('README.md', '.gitignore'):
+                    self.assertEqual((project / name).read_text(), existing[name])
+                self.assertTrue((project / 'AGENTS.md').read_text().endswith(existing['AGENTS.md']))
+                plan = (project / 'PROJECT_PLAN.md').read_text()
+                self.assertTrue(plan.startswith(existing['PROJECT_PLAN.md']))
+                self.assertIn('<!-- cardine-status:begin -->', plan)
             commit('Initialize Cardine')
             record = base / 'proposal.md'
-            record.write_text(INIT_RECORD)
+            record.write_text(INIT_RECORD.replace('git diff --check HEAD~1', check))
             call(sys.executable, str(cardine), 'task', 'new', '001', '--quick', '--record', str(record),
                  '--project', '.')
             commit('Add task 001')
