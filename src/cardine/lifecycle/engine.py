@@ -654,8 +654,13 @@ def _committed_implementation(locations, state):
     from cardine.lifecycle.execution import _execution_location, _execution_owned_paths
     from cardine.shared.git import git_output
     root = locations.worktree
-    if state is None or state['status'] != 'in_progress' or git_output(root, 'status', '--porcelain'):
+    if state is None or state['status'] != 'in_progress':
         return False
+    if git_output(root, 'status', '--porcelain'):
+        from cardine.lifecycle.validation import commit_own_records
+        commit_own_records(root, locations.task_id, context=locations)
+        if git_output(root, 'status', '--porcelain'):
+            return False
     base = str(_execution_location(root, locations.task_id, context=locations)['base_commit'])
     owned = _execution_owned_paths(root, locations.task_id, context=locations)
     changed = set(git_output(root, 'diff', '--name-only', base, 'HEAD').splitlines())

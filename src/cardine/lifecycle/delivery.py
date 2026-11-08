@@ -111,7 +111,10 @@ def deliver_implementation(root, task_id, *, context=None):
             if not paths:
                 raise CardineError('delivery needs a real implementation change')
             if git_output(root, 'status', '--porcelain'):
-                raise CardineError('implementation must be committed before delivery')
+                from cardine.lifecycle.validation import commit_own_records
+                commit_own_records(root, task_id, context=context)
+                if git_output(root, 'status', '--porcelain'):
+                    raise CardineError('implementation must be committed before delivery')
             existing = verify_delivery(root, state, base, context=context)
             if existing:
                 return existing
