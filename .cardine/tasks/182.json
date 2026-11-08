@@ -11,7 +11,9 @@
       "src/cardine/legacy/snapshot.py",
       "src/cardine/legacy/meridian_installation.py",
       "tests/test_status_legacy_boundary.py",
-      "tests/test_legacy_meridian_installation.py"
+      "tests/test_legacy_meridian_installation.py",
+      "src/cardine/stops/causes.py",
+      "tests/test_text_gates.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -32,6 +34,10 @@
     "priority": "\ud83d\udd34 P1",
     "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
     "recordPath": "tasks/182-delete-legacy-snapshot.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
     "title": "Task 182 \u2014 Delete the legacy snapshot reader (C7f)",
     "validation": {
       "baseline": [
@@ -69,9 +75,25 @@
       "changedFields": [
         "validation"
       ]
+    },
+    {
+      "after": "sha256:7b95bc7e4264fda0cf5436986c63d75217ca3a6ed4b9fcfb031036855cf6aa22",
+      "at": "2026-11-08T22:28:37.867832Z",
+      "before": "sha256:5ad5861715d570b54d566c3ff58b896dd8098584b159d6ea7241cf70252e6ee3",
+      "changedFields": [
+        "expectedCodeSurface",
+        "taskValidation"
+      ]
     }
   ],
   "run": {
+    "delivery": {
+      "base": "5337c8da46ee8761fce74daf6bf2b26e74d0383c",
+      "contractDigest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+      "source": "1d4cab59a25ce92730a488a771d43bf2a8fc4e28",
+      "sourceDigest": "ae9f82bfb6ba573cd3d8da501b809f0590907b1025b3691a47d17c7764aa474b",
+      "sourceTree": "8e5be57ce78f67473db37460dac6838bee1ff904"
+    },
     "pending": null,
     "receipts": [
       {
@@ -126,12 +148,214 @@
         "task_id": "182",
         "tree": "0ded0a7e962fe24ce43a609b4c017a0b48823440",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "b5d3f376547074cac32333ca8c63eb64ff13fe99a1c05720be05f89986006a25",
+        "digest": "03aaf5ab8835ec303c50976097e4457e6c807eecda8451816d34f8d76bd7221c",
+        "inputs": {
+          ".cardine/tasks/182.json": "5c9f328f063851212633efebf9b8159055ae43ce39c85739cf220c2f7d352bcb"
+        },
+        "kind": "transition:d5e5ee87c83dffc39a04ff4ac07052132fc65c27920b5e438331787904029908",
+        "operation_id": "54cf47daff7348a9919f77d765207baa",
+        "outputs": {
+          ".cardine/tasks/182.json": "2bfc54cb345738e7d69b602aa4c279ebb97ff3956644596ad6528d698ba4b282"
+        },
+        "predecessor": "36b088a304b565700d7ca0dd93420903f2cb813d35166f5aaf618de2e813504c",
+        "result": "verified",
+        "source": "5337c8da46ee8761fce74daf6bf2b26e74d0383c",
+        "task_id": "182",
+        "tree": "ffd2514ebd8e7a4eb41dbc09749985a0806bae4f",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+        "digest": "21e3189e905ad599dba23633e367c8cea97ae21786a6f4becc04e4e773822a05",
+        "inputs": {
+          ".cardine/tasks/182.json": "8a27f5658c4282ff446a00a9a4c5f4c18f5d2d6379841cbac835825a01987f75",
+          "tasks/182-delete-legacy-snapshot.md": "dd3d05f3cd9a98d24202c8e3a6de037f707342ec5cf8fbedbd37125b8e348dc0"
+        },
+        "kind": "contract_revision",
+        "operation_id": "ee5d15acd2b144a5882c76fe956c3e1b",
+        "outputs": {
+          ".cardine/tasks/182.json": "7d8540b661a02dbfdf30823782a6ee717bedb221c8f4f26e0bc8ced31c84c1db",
+          "tasks/182-delete-legacy-snapshot.md": "dd3d05f3cd9a98d24202c8e3a6de037f707342ec5cf8fbedbd37125b8e348dc0"
+        },
+        "predecessor": "03aaf5ab8835ec303c50976097e4457e6c807eecda8451816d34f8d76bd7221c",
+        "result": "verified",
+        "source": "4e2aef76f11d629d06b738a599c7c85fbf813549",
+        "task_id": "182",
+        "tree": "ca0b278037e629979aad2642ee20751c2785a1cd",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+        "digest": "a950889dc3d5b93a91d810c007d4c282ebac1c3bd0cb4bc278e6a65309a03692",
+        "inputs": {
+          ".cardine/tasks/182.json": "4e598dfdc2f39331e58a92b227a1fcdb9b0824bf8f4ccc0f8bd487d1e1833054"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "ef15e717914945f18cfec7869fc18ff7",
+        "outputs": {
+          ".cardine/tasks/182.json": "3f5a1a58160ace5f17fe8af0cd0632805aa9f934aab7fde2c4d4e585b9c1384a"
+        },
+        "predecessor": "21e3189e905ad599dba23633e367c8cea97ae21786a6f4becc04e4e773822a05",
+        "result": "verified",
+        "source": "1d4cab59a25ce92730a488a771d43bf2a8fc4e28",
+        "task_id": "182",
+        "tree": "8e5be57ce78f67473db37460dac6838bee1ff904",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+        "digest": "35f4533205a9f72e071571b08b1635fe9cfe08350dec10a0273d86d62b1e564c",
+        "inputs": {
+          ".cardine/evidence/182.json": null,
+          ".cardine/tasks/182.json": "0ffddfb0d4eab2571d99a549ec9afdaabb103e63e3b26797eddca8db8e169033",
+          "tasks/handoffs/182.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "a3da67eeec7d48fdaee776515c3dc638",
+        "outputs": {
+          ".cardine/evidence/182.json": "bcc400cf646f7d271d28701c7dad1c95137705ff3714f1ccfbea703f08dc18c9",
+          ".cardine/tasks/182.json": "acf4dd2608a9aac26ec5602f81da68b83b3015163f14da4e5ca1997b35d0a16c",
+          "tasks/handoffs/182.md": "627fa1ebef28ffc783fe12f36f9fc0df044f449baef927289bc58555d8fe8391"
+        },
+        "predecessor": "a950889dc3d5b93a91d810c007d4c282ebac1c3bd0cb4bc278e6a65309a03692",
+        "result": "verified",
+        "source": "ea24f418216a2f5da39de15717fff065bbb95bd9",
+        "task_id": "182",
+        "tree": "b1bd0972e2d8cfc187ed92e1cb5bae307718052c",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+        "digest": "38a480e5a61d384d542ed93dc6e5a8582614970e63f97210df61683be5d86cda",
+        "inputs": {
+          ".cardine/tasks/182.json": "66fd8dff9f8eea8b6edb498803668257a2930d03ecc9e113363a5fc59fc5f656"
+        },
+        "kind": "landing_state",
+        "operation_id": "21c2da5ca3284392b25f02d0b3f0c74f",
+        "outputs": {
+          ".cardine/tasks/182.json": "7981e9be34d14a66d1669049fd97ede8465d4386b16bc2c9d08ffd3989ea1e79"
+        },
+        "predecessor": "35f4533205a9f72e071571b08b1635fe9cfe08350dec10a0273d86d62b1e564c",
+        "result": "verified",
+        "source": "00f75636a60f9e98ba140141a98aa7415dec74ef",
+        "task_id": "182",
+        "tree": "c40496b73cd986e1a0e467e119e2b1c2c159a157",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "ef553a89ad584e1cbfd78d45fb73ecea",
+      "consecutiveFailures": 0,
+      "evidence": ".cardine/evidence/182.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "634e65f1e51cb58f0026ba3c3a949081bf0744f7d23691cfd8de76cfd6c33b32",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-182",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "1d4cab59a25ce92730a488a771d43bf2a8fc4e28",
+        "sourceDigest": "ae9f82bfb6ba573cd3d8da501b809f0590907b1025b3691a47d17c7764aa474b",
+        "sourceTree": "8e5be57ce78f67473db37460dac6838bee1ff904"
+      },
+      "intermittent": [],
+      "lastFailed": [],
+      "phase": "passed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "ef553a89ad584e1cbfd78d45fb73ecea",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "ea24f418216a2f5da39de15717fff065bbb95bd9",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/182.json#ef553a89ad584e1cbfd78d45fb73ecea/1/repository-check",
+            "round": 1,
+            "sourceDigest": "ae9f82bfb6ba573cd3d8da501b809f0590907b1025b3691a47d17c7764aa474b",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "ef553a89ad584e1cbfd78d45fb73ecea",
+            "command": "python3 scripts/run_tests.py --parallel --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "ea24f418216a2f5da39de15717fff065bbb95bd9",
+            "exitStatus": 0,
+            "id": "task-tests",
+            "log": ".cardine/evidence/182.json#ef553a89ad584e1cbfd78d45fb73ecea/1/task-tests",
+            "round": 1,
+            "sourceDigest": "ae9f82bfb6ba573cd3d8da501b809f0590907b1025b3691a47d17c7764aa474b",
+            "stderr": "run_tests: 62 tests in 8 shards\nrun_tests: shard 5/8 finished in 3.6s: exit 0 ran=8 failures=0 errors=0\nrun_tests: shard 7/8 finished in 3.7s: exit 0 ran=7 failures=0 errors=0\nrun_tests: shard 2/8 finished in 5.7s: exit 0 ran=8 failures=0 errors=0\nrun_tests: shard 4/8 finished in 6.7s: exit 0 ran=8 failures=0 errors=0\nrun_tests: shard 3/8 finished in 9.1s: exit 0 ran=8 failures=0 errors=0\nrun_tests: shard 8/8 finished in 9.4s: exit 0 ran=7 failures=0 errors=0\nrun_tests: shard 6/8 finished in 11.1s: exit 0 ran=8 failures=0 errors=0\nrun_tests: shard 1/8 finished in 13.8s: exit 0 ran=8 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "PARTIAL selection=module:test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=62 total=2147 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "ef553a89ad584e1cbfd78d45fb73ecea",
+            "command": "git diff --check",
+            "commit": "ea24f418216a2f5da39de15717fff065bbb95bd9",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/182.json#ef553a89ad584e1cbfd78d45fb73ecea/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "ae9f82bfb6ba573cd3d8da501b809f0590907b1025b3691a47d17c7764aa474b",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
-  "status": "queued",
+  "status": "done",
   "task_id": "182",
-  "transitions": [],
+  "transitions": [
+    {
+      "at": "2026-11-08T22:23:20.133979Z",
+      "commit": "5337c8da46ee8761fce74daf6bf2b26e74d0383c",
+      "from": "queued",
+      "to": "in_progress"
+    },
+    {
+      "at": "2026-11-08T22:31:40.550545Z",
+      "commit": "5660065a5333242f3b200e79ee83882259e28883",
+      "from": "in_progress",
+      "to": "done"
+    }
+  ],
   "version": 1,
   "workflow": "single"
 }

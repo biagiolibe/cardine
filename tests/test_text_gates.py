@@ -294,7 +294,7 @@ class ResidualRatchetTest(unittest.TestCase):
             relative = path.relative_to(ROOT).as_posix()
             if relative != "src/cardine/legacy/importer.py" and "cardine.legacy.importer" in path.read_text(encoding="utf-8"):
                 importers.add(relative)
-        self.assertEqual(importers, {"src/cardine/legacy/snapshot.py"})
+        self.assertEqual(importers, set())
         self.assertNotIn("import_task_states", (ROOT / "src/cardine/cli.py").read_text(encoding="utf-8"))
 
     def test_allowlist_exceptions_are_exact_and_named(self):
