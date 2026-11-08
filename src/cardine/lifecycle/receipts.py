@@ -275,7 +275,16 @@ def require_authority(root, *, context=None):
             result = _run_git(str(root), 'merge-base', '--is-ancestor', str(base), str(main), text=False)
             if not base or not main or result.returncode:
                 raise CardineError('developer reauthorization required: accepted main history changed')
-    return accepted
+    return bound_authority(accepted)
+
+
+def bound_authority(accepted):
+    """The authority that operation bindings and intents embed.
+
+    The runtime digest is checked here against the local file and nowhere else, so
+    an operation started before a developer-accepted Cardine update can continue.
+    """
+    return {key: value for key, value in accepted.items() if key != 'runtime'}
 
 
 def _receipt_hash(receipt):

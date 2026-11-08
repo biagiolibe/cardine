@@ -339,7 +339,7 @@ else:
         with self.assertRaisesRegex(CardineError, 'accept'):
             receipts.authorize_project(self.root, accepted=dict(observed, policy='f'*64))
         receipts.authorize_project(self.root, accepted=observed)
-        self.assertEqual(receipts.require_authority(self.root), observed)
+        self.assertEqual(receipts.require_authority(self.root), receipts.bound_authority(observed))
 
 
 PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["plan_path.write_text(json.dumps(encode_plan(plan)), encoding='utf-8')",

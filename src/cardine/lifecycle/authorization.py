@@ -61,18 +61,29 @@ def plan_authorization(project: Path) -> AuthorizationPlan:
         if policy.returncode == 0 and receipts.digest(policy.stdout) != observed['policy']:
             return AuthorizationPlan('blocked', path, None, changes,
                                      'project declaration differs from main; commit or restore it first')
+    accepted = dict(observed)
+    if isinstance(current, dict) and all(current.get(key) == observed[key]
+                                         for key in ('project', 'common', 'root', 'worktree_root', 'policy')):
+        # Same checkout and policy: keep the accepted base when it is still in main's history,
+        # so bindings of operations already in progress keep matching.
+        base = current.get('accepted_main')
+        if base and observed['accepted_main'] and receipts._run_git(
+                str(root), 'merge-base', '--is-ancestor', str(base), str(observed['accepted_main']),
+                text=False).returncode == 0:
+            accepted['accepted_main'] = base
+            changes = tuple(key for key in changes if key != 'accepted_main')
     for task_id, state_file in _task_states(root):
         try:
             state = json.loads(state_file.read_bytes())
             pending = receipts.pending_operation(root, task_id) or state.get('run', {}).get('pending') is not None
             if not pending:
-                receipts.verify_receipts(root, state, artifacts=False, accepted=observed)
+                receipts.verify_receipts(root, state, artifacts=False, accepted=accepted)
         except (CardineError, KeyError, TypeError, ValueError, AttributeError) as error:
             return AuthorizationPlan('blocked', path, None, changes, f'task {task_id}: {error}')
         if pending:
             return AuthorizationPlan('blocked', path, None, changes,
                                      f'task {task_id} has a pending operation; finish it with the runtime that started it')
-    return AuthorizationPlan('approval-required', path, observed, changes,
+    return AuthorizationPlan('approval-required', path, accepted, changes,
                              'accepts this checkout and runtime for the verified task states')
 
 

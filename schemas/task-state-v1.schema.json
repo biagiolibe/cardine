@@ -1177,7 +1177,6 @@
                       "project",
                       "common",
                       "root",
-                      "runtime",
                       "policy",
                       "accepted_main",
                       "worktree_root"
@@ -1468,7 +1467,6 @@
                     "project",
                     "common",
                     "root",
-                    "runtime",
                     "policy",
                     "accepted_main",
                     "worktree_root"
@@ -1525,7 +1523,6 @@
                     "project",
                     "common",
                     "root",
-                    "runtime",
                     "policy",
                     "accepted_main",
                     "worktree_root"
@@ -1708,7 +1705,7 @@
                 "authority": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["project", "common", "root", "runtime", "policy", "accepted_main", "worktree_root"],
+                  "required": ["project", "common", "root", "policy", "accepted_main", "worktree_root"],
                   "properties": {
                     "project": {"type": "string", "minLength": 1},
                     "common": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},

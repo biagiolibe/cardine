@@ -77,6 +77,21 @@ class AuthorizationTest(unittest.TestCase):
             self.assertTrue(authorization.apply_authorization(plan, confirm=accept))
             receipts.verify_receipts(self.root, self.state(self.root))
 
+    def test_bindings_survive_an_accepted_runtime_update(self):
+        bound = receipts.require_authority(self.root)
+        self.assertNotIn('runtime', bound)
+        (self.root / 'NOTES.md').write_text('later work\n')
+        self.git(self.root, 'add', 'NOTES.md')
+        self.git(self.root, 'commit', '-m', 'Later work')
+        with patch.object(receipts, 'runtime_digest_once', return_value='f' * 64):
+            with self.assertRaisesRegex(CardineError, 'cardine authorize'):
+                receipts.require_authority(self.root)
+            plan = authorization.plan_authorization(self.root)
+            self.assertEqual(plan.changes, ('runtime',))
+            self.assertTrue(authorization.apply_authorization(plan, confirm=accept))
+            # An operation bound before the update still matches after it.
+            self.assertEqual(receipts.require_authority(self.root), bound)
+
     def test_pending_operation_and_tampered_state_block_acceptance(self):
         intent = self.clone / '.cardine/tasks/.001.intent.json'
         intent.write_text(json.dumps({'task_id': '001'}))
