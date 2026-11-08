@@ -104,6 +104,30 @@ class ConversionTest(unittest.TestCase):
         expected = contract_digest((self.root / 'tasks/001.md').read_text())
         self.assertEqual(expected, hashlib.sha256(profile).hexdigest())
 
+    def test_conversion_redone_on_a_new_commit_after_reset(self):
+        def git(*args):
+            subprocess.run(['git', *args], cwd=self.root, check=True, capture_output=True)
+        (self.root / '.gitignore').write_text('.cardine/receipt-authority.json\n')
+        git('add', '.gitignore')
+        git('commit', '-qm', 'Ignore local authority')
+        plan = plan_adopt(self.root, ROOT, name='Example', slug='example', language='English', validation=VALIDATION)
+        self.assertTrue(apply_adopt(self.root, plan, ROOT))
+        git('switch', '-qc', 'first-switch')
+        git('add', '-A')
+        git('commit', '-qm', 'First switch')
+        git('switch', '-q', 'main')
+        (self.root / 'NOTES.md').write_text('A later commit on main.\n')
+        git('add', 'NOTES.md')
+        git('commit', '-qm', 'Later work')
+        stale = json.loads((self.root / '.cardine/receipt-authority.json').read_text())
+        again = plan_adopt(self.root, ROOT, name='Example', slug='example', language='English', validation=VALIDATION)
+        self.assertEqual(again.refusals, ())
+        self.assertTrue(apply_adopt(self.root, again, ROOT))
+        self.assertTrue((self.root / '.cardine/tasks/001.json').is_file())
+        accepted = json.loads((self.root / '.cardine/receipt-authority.json').read_text())
+        self.assertNotEqual(accepted['accepted_main'], stale['accepted_main'])
+        self.assertFalse(apply_adopt(self.root, again, ROOT))
+
     def test_missing_completed_state_is_not_recreated(self):
         apply_adopt(self.root, self.plan, ROOT)
         state = self.root / '.cardine/tasks/001.json'

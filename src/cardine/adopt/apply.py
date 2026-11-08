@@ -26,7 +26,10 @@ def _target(root: Path, relative: str) -> Path:
 
 
 def _binding(root: Path, plan) -> dict:
-    return {'kind': 'adopt', 'anchor': str(root), 'digest': receipts.digest(plan.bytes())}
+    # The commit binds a completed receipt to the tree it converted: the same plan
+    # applied again on another commit is a new adoption, not a replay.
+    return {'kind': 'adopt', 'anchor': str(root), 'digest': receipts.digest(plan.bytes()),
+            'source': receipts._git(root, 'rev-parse', 'HEAD')}
 
 
 def _completed(receipt: Path, binding: dict, root: Path, outputs: dict[str, bytes]) -> bool:
@@ -188,8 +191,6 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             store = _target(root, '.cardine/tasks')
             if store.exists() and (not store.is_dir() or any(store.iterdir())):
                 raise CardineError('adoption requires an empty task state store')
-            if tasks and _target(root, '.cardine/receipt-authority.json').exists():
-                raise CardineError('adoption conflicts with existing receipt authority')
             for name in outputs:
                 if before[name] is not None and (name.startswith('.cardine/') or (
                         plan.case == 'A' and plan.existing.get(name) != before[name])):
@@ -216,7 +217,17 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             active.run(name, content)
         if payload['tasks']:
             authority = root / '.cardine/receipt-authority.json'
-            if not authority.exists():
+            # The task state store was empty when this adoption was declared, so an existing
+            # local authority protects no state: it is residue of an earlier adoption.
+            if authority.exists():
+                try:
+                    current = json.loads(authority.read_bytes())
+                except ValueError:
+                    current = None
+                if current != receipts.observed_authority(root):
+                    receipts.boundary('before_adopt_write:.cardine/receipt-authority.json')
+                    receipts.authorize_project(root, accepted=receipts.observed_authority(root))
+            else:
                 receipts.boundary('before_adopt_write:.cardine/receipt-authority.json')
                 receipts.authorize_project(root, accepted=receipts.observed_authority(root), new=True)
             for task_id, record in sorted(payload['tasks'].items()):
