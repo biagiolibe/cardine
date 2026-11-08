@@ -38,6 +38,18 @@ class AgentDefaults:
 
 
 @dataclass(frozen=True)
+class LiveCommand:
+    kind: str
+    identifier: str | None
+    round: int | None
+    command: str
+    started_at: str
+    exit_status: int | None
+    last_output: str | None
+    interrupted: bool = False
+
+
+@dataclass(frozen=True)
 class Task:
     task_id: str
     title: str
@@ -73,6 +85,8 @@ class Task:
     state_error_origin: str | None = None
     delivery_pending: str | None = None
     run_preview: dict | None = None
+    live_command: LiveCommand | None = None
+    live_log: Path | None = None
 
     @property
     def is_resume(self) -> bool:

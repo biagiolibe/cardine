@@ -20,7 +20,8 @@ import subprocess
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from cardine.console.models import Snapshot, Task
+from cardine.console.models import LiveCommand, Snapshot, Task
+from cardine.lifecycle.live import live_paths
 from cardine.lifecycle.execution import delivery_readiness
 from cardine.shared.console_workflow import ConsoleError
 from cardine.shared.errors import CardineError, CardineStop
@@ -459,6 +460,43 @@ def _delivery_pending(project: Path, worktree: str | None, task_id: str, heads: 
                          shared["main"], shared["common"])
 
 
+
+def _live_command(log: Path, status: Path, task_id: str) -> LiveCommand | None:
+    try:
+        value = json.loads(status.read_text(encoding="utf-8"))
+        if (not isinstance(value, dict) or value.get("task") != task_id
+                or value.get("kind") not in ("validation", "candidate")
+                or not isinstance(value.get("command"), str)
+                or not isinstance(value.get("startedAt"), str)
+                or not (value.get("id") is None or isinstance(value["id"], str))
+                or not (value.get("round") is None or type(value["round"]) is int)
+                or not (value.get("exitStatus") is None or type(value["exitStatus"]) is int)
+                or not (value.get("pid") is None or type(value["pid"]) is int)
+                or not (value.get("finishedAt") is None or isinstance(value["finishedAt"], str))):
+            return None
+        with log.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            handle.seek(max(0, handle.tell() - 4096))
+            lines = handle.read().decode("utf-8", errors="replace").splitlines()
+        last = next((line for line in reversed(lines) if line.strip()), None)
+        interrupted = False
+        pid = value["pid"]
+        if value["exitStatus"] is None and pid is not None:
+            if pid <= 0:
+                return None
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                interrupted = True
+            except PermissionError:
+                pass
+        if value.get("finishedAt") is not None and value["exitStatus"] is None:
+            interrupted = True
+        return LiveCommand(value["kind"], value["id"], value["round"], value["command"],
+                           value["startedAt"], value["exitStatus"], last, interrupted)
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError, OverflowError):
+        return None
+
 @scoped_command
 def load_snapshot(project: Path, identities: IdentityCache | None = None,
                   deliveries: DeliveryCache | None = None) -> Snapshot:
@@ -488,11 +526,14 @@ def _load_snapshot(project: Path, identities: IdentityCache | None = None,
         tasks = []
         for task in snapshot.tasks:
             try:
-                preview = preview_run(resolve_run_locations(task.task_id, project))
+                locations = resolve_run_locations(task.task_id, project)
+                preview = preview_run(locations)
+                log, status = live_paths(locations.common_dir, task.task_id)
             except (CardineError, OSError, ValueError) as error:
                 tasks.append(replace(task, state_error=str(error)))
                 continue
             tasks.append(replace(task, run_preview=preview, progress_phase=preview['step'],
+                live_log=log, live_command=_live_command(log, status, task.task_id),
                 state_error=None if preview['work'] and task.state_error_origin == 'worktree' else task.state_error,
                 closure_stop_reason=preview['stop']['code'] if preview['stop'] else None,
                 closure_resume=preview['next']['command'] if preview['next'] else None))

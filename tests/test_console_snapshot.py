@@ -61,6 +61,30 @@ class ProjectConsoleTest(unittest.TestCase):
         )):
             return owner_console_snapshot.load_snapshot(self.project)
 
+    def test_live_command_running_finished_interrupted_and_bad_files(self) -> None:
+        self.write_states()
+        directory = self.project / ".git" / "cardine-operations"
+        directory.mkdir(exist_ok=True)
+        log, status = directory / "002.live.log", directory / "002.live.json"
+        log.write_text("first\n\nlast\n")
+        data = dict(task="002", kind="validation", id="task-tests", round=1,
+                    command="test", startedAt="2026-01-01T00:00:00+00:00",
+                    pid=os.getpid(), exitStatus=None, finishedAt=None)
+        status.write_text(json.dumps(data))
+        live = self.snapshot().tasks[0].live_command
+        self.assertEqual((live.kind, live.identifier, live.round, live.last_output, live.interrupted),
+                         ("validation", "task-tests", 1, "last", False))
+        data["exitStatus"] = 0
+        status.write_text(json.dumps(data))
+        self.assertEqual(self.snapshot().tasks[0].live_command.exit_status, 0)
+        data.update(exitStatus=None, pid=99999999)
+        status.write_text(json.dumps(data))
+        self.assertTrue(self.snapshot().tasks[0].live_command.interrupted)
+        status.write_text("{")
+        self.assertIsNone(self.snapshot().tasks[0].live_command)
+        status.unlink()
+        self.assertIsNone(self.snapshot().tasks[0].live_command)
+
     def test_completed_dependency_is_ready_and_task_details_are_loaded(self) -> None:
         self.write_states()
         snapshot = self.snapshot()

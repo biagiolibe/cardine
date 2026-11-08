@@ -225,6 +225,71 @@ def _header_framework_label(identity: FrameworkIdentity, width: int,
     return f"{version} | {_clip(identity.root_label, max(8, width - fixed))}"
 
 
+
+def _live_label(task: Task) -> str | None:
+    live = task.live_command
+    if live is None or live.exit_status is not None:
+        return None
+    parts = [live.kind]
+    if live.round is not None:
+        parts.append(f"round {live.round}")
+    if live.identifier:
+        parts.append(live.identifier)
+    parts.append(_elapsed(live.started_at))
+    return f"{'Interrupted' if live.interrupted else 'Running'}: " + " · ".join(parts)
+
+
+class OutputView:
+    """Read a bounded log tail and maintain a scroll position across updates."""
+
+    def __init__(self, path: Path | None):
+        self.path = path
+        self.signature = None
+        self.lines: list[str] = []
+        self.exists = False
+        self.follow = True
+        self.offset = 0
+
+    def refresh(self) -> None:
+        try:
+            stat = self.path.stat()
+            signature = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+            if signature == self.signature:
+                return
+            with self.path.open('rb') as handle:
+                handle.seek(max(0, stat.st_size - 256 * 1024))
+                data = handle.read(256 * 1024).decode('utf-8', errors='replace')
+            data = re.sub(r'\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[@-_])', '', data)
+            self.lines = [''.join(c for c in line.split('\r')[-1] if c.isprintable() or c == '\t')
+                          .expandtabs(8) for line in data.split('\n')]
+            if self.lines and not self.lines[-1]:
+                self.lines.pop()
+            self.signature, self.exists = signature, True
+        except (OSError, AttributeError):
+            self.signature, self.exists, self.lines = None, False, []
+
+    def visible(self, height: int) -> list[str]:
+        maximum = max(0, len(self.lines) - height)
+        self.offset = maximum if self.follow else min(self.offset, maximum)
+        return self.lines[self.offset:self.offset + height]
+
+    def scroll(self, amount: int, height: int) -> None:
+        self.visible(height)
+        self.offset = max(0, min(self.offset + amount, max(0, len(self.lines) - height)))
+        self.follow = self.offset == max(0, len(self.lines) - height)
+
+    def end(self) -> None:
+        self.follow = True
+
+
+def _draw_output(screen, view: OutputView, task_id: str, width: int, height: int,
+                 palette: dict[str, int]) -> None:
+    view.refresh()
+    _put(screen, 3, 2, f"Run output — task {task_id}", width - 4, palette['text'])
+    lines = view.visible(max(1, height - 6)) if view.exists else ["This task has no run output yet."]
+    for y, line in enumerate(lines, 4):
+        _put(screen, y, 2, line, width - 4, palette['base'])
+
 def _detail_lines(task: Task, width: int, palette: dict[str, int],
                   compact: bool = False) -> list[tuple[str, int]]:
     lines: list[tuple[str, int]] = []
@@ -242,6 +307,12 @@ def _detail_lines(task: Task, width: int, palette: dict[str, int],
     add(f"Task {task.task_id}", "muted")
     add(f"○ {label}", color)
     add(f"Status: {task.status}; verdict: {task.review_verdict or 'none'}", "muted")
+    live_label = _live_label(task)
+    if live_label:
+        add(live_label, "working")
+        add(f"Command: {task.live_command.command}", "muted")
+        if task.live_command.last_output:
+            add(f"Last output: {task.live_command.last_output}", "muted")
     if task.run_preview:
         add(f"Run: {task.run_preview['step']}; {task.run_preview['outcome']}", "muted")
     if task.legacy:
@@ -443,7 +514,7 @@ def _draw_list(screen, tasks: list[Task], selected_id: str | None,
         _put(screen, line_number, 1, "›" if selected else " ", 1, row_attr)
         _put(screen, line_number, layout.id_x, _clip(task.task_id, layout.id_width),
              layout.id_width, row_attr if selected else palette["muted"])
-        _put(screen, line_number, layout.title_x, _clip(f"○ {task.title}", title_width),
+        _put(screen, line_number, layout.title_x, _clip((f"{_live_label(task)}  " if _live_label(task) else "") + f"○ {task.title}", title_width),
              title_width, row_attr)
         label, color = _state_label(task)
         flags = ("↺" if task.changes_requested else "") + ("●" if task.active_writer else "")

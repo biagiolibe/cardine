@@ -10,7 +10,7 @@ import time
 
 from cardine.console.launch import _set_terminal_title
 from cardine.console.models import Task
-from cardine.console.render import _action_hit, _copy_to_clipboard, _cycle_filter, _detail_view, _draw_detail, _draw_header, _draw_launch_prompt, _draw_list, _palette, _put, _scroll_detail, _tab_at, _visible_tasks
+from cardine.console.render import OutputView, _draw_output, _action_hit, _copy_to_clipboard, _cycle_filter, _detail_view, _draw_detail, _draw_header, _draw_launch_prompt, _draw_list, _palette, _put, _scroll_detail, _tab_at, _visible_tasks
 from cardine.console.state import ConsoleState, one_shot
 
 
@@ -34,6 +34,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
     searching = False
     help_visible = False
     detail_open = False
+    output_view: OutputView | None = None
     detail_focused = False
     status_filter = "All"
     notice = ""
@@ -69,7 +70,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             if help_visible:
                 help_lines = (
                     "Navigation", "↑/↓ or j/k  Select task", "Tab/Shift+Tab  Filter by status",
-                    "Enter  Open full task details", "Esc  Return to task list",
+                    "Enter  Open full task details", "o  Open run output", "Esc  Return to task list",
                     "/  Search task ID or title", "[ / ]  Scroll task details",
                     "c or click [copy]  Copy a permitted task directive",
                     "l  Choose Claude Code or Codex to launch an iTerm2 split pane",
@@ -82,6 +83,8 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                 )
                 for y, line in enumerate(help_lines, 4):
                     _put(screen, y, 2, line, width - 4, palette["text"] if y == 4 else palette["base"])
+            elif output_view is not None and selected_task:
+                _draw_output(screen, output_view, selected_task.task_id, width, height, palette)
             elif detail_open:
                 detail_width = width - 4
                 detail_bounds = (2, width - 3)
@@ -119,11 +122,13 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                 footer = f"STALE: {state.error}"
             elif searching:
                 footer = f"Search: {search}"
+            elif output_view is not None:
+                footer = "Esc back   [/] or ↑/↓ scroll   End/G follow   q quit"
             elif detail_open or help_visible:
                 footer = "Esc back   [/] scroll   r refresh   q quit"
             else:
                 footer = ("? help   ↑/↓ move   [/] scroll detail   tab filter   enter details   "
-                          "c copy   l launch   x cancel task   a abort   / search   r refresh   q quit")
+                          "o output   c copy   l launch   x cancel task   a abort   / search   r refresh   q quit")
             _put(screen, height - 2, 0, "─" * max(0, width - 1),
                  width - 1, palette["line"])
             _put(screen, height - 1, 1, footer, width - 2,
@@ -163,6 +168,10 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             wheel_up = getattr(curses, "BUTTON4_PRESSED", 0)
             wheel_down = getattr(curses, "BUTTON5_PRESSED", 0)
             in_detail = bool(detail_bounds and detail_bounds[0] <= mouse_x <= detail_bounds[1])
+            if output_view is not None:
+                if button_state & (wheel_up | wheel_down):
+                    output_view.scroll(-3 if button_state & wheel_up else 3, max(1, height - 6))
+                continue
             if button_state & (wheel_up | wheel_down):
                 if selected_task and (detail_open or in_detail) and detail_width:
                     detail_offset = _scroll_detail(
@@ -193,6 +202,18 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             elif 32 <= key <= 126:
                 search += chr(key)
                 detail_offset = offset = 0
+            continue
+        if output_view is not None:
+            if key == 27:
+                output_view = None
+            elif key in (ord('q'), ord('Q')):
+                return
+            elif key in (ord('['), curses.KEY_UP):
+                output_view.scroll(-1, max(1, height - 6))
+            elif key in (ord(']'), curses.KEY_DOWN):
+                output_view.scroll(1, max(1, height - 6))
+            elif key in (ord('G'), curses.KEY_END):
+                output_view.end()
             continue
         if key == 27:
             detail_open = detail_focused = help_visible = False
@@ -244,6 +265,9 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             detail_open = True
             detail_focused = True
             detail_offset = 0
+        elif key == ord("o") and selected_task and not help_visible:
+            output_view = OutputView(selected_task.live_log)
+            detail_open = detail_focused = False
         elif key == ord("/"):
             searching = True
             search = ""
