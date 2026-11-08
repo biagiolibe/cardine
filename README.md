@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/meridian-mark-dark.svg">
+    <img src="docs/assets/meridian-mark-light.svg" alt="Cardine logo" width="96" height="96">
+  </picture>
+</p>
+
 <h1 align="center">Cardine</h1>
 
 <p align="center"><strong>The delivery discipline for AI coding agents.</strong></p>
@@ -17,7 +24,8 @@ with a reason and the exact command to resume.
 ## What Cardine does
 
 You describe one task in a short contract: objective, acceptance criteria,
-validation commands, dependencies. Your agent then calls one command,
+the files it may change, validation commands, dependencies. Your agent then
+calls one command,
 `cardine run <TASK-ID>`, again and again. Each call performs the next step of
 the task and prints JSON with the outcome and the exact command to run next.
 
@@ -189,7 +197,8 @@ can raise or lower them.
 | | `lean` (default) | `governed` |
 | --- | --- | --- |
 | Independent review | not required | required |
-| `Authority` and `Expected code surface` fields | optional | required |
+| `Authority` field | optional | required |
+| `Expected code surface` field | needed by `cardine run` | required |
 | Validation retry limit | 3 | 3 |
 
 A `spike` task class for exploratory work, with an `ANSWERED` or
@@ -247,7 +256,8 @@ pipx install --editable ~/src/cardine
 cardine --version
 ```
 
-From 0.9, `pipx install cardine` installs a release.
+0.9 will be a Git tag, installed the same way from a clone. `pipx install
+cardine` arrives with 1.0, published on PyPI.
 
 ## Documentation
 

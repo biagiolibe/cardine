@@ -136,11 +136,17 @@ Meridian's workflows established:
 | Option | `lean` preset | `governed` preset |
 | --- | --- | --- |
 | Review | not required | required |
-| `Authority` and `Expected code surface` | optional | required |
+| `Authority` | optional | required |
+| `Expected code surface` (amended on 2026-11-08) | needed by `cardine run` | required |
 | Blocking dependencies | yes | yes |
 | `spike` class | available | available |
 | Validation retry limit | 3 | 3 |
 | Quick failure limit (amended on 2026-11-05) | 10 | 10 |
+
+Amended on 2026-11-08: `Expected code surface` is not optional in either
+preset. It bounds unattended work (decision 12), and `cardine run` stops with
+`SCOPE_CHANGE_REQUIRED` when a task has none. In `lean`, `cardine task new`
+still accepts a record without it.
 
 `cardine init` asks for the preset. `lean` replaces Lean Delivery and is the
 default for new projects. `governed` reproduces today's Governed SDD
