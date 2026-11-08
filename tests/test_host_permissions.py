@@ -292,6 +292,21 @@ class ClaudePolicyInstallationTest(Fixture):
     def settings(self) -> dict:
         return json.loads((self.project / ".claude/settings.local.json").read_text())
 
+    def test_setup_removes_only_the_obsolete_tool_rules_it_wrote(self) -> None:
+        settings = self.project / ".claude/settings.local.json"
+        settings.parent.mkdir()
+        obsolete = list(claude.OBSOLETE_DENY_ENTRIES)
+        settings.write_text(json.dumps({"permissions": {"allow": list(claude.CLAUDE_PROJECT_ALLOWLIST),
+                                                        "deny": ["Bash(rm:*)", *claude.CLAUDE_PROJECT_DENYLIST, *obsolete]}}))
+        plan = claude.plan_claude_project_allowlist(self.project)
+        self.assertEqual(plan.status, "approval-required")
+        self.assertIn("never matching", plan.detail)
+        self.assertTrue(claude.apply_claude_project_allowlist(plan))
+        deny = self.settings()["permissions"]["deny"]
+        self.assertEqual(deny, ["Bash(rm:*)", *claude.CLAUDE_PROJECT_DENYLIST])
+        self.assertTrue(all(not rule.startswith(("Write(", "MultiEdit(", "NotebookEdit(")) for rule in deny))
+        self.assertEqual(claude.plan_claude_project_allowlist(self.project).status, "ready")
+
     def test_plan_write_and_verification_use_the_existing_operation(self) -> None:
         settings = self.project / ".claude/settings.local.json"
         settings.parent.mkdir()
@@ -303,9 +318,9 @@ class ClaudePolicyInstallationTest(Fixture):
         self.assertEqual(written["keep"], 1)
         self.assertEqual(written["permissions"]["deny"][0], "Bash(rm:*)")
         self.assertIn("Bash(mine:*)", written["permissions"]["allow"])
-        for tool in permissions.NATIVE_WRITE_TOOLS:
-            for path in permissions.relative_protected():
-                self.assertIn(f"{tool}(/{path})", written["permissions"]["deny"])
+        for path in permissions.relative_protected():
+            self.assertIn(f"Edit(/{path})", written["permissions"]["deny"])
+        self.assertFalse(set(claude.OBSOLETE_DENY_ENTRIES) & set(written["permissions"]["deny"]))
         self.assertNotIn("Bash(git push origin main)", written["permissions"]["allow"])
         self.assertEqual(stat.S_IMODE(settings.stat().st_mode), 0o600)
         self.assertEqual(claude.plan_claude_project_allowlist(self.project).status, "ready")
