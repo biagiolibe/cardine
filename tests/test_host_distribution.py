@@ -69,7 +69,6 @@ class HostDistributionTest(unittest.TestCase):
         self.assertEqual(sorted(p.stem for p in (destination / 'commands').iterdir()), sorted(plugin.COMMANDS))
         self.assertFalse((destination / 'hooks').exists())
         self.assertNotIn('hooks', json.loads((destination / '.claude-plugin/plugin.json').read_text()))
-        self.assertTrue((ROOT / 'hooks/hooks.json').is_file())
 
     def test_kill_before_and_after_every_copy_and_publication_converges(self):
         real_names = list(plugin.payload())

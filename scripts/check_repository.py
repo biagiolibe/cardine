@@ -66,7 +66,6 @@ REQUIRED_FILES = (
     "templates/single/tasks/QUEUE.md",
     "templates/single/docs/CONTEXT_READING_POLICY.md",
     "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md",
-    "templates/single/.codex/hooks.json",
     "skills/cardine-project/SKILL.md",
     "skills/cardine-delivery/SKILL.md",
 )
@@ -929,7 +928,8 @@ def check_managed_digests(root: Path = ROOT) -> None:
 # exist only at runtime. Files listed here are frozen exceptions; none today.
 MACHINE_PATH_ALLOWED_FILES: frozenset[str] = frozenset()
 # Cardine task state records the receipt authority of the checkout that wrote it.
-MACHINE_PATH_ALLOWED_PATTERN = re.compile(r"\.cardine/tasks/[^/]+\.json")
+# The evidence ledger holds captured command output.
+MACHINE_PATH_ALLOWED_PATTERN = re.compile(r"\.cardine/(?:tasks|evidence)/[^/]+\.json")
 MACHINE_PATH_PATTERN = re.compile(
     r"/Users/[A-Za-z0-9_.-]+/"
     r"|/home/[A-Za-z0-9_.-]+/"

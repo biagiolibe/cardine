@@ -274,13 +274,25 @@ class InitAdapterTest(unittest.TestCase):
         for preset in ("`lean`", "`governed`"):
             self.assertIn(preset, text)
         self.assertIn("exactly the same files", text)
-        for hidden in (".gitignore", ".claudeignore", ".codex/hooks.json", ".codex/rules/meridian.rules"):
+        for hidden in (".gitignore", ".claudeignore", ".codex/rules/meridian.rules"):
             self.assertIn(hidden, text)
         self.assertIn("Do not copy from `templates/base/` or `templates/workflows/`", text)
         self.assertIn("Do not copy templates", text)
         for retired in ("overlay", "classic", "workflow mode"):
             self.assertNotIn(retired, text)
         self.assertIn('cardine" init', text)
+
+    def test_init_does_not_create_project_codex_hooks(self) -> None:
+        from cardine.templates.init import apply_init, plan_init
+
+        validation = {"commands": {"test": "python3 -m example_tests"}, "baseline": ["test"],
+                      "candidate": {"REUSE": [], "BOUNDED": ["test"], "FULL": ["test"]}}
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory).resolve() / "project"
+            plan = plan_init(project, ROOT, name="Example", slug="example", preset="lean",
+                             language="English", task_identity="opaque", validation=validation)
+            self.assertTrue(apply_init(plan))
+            self.assertFalse((project / ".codex/hooks.json").exists())
 
     def test_init_writes_a_project_declaration_that_the_schema_accepts(self) -> None:
         text = self.COMMAND.read_text(encoding="utf-8")

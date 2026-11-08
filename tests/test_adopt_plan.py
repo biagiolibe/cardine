@@ -80,13 +80,14 @@ class AdoptPlanTest(unittest.TestCase):
         self.assertEqual(tree_digest(self.base), before)
 
     def test_case_a_refuses_paths_it_cannot_merge(self):
-        for name in ('tasks/QUEUE.md', '.codex/hooks.json'):
-            (self.root / name).parent.mkdir(parents=True, exist_ok=True)
-            (self.root / name).write_text('{}\n')
+        (self.root / 'tasks').mkdir()
+        (self.root / 'tasks/QUEUE.md').write_text('{}\n')
+        (self.root / '.codex/rules').mkdir(parents=True)
+        (self.root / '.codex/rules/meridian.rules').symlink_to(self.root / 'tasks/QUEUE.md')
         self.commit()
         plan = plan_adopt(self.root, ROOT, **self.choices(), preset='lean', task_identity='opaque')
         self.assertIn('ADOPT_RECORD', plan.refusals)
-        self.assertEqual(plan.diagnostics, ('existing path conflicts with adoption: .codex/hooks.json',
+        self.assertEqual(plan.diagnostics, ('existing path conflicts with adoption: .codex/rules/meridian.rules',
                                             'existing path conflicts with adoption: tasks/QUEUE.md'))
 
     def test_case_a_refuses_dirty_git_project(self):

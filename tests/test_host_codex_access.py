@@ -50,11 +50,9 @@ class CodexRulesUpgradeTest(unittest.TestCase):
             / ".cardine/baselines/1.1.37/.codex/rules/meridian.rules"
         ).unlink()
         (self.project / ".codex/rules").rmdir()
-        (self.project / ".codex/hooks.json").unlink()
         (self.project / ".codex").rmdir()
         (self.framework / "VERSION").write_text("1.1.38\n", encoding="utf-8")
         # This fixture models 1.1.38 immediately after task 040, before task 041.
-        (self.framework / "templates/single/.codex/hooks.json").unlink()
 
     def tearDown(self) -> None:
         self.temporary.cleanup()

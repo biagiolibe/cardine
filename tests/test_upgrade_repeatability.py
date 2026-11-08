@@ -21,7 +21,7 @@ from synthetic_upgrade_support import SyntheticFramework
 
 FILES = ("PROJECT_WORKFLOW.md", "AGENTS.md", "CLAUDE.md", "LANGUAGE_POLICY.md",
          "tasks/TASK_BLUEPRINT.md", "docs/CONTEXT_READING_POLICY.md",
-         "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules", ".codex/hooks.json")
+         "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules")
 EDITED = ("PROJECT_WORKFLOW.md", "AGENTS.md")
 CHILD = '''
 import os, sys

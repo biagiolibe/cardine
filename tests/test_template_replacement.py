@@ -29,7 +29,7 @@ FILES = ("AGENTS.md", "CLAUDE.md", "PROJECT_WORKFLOW.md", "LANGUAGE_POLICY.md",
          "docs/CONTEXT_READING_POLICY.md", "docs/workflows/IMPLEMENTATION.md",
          "docs/workflows/REVIEW.md", "docs/workflows/REMEDIATION.md", "docs/LIFECYCLE_ORCHESTRATION.md",
          "tasks/TASK_BLUEPRINT.md", "docs/EXECUTION_EVIDENCE_PROFILE.md", ".codex/rules/meridian.rules",
-         ".codex/hooks.json", "docs/WORKTREE_LIFECYCLE.md", "docs/COMPLETION_REPORT_TEMPLATE.md",
+         "docs/WORKTREE_LIFECYCLE.md", "docs/COMPLETION_REPORT_TEMPLATE.md",
          "docs/REVIEW_RECORD_TEMPLATE.md", "docs/AUDIT_PROMPT_READ_ONLY.md", "docs/OPERATOR_PROMPTS.md",
          "docs/CODE_ORGANIZATION.md")
 # Row TR2b: the condensed documents with a marker block, and a folded file that releases no longer ship.

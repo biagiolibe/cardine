@@ -259,7 +259,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("CI_GATE profile=cardine-self-hosting worst=PASS", output.getvalue())
 
             # MERIDIAN-INSTALLATION-CHECK
-            (project / ".codex/hooks.json").unlink()
+            (project / ".codex/rules/meridian.rules").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
@@ -267,7 +267,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             # MERIDIAN-INSTALLATION-CHECK
-            self.assertIn("missing managed-copy surface .codex/hooks.json", output.getvalue())
+            self.assertIn("missing managed-copy surface .codex/rules/meridian.rules", output.getvalue())
 
     def test_ci_profile_gate_rejects_missing_managed_policy_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -528,8 +528,6 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             # MERIDIAN-INSTALLATION-CHECK
             ("LANGUAGE_POLICY.md", "missing managed-copy surface LANGUAGE_POLICY.md"),
             # MERIDIAN-INSTALLATION-CHECK
-            (".codex/hooks.json", "missing managed-copy surface .codex/hooks.json"),
-            # MERIDIAN-INSTALLATION-CHECK
             ("hooks/read-guard.sh", "missing shared-source surface hooks/read-guard.sh"),
         )
         for relative_path, diagnostic in missing_surfaces:
@@ -738,8 +736,6 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 # MERIDIAN-INSTALLATION-CHECK
                 "docs/EXECUTION_EVIDENCE_PROFILE.md",
                 # MERIDIAN-INSTALLATION-CHECK
-                ".codex/hooks.json",
-                # MERIDIAN-INSTALLATION-CHECK
                 ".codex/rules/meridian.rules",
             }
             <= lean_paths
@@ -780,7 +776,10 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                         source = ROOT / surface.path
                     destination = project / surface.path
                     destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copyfile(source, destination)
+                    if source.is_file():
+                        shutil.copyfile(source, destination)
+                    else:
+                        destination.write_text("")
 
             observed = owner_templates_adoption.bootstrap_capability_profile(
                 project, ROOT, "cardine-self-hosting", apply=True
@@ -826,9 +825,7 @@ MERGED_DESTINATIONS = {
 HIDDEN_DESTINATIONS = {
     "base/.gitignore": ".gitignore",
     "base/.claudeignore": ".claudeignore",
-    "workflows/lean-delivery/.codex/hooks.json": ".codex/hooks.json",
     "workflows/lean-delivery/.codex/rules/meridian.rules": ".codex/rules/meridian.rules",
-    "workflows/governed-sdd/.codex/hooks.json": ".codex/hooks.json",
     "workflows/governed-sdd/.codex/rules/meridian.rules": ".codex/rules/meridian.rules",
 }
 
@@ -845,7 +842,6 @@ def legacy_template_sources() -> list[str]:
         'base/TECH_DESIGN.md',
         'base/tasks/QUEUE.md',
         'base/tasks/TASK_BLUEPRINT.md',
-        'workflows/governed-sdd/.codex/hooks.json',
         'workflows/governed-sdd/.codex/rules/meridian.rules',
         'workflows/governed-sdd/AGENTS.md',
         'workflows/governed-sdd/CLAUDE.md',
@@ -869,7 +865,6 @@ def legacy_template_sources() -> list[str]:
         'workflows/governed-sdd/docs/workflows/REVIEW.md',
         'workflows/governed-sdd/tasks/QUEUE.md',
         'workflows/governed-sdd/tasks/TASK_BLUEPRINT.md',
-        'workflows/lean-delivery/.codex/hooks.json',
         'workflows/lean-delivery/.codex/rules/meridian.rules',
         'workflows/lean-delivery/AGENTS.md',
         'workflows/lean-delivery/CLAUDE.md',
@@ -967,8 +962,8 @@ class SingleTemplateSetTest(unittest.TestCase):
         shipped = {path.relative_to(self.SINGLE).as_posix() for path in self.SINGLE.rglob("*") if path.is_file()}
         self.assertEqual(shipped - destinations, set(), "a shipped file has no inventory source")
 
-    def test_the_six_hidden_files_have_destinations(self) -> None:
-        self.assertEqual(len(HIDDEN_DESTINATIONS), 6)
+    def test_the_four_hidden_files_have_destinations(self) -> None:
+        self.assertEqual(len(HIDDEN_DESTINATIONS), 4)
         for source, destination in HIDDEN_DESTINATIONS.items():
             with self.subTest(source=source):
                 self.assertFalse((ROOT / "templates" / source).exists())

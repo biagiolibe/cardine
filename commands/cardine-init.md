@@ -7,7 +7,7 @@ Both presets install exactly the same files from `templates/single/`; the preset
 only chooses project defaults. The CLI owns rendering, configuration, initial
 views, and the upgrade manifest and baselines. Do not copy templates, replace
 placeholders, write `.cardine/project.json`, or run `cardine lock` manually.
-The CLI includes hidden files `.gitignore`, `.claudeignore`, `.codex/hooks.json`,
+The CLI includes hidden files `.gitignore`, `.claudeignore`,
 and `.codex/rules/meridian.rules`. Do not copy from `templates/base/` or `templates/workflows/`.
 Report existing conflicting paths instead of overwriting user files.
 
