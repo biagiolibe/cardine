@@ -374,6 +374,21 @@
       "resolution": "guardrail"
     },
     {
+      "code": "INTEGRITY_MISMATCH",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "emitter": "cardine run, when a lease, staged file or merge target is not owned by the task or a stale candidate cannot be proven safe to reverse",
+      "human_decision": true,
+      "resume": "cardine run {task_id} --project {project}",
+      "kind": "stop",
+      "summary": "a lease, staged file or merge target that the task does not own, or a reversal the engine cannot prove safe",
+      "test": "tests.test_run_integration.CandidateTest.test_foreign_lease_stops_with_integrity_mismatch",
+      "resolution": "guardrail"
+    },
+    {
       "code": "OS_ACCESS_FAILED",
       "class": "tool",
       "workflows": [

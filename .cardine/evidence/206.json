@@ -1,0 +1,46 @@
+{
+  "206": [
+    {
+      "attemptId": "59a6597d905a4afb9c603a17991c5d3c",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "61ce7052c00b46182091e594aa1c6a5870056f9f",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/206.json#59a6597d905a4afb9c603a17991c5d3c/1/repository-check",
+      "round": 1,
+      "sourceDigest": "d493d70cd7d720857264f1c983cf19ac7bcc37c5822959806e2b1f928797eee5",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "59a6597d905a4afb9c603a17991c5d3c",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_delivery --module test_run_field_cases --module test_run_output --module test_run_control --module test_worktree_lifecycle --module test_worktree_integration --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "61ce7052c00b46182091e594aa1c6a5870056f9f",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/206.json#59a6597d905a4afb9c603a17991c5d3c/1/task-tests",
+      "round": 1,
+      "sourceDigest": "d493d70cd7d720857264f1c983cf19ac7bcc37c5822959806e2b1f928797eee5",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_integration,test_run_delivery,test_run_field_cases,test_run_output,test_run_control,test_worktree_lifecycle,test_worktree_integration,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=187 total=2185 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "59a6597d905a4afb9c603a17991c5d3c",
+      "command": "git diff --check",
+      "commit": "61ce7052c00b46182091e594aa1c6a5870056f9f",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/206.json#59a6597d905a4afb9c603a17991c5d3c/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "d493d70cd7d720857264f1c983cf19ac7bcc37c5822959806e2b1f928797eee5",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}

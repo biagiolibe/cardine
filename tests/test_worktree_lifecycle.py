@@ -469,7 +469,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
             "TASK_STATE_MISSING", "TASK_STATE_INVALID", "TASK_STATE_INTERRUPTED",
         )
         remaining = (
-            "COMMAND_REFUSED", "OS_ACCESS_FAILED", "VALIDATION_ID_UNDECLARED",
+            "COMMAND_REFUSED", "INTEGRITY_MISMATCH", "OS_ACCESS_FAILED", "VALIDATION_ID_UNDECLARED",
             "HOST_IMPACT_DECLARATION_INVALID", "UPGRADE_BLOCKED",
             "RULE_CONFLICT", "SCOPE_CHANGE_REQUIRED",
             "REVIEW_LOOP_EXHAUSTED", "SELF_UPDATE_PLUGIN_CACHE", "SELF_UPDATE_DIRTY",
@@ -543,7 +543,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def test_integrate_stage_reports_primary_dirty_through_the_registry(self) -> None:
         worktree = self._stage_ready_task_with_origin(local_ahead=True)
-        (self.project / "stray.txt").write_text("stray\n", encoding="utf-8")
+        (self.project / "unpushed.txt").write_text("changed tracked file\n", encoding="utf-8")
         result = self.run_cli(*self._stage_args())
         self.assertEqual(result.returncode, 2)
         self.assertEqual(

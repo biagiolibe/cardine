@@ -280,6 +280,7 @@ def dispatch_run(locations: RunLocations) -> dict:
     """Execute one Stable engine step; console actions share this entry point."""
     from cardine.tasks.state import read_task_state
     from cardine.stops.render import stop_error
+    stage = "contract"
     try:
         state = read_task_state(locations.primary, locations.task_id, "single",
                                 stop_factory=stop_error, require_contract=True)
@@ -296,20 +297,24 @@ def dispatch_run(locations: RunLocations) -> dict:
         from cardine.lifecycle.control import require_review_budget
         if active['status'] != 'cancelled':
             require_review_budget(locations.worktree, locations.task_id, active)
+        stage = "candidate"
         result = (resolve_run(RunFacts(locations.task_id, locations.primary, 'cancelled'))
                   if active['status'] == 'cancelled' else run_integration_step(locations))
         if result is None and active['status'] != 'cancelled':
+            stage = "worktree"
             result = run_worktree_step(locations, active)
         if result is None and active['status'] != 'cancelled':
+            stage = "validation"
             result = run_validation_step(locations)
+        stage = "contract"
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
     except CardineStop as error:
-        result = diagnostic_result(locations, error)
+        result = diagnostic_result(locations, error, step=stage)
     except Exception as error:
         # An unknown failure carries no ownership proof and must never suggest
         # successful progress or an automatic repair inferred from its prose.
-        result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)))
+        result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)), step=stage)
     return result
 
 
@@ -572,7 +577,12 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     if not staged.exists():
         strategy.prepare_candidate(task_id, None, root)
     from cardine.integration.candidate import verified_candidate
-    measured = verified_candidate(locations)
+    try:
+        measured = verified_candidate(locations)
+    except CardineStop as error:
+        if error.code != 'EVIDENCE_MISMATCH':
+            raise
+        return _reverse_stale_candidate(strategy, locations, error)
     if measured and measured['phase'] == 'passed':
         landed = strategy.finalize_landing(task_id, None, root)
         return envelope(task_id, str(root), step='landing', action='finalize',
@@ -580,6 +590,8 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     try:
         progress = strategy.validate_candidate(task_id, root)
     except CardineStop as error:
+        if error.code == 'EVIDENCE_MISMATCH' and error.detail == 'task source moved after staging':
+            return _reverse_stale_candidate(strategy, locations, error)
         if error.code in ('VALIDATION_RETRY_LIMIT', 'EVIDENCE_MISMATCH'):
             strategy.reconcile_landing(task_id, root)
         raise
@@ -598,6 +610,30 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
         action='abort-failed-candidate', work=request.as_json(),
         diagnostics=[dict(code='CANDIDATE_VALIDATION_FAILED', message=json.dumps(progress['runs']))],
         next_command=command_reference(argv, 'Repair the task implementation'))
+
+
+def _reverse_stale_candidate(strategy, locations, error):
+    """Reverse the task's own stale candidate with the engine's owned abort; the run goes on to delivery.
+
+    A candidate the engine cannot prove safe to reverse is an integrity stop that names both refusals.
+    """
+    from cardine.stops.render import refusal, stop_error
+    try:
+        strategy.reconcile_landing(locations.task_id, locations.primary)
+    except CardineError as refused:
+        raise stop_error('INTEGRITY_MISMATCH', refusal(
+            'stale candidate not reversed', 'an owned candidate the engine can abort',
+            f'staging refused: {error.detail}', f'abort refused: {refused}',
+            'resolve the difference named above, then rerun'),
+            task_id=locations.task_id, project=locations.primary) from refused
+    # The abort receipt edits the task state in the worktree; commit exactly that file, as the
+    # worktree step does for its own transitions, so the moved branch is clean to deliver again.
+    from cardine.shared.git import git_output
+    from cardine.tasks.state import state_path
+    relative = state_path(locations.worktree, locations.task_id).relative_to(locations.worktree).as_posix()
+    if git_output(locations.worktree, 'status', '--porcelain', '--', relative):
+        git_output(locations.worktree, 'commit', '-q', '-m', f'Reverse stale candidate {locations.task_id}', '--', relative)
+    return None
 
 
 def _candidate_finalize_next(locations):

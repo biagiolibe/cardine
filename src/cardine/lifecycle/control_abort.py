@@ -56,6 +56,12 @@ def _owned_landing_dirt(root, task_id):
             and last['source'] == git_output(root, 'rev-parse', 'HEAD'))
 
 
+def _staged_is_ancestor(worker, staged):
+    """The staged task commit is an ancestor of the worker HEAD: the branch moved on after staging."""
+    commit = staged.get('task_commit')
+    return bool(commit) and _run_git(worker, 'merge-base', '--is-ancestor', commit, 'HEAD').returncode == 0
+
+
 @scoped_command
 def abort_owned(task_id, project, *, adapter=None, principal=None):
     """Abort one owned candidate. ``principal`` is only the engine's own recovery."""
@@ -92,8 +98,11 @@ def abort_owned(task_id, project, *, adapter=None, principal=None):
             merge = _file(_merge_head_path(root))
             task_head = git_output(worker, 'rev-parse', 'HEAD')
             if merge:
-                if (merge.decode().strip() != task_head or staged is not None and (
-                        staged.get('task_commit') != task_head
+                owned_head = task_head
+                if staged is not None and staged.get('task_commit') != task_head and _staged_is_ancestor(worker, staged):
+                    owned_head = staged['task_commit']  # the branch moved past the staged commit
+                if (merge.decode().strip() != owned_head or staged is not None and (
+                        staged.get('task_commit') != owned_head
                         or staged.get('branch') != identity.branch_name
                         or staged.get('project') != str(root))):
                     raise CardineError('foreign or unverified merge target')

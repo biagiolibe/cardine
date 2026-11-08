@@ -59,7 +59,7 @@ def verify_delivery(root, state, base, *, context=None):
         if (git_output(root, 'rev-parse', commit + '^') != source
                 or git_output(root, 'diff', '--name-only', source, commit) != name):
             raise CardineError('delivery commit does not match the exact intended effect')
-        receipts.verify_receipts(root, recorded, portable=True, context=context)
+        receipts.verify_receipts(root, recorded, portable=True, artifact_ref=commit, context=context)
         proof = [r for r in recorded['run']['receipts'] if r['kind'] == 'implementation-delivery'
                  and r['source'] == source]
         if not proof:

@@ -20,7 +20,7 @@ from cardine.shared.jsonio import _read_json_object
 from cardine.tasks.identity import resolve_task_identity
 from cardine.tasks.validation import (environment_identity, failure_count, quick_failed, quick_failure_count,
                                       quick_failure_limit, quick_limit_error, quick_plan)
-from cardine.stops.render import stop_error
+from cardine.stops.render import refusal, stop_error
 from cardine.worktree.storage import _lifecycle_paths, _merge_head_path
 
 
@@ -43,9 +43,16 @@ def staged_inputs(locations, state, pending=None, *, read_only=False):
     staged = _read_json_object(staged_path, 'staged integration')
     if (lease.get('task_id') != task_id or lease.get('project') != str(root)
             or lease.get('branch') != identity.branch_name
-            or any(staged.get(k) != lease.get(k) for k in lease)
-            or staged.get('task_commit') != git_output(locations.worktree, 'rev-parse', 'HEAD')):
-        raise CardineError('foreign candidate ownership or changed task source')
+            or any(staged.get(k) != lease.get(k) for k in lease)):
+        raise stop_error('INTEGRITY_MISMATCH', refusal(
+            'foreign candidate ownership',
+            f'lease and staged file for task {task_id} on {identity.branch_name} in {root}',
+            f"lease names task {lease.get('task_id')} branch {lease.get('branch')}, "
+            f"staged file keys {'match' if all(staged.get(k) == lease.get(k) for k in lease) else 'differ from'} the lease",
+            'nothing was reversed', f'correct or remove {lease_path.name} and {staged_path.name}'),
+            task_id=task_id, project=root)
+    if staged.get('task_commit') != git_output(locations.worktree, 'rev-parse', 'HEAD'):
+        raise stop_error('EVIDENCE_MISMATCH', 'task source moved after staging', task_id=task_id, project=root)
     if (git_output(root, 'branch', '--show-current') != 'main'
             or git_output(root, 'rev-parse', 'HEAD') != staged['main_commit']
             or not _merge_head_path(root).is_file()
