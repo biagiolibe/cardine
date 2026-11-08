@@ -64,9 +64,9 @@
     "delivery": {
       "base": "5b5364219a09cf63f533a6870054ab6cc4b12ba7",
       "contractDigest": "87a3c8e548c855f46302757241c38e5461a9e6fb95c467f0e277c34d7944c32f",
-      "source": "889064264c5d5575ce0a36236e3f88daae74a8f7",
-      "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
-      "sourceTree": "5369ec3aed0c8f23fb73bb4a91b1f404e910600d"
+      "source": "0f1b63642d783173230c021db1db6e6d01af62c8",
+      "sourceDigest": "dd0ef8bbc7257db7b72d3e7d2130757518fd05907bb8b42e138e040b7eec88e9",
+      "sourceTree": "384da6123e23ad6da9d3f4c760694196ed13c974"
     },
     "pending": null,
     "receipts": [
@@ -162,6 +162,28 @@
         "source": "407b1e88badeca81fd394cbc67ebab81d574f7de",
         "task_id": "211",
         "tree": "e2ad43814d9d7c6c5c5d258a07ee35d8ebc6b890",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "87a3c8e548c855f46302757241c38e5461a9e6fb95c467f0e277c34d7944c32f",
+        "digest": "0a6a3304a28a042a17134f2baf9c66a7c6b82b5f8abde2f41dd552c2b083257b",
+        "inputs": {
+          ".cardine/tasks/211.json": "073683510bd37e6c7f6f4dccc2ce34ef51629176afc3372e3e06360a86b5b273"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "c7599c36636344fabc498faad8de2451",
+        "outputs": {
+          ".cardine/tasks/211.json": "bcdc38fb432aa807a31dbe033f765a91be7cd3ca657387d466768a97e1c922fb"
+        },
+        "predecessor": "546c6bf77e82900d71330cece7d5c329940c2bb2b75538213f25769f43710ef3",
+        "result": "verified",
+        "source": "0f1b63642d783173230c021db1db6e6d01af62c8",
+        "task_id": "211",
+        "tree": "384da6123e23ad6da9d3f4c760694196ed13c974",
         "version": 1
       }
     ],
