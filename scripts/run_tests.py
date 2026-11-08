@@ -9,12 +9,14 @@ import difflib
 import json
 import math
 import os
+import queue
 import re
 import shutil
 import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -244,7 +246,8 @@ def run_shards(
     commands: Sequence[Sequence[str]], scratch: Path, environment: dict[str, str] | None = None
 ) -> list[ShardResult]:
     """Run every command concurrently, each with a private TMPDIR, and collect results in order."""
-    processes: list[tuple[subprocess.Popen[bytes], Path]] = []
+    processes: list[tuple[subprocess.Popen[bytes], Path, float]] = []
+    completed: queue.Queue[tuple[int, int, float]] = queue.Queue()
     try:
         for position, command in enumerate(commands, start=1):
             private = scratch / f"shard-{position}"
@@ -259,16 +262,24 @@ def run_shards(
                 process = subprocess.Popen(
                     list(command), stdout=output, stderr=subprocess.STDOUT, env=shard_environment, cwd=ROOT
                 )
-            processes.append((process, output_path))
-        results = []
-        for position, (process, output_path) in enumerate(processes, start=1):
-            returncode = process.wait()
-            results.append(
-                parse_shard_output(position, returncode, output_path.read_text(encoding="utf-8", errors="replace"))
-            )
-        return results
+            processes.append((process, output_path, time.monotonic()))
+            def wait_for_shard(position: int, process: subprocess.Popen[bytes], started: float) -> None:
+                returncode = process.wait()
+                completed.put((position, returncode, time.monotonic() - started))
+            threading.Thread(target=wait_for_shard, args=(position, process, processes[-1][2]), daemon=True).start()
+        results: dict[int, ShardResult] = {}
+        while len(results) < len(processes):
+            position, returncode, elapsed = completed.get()
+            output_path = processes[position - 1][1]
+            result = parse_shard_output(position, returncode, output_path.read_text(encoding="utf-8", errors="replace"))
+            results[position] = result
+            counts = (f"ran={result.counts[0]} failures={result.counts[1]} errors={result.counts[2]}"
+                      if result.counts is not None else "without a result")
+            print(f"run_tests: shard {position}/{len(processes)} finished in {elapsed:.1f}s: "
+                  f"exit {returncode} {counts}", file=sys.stderr, flush=True)
+        return [results[position] for position in range(1, len(processes) + 1)]
     except BaseException:
-        for process, _ in processes:
+        for process, _, _ in processes:
             if process.poll() is None:
                 process.kill()
                 process.wait()
@@ -369,6 +380,7 @@ def run_parallel(
         if record is not None:
             for command, path in zip(commands, failure_files):
                 command.extend(["--failed-output", str(path)])
+        print(f"run_tests: {total} tests in {workers} shards", file=sys.stderr, flush=True)
         results = run_shards(commands, scratch, environment)
         if record is not None:
             identifiers = [identifier for path in failure_files if path.exists()
@@ -449,15 +461,19 @@ def run_clean_clone(requested: int, source: Path = ROOT) -> int:
         if cloned.returncode != 0:
             print(f"clean-clone could not clone: {cloned.stderr.strip()}")
         else:
+            print(f"run_tests: clean-clone: cloned {commit[:7]}", file=sys.stderr, flush=True)
             parallel = ["--parallel"] + ([str(requested)] if requested else [])
             parallel += ["--failure-record", str(failure_record(source))]
             steps = (["scripts/check_repository.py"], ["scripts/run_tests.py", *parallel])
             for step in steps:
+                started = time.monotonic()
+                print(f"run_tests: clean-clone: {step[0]} started", file=sys.stderr, flush=True)
                 finished = subprocess.run(
-                    [sys.executable, *step], cwd=clone, env=environment, text=True, capture_output=True, check=False
+                    [sys.executable, *step], cwd=clone, env=environment, text=True, stdout=subprocess.PIPE, check=False
                 )
+                print(f"run_tests: clean-clone: {step[0]} exit {finished.returncode} in "
+                      f"{time.monotonic() - started:.1f}s", file=sys.stderr, flush=True)
                 print(finished.stdout, end="")
-                print(finished.stderr, end="", file=sys.stderr)
                 proof = COVERAGE.search(finished.stdout)
                 if proof:
                     total, digest = proof[1], proof[2]
