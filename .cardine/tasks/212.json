@@ -1,0 +1,110 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      ".codex/hooks.json",
+      "templates/single/.codex/hooks.json",
+      ".cardine/manifest.json",
+      ".cardine/baselines/1.4.0/.codex/hooks.json",
+      "capabilities/catalog-v1.json",
+      "scripts/check_repository.py",
+      "src/cardine/templates/files.py",
+      "commands/cardine-init.md",
+      "docs/AGENT_OPERATIONS.md",
+      "CHANGELOG.md",
+      "tests/test_template_manifest.py",
+      "tests/test_template_replacement.py",
+      "tests/test_template_router.py",
+      "tests/test_host_codex_access.py",
+      "tests/test_adopt_plan.py",
+      "tests/test_adopt_rehearsal.py",
+      "tests/test_stop_audit.py",
+      "tests/test_host_distribution.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/212.md",
+    "title": "Task 212 \u2014 Register the Codex hooks once, in the user registry",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "973b5ba683cab20c51a47219086ec7d0b924a1ce0c824e2c0db02bcb4897ccc9",
+        "digest": "700ba9e808353b9aead6ece9007c08f0419b4e965cf5b86375478bf7574cb4a2",
+        "inputs": {
+          ".cardine/tasks/212.json": null,
+          "tasks/212.md": null
+        },
+        "kind": "creation",
+        "operation_id": "757819393d80459ea1ae2f7b97a2d76f",
+        "outputs": {
+          ".cardine/tasks/212.json": "326455f281b92f27831cfb8002d17f3eaab345e632bc11540c3a2cf3013c3b1e",
+          "tasks/212.md": "328f261e3ef4d15f206024dc6f7efe5dc0c19f44b88f71a45e135c2834017dab"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "c783c979a54869266e4024745489b39fb9cc1de7",
+        "task_id": "212",
+        "tree": "79b6d63830582bb69cc4f59a907c9384bd303ac6",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "212",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
