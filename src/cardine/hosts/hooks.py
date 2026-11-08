@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 import json
 import re
+import shlex
+import sys
 
 from cardine.hosts.claude import claude_legacy_plugin_advisories
 from cardine.hosts.effects import changed
@@ -64,8 +66,32 @@ class HooksPlan:
         return next((plan for plan in self.registries if plan.status == "blocked"), None)
 
 
+def launcher() -> tuple[str, ...]:
+    """The interpreter and launcher of the running Cardine checkout.
+
+    Hosts started from a desktop app run hooks without the developer's interactive
+    shell PATH, where neither `cardine` nor a recent `python3` resolves. Absolute
+    paths make the registered command independent of that PATH.
+    """
+    script = Path(__file__).resolve().parents[3] / "bin" / "cardine"
+    return (sys.executable, str(script)) if script.is_file() else ("cardine",)
+
+
 def hook_command(host: str, name: str) -> str:
-    return f"cardine hook {name} --host {host}"
+    return " ".join(shlex.quote(part) for part in launcher()) + f" hook {name} --host {host}"
+
+
+def owns(command: str, host: str, name: str) -> bool:
+    """A Cardine registration of this hook, whatever launcher path it names."""
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return False
+    return len(argv) >= 5 and argv[-4:] == ["hook", name, "--host", host] and Path(argv[-5]).name == "cardine"
+
+
+def _owned_anywhere(command: str) -> bool:
+    return any(owns(command, host, name) for host, events in _HOOKS.items() for _m, name, _t in events.values())
 
 
 def _group(host: str, event: str) -> dict[str, object]:
@@ -83,7 +109,7 @@ def _blocked(host: str, path: Path, detail: str, text: str = "") -> HookRegistry
     return HookRegistryPlan(host, path, "blocked", detail, text, None)
 
 
-def _merged(groups: list, owned: str, desired: dict) -> tuple[list, int]:
+def _merged(groups: list, host: str, name: str, desired: dict) -> tuple[list, int]:
     """Replace every owned hook with one desired group; return it and how many owned hooks existed."""
     result: list = []
     seen = 0
@@ -92,7 +118,8 @@ def _merged(groups: list, owned: str, desired: dict) -> tuple[list, int]:
         entries = group.get("hooks") if isinstance(group, dict) else None
         if isinstance(entries, list):
             kept = [entry for entry in entries
-                    if not (isinstance(entry, dict) and entry.get("command") == owned)]
+                    if not (isinstance(entry, dict) and isinstance(entry.get("command"), str)
+                            and owns(entry["command"], host, name))]
             if len(kept) != len(entries):
                 seen += len(entries) - len(kept)
                 insert_at = len(result) if insert_at is None else insert_at
@@ -121,8 +148,7 @@ def _plan_registry(host: str, path: Path) -> HookRegistryPlan:
         groups = registered.get(event, [])
         if not isinstance(groups, list):
             return _blocked(host, path, f"{path} hooks.{event} must be a list", text)
-        owned = hook_command(host, _HOOKS[host][event][1])
-        merged, seen = _merged(groups, owned, _group(host, event))
+        merged, seen = _merged(groups, host, _HOOKS[host][event][1], _group(host, event))
         duplicates += max(seen - 1, 0)
         if merged != groups:
             registered[event] = merged
@@ -151,7 +177,6 @@ def _commands(value: object) -> Iterator[str]:
 
 def _foreign_advisories(home: Path, project_root: Path) -> tuple[str, ...]:
     """Other registrations of a Cardine or legacy hook command; reported, never rewritten."""
-    owned = {hook_command(host, name) for host, events in _HOOKS.items() for _m, name, _t in events.values()}
     candidates = (
         (registry_path(home, "claude"), "user"), (registry_path(home, "codex"), "user"),
         (project_root / ".claude/settings.json", "project"), (project_root / ".claude/settings.local.json", "project"),
@@ -164,7 +189,7 @@ def _foreign_advisories(home: Path, project_root: Path) -> tuple[str, ...]:
         except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             continue
         for command in _commands(document.get("hooks") if isinstance(document, dict) else None):
-            if FOREIGN_HOOK.search(command) and (scope == "project" or command not in owned):
+            if FOREIGN_HOOK.search(command) and (scope == "project" or not _owned_anywhere(command)):
                 found.append(f"{path}: {command!r} may invoke a hook twice next to the user registration; "
                              "remove it if it is yours")
     return (*found, *claude_legacy_plugin_advisories(project_root, home))

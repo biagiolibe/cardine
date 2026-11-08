@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import shlex
 import os
 from pathlib import Path
 import subprocess
@@ -24,7 +25,7 @@ FOREIGN = {"type": "command", "command": "/usr/local/bin/my-own-hook", "timeout"
 
 def owned(host, name, timeout=5, matcher=None):
     group = {} if matcher is None else {"matcher": matcher}
-    return {**group, "hooks": [{"type": "command", "command": f"cardine hook {name} --host {host}", "timeout": timeout}]}
+    return {**group, "hooks": [{"type": "command", "command": hooks.hook_command(host, name), "timeout": timeout}]}
 
 
 class HostHooksTest(unittest.TestCase):
@@ -60,7 +61,7 @@ class HostHooksTest(unittest.TestCase):
 
     def owned_count(self, host, registry, event):
         return sum(1 for group in registry.get(event, []) for entry in group.get("hooks", [])
-                   if entry.get("command", "").startswith(f"cardine hook ") and entry["command"].endswith(f"--host {host}"))
+                   if hooks._owned_anywhere(entry.get("command", "")) and entry["command"].endswith(f"--host {host}"))
 
     def test_a_fresh_home_gets_exactly_one_entry_per_event_in_both_registries(self):
         plan, wrote = self.apply()
@@ -197,6 +198,17 @@ class HostHooksTest(unittest.TestCase):
         self.apply()
         self.assertEqual(self.plan().hooks.advisories, ())
 
+    def test_a_bare_registration_is_replaced_by_one_absolute_entry(self):
+        self.codex.parent.mkdir(parents=True)
+        self.codex.write_text(json.dumps({"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [
+            {"type": "command", "command": "cardine hook read-guard --host codex", "timeout": 10}]}]}}))
+        self.apply()
+        registry = self.registered(self.codex)
+        self.assertEqual(self.owned_count("codex", registry, "PreToolUse"), 1)
+        command = registry["PreToolUse"][0]["hooks"][0]["command"]
+        self.assertEqual(command, hooks.hook_command("codex", "read-guard"))
+        self.assertTrue(Path(shlex.split(command)[0]).is_absolute())
+
 
 class HookCommandRouteTest(unittest.TestCase):
     def run_hook(self, *arguments, cwd, payload):
@@ -228,7 +240,10 @@ class HookCommandRouteTest(unittest.TestCase):
     def test_registered_commands_are_exactly_the_cli_routes(self):
         for host, events in hooks._HOOKS.items():
             for _event, (_matcher, name, _timeout) in events.items():
-                self.assertEqual(hooks.hook_command(host, name), f"cardine hook {name} --host {host}")
+                argv = shlex.split(hooks.hook_command(host, name))
+                self.assertEqual(argv, [sys.executable, str(ROOT / "bin/cardine"), "hook", name, "--host", host])
+                self.assertTrue(hooks.owns(f"cardine hook {name} --host {host}", host, name))
+                self.assertFalse(hooks.owns(f"{LEGACY} hook {name} --host {host}", host, name))
 
 
 if __name__ == "__main__":
