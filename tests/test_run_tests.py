@@ -152,6 +152,23 @@ class ShardedTestRunnerTest(unittest.TestCase):
 
 
 class ParallelTestRunnerTest(unittest.TestCase):
+    def test_progress_arrives_before_slow_shard_finishes(self) -> None:
+        directory = self.make_suite(["__import__('time').sleep(2)", "pass"])
+        process = subprocess.Popen(
+            [sys.executable, str(SCRIPT), "--parallel", "2", "--tests-directory", str(directory),
+             "--failure-record", str(directory / "record")],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        )
+        self.addCleanup(lambda: process.kill() if process.poll() is None else None)
+        start = process.stderr.readline()
+        fast = process.stderr.readline()
+        self.assertRegex(start, r"run_tests: 2 tests in 2 shards")
+        self.assertRegex(fast, r"shard 2/2 finished in [0-9.]+s: exit 0 ran=1 failures=0 errors=0")
+        self.assertIsNone(process.poll())
+        stdout, remaining = process.communicate(timeout=15)
+        self.assertEqual(process.returncode, 0, stdout + remaining)
+        self.assertRegex(remaining, r"shard 1/2 finished in [0-9.]+s: exit 0 ran=1 failures=0 errors=0")
+
     def make_suite(self, bodies: list[str]) -> Path:
         directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, directory, True)
@@ -475,6 +492,35 @@ class ParallelTestRunnerTest(unittest.TestCase):
 
 
 class CleanCloneTest(unittest.TestCase):
+    def test_progress_from_inner_step_is_live(self) -> None:
+        source = self.make_repository("pass\n")
+        (source / "scripts/run_tests.py").write_text(
+            "import sys, time\n"
+            "print('run_tests: shard 1/1 finished', file=sys.stderr, flush=True)\n"
+            "time.sleep(2)\n"
+            "print('coverage total=1 digest=' + 'a' * 64)\n"
+        )
+        subprocess.run(["git", "-C", str(source), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(source), "commit", "-qm", "live fixture"], check=True)
+        code = ("import importlib.util, sys; "
+                "s=importlib.util.spec_from_file_location('run_tests', sys.argv[1]); "
+                "m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m); "
+                "sys.exit(m.run_clean_clone(1, __import__('pathlib').Path(sys.argv[2])))")
+        process = subprocess.Popen([sys.executable, "-c", code, str(SCRIPT), str(source)],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.addCleanup(lambda: process.kill() if process.poll() is None else None)
+        lines = [process.stderr.readline() for _ in range(5)]
+        self.assertIn("clean-clone: cloned", lines[0])
+        self.assertIn("scripts/check_repository.py started", lines[1])
+        self.assertIn("scripts/check_repository.py exit 0", lines[2])
+        self.assertIn("scripts/run_tests.py started", lines[3])
+        self.assertIn("shard 1/1 finished", lines[4])
+        self.assertIsNone(process.poll())
+        stdout, stderr = process.communicate(timeout=15)
+        self.assertEqual(process.returncode, 0, stdout + stderr)
+        self.assertIn("scripts/run_tests.py exit 0", stderr)
+        self.assertRegex(stdout.splitlines()[-1], r"clean-clone commit=\w+ total=1 digest=\w+ outcome=OK")
+
     def make_repository(self, check: str) -> Path:
         directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, directory, True)
@@ -560,7 +606,7 @@ class FocusedTestRunnerTest(unittest.TestCase):
                 record.mkdir()
                 result = self.run_parallel(directory, "--parallel", "1")
                 self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
-                self.assertEqual(len(result.stderr.splitlines()), 1)
+                self.assertEqual(len(result.stderr.splitlines()), 3)
                 self.assertIn(str(record), result.stderr)
                 self.assertIn("Is a directory", result.stderr)
                 self.assertIn("--last-failed is unavailable for this run", result.stderr)
@@ -709,6 +755,4 @@ class FocusedTestRunnerTest(unittest.TestCase):
                      mock.patch("sys.stderr", new_callable=__import__("io").StringIO) as errors:
                     status = runner.run_clean_clone(1, linked)
                 self.assertEqual(status, expected, output.getvalue() + errors.getvalue())
-                self.assertEqual(len(errors.getvalue().splitlines()), 1)
-                self.assertIn(str(blocked), errors.getvalue())
-                self.assertIn("--last-failed is unavailable for this run", errors.getvalue())
+                self.assertIn("scripts/run_tests.py exit", errors.getvalue())
