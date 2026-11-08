@@ -17,6 +17,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 from cardine.lifecycle import receipts
+from cardine.lifecycle.live import LiveLog
 from cardine.lifecycle.delivery import verify_delivery
 from cardine.lifecycle.execution import (_execution_location,
                                          _execution_state, execution_source_digest)
@@ -29,21 +30,29 @@ from cardine.shared.layout import names
 from cardine.stops.render import stop_error
 
 LOG_LIMIT = 64 * 1024
+LOG_HEAD = 16 * 1024
 
 
-def _read_log(stream):
-    chunks, length, truncated = [], 0, False
+def _read_log(stream, frame=None):
+    """Retain the beginning and end while forwarding output as it arrives."""
+    head, tail, length = bytearray(), bytearray(), 0
     with stream:
-        while chunk := stream.read(8192):
-            remaining = max(0, LOG_LIMIT - length)
-            if remaining:
-                chunks.append(chunk[:remaining])
-            length += min(len(chunk), remaining)
-            truncated |= len(chunk) > remaining
-    return b''.join(chunks).decode('utf-8', 'replace'), truncated
+        while chunk := stream.read1(8192):
+            if frame is not None:
+                frame.output(chunk)
+            length += len(chunk)
+            room = LOG_HEAD - len(head)
+            head += chunk[:room]
+            tail += chunk[room:] if room > 0 else chunk
+            del tail[:max(0, len(tail) - (LOG_LIMIT - LOG_HEAD))]
+    omitted = length - len(head) - len(tail)
+    if omitted <= 0:
+        return bytes(head + tail).decode('utf-8', 'replace'), False
+    marker = f'\n... {omitted} bytes omitted ...\n'.encode()
+    return bytes(head + marker + tail).decode('utf-8', 'replace'), True
 
 
-def execute_command(command, root, environment, descriptor):
+def execute_command(command, root, environment, descriptor, frame=None):
     """Drain both pipes without unbounded buffers or mixing logs into CLI JSON."""
     receipts.boundary('before_validation_process')
     from cardine.shared.git import invalidate_facts
@@ -52,12 +61,16 @@ def execute_command(command, root, environment, descriptor):
                                env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                pass_fds=(descriptor,))
     receipts.boundary('after_validation_process')
+    if frame is not None:
+        frame.started(process.pid)
     with ThreadPoolExecutor(max_workers=2) as pool:
-        stdout = pool.submit(_read_log, process.stdout)
-        stderr = pool.submit(_read_log, process.stderr)
+        stdout = pool.submit(_read_log, process.stdout, frame)
+        stderr = pool.submit(_read_log, process.stderr, frame)
         process.wait()
         receipts.boundary('before_validation_exit')
         status = process.returncode
+        if frame is not None:
+            frame.finished(status)
         receipts.boundary('after_validation_exit')
         out, out_truncated = stdout.result()
         err, err_truncated = stderr.result()
@@ -290,6 +303,7 @@ def run_task_validation(root, task_id, *, context=None):
         if receipts.state_digest(state) != intent['before']:
             raise CardineError('validation input state changed')
         runs = intent['runs']
+        live = LiveLog(path.parent.parent, task_id)
         retry = state['contract']['validation'].get('retry', {})
         quick = intent.get('quick', [])
         kinds, rounds = [item['kind'] for item in quick], len(quick)
@@ -326,7 +340,9 @@ def run_task_validation(root, task_id, *, context=None):
                                  task_id=task_id, project=root)
             results = []
             for key, command in round_commands.items():
-                status, stdout, stderr, out_truncated, err_truncated = execute_command(command, root, environment, descriptor)
+                with live.command(command, kind='validation', key=key, round_number=len(runs) + 1) as frame:
+                    status, stdout, stderr, out_truncated, err_truncated = execute_command(
+                        command, root, environment, descriptor, frame)
                 results.append(dict(id=key, command=command, exitStatus=status,
                      commit=git_output(root, 'rev-parse', 'HEAD'), sourceDigest=current['sourceDigest'],
                      attemptId=intent['attemptId'], round=len(runs) + 1,

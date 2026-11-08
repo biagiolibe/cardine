@@ -15,6 +15,7 @@ import shlex
 from pathlib import Path
 from collections.abc import Iterable
 
+from cardine.lifecycle.live import LiveLog
 from cardine.lifecycle.context import resolve_run_locations
 from cardine.lifecycle.model import OUTCOMES, STEPS, RunFacts, RunLocations
 from cardine.shared.errors import CardineError, CardineStop
@@ -275,11 +276,24 @@ def run_preview_cli(argv: list[str]) -> int:
     return emit_run(dispatch_run(locations), validate_output)
 
 
+def run_summary(result):
+    text = f"run finished: step {result['step']}, outcome {result['outcome']}"
+    if result.get('action') and result['action'] != 'none':
+        text += f", action {result['action']}"
+    if result.get('stop'):
+        text += f", stop {result['stop']['code']}"
+    if result.get('next') and result['next'].get('reason'):
+        text += f" — {result['next']['reason']}"
+    return text
+
+
 @scoped_command
 def dispatch_run(locations: RunLocations) -> dict:
     """Execute one Stable engine step; console actions share this entry point."""
     from cardine.tasks.state import read_task_state
     from cardine.stops.render import stop_error
+    live = LiveLog(locations.common_dir, locations.task_id)
+    live.note(f"run {locations.task_id} started")
     stage = "contract"
     try:
         state = read_task_state(locations.primary, locations.task_id, "single",
@@ -291,7 +305,9 @@ def dispatch_run(locations: RunLocations) -> dict:
         # independent; editable progress cannot skip those receipt checks.
         from cardine.integration.candidate import operation_path
         if operation_path(locations, 'cleanup').exists():
-            return run_integration_step(locations)
+            result = run_integration_step(locations)
+            live.note(run_summary(result))
+            return result
         from cardine.lifecycle.control import operation_state
         active = operation_state(locations.worktree, locations.task_id)[0] if locations.worktree.is_dir() else state
         from cardine.lifecycle.control import require_review_budget
@@ -315,6 +331,7 @@ def dispatch_run(locations: RunLocations) -> dict:
         # An unknown failure carries no ownership proof and must never suggest
         # successful progress or an automatic repair inferred from its prose.
         result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)), step=stage)
+    live.note(run_summary(result))
     return result
 
 

@@ -179,6 +179,10 @@ class RunPreviewConsumerTests(fixtures.RunLocationTests):
         first = subprocess.run(['cardine', 'run', '001', '--project', str(self.root)],
                                cwd=self.base, env=environment, text=True, capture_output=True, check=True)
         result = json.loads(first.stdout)
+        live_log = self.root / '.git' / 'cardine-operations' / '001.live.log'
+        self.assertIn('run 001 started', live_log.read_text())
+        self.assertIn('run finished: step worktree, outcome next', live_log.read_text())
+        self.assertNotIn('cardine:', first.stdout + first.stderr)
         self.assertEqual((result['step'], result['action']), ('worktree', 'execution-start'))
         # The emitted text runs unchanged, including shell metacharacters. The
         # started task then stops on this fixture's missing frozen code surface.
