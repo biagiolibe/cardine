@@ -1,0 +1,96 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/integration/merge.py",
+      "tests/test_run_recovery.py",
+      "tests/test_execution_boundaries.py",
+      "tests/test_command_context.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/215.md",
+    "title": "Task 215 \u2014 Repair the tests and the stop that the integrated tasks left behind",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_recovery --module test_execution_boundaries --module test_command_context --module test_worktree_lifecycle --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "5dcf5e190bc373935e05f192a946253818265507f15d943618d967bc6400bd14",
+        "digest": "9e471c3efffc547b206804a82c1cfcf63eeed0dc9f21220850181c033e3404bb",
+        "inputs": {
+          ".cardine/tasks/215.json": null,
+          "tasks/215.md": null
+        },
+        "kind": "creation",
+        "operation_id": "821f777ca17543c781116b56b6a7e9e3",
+        "outputs": {
+          ".cardine/tasks/215.json": "d72c50ff7c1a81cd940a497e0d968cb8d0a7ab84aa336aa2dd7499a16ea3474d",
+          "tasks/215.md": "01128ddec22f31ccc07f086db4581beefe0d6d14fe96ca4408da9078942dd47f"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "e8cca0396db28289324ccd9c2de43f122dfddad6",
+        "task_id": "215",
+        "tree": "15f7b3f0d54dd74cd513790c5e647b5636cc3263",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "215",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
