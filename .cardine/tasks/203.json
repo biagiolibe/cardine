@@ -29,7 +29,7 @@
     "priority": "\ud83d\udd34 P1",
     "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
     "recordPath": "tasks/203.md",
-    "title": "Task 203 \u2014 Decide which engine refusals the engine resolves by itself",
+    "title": "Task 203 \u2014 Decide which refusals the engine resolves and how project decisions reach agents",
     "validation": {
       "baseline": [
         "repository-check",
@@ -65,6 +65,14 @@
       "before": "sha256:46f425f9742bd446cc47714c977bd2e08c3afa1cfcbfea2b293cfbad6263d02e",
       "changedFields": [
         "validation"
+      ]
+    },
+    {
+      "after": "sha256:b80ef50e47a08068c0a447343b2f8c766e49665ae82d04bf4f49da4b2519d1f2",
+      "at": "2026-11-08T15:48:39.509257Z",
+      "before": "sha256:b4169c802b4c5a1a6759e71693448a76228a4d1db76cf62982c6d0c0b0654e33",
+      "changedFields": [
+        "title"
       ]
     }
   ],
@@ -117,6 +125,30 @@
         "source": "9171210f4c7ddccf3fd0738cf9dedb1509400801",
         "task_id": "203",
         "tree": "0ded0a7e962fe24ce43a609b4c017a0b48823440",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "d2d2251c6b720f693a2f21101bd9df6ef59a300f096477f830e23ba92538cb47",
+        "digest": "8bd464a27074578ec40e9c207585aa0810538cdf8a037f5a173e339808cd8c67",
+        "inputs": {
+          ".cardine/tasks/203.json": "edee20829bfe326187054815fae383d35067d0228dcef8d489bbc171e431eae2",
+          "tasks/203.md": "028f0208054199bd1fb8fa2f1033d7ed65031ed14bd65b0cee4b6ffed16cc9cc"
+        },
+        "kind": "contract_revision",
+        "operation_id": "ce825074b29943029c9e6ba9c64e7836",
+        "outputs": {
+          ".cardine/tasks/203.json": "04715e63b4b0a3ffdbb940bca6844bfcd6ee454b8d29b19b410b28e66bc7e513",
+          "tasks/203.md": "028f0208054199bd1fb8fa2f1033d7ed65031ed14bd65b0cee4b6ffed16cc9cc"
+        },
+        "predecessor": "16113695a319fe71ce83dc8431eb4c544152519c3930bf3977e48bcffc3edda9",
+        "result": "verified",
+        "source": "3731aac1b7d0c74328433074dca1f4e24a38c94a",
+        "task_id": "203",
+        "tree": "2909bba0bb07063a2e9d7007abe7da717999ad80",
         "version": 1
       }
     ]
