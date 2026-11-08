@@ -59,8 +59,7 @@ prefix_rule(pattern=["ps"], decision="allow")
 '''
 
 
-CODEX_USER_RULES = LEGACY_CODEX_USER_RULES.replace('# MERIDIAN:', '# CARDINE:')
-PREVIOUS_CODEX_USER_RULES = CODEX_USER_RULES
+PREVIOUS_CODEX_USER_RULES = LEGACY_CODEX_USER_RULES.replace('# MERIDIAN:', '# CARDINE:')
 CODEX_USER_RULES = (PREVIOUS_CODEX_USER_RULES.replace('codex-user-rules v1', 'codex-user-rules v2')
                     .replace('"execution", "task", "review"', '"execution", "task", "review", "run", "status"'))
 
