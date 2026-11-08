@@ -83,6 +83,48 @@
       "stderrTruncated": false,
       "stdout": "",
       "stdoutTruncated": false
+    },
+    {
+      "attemptId": "9d4b58bc9f7e47e587213b32a435f7e9",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "794185232766e549cdceadc9c4a33bb6d4a760d8",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/217.json#9d4b58bc9f7e47e587213b32a435f7e9/1/repository-check",
+      "round": 1,
+      "sourceDigest": "23867fe638aafebd0d6b75c478345b06fc82119debbc797612ef6707e5962028",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "9d4b58bc9f7e47e587213b32a435f7e9",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_delivery --module test_run_validation --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "794185232766e549cdceadc9c4a33bb6d4a760d8",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/217.json#9d4b58bc9f7e47e587213b32a435f7e9/1/task-tests",
+      "round": 1,
+      "sourceDigest": "23867fe638aafebd0d6b75c478345b06fc82119debbc797612ef6707e5962028",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_delivery,test_run_validation,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=156 total=2149 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "9d4b58bc9f7e47e587213b32a435f7e9",
+      "command": "git diff --check",
+      "commit": "794185232766e549cdceadc9c4a33bb6d4a760d8",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/217.json#9d4b58bc9f7e47e587213b32a435f7e9/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "23867fe638aafebd0d6b75c478345b06fc82119debbc797612ef6707e5962028",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
     }
   ]
 }
