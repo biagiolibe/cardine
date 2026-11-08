@@ -1,0 +1,46 @@
+{
+  "181": [
+    {
+      "attemptId": "10aa2666efcc41feab0372257e38802a",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "915effce83d103623d1236f04699c5b38370569f",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/181.json#10aa2666efcc41feab0372257e38802a/1/repository-check",
+      "round": 1,
+      "sourceDigest": "06b64edef2dcef04a181566c4ab02e885b9cf224ba226476d570aa3112a8cb0b",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "10aa2666efcc41feab0372257e38802a",
+      "command": "python3 scripts/run_tests.py --parallel --module test_ci_evidence --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "915effce83d103623d1236f04699c5b38370569f",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/181.json#10aa2666efcc41feab0372257e38802a/1/task-tests",
+      "round": 1,
+      "sourceDigest": "06b64edef2dcef04a181566c4ab02e885b9cf224ba226476d570aa3112a8cb0b",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_ci_evidence,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=75 total=2127 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "10aa2666efcc41feab0372257e38802a",
+      "command": "git diff --check",
+      "commit": "915effce83d103623d1236f04699c5b38370569f",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/181.json#10aa2666efcc41feab0372257e38802a/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "06b64edef2dcef04a181566c4ab02e885b9cf224ba226476d570aa3112a8cb0b",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
