@@ -251,6 +251,48 @@
       "stderrTruncated": false,
       "stdout": "",
       "stdoutTruncated": false
+    },
+    {
+      "attemptId": "c3840058481b41e5900aef1f455d665a",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/198.json#c3840058481b41e5900aef1f455d665a/1/repository-check",
+      "round": 1,
+      "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "c3840058481b41e5900aef1f455d665a",
+      "command": "python3 scripts/run_tests.py --parallel --clean-clone",
+      "commit": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
+      "exitStatus": 0,
+      "id": "adopt-32169894e045e78a",
+      "log": ".cardine/evidence/198.json#c3840058481b41e5900aef1f455d665a/1/adopt-32169894e045e78a",
+      "round": 1,
+      "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\nOK workers=8 ran=2167 failures=0 errors=0 skipped=2 time=1222.5s\ncoverage total=2167 digest=04c9cafdf6e3b5bb33072bc410ad38b3c68b67b4f9f02f3c1a3bf973c6b8c818 shards=8 selected=2167\nclean-clone commit=6c469accb7814b22a72e17d95ff603ad2a03cd8d total=2167 digest=04c9cafdf6e3b5bb33072bc410ad38b3c68b67b4f9f02f3c1a3bf973c6b8c818 outcome=OK\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "c3840058481b41e5900aef1f455d665a",
+      "command": "git diff --check",
+      "commit": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/198.json#c3840058481b41e5900aef1f455d665a/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
     }
   ]
 }

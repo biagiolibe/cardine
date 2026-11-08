@@ -242,12 +242,38 @@
         "task_id": "198",
         "tree": "333fea12d7c13e4f9f44f85cbe31037ad68c3cdd",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "19915381666d8538253d87cd1d0ec84141684b652fc398f2764973fb33b6dc0a",
+        "digest": "9be396e884527e7b4e2ad5cad7d109786abbc7c8095a62ed1860f017d66d280b",
+        "inputs": {
+          ".cardine/evidence/198.json": "2557b6af2ab0df213d18eb9886878d78821f2b4f1d1c43f8a4ba978794be4a78",
+          ".cardine/tasks/198.json": "64643e5b5278521bf2912780e086a9797285310eab52ecfafefd856ce6217eec",
+          "tasks/handoffs/198.md": "23c7e2f40d6e0978f21ff130e329a1bcf331009d892939aa95cc414c9c7b3475"
+        },
+        "kind": "task-validation",
+        "operation_id": "d72db400908c40409aaa67c8b95685be",
+        "outputs": {
+          ".cardine/evidence/198.json": "a46be89a1f2e938041939b169c043376ee0b5eb615e85fc690ea70547ed97acb",
+          ".cardine/tasks/198.json": "3932b0b2f8f686e7dfbd3f8e43e6aa55e615b8253d2944b9c0631aa0adca51bd",
+          "tasks/handoffs/198.md": "bf85f80c9ccd87edec70ac927c5cc85d903d7e1ea76fdbf7418f25691b7fedc5"
+        },
+        "predecessor": "40edcdd586ca26b6937dee6a1ac09172bf003b81b04d6cd2c5c2e23b37484133",
+        "result": "verified",
+        "source": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
+        "task_id": "198",
+        "tree": "1b5de96e614ba730945086f3dccbbade4f2d1f4b",
+        "version": 1
       }
     ],
     "validation": {
       "acceptanceReferences": [],
-      "attemptId": "2773d0dbb52249acb9195b9330877a52",
-      "consecutiveFailures": 1,
+      "attemptId": "c3840058481b41e5900aef1f455d665a",
+      "consecutiveFailures": 0,
       "evidence": ".cardine/evidence/198.json",
       "hostObservations": [],
       "inputs": {
@@ -259,28 +285,26 @@
         },
         "contractDigest": "19915381666d8538253d87cd1d0ec84141684b652fc398f2764973fb33b6dc0a",
         "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-198",
-        "environmentDigest": "03429ebc8d614d549146d13c71ffdc6d26edb7f85a8f041444a558db45a49fc3",
+        "environmentDigest": "4ddb2a7920a094da4d72519fc9f4e06d82aee80c76bdf690220d883cb81c1de8",
         "skips": [],
         "source": "7b35ba31b782cddb5f12f6be2a72b78d970638bf",
         "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
         "sourceTree": "986e928acb7d812179a16b0f698d4607eed7d0f8"
       },
       "intermittent": [],
-      "lastFailed": [
-        "adopt-32169894e045e78a"
-      ],
-      "phase": "failed",
+      "lastFailed": [],
+      "phase": "passed",
       "quickFailures": 0,
       "quickRounds": 0,
       "runs": [
         [
           {
-            "attemptId": "2773d0dbb52249acb9195b9330877a52",
+            "attemptId": "c3840058481b41e5900aef1f455d665a",
             "command": "python3 scripts/check_repository.py",
-            "commit": "940cf469338f9664a8cede9c1691e4929ebba5dd",
+            "commit": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
             "exitStatus": 0,
             "id": "repository-check",
-            "log": ".cardine/evidence/198.json#2773d0dbb52249acb9195b9330877a52/1/repository-check",
+            "log": ".cardine/evidence/198.json#c3840058481b41e5900aef1f455d665a/1/repository-check",
             "round": 1,
             "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
             "stderr": "",
@@ -289,71 +313,27 @@
             "stdoutTruncated": false
           },
           {
-            "attemptId": "2773d0dbb52249acb9195b9330877a52",
+            "attemptId": "c3840058481b41e5900aef1f455d665a",
             "command": "python3 scripts/run_tests.py --parallel --clean-clone",
-            "commit": "940cf469338f9664a8cede9c1691e4929ebba5dd",
-            "exitStatus": 2,
+            "commit": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
+            "exitStatus": 0,
             "id": "adopt-32169894e045e78a",
-            "log": ".cardine/evidence/198.json#2773d0dbb52249acb9195b9330877a52/1/adopt-32169894e045e78a",
+            "log": ".cardine/evidence/198.json#c3840058481b41e5900aef1f455d665a/1/adopt-32169894e045e78a",
             "round": 1,
             "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
             "stderr": "",
             "stderrTruncated": false,
-            "stdout": "clean-clone refused: the working tree has uncommitted changes; commit them first\n",
+            "stdout": "Cardine repository checks passed.\nOK workers=8 ran=2167 failures=0 errors=0 skipped=2 time=1222.5s\ncoverage total=2167 digest=04c9cafdf6e3b5bb33072bc410ad38b3c68b67b4f9f02f3c1a3bf973c6b8c818 shards=8 selected=2167\nclean-clone commit=6c469accb7814b22a72e17d95ff603ad2a03cd8d total=2167 digest=04c9cafdf6e3b5bb33072bc410ad38b3c68b67b4f9f02f3c1a3bf973c6b8c818 outcome=OK\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "2773d0dbb52249acb9195b9330877a52",
+            "attemptId": "c3840058481b41e5900aef1f455d665a",
             "command": "git diff --check",
-            "commit": "940cf469338f9664a8cede9c1691e4929ebba5dd",
+            "commit": "6c469accb7814b22a72e17d95ff603ad2a03cd8d",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/198.json#2773d0dbb52249acb9195b9330877a52/1/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/198.json#c3840058481b41e5900aef1f455d665a/1/adopt-466c2f308b48c766",
             "round": 1,
-            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "",
-            "stdoutTruncated": false
-          }
-        ],
-        [
-          {
-            "attemptId": "2773d0dbb52249acb9195b9330877a52",
-            "command": "python3 scripts/check_repository.py",
-            "commit": "940cf469338f9664a8cede9c1691e4929ebba5dd",
-            "exitStatus": 0,
-            "id": "repository-check",
-            "log": ".cardine/evidence/198.json#2773d0dbb52249acb9195b9330877a52/2/repository-check",
-            "round": 2,
-            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "Cardine repository checks passed.\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "2773d0dbb52249acb9195b9330877a52",
-            "command": "python3 scripts/run_tests.py --parallel --clean-clone",
-            "commit": "940cf469338f9664a8cede9c1691e4929ebba5dd",
-            "exitStatus": 2,
-            "id": "adopt-32169894e045e78a",
-            "log": ".cardine/evidence/198.json#2773d0dbb52249acb9195b9330877a52/2/adopt-32169894e045e78a",
-            "round": 2,
-            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "clean-clone refused: the working tree has uncommitted changes; commit them first\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "2773d0dbb52249acb9195b9330877a52",
-            "command": "git diff --check",
-            "commit": "940cf469338f9664a8cede9c1691e4929ebba5dd",
-            "exitStatus": 0,
-            "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/198.json#2773d0dbb52249acb9195b9330877a52/2/adopt-466c2f308b48c766",
-            "round": 2,
             "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
             "stderr": "",
             "stderrTruncated": false,
