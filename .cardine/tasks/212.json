@@ -25,7 +25,8 @@
       "tests/test_stop_audit.py",
       "tests/test_host_distribution.py",
       "tests/test_marker_structure_audit.py",
-      "tests/test_single_workflow_briefing.py"
+      "tests/test_single_workflow_briefing.py",
+      "tests/test_upgrade_repeatability.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -83,6 +84,14 @@
       "changedFields": [
         "expectedCodeSurface",
         "validation"
+      ]
+    },
+    {
+      "after": "sha256:2f7d571a71af914f85436736e75cd48e8793108c5316c6f397bb1dfc84b9108c",
+      "at": "2026-11-08T20:06:46.027224Z",
+      "before": "sha256:33bd2d0b539d9b93d8bab81f6e885b149ead5f05719d4052343d47eedaf482e8",
+      "changedFields": [
+        "expectedCodeSurface"
       ]
     }
   ],
@@ -187,8 +196,177 @@
         "task_id": "212",
         "tree": "5fe81dfa87e73efdf4b9b7c14db0e2191a80e504",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "3f59d5fa9af3ac7853fafb1d4db5cd19c462984d9689f42ee6e61e4dadf9bef5",
+        "digest": "f8479599076c2f889cd4085b587dc4ac19b9e332bc51f8594fa15995b6a5f3d8",
+        "inputs": {
+          ".cardine/evidence/212.json": null,
+          ".cardine/tasks/212.json": "53cd7247315920d86ebbb3f6b0f474823808ffaf7c0071493c4f53605246f81b",
+          "tasks/handoffs/212.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "ab3cdb7e492d41aeab8df72f0bdafbb9",
+        "outputs": {
+          ".cardine/evidence/212.json": "1097f9bce8484c7587d7dc44817457e547e22b0a1f3055efe3da4691fc7ab163",
+          ".cardine/tasks/212.json": "25621f31f6f96ecb78e89178c8973cb1053b953ff16631a402fa72d8e945e265",
+          "tasks/handoffs/212.md": "ef8224d5161c11c8c118b1a95d24f1616f196aa29ae36123c5e765f8ada1ce4a"
+        },
+        "predecessor": "3f058ae1061825d7f90e3163e68f37b54314640186f4ee4ac163001d31e25ced",
+        "result": "verified",
+        "source": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+        "task_id": "212",
+        "tree": "aade12ddd312d3d2a11d488c95d3605eca752fd9",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "1182ba5b4e62af27ce8a17c1a5b6727d3ad589ba11dac0b8751958eca20a830f",
+        "digest": "b0203f535f0c087ce0a66f9e025f4cc3af73adfea3f9f8f7030d0bc551d3a636",
+        "inputs": {
+          ".cardine/tasks/212.json": "9093705b9fe56037c7cbae0c63e91cbb5f89d18cb6eb247a94c31701506aedac",
+          "tasks/212.md": "79a3c95352412185b5e67b66ee1ad0e713cf1cf320bcdae0487092ff73f5c0c4"
+        },
+        "kind": "contract_revision",
+        "operation_id": "ad5193c458c94c149f4aa2732b0943d4",
+        "outputs": {
+          ".cardine/tasks/212.json": "5c1e43e1822ce5ea0c171a617c2e68fcca2ef460eecf6dc5cf99006db4155919",
+          "tasks/212.md": "79a3c95352412185b5e67b66ee1ad0e713cf1cf320bcdae0487092ff73f5c0c4"
+        },
+        "predecessor": "f8479599076c2f889cd4085b587dc4ac19b9e332bc51f8594fa15995b6a5f3d8",
+        "result": "verified",
+        "source": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+        "task_id": "212",
+        "tree": "aade12ddd312d3d2a11d488c95d3605eca752fd9",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/212.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "ce1edef990b2825a1507a3d22868b1db7af5561fa64ab50d8397d47610319b23",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_marker_structure_audit --module test_single_workflow_briefing --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "3f59d5fa9af3ac7853fafb1d4db5cd19c462984d9689f42ee6e61e4dadf9bef5",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "c315ccc4403ed40e269176cea93c7cdfe45e3a4a",
+        "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+        "sourceTree": "5fe81dfa87e73efdf4b9b7c14db0e2191a80e504"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "task-tests"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/212.json#d7b6f9bd305749bfb78370e6f3904c9c/1/repository-check",
+            "round": 1,
+            "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+            "command": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_marker_structure_audit --module test_single_workflow_briefing --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/212.json#d7b6f9bd305749bfb78370e6f3904c9c/1/task-tests",
+            "round": 1,
+            "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=242 selected=30 digest=387f6b53926f0a47386e8bcf385a431181b40a3fc24116630580679ccfd359d2\ntest_case_b_and_mapping_repeat (test_adopt_plan.AdoptPlanTest.test_case_b_and_mapping_repeat) ... ok\ntest_clone_preserves_source_and_rebuilds_after_interruptions (test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions) ... ok\ntest_shell_path_fallbacks_ignore_the_old_executable (test_command_word.CommandWordTest.test_shell_path_fallbacks_ignore_the_old_executable) ... ok\ntest_config_plan_repairs_managed_block_inserted_before_root_keys (test_host_codex_access.CodexWorktreeAccessTest.test_config_plan_repairs_managed_block_inserted_before_root_keys) ... ok\ntest_repository_namespaces_prevent_equal_task_id_collisions (test_host_codex_access.CodexWorktreeAccessTest.test_repository_namespaces_prevent_equal_task_id_collisions) ... ok\ntest_packaged_command_runtime_runs_without_the_source_checkout (test_host_distribution.HostDistributionTest.test_packaged_command_runtime_runs_without_the_source_checkout) ... ok\ntest_a_registry_edited_after_planning_is_refused_before_any_write (test_host_hooks.HostHooksTest.test_a_registry_edited_after_planning_is_refused_before_any_write) ... ok\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_bootstrap_turns_the_legacy_unverified_row_into_declared_profiles (test_marker_structure_audit.ConsumerProfileTest.test_bootstrap_turns_the_legacy_unverified_row_into_declared_profiles) ... ok\ntest_upgrade_warns_before_a_markerless_copy_conflict (test_marker_structure_audit.ManagedCopyDigestAuditTest.test_upgrade_warns_before_a_markerless_copy_conflict) ... ok\ntest_restructure_removes_retired_blocks_from_a_carried_checklist (test_marker_structure_audit.RetiredInlineMarkerUpgradeTest.test_restructure_removes_retired_blocks_from_a_carried_checklist) ... ok\ntest_a_customized_lean_lifecycle_document_is_a_conflict_not_a_duplicate (test_marker_structure_audit.WrappedTextUpgradeTest.test_a_customized_lean_lifecycle_document_is_a_conflict_not_a_duplicate) ... ok\ntest_conditional_allowances_require_use_only_when_a_matching_file_exists (test_no_meridian_identifiers.IdentifierGuardTest.test_conditional_allowances_require_use_only_when_a_matching_file_exists) ... ok\ntest_incomplete_snapshot_is_reported_without_failing_the_hook (test_single_workflow_briefing.SingleWorkflowBriefingTest.test_incomplete_snapshot_is_reported_without_failing_the_hook) ... ok\ntest_audit_never_writes_task_state (test_stop_audit.StopAuditTest.test_audit_never_writes_task_state) ... ok\ntest_codex_null_message_and_malformed_input_exit_zero (test_stop_audit.StopAuditTest.test_codex_null_message_and_malformed_input_exit_zero) ... ok\ntest_judgment_code_is_declared (test_stop_audit.StopAuditTest.test_judgment_code_is_declared) ... ok\ntest_empty_chain_upgrade_is_current_and_changes_nothing (test_synthetic_upgrade.SyntheticMigrationUpgradeTest.test_empty_chain_upgrade_is_current_and_changes_nothing) ... ok\ntest_ci_profile_gate_accepts_host_unverified_but_rejects_static_failure (test_template_manifest.CapabilityProfileManifestTest.test_ci_profile_gate_accepts_host_unverified_but_rejects_static_failure) ... ok\ntest_lean_managed_files_deliver_only_neutral_profile_surfaces (test_template_manifest.CapabilityProfileManifestTest.test_lean_managed_files_deliver_only_neutral_profile_surfaces) ... ok\ntest_retired_text_audit_advisories_preserve_exit_status_and_files (test_template_manifest.CapabilityProfileManifestTest.test_retired_text_audit_advisories_preserve_exit_status_and_files) ... ok\ntest_both_presets_install_the_same_file_list (test_template_manifest.SingleTemplateSetTest.test_both_presets_install_the_same_file_list) ... ok\ntest_the_four_hidden_files_have_destinations (test_template_manifest.SingleTemplateSetTest.test_the_four_hidden_files_have_destinations) ... ok\ntest_cli_check_and_write_round_trip_on_a_stale_copy (test_template_router.GenerateClaudeMdTest.test_cli_check_and_write_round_trip_on_a_stale_copy) ... ok\ntest_audit_reports_generated_drift_missing_route_and_budget_failure (test_template_router.GeneratedEntryRouterTest.test_audit_reports_generated_drift_missing_route_and_budget_failure) ... ok\ntest_init_writes_a_project_declaration_that_the_schema_accepts (test_template_router.InitAdapterTest.test_init_writes_a_project_declaration_that_the_schema_accepts) ... ok\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\ntest_changed_inputs_and_foreign_owner_stop_at_every_effect (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_changed_inputs_and_foreign_owner_stop_at_every_effect) ... FAIL\n\n======================================================================\n\nRan 30 tests in 96.062s\n\nFAILED (failures=1)\nFAIL: test_changed_inputs_and_foreign_owner_stop_at_every_effect (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_changed_inputs_and_foreign_owner_stop_at_every_effect)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 159, in test_changed_inputs_and_foreign_owner_stop_at_every_effect\n    reference, names = self.seams()\n                       ~~~~~~~~~~^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 95, in seams\n    self.assertEqual(sum(name.startswith('file:baseline:') for name in names), len(FILES))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 8 != 9\n\n----------------------------------------------------------------------\nresult ran=30 failures=1 errors=0 skipped=0\n--- shard 8/8 (exit 1) ---\nshard=8/8 total=242 selected=30 digest=387f6b53926f0a47386e8bcf385a431181b40a3fc24116630580679ccfd359d2\ntest_dirty_refusal (test_adopt_plan.AdoptPlanTest.test_dirty_refusal) ... ok\ntest_extra_nonpass_audit_result_blocks_apply (test_adopt_rehearsal.RehearsalTest.test_extra_nonpass_audit_result_blocks_apply) ... ok\ntest_stop_decisions_match_the_pre_task_snapshot (test_command_word.CommandWordTest.test_stop_decisions_match_the_pre_task_snapshot) ... ok\ntest_conflicting_and_malformed_configuration_is_blocked (test_host_codex_access.CodexWorktreeAccessTest.test_conflicting_and_malformed_configuration_is_blocked) ... ok\ntest_unsafe_identity_task_and_root_are_rejected (test_host_codex_access.CodexWorktreeAccessTest.test_unsafe_identity_task_and_root_are_rejected) ... ok\ntest_source_checkout_is_not_an_installation_destination (test_host_distribution.HostDistributionTest.test_source_checkout_is_not_an_installation_destination) ... ok\ntest_a_second_apply_writes_nothing_and_leaves_no_receipt (test_host_hooks.HostHooksTest.test_a_second_apply_writes_nothing_and_leaves_no_receipt) ... ok\ntest_console_identity_cache_observes_context_switch (test_layout.LayoutTest.test_console_identity_cache_observes_context_switch) ... ok\ntest_lifecycle_directory_lease_and_state_change_together (test_layout.LayoutTest.test_lifecycle_directory_lease_and_state_change_together) ... ok\ntest_task_audit_reads_selected_state_directory (test_layout.LayoutTest.test_task_audit_reads_selected_state_directory) ... ok\ntest_catalog_ships_a_consumer_profile_per_mode (test_marker_structure_audit.ConsumerProfileTest.test_catalog_ships_a_consumer_profile_per_mode) ... ok\ntest_upgrade_warns_for_an_edited_markerless_copy_and_the_audit_matches (test_marker_structure_audit.ManagedCopyDigestAuditTest.test_upgrade_warns_for_an_edited_markerless_copy_and_the_audit_matches) ... ok\ntest_restructure_reports_an_edited_retired_marker_and_keeps_the_backup (test_marker_structure_audit.RetiredInlineMarkerUpgradeTest.test_restructure_reports_an_edited_retired_marker_and_keeps_the_backup) ... ok\ntest_a_customized_remote_cleanup_section_is_a_conflict_not_a_duplicate (test_marker_structure_audit.WrappedTextUpgradeTest.test_a_customized_remote_cleanup_section_is_a_conflict_not_a_duplicate) ... ok\ntest_future_task_records_pass_without_allowing_other_paths (test_no_meridian_identifiers.IdentifierGuardTest.test_future_task_records_pass_without_allowing_other_paths) ... ok\ntest_invalid_state_is_a_diagnostic_and_not_a_queued_task (test_single_workflow_briefing.SingleWorkflowBriefingTest.test_invalid_state_is_a_diagnostic_and_not_a_queued_task) ... ok\ntest_backed_code_is_not_recorded (test_stop_audit.StopAuditTest.test_backed_code_is_not_recorded) ... ok\ntest_compatibility_script_delegates_to_the_host_module (test_stop_audit.StopAuditTest.test_compatibility_script_delegates_to_the_host_module) ... ok\ntest_malformed_input_exits_zero (test_stop_audit.StopAuditTest.test_malformed_input_exits_zero) ... ok\ntest_insertion_supersession_and_retirement_keep_consumer_text (test_synthetic_upgrade.SyntheticMigrationUpgradeTest.test_insertion_supersession_and_retirement_keep_consumer_text) ... ok\ntest_ci_profile_gate_rejects_an_unknown_profile (test_template_manifest.CapabilityProfileManifestTest.test_ci_profile_gate_rejects_an_unknown_profile) ... ok\ntest_legacy_lean_manifest_is_named_and_migration_history_is_not_evidence (test_template_manifest.CapabilityProfileManifestTest.test_legacy_lean_manifest_is_named_and_migration_history_is_not_evidence) ... ok\ntest_synthetic_manifest_has_no_host_claim_or_machine_specific_path (test_template_manifest.CapabilityProfileManifestTest.test_synthetic_manifest_has_no_host_claim_or_machine_specific_path) ... ok\ntest_context_policy_uses_the_reading_path (test_template_manifest.SingleTemplateSetTest.test_context_policy_uses_the_reading_path) ... ok\ntest_killing_the_writer_around_its_replace_converges_on_a_fresh_generation (test_template_replacement.MarkerBaselineWriteTest.test_killing_the_writer_around_its_replace_converges_on_a_fresh_generation) ... ok\ntest_committed_claude_md_matches_the_generator_for_the_single_template_set (test_template_router.GenerateClaudeMdTest.test_committed_claude_md_matches_the_generator_for_the_single_template_set) ... ok\ntest_cli_checks_and_writes_both_entry_points (test_template_router.GeneratedEntryRouterTest.test_cli_checks_and_writes_both_entry_points) ... ok\ntest_allowlist_exceptions_are_exact_and_named (test_text_gates.ResidualRatchetTest.test_allowlist_exceptions_are_exact_and_named) ... ok\ntest_script_imports_are_transitive_and_unimported_scripts_are_excluded (test_text_gates.TextGateScannerTest.test_script_imports_are_transitive_and_unimported_scripts_are_excluded) ... ok\ntest_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss) ... FAIL\n\n======================================================================\n\nRan 30 tests in 70.449s\n\nFAILED (failures=1)\nFAIL: test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 99, in test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss\n    reference, names = self.seams()\n                       ~~~~~~~~~~^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 95, in seams\n    self.assertEqual(sum(name.startswith('file:baseline:') for name in names), len(FILES))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 8 != 9\n\n----------------------------------------------------------------------\nresult ran=30 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_manifest,test_template_replacement,test_template_router,test_marker_structure_audit,test_single_workflow_briefing,test_host_codex_access,test_host_hooks,test_host_distribution,test_adopt_plan,test_adopt_rehearsal,test_stop_audit,test_upgrade_repeatability,test_synthetic_upgrade,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=242 total=2144 failures=2 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+            "command": "git diff --check",
+            "commit": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/212.json#d7b6f9bd305749bfb78370e6f3904c9c/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/212.json#d7b6f9bd305749bfb78370e6f3904c9c/2/repository-check",
+            "round": 2,
+            "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+            "command": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_marker_structure_audit --module test_single_workflow_briefing --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/212.json#d7b6f9bd305749bfb78370e6f3904c9c/2/task-tests",
+            "round": 2,
+            "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=242 selected=30 digest=387f6b53926f0a47386e8bcf385a431181b40a3fc24116630580679ccfd359d2\ntest_case_b_and_mapping_repeat (test_adopt_plan.AdoptPlanTest.test_case_b_and_mapping_repeat) ... ok\ntest_clone_preserves_source_and_rebuilds_after_interruptions (test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions) ... ok\ntest_shell_path_fallbacks_ignore_the_old_executable (test_command_word.CommandWordTest.test_shell_path_fallbacks_ignore_the_old_executable) ... ok\ntest_config_plan_repairs_managed_block_inserted_before_root_keys (test_host_codex_access.CodexWorktreeAccessTest.test_config_plan_repairs_managed_block_inserted_before_root_keys) ... ok\ntest_repository_namespaces_prevent_equal_task_id_collisions (test_host_codex_access.CodexWorktreeAccessTest.test_repository_namespaces_prevent_equal_task_id_collisions) ... ok\ntest_packaged_command_runtime_runs_without_the_source_checkout (test_host_distribution.HostDistributionTest.test_packaged_command_runtime_runs_without_the_source_checkout) ... ok\ntest_a_registry_edited_after_planning_is_refused_before_any_write (test_host_hooks.HostHooksTest.test_a_registry_edited_after_planning_is_refused_before_any_write) ... ok\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_bootstrap_turns_the_legacy_unverified_row_into_declared_profiles (test_marker_structure_audit.ConsumerProfileTest.test_bootstrap_turns_the_legacy_unverified_row_into_declared_profiles) ... ok\ntest_upgrade_warns_before_a_markerless_copy_conflict (test_marker_structure_audit.ManagedCopyDigestAuditTest.test_upgrade_warns_before_a_markerless_copy_conflict) ... ok\ntest_restructure_removes_retired_blocks_from_a_carried_checklist (test_marker_structure_audit.RetiredInlineMarkerUpgradeTest.test_restructure_removes_retired_blocks_from_a_carried_checklist) ... ok\ntest_a_customized_lean_lifecycle_document_is_a_conflict_not_a_duplicate (test_marker_structure_audit.WrappedTextUpgradeTest.test_a_customized_lean_lifecycle_document_is_a_conflict_not_a_duplicate) ... ok\ntest_conditional_allowances_require_use_only_when_a_matching_file_exists (test_no_meridian_identifiers.IdentifierGuardTest.test_conditional_allowances_require_use_only_when_a_matching_file_exists) ... ok\ntest_incomplete_snapshot_is_reported_without_failing_the_hook (test_single_workflow_briefing.SingleWorkflowBriefingTest.test_incomplete_snapshot_is_reported_without_failing_the_hook) ... ok\ntest_audit_never_writes_task_state (test_stop_audit.StopAuditTest.test_audit_never_writes_task_state) ... ok\ntest_codex_null_message_and_malformed_input_exit_zero (test_stop_audit.StopAuditTest.test_codex_null_message_and_malformed_input_exit_zero) ... ok\ntest_judgment_code_is_declared (test_stop_audit.StopAuditTest.test_judgment_code_is_declared) ... ok\ntest_empty_chain_upgrade_is_current_and_changes_nothing (test_synthetic_upgrade.SyntheticMigrationUpgradeTest.test_empty_chain_upgrade_is_current_and_changes_nothing) ... ok\ntest_ci_profile_gate_accepts_host_unverified_but_rejects_static_failure (test_template_manifest.CapabilityProfileManifestTest.test_ci_profile_gate_accepts_host_unverified_but_rejects_static_failure) ... ok\ntest_lean_managed_files_deliver_only_neutral_profile_surfaces (test_template_manifest.CapabilityProfileManifestTest.test_lean_managed_files_deliver_only_neutral_profile_surfaces) ... ok\ntest_retired_text_audit_advisories_preserve_exit_status_and_files (test_template_manifest.CapabilityProfileManifestTest.test_retired_text_audit_advisories_preserve_exit_status_and_files) ... ok\ntest_both_presets_install_the_same_file_list (test_template_manifest.SingleTemplateSetTest.test_both_presets_install_the_same_file_list) ... ok\ntest_the_four_hidden_files_have_destinations (test_template_manifest.SingleTemplateSetTest.test_the_four_hidden_files_have_destinations) ... ok\ntest_cli_check_and_write_round_trip_on_a_stale_copy (test_template_router.GenerateClaudeMdTest.test_cli_check_and_write_round_trip_on_a_stale_copy) ... ok\ntest_audit_reports_generated_drift_missing_route_and_budget_failure (test_template_router.GeneratedEntryRouterTest.test_audit_reports_generated_drift_missing_route_and_budget_failure) ... ok\ntest_init_writes_a_project_declaration_that_the_schema_accepts (test_template_router.InitAdapterTest.test_init_writes_a_project_declaration_that_the_schema_accepts) ... ok\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\ntest_changed_inputs_and_foreign_owner_stop_at_every_effect (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_changed_inputs_and_foreign_owner_stop_at_every_effect) ... FAIL\n\n======================================================================\n\nRan 30 tests in 55.568s\n\nFAILED (failures=1)\nFAIL: test_changed_inputs_and_foreign_owner_stop_at_every_effect (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_changed_inputs_and_foreign_owner_stop_at_every_effect)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 159, in test_changed_inputs_and_foreign_owner_stop_at_every_effect\n    reference, names = self.seams()\n                       ~~~~~~~~~~^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 95, in seams\n    self.assertEqual(sum(name.startswith('file:baseline:') for name in names), len(FILES))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 8 != 9\n\n----------------------------------------------------------------------\nresult ran=30 failures=1 errors=0 skipped=0\n--- shard 8/8 (exit 1) ---\nshard=8/8 total=242 selected=30 digest=387f6b53926f0a47386e8bcf385a431181b40a3fc24116630580679ccfd359d2\ntest_dirty_refusal (test_adopt_plan.AdoptPlanTest.test_dirty_refusal) ... ok\ntest_extra_nonpass_audit_result_blocks_apply (test_adopt_rehearsal.RehearsalTest.test_extra_nonpass_audit_result_blocks_apply) ... ok\ntest_stop_decisions_match_the_pre_task_snapshot (test_command_word.CommandWordTest.test_stop_decisions_match_the_pre_task_snapshot) ... ok\ntest_conflicting_and_malformed_configuration_is_blocked (test_host_codex_access.CodexWorktreeAccessTest.test_conflicting_and_malformed_configuration_is_blocked) ... ok\ntest_unsafe_identity_task_and_root_are_rejected (test_host_codex_access.CodexWorktreeAccessTest.test_unsafe_identity_task_and_root_are_rejected) ... ok\ntest_source_checkout_is_not_an_installation_destination (test_host_distribution.HostDistributionTest.test_source_checkout_is_not_an_installation_destination) ... ok\ntest_a_second_apply_writes_nothing_and_leaves_no_receipt (test_host_hooks.HostHooksTest.test_a_second_apply_writes_nothing_and_leaves_no_receipt) ... ok\ntest_console_identity_cache_observes_context_switch (test_layout.LayoutTest.test_console_identity_cache_observes_context_switch) ... ok\ntest_lifecycle_directory_lease_and_state_change_together (test_layout.LayoutTest.test_lifecycle_directory_lease_and_state_change_together) ... ok\ntest_task_audit_reads_selected_state_directory (test_layout.LayoutTest.test_task_audit_reads_selected_state_directory) ... ok\ntest_catalog_ships_a_consumer_profile_per_mode (test_marker_structure_audit.ConsumerProfileTest.test_catalog_ships_a_consumer_profile_per_mode) ... ok\ntest_upgrade_warns_for_an_edited_markerless_copy_and_the_audit_matches (test_marker_structure_audit.ManagedCopyDigestAuditTest.test_upgrade_warns_for_an_edited_markerless_copy_and_the_audit_matches) ... ok\ntest_restructure_reports_an_edited_retired_marker_and_keeps_the_backup (test_marker_structure_audit.RetiredInlineMarkerUpgradeTest.test_restructure_reports_an_edited_retired_marker_and_keeps_the_backup) ... ok\ntest_a_customized_remote_cleanup_section_is_a_conflict_not_a_duplicate (test_marker_structure_audit.WrappedTextUpgradeTest.test_a_customized_remote_cleanup_section_is_a_conflict_not_a_duplicate) ... ok\ntest_future_task_records_pass_without_allowing_other_paths (test_no_meridian_identifiers.IdentifierGuardTest.test_future_task_records_pass_without_allowing_other_paths) ... ok\ntest_invalid_state_is_a_diagnostic_and_not_a_queued_task (test_single_workflow_briefing.SingleWorkflowBriefingTest.test_invalid_state_is_a_diagnostic_and_not_a_queued_task) ... ok\ntest_backed_code_is_not_recorded (test_stop_audit.StopAuditTest.test_backed_code_is_not_recorded) ... ok\ntest_compatibility_script_delegates_to_the_host_module (test_stop_audit.StopAuditTest.test_compatibility_script_delegates_to_the_host_module) ... ok\ntest_malformed_input_exits_zero (test_stop_audit.StopAuditTest.test_malformed_input_exits_zero) ... ok\ntest_insertion_supersession_and_retirement_keep_consumer_text (test_synthetic_upgrade.SyntheticMigrationUpgradeTest.test_insertion_supersession_and_retirement_keep_consumer_text) ... ok\ntest_ci_profile_gate_rejects_an_unknown_profile (test_template_manifest.CapabilityProfileManifestTest.test_ci_profile_gate_rejects_an_unknown_profile) ... ok\ntest_legacy_lean_manifest_is_named_and_migration_history_is_not_evidence (test_template_manifest.CapabilityProfileManifestTest.test_legacy_lean_manifest_is_named_and_migration_history_is_not_evidence) ... ok\ntest_synthetic_manifest_has_no_host_claim_or_machine_specific_path (test_template_manifest.CapabilityProfileManifestTest.test_synthetic_manifest_has_no_host_claim_or_machine_specific_path) ... ok\ntest_context_policy_uses_the_reading_path (test_template_manifest.SingleTemplateSetTest.test_context_policy_uses_the_reading_path) ... ok\ntest_killing_the_writer_around_its_replace_converges_on_a_fresh_generation (test_template_replacement.MarkerBaselineWriteTest.test_killing_the_writer_around_its_replace_converges_on_a_fresh_generation) ... ok\ntest_committed_claude_md_matches_the_generator_for_the_single_template_set (test_template_router.GenerateClaudeMdTest.test_committed_claude_md_matches_the_generator_for_the_single_template_set) ... ok\ntest_cli_checks_and_writes_both_entry_points (test_template_router.GeneratedEntryRouterTest.test_cli_checks_and_writes_both_entry_points) ... ok\ntest_allowlist_exceptions_are_exact_and_named (test_text_gates.ResidualRatchetTest.test_allowlist_exceptions_are_exact_and_named) ... ok\ntest_script_imports_are_transitive_and_unimported_scripts_are_excluded (test_text_gates.TextGateScannerTest.test_script_imports_are_transitive_and_unimported_scripts_are_excluded) ... ok\ntest_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss) ... FAIL\n\n======================================================================\n\nRan 30 tests in 42.157s\n\nFAILED (failures=1)\nFAIL: test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss (test_upgrade_repeatability.UpgradeRepeatabilityTest.test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 99, in test_kills_at_every_boundary_converge_without_duplicates_or_foreign_loss\n    reference, names = self.seams()\n                       ~~~~~~~~~~^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-212/tests/test_upgrade_repeatability.py\", line 95, in seams\n    self.assertEqual(sum(name.startswith('file:baseline:') for name in names), len(FILES))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 8 != 9\n\n----------------------------------------------------------------------\nresult ran=30 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_manifest,test_template_replacement,test_template_router,test_marker_structure_audit,test_single_workflow_briefing,test_host_codex_access,test_host_hooks,test_host_distribution,test_adopt_plan,test_adopt_rehearsal,test_stop_audit,test_upgrade_repeatability,test_synthetic_upgrade,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=242 total=2144 failures=2 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "d7b6f9bd305749bfb78370e6f3904c9c",
+            "command": "git diff --check",
+            "commit": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/212.json#d7b6f9bd305749bfb78370e6f3904c9c/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "212",
