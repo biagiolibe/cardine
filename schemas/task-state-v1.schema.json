@@ -160,6 +160,11 @@
         "validationScoping"
       ],
       "properties": {
+        "taskValidation": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
         "preset": {
           "type": "string",
           "enum": [

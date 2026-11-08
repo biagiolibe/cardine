@@ -242,6 +242,29 @@ class MeasuredLandingTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(integration.read_bytes(), forged)
         self.assertFalse((self.primary / ".git/MERGE_HEAD").exists())
 
+    def test_candidate_needs_respects_task_validation_for_each_outcome(self) -> None:
+        from cardine.shared.project import project_validation_commands
+        contract = {"validation": {"commands": {"base": "base check", "task-tests": "task suite",
+                    "other": "other task check", "reuse": "closure check"},
+                    "baseline": ["base", "task-tests", "other"],
+                    "candidate": {"REUSE": ["reuse"], "BOUNDED": [], "FULL": []}},
+                    "taskValidation": ["task-tests", "other"]}
+        fragments = {outcome: tuple(c for c in project_validation_commands(contract, outcome)
+                                    if c != "git diff --check")
+                     for outcome in ("REUSE", "BOUNDED", "FULL")}
+        for outcome in fragments:
+            staged = {"decision": outcome, "candidate_tree": "a" * 40}
+            with self.subTest(outcome=outcome), \
+                 mock.patch("cardine.integration.direct._read_json_object", return_value=staged), \
+                 mock.patch("cardine.integration.direct.candidate_validation_declaration", return_value=("declared", fragments)):
+                required = DirectLanding().candidate_needs("056", self.primary)["required"]
+            self.assertIn("git diff --check", required)
+            self.assertIn("base check", required)
+            self.assertEqual("task suite" in required, outcome != "REUSE")
+            self.assertEqual("other task check" in required, outcome != "REUSE")
+            if outcome == "REUSE":
+                self.assertIn("closure check", required)
+
     def test_repeated_resolution_of_a_staged_candidate_writes_nothing(self) -> None:
         worktree = self.implemented()
         self.measure(worktree)

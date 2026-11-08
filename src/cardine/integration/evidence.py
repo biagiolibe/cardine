@@ -90,7 +90,12 @@ def proposed_candidate_validation_declaration(project_root: Path) -> dict[str, o
         "FULL": [repository_check],
     }
     if (project_root / "tests").is_dir():
-        outcomes["FULL"].append("python3 -m unittest discover -s tests")
+        suite = "python3 -m unittest discover -s tests"
+        outcomes["FULL"].append(suite)
+        from cardine.shared.project import read_project_declaration
+        declaration = read_project_declaration(project_root) or {}
+        if declaration.get("ci", "none") == "none":
+            outcomes["BOUNDED"].append(suite)
     return {"version": 1, "state": "declared", "outcomes": outcomes}
 
 

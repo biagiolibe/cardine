@@ -111,12 +111,14 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
     validation = deepcopy(configuration.get("validation"))
     project_validation_commands(configuration)  # Absent is not explicit empty.
     task_commands = validation_commands(text)
+    task_validation = []
     for key, command in task_commands.items():
         if key in validation["commands"] and validation["commands"][key] != command:
             raise CardineError(f"task validation ID {key!r} conflicts with the project command")
         validation["commands"][key] = command
         if key not in validation["baseline"]:
             validation["baseline"].append(key)
+            task_validation.append(key)
     # Keep literal commands and IDs; candidates always include the diff check.
     diff_id = next((key for key, command in validation["commands"].items()
                     if command == "git diff --check"), None)
@@ -134,7 +136,7 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
         "projectDigest": "sha256:" + hashlib.sha256(
             json.dumps(declaration, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest(),
-        "options": options, "validation": validation, "hostImpact": host_impact,
+        "options": options, "validation": validation, "taskValidation": task_validation, "hostImpact": host_impact,
         "ci": deepcopy(configuration.get("ci", "none")),
         "validationScoping": deepcopy(configuration.get("validationScoping", [])),
     }
