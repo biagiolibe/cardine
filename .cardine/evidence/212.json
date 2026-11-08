@@ -167,6 +167,48 @@
       "stderrTruncated": false,
       "stdout": "",
       "stdoutTruncated": false
+    },
+    {
+      "attemptId": "08adaefc2c2746a68cb1d2c0ef0bde93",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "dc908f15b3a06229b89f40f084c5ad984a22c33a",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/212.json#08adaefc2c2746a68cb1d2c0ef0bde93/1/repository-check",
+      "round": 1,
+      "sourceDigest": "c03cdba9ad44eb1acda5b84710545204249617e109d2fe970b7f4365ea401fce",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "08adaefc2c2746a68cb1d2c0ef0bde93",
+      "command": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_marker_structure_audit --module test_single_workflow_briefing --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "dc908f15b3a06229b89f40f084c5ad984a22c33a",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/212.json#08adaefc2c2746a68cb1d2c0ef0bde93/1/task-tests",
+      "round": 1,
+      "sourceDigest": "c03cdba9ad44eb1acda5b84710545204249617e109d2fe970b7f4365ea401fce",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_template_manifest,test_template_replacement,test_template_router,test_marker_structure_audit,test_single_workflow_briefing,test_host_codex_access,test_host_hooks,test_host_distribution,test_adopt_plan,test_adopt_rehearsal,test_stop_audit,test_upgrade_repeatability,test_synthetic_upgrade,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=242 total=2144 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "08adaefc2c2746a68cb1d2c0ef0bde93",
+      "command": "git diff --check",
+      "commit": "dc908f15b3a06229b89f40f084c5ad984a22c33a",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/212.json#08adaefc2c2746a68cb1d2c0ef0bde93/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "c03cdba9ad44eb1acda5b84710545204249617e109d2fe970b7f4365ea401fce",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
     }
   ]
 }
