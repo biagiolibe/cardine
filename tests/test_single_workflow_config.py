@@ -109,6 +109,13 @@ class SingleWorkflowConfigTest(unittest.TestCase):
         with self.assertRaises(CardineError):
             project_validation_commands(configuration, "UNKNOWN")
 
+    def test_legacy_contract_and_project_rejects_task_validation(self):
+        configuration = self.declaration(validation=self.validation())
+        original = project_validation_commands(configuration, "REUSE")
+        self.assertEqual(original, ("python3 check.py", "git diff --check"))
+        with self.assertRaisesRegex(CardineError, "unknown key: taskValidation"):
+            parse_project_declaration({**configuration, "taskValidation": []})
+
     def test_validation_requires_unique_known_command_references(self):
         for key, value in (("baseline", ["unknown"]), ("baseline", ["repo", "repo"]),
                            ("baseline", "repo"), ("baseline", [{}]), ("commands", {"": "true"}),

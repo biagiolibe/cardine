@@ -40,7 +40,14 @@ class CandidateProposalTest(unittest.TestCase):
                 "REUSE": [check], "BOUNDED": [check], "FULL": [check]}}
             self.assertEqual(proposed_candidate_validation_declaration(root), expected)
             (root / "tests").mkdir()
-            expected["outcomes"]["FULL"].append("python3 -m unittest discover -s tests")
+            suite = "python3 -m unittest discover -s tests"
+            expected["outcomes"]["FULL"].append(suite)
+            expected["outcomes"]["BOUNDED"].append(suite)
+            self.assertEqual(proposed_candidate_validation_declaration(root), expected)
+            write_project_config(root, ci="none")
+            self.assertEqual(proposed_candidate_validation_declaration(root), expected)
+            write_project_config(root, ci={"provider": "github", "requiredChecks": ["test"]})
+            expected["outcomes"]["BOUNDED"].remove(suite)
             self.assertEqual(proposed_candidate_validation_declaration(root), expected)
 
 

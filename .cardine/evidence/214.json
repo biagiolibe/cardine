@@ -1,0 +1,46 @@
+{
+  "214": [
+    {
+      "attemptId": "92e599b480cd46f79bded12559dc2d43",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "2de50fa88fca0e2a93528b7dd54dadb698210267",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/214.json#92e599b480cd46f79bded12559dc2d43/1/repository-check",
+      "round": 1,
+      "sourceDigest": "2cb4a52547a49d3a1bfa1848fb0918d93b76cc87959943dad239ca168845bd27",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "92e599b480cd46f79bded12559dc2d43",
+      "command": "python3 scripts/run_tests.py --parallel --module test_single_workflow_config --module test_ci_evidence --module test_run_integration_decision --module test_run_integration --module test_single_workflow_parity --module test_contract_snapshot_readers --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "2de50fa88fca0e2a93528b7dd54dadb698210267",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/214.json#92e599b480cd46f79bded12559dc2d43/1/task-tests",
+      "round": 1,
+      "sourceDigest": "2cb4a52547a49d3a1bfa1848fb0918d93b76cc87959943dad239ca168845bd27",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_single_workflow_config,test_ci_evidence,test_run_integration_decision,test_run_integration,test_single_workflow_parity,test_contract_snapshot_readers,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=161 total=2138 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "92e599b480cd46f79bded12559dc2d43",
+      "command": "git diff --check",
+      "commit": "2de50fa88fca0e2a93528b7dd54dadb698210267",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/214.json#92e599b480cd46f79bded12559dc2d43/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "2cb4a52547a49d3a1bfa1848fb0918d93b76cc87959943dad239ca168845bd27",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}

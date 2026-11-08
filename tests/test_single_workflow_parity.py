@@ -69,6 +69,22 @@ class SingleWorkflowParityTest(unittest.TestCase):
             action()
         self.assertEqual(caught.exception.code, code)
 
+    def test_contract_tracks_only_commands_added_to_baseline(self):
+        f = self.project('lean')
+        text = (f.worker / f.record).read_text()
+        from cardine.tasks.evidence import validation_commands
+        commands = validation_commands(text)
+        first = next(iter(commands))
+        validation = deepcopy(VALIDATION)
+        validation['commands'][first] = commands[first]
+        validation['baseline'].append(first)
+        write_project_config(f.primary, 'lean', validation=validation)
+        text = text.replace('## Validation\n', "## Validation\n- `extra-check`: `python3 -c 'print(1)'`\n")
+        contract = resolve_task_contract(f.worker, '001', text=text)
+        self.assertEqual(contract['taskValidation'], ['extra-check'])
+        self.assertIn(first, contract['validation']['baseline'])
+        self.assertIn('extra-check', contract['validation']['baseline'])
+
     def test_required_review_for_both_presets(self):
         for preset in PRESETS:
             with self.subTest(preset=preset):
@@ -92,7 +108,8 @@ class SingleWorkflowParityTest(unittest.TestCase):
                 (f.worker / '.cardine/candidate-validation.json').write_text('{invalid')
                 declaration, commands_by_outcome = candidate_validation_declaration(f.worker, '001')
                 self.assertEqual(declaration, 'declared')
-                self.assertEqual(commands_by_outcome['REUSE'], ('true',))
+                self.assertEqual(commands_by_outcome['REUSE'], ())
+                self.assertEqual(commands_by_outcome['BOUNDED'], ('true',))
                 self.assertNotIn('in_review', machine(review_required=False)['in_progress'])
 
     def test_verdict_is_bound_to_the_approved_commit(self):

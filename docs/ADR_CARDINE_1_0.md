@@ -398,6 +398,14 @@ project default that one task can override, like the presets.
 | Who merges | `cardine run` | A person on the forge, or `cardine run` once the pull request is approved and green, when the project allows it |
 | Forge dependency | None | `gh`, authenticated by the user; Cardine stores no token |
 
+**Amendment, 2026-11-08.** Each validation must be able to give a new result.
+For `REUSE`, the candidate runs the project baseline and `candidate.REUSE`,
+excluding commands added by the task record: the code is already validated and
+only closure records differ. For `BOUNDED` and `FULL`, the candidate also runs
+the record's commands because the tree has changed. The project chooses one
+owner for the full suite: candidate validation without CI, CI with
+`ciBeforeLanding`, or required pull request checks in `pull-request` mode.
+
 In `pull-request` mode, `cardine run` keeps the same next-step logic:
 
 1. Validate the task locally, as in `direct` mode.

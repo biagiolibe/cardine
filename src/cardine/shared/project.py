@@ -100,7 +100,8 @@ def project_validation_commands(configuration: dict[str, object], outcome: str |
         if outcome not in ("REUSE", "BOUNDED", "FULL"):
             raise CardineError(f"unknown candidate validation outcome: {outcome}")
         references.extend(validation["candidate"][outcome])
-    commands = [validation["commands"][key] for key in references]
+    excluded = set(configuration.get("taskValidation", ())) if outcome == "REUSE" else set()
+    commands = [validation["commands"][key] for key in references if key not in excluded]
     if outcome is not None:
         commands.append("git diff --check")
     return tuple(dict.fromkeys(commands))
