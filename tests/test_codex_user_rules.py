@@ -47,6 +47,19 @@ class CodexUserRulesTest(unittest.TestCase):
                 self.assertEqual(ready.status, "ready")
                 self.assertFalse(owner_hosts_codex.apply_codex_user_rules(ready))
 
+    def test_setup_updates_previous_block_and_preserves_foreign_bytes(self):
+        before, after = "# foreign before\r\n", "# foreign after\r\n"
+        self.write(before + owner_hosts_codex.PREVIOUS_CODEX_USER_RULES + after)
+        config = self.home / "config.toml"
+        def setup():
+            return owner_hosts_setup.plan_setup(None, config, home=self.home, environment={}, framework_root=ROOT, project_root=self.home)
+        self.assertEqual(owner_hosts_codex.plan_codex_user_rules(self.rules).status, "stale")
+        owner_hosts_setup.apply_setup(setup())
+        expected = (before + owner_hosts_codex.CODEX_USER_RULES + after).encode()
+        self.assertEqual(self.rules.read_bytes(), expected)
+        owner_hosts_setup.apply_setup(setup())
+        self.assertEqual(self.rules.read_bytes(), expected)
+
     def test_changed_block_is_preserved(self):
         before, after = "# foreign before\r\n", "# foreign after\r\n"
         self.write(before + "# CARDINE:BEGIN codex-user-rules v0\n# old\n# CARDINE:END codex-user-rules\n" + after)
@@ -105,7 +118,7 @@ class CodexUserRulesTest(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             owner_hosts_setup.print_setup_plan(plan)
-        self.assertIn("+# CARDINE:BEGIN codex-user-rules v1", output.getvalue())
+        self.assertIn("+# CARDINE:BEGIN codex-user-rules v2", output.getvalue())
         self.assertFalse(self.rules.exists())
         owner_hosts_setup.apply_setup(plan)
         self.assertEqual(doctor(), "ready")
@@ -239,6 +252,10 @@ setup.apply_setup(plan)
             (["gh", "api", "repos/x"], None),
             (["gh", "issue", "close", "1"], None),
             (["cardine", "worktree", "advance", "221"], "allow"),
+            (["cardine", "run", "221"], "allow"),
+            (["cardine", "status"], "allow"),
+            (["cardine", "cancel", "221"], None),
+            (["cardine", "abort", "221"], None),
         ]
         for flag in ("--force", "-f", "--force-with-lease", "--delete", "-d", "--mirror"):
             for prefix in (["git", "push"], ["git", "push", "origin"]):
