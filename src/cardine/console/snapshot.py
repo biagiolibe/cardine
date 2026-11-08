@@ -135,6 +135,16 @@ class DeliveryCache:
 
     def __init__(self) -> None:
         self._items: dict[str, tuple[tuple, str | None]] = {}
+        self.cleanup: dict[tuple[Path, str], tuple[tuple, Path]] = {}
+        self.dates: dict[tuple[Path, str, str], int | None] = {}
+
+    def committed_update(self, project: Path, relative: str, ref: str, commit: str | None) -> int | None:
+        if not commit:
+            return _committed_update(project, relative, ref)
+        key = (project, relative, commit)
+        if key not in self.dates:
+            self.dates[key] = _committed_update(project, relative, ref)
+        return self.dates[key]
 
     def pending(self, project: Path, worktree: Path, head: str, task_id: str,
                 identity: ResolvedTaskIdentity, main_commit: str | None,
@@ -244,7 +254,7 @@ def _read_console_state(project: Path, task_id: str, text: str) -> tuple[dict | 
 
 
 def _branch_observation(project: Path, task_id: str, worktrees: dict[str, str],
-                        identities: IdentityCache) -> BranchObservation | None:
+                        identities: IdentityCache, branches: dict[str, str]) -> BranchObservation | None:
     """Observe the canonical task branch, or None when the task has no branch or worktree."""
     try:
         identity = identities.resolve(project, task_id)
@@ -254,7 +264,7 @@ def _branch_observation(project: Path, task_id: str, worktrees: dict[str, str],
     worktree = worktrees.get(branch)
     available = bool(worktree and Path(worktree).is_dir())
     ref = f"refs/heads/{branch}"
-    if _git_optional(project, "rev-parse", "--verify", "--quiet", ref) is None:
+    if branch not in branches:
         return BranchObservation(branch, False, worktree, available, False, None, None, "") if worktree else None
     state_source = f"task state on branch {branch}"
     state_text = None
@@ -315,7 +325,8 @@ def _record_text(project: Path, row: dict, worktree: str | None) -> tuple[Path |
 
 
 def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identities: IdentityCache,
-                  by_id: dict[str, dict], preset: str) -> Task | None:
+                  by_id: dict[str, dict], preset: str, cache: DeliveryCache,
+                  main_commit: str | None, head: str | None) -> Task | None:
     """List a done task with closure work or a cleanup-only hint.
 
     The state keeps its real status; `CLOSING` is derived from the registered
@@ -327,14 +338,14 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
     task_id = row["id"]
     needle = task_id.casefold()
     if not any(needle in branch.casefold() for branch in worktrees):
-        return _orphaned_cleanup_task(project, row, by_id, preset)
+        return _orphaned_cleanup_task(project, row, by_id, preset, cache, main_commit)
     try:
         identity = identities.resolve(project, task_id)
     except CardineError:
         return None
     worktree = worktrees.get(identity.branch_name)
     if worktree is None:
-        return _orphaned_cleanup_task(project, row, by_id, preset)
+        return _orphaned_cleanup_task(project, row, by_id, preset, cache, main_commit)
     closure: dict[str, object] | None = None
     try:
         report, _ready = closure_status(task_id, None, project, identity=identity)
@@ -366,7 +377,7 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
         worktree=worktree, readiness="DONE" if cleanup_pending else "CLOSING",
         lifecycle="done" if cleanup_pending else "closing", source="main",
         cleanup_pending=cleanup_pending, registered_worktree=True, workflow=preset, legacy=False,
-        updated_at=_committed_update(project, row["record"]) if row["record"] else None,
+        updated_at=cache.committed_update(project, row["record"], "HEAD", head) if row["record"] else None,
         closure_stop_reason=closure["stop_reason"] if closure else None,
         closure_resume=closure["resume"] if closure else None,
         started_at=started_at, progress_phase=progress_phase, remaining_gates=remaining_gates,
@@ -375,21 +386,32 @@ def _closing_task(project: Path, row: dict, worktrees: dict[str, str], identitie
     )
 
 
-def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str) -> Task | None:
+def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str,
+                           cache: DeliveryCache, main_commit: str | None) -> Task | None:
     """Keep an issued cleanup visible after Git has removed its registration.
 
     The common-directory receipt, not a missing worktree or a guessed phase,
     selects the read-only preview. Completed deliveries stay hidden.
     """
     common = canonical_git_common_dir(project)
-    if not (common / 'cardine-operations' / f"{row['id']}.cleanup.json").exists():
+    intent = common / 'cardine-operations' / f"{row['id']}.cleanup.json"
+    intent_stat = _stat_identity(intent)
+    cache_key = (project, row['id'])
+    if intent_stat is None:
+        cache.cleanup.pop(cache_key, None)
+        return None
+    cached = cache.cleanup.get(cache_key)
+    if cached and main_commit and cached[0] == (intent_stat, main_commit, _stat_identity(cached[1])):
         return None
     from cardine.lifecycle.context import resolve_run_locations
     from cardine.lifecycle.preview import preview_run
     locations = resolve_run_locations(row['id'], project)
     preview = preview_run(locations)
     if preview['outcome'] == 'done':
+        if main_commit:
+            cache.cleanup[cache_key] = ((intent_stat, main_commit, _stat_identity(locations.worktree)), locations.worktree)
         return None
+    cache.cleanup.pop(cache_key, None)
     path, text = _record_text(project, row, None)
     dependencies = tuple(row['dependencies'])
     return Task(row['id'], row['title'], 'done', (row['phase'],) if row['phase'] else (),
@@ -533,6 +555,10 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         raise listing_error
     worktrees, heads = _worktrees(records)
     delivery_cache = deliveries or DeliveryCache()
+    refs = _git(project, "for-each-ref", "--format=%(refname:strip=2) %(objectname)", "refs/heads/")
+    branches = dict(line.split(" ", 1) for line in refs.splitlines() if " " in line)
+    head = heads.get(str(project)) or None
+    main_commit = branches.get("main")
     deliveries_shared: dict[str, object] = {}
     tasks: list[Task] = []
     closing_count = 0
@@ -552,14 +578,14 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
         if only is not None and task_id != only:
             continue
         if row["status"] in ("done", "cancelled"):
-            closing = _closing_task(project, row, worktrees, identities, by_id, preset)
+            closing = _closing_task(project, row, worktrees, identities, by_id, preset, delivery_cache, main_commit, head)
             if closing:
                 tasks.append(closing)
                 closing_count += int(not closing.cleanup_pending)
             continue
         identity_problem = None
         try:
-            facts = _branch_observation(project, task_id, worktrees, identities)
+            facts = _branch_observation(project, task_id, worktrees, identities, branches)
         except ConsoleError as error:
             facts, identity_problem = None, str(error)
         state = facts.state if facts and facts.state is not None else states[task_id]
@@ -614,7 +640,8 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
             objective=_section(text or "", "Objective", "Goal"),
             criteria=_section(text or "", "Acceptance Criteria"),
             worktree=facts.worktree if facts else None, readiness=readiness,
-            updated_at=_committed_update(project, row["record"], updated_ref) if row["record"] else None,
+            updated_at=delivery_cache.committed_update(project, row["record"], updated_ref,
+                branches.get(facts.branch) if from_branch else head) if row["record"] else None,
             lifecycle=lifecycle, source=source, mismatch=mismatch,
             changes_requested=(not state_error and state.get("review", {}).get("verdict") == "CHANGES_REQUESTED"),
             active_writer=bool(facts and facts.dirty),

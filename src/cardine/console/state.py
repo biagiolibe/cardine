@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 import threading
+import time
 
 from cardine.console.launch import _agent_defaults, _launch_selected
 from cardine.console.models import FrameworkIdentity, Snapshot, Task
@@ -38,6 +39,7 @@ class ConsoleState:
         self.agent_defaults = _agent_defaults()
         self.snapshot: Snapshot | None = None
         self.last_success: datetime | None = None
+        self.last_refresh_finished: float | None = None
         self.error: str | None = None
         self.identities = IdentityCache()
         self.deliveries = DeliveryCache()
@@ -87,6 +89,7 @@ class ConsoleState:
             result = (None, f"Refresh failed: {error}")
         with self._lock:
             self._pending = result
+            self.last_refresh_finished = time.monotonic()
             self._worker = None
 
     @property

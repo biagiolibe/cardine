@@ -36,7 +36,6 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
     detail_open = False
     detail_focused = False
     status_filter = "All"
-    last_poll = 0.0
     notice = ""
     notice_until = 0.0
     launch_task: Task | None = None
@@ -48,8 +47,8 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
         finished = state.take_launch_result()
         if finished is not None:
             notice, notice_until = finished[1], time.monotonic() + (3 if finished[0] else 5)
-        if now - last_poll >= interval and state.start_refresh():
-            last_poll = now
+        if state.last_refresh_finished is None or now - state.last_refresh_finished >= interval:
+            state.start_refresh()
         snapshot = state.snapshot
         visible = _visible_tasks(snapshot, status_filter, search)
         if selected_id not in {task.task_id for task in visible}:
@@ -249,8 +248,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             searching = True
             search = ""
         elif key == ord("r"):
-            if state.start_refresh():
-                last_poll = time.monotonic()
+            state.start_refresh()
         elif key == ord("c") and selected_task and not help_visible:
             command = selected_task.launch_command
             notice = (f"Copied: {command}" if command and _copy_to_clipboard(command)
