@@ -17,6 +17,7 @@ from cardine.shared.errors import CardineError, CardineStop
 from cardine.tasks.state import state_path
 from cardine.worktree.storage import _lifecycle_paths
 from cardine.tasks.identity import resolve_task_identity
+from cardine.lifecycle.control import operation_state
 import worktree_support as support
 from fixture_restore_support import ReadySnapshot
 
@@ -496,6 +497,68 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
         self.assertEqual(self.git('rev-parse', 'HEAD').stdout.strip(), self.base)
         self.assertEqual((self.worker / 'feature.txt').read_text(), 'undelivered changes')
         self.assertTrue(self.paths()[1].exists())
+
+    def move_branch(self):
+        (self.worker / 'more.txt').write_text('after staging\n')
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'late commit', cwd=self.worker)
+
+    def test_stale_candidate_is_reversed_by_the_engine(self):
+        self.ready()
+        self.move_branch()
+        from cardine.lifecycle.engine import dispatch_run, run_integration_step
+        locations = candidate.locations_for('056', self.primary)
+        with self.assertRaisesRegex(CardineStop, 'task source moved after staging'):
+            candidate.staged_inputs(locations, operation_state(self.worker, '056')[0])
+        self.assertIsNone(run_integration_step(locations))
+        self.assertEqual(self.git('branch', '--show-current').stdout.strip(), 'main')
+        self.assertFalse((self.primary / '.git' / 'MERGE_HEAD').exists())
+        self.assertFalse(self.paths()[1].exists())
+        self.assertFalse(self.paths()[2].exists())
+
+    def test_foreign_lease_stops_with_integrity_mismatch(self):
+        self.ready()
+        from cardine.lifecycle.engine import dispatch_run
+        _, lease, staged = self.paths()
+        foreign = json.loads(staged.read_bytes())
+        foreign['task_id'] = '999'
+        staged.write_text(json.dumps(foreign))
+        locations = candidate.locations_for('056', self.primary)
+        with mock.patch.object(merge, 'recover_task_integration', side_effect=AssertionError('reversed')):
+            result = dispatch_run(locations)
+        self.assertEqual((result['outcome'], result['stop']['code'], result['step']),
+                         ('blocked', 'INTEGRITY_MISMATCH', 'candidate'))
+        detail = result['stop']['detail']
+        self.assertTrue(detail.startswith('foreign candidate ownership | expected '), detail)
+        self.assertEqual(len(detail.split(' | ')), 5)
+        self.assertEqual(json.loads(staged.read_bytes()), foreign)
+        self.assertTrue(lease.exists())
+        self.assertTrue((self.primary / '.git' / 'MERGE_HEAD').exists())
+
+    def test_refused_reversal_names_both_refusals_and_keeps_the_foreign_edit(self):
+        self.ready()
+        self.run_candidate()
+        self.move_branch()
+        (self.primary / 'foreign.txt').write_text('foreign')
+        self.git('add', 'foreign.txt')
+        from cardine.lifecycle.engine import dispatch_run
+        result = dispatch_run(candidate.locations_for('056', self.primary))
+        self.assertEqual((result['outcome'], result['stop']['code']), ('blocked', 'INTEGRITY_MISMATCH'))
+        detail = result['stop']['detail']
+        self.assertIn('task source moved after staging', detail)
+        self.assertIn('foreign candidate changes must be preserved before abort', detail)
+        self.assertEqual((self.primary / 'foreign.txt').read_text(), 'foreign')
+
+    def test_a_stop_during_staging_reports_the_candidate_step(self):
+        self.ready()
+        from cardine.lifecycle.engine import dispatch_run
+        with mock.patch.object(merge, 'recover_task_integration', side_effect=AssertionError('reversed')):
+            _, lease, _ = self.paths()
+            foreign = json.loads(lease.read_bytes())
+            foreign['branch'] = 'other'
+            lease.write_text(json.dumps(foreign))
+            result = dispatch_run(candidate.locations_for('056', self.primary))
+        self.assertEqual((result['step'], result['stop']['code']), ('candidate', 'INTEGRITY_MISMATCH'))
 
     def test_later_cancellation_cannot_land_a_previously_validated_candidate(self):
         self.ready()

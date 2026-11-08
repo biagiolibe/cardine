@@ -60,6 +60,11 @@ def stop_error(code: str, detail: str, **fields: object) -> CardineStop:
     return error
 
 
+def refusal(what: str, expected: str, found: str, why: str, resolve: str) -> str:
+    """One developer-stop message; callers shorten commits and digests to 12 characters."""
+    return f"{what} | expected {expected} | found {found} | {why} | resolve: {resolve}"
+
+
 def outcome_for_code(code: str) -> str:
     """Classify a registered diagnostic without granting repair authority."""
     entry = load_stop_registry().get(code)

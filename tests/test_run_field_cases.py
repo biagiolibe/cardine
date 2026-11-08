@@ -122,7 +122,7 @@ class AuthorityFieldCaseTest(unittest.TestCase):
             worker = project.commit_implementation()
             (worker / 'stray.txt').write_text('outside\n')
             status, stopped = printed(['001', '--project', str(project.root)])
-            self.assertEqual((status, stopped['step'], stopped['outcome']), (2, 'contract', 'blocked'))
+            self.assertEqual((status, stopped['step'], stopped['outcome']), (2, 'validation', 'blocked'))
             self.assertEqual(stopped['stop']['code'], 'SCOPE_CHANGE_REQUIRED')
             self.assertEqual(stopped['stop']['detail'], 'path outside expected surface: stray.txt')
             with self.assertRaisesRegex(CardineError, 'SCOPE_CHANGE_REQUIRED'):
