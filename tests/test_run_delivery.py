@@ -212,6 +212,58 @@ deliver_implementation(Path(sys.argv[1]), '001')
         self.assertIsNone(verify_delivery(self.worker, self.state(), self.base))
         self.assertEqual(self.deliver()['source'], source)
 
+    def attempt(self, phase):
+        """Leave a validation intent in the given phase, as a finished or running attempt would."""
+        from cardine.lifecycle.validation import operation_path
+        receipts._save_intent(operation_path(self.worker, '001'), {'phase': phase})
+
+    def run_step(self):
+        from unittest.mock import patch
+        from cardine.lifecycle.engine import resolve_run_locations, run_validation_step
+        with patch('cardine.lifecycle.validation.run_task_validation',
+                   return_value={'phase': 'failed', 'evidence': 'attempt', 'attemptId': 'a1',
+                                 'runs': []}) as validation:
+            result = run_validation_step(resolve_run_locations('001', self.worker))
+        return result, validation
+
+    def revise(self, text):
+        (self.worker / 'src/result.py').write_text(text)
+        self.git('add', '.')
+        self.git('commit', '-m', 'Revise implementation')
+
+    def test_run_redelivers_after_a_completed_validation_attempt(self):
+        self.deliver()
+        for phase, text in (('invalidated', 'result = 2\n'), ('complete', 'result = 3\n')):
+            with self.subTest(phase=phase):
+                self.attempt(phase)
+                self.revise(text)
+                result, validation = self.run_step()
+                self.assertEqual(result['action'], 'deliver')
+                validation.assert_not_called()
+                self.assertEqual(result['evidence'][0]['identity'], self.git('rev-parse', 'HEAD'))
+
+    def test_run_does_not_redeliver_during_a_validation_attempt(self):
+        self.deliver()
+        for number, phase in enumerate(('process', 'publish'), 4):
+            with self.subTest(phase=phase):
+                self.attempt(phase)
+                self.revise('result = %d\n' % number)
+                head = self.git('rev-parse', 'HEAD')
+                result, validation = self.run_step()
+                validation.assert_called_once()
+                self.assertNotEqual(result.get('action'), 'deliver')
+                self.assertEqual(self.git('rev-parse', 'HEAD'), head)
+
+    def test_unchanged_run_after_a_completed_attempt_writes_nothing(self):
+        self.deliver()
+        self.attempt('complete')
+        head, status = self.git('rev-parse', 'HEAD'), self.git('status', '--porcelain')
+        for _ in range(2):
+            result, validation = self.run_step()
+            validation.assert_called_once()
+            self.assertNotEqual(result.get('action'), 'deliver')
+            self.assertEqual((self.git('rev-parse', 'HEAD'), self.git('status', '--porcelain')), (head, status))
+
     def test_progress_requires_the_canonical_worktree_and_completed_operation(self):
         from cardine.lifecycle.engine import implementation_delivery, resolve_run_locations
         locations = resolve_run_locations('001', self.worker)

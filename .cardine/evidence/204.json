@@ -1,0 +1,46 @@
+{
+  "204": [
+    {
+      "attemptId": "2d49bda46daf46b6aeef7cff6010f6fd",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "b65951886fc5f567ed631fe1e721c8b83711cb38",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/204.json#2d49bda46daf46b6aeef7cff6010f6fd/1/repository-check",
+      "round": 1,
+      "sourceDigest": "8879caf642dacb954d4e6a4ee7ddb50e945fadf3285956c26f07f101058d173b",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "2d49bda46daf46b6aeef7cff6010f6fd",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_delivery --module test_run_validation --module test_run_handoff --module test_run_ci --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "b65951886fc5f567ed631fe1e721c8b83711cb38",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/204.json#2d49bda46daf46b6aeef7cff6010f6fd/1/task-tests",
+      "round": 1,
+      "sourceDigest": "8879caf642dacb954d4e6a4ee7ddb50e945fadf3285956c26f07f101058d173b",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_delivery,test_run_validation,test_run_handoff,test_run_ci,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=195 total=2174 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "2d49bda46daf46b6aeef7cff6010f6fd",
+      "command": "git diff --check",
+      "commit": "b65951886fc5f567ed631fe1e721c8b83711cb38",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/204.json#2d49bda46daf46b6aeef7cff6010f6fd/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "8879caf642dacb954d4e6a4ee7ddb50e945fadf3285956c26f07f101058d173b",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
