@@ -34,7 +34,7 @@
     "validation": {
       "baseline": [
         "repository-check",
-        "adopt-32169894e045e78a",
+        "task-tests",
         "adopt-466c2f308b48c766"
       ],
       "candidate": {
@@ -51,14 +51,24 @@
       },
       "commands": {
         "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
-        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
         "adopt-466c2f308b48c766": "git diff --check",
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
-        "repository-check": "python3 scripts/check_repository.py"
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_init --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:4ab497dbd34938698463c63f936270d9284a4fc30e450d7cd94c94cf622d2038",
+      "at": "2026-11-08T15:27:14.699614Z",
+      "before": "sha256:9fdd50f80340271380da7544fa619e292aa3b301bdfdcd5add7d1908bce4e9fe",
+      "changedFields": [
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -84,6 +94,30 @@
         "source": "eacfef8e8310d2fd87b0898e4abc2912eed8991e",
         "task_id": "194",
         "tree": "37b7977251bf7ed975ff1a353aacc9b013850865",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "a30995c0a12330b0e299619c74f873bc79e7bb900286c15b12433ca1a1954710",
+        "digest": "bd77034740553bd61542f5f1cea60dd2ede623a1722933b99d8394241bbe1d32",
+        "inputs": {
+          ".cardine/tasks/194.json": "e40f9ffedff279380fe27869cb2faffde3bce9b5cf2a4b38c17c34e7bb921f75",
+          "tasks/194.md": "de91369fa97fc78ec8240242380a16e2c3efeb441d9c390915d493302746fb9f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "6b636f2414a94c7f8e0c884c217c19c1",
+        "outputs": {
+          ".cardine/tasks/194.json": "1429bac9038b57c79b8372b8da652204f3fac48d27f7ef207246f7cd6219bac5",
+          "tasks/194.md": "de91369fa97fc78ec8240242380a16e2c3efeb441d9c390915d493302746fb9f"
+        },
+        "predecessor": "e8fbbd2bb438d216e74086934d839e60ed13bb9088d05342418dac0b7e959335",
+        "result": "verified",
+        "source": "9171210f4c7ddccf3fd0738cf9dedb1509400801",
+        "task_id": "194",
+        "tree": "0ded0a7e962fe24ce43a609b4c017a0b48823440",
         "version": 1
       }
     ]

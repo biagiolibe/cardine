@@ -34,7 +34,7 @@
     "validation": {
       "baseline": [
         "repository-check",
-        "adopt-32169894e045e78a",
+        "task-tests",
         "adopt-466c2f308b48c766"
       ],
       "candidate": {
@@ -51,14 +51,24 @@
       },
       "commands": {
         "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
-        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
         "adopt-466c2f308b48c766": "git diff --check",
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
-        "repository-check": "python3 scripts/check_repository.py"
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:cad5b1156b676cc804862702c52a5989a35b76888770d1ad64a693549bba73da",
+      "at": "2026-11-08T15:27:09.298939Z",
+      "before": "sha256:5eed2a755274bb284fe317a948e2736e806433d017d8206bc311acc33cc07b36",
+      "changedFields": [
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -89,6 +99,30 @@
         "source": "3ea64471e17043beb3ec496fc2515134ae5c924a",
         "task_id": "180",
         "tree": "b2b205167d58eff2c531eaad9e0a239f22cb350e",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "294d6f296729634cc978af89f0e68c6042d124b9945174fc41307f51bcf2f0c6",
+        "digest": "fc2f366b4d60f198ac79af441f226fe48dc20baef11da7a86e57e40e19a6cb65",
+        "inputs": {
+          ".cardine/tasks/180.json": "cd96a47464b961dda4b0a74087881429d948a15fe79fadb55acced48d3f3888e",
+          "tasks/180-remove-meridian-allowances.md": "d9d02134704847cf36eea4b4fe0028d47fa65e30818437f3de9cccc44623484f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "9a2b1a26006c40d9b2153c2ffd99032f",
+        "outputs": {
+          ".cardine/tasks/180.json": "233e8978831be86812e1c7e1d0c57f2210abb83cd2ad3cc5e16ef1c7968b8871",
+          "tasks/180-remove-meridian-allowances.md": "d9d02134704847cf36eea4b4fe0028d47fa65e30818437f3de9cccc44623484f"
+        },
+        "predecessor": "349fe03b094792d3f55adac6816dcdf2b1f0d04cc289a7b00c0c376046a8ee77",
+        "result": "verified",
+        "source": "9171210f4c7ddccf3fd0738cf9dedb1509400801",
+        "task_id": "180",
+        "tree": "0ded0a7e962fe24ce43a609b4c017a0b48823440",
         "version": 1
       }
     ]

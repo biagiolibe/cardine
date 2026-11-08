@@ -39,7 +39,7 @@
     "validation": {
       "baseline": [
         "repository-check",
-        "adopt-32169894e045e78a",
+        "task-tests",
         "adopt-466c2f308b48c766"
       ],
       "candidate": {
@@ -56,14 +56,24 @@
       },
       "commands": {
         "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
-        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
         "adopt-466c2f308b48c766": "git diff --check",
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
-        "repository-check": "python3 scripts/check_repository.py"
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_command_context --module test_host_hooks --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:87d9cd16fdd9a3b4973f8f9f44cc269da9f77912f51dc70e38575d7d7a211867",
+      "at": "2026-11-08T15:27:08.191713Z",
+      "before": "sha256:01673bedde10cfad314962bd750262d8a6091eef0df77e98d5ac29727a3426ec",
+      "changedFields": [
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -94,6 +104,30 @@
         "source": "3ea64471e17043beb3ec496fc2515134ae5c924a",
         "task_id": "179",
         "tree": "b2b205167d58eff2c531eaad9e0a239f22cb350e",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "ce13ced3e0520eea4d765a0b88b307352ac1529ff18e2eedf513155e4df9101a",
+        "digest": "ed93e1020500eb48eb21a883aabfd27a0cdfbf0d11e31f5490f08bab833f9f99",
+        "inputs": {
+          ".cardine/tasks/179.json": "64982d4721e6cc972a6a1cf8e2a4d2c1461c5b6548bfbee8428eb9c9bb37705e",
+          "tasks/179-remove-shell-hooks.md": "0bc8a5574e081fee309a37a1b51f07542f2b2c03081709dfe2cd68ea756a6e7f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "dda0b89bd192438681a1b192976e11ff",
+        "outputs": {
+          ".cardine/tasks/179.json": "df21c4d5c29087dc85d5554031cd3a01c202e0ea8a3e442ce86e1577da5969ed",
+          "tasks/179-remove-shell-hooks.md": "0bc8a5574e081fee309a37a1b51f07542f2b2c03081709dfe2cd68ea756a6e7f"
+        },
+        "predecessor": "2782410364acdbbc3662057304654c41e7dfd767999bce12a0f593d3834adb38",
+        "result": "verified",
+        "source": "9171210f4c7ddccf3fd0738cf9dedb1509400801",
+        "task_id": "179",
+        "tree": "0ded0a7e962fe24ce43a609b4c017a0b48823440",
         "version": 1
       }
     ]
