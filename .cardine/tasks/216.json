@@ -1,0 +1,94 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/hosts/codex.py",
+      "tests/test_codex_user_rules.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/216.md",
+    "title": "Task 216 \u2014 Let Codex run the lifecycle commands without a prompt",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_codex_user_rules --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "a53bf83e6f24276dfe418d024395e2e09c9e7584889d5133e72dc5957833aa72",
+        "digest": "c2e1a5413a482c234b4b24eaf699e4029aafbeb759a0ee5e19c52d413300a772",
+        "inputs": {
+          ".cardine/tasks/216.json": null,
+          "tasks/216.md": null
+        },
+        "kind": "creation",
+        "operation_id": "2898698634fb4be68fb38f85df7312b4",
+        "outputs": {
+          ".cardine/tasks/216.json": "661a295165f1b11134aca92d11209ac4dea7d6c1875c872113c5b6b9c64c5ede",
+          "tasks/216.md": "5409a4b1dcbea17d46842ff1f53d09c08319cd7d340f9e7ebd28feb7b9c22a40"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "c30157f1e9fafdb357ffc84fd5dc88ac7f29bb29",
+        "task_id": "216",
+        "tree": "66eda1457e13286de26302e9f0963572baef39f0",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "216",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
