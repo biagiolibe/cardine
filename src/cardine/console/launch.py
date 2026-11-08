@@ -90,15 +90,24 @@ def _apple_script(command: str, session_uuid: str) -> str:
         "repeat with aWindow in windows",
         "    repeat with aTab in tabs of aWindow",
         "        repeat with aSession in sessions of aTab",
-        f'            if unique id of aSession is "{session_uuid}" then set targetSession to aSession',
+        f'            if unique id of aSession is "{session_uuid}" then',
+        '                set targetSession to aSession',
+        '                set targetTab to aTab',
+        '            end if',
         "        end repeat",
         "    end repeat",
         "end repeat",
         "if targetSession is missing value then error \"CARDINE_SESSION_NOT_FOUND\"",
-        "tell targetSession",
-        "set newSession to split horizontally with default profile",
+        "set agentSessions to {}",
+        "repeat with aSession in sessions of targetTab",
+        f'    if unique id of aSession is not "{session_uuid}" then set end of agentSessions to contents of aSession',
+        "end repeat",
+        "if (count of agentSessions) is 0 then",
+        "    tell targetSession to set newSession to (split vertically with default profile)",
+        "else",
+        "    tell (item -1 of agentSessions) to set newSession to (split horizontally with default profile)",
+        "end if",
         f'tell newSession to write text "{quoted}"',
-        "end tell",
         "end tell",
     ))
 
@@ -130,7 +139,7 @@ def _start_launch(request: LaunchRequest) -> tuple[bool, str]:
             return False, "iTerm2 console session was not found; [copy] remains available"
         return False, (f"iTerm2 is unavailable or rejected launch: {detail}; [copy] remains available"
                        if detail else "iTerm2 launch failed; [copy] remains available")
-    return True, f"Started {request.agent} in a new iTerm2 split pane"
+    return True, f"Started {request.agent} in a new iTerm2 pane beside the console"
 
 
 def _launch_selected(state: "ConsoleState", task: Task, agent: str,

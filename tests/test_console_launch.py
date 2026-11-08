@@ -357,7 +357,12 @@ class AgentLaunchTest(unittest.TestCase):
         command = run.call_args.args[0]
         self.assertEqual(command[0], "osascript")
         self.assertIn("exec claude 'Proceed with 001; echo nope'", command[2])
-        self.assertIn("split horizontally with default profile", command[2])
+        self.assertIn("if (count of agentSessions) is 0 then", command[2])
+        self.assertIn("tell targetSession to set newSession to (split vertically with default profile)", command[2])
+        self.assertIn("tell (item -1 of agentSessions) to set newSession to (split horizontally with default profile)", command[2])
+        self.assertIn("repeat with aSession in sessions of targetTab", command[2])
+        self.assertIn('if unique id of aSession is not "12345678-1234-1234-1234-123456789abc"', command[2])
+        self.assertNotIn("tell targetSession to set newSession to (split horizontally", command[2])
         self.assertIn('if unique id of aSession is "12345678-1234-1234-1234-123456789abc"', command[2])
         self.assertIn("repeat with aSession in sessions of aTab", command[2])
         self.assertIn("tell newSession to write text", command[2])
