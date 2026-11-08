@@ -58,7 +58,7 @@ def _landed(locations, intent):
             or binding['authority'] != receipts.require_authority(root)
             or binding['origin'] != _origin(root)
             or git_output(root, 'branch', '--show-current') != 'main'
-            or git_output(root, 'status', '--porcelain')
+            or git_output(root, 'status', '--porcelain', '--untracked-files=no')
             or not _ancestor(root, binding['main'], 'HEAD')
             or not _ancestor(root, binding['taskTip'], binding['main'])):
         _fail(locations, 'foreign cleanup owner or changed landing inputs')
@@ -164,7 +164,7 @@ def _new_intent(locations, *, delivery):
     root, worker = locations.primary, locations.worktree
     identity = resolve_task_identity(root, locations.task_id, 'existing')
     lifecycle, _, _ = _lifecycle_paths(root, identity)
-    if git_output(root, 'status', '--porcelain'):
+    if git_output(root, 'status', '--porcelain', '--untracked-files=no'):
         _fail(locations, 'primary checkout must be clean')
     _inactive(locations)
     from cardine.worktree.checkout import inspect_task_worktree

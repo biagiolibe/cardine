@@ -212,8 +212,19 @@ def stage_task_integration(
     if git_output(project_root, "branch", "--show-current") != "main":
         raise CardineError("primary checkout must be on main")
     recover_landing_residue(project_root, identity.canonical_id)
-    if git_output(project_root, "status", "--porcelain"):
+    if git_output(project_root, "status", "--porcelain", "--untracked-files=no"):
         raise stop_error("PRIMARY_DIRTY", "primary checkout must be clean")
+    task_commit = str(inspection["task_commit"])
+    merge_base = git_output(project_root, "merge-base", "main", task_commit)
+    written = git_output(project_root, "diff", "--name-only", "-z", "--no-renames",
+                         "--diff-filter=ACMRT", merge_base, task_commit).split("\0")
+    untracked = git_output(project_root, "ls-files", "--others", "--exclude-standard", "-z").split("\0")
+    collisions = sorted(path for path in untracked if path and any(
+        path == changed or path.startswith(changed + "/") or changed.startswith(path + "/")
+        for changed in written if changed
+    ))
+    if collisions:
+        raise stop_error("PRIMARY_DIRTY", "untracked paths would be overwritten: " + ", ".join(collisions))
     origin = _run_git(project_root, "remote", "get-url", "origin")
     remote_main = _run_git(project_root, "rev-parse", "--verify", "refs/remotes/origin/main")
     if (
@@ -240,7 +251,6 @@ def stage_task_integration(
         # This is deliberately before inspection, lease creation, and merge so the
         # first-use decision cannot strand an integration transaction.
         raise undeclared_validation_commands_error(project_root)
-    task_commit = str(inspection["task_commit"])
     task_state = _integration_task_state(project_root, identity, task_commit, Path(str(inspection["worktree"])))
     from cardine.lifecycle.execution import enforce_execution_scope
     enforce_execution_scope(Path(str(inspection["worktree"])), identity.canonical_id,

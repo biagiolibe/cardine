@@ -11,7 +11,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 sys.path.insert(0, str(ROOT / 'tests'))
-from cardine.integration import candidate, merge
+from cardine.integration import candidate, cleanup, merge
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.tasks.state import state_path
@@ -30,7 +30,7 @@ class CandidateTest(support.BoundedWorktreeLifecycleFixture):
         environment.start()
         self.addCleanup(environment.stop)
 
-    def ready(self, command=None):
+    def ready(self, command=None, before_stage=None):
         if command is None and CandidateTest._ready is not None:
             snapshot, worker, staged = CandidateTest._ready
             snapshot.restore()
@@ -51,6 +51,8 @@ class CandidateTest(support.BoundedWorktreeLifecycleFixture):
         self.git('add', '.', cwd=self.worker)
         self.git('commit', '-m', 'implement', cwd=self.worker)
         self.measure(self.worker)
+        if before_stage:
+            before_stage()
         staged = merge.stage_task_integration('056', self.worktree_root, None, self.primary)
         if command is None:
             snapshot = ReadySnapshot(self.root)
@@ -121,6 +123,38 @@ else: finalize_task_integration('056', None, root)
         with mock.patch.dict(os.environ, {'CODEX_TOOL_CALL_ID': 'another-call', 'TERM_SESSION_ID': 'another'}), \
                 mock.patch.object(candidate, 'execute_command', side_effect=AssertionError('repeated process')):
             self.assertEqual(self.run_candidate(), first)
+
+    def test_untracked_files_do_not_invalidate_candidate(self):
+        origin = self.root / 'origin.git'
+        subprocess.run(['git', 'init', '--bare', '-b', 'main', str(origin)], check=True, capture_output=True)
+        self.git('remote', 'add', 'origin', str(origin))
+        self.git('push', 'origin', 'main')
+        self.ready('printf candidate-output', lambda: (self.primary / 'unrelated.txt').write_text('before'))
+        first = self.run_candidate()
+        self.assertEqual(first['phase'], 'passed')
+        (self.primary / 'another.txt').write_text('after')
+        with mock.patch.object(candidate, 'execute_command', side_effect=AssertionError('repeated process')):
+            self.assertEqual(self.run_candidate(), first)
+            self.finalize()
+            self.assertEqual(cleanup.finish_delivery(candidate.locations_for('056', self.primary))['status'], 'cleaned')
+        self.assertEqual((self.primary / 'unrelated.txt').read_text(), 'before')
+        self.assertEqual((self.primary / 'another.txt').read_text(), 'after')
+        self.assertFalse(self.git('branch', '--list', 'task-056').stdout)
+
+    def test_untracked_task_path_blocks_staging(self):
+        with self.assertRaisesRegex(CardineStop, 'PRIMARY_DIRTY.*feature.txt'):
+            self.ready('true', lambda: (self.primary / 'feature.txt').write_text('local'))
+
+    def test_tracked_change_blocks_staging(self):
+        with self.assertRaisesRegex(CardineStop, 'PRIMARY_DIRTY'):
+            self.ready('true', lambda: (self.primary / 'tasks/056-lifecycle.md').write_text('changed'))
+
+    def test_tracked_change_after_validation_invalidates_candidate(self):
+        self.ready('true')
+        self.run_candidate()
+        (self.primary / 'tasks/056-lifecycle.md').write_text('changed')
+        with self.assertRaisesRegex(CardineStop, 'candidate tree or main changed'):
+            self.finalize()
 
     def test_declared_pass_file_has_no_authority(self):
         staged = self.ready()
