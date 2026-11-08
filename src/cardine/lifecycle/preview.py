@@ -31,7 +31,9 @@ def observe_run(locations):
     cleanup = operation_path(locations, 'cleanup')
     if cleanup.exists():
         intent = receipts._load_intent(cleanup)
-        from cardine.integration.cleanup import _landed
+        from cardine.integration.cleanup import _landed, completed
+        if completed(locations, intent):
+            return RunFacts(task, locations.primary, 'done', cleanup_pending=False, landing_complete=True)
         _landed(locations, intent)
         complete = intent.get('effects', {}).get('cleanup_lifecycle') == 'done'
         if complete:

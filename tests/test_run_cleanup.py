@@ -165,6 +165,28 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
         self.assertEqual(self.remote('task-056'), self.landed)
         self.assertTrue((self.worker / '.git').exists())
 
+    def test_completed_cleanup_stays_done_after_a_new_authorization(self):
+        self.finish()
+        # A later `cardine authorize` (new runtime, policy, or accepted main) leaves the
+        # landed intent bound to an authority that no longer matches.
+        path = candidate.operation_path(self.locations, 'cleanup')
+        intent = receipts._load_intent(path)
+        intent['binding']['authority'] = {**intent['binding']['authority'],
+                                          'runtime': 'f' * 64, 'accepted_main': self.landed}
+        receipts._save_intent(path, intent)
+        self.assertNotEqual(intent['binding']['authority'], receipts.require_authority(self.primary))
+        with mock.patch.object(receipts, '_durable', side_effect=AssertionError('completed cleanup wrote')):
+            result = self.finish()
+        self.assertEqual((result['status'], result['already_cleaned']), ('cleaned', True))
+        self.assertEqual(engine.run_integration_step(self.locations)['outcome'], 'done')
+        from cardine.lifecycle.preview import observe_run
+        facts = observe_run(self.locations)
+        self.assertEqual((facts.cleanup_pending, facts.landing_complete), (False, True))
+        (self.worker / 'foreign').write_text('keep')
+        with self.assertRaises(CardineError):
+            self.finish()
+        self.assertEqual((self.worker / 'foreign').read_text(), 'keep')
+
     def test_changed_remote_or_foreign_owner_intent_is_rejected(self):
         self.own_remote()
         path = candidate.operation_path(self.locations, 'cleanup')
