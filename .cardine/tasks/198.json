@@ -1,0 +1,98 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/receipts.py",
+      "src/cardine/lifecycle/authorization.py",
+      "schemas/task-state-v1.schema.json",
+      "tests/test_authorization.py",
+      "tests/test_run_receipts.py",
+      "tests/task_contract_support.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/198.md",
+    "title": "Task 198 \u2014 Keep in-progress operations valid across an accepted Cardine update",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "987449b6b66a2949b47823264096aa444adf5d04",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "19915381666d8538253d87cd1d0ec84141684b652fc398f2764973fb33b6dc0a",
+        "digest": "c199c13e114c097760aca088f04d7b49c20f3efc619ba2ed00fd2e90707630c6",
+        "inputs": {
+          ".cardine/tasks/198.json": null,
+          "tasks/198.md": null
+        },
+        "kind": "creation",
+        "operation_id": "d35ea216aabe49a8ba2cd7619123520b",
+        "outputs": {
+          ".cardine/tasks/198.json": "b9ee8de0fd31c1109f9eb9ce4127577e63fb033a235371c320662bd29129b0d2",
+          "tasks/198.md": "c10e9e879c08df53ae98b26b7f19101db12b11443ec36f2e00e1c2174bf8670a"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "8de50111c9e37ae5e73d6e7ef8aec653ac324d16",
+        "task_id": "198",
+        "tree": "f1eecc59a7dbe9c1fcaea545a99f20e69fdb3b27",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "198",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
