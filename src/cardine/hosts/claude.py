@@ -56,6 +56,9 @@ CLAUDE_PROJECT_ALLOWLIST = (
 
 # Prefix rules are defense in depth: a reworded command can evade them, so the
 # managed denial text stays in force (docs/ADR_STOPS_AND_DENIALS.md, Decision 5).
+# Claude Code applies an `Edit(...)` rule to every built-in file-editing tool.
+CLAUDE_EDIT_RULE_TOOL = "Edit"
+
 CLAUDE_PROJECT_DENYLIST = (
     "Bash(git push --force:*)",
     "Bash(git push -f:*)",
@@ -68,8 +71,16 @@ CLAUDE_PROJECT_DENYLIST = (
     "Bash(git cherry-pick:*)",
     "Bash(git branch -D:*)",
     "Bash(git worktree remove --force:*)",
-    # Protected paths: relative to the project root, applied to every native edit tool.
-    *(f"{tool}(/{path})" for path in permissions.relative_protected() for tool in permissions.NATIVE_WRITE_TOOLS),
+    # Protected paths: relative to the project root. One `Edit` rule covers every
+    # built-in tool that edits files; Claude Code warns on the other tool names.
+    *(f"{CLAUDE_EDIT_RULE_TOOL}(/{path})" for path in permissions.relative_protected()),
+)
+
+# Earlier versions also wrote these exact rules. `Edit(...)` above covers the same
+# tools, so removing them never widens access; setup removes only these strings.
+OBSOLETE_DENY_ENTRIES = tuple(
+    f"{tool}(/{path})" for path in permissions.relative_protected()
+    for tool in permissions.NATIVE_WRITE_TOOLS if tool != CLAUDE_EDIT_RULE_TOOL
 )
 
 # A previous Cardine version pre-approved this exact entry. A user can also write it, so
@@ -115,7 +126,8 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
                    if legacy else "")
     missing = [item for item in CLAUDE_PROJECT_ALLOWLIST if item not in allow]
     missing_deny = [item for item in CLAUDE_PROJECT_DENYLIST if item not in deny]
-    if not missing and not missing_deny:
+    obsolete = [item for item in deny if item in OBSOLETE_DENY_ENTRIES]
+    if not missing and not missing_deny and not obsolete:
         return ClaudeConfigurationPlan(
             "ready",
             settings_path,
@@ -128,8 +140,8 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
     proposed_permissions = copy.deepcopy(permissions)
     if missing:
         proposed_permissions["allow"] = [*allow, *missing]
-    if missing_deny:
-        proposed_permissions["deny"] = [*deny, *missing_deny]
+    if missing_deny or obsolete:
+        proposed_permissions["deny"] = [*(item for item in deny if item not in OBSOLETE_DENY_ENTRIES), *missing_deny]
     proposed["permissions"] = proposed_permissions
     detail = "explicit --apply adds the missing project command allowlist entries"
     if missing_deny:
@@ -141,6 +153,8 @@ def plan_claude_project_allowlist(project_root: Path) -> ClaudeConfigurationPlan
             + "; prefix rules are defense in depth, a reworded command can evade them,"
             + " and the managed denial text remains in force"
         )
+    if obsolete:
+        detail += "; removes deny rules that Claude Code reports as never matching: " + ", ".join(obsolete)
     detail += legacy_note
     return ClaudeConfigurationPlan("approval-required", settings_path, proposed, detail, current_text)
 
@@ -171,8 +185,7 @@ def claude_role_policy(role: str, project_root: Path, worktree: Path, common_dir
     if role not in permissions.ROLES:
         raise CardineError(f"unknown Claude role: {role}")
     roots = permissions.protected_roots((project_root, worktree), common_dir)
-    deny = [_edit_rule(tool, path) for tool in permissions.NATIVE_WRITE_TOOLS
-            for root in roots for path in (root, root / "**")]
+    deny = [_edit_rule(CLAUDE_EDIT_RULE_TOOL, path) for root in roots for path in (root, root / "**")]
     deny += [f"Bash(cardine {' '.join(action)}:*)" for action in permissions.DEVELOPER_ONLY + permissions.INTEGRATION]
     deny += ["Bash(git push origin main:*)", "Bash(git push origin HEAD:main:*)",
              "Bash(git push origin +main:*)", "Bash(git push origin HEAD:refs/heads/main:*)",
@@ -180,7 +193,7 @@ def claude_role_policy(role: str, project_root: Path, worktree: Path, common_dir
     if role == "implementer":
         deny.append("Bash(cardine review verdict:*)")
     else:
-        deny += list(permissions.NATIVE_WRITE_TOOLS)
+        deny.append(CLAUDE_EDIT_RULE_TOOL)
         deny += ["Bash(git push:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git merge:*)",
                  "Bash(rm:*)", "Bash(mv:*)", "Bash(cp:*)", "Bash(tee:*)", "Bash(sed -i:*)", "Bash(ln:*)"]
         deny += [f"Bash(cardine {' '.join(action)}:*)" for action in permissions.REVIEWER_DENIED]
