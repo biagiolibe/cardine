@@ -557,7 +557,7 @@ def _build_snapshot(project: Path, identities: IdentityCache | None, only: str |
     delivery_cache = deliveries or DeliveryCache()
     refs = _git(project, "for-each-ref", "--format=%(refname:strip=2) %(objectname)", "refs/heads/")
     branches = dict(line.split(" ", 1) for line in refs.splitlines() if " " in line)
-    head = (_git_optional(project, "rev-parse", "--verify", "--quiet", "HEAD") or "").strip() or None
+    head = heads.get(str(project)) or None
     main_commit = branches.get("main")
     deliveries_shared: dict[str, object] = {}
     tasks: list[Task] = []
