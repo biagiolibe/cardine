@@ -1,0 +1,107 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "202",
+      "204",
+      "205"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/integration/candidate.py",
+      "src/cardine/lifecycle/control_abort.py",
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/stops/render.py",
+      "capabilities/stop-codes-v1.json",
+      "tests/test_run_integration.py",
+      "tests/test_run_field_cases.py",
+      "tests/test_run_output.py",
+      "tests/test_worktree_lifecycle.py",
+      "tests/test_worktree_integration.py",
+      "tests/test_run_control.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/206.md",
+    "title": "Task 206 \u2014 Let the engine reverse its own stale candidate",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_field_cases --module test_run_output --module test_run_control --module test_worktree_lifecycle --module test_worktree_integration --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "d187e4a3f0f8016d794284a07d1299d4cda68694128319d299256fa6933a2af0",
+        "digest": "a7a065fb2802982a758917e69c7b5f9b23ac66dff3cdc2b5bd40611956380875",
+        "inputs": {
+          ".cardine/tasks/206.json": null,
+          "tasks/206.md": null
+        },
+        "kind": "creation",
+        "operation_id": "495631e04c824015b08af411d0b69d9b",
+        "outputs": {
+          ".cardine/tasks/206.json": "684b3f54b164e27ebc005ccb8d1e462d44b3378f5e2a3f4eb040e3b7cf6c8b4c",
+          "tasks/206.md": "95226242c84e5d153ad6d97246a6b8eb44741039f55697a836bd908b1043489c"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "3df0d226946e10a0035ddcf2bf43e2bd616011b1",
+        "task_id": "206",
+        "tree": "b603f10adaf6657a54e6e7b62ad6b9189209897b",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "206",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

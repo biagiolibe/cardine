@@ -1,0 +1,97 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "PROJECT_WORKFLOW.md",
+      "tasks/TASK_BLUEPRINT.md",
+      "docs/ADR_CARDINE_1_0.md",
+      "src/cardine/lifecycle/scope.py",
+      "tests/test_run_field_cases.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/205.md",
+    "title": "Task 205 \u2014 Move standing decisions to the project workflow and report every out-of-scope path at once",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_field_cases --module test_execution_boundaries --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "32d292e004e68d29087319983b70011192c351764a58ebbde27511ac3ac57380",
+        "digest": "61dfee40cd4d7c05324b0e6627b67a75ac77c670029623d55ef361e6ae703282",
+        "inputs": {
+          ".cardine/tasks/205.json": null,
+          "tasks/205.md": null
+        },
+        "kind": "creation",
+        "operation_id": "d65f217e6685451aab7b36de9f92c1bd",
+        "outputs": {
+          ".cardine/tasks/205.json": "abc6670486bb096efe250aafacaf8c66c54c1e905f14d3f6946314da518a6fa4",
+          "tasks/205.md": "8b18622a487413bfe5e751eb3c5291363caa070ee10261460a37fba51064cc70"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "3df0d226946e10a0035ddcf2bf43e2bd616011b1",
+        "task_id": "205",
+        "tree": "b603f10adaf6657a54e6e7b62ad6b9189209897b",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "205",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
