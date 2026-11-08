@@ -1,0 +1,100 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "206"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/live.py",
+      "src/cardine/lifecycle/validation.py",
+      "src/cardine/integration/candidate.py",
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_run_validation.py",
+      "tests/test_run_output.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/208.md",
+    "title": "Task 208 \u2014 Write a live log of the commands a run executes",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_output --module test_run_integration --module test_run_delivery --module test_run_recovery --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "50988e38780dfb4f4a2e45ea1c84be9377200944824904e57cf8e822b6a5c3b9",
+        "digest": "e0c66efad5bc24c92462bd4d50b2a671c0da75376dc1bb8537445af35181b64e",
+        "inputs": {
+          ".cardine/tasks/208.json": null,
+          "tasks/208.md": null
+        },
+        "kind": "creation",
+        "operation_id": "5c0f99890f654d23a26f2e1e47971688",
+        "outputs": {
+          ".cardine/tasks/208.json": "509b4855eaf2ab35e8b10c7b981f0c1cf8522c5054d9c098540474a56693d15f",
+          "tasks/208.md": "1cfe73a8058da024b189fbfd1f6860a5add9ba5e0aaa9847b4d6933bab64b47f"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "0f5dbc754c11e2bad8617ee8ffa23ad857ad5494",
+        "task_id": "208",
+        "tree": "e8ec62b303fe8c1dc0039be83d81b2bb39ebc558",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "208",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
