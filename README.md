@@ -1,138 +1,276 @@
-> **Cardine is in development.** This repository starts from the code of
-> Meridian 1.4.0 and still installs and runs as `meridian`. Until Cardine 0.9,
-> use [Meridian 1.4.0](https://github.com/biagiolibe/meridian/releases/tag/v1.4.0).
-> The scope of Cardine 1.0 is [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md).
+<h1 align="center">Cardine</h1>
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/meridian-mark-dark.svg">
-    <img src="docs/assets/meridian-mark-light.svg" alt="Meridian logo" width="96" height="96">
-  </picture>
-</p>
+<p align="center"><strong>The delivery discipline for AI coding agents.</strong></p>
 
-<h1 align="center">Meridian</h1>
+> **Status: in development, before 0.9.** There is no release yet: install the
+> CLI from a clone of this repository. The scope of 1.0 is
+> [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md); what is proven today is
+> listed under [Status and evidence](#status-and-evidence).
 
-<p align="center"><strong>Explicit tasks, isolated worktrees, verified integration. A delivery workflow for AI coding agents.</strong></p>
+Coding agents can write the change. Nothing in the agent itself checks that
+what reaches `main` was validated, integrated with the latest `main`, and can
+be undone. Cardine does that part.
 
-<p align="center">
-  <a href="https://github.com/biagiolibe/meridian/releases"><img src="https://img.shields.io/github/v/release/biagiolibe/meridian" alt="Release"></a>
-  <a href="https://github.com/biagiolibe/meridian/actions/workflows/validate.yml"><img src="https://github.com/biagiolibe/meridian/actions/workflows/validate.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
-</p>
+Every task lands on `main` validated, integrated, and reversible, or it stops
+with a reason and the exact command to resume.
 
-Meridian turns a project plan into bounded tasks that AI coding agents can implement, validate, and integrate with a durable record of the result. It supplies workflow instructions, templates, and a CLI; it is not an agent. It prescribes no application stack: each project owns its architecture, invariants, and validation commands. It runs from a local Git checkout, without a service or background process.
+## What Cardine does
 
-## Meridian in 30 seconds
+You describe one task in a short contract: objective, acceptance criteria,
+validation commands, dependencies. Your agent then calls one command,
+`cardine run <TASK-ID>`, again and again. Each call performs the next step of
+the task and prints JSON with the outcome and the exact command to run next.
 
-A task makes the change and its proof explicit:
+Cardine runs locally, inside your Git repository, with no service and no
+account. It works with Claude Code and Codex. It is not an agent and not an
+orchestrator: it is the lifecycle your agent follows.
+
+> Specs say what to build. Orchestrators run the agents. Cardine makes sure
+> what lands on main is right.
+
+## How a task lands
+
+`cardine run` moves a task through seven steps:
+
+1. **Contract.** Check the task contract that `cardine task new` froze.
+2. **Worktree.** Prepare one branch and one linked worktree for the task.
+3. **Implementation.** The agent makes the change and commits it.
+4. **Validation.** Cardine runs the task's validation commands itself.
+5. **Review**, when the task requires it.
+6. **Candidate.** Validate `main` plus the task before merging.
+7. **Landing.** Merge, push `main`, clean up the worktree and branch.
+
+Every outcome falls into one of three classes:
+
+| Class | Examples | What happens |
+| --- | --- | --- |
+| Guardrail | Merge conflict, rejected push, required review, scope change, denied action | The agent stops. Cardine prints `BLOCKED <CODE>` and the command a person runs to resume. |
+| Recoverable state | Unfinished closure records, an interrupted cleanup, CI still running | The agent continues with the `next` command Cardine returns. |
+| Failing work | Failing tests, a lint error | The agent fixes its work and validates again, up to a retry limit (3 by default). |
+
+## Why it holds
+
+**Stops are for people.** A stop is justified only when a person brings
+something the agent lacks: authority, a decision, or information. Each stop
+code in the registry declares whether it needs a person, and `cardine run`
+refuses to print a stop for any code that does not. A failed validation run
+is rerun once, so a test that fails intermittently does not consume the retry
+limit. ([ADR decision 12](docs/ADR_CARDINE_1_0.md#12-stops-are-for-people))
+
+**Gates read facts, not prose.** A gate reads only the task's state file
+written by Cardine, Git objects, and the results of commands Cardine ran
+itself. Handoffs and reports explain the work to people; no gate parses them.
+An exit code that an agent reports is not evidence.
+([decision 13](docs/ADR_CARDINE_1_0.md#13-gates-read-facts-not-prose))
+
+**It holds with weak and strong agents.** An agent needs little to read: the
+next action and a short contract. Rules whose violation causes harm are
+enforced by a CLI gate, a hook, or a host permission rule, not only written
+down. The files that gates trust are written by Cardine and bound to
+operation receipts, so a file an agent writes on the task branch does not
+change a gate's outcome. Host rules deny agents the state files and
+developer-only commands, and an implementer cannot approve its own work.
+Every step can be interrupted and rerun.
+([decision 14](docs/ADR_CARDINE_1_0.md#14-robust-against-weak-and-strong-agents))
+
+**One task, one worktree, one writer.** Agents never force-push, rewrite
+history, create tags, delete unmerged branches, or resolve textual conflicts.
+Those stay with you.
+
+## First 5 minutes
+
+You need a Git repository on `main` with a writable `origin` (landing pushes
+`main`) and a test command that passes on `main`. Install the CLI first; see
+[Install](#install).
+
+Declare the project's validation commands once, in a small JSON file outside
+the repository, `~/contoso-validation.json`:
+
+```json
+{"commands": {"test": "python3 -m unittest"},
+ "baseline": ["test"],
+ "candidate": {"REUSE": [], "BOUNDED": ["test"], "FULL": ["test"]}}
+```
+
+Convert the project. `--check` shows the plan and changes nothing. Your
+files are kept; an existing `AGENTS.md` or `CLAUDE.md` gets Cardine's text
+followed by yours. In a repository without a `README.md`, `AGENTS.md`, or
+`CLAUDE.md`, `cardine init` takes the same options.
+
+```bash
+cardine adopt --project . --check --name "Contoso API" --slug contoso-api \
+  --preset lean --language English --task-identity opaque \
+  --validation ~/contoso-validation.json
+```
+
+Run it again with `--apply` instead of `--check`, then commit and push:
+
+```bash
+git add -A && git commit -m "Adopt Cardine" && git push origin main
+```
+
+Add the patterns for files your tests generate to `.gitignore`, such as
+`__pycache__/` for Python, then commit that file. Cardine treats any other
+untracked file as part of the change.
+
+```bash
+printf "__pycache__/\n" >> .gitignore
+git add .gitignore && git commit -m "Ignore generated test files" && git push origin main
+```
+
+Connect your host. `setup --check` shows every change it would make; nothing
+is written until `--apply`.
+
+```bash
+cardine setup --check --project .
+cardine setup --apply --project .
+cardine doctor --host claude --project .
+```
+
+Write a first task as a quick contract, `~/proposal-001.md`:
 
 ```markdown
-# Task 001 — Explain the configuration defaults
+# Task 001 — Document the configuration defaults
+
+> **ID**: `001`
+> **Category**: Quick
 
 ## Objective
+
 Document the defaults used when no configuration file exists.
 
-## Acceptance criteria
-- README lists each default and the command that overrides it.
+## Acceptance Criteria
+
+- README.md lists each default and the option that overrides it.
+
+## Expected code surface
+
+- `README.md`
+
+## Dependencies
+
+None.
 
 ## Validation
-python3 scripts/check_docs.py
+
+- `test`: `python3 -m unittest`
 ```
 
-In an initialized project, assign it to your agent:
+```bash
+cardine task new 001 --quick --record ~/proposal-001.md --project .
+git add -A && git commit -m "Add task 001" && git push origin main
+```
+
+Then ask your agent to deliver it:
 
 ```text
-Proceed with 001
+Run `cardine run 001` and follow its next command until the task is done.
 ```
 
-For a Lean Delivery task, that directive authorizes the whole lifecycle: prepare an isolated task branch and worktree, implement the task, run its validation, record completion, validate the integration candidate, integrate, push `main`, and clean up the merged worktree. Each step proceeds only when its gates pass. A failed gate returns a concrete `BLOCKED <CODE>` and a resume command.
+Each call prints one JSON result. One of them, with the path shortened and
+the other fields left out:
 
-Follow the [quick start](docs/QUICKSTART.md) to initialize a project and close your first task.
+```json
+{"task_id": "001", "step": "landing", "outcome": "next", "action": "finalize",
+ "next": {"command": "cardine run 001 --project /path/to/contoso-api",
+          "reason": "Push and clean up the landed task"},
+ "stop": null}
+```
 
-## Features
+`outcome` is one of `progress`, `next`, `waiting`, `iterate`, `blocked`, or
+`done`. The agent keeps going until the task is `done` on `main`, or until a
+`blocked` result names the command you run to resume.
 
-- **Explicit tasks:** objectives, acceptance criteria, context, and validation stay with the code.
-- **Per-task worktrees:** one branch, one checkout, and one writer per task isolate concurrent work.
-- **Command-backed stops:** lifecycle gates explain why work stopped and how to resume.
-- **Denied destructive actions:** task authorization excludes force pushes, history rewriting, tags, releases, and textual conflict resolution.
-- **Migration-based upgrades:** versioned baselines and three-way merges preserve project-owned changes.
-- **Project console:** inspect tasks, dependencies, worktrees, and the next permitted action with `meridian console` (experimental).
-- **Host hooks:** bounded reads, queue briefings, and stop audits reinforce the project workflow.
+## Lean or Governed
 
-## Choose a workflow
+One lifecycle, two presets. A preset sets the project's defaults; each task
+can raise or lower them.
 
-**Lean Delivery is the default starting point** for small projects, prototypes, demos, and reversible changes. Tasks use `[ ]` → `[/]` → `[x]` and carry enough context to implement and verify one bounded change.
+| | `lean` (default) | `governed` |
+| --- | --- | --- |
+| Independent review | not required | required |
+| `Authority` and `Expected code surface` fields | optional | required |
+| Validation retry limit | 3 | 3 |
 
-**Governed SDD** adds architectural authority, dependencies, execution evidence, and independent review for higher-risk work involving public APIs, security, persistence, state, or unresolved design decisions. SDD means spec-driven development: the task is the durable specification. Its lifecycle is `QUEUED` → `IN_PROGRESS` → `READY_FOR_REVIEW` → `ACCEPTED`, with a direct acceptance path for eligible low-risk work.
+A `spike` task class for exploratory work, with an `ANSWERED` or
+`INCONCLUSIVE` outcome, is available in both.
 
-Each project's `PROJECT_WORKFLOW.md` locks its mode and takes precedence over global or remembered instructions. See the [Lean guide](WORKFLOW_GUIDE.md) and [governed workflow](docs/GOVERNED_WORKFLOW.md).
+## What Cardine is not
+
+- **Not an agent.** Your host (Claude Code or Codex) does the work.
+- **Not an orchestrator.** It does not run several agents in parallel. An
+  orchestrator can run Cardine inside each worktree.
+- **Not a service.** Everything runs locally; `direct` landing needs no forge.
+- **Not proof of authorship.** Agents run as your user. Receipts and host
+  rules catch mistakes and refuse shortcuts, but an agent that deliberately
+  bypasses the host's permissions could rewrite them. Cardine does not claim
+  otherwise.
+- **Not yet for team workflows.** Landing through pull requests is planned
+  for 1.1.
+
+The project console, `cardine console`, is experimental.
+
+## Status and evidence
+
+Proven:
+
+- in disposable test projects with a local bare remote: a task without
+  review, from queued to landed on `main`; a task with required review and
+  one round of requested changes; an agent that followed only what
+  `cardine run` printed; a stop followed by a resume;
+- the path of [First 5 minutes](#first-5-minutes), from `cardine adopt` and
+  a quick task to landing, in a disposable project with the CLI installed
+  from a clone;
+- on Cardine's own repository: its tasks land through `cardine run`.
+
+Not yet proven or measured:
+
+- a task landed through Cardine in another project;
+- installation from a released package;
+- the field trial that gates 1.0 (ADR decision 10);
+- the comparison with and without Cardine. Its
+  [protocol](docs/BENCHMARK_PROTOCOL.md) is decided; nothing has been run.
+  Results will be published with the disclosure that the author of Cardine
+  arbitrated disagreements, and they will state what they do not cover: the
+  `lean` preset on a real adopter, Codex, and other models.
 
 ## Install
 
-Requires macOS or Linux, Python 3.12+, Git, and an installed, authenticated agent host. See [platform support](docs/PLATFORM_SUPPORT.md) for the CI-tested matrix and best-effort integrations.
+Requires macOS or Linux, Python 3.12 or later, Git, pipx, and an installed,
+authenticated Claude Code or Codex.
 
-**1. Install the CLI for every host** at the canonical checkout:
+Until the first release, install from a clone:
 
 ```bash
-git clone --branch stable https://github.com/biagiolibe/meridian ~/.local/share/meridian
-export MERIDIAN_ROOT="$HOME/.local/share/meridian"
-export PATH="$MERIDIAN_ROOT/bin:$PATH"
+git clone https://github.com/biagiolibe/cardine ~/src/cardine
+pipx install --editable ~/src/cardine
+cardine --version
 ```
 
-Persist both exports (`~/.zshenv` for zsh). The
-[quick start](docs/QUICKSTART.md#install-the-cli-for-every-host) covers bash,
-non-interactive Python/PATH checks, and release verification.
-Use `--branch v<version>` to pin a [specific release](https://github.com/biagiolibe/meridian/releases)
-at the same path.
-
-**2. Connect your host.** For Claude Code, install the matching release plugin:
-
-```text
-/plugin marketplace add biagiolibe/meridian#stable
-/plugin install meridian@meridian
-```
-
-Keep plugin and checkout versions aligned; terminal commands use the checkout
-CLI. For Codex, run `meridian setup --check`, review the skill-link and
-permission-profile diff, then consent with `meridian setup --apply` and
-restart. Follow the [quick start](docs/QUICKSTART.md#connect-codex) for
-initialization and effective access checks.
-
-## Project conversion
-
-Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
-
-## Update
-
-Update the installed plugin or local framework checkout first, restart agent sessions, then preview and apply the project migration on a dedicated branch. The [upgrade guide](docs/HOW_TO_UPGRADE.md) covers both `stable` and tagged checkouts, plugin pins, version checks, [manual updates](docs/HOW_TO_UPGRADE.md#updating-meridian), and [framework upgrades](docs/HOW_TO_UPGRADE.md#framework-upgrades).
+From 0.9, `pipx install cardine` installs a release.
 
 ## Documentation
 
-**Adopters**
+- **Using Cardine:** [run commands](docs/RUN_COMMANDS.md),
+  [converting an existing project](docs/ADOPT_COMMANDS.md),
+  [platform support](docs/PLATFORM_SUPPORT.md).
+- **Design:** [design decisions](docs/ADR_CARDINE_1_0.md),
+  [public surface](docs/PUBLIC_SURFACE.md).
+- **Being rewritten from Meridian:** [quick start](docs/QUICKSTART.md),
+  [agent operations](docs/AGENT_OPERATIONS.md),
+  [upgrade guide](docs/HOW_TO_UPGRADE.md).
+- **Contributing:** [contributing](CONTRIBUTING.md).
 
-- [Quick start](docs/QUICKSTART.md), [platform support](docs/PLATFORM_SUPPORT.md), and [upgrade guide](docs/HOW_TO_UPGRADE.md)
-- [Lean Delivery guide](WORKFLOW_GUIDE.md) and [workflow template](templates/single/PROJECT_WORKFLOW.md)
-- [Language behavior](docs/AGENT_OPERATIONS.md#language-behavior)
+Tooling must read `--format json` output; human-readable output is never
+stable.
 
-**Agent operators**
+## Origin and license
 
-- [Agent operations](docs/AGENT_OPERATIONS.md): console, [Codex command approvals](docs/AGENT_OPERATIONS.md#codex-hooks-and-command-approvals), read guard, and local usage reports
-- [Governed execution evidence](docs/GOVERNED_WORKFLOW.md#governed-execution-evidence), [workflow template](templates/single/PROJECT_WORKFLOW.md), and [task template](templates/single/tasks/TASK_BLUEPRINT.md)
-- [Review procedure](templates/single/docs/workflows/REVIEW.md), [read-only audit](templates/single/docs/AUDIT_PROMPT_READ_ONLY.md), and [operator prompts](templates/single/docs/OPERATOR_PROMPTS.md)
-- [Consumer router adoption](docs/CONSUMER_ROUTER_ADOPTION_PLAYBOOK.md) and [capability audit](commands/cardine-audit.md)
+Cardine starts from the code of Meridian 1.4.0, which it replaces. Meridian's
+history and design records stay in its
+[repository](https://github.com/biagiolibe/meridian).
 
-**Maintainers**
-
-- [Contributing and releases](CONTRIBUTING.md), [upgrade CLI](commands/cardine-upgrade.md), [distribution design](docs/DISTRIBUTION_AND_UPDATE_DESIGN.md), and [consumer profiles](docs/CONSUMER_PROFILES.md)
-- [Public surface](docs/PUBLIC_SURFACE.md): stable compatibility starts at 1.3.0; `meridian console` and `meridian usage` are experimental.
-- [Open tasks](tasks/QUEUE.md) and [project plan](PROJECT_PLAN.md)
-
-## Community and license
-
-Follow the [code of conduct](CODE_OF_CONDUCT.md) and report vulnerabilities privately through the [security policy](SECURITY.md).
+Follow the [code of conduct](CODE_OF_CONDUCT.md) and report vulnerabilities
+through the [security policy](SECURITY.md).
 
 Copyright © 2026 Biagio Liberto. Available under the [MIT License](LICENSE).
-
-`meridian self-update` is Experimental. Preview local framework updates with
-`meridian self-update --check`, then use `--apply`; see
-[the update procedure](docs/HOW_TO_UPGRADE.md#1-update-the-framework-first).
