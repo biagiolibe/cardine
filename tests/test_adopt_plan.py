@@ -162,6 +162,20 @@ class AdoptPlanTest(unittest.TestCase):
         (self.root / '.git/meridian-integration.lock').write_text('{}')
         self.assertIn('ADOPT_LEASE', plan_adopt(self.root, ROOT, **self.choices()).refusals)
 
+    def test_dependency_on_an_archived_row_is_closed(self):
+        write_meridian_project(self.root, queue=queue_text([('[ ]', '001', 'Task')]))
+        (self.root / 'tasks/QUEUE_ARCHIVE.md').write_text(queue_text([('[x]', '000', 'Archived')]))
+        source = contract_record('001').replace(
+            '## Expected code surface\nChange the documented deliverable only.\n', '')
+        (self.root / 'tasks/001.md').write_text(source.replace('## Dependencies\nnone\n',
+                                                               '## Dependencies\n- **Depends on**: 000\n'))
+        self.commit()
+        plan = plan_adopt(self.root, ROOT, **self.choices())
+        self.assertNotIn('ADOPT_RECORD', plan.refusals)
+        self.assertEqual(plan.diagnostics, ())
+        self.assertEqual(plan.dropped_dependencies, {'001': ('000',)})
+        self.assertIn('- Depends on: None', plan.outputs['tasks/001.md'].decode())
+
     def test_record_refusal(self):
         self.legacy()
         (self.root / 'tasks/001.md').write_text('incomplete')

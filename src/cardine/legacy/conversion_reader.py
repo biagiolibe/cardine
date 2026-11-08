@@ -68,6 +68,7 @@ class LegacyProject:
     candidate_validation: dict[str, object] | None
     flow_targets: dict[str, object] | None
     diagnostics: tuple[str, ...]
+    archived_closed_ids: tuple[str, ...] = ()
 
     @property
     def open_rows(self) -> tuple[LegacyQueueRow, ...]:
@@ -79,7 +80,8 @@ class LegacyProject:
 
     @property
     def closed_ids(self) -> tuple[str, ...]:
-        return tuple(dict.fromkeys(row.task_id for row in self.rows if row.state == "closed"))
+        return tuple(dict.fromkeys((*(row.task_id for row in self.rows if row.state == "closed"),
+                                    *self.archived_closed_ids)))
 
 
 def _state(status: str) -> str:
@@ -152,6 +154,11 @@ def read_legacy_project(project: Path) -> LegacyProject:
         )
     else:
         diagnostics.append(f"no queue at {locations.queue}")
+    archive = queue.with_name("QUEUE_ARCHIVE.md")
+    archived = tuple(dict.fromkeys(
+        str(row["id"]) for row in _queue_task_rows(archive.read_text(encoding="utf-8"))
+        if _state(str(row["status"])) == "closed"
+    )) if archive.is_file() else ()
     for row in rows:
         if row.state == "unknown":
             diagnostics.append(f"{locations.queue}:{row.line}: unrecognized status {row.status!r} for {row.task_id}")
@@ -170,4 +177,5 @@ def read_legacy_project(project: Path) -> LegacyProject:
         duplicate_ids=duplicates, adr_log_present=adr_log.is_file(), adr_entries=entries,
         adr_unnumbered=unnumbered, identity_mode=identity_mode, declaration=declaration,
         candidate_validation=candidate, flow_targets=flow_targets, diagnostics=tuple(diagnostics),
+        archived_closed_ids=archived,
     )
