@@ -92,6 +92,14 @@ the repository, `~/contoso-validation.json`:
  "candidate": {"REUSE": [], "BOUNDED": ["test"], "FULL": ["test"]}}
 ```
 
+Ignore and commit the files your tests generate, such as `__pycache__/` for
+Python. Cardine treats any other untracked file as part of the change.
+
+```bash
+printf "__pycache__/\n" >> .gitignore
+git add .gitignore && git commit -m "Ignore generated test files" && git push origin main
+```
+
 Convert the project. `--check` shows the plan and changes nothing. Your
 files are kept; an existing `AGENTS.md` or `CLAUDE.md` gets Cardine's text
 followed by yours. In a repository without a `README.md`, `AGENTS.md`, or
