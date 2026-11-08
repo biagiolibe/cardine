@@ -1,0 +1,46 @@
+{
+  "205": [
+    {
+      "attemptId": "f12b5c37fde14fccbcf9c7ea6bd47520",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "0d0165652e37d96ecc7ff9de77a20cc4ffc22a5d",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/205.json#f12b5c37fde14fccbcf9c7ea6bd47520/1/repository-check",
+      "round": 1,
+      "sourceDigest": "22b621924116155fd3ccc6b230572481068b3dee1aa18bb5bd6305c8630b6667",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "f12b5c37fde14fccbcf9c7ea6bd47520",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_field_cases --module test_execution_boundaries --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "0d0165652e37d96ecc7ff9de77a20cc4ffc22a5d",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/205.json#f12b5c37fde14fccbcf9c7ea6bd47520/1/task-tests",
+      "round": 1,
+      "sourceDigest": "22b621924116155fd3ccc6b230572481068b3dee1aa18bb5bd6305c8630b6667",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_field_cases,test_execution_boundaries,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=93 total=2175 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "f12b5c37fde14fccbcf9c7ea6bd47520",
+      "command": "git diff --check",
+      "commit": "0d0165652e37d96ecc7ff9de77a20cc4ffc22a5d",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/205.json#f12b5c37fde14fccbcf9c7ea6bd47520/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "22b621924116155fd3ccc6b230572481068b3dee1aa18bb5bd6305c8630b6667",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
