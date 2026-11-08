@@ -548,6 +548,53 @@ class RefreshCostTest(support.StateConsoleFixture):
         self.write(self.project, "tasks/999-task.md", "# Task 999\n\n> **ID**: `999`\n")
         self.assertEqual(cache.resolve(self.project, "999").canonical_id, "999")
 
+    def test_landed_cleanup_cache_invalidates_each_input(self) -> None:
+        self.setup_project({"001": "done", "002": "done", "003": "done"})
+        common = self.project / ".git" / "cardine-operations"
+        common.mkdir(exist_ok=True)
+        for task_id in ("001", "002", "003"):
+            (common / f"{task_id}.cleanup.json").write_text("{}")
+        trees = {task_id: self.root / f"landed-{task_id}" for task_id in ("001", "002", "003")}
+        trees["002"].mkdir()
+        from cardine.lifecycle import context, preview
+        identities, deliveries = owner_console_snapshot.IdentityCache(), owner_console_snapshot.DeliveryCache()
+        def locations(task_id, _project):
+            return mock.Mock(worktree=trees[task_id])
+        with mock.patch.object(context, "resolve_run_locations", side_effect=locations), \
+             mock.patch.object(preview, "preview_run", return_value={"outcome": "done"}) as run:
+            def load():
+                owner_console_snapshot.load_snapshot(self.project, identities, deliveries)
+            load()
+            self.assertEqual(run.call_count, 3)
+            load()
+            self.assertEqual(run.call_count, 3)
+            (common / "001.cleanup.json").write_text('{"changed": true}')
+            load()
+            self.assertEqual(run.call_count, 4)
+            (trees["002"] / "new").write_text("new")
+            load()
+            self.assertEqual(run.call_count, 5)
+            self.write(self.project, "new-main-file", "new")
+            self.commit(self.project, "move main")
+            load()
+            self.assertEqual(run.call_count, 8)
+
+    def test_branch_listing_and_record_dates_are_shared(self) -> None:
+        self.setup_project({f"{i:03}": "queued" for i in range(1, 6)})
+        identities, deliveries = owner_console_snapshot.IdentityCache(), owner_console_snapshot.DeliveryCache()
+        def load():
+            owner_console_snapshot.load_snapshot(self.project, identities, deliveries)
+        with mock.patch.object(owner_console_snapshot, "_git", wraps=owner_console_snapshot._git) as git:
+            load()
+            first = list(git.call_args_list)
+            git.reset_mock()
+            load()
+            second = list(git.call_args_list)
+        self.assertEqual(sum(call.args[1] == "for-each-ref" for call in first), 1)
+        self.assertEqual(sum(call.args[1] == "for-each-ref" for call in second), 1)
+        self.assertEqual(sum(call.args[1] == "log" for call in first), 5)
+        self.assertFalse(any(call.args[1] == "log" for call in second))
+
 
 class SnapshotCostTest(support.StateConsoleFixture):
     """One worktree listing, resolved identities, and cached delivery gates."""

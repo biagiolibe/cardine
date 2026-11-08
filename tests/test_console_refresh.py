@@ -37,6 +37,29 @@ from console_support import HEADER, RESUME_001
 import console_support as support
 
 class BackgroundRefreshTest(unittest.TestCase):
+    def test_poll_interval_starts_after_slow_load_finishes(self) -> None:
+        state = owner_console_state.ConsoleState(Path('/p'))
+        starts, finishes = [], []
+        def slow(*_args):
+            starts.append(time.monotonic())
+            time.sleep(0.12)
+            finishes.append(time.monotonic())
+            return self.snapshot('fresh')
+        screen = mock.Mock()
+        screen.getmaxyx.return_value = (5, 40)
+        def getch():
+            time.sleep(0.01)
+            return ord('q') if len(starts) >= 2 else -1
+        screen.getch.side_effect = getch
+        with mock.patch.object(owner_console_state, 'load_snapshot', side_effect=slow), \
+             mock.patch.object(owner_console_entry.curses, 'curs_set'), \
+             mock.patch.object(owner_console_entry.curses, 'mousemask'), \
+             mock.patch.object(owner_console_entry, '_palette', return_value={'text': 0}), \
+             mock.patch.object(owner_console_entry, '_put'):
+            owner_console_entry.run_terminal(screen, state, 0.08)
+            self.wait_idle(state)
+        self.assertGreaterEqual(starts[1] - finishes[0], 0.075)
+
     def wait_idle(self, state: owner_console_state.ConsoleState) -> None:
         deadline = time.monotonic() + 5
         while state.refreshing and time.monotonic() < deadline:
