@@ -19,6 +19,29 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import ci_evidence  # noqa: E402
 import cardine_cli  # noqa: E402
+from cardine.integration.evidence import proposed_candidate_validation_declaration  # noqa: E402
+
+
+class CandidateProposalTest(unittest.TestCase):
+    def test_no_repository_script_leaves_proposal_undeclared(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "tests").mkdir()
+            self.assertEqual(proposed_candidate_validation_declaration(root),
+                             {"version": 1, "state": "undeclared"})
+
+    def test_repository_script_preserves_declared_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts").mkdir()
+            (root / "scripts/check_repository.py").touch()
+            check = "python3 scripts/check_repository.py"
+            expected = {"version": 1, "state": "declared", "outcomes": {
+                "REUSE": [check], "BOUNDED": [check], "FULL": [check]}}
+            self.assertEqual(proposed_candidate_validation_declaration(root), expected)
+            (root / "tests").mkdir()
+            expected["outcomes"]["FULL"].append("python3 -m unittest discover -s tests")
+            self.assertEqual(proposed_candidate_validation_declaration(root), expected)
 
 
 class CiEvidenceTest(unittest.TestCase):
