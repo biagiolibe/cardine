@@ -254,7 +254,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertEqual(owner_lifecycle_commands.execution_deliver(self.worker, '001'), result)
         self.assertEqual(self.state(), state)
         task = project_console.load_snapshot(self.primary).tasks[0]
-        self.assertEqual(task.launch_command, f'cardine run 001 --project {self.primary.resolve()}')
+        self.assertEqual(task.launch_command, 'Proceed with 001')
         self.assertEqual(task.run_preview['step'], 'implementation')
         self.assertEqual(task.run_preview['work']['role'], 'implementer')
         (self.worker / 'feature.txt').write_text('later changes\n')
@@ -366,7 +366,7 @@ class ExecutionBoundariesTest(unittest.TestCase):
             self.assert_stop('EVIDENCE_INCOMPLETE', lambda: owner_lifecycle_commands.execution_deliver(self.worker, '001'))
         self.assertEqual(self.state()['status'], 'in_review')
         task = project_console.load_snapshot(self.primary).tasks[0]
-        self.assertEqual(task.launch_command, f'cardine run 001 --project {self.primary.resolve()}')
+        self.assertEqual(task.launch_command, 'Proceed with 001')
         self.assertEqual(task.run_preview['step'], 'implementation')
         self.commit('Deliver 001 for review')
         self.assertTrue(owner_lifecycle_commands.execution_deliver(self.worker, '001')['clean'])

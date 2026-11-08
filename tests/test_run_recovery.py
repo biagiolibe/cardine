@@ -699,10 +699,12 @@ class RunRecoveryTest(unittest.TestCase):
 
     def test_dirty_primary_checkout_stays_a_guardrail(self) -> None:
         self._stage_ready_task_with_origin(local_ahead=True)
-        (self.project / "foreign.txt").write_text("dirt\n", encoding="utf-8")
+        tracked = self.project / "unpushed.txt"
+        dirt = tracked.read_text(encoding="utf-8") + "\n"
+        tracked.write_text(dirt, encoding="utf-8")
         result = self.run_cli(*self._stage_args())
         self.assertTrue(result.stderr.startswith("BLOCKED PRIMARY_DIRTY:"), result.stderr)
-        self.assertEqual((self.project / "foreign.txt").read_text(), "dirt\n")
+        self.assertEqual(tracked.read_text(encoding="utf-8"), dirt)
 
 
 def _stage_kill_test(point: str):

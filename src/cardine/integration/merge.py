@@ -214,6 +214,8 @@ def stage_task_integration(
     recover_landing_residue(project_root, identity.canonical_id)
     if git_output(project_root, "status", "--porcelain", "--untracked-files=no"):
         raise stop_error("PRIMARY_DIRTY", "primary checkout must be clean")
+    if receipts.pending_operation(project_root, identity.canonical_id):
+        raise stop_error("PRIMARY_DIRTY", "pending landing residue must be resolved before staging")
     task_commit = str(inspection["task_commit"])
     merge_base = git_output(project_root, "merge-base", "main", task_commit)
     written = git_output(project_root, "diff", "--name-only", "-z", "--no-renames",
