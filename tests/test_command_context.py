@@ -42,17 +42,17 @@ class CommandContextTest(unittest.TestCase):
         with patch.object(engine, 'resolve_run_locations', wraps=engine.resolve_run_locations) as resolve:
             result, calls = self.measured(fixture.deliver)
         self.assertEqual(resolve.call_count, 1)
-        self.assertLessEqual(len(calls), 47)  # Before: 80.
+        self.assertLessEqual(len(calls), 48)  # Before: 80.
         with patch.object(receipts, '_durable', side_effect=AssertionError('no-op wrote bytes')):
             replay, calls = self.measured(fixture.deliver)
         self.assertEqual(replay, result)
-        self.assertLessEqual(len(calls), 29)  # Before: 42.
+        self.assertLessEqual(len(calls), 30)  # Before: 42; delivery artifacts are verified at their commit.
         self.assertFalse(any('add' in call or 'commit' in call for call in calls))
         _, calls = self.measured(fixture.state)
         self.assertLessEqual(len(calls), 5)
         from cardine.console.snapshot import load_snapshot
         _, calls = self.measured(lambda: load_snapshot(fixture.root))
-        self.assertLessEqual(len(calls), 26)  # Receipt-bound source and committed delivery proof (RE7a).
+        self.assertLessEqual(len(calls), 27)  # Receipt-bound source and committed delivery proof (RE7a).
         preparation = self.fixture(test_run_preparation, 'RunPreparationTest')
         _, calls = self.measured(preparation.prepare)
         self.assertLessEqual(len(calls), 17)  # Before: 18.
