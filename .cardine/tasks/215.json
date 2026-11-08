@@ -60,6 +60,13 @@
     "validationScoping": []
   },
   "run": {
+    "delivery": {
+      "base": "c30157f1e9fafdb357ffc84fd5dc88ac7f29bb29",
+      "contractDigest": "5dcf5e190bc373935e05f192a946253818265507f15d943618d967bc6400bd14",
+      "source": "1912cf33398dfef71428ac105d0cbfa8a7d00340",
+      "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
+      "sourceTree": "7b028f5fdcb7d20a30c5ad7650a3cb899107d98a"
+    },
     "pending": null,
     "receipts": [
       {
@@ -106,6 +113,28 @@
         "source": "c30157f1e9fafdb357ffc84fd5dc88ac7f29bb29",
         "task_id": "215",
         "tree": "66eda1457e13286de26302e9f0963572baef39f0",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "5dcf5e190bc373935e05f192a946253818265507f15d943618d967bc6400bd14",
+        "digest": "b02e4cc2afedece1eaa7cf8fd294d40dadb2a243dfa3cf0f74ddd9958a180d22",
+        "inputs": {
+          ".cardine/tasks/215.json": "ee99c58bce6a17ccc35e2fb762fd6eec89b6bb6c72d48f5757f3a5c377fe5206"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "17ea0202ae5f45149d73d388fb53d6b8",
+        "outputs": {
+          ".cardine/tasks/215.json": "ec52c5457053abe9fee85599ddc681666c7b44e35c811690a7efea1e38ec7e36"
+        },
+        "predecessor": "fa1283b0d41da8b1c374642d7f1fa1f468b78febe913837cc5927d5cfd4606d6",
+        "result": "verified",
+        "source": "1912cf33398dfef71428ac105d0cbfa8a7d00340",
+        "task_id": "215",
+        "tree": "7b028f5fdcb7d20a30c5ad7650a3cb899107d98a",
         "version": 1
       }
     ]
