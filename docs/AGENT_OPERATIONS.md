@@ -117,8 +117,8 @@ The offline checker evaluates argument vectors rather than shell syntax.
 
 ## Codex large-file read guard in Governed SDD
 
-Governed-SDD upgrades also manage `.codex/hooks.json`. After reviewing the
-hook with `/hooks`, Codex invokes `meridian hook read-guard --host codex`
+`cardine setup --apply` registers the hooks in `~/.codex/hooks.json`. After
+reviewing them once with `/hooks`, Codex invokes `cardine hook read-guard --host codex`
 before Bash commands. It blocks recognised `cat`, `sed -n`, bounded
 `head`/`tail`, and `nl | sed` reads when their combined effective output from
 large files exceeds `Read-guard threshold` (400 lines by default). It does not
@@ -176,11 +176,9 @@ or `tasks/QUEUE.md`.
 
 ## Codex hooks and command approvals
 
-Meridian installs the read guard (`PreToolUse`) and stop audit (`Stop`) in
-project-level `.codex/hooks.json`. Open `/hooks` in Codex, review the two
-`meridian hook` commands, and trust them once. In Codex CLI 0.161.0, linked
-worktree sessions load the primary checkout's project configuration and reuse
-that trust; no user-level hook installation or per-task trust step is needed.
+Run `cardine setup --apply` to register the read guard (`PreToolUse`) and stop
+audit (`Stop`) in `~/.codex/hooks.json`. Open `/hooks` in Codex, review the two
+`cardine hook` commands, and trust them once.
 Changed hook definitions require another review. Check `/hooks` after a Codex
 upgrade, since host discovery behavior can change.
 

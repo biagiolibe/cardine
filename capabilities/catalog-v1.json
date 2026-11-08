@@ -227,12 +227,6 @@
             "shared-source"
           ],
           "path": "hooks/hooks.json"
-        },
-        {
-          "forms": [
-            "managed-copy"
-          ],
-          "path": ".codex/hooks.json"
         }
       ],
       "selfHostingEligible": true,

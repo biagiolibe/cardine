@@ -11,7 +11,7 @@ from test_host_briefing import run_host_briefing
 from project_config_support import write_project_config
 from task_state_support import write_task
 from task_contract_support import seal_state
-from test_queue_briefing import GOVERNED_HEADER
+GOVERNED_HEADER = "| Order | ID | Priority | Status | Review | Dependencies | Task file |\n|---:|---|---|---|---|---|---|\n"
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))

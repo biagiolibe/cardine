@@ -155,7 +155,6 @@
   },
   "frameworkVersion": "1.4.0",
   "managedFiles": {
-    ".codex/hooks.json": "4048efe87dc00ab2a81c2e2f247f67d0e3febb37eb901f56fad5646a692d7c4f",
     ".codex/rules/meridian.rules": "a9645a548667548a20d7ddf163d06c886f6a0198bb504e588a463d3dbc360944",
     "AGENTS.md": "d1eec58f259d07f9c618db29e7df29570bc658359d575a82bdf18b65dd3c53d8",
     "CLAUDE.md": "f5bbd2643f6f4673034605526086ab13572dad3108aa93f33c862bdf43622d7e",

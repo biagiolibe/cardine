@@ -583,7 +583,11 @@ class ConsumerProfileTest(unittest.TestCase):
                 destination = project / surface.path
                 if not destination.exists():
                     destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copyfile(ROOT / surface.path, destination)
+                    source = ROOT / surface.path
+                    if source.is_file():
+                        shutil.copyfile(source, destination)
+                    else:
+                        destination.write_text("")
         manifest_path = project / ".cardine/manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         manifest["managedFiles"]["docs/CONTEXT_READING_POLICY.md"] = "0" * 64

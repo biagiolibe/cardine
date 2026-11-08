@@ -15,6 +15,10 @@ records which release moved it.
 
 ## [Unreleased]
 
+### Removed
+
+- Stop distributing project-level Codex hooks; setup registers them in the user registry.
+
 
 ## [1.4.0]
 

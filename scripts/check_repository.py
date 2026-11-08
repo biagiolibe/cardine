@@ -66,7 +66,6 @@ REQUIRED_FILES = (
     "templates/single/tasks/QUEUE.md",
     "templates/single/docs/CONTEXT_READING_POLICY.md",
     "templates/single/docs/EXECUTION_EVIDENCE_PROFILE.md",
-    "templates/single/.codex/hooks.json",
     "skills/cardine-project/SKILL.md",
     "skills/cardine-delivery/SKILL.md",
 )
