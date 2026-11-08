@@ -85,7 +85,7 @@ class ProjectConsoleTest(unittest.TestCase):
             task = owner_console_snapshot.load_task(self.project, "002")
             missing = owner_console_snapshot.load_task(self.project, "999")
         self.assertEqual((task.task_id, task.readiness, task.launch_command),
-                         ("002", "READY", f"cardine run 002 --project {self.project}"))
+                         ("002", "READY", f"Proceed with 002"))
         self.assertIsNone(missing)
         self.assertNotIn("status", [args[0] for args in calls])
 
@@ -343,7 +343,7 @@ class ProjectConsoleTest(unittest.TestCase):
     def test_ready_directive_copy_hit_and_clipboard_result(self) -> None:
         self.write_states()
         task = self.snapshot().tasks[0]
-        self.assertEqual(task.launch_command, f"cardine run 002 --project {self.project}")
+        self.assertEqual(task.launch_command, f"Proceed with 002")
         palette = {name: 0 for name in (
             "base", "text", "title", "ready", "muted", "line", "action", "blocked", "unknown"
         )}
@@ -412,9 +412,9 @@ class MilestoneProjectTest(support.StateConsoleFixture):
         self.assertIsNone(tasks["M37-CAUSE-002"].record_problem)
         self.assertEqual(tasks["M37-CAUSE-002"].readiness, "READY")
         self.assertEqual(tasks["M37-CAUSE-002"].launch_command,
-                         f"cardine run M37-CAUSE-002 --project {self.project}")
+                         f"Proceed with M37-CAUSE-002")
         self.assertEqual(tasks["M37-CAUSE-005"].readiness, "READY")
-        self.assertEqual(tasks["M37-CAUSE-003"].launch_command, f"cardine run M37-CAUSE-003 --project {self.project}")
+        self.assertEqual(tasks["M37-CAUSE-003"].launch_command, f"Proceed with M37-CAUSE-003")
         self.assertEqual(state.snapshot.done_count, 2)
 
     def test_milestone_phases_group_the_rendered_open_list(self) -> None:
