@@ -407,7 +407,9 @@ def run_validation_step(locations: RunLocations) -> dict | None:
                 contract_ready=True, worktree_ready=True, validation_failed=True, implementation_work=request))
             result['diagnostics'] = [dict(code='CANDIDATE_VALIDATION_FAILED', message=json.dumps(failed_candidate['runs']))]
             return result
-    pending = operation_path(root, task_id).exists()
+    path = operation_path(root, task_id)
+    # Only an attempt in progress blocks a new delivery; a finished one stays on disk.
+    pending = path.exists() and receipts._load_intent(path).get('phase') not in ('complete', 'invalidated')
     if not pending and implementation_delivery(locations) is None and _committed_implementation(locations, state):
         # A clean, committed change in scope is a delivery the tool can perform
         # itself, so the agent needs no command beyond run (ADR decisions 6 and 14).
