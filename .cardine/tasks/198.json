@@ -138,8 +138,179 @@
         "task_id": "198",
         "tree": "986e928acb7d812179a16b0f698d4607eed7d0f8",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "19915381666d8538253d87cd1d0ec84141684b652fc398f2764973fb33b6dc0a",
+        "digest": "d3419147e76fdd1534ca6178bb6c6e306cd9206892c0698d43840546c6c55fc9",
+        "inputs": {
+          ".cardine/evidence/198.json": null,
+          ".cardine/tasks/198.json": "440102ce2a498a950be336e8223b43acf39d2c8dc204c32398a177e19df20016",
+          "tasks/handoffs/198.md": "69d57c37c5d4c235ef672059986a0125541f9d42c00c2746660b378bb3472f2f"
+        },
+        "kind": "task-validation",
+        "operation_id": "0337946c908a408ca0d16daec70508c2",
+        "outputs": {
+          ".cardine/evidence/198.json": "1648936d70827b7aeb05824b0d064b016453ac243ec67ff976b676f58bf514bd",
+          ".cardine/tasks/198.json": "fa6889f7c77c75905c301a48abb539c35d952b55742faa77c7bfa4d7bf4a34f4",
+          "tasks/handoffs/198.md": "16817ca3a397953a1f713c0f0b289d9ff635cababe03bb62dbe0977e2a89a581"
+        },
+        "predecessor": "f6dfe205a73d215a73a5d845edf10b9df136aa5915829b3f78067255976e534d",
+        "result": "verified",
+        "source": "368e41e8b95395b6e7754aa66792358322781120",
+        "task_id": "198",
+        "tree": "3f3bdfd70b9e48a95506c9732e09290dd1a58618",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "19915381666d8538253d87cd1d0ec84141684b652fc398f2764973fb33b6dc0a",
+        "digest": "fc6bf84b9228d327b75fbbf45f3d8f6eba356f1f5a2cbd49b490386103475873",
+        "inputs": {
+          ".cardine/evidence/198.json": "1648936d70827b7aeb05824b0d064b016453ac243ec67ff976b676f58bf514bd",
+          ".cardine/tasks/198.json": "8b464bf684ee2687d43c074002e1e3a33fa319254b04a7ea738654f9a1458859",
+          "tasks/handoffs/198.md": "16817ca3a397953a1f713c0f0b289d9ff635cababe03bb62dbe0977e2a89a581"
+        },
+        "kind": "task-validation",
+        "operation_id": "20b81235d529480797bd5f4ce750d3f2",
+        "outputs": {
+          ".cardine/evidence/198.json": "b5e2ced0ca2968ffc9d848c7470882e50f0c2f5f413774fe98378fd5e19f1377",
+          ".cardine/tasks/198.json": "ceeb0849740928c9ef710a73d9b8e44caa53db61d982e6a94fe36f3c474c2bc5",
+          "tasks/handoffs/198.md": "234aef90cb3eec595dea60fd184ddce4871f55a6c55e5c13b188c64d844e73db"
+        },
+        "predecessor": "d3419147e76fdd1534ca6178bb6c6e306cd9206892c0698d43840546c6c55fc9",
+        "result": "verified",
+        "source": "368e41e8b95395b6e7754aa66792358322781120",
+        "task_id": "198",
+        "tree": "3f3bdfd70b9e48a95506c9732e09290dd1a58618",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/198.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "68f5eb3a985456d455d0324f201b890f2a33bb1554c0ab5748dbbeb981714bac",
+        "commands": {
+          "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py"
+        },
+        "contractDigest": "19915381666d8538253d87cd1d0ec84141684b652fc398f2764973fb33b6dc0a",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-198",
+        "environmentDigest": "b22db751917225b202e7f1b973ae995818d90b91c0b0dfb68b46be97c80babcd",
+        "skips": [],
+        "source": "7b35ba31b782cddb5f12f6be2a72b78d970638bf",
+        "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+        "sourceTree": "986e928acb7d812179a16b0f698d4607eed7d0f8"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "adopt-32169894e045e78a"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "368e41e8b95395b6e7754aa66792358322781120",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/198.json#1ab1398b2fce4b23938d07723bf819bf/1/repository-check",
+            "round": 1,
+            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+            "command": "python3 scripts/run_tests.py --parallel --clean-clone",
+            "commit": "368e41e8b95395b6e7754aa66792358322781120",
+            "exitStatus": 2,
+            "id": "adopt-32169894e045e78a",
+            "log": ".cardine/evidence/198.json#1ab1398b2fce4b23938d07723bf819bf/1/adopt-32169894e045e78a",
+            "round": 1,
+            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "clean-clone refused: the working tree has uncommitted changes; commit them first\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+            "command": "git diff --check",
+            "commit": "368e41e8b95395b6e7754aa66792358322781120",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/198.json#1ab1398b2fce4b23938d07723bf819bf/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "368e41e8b95395b6e7754aa66792358322781120",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/198.json#1ab1398b2fce4b23938d07723bf819bf/2/repository-check",
+            "round": 2,
+            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+            "command": "python3 scripts/run_tests.py --parallel --clean-clone",
+            "commit": "368e41e8b95395b6e7754aa66792358322781120",
+            "exitStatus": 2,
+            "id": "adopt-32169894e045e78a",
+            "log": ".cardine/evidence/198.json#1ab1398b2fce4b23938d07723bf819bf/2/adopt-32169894e045e78a",
+            "round": 2,
+            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "clean-clone refused: the working tree has uncommitted changes; commit them first\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "1ab1398b2fce4b23938d07723bf819bf",
+            "command": "git diff --check",
+            "commit": "368e41e8b95395b6e7754aa66792358322781120",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/198.json#1ab1398b2fce4b23938d07723bf819bf/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "eadffe1943e3bc0b3b3322c24aaf7a8f55e9223e6c00c3a0b3fddf80536d1ffd",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "198",
