@@ -137,8 +137,153 @@
         "task_id": "211",
         "tree": "5369ec3aed0c8f23fb73bb4a91b1f404e910600d",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "87a3c8e548c855f46302757241c38e5461a9e6fb95c467f0e277c34d7944c32f",
+        "digest": "546c6bf77e82900d71330cece7d5c329940c2bb2b75538213f25769f43710ef3",
+        "inputs": {
+          ".cardine/evidence/211.json": null,
+          ".cardine/tasks/211.json": "5b478af6a56e28d95a48393ce7278a3bfbcf790d996d52b509ff6df93be6e21f",
+          "tasks/handoffs/211.md": "e92fc8196768212b17d7554bc2a4a227ff7848c836fc8cc5c08f867cd6e98cd8"
+        },
+        "kind": "task-validation",
+        "operation_id": "28c413c7bf244ee88b0122c5e5cabd1f",
+        "outputs": {
+          ".cardine/evidence/211.json": "3a2bc08f9fa5e94a729bb0331320612865ff6a2d375341348973eb9529799da3",
+          ".cardine/tasks/211.json": "8e98ab34724b080cfcf2d0d442646a69fcea800d54652d2a5e24e4cf8ceb0e9e",
+          "tasks/handoffs/211.md": "3e03e470b2da4324e435edbbfe4b17ae4fb4d4427da2f954219f778c1ea2c245"
+        },
+        "predecessor": "8a5fa5aaaa7e0f4828621f9d7caab2b66d5c4fc4b8e9f1396803bc60a4aa2399",
+        "result": "verified",
+        "source": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+        "task_id": "211",
+        "tree": "e2ad43814d9d7c6c5c5d258a07ee35d8ebc6b890",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/211.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "2e5d81926d65982ba6df0637f87369392f78a7bdd0cd08d2353ff21189d927c4",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_console_snapshot --module test_console_refresh --module test_console_states --module test_console_closure --module test_console_render --module test_run_console --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "87a3c8e548c855f46302757241c38e5461a9e6fb95c467f0e277c34d7944c32f",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-211",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "889064264c5d5575ce0a36236e3f88daae74a8f7",
+        "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+        "sourceTree": "5369ec3aed0c8f23fb73bb4a91b1f404e910600d"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "task-tests"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/211.json#b05cfc77d7bb43e18dcd8071fe9e389b/1/repository-check",
+            "round": 1,
+            "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+            "command": "python3 scripts/run_tests.py --parallel --module test_console_snapshot --module test_console_refresh --module test_console_states --module test_console_closure --module test_console_render --module test_run_console --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/211.json#b05cfc77d7bb43e18dcd8071fe9e389b/1/task-tests",
+            "round": 1,
+            "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+            "stderr": "run_tests: 201 tests in 8 shards\nrun_tests: shard 6/8 finished in 117.4s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 7/8 finished in 119.5s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 5/8 finished in 123.7s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 3/8 finished in 128.4s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 1/8 finished in 148.7s: exit 1 ran=26 failures=1 errors=0\nrun_tests: shard 2/8 finished in 155.5s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 8/8 finished in 158.3s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 4/8 finished in 210.1s: exit 0 ran=25 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=201 selected=26 digest=09ea5057fe293c395178f04f3e787db95291561a297918a35e19bed17da4c028\ntest_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing) ... FAIL\ntest_stable_facts_and_failures (test_command_context.CommandContextTest.test_stable_facts_and_failures) ... ok\ntest_stop_hook_ignores_old_bin_variable (test_command_word.CommandWordTest.test_stop_hook_ignores_old_bin_variable) ... ok\ntest_lifecycle_read_failure_keeps_the_engine_preview (test_console_closure.NamedIdClosingTaskTest.test_lifecycle_read_failure_keeps_the_engine_preview) ... ok\ntest_archived_cleanup_only_counts_as_done_with_accessible_hint_and_resume (test_console_closure.OpaqueIdClosingTaskTest.test_archived_cleanup_only_counts_as_done_with_accessible_hint_and_resume) ... ok\ntest_once_output_lists_the_closing_task_with_the_same_facts (test_console_closure.OpaqueIdClosingTaskTest.test_once_output_lists_the_closing_task_with_the_same_facts) ... ok\ntest_task_stays_visible_after_stage_with_derived_closing_state (test_console_closure.OpaqueIdClosingTaskTest.test_task_stays_visible_after_stage_with_derived_closing_state) ... ok\ntest_columns_follow_the_longest_id_for_3_8_13_and_18_characters (test_console_render.ConsoleListLayoutTest.test_columns_follow_the_longest_id_for_3_8_13_and_18_characters) ... ok\ntest_consumer_project_a_shaped_project_lists_every_open_task_without_stale (test_console_snapshot.MilestoneProjectTest.test_consumer_project_a_shaped_project_lists_every_open_task_without_stale) ... ok\ntest_detail_view_clamps_scroll_across_resize_and_draws_hidden_indicators (test_console_snapshot.ProjectConsoleTest.test_detail_view_clamps_scroll_across_resize_and_draws_hidden_indicators) ... ok\ntest_new_tabs_are_appended_after_existing_ones (test_console_snapshot.ProjectConsoleTest.test_new_tabs_are_appended_after_existing_ones) ... ok\ntest_tab_wraps_through_all_and_empty_tabs_remain_clickable (test_console_snapshot.ProjectConsoleTest.test_tab_wraps_through_all_and_empty_tabs_remain_clickable) ... ok\ntest_warm_refresh_rechecks_each_preview_identity_once (test_console_snapshot.RefreshCostTest.test_warm_refresh_rechecks_each_preview_identity_once) ... ok\ntest_worktrees_are_listed_once_per_snapshot (test_console_snapshot.SnapshotCostTest.test_worktrees_are_listed_once_per_snapshot) ... ok\ntest_legacy_closure_advice_cannot_override_the_run_preview (test_console_states.BranchStateTest.test_legacy_closure_advice_cannot_override_the_run_preview) ... ok\ntest_review_not_required_is_shown_and_never_offers_review (test_console_states.BranchStateTest.test_review_not_required_is_shown_and_never_offers_review) ... ok\ntest_empty_queue_with_done_states_preserves_totals (test_console_states.StateAuthorityTest.test_empty_queue_with_done_states_preserves_totals) ... ok\ntest_stale_queue_rows_enumerate_nothing (test_console_states.StateAuthorityTest.test_stale_queue_rows_enumerate_nothing) ... ok\ntest_evidence_rejects_traversal_and_links_to_another_task (test_layout.LayoutTest.test_evidence_rejects_traversal_and_links_to_another_task) ... ok\ntest_old_adoption_backups_do_not_reserve_product_backup_names (test_layout.LayoutTest.test_old_adoption_backups_do_not_reserve_product_backup_names) ... ok\ntest_adopt_package_exists_and_defines_nothing_yet (test_module_inventory.ModuleInventoryTest.test_adopt_package_exists_and_defines_nothing_yet) ... ok\ntest_scope_and_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_scope_and_stale_allowances) ... ok\ntest_finalized_and_cleaned_preview_never_repeats_delivery (test_run_console.RunConsoleTest.test_finalized_and_cleaned_preview_never_repeats_delivery) ... ok\ntest_stale_genuine_delivery_returns_to_implementation (test_run_console.RunConsoleTest.test_stale_genuine_delivery_returns_to_implementation) ... ok\ntest_all_declared_result_patterns_and_multiple_options (test_text_gates.TextGateScannerTest.test_all_declared_result_patterns_and_multiple_options) ... ok\ntest_product_text_readers_match_ratchet (test_text_gates.TextGateTest.test_product_text_readers_match_ratchet) ... ok\n\n======================================================================\n\nRan 26 tests in 146.820s\n\nFAILED (failures=1)\nFAIL: test_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-211/tests/test_command_context.py\", line 55, in test_command_budgets_and_noop_delivery_writes_nothing\n    self.assertLessEqual(len(calls), 27)  # Receipt-bound source and committed delivery proof (RE7a).\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\nAssertionError: 28 not less than or equal to 27\n\n----------------------------------------------------------------------\nresult ran=26 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_console_snapshot,test_console_refresh,test_console_states,test_console_closure,test_console_render,test_run_console,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=201 total=2157 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+            "command": "git diff --check",
+            "commit": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/211.json#b05cfc77d7bb43e18dcd8071fe9e389b/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/211.json#b05cfc77d7bb43e18dcd8071fe9e389b/2/repository-check",
+            "round": 2,
+            "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+            "command": "python3 scripts/run_tests.py --parallel --module test_console_snapshot --module test_console_refresh --module test_console_states --module test_console_closure --module test_console_render --module test_run_console --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/211.json#b05cfc77d7bb43e18dcd8071fe9e389b/2/task-tests",
+            "round": 2,
+            "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+            "stderr": "run_tests: 201 tests in 8 shards\nrun_tests: shard 6/8 finished in 120.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 7/8 finished in 122.3s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 5/8 finished in 125.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 3/8 finished in 137.2s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 1/8 finished in 164.8s: exit 1 ran=26 failures=1 errors=0\nrun_tests: shard 2/8 finished in 175.0s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 8/8 finished in 178.3s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 4/8 finished in 206.1s: exit 0 ran=25 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=201 selected=26 digest=09ea5057fe293c395178f04f3e787db95291561a297918a35e19bed17da4c028\ntest_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing) ... FAIL\ntest_stable_facts_and_failures (test_command_context.CommandContextTest.test_stable_facts_and_failures) ... ok\ntest_stop_hook_ignores_old_bin_variable (test_command_word.CommandWordTest.test_stop_hook_ignores_old_bin_variable) ... ok\ntest_lifecycle_read_failure_keeps_the_engine_preview (test_console_closure.NamedIdClosingTaskTest.test_lifecycle_read_failure_keeps_the_engine_preview) ... ok\ntest_archived_cleanup_only_counts_as_done_with_accessible_hint_and_resume (test_console_closure.OpaqueIdClosingTaskTest.test_archived_cleanup_only_counts_as_done_with_accessible_hint_and_resume) ... ok\ntest_once_output_lists_the_closing_task_with_the_same_facts (test_console_closure.OpaqueIdClosingTaskTest.test_once_output_lists_the_closing_task_with_the_same_facts) ... ok\ntest_task_stays_visible_after_stage_with_derived_closing_state (test_console_closure.OpaqueIdClosingTaskTest.test_task_stays_visible_after_stage_with_derived_closing_state) ... ok\ntest_columns_follow_the_longest_id_for_3_8_13_and_18_characters (test_console_render.ConsoleListLayoutTest.test_columns_follow_the_longest_id_for_3_8_13_and_18_characters) ... ok\ntest_consumer_project_a_shaped_project_lists_every_open_task_without_stale (test_console_snapshot.MilestoneProjectTest.test_consumer_project_a_shaped_project_lists_every_open_task_without_stale) ... ok\ntest_detail_view_clamps_scroll_across_resize_and_draws_hidden_indicators (test_console_snapshot.ProjectConsoleTest.test_detail_view_clamps_scroll_across_resize_and_draws_hidden_indicators) ... ok\ntest_new_tabs_are_appended_after_existing_ones (test_console_snapshot.ProjectConsoleTest.test_new_tabs_are_appended_after_existing_ones) ... ok\ntest_tab_wraps_through_all_and_empty_tabs_remain_clickable (test_console_snapshot.ProjectConsoleTest.test_tab_wraps_through_all_and_empty_tabs_remain_clickable) ... ok\ntest_warm_refresh_rechecks_each_preview_identity_once (test_console_snapshot.RefreshCostTest.test_warm_refresh_rechecks_each_preview_identity_once) ... ok\ntest_worktrees_are_listed_once_per_snapshot (test_console_snapshot.SnapshotCostTest.test_worktrees_are_listed_once_per_snapshot) ... ok\ntest_legacy_closure_advice_cannot_override_the_run_preview (test_console_states.BranchStateTest.test_legacy_closure_advice_cannot_override_the_run_preview) ... ok\ntest_review_not_required_is_shown_and_never_offers_review (test_console_states.BranchStateTest.test_review_not_required_is_shown_and_never_offers_review) ... ok\ntest_empty_queue_with_done_states_preserves_totals (test_console_states.StateAuthorityTest.test_empty_queue_with_done_states_preserves_totals) ... ok\ntest_stale_queue_rows_enumerate_nothing (test_console_states.StateAuthorityTest.test_stale_queue_rows_enumerate_nothing) ... ok\ntest_evidence_rejects_traversal_and_links_to_another_task (test_layout.LayoutTest.test_evidence_rejects_traversal_and_links_to_another_task) ... ok\ntest_old_adoption_backups_do_not_reserve_product_backup_names (test_layout.LayoutTest.test_old_adoption_backups_do_not_reserve_product_backup_names) ... ok\ntest_adopt_package_exists_and_defines_nothing_yet (test_module_inventory.ModuleInventoryTest.test_adopt_package_exists_and_defines_nothing_yet) ... ok\ntest_scope_and_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_scope_and_stale_allowances) ... ok\ntest_finalized_and_cleaned_preview_never_repeats_delivery (test_run_console.RunConsoleTest.test_finalized_and_cleaned_preview_never_repeats_delivery) ... ok\ntest_stale_genuine_delivery_returns_to_implementation (test_run_console.RunConsoleTest.test_stale_genuine_delivery_returns_to_implementation) ... ok\ntest_all_declared_result_patterns_and_multiple_options (test_text_gates.TextGateScannerTest.test_all_declared_result_patterns_and_multiple_options) ... ok\ntest_product_text_readers_match_ratchet (test_text_gates.TextGateTest.test_product_text_readers_match_ratchet) ... ok\n\n======================================================================\n\nRan 26 tests in 163.524s\n\nFAILED (failures=1)\nFAIL: test_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-211/tests/test_command_context.py\", line 55, in test_command_budgets_and_noop_delivery_writes_nothing\n    self.assertLessEqual(len(calls), 27)  # Receipt-bound source and committed delivery proof (RE7a).\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\nAssertionError: 28 not less than or equal to 27\n\n----------------------------------------------------------------------\nresult ran=26 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_console_snapshot,test_console_refresh,test_console_states,test_console_closure,test_console_render,test_run_console,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=201 total=2157 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "b05cfc77d7bb43e18dcd8071fe9e389b",
+            "command": "git diff --check",
+            "commit": "407b1e88badeca81fd394cbc67ebab81d574f7de",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/211.json#b05cfc77d7bb43e18dcd8071fe9e389b/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "ac4282472f0b2ac3687024b04aba77703efb0d243b4d2dd01033e369ed561fa8",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "211",
