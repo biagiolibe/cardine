@@ -1,0 +1,101 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "220"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/integration/finalize.py",
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_run_integration.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/221.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 221 \u2014 Do not refuse the replay of a landing that already completed",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_recovery --module test_worktree_cleanup --module test_run_receipts --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "d056caedc981accee2ca15bedaa74f373002e9a3a12f359b37310ec933ae16a8",
+        "digest": "8945804d4e7fdbd571f13a6f69570c0d2cf4a09cce2d2d1accdef817dbbbfa88",
+        "inputs": {
+          ".cardine/tasks/221.json": null,
+          "tasks/221.md": null
+        },
+        "kind": "creation",
+        "operation_id": "8c3f2390e53041e5bc1d555492b6a87f",
+        "outputs": {
+          ".cardine/tasks/221.json": "1ab6177b764fb023eb5b75a7c9caf4175193d612c4b4519ea7a0ff828dc85844",
+          "tasks/221.md": "b92b873d6387faf329dac8972a49eef8b585eaa0825c507f5cd2f31b3698ca5b"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "39ae6223d6f85c0c6788a47153350adfd67c600f",
+        "task_id": "221",
+        "tree": "e8abbad16a6179dc955ff0f905fef2545457eb10",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "221",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
