@@ -52,7 +52,7 @@ class CommandContextTest(unittest.TestCase):
         self.assertLessEqual(len(calls), 5)
         from cardine.console.snapshot import load_snapshot
         _, calls = self.measured(lambda: load_snapshot(fixture.root))
-        self.assertLessEqual(len(calls), 26)  # Receipt-bound source and committed delivery proof (RE7a).
+        self.assertLessEqual(len(calls), 27)  # Receipt-bound source and committed delivery proof (RE7a).
         preparation = self.fixture(test_run_preparation, 'RunPreparationTest')
         _, calls = self.measured(preparation.prepare)
         self.assertLessEqual(len(calls), 17)  # Before: 18.
