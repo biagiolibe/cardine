@@ -1,0 +1,97 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/console/snapshot.py",
+      "src/cardine/console/state.py",
+      "src/cardine/console/entry.py",
+      "tests/test_console_snapshot.py",
+      "tests/test_console_refresh.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/211.md",
+    "title": "Task 211 \u2014 Make console refreshes cheap",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_console_snapshot --module test_console_refresh --module test_console_states --module test_console_closure --module test_console_render --module test_run_console --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "87a3c8e548c855f46302757241c38e5461a9e6fb95c467f0e277c34d7944c32f",
+        "digest": "c17e365bf28aed1a1413b71efdb285442f423524a658927b558712043e85b43a",
+        "inputs": {
+          ".cardine/tasks/211.json": null,
+          "tasks/211.md": null
+        },
+        "kind": "creation",
+        "operation_id": "5a7a3e6e12f9474ca85a854138db42d4",
+        "outputs": {
+          ".cardine/tasks/211.json": "d7a8055a9b511e1042e2db9ff1297878a08fcfc8e92a33994175bd1eeaa6c12f",
+          "tasks/211.md": "525df10d8b24bbbd1ef60ee593df152aa737f6bb794b6576c476c59e18fbef5b"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "e637cefc69015f63461c7d556f582bc81b504c97",
+        "task_id": "211",
+        "tree": "18794f02dfec3890c7e3e849342fdb0bd1d2f69e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "211",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

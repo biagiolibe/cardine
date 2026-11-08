@@ -5,7 +5,8 @@
     "class": "standard",
     "deliverables": [],
     "dependencies": [
-      "208"
+      "208",
+      "211"
     ],
     "expectedCodeSurface": [
       "src/cardine/console/models.py",
@@ -64,6 +65,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:9833bab5e6860d18d24276a5a08922ab32071de3134ca8490dae45e6aea48560",
+      "at": "2026-11-08T18:23:30.544788Z",
+      "before": "sha256:5d372704fe28ca55f64a1b2762910edb4eb995d6443edf442c95552e22933ec5",
+      "changedFields": [
+        "dependencies"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -89,6 +100,30 @@
         "source": "0f5dbc754c11e2bad8617ee8ffa23ad857ad5494",
         "task_id": "209",
         "tree": "e8ec62b303fe8c1dc0039be83d81b2bb39ebc558",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "16da961d4595153ea7073f82971f24ec5130aef814c83de446fe0e47b9df4089",
+        "digest": "8a19cf117d0f4d2262fbd83e523ab74860c69a64d461f36d8c71719d0d27e7a0",
+        "inputs": {
+          ".cardine/tasks/209.json": "719625d7ef065e07013bb5ac7b37f5178b1b5701e2bd64de3cc2efa0c76c580f",
+          "tasks/209.md": "b6ef5754a33760f9647031143bac56b90fbc2cfedac2695315a87f45c88a3b4f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "1ab46aa60e5c489bb3866acc6c8afffc",
+        "outputs": {
+          ".cardine/tasks/209.json": "c804a114661d1c4027ad06aa19ca72ee4d9b298ca40b844a6940a9aeaf1e854b",
+          "tasks/209.md": "b6ef5754a33760f9647031143bac56b90fbc2cfedac2695315a87f45c88a3b4f"
+        },
+        "predecessor": "13849471dcdbccdbfba2655b46af66316aa4665e0a50d1ef385e58eb72787da8",
+        "result": "verified",
+        "source": "e637cefc69015f63461c7d556f582bc81b504c97",
+        "task_id": "209",
+        "tree": "18794f02dfec3890c7e3e849342fdb0bd1d2f69e",
         "version": 1
       }
     ]
