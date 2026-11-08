@@ -265,12 +265,38 @@
         "task_id": "216",
         "tree": "06a7e363ef0e539c08204620548e0abfa5efa844",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "3f001846f85e74733169e7e3f3b38b2621e14cc5add7e870cfda352fe45c3748",
+        "digest": "a1876a93f83eaf624887220273f9819fb2958ab2004a5257083033fe172fc67f",
+        "inputs": {
+          ".cardine/evidence/216.json": "fcf3a281768cc8846d51c90dac868b8f29fe9189ad52d47e761ef608bacddd84",
+          ".cardine/tasks/216.json": "814e4cacb4bec26834c4fba1f1eb6ac51e4058f9ce534ff56740ba6d217a963d",
+          "tasks/handoffs/216.md": "7145abf4c04c54a82d0065c1a495061ca7efda5d4962deb661e3c3725ea5f27b"
+        },
+        "kind": "task-validation",
+        "operation_id": "79e4bb84b9f94ccbb5f2d3d4a7bbbd66",
+        "outputs": {
+          ".cardine/evidence/216.json": "987001deb1972f1629286bc5c295bd825b81bed1583139d004432d261007d051",
+          ".cardine/tasks/216.json": "63e928f6d06b078041a3727bd76eae77b8ccc6a14396604725a5413869d73670",
+          "tasks/handoffs/216.md": "5c4dac22250af189f6913da99eae855adf65998c365ee264f046336f79fa1a0c"
+        },
+        "predecessor": "ec0da9c8ee134c31a901d2262c8d8d4a3290292036a2263b81d51c1a3c2eabaf",
+        "result": "verified",
+        "source": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
+        "task_id": "216",
+        "tree": "f328471b1ec8f766650981ac106409da18f0cf20",
+        "version": 1
       }
     ],
     "validation": {
       "acceptanceReferences": [],
-      "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
-      "consecutiveFailures": 2,
+      "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
+      "consecutiveFailures": 0,
       "evidence": ".cardine/evidence/216.json",
       "hostObservations": [],
       "inputs": {
@@ -280,104 +306,58 @@
           "repository-check": "python3 scripts/check_repository.py",
           "task-tests": "python3 scripts/run_tests.py --parallel --module test_codex_user_rules --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
         },
-        "contractDigest": "a53bf83e6f24276dfe418d024395e2e09c9e7584889d5133e72dc5957833aa72",
+        "contractDigest": "3f001846f85e74733169e7e3f3b38b2621e14cc5add7e870cfda352fe45c3748",
         "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-216",
         "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
         "skips": [],
-        "source": "590f250668e24e9fc2a2bf80311a275458db69bb",
-        "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
-        "sourceTree": "b20569d2f69ee64ee10c9c31594c4113d71c5324"
+        "source": "ca607d41fcadb2ea488dc7697df049e75a131fb2",
+        "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
+        "sourceTree": "06a7e363ef0e539c08204620548e0abfa5efa844"
       },
       "intermittent": [],
-      "lastFailed": [
-        "task-tests"
-      ],
-      "phase": "failed",
+      "lastFailed": [],
+      "phase": "passed",
       "quickFailures": 0,
       "quickRounds": 0,
       "runs": [
         [
           {
-            "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
+            "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
             "command": "python3 scripts/check_repository.py",
-            "commit": "ca96063f1fa11534a306e681fd1a7a5eeb36dda6",
+            "commit": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
             "exitStatus": 0,
             "id": "repository-check",
-            "log": ".cardine/evidence/216.json#1e07ed7b6a3749cfb7b56196b1c9461d/1/repository-check",
+            "log": ".cardine/evidence/216.json#76edc7a8aaab4634a3a216cbd74e9355/1/repository-check",
             "round": 1,
-            "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
+            "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "Cardine repository checks passed.\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
+            "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
             "command": "python3 scripts/run_tests.py --parallel --module test_codex_user_rules --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-            "commit": "ca96063f1fa11534a306e681fd1a7a5eeb36dda6",
-            "exitStatus": 1,
+            "commit": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
+            "exitStatus": 0,
             "id": "task-tests",
-            "log": ".cardine/evidence/216.json#1e07ed7b6a3749cfb7b56196b1c9461d/1/task-tests",
+            "log": ".cardine/evidence/216.json#76edc7a8aaab4634a3a216cbd74e9355/1/task-tests",
             "round": 1,
-            "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
+            "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
             "stderr": "",
             "stderrTruncated": false,
-            "stdout": "--- shard 3/8 (exit 1) ---\nshard=3/8 total=66 selected=8 digest=d950facad1015f21b4862b0236f561ffe906be1bb82d1003e32f24ce81178fcc\ntest_codex_user_rules_decisions (test_codex_user_rules.CodexUserRulesTest.test_codex_user_rules_decisions) ... ok\ntest_setup_migration_replays_all_durable_boundaries (test_codex_user_rules.CodexUserRulesTest.test_setup_migration_replays_all_durable_boundaries) ... ok\ntest_stop_hook_ignores_old_bin_variable (test_command_word.CommandWordTest.test_stop_hook_ignores_old_bin_variable) ... ok\ntest_flow_targets_read_selected_directory (test_layout.LayoutTest.test_flow_targets_read_selected_directory) ... ok\ntest_product_defaults_use_cardine_layout (test_layout.LayoutTest.test_product_defaults_use_cardine_layout) ... ok\ntest_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) ... \n  test_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) (name='CODEX_USER_RULES') ... FAIL\ntest_seeded_group_one_identifier_fails_in_temporary_repository (test_no_meridian_identifiers.IdentifierGuardTest.test_seeded_group_one_identifier_fails_in_temporary_repository) ... ok\ntest_allowlist_has_only_three_classes_and_creation_is_branch_scoped (test_text_gates.TextGateScannerTest.test_allowlist_has_only_three_classes_and_creation_is_branch_scoped) ... ok\n\n======================================================================\n\nRan 8 tests in 24.878s\n\nFAILED (failures=1)\nFAIL: test_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) (name='CODEX_USER_RULES')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-216/tests/test_module_inventory.py\", line 159, in test_baseline_bindings_have_exactly_one_definition\n    self.assertEqual(len(owners[binding[\"name\"]]), expected, owners[binding[\"name\"]])\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 2 != 1 : ['src/cardine/hosts/codex.py', 'src/cardine/hosts/codex.py']\n\n----------------------------------------------------------------------\nresult ran=8 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_codex_user_rules,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=66 total=2148 failures=1 errors=0\n",
+            "stdout": "PARTIAL selection=module:test_codex_user_rules,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=66 total=2148 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
+            "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
             "command": "git diff --check",
-            "commit": "ca96063f1fa11534a306e681fd1a7a5eeb36dda6",
+            "commit": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/216.json#1e07ed7b6a3749cfb7b56196b1c9461d/1/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/216.json#76edc7a8aaab4634a3a216cbd74e9355/1/adopt-466c2f308b48c766",
             "round": 1,
-            "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "",
-            "stdoutTruncated": false
-          }
-        ],
-        [
-          {
-            "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
-            "command": "python3 scripts/check_repository.py",
-            "commit": "ca96063f1fa11534a306e681fd1a7a5eeb36dda6",
-            "exitStatus": 0,
-            "id": "repository-check",
-            "log": ".cardine/evidence/216.json#1e07ed7b6a3749cfb7b56196b1c9461d/2/repository-check",
-            "round": 2,
-            "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "Cardine repository checks passed.\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
-            "command": "python3 scripts/run_tests.py --parallel --module test_codex_user_rules --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-            "commit": "ca96063f1fa11534a306e681fd1a7a5eeb36dda6",
-            "exitStatus": 1,
-            "id": "task-tests",
-            "log": ".cardine/evidence/216.json#1e07ed7b6a3749cfb7b56196b1c9461d/2/task-tests",
-            "round": 2,
-            "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "--- shard 3/8 (exit 1) ---\nshard=3/8 total=66 selected=8 digest=d950facad1015f21b4862b0236f561ffe906be1bb82d1003e32f24ce81178fcc\ntest_codex_user_rules_decisions (test_codex_user_rules.CodexUserRulesTest.test_codex_user_rules_decisions) ... ok\ntest_setup_migration_replays_all_durable_boundaries (test_codex_user_rules.CodexUserRulesTest.test_setup_migration_replays_all_durable_boundaries) ... ok\ntest_stop_hook_ignores_old_bin_variable (test_command_word.CommandWordTest.test_stop_hook_ignores_old_bin_variable) ... ok\ntest_flow_targets_read_selected_directory (test_layout.LayoutTest.test_flow_targets_read_selected_directory) ... ok\ntest_product_defaults_use_cardine_layout (test_layout.LayoutTest.test_product_defaults_use_cardine_layout) ... ok\ntest_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) ... \n  test_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) (name='CODEX_USER_RULES') ... FAIL\ntest_seeded_group_one_identifier_fails_in_temporary_repository (test_no_meridian_identifiers.IdentifierGuardTest.test_seeded_group_one_identifier_fails_in_temporary_repository) ... ok\ntest_allowlist_has_only_three_classes_and_creation_is_branch_scoped (test_text_gates.TextGateScannerTest.test_allowlist_has_only_three_classes_and_creation_is_branch_scoped) ... ok\n\n======================================================================\n\nRan 8 tests in 25.667s\n\nFAILED (failures=1)\nFAIL: test_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) (name='CODEX_USER_RULES')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-216/tests/test_module_inventory.py\", line 159, in test_baseline_bindings_have_exactly_one_definition\n    self.assertEqual(len(owners[binding[\"name\"]]), expected, owners[binding[\"name\"]])\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 2 != 1 : ['src/cardine/hosts/codex.py', 'src/cardine/hosts/codex.py']\n\n----------------------------------------------------------------------\nresult ran=8 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_codex_user_rules,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=66 total=2148 failures=1 errors=0\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "1e07ed7b6a3749cfb7b56196b1c9461d",
-            "command": "git diff --check",
-            "commit": "ca96063f1fa11534a306e681fd1a7a5eeb36dda6",
-            "exitStatus": 0,
-            "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/216.json#1e07ed7b6a3749cfb7b56196b1c9461d/2/adopt-466c2f308b48c766",
-            "round": 2,
-            "sourceDigest": "a051af2cfddee8d3f1757aff5a00a9e0d4b0489de9f779c521feba1d3f386c8e",
+            "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "",

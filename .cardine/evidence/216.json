@@ -167,6 +167,48 @@
       "stderrTruncated": false,
       "stdout": "",
       "stdoutTruncated": false
+    },
+    {
+      "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/216.json#76edc7a8aaab4634a3a216cbd74e9355/1/repository-check",
+      "round": 1,
+      "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
+      "command": "python3 scripts/run_tests.py --parallel --module test_codex_user_rules --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/216.json#76edc7a8aaab4634a3a216cbd74e9355/1/task-tests",
+      "round": 1,
+      "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_codex_user_rules,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=66 total=2148 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "76edc7a8aaab4634a3a216cbd74e9355",
+      "command": "git diff --check",
+      "commit": "7af422df3eba3e18e0b34742c4331df8d799c0f2",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/216.json#76edc7a8aaab4634a3a216cbd74e9355/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "8aa7da82063d1e71c81824cd16fd7556a0a0403079c3969186b740e29f9f1343",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
     }
   ]
 }
