@@ -11,7 +11,9 @@
       "src/cardine/legacy/snapshot.py",
       "src/cardine/legacy/meridian_installation.py",
       "tests/test_status_legacy_boundary.py",
-      "tests/test_legacy_meridian_installation.py"
+      "tests/test_legacy_meridian_installation.py",
+      "src/cardine/stops/causes.py",
+      "tests/test_text_gates.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -32,6 +34,10 @@
     "priority": "\ud83d\udd34 P1",
     "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
     "recordPath": "tasks/182-delete-legacy-snapshot.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
     "title": "Task 182 \u2014 Delete the legacy snapshot reader (C7f)",
     "validation": {
       "baseline": [
@@ -68,6 +74,15 @@
       "before": "sha256:e794c253a5000cecfa736816d07acebd498ac9400adfa0c45e78f43e9ba5d361",
       "changedFields": [
         "validation"
+      ]
+    },
+    {
+      "after": "sha256:7b95bc7e4264fda0cf5436986c63d75217ca3a6ed4b9fcfb031036855cf6aa22",
+      "at": "2026-11-08T22:28:37.867832Z",
+      "before": "sha256:5ad5861715d570b54d566c3ff58b896dd8098584b159d6ea7241cf70252e6ee3",
+      "changedFields": [
+        "expectedCodeSurface",
+        "taskValidation"
       ]
     }
   ],
@@ -147,6 +162,30 @@
         "source": "5337c8da46ee8761fce74daf6bf2b26e74d0383c",
         "task_id": "182",
         "tree": "ffd2514ebd8e7a4eb41dbc09749985a0806bae4f",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9ef47dada24e1d865971c45874f68c5a451d75bc7ce4ebf10aa89aa781958a49",
+        "digest": "21e3189e905ad599dba23633e367c8cea97ae21786a6f4becc04e4e773822a05",
+        "inputs": {
+          ".cardine/tasks/182.json": "8a27f5658c4282ff446a00a9a4c5f4c18f5d2d6379841cbac835825a01987f75",
+          "tasks/182-delete-legacy-snapshot.md": "dd3d05f3cd9a98d24202c8e3a6de037f707342ec5cf8fbedbd37125b8e348dc0"
+        },
+        "kind": "contract_revision",
+        "operation_id": "ee5d15acd2b144a5882c76fe956c3e1b",
+        "outputs": {
+          ".cardine/tasks/182.json": "7d8540b661a02dbfdf30823782a6ee717bedb221c8f4f26e0bc8ced31c84c1db",
+          "tasks/182-delete-legacy-snapshot.md": "dd3d05f3cd9a98d24202c8e3a6de037f707342ec5cf8fbedbd37125b8e348dc0"
+        },
+        "predecessor": "03aaf5ab8835ec303c50976097e4457e6c807eecda8451816d34f8d76bd7221c",
+        "result": "verified",
+        "source": "4e2aef76f11d629d06b738a599c7c85fbf813549",
+        "task_id": "182",
+        "tree": "ca0b278037e629979aad2642ee20751c2785a1cd",
         "version": 1
       }
     ]

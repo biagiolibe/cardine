@@ -156,7 +156,6 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/integration/merge.py", "stage_task_integration", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "LEASE_HELD"): ("guardrail", "exclusive-create race or foreign or live lease"),
     ("src/cardine/integration/merge.py", "stage_task_integration", "PRIMARY_DIRTY"): ("guardrail", "foreign dirt only; the exact owned landing residue (intent and stage files) is cleared under an operation record before this check"),
-    ("src/cardine/legacy/snapshot.py", "_read_console_state", "TASK_STATE_INVALID"): ("guardrail", "corrupt, foreign or forbidden state is never rewritten from prose"),
     ("src/cardine/lifecycle/closure.py", "advance_task_closure", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),
     ("src/cardine/lifecycle/closure.py", "advance_task_closure", "PUSH_PENDING"): ("split", "origin/main is a proper ancestor of local main"),
     ("src/cardine/lifecycle/closure.py", "advance_task_closure.result", "<dynamic>"): ("passthrough", "the code is chosen by an upstream classifier or a registered error carried through"),

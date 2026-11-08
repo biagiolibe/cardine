@@ -16,6 +16,11 @@ the files, and the tests; this record adds the developer's decisions and no desi
 
 delete `legacy/snapshot.py`, `load_meridian_snapshot`, and their tests; the rest of legacy stays (DD2).
 
+**Revision (2026-11-08).** Deleting the reader leaves an entry for
+`src/cardine/legacy/snapshot.py` in `src/cardine/stops/causes.py`, which
+`test_stop_registry` refuses: remove it. `tests/test_text_gates.py` needs its fixture updated
+for the deleted file. Comments elsewhere that mention the deleted file stay.
+
 ## Acceptance Criteria
 
 - [ ] Row C7f is implemented as its line in the excerpt describes it.
@@ -145,6 +150,8 @@ revalidation in the same turn; do not stop to report the fix.
 - `src/cardine/legacy/meridian_installation.py`
 - `tests/test_status_legacy_boundary.py`
 - `tests/test_legacy_meridian_installation.py`
+- `src/cardine/stops/causes.py`
+- `tests/test_text_gates.py`
 
 ## Execution contract — resolved
 
