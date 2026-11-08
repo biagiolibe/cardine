@@ -1,0 +1,95 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/delivery.py",
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_run_delivery.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/217.md",
+    "title": "Task 217 \u2014 Let a repair be delivered after a failed validation attempt",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_delivery --module test_run_validation --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "eb411f207208cee0f34e9a10789717a7baaa0973a752a4ecaca1a9cee051812e",
+        "digest": "b542be6b46dd743ffd11e7a9d9ccc8a3ccdc74e4683154a297fb475d8b10dc61",
+        "inputs": {
+          ".cardine/tasks/217.json": null,
+          "tasks/217.md": null
+        },
+        "kind": "creation",
+        "operation_id": "cd8cbefdbf96416c812135033cc33309",
+        "outputs": {
+          ".cardine/tasks/217.json": "29574de98f91dd0ee868d186068b084476a74a0380e62d14a6c7e80051159cac",
+          "tasks/217.md": "2ed8d0cdb2031489817f857d1ffe6b8141e0f4f2c371a7148cf66fe5103fc39b"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "adedddf046e29c823a56bbb8e1287395c4c49692",
+        "task_id": "217",
+        "tree": "e0a7a08632f5b4d87d1f3bc52902a785842fb2c4",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "217",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
