@@ -56,3 +56,13 @@ Guidance that no command backs is advice: follow it when you can, and never stop
 
 Validation scope comes from the frozen `validationScoping`: documentation-only changes may skip unrelated build, test, or lint commands, and source, build, runtime, or CI changes run every task-required check plus the baseline. `cardine run` records any skip. Scope never weakens an acceptance criterion. Advice: verify each criterion before delivery; incomplete evidence keeps the task `in_progress`.
 <!-- CARDINE:END -->
+
+## Standing decisions
+
+- The developer gives these decisions in advance for every task. They hold however the task is launched; none of the situations they cover needs a new decision.
+- After fixing a failure, continue with `cardine run` in the same turn; do not stop to report the fix.
+- Test runs during implementation are development, not validation attempts. Run only what the change touches: `python3 scripts/run_tests.py --parallel --module <name>`, repeating `--module` (a comma-separated list is refused). Do not run `python3 -m unittest` directly.
+- Task validation runs the commands under the record's Validation section. Do not run `--clean-clone` or the full suite: the coordinator runs the full suite on `main` after a group of tasks, and CI runs it on every push.
+- Run test suites one at a time, redirect each one's output to a log file with its exit code appended, and let a started run finish. Other tasks share this machine: stop only your own processes, by process ID, never by pattern.
+- Before stopping for a change of scope, finish everything else, commit it, and run the repository check and the affected tests, so that one stop names every file needed.
+- A recoverable result (`outcome: next`): run `next.command` unchanged. If the same code with the same detail comes back twice in a row, stop and report it.

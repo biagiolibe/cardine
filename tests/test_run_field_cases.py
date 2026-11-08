@@ -133,6 +133,18 @@ class AuthorityFieldCaseTest(unittest.TestCase):
             self.assertEqual(project.git('show', 'main:src/result.py'), 'result = 1')
             self.assertEqual(project.git('ls-tree', '-r', '--name-only', 'main').count('stray.txt'), 0)
 
+    def test_several_paths_outside_the_surface_stop_once_with_every_path(self):
+        with self.project() as project:
+            project.run()
+            project.run()
+            worker = project.commit_implementation()
+            for name in ('stray_b.txt', 'stray_a.txt'):
+                (worker / name).write_text('outside\n')
+            status, stopped = printed(['001', '--project', str(project.root)])
+            self.assertEqual((status, stopped['stop']['code']), (2, 'SCOPE_CHANGE_REQUIRED'))
+            self.assertEqual(stopped['stop']['detail'],
+                             'paths outside expected surface: stray_a.txt, stray_b.txt')
+
 
 class StopThenResumeFieldCaseTest(unittest.TestCase):
     def test_printed_resume_converges_after_a_kill_inside_validation(self):

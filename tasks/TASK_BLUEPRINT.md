@@ -61,40 +61,7 @@
 claude "$(cat tasks/[NNN]-name.md)"$'\n\nExecute this task in the current project.'
 ```
 
-## Developer decisions given in advance
-
-The developer records these decisions in the task contract, so that they
-hold however the task is launched, including a bare `Proceed with <TASK-ID>`
-from the project console (ADR decision 12). None of these situations needs a
-new decision from the developer. After fixing a failure, continue with
-revalidation in the same turn; do not stop to report the fix.
-
-- A required command that exits non-zero because of a precondition the agent
-  can satisfy (command order, an uncommitted worktree, a missing argument):
-  satisfy it and run the command again, once.
-- A validation failure caused by this task's own changes, including a name
-  collision, a stale reference, a broken link, or a test expectation that the
-  task made obsolete: fix it and revalidate, at most 3 counted attempts. A
-  test that fails once and passes on an identical unchanged rerun is
-  intermittent, recorded in the handoff, and does not count. Only after 3
-  counted failures stop with `BLOCKED VALIDATION_FAILED` and a summary of the
-  failures.
-- A counted attempt is one run of the whole Validation section on a
-  committed implementation that the agent considers complete. Test runs
-  during implementation are development, not attempts, however many fail.
-  An unfinished implementation is never a reason to stop: finish it first.
-- A `BLOCKED <CODE>` from a Meridian command whose entry in
-  `capabilities/stop-codes-v1.json` of the primary checkout's `main` has
-  `human_decision: false`: run the command the stop names, once. If it stops
-  again with the same code, stop.
-- The deny list, `RULE_CONFLICT`, every guardrail, and a change of scope
-  remain stops.
-
 ## Validation
 
-- `python3 scripts/check_repository.py`
-- `meridian profile doctor meridian-self-hosting --project .`
-- `meridian audit --project . --mode lean-delivery --ci-profile meridian-self-hosting`
-- `python3 scripts/run_tests.py --parallel`
-- `python3 scripts/run_tests.py --parallel --clean-clone`
-- `git diff --check`
+- `task-tests`: `python3 scripts/run_tests.py --parallel --module <touched test modules> --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word`
+- `adopt-466c2f308b48c766`: `git diff --check`
