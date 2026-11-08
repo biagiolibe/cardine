@@ -657,7 +657,7 @@ def _committed_implementation(locations, state):
     if state is None or state['status'] != 'in_progress':
         return False
     if git_output(root, 'status', '--porcelain'):
-        from cardine.lifecycle.validation import commit_own_records
+        from cardine.lifecycle.source import commit_own_records
         commit_own_records(root, locations.task_id, context=locations)
         if git_output(root, 'status', '--porcelain'):
             return False
