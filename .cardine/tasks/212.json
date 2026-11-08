@@ -23,7 +23,9 @@
       "tests/test_adopt_plan.py",
       "tests/test_adopt_rehearsal.py",
       "tests/test_stop_audit.py",
-      "tests/test_host_distribution.py"
+      "tests/test_host_distribution.py",
+      "tests/test_marker_structure_audit.py",
+      "tests/test_single_workflow_briefing.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -68,11 +70,22 @@
         "adopt-466c2f308b48c766": "git diff --check",
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_manifest --module test_template_replacement --module test_template_router --module test_marker_structure_audit --module test_single_workflow_briefing --module test_host_codex_access --module test_host_hooks --module test_host_distribution --module test_adopt_plan --module test_adopt_rehearsal --module test_stop_audit --module test_upgrade_repeatability --module test_synthetic_upgrade --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:33bd2d0b539d9b93d8bab81f6e885b149ead5f05719d4052343d47eedaf482e8",
+      "at": "2026-11-08T19:32:25.281825Z",
+      "before": "sha256:a9d4a87ae60abf5d229a316a4d0cd6145dfd491a7793569db02c1495f7be4efa",
+      "changedFields": [
+        "expectedCodeSurface",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -98,6 +111,30 @@
         "source": "c783c979a54869266e4024745489b39fb9cc1de7",
         "task_id": "212",
         "tree": "79b6d63830582bb69cc4f59a907c9384bd303ac6",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "3f59d5fa9af3ac7853fafb1d4db5cd19c462984d9689f42ee6e61e4dadf9bef5",
+        "digest": "55018cf174fd1811580002787608c58cee72a51883c0c30dc398f7e56ea44a2b",
+        "inputs": {
+          ".cardine/tasks/212.json": "e2f231701cc7c34404b449422fe1be53ec578c1228af04ec1a89814be6e1fe03",
+          "tasks/212.md": "22751629bd5b4246c5956e6fbd5fd2672d55f40e5409d8026b4b618be68aeb2b"
+        },
+        "kind": "contract_revision",
+        "operation_id": "263493b1c84f4b6c98dc5a5d27c289f7",
+        "outputs": {
+          ".cardine/tasks/212.json": "1069aa4a6ebc1e007fa87816e1f17008bf151b3a4272db8d3f3066a5169817c7",
+          "tasks/212.md": "22751629bd5b4246c5956e6fbd5fd2672d55f40e5409d8026b4b618be68aeb2b"
+        },
+        "predecessor": "700ba9e808353b9aead6ece9007c08f0419b4e965cf5b86375478bf7574cb4a2",
+        "result": "verified",
+        "source": "93f2140a74bb61ee7cede5acef2ec38f0ba470da",
+        "task_id": "212",
+        "tree": "40ae76329bf7f4baa27e0e0cb03ff9019af34e27",
         "version": 1
       }
     ]

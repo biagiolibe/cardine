@@ -1,0 +1,104 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/tasks/contract.py",
+      "src/cardine/shared/project.py",
+      "src/cardine/integration/evidence.py",
+      "schemas/task-state-v1.schema.json",
+      "docs/ADR_CARDINE_1_0.md",
+      "tests/test_single_workflow_config.py",
+      "tests/test_ci_evidence.py",
+      "tests/test_run_integration_decision.py",
+      "tests/task_contract_support.py",
+      "tests/test_contract_snapshot_readers.py",
+      "tests/test_run_integration.py",
+      "tests/test_single_workflow_parity.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/214.md",
+    "title": "Task 214 \u2014 Run on the candidate only the commands that can give a new result",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_single_workflow_config --module test_ci_evidence --module test_run_integration_decision --module test_run_integration --module test_single_workflow_parity --module test_contract_snapshot_readers --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "e49184de33f4beb97303371b184ac24607321aed3baf972c433ca20a244688cc",
+        "digest": "1dcdba826ac0af26e85afe7b2c3962f792a02d720605f12ab34df23d53910129",
+        "inputs": {
+          ".cardine/tasks/214.json": null,
+          "tasks/214.md": null
+        },
+        "kind": "creation",
+        "operation_id": "5016ddf0f4334a62ad5ba07d7117876e",
+        "outputs": {
+          ".cardine/tasks/214.json": "7872d7a236e1c8589f7529b0864f5c1c19d1a72f66a567d592f2bd79d9dd1d17",
+          "tasks/214.md": "05f1e5ce0797dd303190a79a9707cd04566848dff1fe76f560625c93c5bb91f5"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "93f2140a74bb61ee7cede5acef2ec38f0ba470da",
+        "task_id": "214",
+        "tree": "40ae76329bf7f4baa27e0e0cb03ff9019af34e27",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "214",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

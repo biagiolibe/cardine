@@ -1,0 +1,100 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "212"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/integration/merge.py",
+      "tests/test_run_recovery.py",
+      "tests/test_execution_boundaries.py",
+      "tests/test_command_context.py",
+      ".github/workflows/validate.yml",
+      ".cardine/project.json"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/213.md",
+    "title": "Task 213 \u2014 Restore the full suite and make CI a real gate before landing",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_recovery --module test_execution_boundaries --module test_command_context --module test_worktree_lifecycle --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "22a5eb1b018440839cdbfeb20c00a4fe3dd5c71c079bea51d4e50a12672bb98e",
+        "digest": "1a693e94d86f07e9c0218b0eba3291cb464e28c1aaa95ae4d75834043875e8e9",
+        "inputs": {
+          ".cardine/tasks/213.json": null,
+          "tasks/213.md": null
+        },
+        "kind": "creation",
+        "operation_id": "c7c3330927bb4721810260ef3f004578",
+        "outputs": {
+          ".cardine/tasks/213.json": "c82087bf20cd61149c53674b1c9527acc90bf755dffa60f416e56c1882c1e48f",
+          "tasks/213.md": "69d6cae8feaab16bb99dd2aa4cd12330b37962c159e1438cad39b3005d1a8fb9"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "93f2140a74bb61ee7cede5acef2ec38f0ba470da",
+        "task_id": "213",
+        "tree": "40ae76329bf7f4baa27e0e0cb03ff9019af34e27",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "213",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
