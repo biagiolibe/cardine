@@ -1,0 +1,96 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/templates/init.py",
+      "tests/test_init.py",
+      ".gitignore",
+      ".cardine/task-creation.guard"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/194.md",
+    "title": "Task 194 \u2014 Keep machine-local Cardine files out of version control",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "a995ee3e3f016ff4da40f10d3b59a155846c3e5d",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "85284956f79a4c0276aa1cef43c46c41c0759d4c29604cc233b3bca13618f954",
+        "digest": "e8fbbd2bb438d216e74086934d839e60ed13bb9088d05342418dac0b7e959335",
+        "inputs": {
+          ".cardine/tasks/194.json": null,
+          "tasks/194.md": null
+        },
+        "kind": "creation",
+        "operation_id": "2939fa6116514edc8047fa2e8c9579f4",
+        "outputs": {
+          ".cardine/tasks/194.json": "ae453358709a8baef004aa8933f978546110b2e146ed32c612b273c580eead2e",
+          "tasks/194.md": "096f999a003690578a3c17fbfef0cc34d787c3bf4420e47b78c61cc06d03bf35"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "eacfef8e8310d2fd87b0898e4abc2912eed8991e",
+        "task_id": "194",
+        "tree": "37b7977251bf7ed975ff1a353aacc9b013850865",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "194",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

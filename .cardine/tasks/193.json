@@ -1,0 +1,94 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/adopt/apply.py",
+      "tests/test_adopt_interruption.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/193.md",
+    "title": "Task 193 \u2014 Let adoption start again on a new commit",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "a995ee3e3f016ff4da40f10d3b59a155846c3e5d",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "c41421a20032294cef8b7836897819c6e76283b45ee3caf320c0bdb609cf0506",
+        "digest": "234f1b692b9041897d9d2f98ba2aa8b265268b4c8f82fbc15a291b83211c3ff2",
+        "inputs": {
+          ".cardine/tasks/193.json": null,
+          "tasks/193.md": null
+        },
+        "kind": "creation",
+        "operation_id": "36d183e324c449d2a2c41a1c9746b1ad",
+        "outputs": {
+          ".cardine/tasks/193.json": "8b56c6f49ae3bdac17082dffe105b66b355eeb9995078c39a9d42459fafb4332",
+          "tasks/193.md": "783850cb39e20222d0354dced53699672bdf2f53cd9342555ef0a0c2d3e90b4d"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "eacfef8e8310d2fd87b0898e4abc2912eed8991e",
+        "task_id": "193",
+        "tree": "37b7977251bf7ed975ff1a353aacc9b013850865",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "193",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
