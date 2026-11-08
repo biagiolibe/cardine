@@ -1,0 +1,94 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/tasks/contract_update.py",
+      "tests/test_run_receipts.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/195.md",
+    "title": "Task 195 \u2014 Cover prose-only record revisions with a receipt",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "a995ee3e3f016ff4da40f10d3b59a155846c3e5d",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "5b790659ce83eb941a2b8f7441bf2c9e6bfc88fed032692494202b03c17d9caf",
+        "digest": "a76ce80d2b5b57457ceae67680238535c93ac16299517b243daf8fc889d6cb5a",
+        "inputs": {
+          ".cardine/tasks/195.json": null,
+          "tasks/195.md": null
+        },
+        "kind": "creation",
+        "operation_id": "7315b72ceb89461cacd21cc8bdeb5e07",
+        "outputs": {
+          ".cardine/tasks/195.json": "74a25ee9d0ac936359a5b2791472a2406678e06cd76e2e1348154b38c5070fd5",
+          "tasks/195.md": "0ee8406a3f5f749cd4646ae304f8cbedfe2c01845bb816fa509d3a523f327688"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "b3cb90a6b24ded81f6990964081e17ed2764a9fd",
+        "task_id": "195",
+        "tree": "ab44eceb0de735be140de40cdfedf2d972b6d740",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "195",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
