@@ -149,6 +149,7 @@ def seal_state(root, task_id, *, artifacts=False):
             if old.get('accepted_main'):
                 observed['accepted_main'] = old['accepted_main']
         receipts.authorize_project(primary, accepted=observed)
+        observed = receipts.bound_authority(observed)
     if observed['common']:
         for operation_path in (Path(observed['common']) / 'cardine-worktrees').glob('*.preparation'):
             operation = receipts._load_intent(operation_path)
