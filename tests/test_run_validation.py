@@ -53,6 +53,15 @@ class RunValidationTest(unittest.TestCase):
     def run_attempt(self):
         return run_task_validation(self.worker, '001')
 
+    def shadowed_path(self, name):
+        """A PATH on which `name` resolves to a different program."""
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__('shutil').rmtree(directory, ignore_errors=True))
+        program = directory / name
+        program.write_text('#!/bin/sh\nexit 0\n')
+        program.chmod(0o755)
+        return {'PATH': f"{directory}{os.pathsep}{os.environ['PATH']}"}
+
     def kill(self, point):
         script = '''
 import os,sys
@@ -128,7 +137,7 @@ run_task_validation(Path(sys.argv[1]), '001')
 
     def test_changed_source_environment_and_stale_ledger_never_reuse_success(self):
         original = self.run_attempt()
-        with patch.dict(os.environ, {'CARDINE_TEST_ENVIRONMENT': 'changed'}):
+        with patch.dict(os.environ, self.shadowed_path('printf')):
             self.assertIsNone(verified_validation(self.worker, '001'))
             changed = self.run_attempt()
             self.assertNotEqual(changed['attemptId'], original['attemptId'])
@@ -182,7 +191,7 @@ run_task_validation(Path(sys.argv[1]), '001')
 
     def test_changed_environment_before_rerun_invalidates_without_intermittence_or_count(self):
         self.configure({'one': 'exit 8'})
-        changed_environment = patch.dict(os.environ, {'CARDINE_CHANGED_DURING_ATTEMPT': 'yes'})
+        changed_environment = patch.dict(os.environ, self.shadowed_path('exit'))
         self.addCleanup(changed_environment.stop)
         def change(name):
             if name == 'after_validation_logs':
@@ -196,6 +205,38 @@ run_task_validation(Path(sys.argv[1]), '001')
         result = self.run_attempt()
         self.assertEqual(result['consecutiveFailures'], 1)
         self.assertEqual(result['intermittent'], [])
+
+    def test_session_variables_never_make_a_passed_attempt_stale(self):
+        original = self.run_attempt()
+        for value in ('call-1', 'call-2'):
+            with patch.dict(os.environ, {'CODEX_TOOL_CALL_ID': value, 'TERM_SESSION_ID': value}):
+                self.assertEqual(verified_validation(self.worker, '001'), original)
+                self.assertEqual(self.run_attempt(), original)
+
+    def test_an_interrupted_attempt_for_other_inputs_is_replaced_without_a_stop(self):
+        self.kill('after_validation_intent')
+        interrupted = receipts._load_intent(operation_path(self.worker, '001'))
+        self.assertEqual(interrupted['phase'], 'process')
+        with patch.dict(os.environ, self.shadowed_path('printf')):
+            progress = self.run_attempt()
+        self.assertEqual(progress['phase'], 'passed')
+        self.assertNotEqual(progress['attemptId'], interrupted['attemptId'])
+        self.assertEqual(progress['consecutiveFailures'], 0)
+
+    def test_own_records_are_committed_before_a_fresh_attempt_and_foreign_changes_are_not(self):
+        self.configure({'one': 'test -z "$(git status --porcelain --untracked-files=no)"'})
+        first = self.run_attempt()
+        self.assertEqual(first['phase'], 'passed')
+        self.assertTrue(self.git('status', '--porcelain'))  # the published result is uncommitted
+        with patch.dict(os.environ, self.shadowed_path('test')):
+            second = self.run_attempt()
+        self.assertEqual(second['phase'], 'passed')
+        self.assertEqual(self.git('log', '-1', '--format=%s'), 'Record 001 task state')
+        (self.worker / 'src/result.py').write_text('foreign edit')
+        head = self.git('rev-parse', 'HEAD')
+        from cardine.lifecycle.validation import commit_own_records
+        self.assertFalse(commit_own_records(self.worker, '001'))
+        self.assertEqual(self.git('rev-parse', 'HEAD'), head)
 
     def test_missing_acceptance_deliverable_returns_implementation_work(self):
         self.git('rm', 'src/result.py')

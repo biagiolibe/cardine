@@ -10,7 +10,8 @@
       "src/cardine/lifecycle/validation.py",
       "src/cardine/integration/candidate.py",
       "tests/test_run_validation.py",
-      "tests/test_run_integration.py"
+      "tests/test_run_integration.py",
+      "tests/test_no_meridian_identifiers.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -68,9 +69,157 @@
       "changedFields": [
         "validation"
       ]
+    },
+    {
+      "after": "sha256:678ce23dedfd672e3f4d9385dd6229e9cd09fc17633712b7fc3b240827cf50fa",
+      "at": "2026-11-08T15:55:49.895718Z",
+      "before": "sha256:2dbc29b7b5915d2d6e02262c68ccc6916f25c46f0da8790ad0c1655c9e312584",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
     }
   ],
   "run": {
+    "candidateValidation": {
+      "attemptId": "e2090659120f4376be62e8c198ad1240",
+      "binding": {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "commands": [
+          "git diff --check",
+          "python3 scripts/check_repository.py",
+          "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        ],
+        "contract": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "environment": "07ee2685db8100d0906fbb4b3338503c72c0666106d2e047851c9e72593b9b7b",
+        "lease": "c3e0e2ee3da6ee1e0d2ae7c4f32d3c9ca6345ff063c1afeee05e4bd7d558f753",
+        "main": "3731aac1b7d0c74328433074dca1f4e24a38c94a",
+        "primaryAuthority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "project": "/Users/biagioliberto/dev/src/cardine",
+        "source": "a525407e854e971f7a66479e60a4c49976ea1c51",
+        "sourceDigest": "6d2aef08d0de1f99604444c15e660a165eb54a6f48feafb3ecc3bf7436a14fc5",
+        "staged": "053170f8319a6d564af108d0ece4ebc89f9725da33626ecd1ce98830da73339d",
+        "task_id": "201",
+        "tree": "f35eea8fc2efd85f33104d55879aaaaa95787f18",
+        "worker": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-201",
+        "worktreeStatus": "A  .cardine/evidence/201.json\nM  .cardine/tasks/201.json\nM  PROJECT_PLAN.md\nM  src/cardine/integration/candidate.py\nM  src/cardine/lifecycle/validation.py\nM  src/cardine/tasks/validation.py\nM  tasks/QUEUE.md\nA  tasks/handoffs/201.md\nM  tests/test_run_integration.py\nM  tests/test_run_validation.py"
+      },
+      "consecutiveFailures": 0,
+      "intermittent": [],
+      "lastFailed": [
+        "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "command": "git diff --check",
+            "exitStatus": 0,
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          },
+          {
+            "command": "python3 scripts/check_repository.py",
+            "exitStatus": 0,
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "exitStatus": 1,
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=287 selected=36 digest=c31fa6b72a80351fc9fb115d324fb5558ad28cbff42b67aa8da569306406bb7d\ntest_runtime_is_measured_once_and_a_foreign_runtime_is_rejected (test_command_context.CommandContextTest.test_runtime_is_measured_once_and_a_foreign_runtime_is_rejected) ... ok\ntest_shell_path_fallbacks_ignore_the_old_executable (test_command_word.CommandWordTest.test_shell_path_fallbacks_ignore_the_old_executable) ... ok\ntest_delivery_ignores_commit_fields_in_the_handoff (test_execution_boundaries.ExecutionBoundariesTest.test_delivery_ignores_commit_fields_in_the_handoff) ... ok\ntest_later_execution_evidence_change_is_rejected_even_if_reverted (test_execution_boundaries.ExecutionBoundariesTest.test_later_execution_evidence_change_is_rejected_even_if_reverted) ... ok\ntest_lifecycle_from_worker_comparison (test_execution_boundaries.ExecutionBoundariesTest.test_lifecycle_from_worker_comparison) ... ok\ntest_terminal_and_remediation_states_never_restart (test_execution_boundaries.ExecutionBoundariesTest.test_terminal_and_remediation_states_never_restart) ... ok\ntest_execution_evidence_writes_and_reads_selected_directory (test_layout.LayoutTest.test_execution_evidence_writes_and_reads_selected_directory) ... ok\ntest_old_journals_are_ignored_and_never_rotated (test_layout.LayoutTest.test_old_journals_are_ignored_and_never_rotated) ... ok\ntest_all_tracked_python_files_fit_line_budget (test_module_inventory.ModuleInventoryTest.test_all_tracked_python_files_fit_line_budget) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... FAIL\ntest_commands_run_on_a_committed_candidate (test_run_integration.CandidateTest.test_commands_run_on_a_committed_candidate) ... ok\ntest_finalize_every_effect_boundary_returns_the_same_commit (test_run_integration.CandidateTest.test_finalize_every_effect_boundary_returns_the_same_commit) ... ok\ntest_process_mutating_tree_cannot_publish_a_pass (test_run_integration.CandidateTest.test_process_mutating_tree_cannot_publish_a_pass) ... ok\ntest_an_interrupted_attempt_for_other_inputs_is_replaced_without_a_stop (test_run_validation.RunValidationTest.test_an_interrupted_attempt_for_other_inputs_is_replaced_without_a_stop) ... ok\ntest_failed_replay_after_result_receipt (test_run_validation.RunValidationTest.test_failed_replay_after_result_receipt) ... ok\ntest_failed_replay_after_validation_process (test_run_validation.RunValidationTest.test_failed_replay_after_validation_process) ... ok\ntest_failed_replay_before_validation_exit (test_run_validation.RunValidationTest.test_failed_replay_before_validation_exit) ... ok\ntest_missing_acceptance_deliverable_returns_implementation_work (test_run_validation.RunValidationTest.test_missing_acceptance_deliverable_returns_implementation_work) ... ok\ntest_negative_after_validation_evidence (test_run_validation.RunValidationTest.test_negative_after_validation_evidence) ... ok\ntest_negative_before_staged_pair (test_run_validation.RunValidationTest.test_negative_before_staged_pair) ... ok\ntest_negative_before_validation_result (test_run_validation.RunValidationTest.test_negative_before_validation_result) ... ok\ntest_replay_after_validation_exit (test_run_validation.RunValidationTest.test_replay_after_validation_exit) ... ok\ntest_replay_before_state_replace (test_run_validation.RunValidationTest.test_replay_before_state_replace) ... ok\ntest_scoping_and_host_checks_use_only_frozen_commands (test_run_validation.RunValidationTest.test_scoping_and_host_checks_use_only_frozen_commands) ... ok\ntest_close_from_primary (test_task_close.TaskCloseTest.test_close_from_primary) ... ok\ntest_success_verifies_closure_and_leaves_every_record_in_place (test_task_close.TaskCloseTest.test_success_verifies_closure_and_leaves_every_record_in_place) ... ok\ntest_named_references_aliases_and_qualified_functions (test_text_gates.TextGateScannerTest.test_named_references_aliases_and_qualified_functions) ... ok\ntest_quick_limit_stops_candidate_validation (test_validation_quick_commands.QuickCandidateTest.test_quick_limit_stops_candidate_validation) ... ok\ntest_order_is_variant_then_preflight_then_complete_set (test_validation_quick_commands.QuickTaskTest.test_order_is_variant_then_preflight_then_complete_set) ... ok\ntest_variant_exit_one_ends_attempt (test_validation_quick_commands.RetryCandidateTest.test_variant_exit_one_ends_attempt) ... ok\ntest_variant_exit_one_ends_attempt (test_validation_quick_commands.RetryTaskTest.test_variant_exit_one_ends_attempt) ... ok\ntest_advance_rejects_caller_candidate_results_without_finalizing (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_advance_rejects_caller_candidate_results_without_finalizing) ... ok\ntest_cleanup_reports_blocked_cleanup_through_the_registry (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_cleanup_reports_blocked_cleanup_through_the_registry) ... ok\ntest_integrate_stage_accepts_local_main_ahead_of_fetched_origin_main (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_accepts_local_main_ahead_of_fetched_origin_main) ... ok\ntest_prepare_and_worker_check_json_exit_codes (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_prepare_and_worker_check_json_exit_codes) ... ok\ntest_worktree_and_codex_commands_accept_the_resolved_root_without_an_option (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_worktree_and_codex_commands_accept_the_resolved_root_without_an_option) ... ok\n\n======================================================================\n\nRan 36 tests in 253.945s\n\nFAILED (failures=1)\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nFAIL: test_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/8b/3136z1zd1tl45yhp3mdxxrzh0000gn/T/cardine-candidate-htxgwxlw/candidate/tests/test_no_meridian_identifiers.py\", line 268, in test_repository_has_no_unallowed_identifiers_or_stale_allowances\n    self.assertEqual(failures, [], \"\\n\".join(failures))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['.cardine/evidence/201.json:19: \"command\"[878 chars]n\",'] != []\n\nFirst list contains 2 additional elements.\nFirst extra element 0:\n'.cardine/evidence/201.json:19: \"command\": \"python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word\",'\n\nDiff is 990 characters long. Set self.maxDiff to None to see it. : .cardine/evidence/201.json:19: \"command\": \"python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word\",\n.cardine/evidence/201.json:28: \"stdout\": \"PARTIAL selection=module:test_run_validation,test_run_integration,test_worktree_lifecycle,test_validation_quick_commands,test_execution_boundaries,test_task_close,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=287 total=2171 failures=0 errors=0\\npython3 scripts/run_tests.py --parallel --clean-clone\\n\",\n\n----------------------------------------------------------------------\nresult ran=36 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_validation,test_run_integration,test_worktree_lifecycle,test_validation_quick_commands,test_execution_boundaries,test_task_close,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=287 total=2171 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "command": "git diff --check",
+            "exitStatus": 0,
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          },
+          {
+            "command": "python3 scripts/check_repository.py",
+            "exitStatus": 0,
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "exitStatus": 1,
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=287 selected=36 digest=c31fa6b72a80351fc9fb115d324fb5558ad28cbff42b67aa8da569306406bb7d\ntest_runtime_is_measured_once_and_a_foreign_runtime_is_rejected (test_command_context.CommandContextTest.test_runtime_is_measured_once_and_a_foreign_runtime_is_rejected) ... ok\ntest_shell_path_fallbacks_ignore_the_old_executable (test_command_word.CommandWordTest.test_shell_path_fallbacks_ignore_the_old_executable) ... ok\ntest_delivery_ignores_commit_fields_in_the_handoff (test_execution_boundaries.ExecutionBoundariesTest.test_delivery_ignores_commit_fields_in_the_handoff) ... ok\ntest_later_execution_evidence_change_is_rejected_even_if_reverted (test_execution_boundaries.ExecutionBoundariesTest.test_later_execution_evidence_change_is_rejected_even_if_reverted) ... ok\ntest_lifecycle_from_worker_comparison (test_execution_boundaries.ExecutionBoundariesTest.test_lifecycle_from_worker_comparison) ... ok\ntest_terminal_and_remediation_states_never_restart (test_execution_boundaries.ExecutionBoundariesTest.test_terminal_and_remediation_states_never_restart) ... ok\ntest_execution_evidence_writes_and_reads_selected_directory (test_layout.LayoutTest.test_execution_evidence_writes_and_reads_selected_directory) ... ok\ntest_old_journals_are_ignored_and_never_rotated (test_layout.LayoutTest.test_old_journals_are_ignored_and_never_rotated) ... ok\ntest_all_tracked_python_files_fit_line_budget (test_module_inventory.ModuleInventoryTest.test_all_tracked_python_files_fit_line_budget) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... FAIL\ntest_commands_run_on_a_committed_candidate (test_run_integration.CandidateTest.test_commands_run_on_a_committed_candidate) ... ok\ntest_finalize_every_effect_boundary_returns_the_same_commit (test_run_integration.CandidateTest.test_finalize_every_effect_boundary_returns_the_same_commit) ... ok\ntest_process_mutating_tree_cannot_publish_a_pass (test_run_integration.CandidateTest.test_process_mutating_tree_cannot_publish_a_pass) ... ok\ntest_an_interrupted_attempt_for_other_inputs_is_replaced_without_a_stop (test_run_validation.RunValidationTest.test_an_interrupted_attempt_for_other_inputs_is_replaced_without_a_stop) ... ok\ntest_failed_replay_after_result_receipt (test_run_validation.RunValidationTest.test_failed_replay_after_result_receipt) ... ok\ntest_failed_replay_after_validation_process (test_run_validation.RunValidationTest.test_failed_replay_after_validation_process) ... ok\ntest_failed_replay_before_validation_exit (test_run_validation.RunValidationTest.test_failed_replay_before_validation_exit) ... ok\ntest_missing_acceptance_deliverable_returns_implementation_work (test_run_validation.RunValidationTest.test_missing_acceptance_deliverable_returns_implementation_work) ... ok\ntest_negative_after_validation_evidence (test_run_validation.RunValidationTest.test_negative_after_validation_evidence) ... ok\ntest_negative_before_staged_pair (test_run_validation.RunValidationTest.test_negative_before_staged_pair) ... ok\ntest_negative_before_validation_result (test_run_validation.RunValidationTest.test_negative_before_validation_result) ... ok\ntest_replay_after_validation_exit (test_run_validation.RunValidationTest.test_replay_after_validation_exit) ... ok\ntest_replay_before_state_replace (test_run_validation.RunValidationTest.test_replay_before_state_replace) ... ok\ntest_scoping_and_host_checks_use_only_frozen_commands (test_run_validation.RunValidationTest.test_scoping_and_host_checks_use_only_frozen_commands) ... ok\ntest_close_from_primary (test_task_close.TaskCloseTest.test_close_from_primary) ... ok\ntest_success_verifies_closure_and_leaves_every_record_in_place (test_task_close.TaskCloseTest.test_success_verifies_closure_and_leaves_every_record_in_place) ... ok\ntest_named_references_aliases_and_qualified_functions (test_text_gates.TextGateScannerTest.test_named_references_aliases_and_qualified_functions) ... ok\ntest_quick_limit_stops_candidate_validation (test_validation_quick_commands.QuickCandidateTest.test_quick_limit_stops_candidate_validation) ... ok\ntest_order_is_variant_then_preflight_then_complete_set (test_validation_quick_commands.QuickTaskTest.test_order_is_variant_then_preflight_then_complete_set) ... ok\ntest_variant_exit_one_ends_attempt (test_validation_quick_commands.RetryCandidateTest.test_variant_exit_one_ends_attempt) ... ok\ntest_variant_exit_one_ends_attempt (test_validation_quick_commands.RetryTaskTest.test_variant_exit_one_ends_attempt) ... ok\ntest_advance_rejects_caller_candidate_results_without_finalizing (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_advance_rejects_caller_candidate_results_without_finalizing) ... ok\ntest_cleanup_reports_blocked_cleanup_through_the_registry (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_cleanup_reports_blocked_cleanup_through_the_registry) ... ok\ntest_integrate_stage_accepts_local_main_ahead_of_fetched_origin_main (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_accepts_local_main_ahead_of_fetched_origin_main) ... ok\ntest_prepare_and_worker_check_json_exit_codes (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_prepare_and_worker_check_json_exit_codes) ... ok\ntest_worktree_and_codex_commands_accept_the_resolved_root_without_an_option (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_worktree_and_codex_commands_accept_the_resolved_root_without_an_option) ... ok\n\n======================================================================\n\nRan 36 tests in 270.407s\n\nFAILED (failures=1)\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nFAIL: test_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/private/var/folders/8b/3136z1zd1tl45yhp3mdxxrzh0000gn/T/cardine-candidate-xlwai2k7/candidate/tests/test_no_meridian_identifiers.py\", line 268, in test_repository_has_no_unallowed_identifiers_or_stale_allowances\n    self.assertEqual(failures, [], \"\\n\".join(failures))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['.cardine/evidence/201.json:19: \"command\"[878 chars]n\",'] != []\n\nFirst list contains 2 additional elements.\nFirst extra element 0:\n'.cardine/evidence/201.json:19: \"command\": \"python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word\",'\n\nDiff is 990 characters long. Set self.maxDiff to None to see it. : .cardine/evidence/201.json:19: \"command\": \"python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word\",\n.cardine/evidence/201.json:28: \"stdout\": \"PARTIAL selection=module:test_run_validation,test_run_integration,test_worktree_lifecycle,test_validation_quick_commands,test_execution_boundaries,test_task_close,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=287 total=2171 failures=0 errors=0\\npython3 scripts/run_tests.py --parallel --clean-clone\\n\",\n\n----------------------------------------------------------------------\nresult ran=36 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_validation,test_run_integration,test_worktree_lifecycle,test_validation_quick_commands,test_execution_boundaries,test_task_close,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=287 total=2171 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    },
+    "delivery": {
+      "base": "3731aac1b7d0c74328433074dca1f4e24a38c94a",
+      "contractDigest": "9e0d573893e9e48c2eb813482192b54f2a635105dadc887d5d28efcaa4d50627",
+      "source": "e9270c3cff842557380031e8c17bf25c1c444c86",
+      "sourceDigest": "1f6912db39d84764197e4a98a7774b9bc48040eb46099323ed318c62b35ce00c",
+      "sourceTree": "2198e724b02ed31f03073ac0a317c6bf6a91b6b2"
+    },
+    "ownedAbort": {
+      "binding": {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "common": "/Users/biagioliberto/dev/src/cardine/.git",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00",
+          "project": "/Users/biagioliberto/dev/src/cardine",
+          "root": "/Users/biagioliberto/dev/src/cardine",
+          "worktree_root": "/Users/biagioliberto/.cardine/worktrees"
+        },
+        "contract": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "lease_digest": "c3e0e2ee3da6ee1e0d2ae7c4f32d3c9ca6345ff063c1afeee05e4bd7d558f753",
+        "main": "3731aac1b7d0c74328433074dca1f4e24a38c94a",
+        "merge": "a525407e854e971f7a66479e60a4c49976ea1c51\n",
+        "project": "/Users/biagioliberto/dev/src/cardine",
+        "root": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-201",
+        "snapshot": "4d450c5764db10e9e09c003d9ad0136e733e3e6c711ae0ecf79ad8f7e3e11a5a",
+        "source": "a525407e854e971f7a66479e60a4c49976ea1c51",
+        "source_digest": "6d2aef08d0de1f99604444c15e660a165eb54a6f48feafb3ecc3bf7436a14fc5",
+        "staged_digest": "053170f8319a6d564af108d0ece4ebc89f9725da33626ecd1ce98830da73339d",
+        "task_id": "201"
+      },
+      "principal": {
+        "host": "cardine",
+        "profile": "engine",
+        "role": "engine",
+        "session_id": "candidate-recovery"
+      }
+    },
+    "ownedAbortResult": {
+      "operation": "c8369da5271f304876a45e24d37bee6ac2a588e3c0b6cd756c1dfe921eaa701f",
+      "result": "verified"
+    },
     "pending": null,
     "receipts": [
       {
@@ -120,12 +269,328 @@
         "task_id": "201",
         "tree": "0ded0a7e962fe24ce43a609b4c017a0b48823440",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "digest": "a4a7d0bdbc65b0776bfc55931c42c56efb83956221230d84f5a56a99a4930b10",
+        "inputs": {
+          ".cardine/tasks/201.json": "9b13ade7eea36fc8fc86b325cdea5af1775af1f1beeb97a37ceb59b1f817b940"
+        },
+        "kind": "transition:d5e5ee87c83dffc39a04ff4ac07052132fc65c27920b5e438331787904029908",
+        "operation_id": "bed88b20516a4bb98b2abfac3fe00e69",
+        "outputs": {
+          ".cardine/tasks/201.json": "df964e98936bc251c5cd94ee7bc06338e8735042c49d8600fa989afccd13843c"
+        },
+        "predecessor": "bf6fceaa229688230f47bcf0b2f7868e4b968e9be0aa22c68e6f558e2de550af",
+        "result": "verified",
+        "source": "3731aac1b7d0c74328433074dca1f4e24a38c94a",
+        "task_id": "201",
+        "tree": "2909bba0bb07063a2e9d7007abe7da717999ad80",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "digest": "ab677a43aedd010cbb4ebf779eb4f9d759cab869143a797268c00437fcf5731e",
+        "inputs": {
+          ".cardine/tasks/201.json": "85c442b690379bd859266f84822754bbb3a7b26098096fdae1c16bb4b6bcaa75"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "6f4ce9bbe3f54cba93552d81065f023d",
+        "outputs": {
+          ".cardine/tasks/201.json": "41521c551a586658dbb58e60e80bbad16c8f049356b511eeb16dd22758bdd04a"
+        },
+        "predecessor": "a4a7d0bdbc65b0776bfc55931c42c56efb83956221230d84f5a56a99a4930b10",
+        "result": "verified",
+        "source": "37a9740f2dc183391b4a28de0c0d96b59a4f80d6",
+        "task_id": "201",
+        "tree": "78219a45b3b42ee093364aafebe7f35aa9f5b89b",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "digest": "8bd2abb4da120bdbf913e24399c56dc76485349d7e2ed43f80b28b01cb0af290",
+        "inputs": {
+          ".cardine/evidence/201.json": null,
+          ".cardine/tasks/201.json": "5ae953d1c2ffeadd08ad817beb0b17da4e13cae8ba6d482ea9316d5c6a29abbd",
+          "tasks/handoffs/201.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "e5b5a798fa164492bf9cf25fb633ded1",
+        "outputs": {
+          ".cardine/evidence/201.json": "344a9fbd1c3e15fd4190e8cdcd4d1b41ce10ec8908252b63dba1299e31cdbed7",
+          ".cardine/tasks/201.json": "0435bd6555a778c4c2a2e92f72f68b4ce16fe54ea69e85acc2cd2a2e033bf476",
+          "tasks/handoffs/201.md": "0ab5779243d05571a6d4dcda65d13bce3283ce7a2762a170c96e98968e4e068d"
+        },
+        "predecessor": "ab677a43aedd010cbb4ebf779eb4f9d759cab869143a797268c00437fcf5731e",
+        "result": "verified",
+        "source": "56821e1a6b34b7267570c7b20d4ff9badb617660",
+        "task_id": "201",
+        "tree": "0f994ad5ab6dc5b7a2c54ff0526ae8a605a0e64f",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "digest": "752228d79673c3924a03115346b19aaa3c784c39603a76da6daf1666f88c4a2f",
+        "inputs": {
+          ".cardine/tasks/201.json": "dd2d3b26369e44f60489b7e0386e1092f367b6f9d1945345de642d5be11dbb7d"
+        },
+        "kind": "candidate-validation",
+        "operation_id": "a62b69d7b2644c4f96776d714388ce75",
+        "outputs": {
+          ".cardine/tasks/201.json": "1bbea05f6c342ceb559e6f512a179dfce31db9fff6b1b86115d8af4c50977deb"
+        },
+        "predecessor": "8bd2abb4da120bdbf913e24399c56dc76485349d7e2ed43f80b28b01cb0af290",
+        "result": "verified",
+        "source": "a525407e854e971f7a66479e60a4c49976ea1c51",
+        "task_id": "201",
+        "tree": "b46c6887c8bf19a5bccbdc3d06b99260cacbc992",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "digest": "b45b694ad6a6113c6c71b93af4c617fc42e00e0e492f0ad0f447ac4b7b3da97f",
+        "inputs": {
+          ".cardine/tasks/201.json": "9a748448236734ab100a1de89b2f94e6287f2b9394c5678ab5ceff235e6d19aa"
+        },
+        "kind": "abort:c8369da5271f304876a45e24d37bee6ac2a588e3c0b6cd756c1dfe921eaa701f",
+        "operation_id": "b5a97eb54a05460ca89ba612f5a1a9ba",
+        "outputs": {
+          ".cardine/tasks/201.json": "aac4eea76c66c316dded47f02dc6a1c5cc6a6199afce7a6bf1ecc33dc2ed8048"
+        },
+        "predecessor": "752228d79673c3924a03115346b19aaa3c784c39603a76da6daf1666f88c4a2f",
+        "result": "verified",
+        "source": "a525407e854e971f7a66479e60a4c49976ea1c51",
+        "task_id": "201",
+        "tree": "b46c6887c8bf19a5bccbdc3d06b99260cacbc992",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "0acbde26895ded2f8ac0a0d278e390deb68a68266eddb9937dd1aa2be9fb0c62",
+        "digest": "3330b06763acd9c7890606152b60c85bb22139e8fbc4179ff32ad9d9a46f542f",
+        "inputs": {
+          ".cardine/tasks/201.json": "6892c7a884aebbdc250f3ca7ad62a5fe515318605809e4195df639ed3dd8ccc7"
+        },
+        "kind": "abort-result:c8369da5271f304876a45e24d37bee6ac2a588e3c0b6cd756c1dfe921eaa701f",
+        "operation_id": "bb9c8907e57f41f59527be075cd98880",
+        "outputs": {
+          ".cardine/tasks/201.json": "b8945dff19da5cf4ffed7d71bbc9205ce07f94b9a8c42d48f484e473029b6644"
+        },
+        "predecessor": "b45b694ad6a6113c6c71b93af4c617fc42e00e0e492f0ad0f447ac4b7b3da97f",
+        "result": "verified",
+        "source": "a525407e854e971f7a66479e60a4c49976ea1c51",
+        "task_id": "201",
+        "tree": "b46c6887c8bf19a5bccbdc3d06b99260cacbc992",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9e0d573893e9e48c2eb813482192b54f2a635105dadc887d5d28efcaa4d50627",
+        "digest": "5772d2a4909b02805fa38cdd3c4e139471fb8a33fe85e2007cd025e786882787",
+        "inputs": {
+          ".cardine/tasks/201.json": "28b1ed4324d33d98371f1657621d03974ede9028913e3bd49235d63681e3aab7",
+          "tasks/201.md": "cca6a1357b7cd632009c11b718d59baaae35e2d7b667c4032feb71797aa51494"
+        },
+        "kind": "contract_revision",
+        "operation_id": "9bf5ce1bee1d48dbb602876ea4dbe09e",
+        "outputs": {
+          ".cardine/tasks/201.json": "88edd913de5c83890b78baa9b2ce86c97d5b465e39865d41af6c3d4dc484679a",
+          "tasks/201.md": "cca6a1357b7cd632009c11b718d59baaae35e2d7b667c4032feb71797aa51494"
+        },
+        "predecessor": "3330b06763acd9c7890606152b60c85bb22139e8fbc4179ff32ad9d9a46f542f",
+        "result": "verified",
+        "source": "a525407e854e971f7a66479e60a4c49976ea1c51",
+        "task_id": "201",
+        "tree": "b46c6887c8bf19a5bccbdc3d06b99260cacbc992",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9e0d573893e9e48c2eb813482192b54f2a635105dadc887d5d28efcaa4d50627",
+        "digest": "587aa0b5691b096786a5bcb52ebcb5fa6d9c63b41453eae8fdfeb1d600304739",
+        "inputs": {
+          ".cardine/tasks/201.json": "fe3f1d296a4ba810f7223edc64428fdb700b535cb1793c1e9b640c407d0b2196"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "c549744613c9427db9d747bc0cb254be",
+        "outputs": {
+          ".cardine/tasks/201.json": "a118dbb48ad1128681ff57544987c893240b8a568ba03e707ee19227536aa588"
+        },
+        "predecessor": "5772d2a4909b02805fa38cdd3c4e139471fb8a33fe85e2007cd025e786882787",
+        "result": "verified",
+        "source": "e9270c3cff842557380031e8c17bf25c1c444c86",
+        "task_id": "201",
+        "tree": "2198e724b02ed31f03073ac0a317c6bf6a91b6b2",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9e0d573893e9e48c2eb813482192b54f2a635105dadc887d5d28efcaa4d50627",
+        "digest": "9a4f17293743b3a125b24aaf1ceb622fa43bf7fe66d198fdae068cd0a664bffa",
+        "inputs": {
+          ".cardine/evidence/201.json": "344a9fbd1c3e15fd4190e8cdcd4d1b41ce10ec8908252b63dba1299e31cdbed7",
+          ".cardine/tasks/201.json": "26e30b6742a47e21de7ef4e93d96cbb482f31a4ee4eaddb73d1a4f21836cfe05",
+          "tasks/handoffs/201.md": "0ab5779243d05571a6d4dcda65d13bce3283ce7a2762a170c96e98968e4e068d"
+        },
+        "kind": "task-validation",
+        "operation_id": "e746254889a84fef95a30d1be65f2f80",
+        "outputs": {
+          ".cardine/evidence/201.json": "8172c7f32177e954dfee2c30f9529f9ae4b55186f3dc8c01436eca6a3b14fb19",
+          ".cardine/tasks/201.json": "aa722f4e7902f3e4668348fe95acc22b70c30d956901a3fcfcc17e2f92f9748e",
+          "tasks/handoffs/201.md": "b5def36f2fec4eb332d9ded77550b2cae0c4fceba7e708eb0b045c84ccae291d"
+        },
+        "predecessor": "587aa0b5691b096786a5bcb52ebcb5fa6d9c63b41453eae8fdfeb1d600304739",
+        "result": "verified",
+        "source": "c26a096b6cc20f55575b9181406011e27e87002c",
+        "task_id": "201",
+        "tree": "cfcb6d21c6771b5b242c1358f09015dcd8579ee5",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9e0d573893e9e48c2eb813482192b54f2a635105dadc887d5d28efcaa4d50627",
+        "digest": "1e0dc2c8c07eb5181fae69725c1d5f9c1b25ae069fb9600cf21fdd011c7fe4cf",
+        "inputs": {
+          ".cardine/tasks/201.json": "8cbbb17127973b2661d81deafad55bcd4234d233d481dbd001ecd655bcecd37f"
+        },
+        "kind": "landing_state",
+        "operation_id": "3803bff148e641149bf428267ea77cbe",
+        "outputs": {
+          ".cardine/tasks/201.json": "43b6430689eb7066a2c9613fc3cbab8424f3f4f27ae8725eb25a68fb54020718"
+        },
+        "predecessor": "9a4f17293743b3a125b24aaf1ceb622fa43bf7fe66d198fdae068cd0a664bffa",
+        "result": "verified",
+        "source": "30183a7172538b5119895bad684e93e16275dacb",
+        "task_id": "201",
+        "tree": "754c508a4dab8f3651d19bc638adbcc3c136e663",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "50a0d6384cfd43bc970c9bbebfdf0329",
+      "consecutiveFailures": 0,
+      "evidence": ".cardine/evidence/201.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "1c21e34118a86d624761e3768b31f4eb5c733e97e6de0fabeccfa1d0c52b1272",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "9e0d573893e9e48c2eb813482192b54f2a635105dadc887d5d28efcaa4d50627",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-201",
+        "environmentDigest": "07ee2685db8100d0906fbb4b3338503c72c0666106d2e047851c9e72593b9b7b",
+        "skips": [],
+        "source": "e9270c3cff842557380031e8c17bf25c1c444c86",
+        "sourceDigest": "1f6912db39d84764197e4a98a7774b9bc48040eb46099323ed318c62b35ce00c",
+        "sourceTree": "2198e724b02ed31f03073ac0a317c6bf6a91b6b2"
+      },
+      "intermittent": [],
+      "lastFailed": [],
+      "phase": "passed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "50a0d6384cfd43bc970c9bbebfdf0329",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "c26a096b6cc20f55575b9181406011e27e87002c",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/201.json#50a0d6384cfd43bc970c9bbebfdf0329/1/repository-check",
+            "round": 1,
+            "sourceDigest": "1f6912db39d84764197e4a98a7774b9bc48040eb46099323ed318c62b35ce00c",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "50a0d6384cfd43bc970c9bbebfdf0329",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "c26a096b6cc20f55575b9181406011e27e87002c",
+            "exitStatus": 0,
+            "id": "task-tests",
+            "log": ".cardine/evidence/201.json#50a0d6384cfd43bc970c9bbebfdf0329/1/task-tests",
+            "round": 1,
+            "sourceDigest": "1f6912db39d84764197e4a98a7774b9bc48040eb46099323ed318c62b35ce00c",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "PARTIAL selection=module:test_run_validation,test_run_integration,test_worktree_lifecycle,test_validation_quick_commands,test_execution_boundaries,test_task_close,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=287 total=2171 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "50a0d6384cfd43bc970c9bbebfdf0329",
+            "command": "git diff --check",
+            "commit": "c26a096b6cc20f55575b9181406011e27e87002c",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/201.json#50a0d6384cfd43bc970c9bbebfdf0329/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "1f6912db39d84764197e4a98a7774b9bc48040eb46099323ed318c62b35ce00c",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
-  "status": "queued",
+  "status": "done",
   "task_id": "201",
-  "transitions": [],
+  "transitions": [
+    {
+      "at": "2026-11-08T15:29:44.668887Z",
+      "commit": "3731aac1b7d0c74328433074dca1f4e24a38c94a",
+      "from": "queued",
+      "to": "in_progress"
+    },
+    {
+      "at": "2026-11-08T16:09:08.604399Z",
+      "commit": "f518af721f4973c933add69a1a7103330f196cae",
+      "from": "in_progress",
+      "to": "done"
+    }
+  ],
   "version": 1,
   "workflow": "single"
 }

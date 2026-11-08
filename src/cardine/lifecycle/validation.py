@@ -67,6 +67,25 @@ def operation_path(root, task_id):
     return receipts.safe_path((root / common).resolve(), f'cardine-operations/{task_id}.validation')
 
 
+def commit_own_records(root, task_id, *, context=None):
+    """Commit the records Cardine itself left uncommitted in the task worktree.
+
+    A validation command may require a committed tree; a clean-clone run refuses
+    a dirty one. The engine's own state, evidence and handoff must not fail it.
+    Any change outside those paths is left for the commands to judge.
+    """
+    changed = set(git_output(root, 'diff', 'HEAD', '--name-only', '-z').split('\0'))
+    changed.update(git_output(root, 'ls-files', '--others', '--exclude-standard', '-z').split('\0'))
+    changed.discard('')
+    owned = _execution_owned_paths(root, task_id, context=context)
+    if not changed or changed - owned:
+        return False
+    paths = sorted(changed)
+    git_output(root, 'add', '--', *paths)
+    git_output(root, 'commit', '-q', '-m', f'Record {task_id} task state', '--', *paths)
+    return True
+
+
 @contextmanager
 def runner_lock(root, task_id):
     # Separate from the short metadata lock: validation subprocesses never hold
@@ -191,7 +210,10 @@ def run_task_validation(root, task_id, *, context=None):
         if quick_count >= quick_limit:
             raise quick_limit_error(task_id, root, quick_limit, _failed_quick(previous))
         if intent and intent['phase'] not in ('complete', 'invalidated') and intent['inputs'] != current:
-            raise CardineError('validation inputs changed during interrupted attempt')
+            # An interrupted attempt for other inputs never published a result:
+            # its runs say nothing about the current source, so it is replaced.
+            receipts._save_intent(path, dict(intent, phase='invalidated'))
+            intent = dict(intent, phase='invalidated')
         if intent and intent['phase'] == 'publish':
             with receipts.task_lock(root, task_id):
                 if state.get('run', {}).get('validation') != intent['progress']:
@@ -218,6 +240,7 @@ def run_task_validation(root, task_id, *, context=None):
             raise stop_error('ACCEPTANCE_UNMET', 'Missing acceptance deliverables: ' + ', '.join(missing),
                              task_id=task_id, project=root)
         if intent is None or intent['phase'] in ('complete', 'invalidated'):
+            commit_own_records(root, task_id, context=context)
             policy = state['contract']['validation']
             plan = quick_plan(policy.get('retry', {}), policy.get('preflight', []),
                               [key for key in current['commands'] if key in previous.get('lastFailed', [])],

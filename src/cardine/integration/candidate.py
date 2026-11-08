@@ -82,7 +82,7 @@ def staged_inputs(locations, state, pending=None, *, read_only=False):
         source=staged['task_commit'], sourceDigest=source,
         tree=staged['candidate_tree'], main=staged['main_commit'],
         lease=receipts.digest(lease_path.read_bytes()), staged=receipts.digest(staged_path.read_bytes()),
-        commands=commands, environment=environment_identity(dict(os.environ)),
+        commands=commands, environment=environment_identity(dict(os.environ), commands),
         worktreeStatus=git_output(root, 'status', '--porcelain', '--untracked-files=all'))
 
 
@@ -137,8 +137,8 @@ def run_candidate_validation(task_id, project):
         state, pending = operation_state(worker, task_id)
         binding = staged_inputs(locations, state, pending)
         if intent and intent['binding'] != binding:
-            if intent['phase'] != 'complete':
-                raise CardineError('candidate inputs changed during interrupted operation')
+            # An interrupted attempt for other inputs never published a result:
+            # its runs say nothing about this binding, so a fresh attempt replaces it.
             intent = None
         if pending:
             if (not intent or intent['phase'] != 'publish'
