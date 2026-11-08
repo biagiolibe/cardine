@@ -130,6 +130,17 @@ class InitTest(unittest.TestCase):
                         if relative.startswith(".cardine/baselines/"):
                             self.assertEqual((root / relative).read_bytes(), content)
 
+    def test_machine_local_files_stay_out_of_version_control(self):
+        subprocess.run(["git", "init", "-q", str(self.root)], check=True)
+        self.assertTrue(apply_init(self.plan()))
+        for name in (".cardine/receipt-authority.json", ".cardine/task-creation.guard"):
+            (self.root / name).write_text("{}")
+            ignored = subprocess.run(["git", "-C", str(self.root), "check-ignore", "-q", name])
+            self.assertEqual(ignored.returncode, 0, name)
+        for name in (".cardine/project.json", ".cardine/tasks/001.json"):
+            ignored = subprocess.run(["git", "-C", str(self.root), "check-ignore", "-q", name])
+            self.assertEqual(ignored.returncode, 1, name)
+
     def test_explicit_empty_validation_is_valid_but_missing_choices_are_not(self):
         empty = {"commands": {}, "baseline": [], "candidate": dict.fromkeys(("REUSE", "BOUNDED", "FULL"), [])}
         apply_init(self.plan(validation=empty))
