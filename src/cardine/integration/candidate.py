@@ -83,7 +83,7 @@ def staged_inputs(locations, state, pending=None, *, read_only=False):
         tree=staged['candidate_tree'], main=staged['main_commit'],
         lease=receipts.digest(lease_path.read_bytes()), staged=receipts.digest(staged_path.read_bytes()),
         commands=commands, environment=environment_identity(dict(os.environ), commands),
-        worktreeStatus=git_output(root, 'status', '--porcelain', '--untracked-files=all'))
+        worktreeStatus=git_output(root, 'status', '--porcelain', '--untracked-files=no'))
 
 
 def require_budget(state, task_id, root):
