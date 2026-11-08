@@ -68,6 +68,7 @@ def enforce_scope(root, state, base, *, owned=()):
     if not patterns:
         reject('unattended work requires a frozen Expected code surface')
     paths = changed_paths(root, base)
+    outside = []
     for name in sorted(paths):
         try:
             normalize_surface([name])
@@ -81,5 +82,9 @@ def enforce_scope(root, state, base, *, owned=()):
             if parent.is_symlink() and not parent.resolve().is_relative_to(root.resolve()):
                 reject(f'symlink escapes the project: {name}')
         if name not in owned and not any(_matches(name, pattern) for pattern in patterns):
-            reject(f'path outside expected surface: {name}')
+            outside.append(name)
+    if outside:
+        outside.sort()
+        noun = 'path' if len(outside) == 1 else 'paths'
+        reject(f'{noun} outside expected surface: ' + ', '.join(outside))
     return paths - set(owned)

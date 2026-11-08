@@ -510,6 +510,13 @@ For unattended runs, decisions that need a person are taken before the run,
 in the task contract. The `Expected code surface` bounds what the agent may
 change. Work outside it is a scope change and stops.
 
+Amended on 2026-11-08: project-wide decisions live in the `Standing
+decisions` section of `PROJECT_WORKFLOW.md`; the task contract carries only
+decisions specific to one task. Spike 203
+(`docs/ENGINE_STOP_CLASSIFICATION.md`) records the classification and the
+rejected frozen-decisions mechanism, rejected because it would take five
+engine tasks to move about ten lines of judgment rules.
+
 "Resume" is no longer a ritual for the developer. It follows only a stop
 that needed a person; otherwise the agent runs the lifecycle command again.
 
