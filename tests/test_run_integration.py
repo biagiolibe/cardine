@@ -515,6 +515,18 @@ commit_closure_records(locations_for('056', Path(sys.argv[1])))
         self.assertFalse((self.primary / '.git' / 'MERGE_HEAD').exists())
         self.assertFalse(self.paths()[1].exists())
         self.assertFalse(self.paths()[2].exists())
+        for _ in range(8):
+            result = dispatch_run(locations)
+            self.assertNotEqual(result['outcome'], 'blocked', result)
+            if self.paths()[2].exists():
+                break
+        staged = json.loads(self.paths()[2].read_bytes())
+        self.assertEqual(staged['task_commit'], self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip())
+        from cardine.lifecycle import engine
+        with mock.patch.object(engine, '_reverse_stale_candidate', side_effect=AssertionError('reversed again')):
+            result = dispatch_run(locations)
+        self.assertNotEqual(result['outcome'], 'blocked', result.get('stop'))
+        self.assertIn(result['step'], ('candidate', 'landing'))
 
     def test_foreign_lease_stops_with_integrity_mismatch(self):
         self.ready()

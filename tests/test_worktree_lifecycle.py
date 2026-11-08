@@ -543,7 +543,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
 
     def test_integrate_stage_reports_primary_dirty_through_the_registry(self) -> None:
         worktree = self._stage_ready_task_with_origin(local_ahead=True)
-        (self.project / "stray.txt").write_text("stray\n", encoding="utf-8")
+        (self.project / "unpushed.txt").write_text("changed tracked file\n", encoding="utf-8")
         result = self.run_cli(*self._stage_args())
         self.assertEqual(result.returncode, 2)
         self.assertEqual(

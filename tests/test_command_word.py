@@ -59,6 +59,8 @@ class CommandWordTest(unittest.TestCase):
         # C2c adds conversion refusals, each resolved by correcting the input.
         for code in ("ADOPT_DIRTY", "ADOPT_IN_PROGRESS", "ADOPT_WORKTREE", "ADOPT_LEASE", "ADOPT_RECORD"):
             baseline[code] = {"human_decision": False, "resolution": "failing-work"}
+        # Task 206 adds the integrity stop for ownership the task cannot prove.
+        baseline["INTEGRITY_MISMATCH"] = {"human_decision": True, "resolution": "guardrail"}
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []
