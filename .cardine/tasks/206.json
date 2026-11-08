@@ -20,7 +20,10 @@
       "tests/test_run_output.py",
       "tests/test_worktree_lifecycle.py",
       "tests/test_worktree_integration.py",
-      "tests/test_run_control.py"
+      "tests/test_run_control.py",
+      "src/cardine/lifecycle/delivery.py",
+      "tests/test_command_word.py",
+      "tests/test_run_delivery.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -65,11 +68,22 @@
         "adopt-466c2f308b48c766": "git diff --check",
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_field_cases --module test_run_output --module test_run_control --module test_worktree_lifecycle --module test_worktree_integration --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_delivery --module test_run_field_cases --module test_run_output --module test_run_control --module test_worktree_lifecycle --module test_worktree_integration --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:badf968c4f4579fbec80e19afd5c65cdf2485d1445d00ff1d4346e4aee4ee33d",
+      "at": "2026-11-08T18:36:57.367690Z",
+      "before": "sha256:db299a0411f6b49e17db6182a1bca6163db07d603516f7d81fa12bf93ff7d6e4",
+      "changedFields": [
+        "expectedCodeSurface",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -117,6 +131,30 @@
         "source": "6a7f17c77779c3891981761c71c95e9e442d2895",
         "task_id": "206",
         "tree": "dcf7b93a33a6cb8b246fa8b6ee4a5020b9cd9fef",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "6b1cc2176d75b03855cd135eb5799deb16c69980edfae06fe90f7bb783be8f2c",
+        "digest": "6b8a080de8f1957527743bb789ba5ff4a94f4bbc2f87292489337ed167d79971",
+        "inputs": {
+          ".cardine/tasks/206.json": "33dce6e5a6eaae40ecd33716ad6d8380fd82768e4c428232d9d2b3f39d0a4416",
+          "tasks/206.md": "f5831de694ea9517fa0b1129cfb469d82a00e90bcd385f5f1f7f4dc5c20ca22d"
+        },
+        "kind": "contract_revision",
+        "operation_id": "75717758c2e04c58ad6eee04cae1241d",
+        "outputs": {
+          ".cardine/tasks/206.json": "7c5ba38f2f540e4631c20a308052a0139ee203863db179fb875f21f75b39ce24",
+          "tasks/206.md": "f5831de694ea9517fa0b1129cfb469d82a00e90bcd385f5f1f7f4dc5c20ca22d"
+        },
+        "predecessor": "9ce7ef4b24f992a9aaa0a490ca42117a17b0f612312022f33694cfb69fa83d7f",
+        "result": "verified",
+        "source": "7a90b67d1c0165d903a962a23b5bdcccf9b727be",
+        "task_id": "206",
+        "tree": "923f200fe1daf1151462dd12af3962ce5eefacde",
         "version": 1
       }
     ]
