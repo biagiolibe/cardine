@@ -302,10 +302,10 @@ def dispatch_run(locations: RunLocations) -> dict:
                   if active['status'] == 'cancelled' else run_integration_step(locations))
         if result is None and active['status'] != 'cancelled':
             stage = "worktree"
-            result = run_worktree_step(locations, active)
+            result = _integration_wait(locations) or run_worktree_step(locations, active)
         if result is None and active['status'] != 'cancelled':
             stage = "validation"
-            result = run_validation_step(locations)
+            result = _integration_wait(locations) or run_validation_step(locations)
         stage = "contract"
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
@@ -316,6 +316,16 @@ def dispatch_run(locations: RunLocations) -> dict:
         # successful progress or an automatic repair inferred from its prose.
         result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)), step=stage)
     return result
+
+
+def _integration_wait(locations):
+    from cardine.integration.candidate import wait_for_lease
+    if wait_for_lease(locations):
+        return None
+    argv = ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
+    return envelope(locations.task_id, str(locations.primary), step='candidate', outcome='waiting',
+                    action='wait-for-lease', retry_after_seconds=5,
+                    next_command=command_reference(argv, 'Wait for the competing integration'))
 
 
 @contextlib.contextmanager
@@ -584,6 +594,8 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
             action='wait-for-lease', retry_after_seconds=5,
             next_command=command_reference(argv, 'Wait for the competing integration'))
     if not staged.exists():
+        if not prepare:
+            return None
         strategy.prepare_candidate(task_id, None, root)
     from cardine.integration.candidate import verified_candidate
     try:

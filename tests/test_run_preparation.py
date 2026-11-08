@@ -77,6 +77,29 @@ class RunPreparationTest(unittest.TestCase):
     def prepare(self, **kwargs):
         return prepare_task_worktree('001', self.worktrees, self.root, **kwargs)
 
+    def test_queued_task_waits_for_competing_integration(self):
+        from unittest.mock import patch
+        from cardine.integration import candidate
+        from cardine.lifecycle.engine import dispatch_run
+        from cardine.tasks.identity import resolve_task_identity
+        from cardine.worktree.storage import _lifecycle_paths
+        locations = candidate.locations_for('001', self.root)
+        _, lease, _ = _lifecycle_paths(self.root, resolve_task_identity(self.root, '001', 'existing'))
+        lease.parent.mkdir(parents=True, exist_ok=True)
+        lease.write_text(json.dumps(dict(task_id='999', branch='task-999', project=str(self.root))))
+        wait = candidate.wait_for_lease
+        with patch.object(candidate, 'wait_for_lease', side_effect=lambda loc: wait(loc, seconds=0)):
+            result = dispatch_run(locations)
+        self.assertEqual((result['outcome'], result['action'], result['retry_after_seconds']),
+                         ('waiting', 'wait-for-lease', 5))
+        self.assertFalse(locations.worktree.exists())
+        lease.write_text(json.dumps(dict(task_id='999')))
+        result = dispatch_run(locations)
+        self.assertEqual((result['outcome'], result['stop']['code']), ('blocked', 'LEASE_HELD'))
+        lease.unlink()
+        self.assertEqual(dispatch_run(locations)['action'], 'execution-start')
+        self.assertTrue(locations.worktree.exists())
+
     def read(self, task_id='001'):
         return read_task_state(self.root, task_id, 'single', stop_factory=stop_error, require_contract=True)
 
