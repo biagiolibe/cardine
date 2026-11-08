@@ -108,6 +108,19 @@ class ConversionReaderTest(unittest.TestCase):
         self.assertEqual((project.declaration, project.candidate_validation, project.flow_targets), (None, None, None))
         self.assertEqual(project.identity_mode, "opaque")
 
+    def test_closed_rows_of_the_queue_archive_count_as_closed(self) -> None:
+        root = self.project(queue=queue_text([("[ ]", "30", "Open"), ("[x]", "31", "Done")]))
+        (root / "tasks" / "QUEUE_ARCHIVE.md").write_text(
+            queue_text([("[x]", "20", "Archived"), ("[-]", "21", "Cancelled"),
+                        ("[ ]", "22", "Open"), ("[x]", "31", "Duplicate")]), encoding="utf-8")
+        before = tree_digest(root)
+        project = read_legacy_project(root)
+        self.assertEqual(project.closed_ids, ("31", "20"))
+        self.assertEqual([row.task_id for row in project.rows], ["30", "31"])
+        self.assertEqual(project.duplicate_ids, ())
+        self.assertEqual(project.diagnostics, ())
+        self.assertEqual(tree_digest(root), before)
+
     def test_declared_locations_are_the_only_paths_read(self) -> None:
         root = self.project(
             declaration={"version": 1, "preset": "lean", "locations": {"queue": "work/Q.md", "adrLog": "log/adr.md"}},
