@@ -1,0 +1,46 @@
+{
+  "201": [
+    {
+      "attemptId": "e8256da27c434424a958b72ca0e7a30f",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "56821e1a6b34b7267570c7b20d4ff9badb617660",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/201.json#e8256da27c434424a958b72ca0e7a30f/1/repository-check",
+      "round": 1,
+      "sourceDigest": "6d2aef08d0de1f99604444c15e660a165eb54a6f48feafb3ecc3bf7436a14fc5",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "e8256da27c434424a958b72ca0e7a30f",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_validation --module test_run_integration --module test_worktree_lifecycle --module test_validation_quick_commands --module test_execution_boundaries --module test_task_close --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "56821e1a6b34b7267570c7b20d4ff9badb617660",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/201.json#e8256da27c434424a958b72ca0e7a30f/1/task-tests",
+      "round": 1,
+      "sourceDigest": "6d2aef08d0de1f99604444c15e660a165eb54a6f48feafb3ecc3bf7436a14fc5",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_validation,test_run_integration,test_worktree_lifecycle,test_validation_quick_commands,test_execution_boundaries,test_task_close,test_command_context,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=287 total=2171 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "e8256da27c434424a958b72ca0e7a30f",
+      "command": "git diff --check",
+      "commit": "56821e1a6b34b7267570c7b20d4ff9badb617660",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/201.json#e8256da27c434424a958b72ca0e7a30f/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "6d2aef08d0de1f99604444c15e660a165eb54a6f48feafb3ecc3bf7436a14fc5",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
