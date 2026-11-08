@@ -1,0 +1,96 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "194",
+      "197"
+    ],
+    "expectedCodeSurface": [
+      "README.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "maintenance",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/196.md",
+    "title": "Task 196 \u2014 Rewrite the README for Cardine (D1)",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "adopt-32169894e045e78a",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-32169894e045e78a": "python3 scripts/run_tests.py --parallel --clean-clone",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "987449b6b66a2949b47823264096aa444adf5d04",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "8865a95c7b7606ad6b84c3abfad136b274a402851ba55a43f3829ec0165bdf3f",
+        "digest": "f9f22ecf06ebbd7cef8b8a1aa3fac25f6270850eecc0147cba95b290f4f681ba",
+        "inputs": {
+          ".cardine/tasks/196.json": null,
+          "tasks/196.md": null
+        },
+        "kind": "creation",
+        "operation_id": "a614da21bdd84a89b05693a1622b5966",
+        "outputs": {
+          ".cardine/tasks/196.json": "94c43dd942d19e1f577142660d6f3dc40c8ad1e5d9b4fd5974cff1547f7b4d47",
+          "tasks/196.md": "5e06162652b7c9471805d006ae6834b77dc787a4a849f4fb5891122ef9df9115"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "987449b6b66a2949b47823264096aa444adf5d04",
+        "task_id": "196",
+        "tree": "8d08d7ea6aca9d15123ef6e66b4b4769047ed98d",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "196",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
