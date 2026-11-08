@@ -385,7 +385,7 @@ def run_worktree_step(locations: RunLocations, active: dict) -> dict | None:
 @scoped_command
 def run_validation_step(locations: RunLocations) -> dict | None:
     """Recover missing task evidence and return the review or C6 boundary."""
-    from cardine.lifecycle.validation import operation_path, run_task_validation
+    from cardine.lifecycle.validation import byproducts_path, operation_path, run_task_validation
     from cardine.lifecycle.execution import _execution_state
     from cardine.lifecycle.model import WorkRequest
     from cardine.lifecycle import receipts
@@ -444,6 +444,15 @@ def run_validation_step(locations: RunLocations) -> dict | None:
         request = WorkRequest('implementer', root, receipts.digest(receipts.encoded(contract)),
             tuple(contract.get('expectedCodeSurface', [])), _acceptance_references(contract),
             tuple(contract['validation']['baseline']), ('committed implementation delivery',))
+    intent = receipts._load_intent(path) if path.exists() else {}
+    byproducts = intent.get('byproducts', []) if intent.get('attemptId') == progress['attemptId'] else []
+    def add_byproducts(result):
+        if byproducts:
+            directory = byproducts_path(root, task_id) / intent['attemptId']
+            result['diagnostics'].append(dict(code='VALIDATION_BYPRODUCTS', message=(
+                f'moved {len(byproducts)} files that validation created to {directory}: '
+                + ', '.join(byproducts[:5]) + '; ignore them in .gitignore or commit them')))
+        return result
     passed = progress['phase'] == 'passed'
     from cardine.tasks.validation import host_observations_complete
     if passed and not host_observations_complete(contract, progress):
@@ -451,7 +460,7 @@ def run_validation_step(locations: RunLocations) -> dict | None:
             contract_ready=True, worktree_ready=True, validation_failed=True, implementation_work=request))
         result['diagnostics'] = [dict(code='ACCEPTANCE_UNMET',
             message='An enforced host profile needs a matching declared validation command and passing observation')]
-        return result
+        return add_byproducts(result)
     from cardine.review.progress import review_progress, prepare_review
     from cardine.lifecycle.control import require_review_budget
     require_review_budget(root, task_id, state)
@@ -472,16 +481,16 @@ def run_validation_step(locations: RunLocations) -> dict | None:
         if before_validation != progress:
             result['action'] = 'C6'
             result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
-            return result
+            return add_byproducts(result)
         gated = run_ci_step(locations, facts, request, state)
         if gated is not None:
-            return gated
-        return run_integration_step(locations, prepare=True)
+            return add_byproducts(gated)
+        return add_byproducts(run_integration_step(locations, prepare=True))
     result['action'] = 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
     if not passed:
         result['diagnostics'] = [dict(code='VALIDATION_FAILED', message=json.dumps(progress['runs']))]
-    return result
+    return add_byproducts(result)
 
 
 @scoped_command

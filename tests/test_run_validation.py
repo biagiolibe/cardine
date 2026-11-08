@@ -124,6 +124,59 @@ run_task_validation(Path(sys.argv[1]), '001')
         handoff = self.worker / 'tasks/handoffs/001.md'
         self.assertIn('Intermittent commands: one', handoff.read_text())
 
+    def test_validation_byproducts_are_moved_and_reported(self):
+        from cardine.lifecycle.engine import run_validation_step, resolve_run_locations
+        from cardine.lifecycle.validation import byproducts_path
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / 'marker'
+            command = ("mkdir -p generated; printf a > output.tmp; printf b > generated/file; "
+                       "printf ignored > ignored.tmp; "
+                       f"if test -f {shlex.quote(str(marker))}; then exit 0; "
+                       f"else touch {shlex.quote(str(marker))}; exit 1; fi")
+            exclude = Path(self.git('rev-parse', '--git-common-dir')) / 'info/exclude'
+            with exclude.open('a') as handle:
+                handle.write('\nignored.tmp\n')
+            self.configure({'one': command})
+            result = run_validation_step(resolve_run_locations('001', self.worker))
+            self.assertEqual(result['step'], 'candidate')
+            diagnostic = next(d for d in result['diagnostics'] if d['code'] == 'VALIDATION_BYPRODUCTS')
+            self.assertIn('moved 2 files', diagnostic['message'])
+            intent = receipts._load_intent(operation_path(self.worker, '001'))
+            stored = byproducts_path(self.worker, '001') / intent['attemptId']
+            self.assertEqual((stored / 'output.tmp').read_text(), 'a')
+            self.assertEqual((stored / 'generated/file').read_text(), 'b')
+            self.assertFalse((self.worker / 'output.tmp').exists())
+            self.assertFalse((self.worker / 'generated').exists())
+            self.assertTrue((self.worker / 'ignored.tmp').exists())
+            self.assertEqual(len(intent['runs']), 2)
+            self.assertEqual(self.run_attempt()['phase'], 'passed')
+
+    def test_restore_preserves_preexisting_untracked_file(self):
+        from cardine.lifecycle.validation import _restore_worktree, _untracked
+        from cardine.lifecycle.engine import resolve_run_locations
+        existing = self.worker / 'existing.tmp'
+        existing.write_text('keep')
+        intent = dict(untracked=_untracked(self.worker), attemptId='test', byproducts=[])
+        (self.worker / 'new.tmp').write_text('move')
+        _restore_worktree(self.worker, '001', intent, operation_path(self.worker, '001'),
+                          resolve_run_locations('001', self.worker))
+        self.assertEqual(existing.read_text(), 'keep')
+        self.assertFalse((self.worker / 'new.tmp').exists())
+
+    def test_byproducts_recovered_after_interruption(self):
+        from cardine.lifecycle.validation import byproducts_path
+        self.configure({'one': 'mkdir -p generated; printf x > generated/file'})
+        for point in ('before_validation_restore', 'after_validation_restore', 'before_validation_exit'):
+            with self.subTest(point=point):
+                if point != 'before_validation_restore':
+                    self.repair()
+                self.kill(point)
+                result = self.run_attempt()
+                self.assertEqual(result['phase'], 'passed')
+                intent = receipts._load_intent(operation_path(self.worker, '001'))
+                self.assertEqual((byproducts_path(self.worker, '001') / intent['attemptId'] / 'generated/file').read_text(), 'x')
+                self.assertFalse((self.worker / 'generated').exists())
+
     def test_scoping_and_host_checks_use_only_frozen_commands(self):
         self.configure({'one': 'exit 99', 'codex': 'printf observed'}, profiles={'codex': 'enforced'},
             scoping=[dict(paths=['docs/**'], commands=['one'])])

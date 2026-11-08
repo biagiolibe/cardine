@@ -10,6 +10,7 @@ from contextlib import contextmanager
 import fcntl
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import uuid
@@ -19,7 +20,7 @@ from cardine.lifecycle import receipts
 from cardine.lifecycle.delivery import verify_delivery
 from cardine.lifecycle.execution import (_execution_location,
                                          _execution_state, execution_source_digest)
-from cardine.lifecycle.source import commit_own_records
+from cardine.lifecycle.source import commit_own_records, _execution_owned_paths
 from cardine.tasks.validation import (inputs, _ledger, verified_validation,
                                       resolved_commands, environment_identity, host_observations_complete)
 from cardine.shared.errors import CardineError
@@ -66,6 +67,53 @@ def execute_command(command, root, environment, descriptor):
 def operation_path(root, task_id):
     common = Path(git_output(root, 'rev-parse', '--git-common-dir'))
     return receipts.safe_path((root / common).resolve(), f'cardine-operations/{task_id}.validation')
+
+
+def byproducts_path(root, task_id):
+    common = Path(git_output(root, 'rev-parse', '--git-common-dir'))
+    return receipts.safe_path((root / common).resolve(), f'cardine-operations/{task_id}.byproducts')
+
+
+def _untracked(root):
+    return sorted(filter(None, git_output(root, 'ls-files', '--others', '--exclude-standard', '-z').split('\0')))
+
+
+def _restore_worktree(root, task_id, intent, path, context):
+    if 'untracked' not in intent:
+        return
+    owned = _execution_owned_paths(root, task_id, context=context)
+    baseline = set(intent['untracked'])
+    for relative in _untracked(root):
+        if relative in baseline or relative in owned or relative.startswith('.cardine/'):
+            continue
+        source = root / relative
+        # Validate parents without rejecting a symlink that is itself the byproduct.
+        if source.parent != root:
+            receipts.safe_path(root, source.parent.relative_to(root).as_posix())
+        destination_root = byproducts_path(root, task_id)
+        destination_relative = intent['attemptId'] + '/' + relative
+        destination_parent = Path(destination_relative).parent.as_posix()
+        receipts.safe_path(destination_root, destination_parent)
+        destination = destination_root / destination_relative
+        if destination.is_symlink():
+            destination.unlink()
+        destination = receipts.safe_path(destination_root, destination_relative)
+        if relative not in intent.setdefault('byproducts', []):
+            intent['byproducts'].append(relative)
+            intent['byproducts'].sort()
+            receipts._save_intent(path, intent)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source), str(destination))
+        from cardine.shared.git import invalidate_facts
+        invalidate_facts()
+        parent = source.parent
+        while parent != root:
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+    receipts._save_intent(path, intent)
 
 
 @contextmanager
@@ -178,6 +226,8 @@ def run_task_validation(root, task_id, *, context=None):
             intent = dict(intent, phase='complete')
             receipts._save_intent(path, intent)
             receipts.boundary('after_validation_result')
+        if intent and intent['phase'] == 'process':
+            _restore_worktree(root, task_id, intent, path, context)
         environment = dict(os.environ)
         current = inputs(root, task_id, state, base, environment)
         previous = state.get('run', {}).get('validation', {})
@@ -223,12 +273,16 @@ def run_task_validation(root, task_id, *, context=None):
                              task_id=task_id, project=root)
         if intent is None or intent['phase'] in ('complete', 'invalidated'):
             commit_own_records(root, task_id, context=context)
+            previous_byproducts = byproducts_path(root, task_id)
+            if previous_byproducts.exists():
+                shutil.rmtree(previous_byproducts)
             policy = state['contract']['validation']
             plan = quick_plan(policy.get('retry', {}), policy.get('preflight', []),
                               [key for key in current['commands'] if key in previous.get('lastFailed', [])],
                               policy['commands'])
             intent = dict(task_id=task_id, root=str(root), authority=authority, inputs=current,
                           attemptId=uuid.uuid4().hex, phase='process', runs=[], before=receipts.state_digest(state),
+                          untracked=_untracked(root), byproducts=[],
                           quick=[dict(kind=kind, commands=[list(item) for item in commands]) for kind, commands in plan])
             receipts.boundary('before_validation_intent')
             receipts._save_intent(path, intent)
@@ -278,6 +332,9 @@ def run_task_validation(root, task_id, *, context=None):
                      attemptId=intent['attemptId'], round=len(runs) + 1,
                      log=f'{names().execution_evidence_path(task_id)}#{intent["attemptId"]}/{len(runs)+1}/{key}',
                      stdout=stdout, stderr=stderr, stdoutTruncated=out_truncated, stderrTruncated=err_truncated))
+            receipts.boundary('before_validation_restore')
+            _restore_worktree(root, task_id, intent, path, context)
+            receipts.boundary('after_validation_restore')
             # A subprocess may change files, policy or environment; no result is
             # accepted until all inputs and receipt authority have been rechecked.
             state_after = _execution_state(root, task_id, context=context)
