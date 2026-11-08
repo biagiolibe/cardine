@@ -50,7 +50,20 @@ def update_task_contract(project_root: Path, task_id: str) -> dict:
         contract = resolve_task_contract(root, task_id, text=text, identity=identity)
         validate_dependencies(root, task_id, contract)
         if contract == previous:
-            return {'id': task_id, 'updated': False, 'state': str(path.relative_to(root))}
+            # Prose that the contract does not read may still change (decision 13): cover the
+            # new record bytes with a receipt so the task stays usable; the contract is unchanged.
+            covered = {}
+            for receipt in state.get('run', {}).get('receipts', []):
+                covered.update(receipt['outputs'])
+            from cardine.lifecycle.receipts import digest
+            if 'run' not in state or covered.get(record_path) == digest(text.encode('utf-8')):
+                return {'id': task_id, 'updated': False, 'state': str(path.relative_to(root))}
+            if record.read_text(encoding='utf-8') != text:
+                raise CardineError('task record changed during contract update; retry')
+            from cardine.lifecycle.receipts import write_operation
+            write_operation(root, task_id, state, kind='contract_revision', previous=previous_state,
+                            files={record_path: text.encode('utf-8')})
+            return {'id': task_id, 'updated': False, 'record': 'covered', 'state': str(path.relative_to(root))}
         state['contract'] = contract
         state.setdefault('contract_history', []).append({
             'at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
