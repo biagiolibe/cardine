@@ -1,6 +1,8 @@
 """Read-only frozen validation identity and receipt-covered task results."""
 import json
 import os
+import shlex
+import shutil
 from cardine.lifecycle import receipts
 from cardine.lifecycle.source import _execution_owned_paths, execution_source_digest
 from cardine.lifecycle.scope import enforce_scope, _matches
@@ -14,9 +16,28 @@ def _validation_state(root, task_id):
     return read_task_state(root, task_id, 'single', stop_factory=stop_error, require_contract=True)
 
 
-def environment_identity(environment):
-    return receipts.digest(receipts.encoded({key: value for key, value in environment.items()
-                           if key not in {'_', 'SHLVL', 'PWD', 'OLDPWD'}}))
+def environment_identity(environment, commands=()):
+    """The programs the validation commands would run in this environment.
+
+    Each command's program is resolved on the environment's PATH. Session
+    variables that hosts change on every call, such as tool-call IDs or terminal
+    session keys, do not change which program runs, so they never make a
+    measured result stale. A name with a path separator is a file of the
+    checkout, which the source digest already covers.
+    """
+    resolved = {}
+    for command in commands:
+        try:
+            words = shlex.split(command)
+        except ValueError:
+            continue
+        words = [word for word in words if not ('=' in word and word.split('=', 1)[0].isidentifier())][:1]
+        for name in words:
+            if os.sep in name:
+                continue
+            found = shutil.which(name, path=environment.get('PATH', ''))
+            resolved[name] = os.path.realpath(found) if found else None
+    return receipts.digest(receipts.encoded(resolved))
 
 
 def resolved_commands(contract, paths):
@@ -53,7 +74,7 @@ def inputs(root, task_id, state, base, environment, *, operation_paths=()):
                 sourceTree=delivery.get('sourceTree', ''), cwd=str(root),
                 commands=commands, skips=skips,
                 commandDigest=receipts.digest(receipts.encoded(identity)),
-                environmentDigest=environment_identity(environment))
+                environmentDigest=environment_identity(environment, commands.values()))
 
 
 def _ledger(root, task_id):

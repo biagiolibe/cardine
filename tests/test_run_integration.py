@@ -114,6 +114,14 @@ else: finalize_task_integration('056', None, root)
         self.assertEqual(self.git('rev-list', '--count', '--merges', 'main').stdout.strip(), '1')
         self.assertEqual(self.git('show', '-s', '--format=%T').stdout.strip(), result['candidate_tree'])
 
+    def test_session_variables_never_rerun_a_passed_candidate(self):
+        self.ready('printf candidate-output')
+        first = self.run_candidate()
+        self.assertEqual(first['phase'], 'passed')
+        with mock.patch.dict(os.environ, {'CODEX_TOOL_CALL_ID': 'another-call', 'TERM_SESSION_ID': 'another'}), \
+                mock.patch.object(candidate, 'execute_command', side_effect=AssertionError('repeated process')):
+            self.assertEqual(self.run_candidate(), first)
+
     def test_declared_pass_file_has_no_authority(self):
         staged = self.ready()
         forged = self.root / 'passed.json'
