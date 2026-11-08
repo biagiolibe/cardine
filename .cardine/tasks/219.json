@@ -1,0 +1,100 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_run_preparation.py",
+      "tests/test_run_integration.py",
+      "tests/test_command_context.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/219.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 219 \u2014 Wait for another task's integration instead of stopping",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_preparation --module test_run_integration --module test_run_output --module test_command_context --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "f5d6430562a17cd6832a13b794731e8c8e87575fcb7f0a0afe483bc67792ff97",
+        "digest": "cf053c004a1c3afdc0b5744c7cccb6428f181067da153d195302acd9e62e9b9c",
+        "inputs": {
+          ".cardine/tasks/219.json": null,
+          "tasks/219.md": null
+        },
+        "kind": "creation",
+        "operation_id": "aeb6f4a8ea93404d98077f426939ef25",
+        "outputs": {
+          ".cardine/tasks/219.json": "8d0494502cd25f1330ab59c13e9129c44c73d7dc1661d49fc78dc17bfd95726f",
+          "tasks/219.md": "5c6814b992932adc8fd179cd05976ba4fcdfdd77c5956962024303f68a79b31f"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "1de3087845d3f5525d24153bcf41e5e5421fd325",
+        "task_id": "219",
+        "tree": "fa1f517d91942c14ef7fd31402ba6ef2b8d8d1f0",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "219",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
