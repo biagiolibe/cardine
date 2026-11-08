@@ -1,4 +1,4 @@
-"""Read-only task source identity, shared by execution and evidence consumers."""
+"""Task source identity and owned records shared by lifecycle operations."""
 import hashlib
 import json
 import os
@@ -18,6 +18,25 @@ def _execution_owned_paths(project_root: Path, task_id: str, *, context=None) ->
     identity = resolve_task_identity(project_root, task_id, "existing")
     return {path.relative_to(project_root).as_posix() for path in
             (identity.task_path, identity.handoff_path, identity.review_path, state_path(project_root, task_id))} | {names().execution_evidence_path(identity.canonical_id).as_posix()}
+
+
+def commit_own_records(root, task_id, *, context=None):
+    """Commit the records Cardine itself left uncommitted in the task worktree.
+
+    A validation command may require a committed tree; a clean-clone run refuses
+    a dirty one. The engine's own state, evidence and handoff must not fail it.
+    Any change outside those paths is left for the commands to judge.
+    """
+    changed = set(git_output(root, 'diff', 'HEAD', '--name-only', '-z').split('\0'))
+    changed.update(git_output(root, 'ls-files', '--others', '--exclude-standard', '-z').split('\0'))
+    changed.discard('')
+    owned = _execution_owned_paths(root, task_id, context=context)
+    if not changed or changed - owned:
+        return False
+    paths = sorted(changed)
+    git_output(root, 'add', '--', *paths)
+    git_output(root, 'commit', '-q', '-m', f'Record {task_id} task state', '--', *paths)
+    return True
 
 
 def execution_source_digest(project_root: Path, task_id: str, *, operation_paths=(), context=None) -> str:

@@ -17,8 +17,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 from cardine.lifecycle import receipts
 from cardine.lifecycle.delivery import verify_delivery
-from cardine.lifecycle.execution import (_execution_location, _execution_owned_paths,
+from cardine.lifecycle.execution import (_execution_location,
                                          _execution_state, execution_source_digest)
+from cardine.lifecycle.source import commit_own_records
 from cardine.tasks.validation import (inputs, _ledger, verified_validation,
                                       resolved_commands, environment_identity, host_observations_complete)
 from cardine.shared.errors import CardineError
@@ -65,25 +66,6 @@ def execute_command(command, root, environment, descriptor):
 def operation_path(root, task_id):
     common = Path(git_output(root, 'rev-parse', '--git-common-dir'))
     return receipts.safe_path((root / common).resolve(), f'cardine-operations/{task_id}.validation')
-
-
-def commit_own_records(root, task_id, *, context=None):
-    """Commit the records Cardine itself left uncommitted in the task worktree.
-
-    A validation command may require a committed tree; a clean-clone run refuses
-    a dirty one. The engine's own state, evidence and handoff must not fail it.
-    Any change outside those paths is left for the commands to judge.
-    """
-    changed = set(git_output(root, 'diff', 'HEAD', '--name-only', '-z').split('\0'))
-    changed.update(git_output(root, 'ls-files', '--others', '--exclude-standard', '-z').split('\0'))
-    changed.discard('')
-    owned = _execution_owned_paths(root, task_id, context=context)
-    if not changed or changed - owned:
-        return False
-    paths = sorted(changed)
-    git_output(root, 'add', '--', *paths)
-    git_output(root, 'commit', '-q', '-m', f'Record {task_id} task state', '--', *paths)
-    return True
 
 
 @contextmanager

@@ -231,6 +231,43 @@ deliver_implementation(Path(sys.argv[1]), '001')
         self.git('add', '.')
         self.git('commit', '-m', 'Revise implementation')
 
+    def leave_validation_records(self):
+        state = state_path(self.worker, '001')
+        state.write_text(state.read_text() + '\n')
+        for name in ('.cardine/evidence/001.json', 'tasks/handoffs/001.md'):
+            path = self.worker / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('validation output\n')
+
+    def test_repair_delivery_commits_validation_records(self):
+        self.deliver()
+        self.attempt('complete')
+        self.revise('result = 2\n')
+        self.leave_validation_records()
+        result, validation = self.run_step()
+        self.assertEqual(result['action'], 'deliver')
+        validation.assert_not_called()
+        self.assertEqual(self.git('status', '--porcelain'), '')
+        self.revise('result = 3\n')
+        self.leave_validation_records()
+        self.deliver()
+        self.assertEqual(self.git('status', '--porcelain'), '')
+
+    def test_foreign_dirt_refuses_repair_without_committing_records(self):
+        self.deliver()
+        self.attempt('complete')
+        self.revise('result = 2\n')
+        self.leave_validation_records()
+        (self.worker / 'src/foreign.py').write_text('foreign = True\n')
+        head = self.git('rev-parse', 'HEAD')
+        status = self.git('status', '--porcelain')
+        result, validation = self.run_step()
+        self.assertNotEqual(result.get('action'), 'deliver')
+        validation.assert_not_called()
+        with self.assertRaisesRegex(CardineError, 'implementation must be committed'):
+            self.deliver()
+        self.assertEqual((self.git('rev-parse', 'HEAD'), self.git('status', '--porcelain')), (head, status))
+
     def test_run_redelivers_after_a_completed_validation_attempt(self):
         self.deliver()
         for phase, text in (('invalidated', 'result = 2\n'), ('complete', 'result = 3\n')):

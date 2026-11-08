@@ -13,6 +13,7 @@ from cardine.lifecycle import receipts
 from cardine.lifecycle.execution import (_execution_location, _execution_owned_paths,
                                           _execution_state, execution_source_digest)
 from cardine.lifecycle.scope import enforce_scope
+from cardine.lifecycle.source import commit_own_records
 from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git, git_output
 from cardine.tasks.state import state_path
@@ -111,7 +112,9 @@ def deliver_implementation(root, task_id, *, context=None):
             if not paths:
                 raise CardineError('delivery needs a real implementation change')
             if git_output(root, 'status', '--porcelain'):
-                raise CardineError('implementation must be committed before delivery')
+                commit_own_records(root, task_id, context=context)
+                if git_output(root, 'status', '--porcelain'):
+                    raise CardineError('implementation must be committed before delivery')
             existing = verify_delivery(root, state, base, context=context)
             if existing:
                 return existing
