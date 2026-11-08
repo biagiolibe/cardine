@@ -9,7 +9,8 @@
       "src/cardine/integration/merge.py",
       "tests/test_run_recovery.py",
       "tests/test_execution_boundaries.py",
-      "tests/test_command_context.py"
+      "tests/test_command_context.py",
+      "scripts/check_repository.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -59,6 +60,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:632be3ae2477f146293011fa72fe6afe12c4de4c24ad31011c2a6cd732bc0030",
+      "at": "2026-11-08T20:30:24.910056Z",
+      "before": "sha256:7caa8886f03bf92e0b0fc0f28186f53086016da8ee7439e02529d4e339c95d0e",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "delivery": {
       "base": "c30157f1e9fafdb357ffc84fd5dc88ac7f29bb29",
@@ -184,12 +195,62 @@
         "task_id": "215",
         "tree": "c9c25dac46e349d4ece08fa3ee30d2cc5824ee71",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "5dcf5e190bc373935e05f192a946253818265507f15d943618d967bc6400bd14",
+        "digest": "28a21bb1854468f9ade75ba1c824baefa75af8973de20cf70474457a1d9db144",
+        "inputs": {
+          ".cardine/evidence/215.json": "44f8fa0f684142aa9e64e0187df4d3acbc05dd18d201dc5efde7ef301eb30445",
+          ".cardine/tasks/215.json": "32b5d7bbed223c74f10f6de7fbb6e21bccf8f3eeb3660579ba7756a992215e11",
+          "tasks/handoffs/215.md": "5c89ccf4937819aac2d0eea5f7b0d60262cb6d39dfd740c53599383f4ecf4546"
+        },
+        "kind": "task-validation",
+        "operation_id": "096fc92e47534ec399109452b7c175ce",
+        "outputs": {
+          ".cardine/evidence/215.json": "62f7d0d101a27a56953dfd16dcaf2cf3c47b980639ff9a31d34cc41099998720",
+          ".cardine/tasks/215.json": "85d07d43b6455e382e5a283239d511cbb1ee3297236de60916bd5f1176c67acf",
+          "tasks/handoffs/215.md": "78a6e73d14b143c0ae0946963f1150dd9aafbd5776ca9f7df15d136dc01ee9dd"
+        },
+        "predecessor": "626269db400f8305ebee7eef0cf814e19a378a11fd48f7565c7f393d0550fdf8",
+        "result": "verified",
+        "source": "36682258c8dedc9425b999878a2e5cc78e8e2003",
+        "task_id": "215",
+        "tree": "c8495708be4ffb44386df21063cc19909e83e220",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "47988afdc9e2e246795aaa55c203e4ce45da3610473dbab7849d0d4a313fe3cf",
+        "digest": "4566e5ca8c9cd6980c9982e8f6a4a709f122b62411348b22bc6d367c0c54db75",
+        "inputs": {
+          ".cardine/tasks/215.json": "8a1df57c1e1bacefca078401bf76099f700d326fbc1a807f4f68a8b197195e31",
+          "tasks/215.md": "ec0a27cc925c6fcc37564613ea2d77e6e2aeec750e3108769f83b5b1b40e0837"
+        },
+        "kind": "contract_revision",
+        "operation_id": "94b31190938e489fb50dfb1ecb58402c",
+        "outputs": {
+          ".cardine/tasks/215.json": "744c4815457b81411be8fa32874ccb7dd5c558e118e3e59184c222278f11563f",
+          "tasks/215.md": "ec0a27cc925c6fcc37564613ea2d77e6e2aeec750e3108769f83b5b1b40e0837"
+        },
+        "predecessor": "28a21bb1854468f9ade75ba1c824baefa75af8973de20cf70474457a1d9db144",
+        "result": "verified",
+        "source": "36682258c8dedc9425b999878a2e5cc78e8e2003",
+        "task_id": "215",
+        "tree": "c8495708be4ffb44386df21063cc19909e83e220",
+        "version": 1
       }
     ],
     "validation": {
       "acceptanceReferences": [],
-      "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
-      "consecutiveFailures": 1,
+      "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
+      "consecutiveFailures": 2,
       "evidence": ".cardine/evidence/215.json",
       "hostObservations": [],
       "inputs": {
@@ -203,13 +264,13 @@
         "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-215",
         "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
         "skips": [],
-        "source": "1912cf33398dfef71428ac105d0cbfa8a7d00340",
-        "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
-        "sourceTree": "7b028f5fdcb7d20a30c5ad7650a3cb899107d98a"
+        "source": "56d219c301bcec2d28cc4453796b09d47dbc6af2",
+        "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
+        "sourceTree": "c9c25dac46e349d4ece08fa3ee30d2cc5824ee71"
       },
       "intermittent": [],
       "lastFailed": [
-        "task-tests"
+        "repository-check"
       ],
       "phase": "failed",
       "quickFailures": 0,
@@ -217,42 +278,42 @@
       "runs": [
         [
           {
-            "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
+            "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
             "command": "python3 scripts/check_repository.py",
-            "commit": "3ce445c4a03485e066b51ebec5305a140c80366d",
-            "exitStatus": 0,
-            "id": "repository-check",
-            "log": ".cardine/evidence/215.json#9345f5a50d2b42db9baa8a861430b5f6/1/repository-check",
-            "round": 1,
-            "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "Cardine repository checks passed.\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
-            "command": "python3 scripts/run_tests.py --parallel --module test_run_recovery --module test_execution_boundaries --module test_command_context --module test_worktree_lifecycle --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-            "commit": "3ce445c4a03485e066b51ebec5305a140c80366d",
+            "commit": "36682258c8dedc9425b999878a2e5cc78e8e2003",
             "exitStatus": 1,
-            "id": "task-tests",
-            "log": ".cardine/evidence/215.json#9345f5a50d2b42db9baa8a861430b5f6/1/task-tests",
+            "id": "repository-check",
+            "log": ".cardine/evidence/215.json#f417ad5e3b4f489d8b8c3fe1f6890c65/1/repository-check",
             "round": 1,
-            "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
+            "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
             "stderr": "",
             "stderrTruncated": false,
-            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=180 selected=23 digest=d52f6cd3a3bc3572526de02d38c8f08b20c44decae7a59208f36288089430872\ntest_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing) ... FAIL\ntest_stable_facts_and_failures (test_command_context.CommandContextTest.test_stable_facts_and_failures) ... ok\ntest_stop_hook_ignores_old_bin_variable (test_command_word.CommandWordTest.test_stop_hook_ignores_old_bin_variable) ... ok\ntest_delivery_without_committed_implementation_is_rejected (test_execution_boundaries.ExecutionBoundariesTest.test_delivery_without_committed_implementation_is_rejected) ... ok\ntest_later_state_file_change_is_rejected_even_if_reverted (test_execution_boundaries.ExecutionBoundariesTest.test_later_state_file_change_is_rejected_even_if_reverted) ... ok\ntest_preflight_and_worktree_failures_do_not_write_start (test_execution_boundaries.ExecutionBoundariesTest.test_preflight_and_worktree_failures_do_not_write_start) ... ok\ntest_wrong_project_cli_preserves_arguments_and_names_paths (test_execution_boundaries.ExecutionBoundariesTest.test_wrong_project_cli_preserves_arguments_and_names_paths) ... ok\ntest_identity_policy_reads_selected_directory (test_layout.LayoutTest.test_identity_policy_reads_selected_directory) ... ok\ntest_project_declaration_reads_selected_directory (test_layout.LayoutTest.test_project_declaration_reads_selected_directory) ... ok\ntest_compatibility_adapters_have_no_implementation (test_module_inventory.ModuleInventoryTest.test_compatibility_adapters_have_no_implementation) ... ok\ntest_installed_policy_resolves_without_installation_and_changes_invalidate_digest (test_run_recovery.PolicyRecoveryTest.test_installed_policy_resolves_without_installation_and_changes_invalidate_digest) ... ok\ntest_foreign_corrupt_live_or_unreplayable_state_operation_stays_invalid (test_run_recovery.RunRecoveryTest.test_foreign_corrupt_live_or_unreplayable_state_operation_stays_invalid) ... ok\ntest_missing_worktree_stays_a_wrong_worktree_guardrail (test_run_recovery.RunRecoveryTest.test_missing_worktree_stays_a_wrong_worktree_guardrail) ... ok\ntest_residue_clear_killed_at_after_residue_unlink_converges (test_run_recovery.RunRecoveryTest.test_residue_clear_killed_at_after_residue_unlink_converges) ... ok\ntest_stage_killed_at_after_result_receipt_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_after_result_receipt_recovers_the_owned_lease) ... ok\ntest_stage_killed_at_before_result_receipt_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_before_result_receipt_recovers_the_owned_lease) ... ok\ntest_consolidated_negatives_keep_human_authority_and_cause_detail (test_stop_registry.StopRegistryTest.test_consolidated_negatives_keep_human_authority_and_cause_detail) ... ok\ntest_named_references_aliases_and_qualified_functions (test_text_gates.TextGateScannerTest.test_named_references_aliases_and_qualified_functions) ... ok\ntest_advance_has_no_declared_result_options_and_stops_without_a_measured_attempt (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_advance_has_no_declared_result_options_and_stops_without_a_measured_attempt) ... ok\ntest_advance_resumes_after_each_mechanical_step_and_reaches_cleanup (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_advance_resumes_after_each_mechanical_step_and_reaches_cleanup) ... ok\ntest_console_requires_a_terminal (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_console_requires_a_terminal) ... ok\ntest_integrate_stage_reports_primary_dirty_through_the_registry (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_primary_dirty_through_the_registry) ... ok\ntest_stop_registry_covers_closure_codes_and_names_real_tests (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_stop_registry_covers_closure_codes_and_names_real_tests) ... ok\n\n======================================================================\n\nRan 23 tests in 298.220s\n\nFAILED (failures=1)\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nFAIL: test_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-215/tests/test_command_context.py\", line 55, in test_command_budgets_and_noop_delivery_writes_nothing\n    self.assertLessEqual(len(calls), 26)  # Receipt-bound source and committed delivery proof (RE7a).\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\nAssertionError: 27 not less than or equal to 26\n\n----------------------------------------------------------------------\nresult ran=23 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_recovery,test_execution_boundaries,test_command_context,test_worktree_lifecycle,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=180 total=2135 failures=1 errors=0\n",
+            "stdout": "FAIL: machine-specific absolute path in .cardine/evidence/215.json:28\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
+            "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_recovery --module test_execution_boundaries --module test_command_context --module test_worktree_lifecycle --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "36682258c8dedc9425b999878a2e5cc78e8e2003",
+            "exitStatus": 0,
+            "id": "task-tests",
+            "log": ".cardine/evidence/215.json#f417ad5e3b4f489d8b8c3fe1f6890c65/1/task-tests",
+            "round": 1,
+            "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "PARTIAL selection=module:test_run_recovery,test_execution_boundaries,test_command_context,test_worktree_lifecycle,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=180 total=2135 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
             "command": "git diff --check",
-            "commit": "3ce445c4a03485e066b51ebec5305a140c80366d",
+            "commit": "36682258c8dedc9425b999878a2e5cc78e8e2003",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/215.json#9345f5a50d2b42db9baa8a861430b5f6/1/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/215.json#f417ad5e3b4f489d8b8c3fe1f6890c65/1/adopt-466c2f308b48c766",
             "round": 1,
-            "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
+            "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "",
@@ -261,42 +322,42 @@
         ],
         [
           {
-            "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
+            "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
             "command": "python3 scripts/check_repository.py",
-            "commit": "3ce445c4a03485e066b51ebec5305a140c80366d",
-            "exitStatus": 0,
-            "id": "repository-check",
-            "log": ".cardine/evidence/215.json#9345f5a50d2b42db9baa8a861430b5f6/2/repository-check",
-            "round": 2,
-            "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "Cardine repository checks passed.\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
-            "command": "python3 scripts/run_tests.py --parallel --module test_run_recovery --module test_execution_boundaries --module test_command_context --module test_worktree_lifecycle --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-            "commit": "3ce445c4a03485e066b51ebec5305a140c80366d",
+            "commit": "36682258c8dedc9425b999878a2e5cc78e8e2003",
             "exitStatus": 1,
-            "id": "task-tests",
-            "log": ".cardine/evidence/215.json#9345f5a50d2b42db9baa8a861430b5f6/2/task-tests",
+            "id": "repository-check",
+            "log": ".cardine/evidence/215.json#f417ad5e3b4f489d8b8c3fe1f6890c65/2/repository-check",
             "round": 2,
-            "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
+            "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
             "stderr": "",
             "stderrTruncated": false,
-            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=180 selected=23 digest=d52f6cd3a3bc3572526de02d38c8f08b20c44decae7a59208f36288089430872\ntest_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing) ... FAIL\ntest_stable_facts_and_failures (test_command_context.CommandContextTest.test_stable_facts_and_failures) ... ok\ntest_stop_hook_ignores_old_bin_variable (test_command_word.CommandWordTest.test_stop_hook_ignores_old_bin_variable) ... ok\ntest_delivery_without_committed_implementation_is_rejected (test_execution_boundaries.ExecutionBoundariesTest.test_delivery_without_committed_implementation_is_rejected) ... ok\ntest_later_state_file_change_is_rejected_even_if_reverted (test_execution_boundaries.ExecutionBoundariesTest.test_later_state_file_change_is_rejected_even_if_reverted) ... ok\ntest_preflight_and_worktree_failures_do_not_write_start (test_execution_boundaries.ExecutionBoundariesTest.test_preflight_and_worktree_failures_do_not_write_start) ... ok\ntest_wrong_project_cli_preserves_arguments_and_names_paths (test_execution_boundaries.ExecutionBoundariesTest.test_wrong_project_cli_preserves_arguments_and_names_paths) ... ok\ntest_identity_policy_reads_selected_directory (test_layout.LayoutTest.test_identity_policy_reads_selected_directory) ... ok\ntest_project_declaration_reads_selected_directory (test_layout.LayoutTest.test_project_declaration_reads_selected_directory) ... ok\ntest_compatibility_adapters_have_no_implementation (test_module_inventory.ModuleInventoryTest.test_compatibility_adapters_have_no_implementation) ... ok\ntest_installed_policy_resolves_without_installation_and_changes_invalidate_digest (test_run_recovery.PolicyRecoveryTest.test_installed_policy_resolves_without_installation_and_changes_invalidate_digest) ... ok\ntest_foreign_corrupt_live_or_unreplayable_state_operation_stays_invalid (test_run_recovery.RunRecoveryTest.test_foreign_corrupt_live_or_unreplayable_state_operation_stays_invalid) ... ok\ntest_missing_worktree_stays_a_wrong_worktree_guardrail (test_run_recovery.RunRecoveryTest.test_missing_worktree_stays_a_wrong_worktree_guardrail) ... ok\ntest_residue_clear_killed_at_after_residue_unlink_converges (test_run_recovery.RunRecoveryTest.test_residue_clear_killed_at_after_residue_unlink_converges) ... ok\ntest_stage_killed_at_after_result_receipt_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_after_result_receipt_recovers_the_owned_lease) ... ok\ntest_stage_killed_at_before_result_receipt_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_before_result_receipt_recovers_the_owned_lease) ... ok\ntest_consolidated_negatives_keep_human_authority_and_cause_detail (test_stop_registry.StopRegistryTest.test_consolidated_negatives_keep_human_authority_and_cause_detail) ... ok\ntest_named_references_aliases_and_qualified_functions (test_text_gates.TextGateScannerTest.test_named_references_aliases_and_qualified_functions) ... ok\ntest_advance_has_no_declared_result_options_and_stops_without_a_measured_attempt (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_advance_has_no_declared_result_options_and_stops_without_a_measured_attempt) ... ok\ntest_advance_resumes_after_each_mechanical_step_and_reaches_cleanup (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_advance_resumes_after_each_mechanical_step_and_reaches_cleanup) ... ok\ntest_console_requires_a_terminal (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_console_requires_a_terminal) ... ok\ntest_integrate_stage_reports_primary_dirty_through_the_registry (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_integrate_stage_reports_primary_dirty_through_the_registry) ... ok\ntest_stop_registry_covers_closure_codes_and_names_real_tests (test_worktree_lifecycle.WorktreeLifecycleCliTest.test_stop_registry_covers_closure_codes_and_names_real_tests) ... ok\n\n======================================================================\n\nRan 23 tests in 423.803s\n\nFAILED (failures=1)\nValidation 001/check: exit 0\nValidation 001/check: exit 0\nFAIL: test_command_budgets_and_noop_delivery_writes_nothing (test_command_context.CommandContextTest.test_command_budgets_and_noop_delivery_writes_nothing)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-215/tests/test_command_context.py\", line 55, in test_command_budgets_and_noop_delivery_writes_nothing\n    self.assertLessEqual(len(calls), 26)  # Receipt-bound source and committed delivery proof (RE7a).\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^\nAssertionError: 27 not less than or equal to 26\n\n----------------------------------------------------------------------\nresult ran=23 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_recovery,test_execution_boundaries,test_command_context,test_worktree_lifecycle,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=180 total=2135 failures=1 errors=0\n",
+            "stdout": "FAIL: machine-specific absolute path in .cardine/evidence/215.json:28\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "9345f5a50d2b42db9baa8a861430b5f6",
+            "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_recovery --module test_execution_boundaries --module test_command_context --module test_worktree_lifecycle --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "36682258c8dedc9425b999878a2e5cc78e8e2003",
+            "exitStatus": 0,
+            "id": "task-tests",
+            "log": ".cardine/evidence/215.json#f417ad5e3b4f489d8b8c3fe1f6890c65/2/task-tests",
+            "round": 2,
+            "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "PARTIAL selection=module:test_run_recovery,test_execution_boundaries,test_command_context,test_worktree_lifecycle,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=180 total=2135 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "f417ad5e3b4f489d8b8c3fe1f6890c65",
             "command": "git diff --check",
-            "commit": "3ce445c4a03485e066b51ebec5305a140c80366d",
+            "commit": "36682258c8dedc9425b999878a2e5cc78e8e2003",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/215.json#9345f5a50d2b42db9baa8a861430b5f6/2/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/215.json#f417ad5e3b4f489d8b8c3fe1f6890c65/2/adopt-466c2f308b48c766",
             "round": 2,
-            "sourceDigest": "bfeb97f8f5f47d75d04e702ff526ded15f0e6b02fd3d0edd6e74f0ff3264ec44",
+            "sourceDigest": "20a334648d6edc701fcd5c18a4701d6ac4816373f520827fb52ba5911acad5f6",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "",
