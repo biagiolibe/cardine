@@ -70,6 +70,44 @@ class ConsoleListLayoutTest(unittest.TestCase):
                            self.PALETTE, all_tasks)
         return screen
 
+    def test_live_states_in_details_and_row(self) -> None:
+        from dataclasses import replace
+        live = owner_console_models.LiveCommand("validation", "task-tests", 1, "test",
+                                                "2026-01-01T00:00:00+00:00", None, "hello")
+        task = replace(self.task("001"), live_command=live)
+        for interrupted, label in ((False, "Running:"), (True, "Interrupted:")):
+            task = replace(task, live_command=replace(live, interrupted=interrupted))
+            details = " ".join(line for line, _ in owner_console_render._detail_lines(task, 120, self.PALETTE))
+            self.assertIn(label + " validation · round 1 · task-tests", details)
+            self.assertIn("Last output: hello", details)
+            self.assertIn(label, self.render([task], 160).row(6))
+        task = replace(task, live_command=replace(live, exit_status=0))
+        self.assertNotIn("Last output:", " ".join(line for line, _ in
+                         owner_console_render._detail_lines(task, 120, self.PALETTE)))
+
+    def test_output_tail_follow_scroll_growth_rotation_and_cleaning(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "run.log"
+            view = owner_console_render.OutputView(path)
+            view.refresh()
+            self.assertFalse(view.exists)
+            path.write_bytes(b"x" * (256 * 1024) + b"\nfirst\n\x1b[31mold\rnew\x1b[0m\x01\nlast\n")
+            view.refresh()
+            self.assertEqual(view.visible(2), ["new", "last"])
+            view.scroll(-1, 2)
+            self.assertFalse(view.follow)
+            self.assertEqual(view.visible(2), ["first", "new"])
+            with path.open("ab") as handle:
+                handle.write(b"more\n")
+            view.refresh()
+            self.assertEqual(view.visible(2), ["first", "new"])
+            view.end()
+            self.assertEqual(view.visible(2), ["last", "more"])
+            path.rename(path.with_suffix(".old"))
+            path.write_text("rotated\n")
+            view.refresh()
+            self.assertEqual(view.visible(2), ["rotated"])
+
     def test_columns_follow_the_longest_id_for_3_8_13_and_18_characters(self) -> None:
         for length in (3, 8, 13, 18):
             with self.subTest(length=length):
