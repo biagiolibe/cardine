@@ -1,0 +1,101 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/integration/cleanup.py",
+      "src/cardine/stops/causes.py",
+      "tests/test_run_integration.py",
+      "tests/test_run_recovery.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/220.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 220 \u2014 Wait during cleanup while another task integrates",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_recovery --module test_worktree_cleanup --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "77816b3dc80533e59616252427db6567dce2c29bbbceb77e706889521d4a4b02",
+        "digest": "22bb7eb66411ab93ecf0520ce2959aca5616267dbd71c90d7f58436934490968",
+        "inputs": {
+          ".cardine/tasks/220.json": null,
+          "tasks/220.md": null
+        },
+        "kind": "creation",
+        "operation_id": "0e7d5c2ebb81454d8ebc12f06683f385",
+        "outputs": {
+          ".cardine/tasks/220.json": "5477b2d07f9a36d4754608e784bcd5358c4b70a2790c6db3143282b2c453f7e7",
+          "tasks/220.md": "b2f65026024b429bcdbad3e760a32477e9920d78a7eb42c2fcf33db3b69a6862"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "bb7fa823ea7d2807c7797896985f872058154443",
+        "task_id": "220",
+        "tree": "3026727b3beb9f93362f9d7121aa0817a4692a11",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "220",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
