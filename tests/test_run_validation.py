@@ -7,6 +7,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 
@@ -336,13 +337,54 @@ run_task_validation(Path(sys.argv[1]), '001')
     def test_large_process_output_is_bounded_and_marked_without_losing_exit(self):
         from cardine.lifecycle.validation import LOG_LIMIT
         command = shlex.quote(sys.executable) + ' -c ' + shlex.quote(
-            'import sys; sys.stdout.write("x"*100000); sys.stderr.write("y"*100000)')
+            'import sys; sys.stdout.write("x"*100000+"OUT-END"); sys.stderr.write("y"*100000+"ERR-END")')
         self.configure({'one': command})
         result = self.run_attempt()['runs'][0][0]
         self.assertEqual(result['exitStatus'], 0)
         for stream in ('stdout', 'stderr'):
-            self.assertEqual(len(result[stream]), LOG_LIMIT)
+            self.assertIn('bytes omitted', result[stream])
+            self.assertTrue(result[stream].endswith('OUT-END' if stream == 'stdout' else 'ERR-END'))
             self.assertTrue(result[stream + 'Truncated'])
+
+    def test_live_command_output_and_status(self):
+        from cardine.lifecycle.live import LiveLog
+        from cardine.lifecycle.validation import execute_command
+        with tempfile.TemporaryDirectory() as directory:
+            live = LiveLog(directory, '001')
+            with live.command('printf out; printf err >&2', kind='validation', key='check', round_number=1) as frame:
+                result = execute_command('printf out; printf err >&2', directory, dict(os.environ), 1, frame)
+            self.assertEqual(result[0], 0)
+            log = live.log.read_text()
+            for text in ('validation · round 1 · check:', 'out', 'err', 'exit 0 after'):
+                self.assertIn(text, log)
+            status = json.loads(live.status.read_text())
+            self.assertEqual((status['id'], status['kind'], status['exitStatus']), ('check', 'validation', 0))
+            self.assertIsInstance(status['pid'], int)
+            live.log.unlink()
+            live.log.mkdir()
+            with live.command('true', kind='candidate') as frame:
+                self.assertEqual(execute_command('true', directory, dict(os.environ), 1, frame)[0], 0)
+            with patch('cardine.lifecycle.live.receipts.safe_path', side_effect=ValueError('refused')):
+                disabled = LiveLog(directory, '001')
+                with disabled.command('true', kind='candidate') as frame:
+                    self.assertEqual(execute_command('true', directory, dict(os.environ), 1, frame)[0], 0)
+
+    def test_partial_pipe_output_is_forwarded_before_eof(self):
+        from cardine.lifecycle.validation import _read_log
+        received = threading.Event()
+        class Frame:
+            def output(self, chunk):
+                received.set()
+        read_fd, write_fd = os.pipe()
+        with os.fdopen(read_fd, 'rb') as stream:
+            thread = threading.Thread(target=_read_log, args=(stream, Frame()))
+            thread.start()
+            try:
+                os.write(write_fd, b'partial')
+                self.assertTrue(received.wait(2))
+            finally:
+                os.close(write_fd)
+                thread.join()
 
     def test_exhausted_interrupted_publication_can_resume_after_authorized_budget_revision(self):
         self.configure({'one': 'exit 7'}, limit=1)

@@ -12,6 +12,7 @@ import uuid
 from pathlib import Path
 
 from cardine.lifecycle import receipts
+from cardine.lifecycle.live import LiveLog
 from cardine.lifecycle.control import operation_state, source_digest
 from cardine.lifecycle.validation import execute_command, runner_lock
 from cardine.shared.errors import CardineError
@@ -176,6 +177,7 @@ def run_candidate_validation(task_id, project):
         if receipts.state_digest(state) != intent['before']:
             raise CardineError('candidate state changed during validation')
         runs = intent['runs']
+        live = LiveLog(locations.common_dir, task_id)
         policy = state['contract']['validation']
         retry = policy.get('retry', {})
         quick = intent.get('quick', [])
@@ -206,7 +208,9 @@ def run_candidate_validation(task_id, project):
             results = []
             with candidate_checkout(root, binding) as checkout:
                 for command in round_commands:
-                    status, out, err, out_cut, err_cut = execute_command(command, checkout, dict(os.environ), descriptor)
+                    with live.command(command, kind='candidate', round_number=len(runs) + 1) as frame:
+                        status, out, err, out_cut, err_cut = execute_command(
+                            command, checkout, dict(os.environ), descriptor, frame)
                     results.append(dict(command=command, exitStatus=status, stdout=out, stderr=err,
                                         stdoutTruncated=out_cut, stderrTruncated=err_cut))
                 if _run_git(checkout, 'diff', '--quiet', 'HEAD').returncode:
