@@ -70,8 +70,8 @@ class ClosingTaskMixin:
         self.assertEqual(task.progress_phase, "landing")
         self.assertEqual(task.remaining_gates[0], "Stage integration")
         self.assertEqual(task.closure_resume, f"cardine run {self.done_id} --project {self.project}")
-        self.assertEqual(task.next_action, f"cardine run {self.done_id} --project {self.project}")
-        self.assertEqual(task.launch_command, f"cardine run {self.done_id} --project {self.project}")
+        self.assertEqual(task.next_action, f"Proceed with {self.done_id}")
+        self.assertEqual(task.launch_command, f"Proceed with {self.done_id}")
         self.assertTrue(task.shows_progress)
 
     def test_task_stays_visible_after_finalize_with_a_pending_push(self) -> None:
@@ -80,7 +80,7 @@ class ClosingTaskMixin:
         task = tasks[self.done_id]
         self.assertEqual(task.progress_phase, "landing")
         self.assertIsNone(task.closure_stop_reason)
-        self.assertEqual(task.next_action, f"cardine run {self.done_id} --project {self.project}")
+        self.assertEqual(task.next_action, f"Proceed with {self.done_id}")
 
     def check_cleanup_only(self, archived: bool) -> None:
         self.closing_project(archived=archived)
@@ -102,8 +102,8 @@ class ClosingTaskMixin:
         self.assertEqual((task.readiness, task.lifecycle), ("DONE", "done"))
         self.assertTrue(task.cleanup_pending)
         self.assertFalse(task.shows_progress)
-        self.assertEqual(task.launch_command, f"cardine run {self.done_id} --project {self.project}")
-        self.assertEqual(task.next_action, resume)
+        self.assertEqual(task.launch_command, f"Proceed with {self.done_id}")
+        self.assertEqual(task.next_action, f"Proceed with {self.done_id}")
         self.assertEqual(task.closure_resume, resume)
         self.assertEqual(task.progress_phase, "landing")
         self.assertEqual(owner_console_render._filter_counts(snapshot)["Working"], 0)
@@ -176,7 +176,7 @@ class ClosingTaskMixin:
     def test_closing_task_offers_stable_resume_without_changing_dependencies(self) -> None:
         self.closing_project()
         tasks, _status = self.load_closing(self.report("C7"))
-        self.assertEqual(tasks[self.done_id].launch_command, f"cardine run {self.done_id} --project {self.project}")
+        self.assertEqual(tasks[self.done_id].launch_command, f"Proceed with {self.done_id}")
         self.assertEqual(tasks[self.open_id].readiness, "READY")
         self.assertEqual(tasks[self.open_id].dependency_states, ((self.done_id, "Done"),))
 
@@ -188,7 +188,7 @@ class ClosingTaskMixin:
                 task = tasks[self.done_id]
                 self.assertEqual(task.readiness, "CLOSING")
                 self.assertEqual(task.progress_phase, "landing")
-                self.assertEqual(task.next_action, f"cardine run {self.done_id} --project {self.project}")
+                self.assertEqual(task.next_action, f"Proceed with {self.done_id}")
 
     def test_steps_that_are_not_closure_work_never_surface_a_prepare_resume(self) -> None:
         self.closing_project()
@@ -262,7 +262,7 @@ class OpaqueIdClosingTaskTest(ClosingTaskMixin, support.StateConsoleFixture):
         status.assert_not_called()
         self.assertEqual((task.readiness, task.lifecycle),
                          ("READY FOR REVIEW", "ready_for_review"))
-        self.assertEqual(task.launch_command, f"cardine run 003 --project {self.project}")
+        self.assertEqual(task.launch_command, f"Proceed with 003")
         self.assertEqual(task.progress_phase, "contract")
         self.assertEqual(task.remaining_gates[0], "Independent review")
         self.assertTrue(task.shows_progress)

@@ -155,6 +155,13 @@ def _launch_selected(state: "ConsoleState", task: Task, agent: str,
         from cardine.hosts.launch import launch_run_request
         locations = resolve_run_locations(current.task_id, state.project)
         adapter = host_adapter()
+        if adapter is None and action == 'run':
+            # Start the developer's agent session when no enforced host channel exists.
+            request, error = _launch_request(current, state.project, agent)
+            if error:
+                return False, error
+            assert request is not None
+            return _start_launch(request)
         if adapter is None or adapter.host != agent:
             return False, 'Host role boundary unavailable: configure the selected enforced host profiles'
         if action == 'cancel':

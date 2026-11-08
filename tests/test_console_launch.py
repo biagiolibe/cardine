@@ -74,6 +74,19 @@ class AgentLaunchTest(unittest.TestCase):
         values.update(changes)
         return owner_console_models.Task(**values)
 
+    def test_product_task_directive_follows_the_engine_step(self) -> None:
+        def preview(role="implementer", outcome="next"):
+            return {"outcome": outcome, "stop": None, "work": {"role": role} if role else None,
+                    "next": {"command": "cardine run 001 --project /p", "argv": [], "reason": "step"}}
+        self.assertEqual(self.task(run_preview=preview()).launch_command, "Proceed with 001")
+        self.assertEqual(self.task(run_preview=preview(None)).launch_command, "Proceed with 001")
+        self.assertEqual(self.task(run_preview=preview("reviewer")).launch_command, "Review 001")
+        self.assertEqual(self.task(run_preview=preview(), changes_requested=True).launch_command,
+                         "Address review 001")
+        self.assertEqual(self.task(run_preview=preview()).next_action, "Proceed with 001")
+        self.assertIsNone(self.task(run_preview=preview(outcome="blocked")).launch_command)
+        self.assertIsNone(self.task(run_preview=dict(preview(), next=None)).launch_command)
+
     def test_permitted_directive_matrix_refuses_writers_and_mismatches(self) -> None:
         self.assertEqual(self.task().launch_command, "Proceed with 001")
         self.assertFalse(self.task().is_resume)

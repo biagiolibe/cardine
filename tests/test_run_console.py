@@ -49,7 +49,7 @@ class RunConsoleTest(unittest.TestCase):
                                      'ready', 'review', 'done', 'warning', 'accent', 'unknown', 'action', 'line'), 0)
             _detail_lines(task, 100, palette)
         self.assertEqual(self.fixture.state(), before)
-        self.assertTrue(task.launch_command.startswith('cardine run 001 --project '))
+        self.assertEqual(task.launch_command, 'Proceed with 001')
 
     def test_delivery_selects_validation_and_forged_state_never_selects_a_step(self):
         self.fixture.deliver()
@@ -214,6 +214,24 @@ launch_run_request(locations, request,
                 reason='Cancelled from the console', adapter=adapter)
             self.assertTrue(_launch_selected(state, task, 'codex', True, 'abort')[0])
             abort.assert_called_once_with('001', self.fixture.root, adapter=adapter)
+
+    def test_run_without_an_enforced_host_starts_the_developer_session(self):
+        from cardine.console import launch
+        from types import SimpleNamespace
+        task = load_snapshot(self.fixture.root).tasks[0]
+        state = SimpleNamespace(project=self.fixture.root)
+        before = self.fixture.state()
+        session = 'w0t0p0:01234567-89AB-CDEF-0123-456789ABCDEF'
+        with patch('cardine.lifecycle.control.host_adapter', return_value=None), \
+             patch.dict(os.environ, {'ITERM_SESSION_ID': session}), \
+             patch.object(launch, '_start_launch', return_value=(True, 'started')) as start:
+            self.assertEqual(launch._launch_selected(state, task, 'claude', True), (True, 'started'))
+            request = start.call_args.args[0]
+            self.assertEqual((request.agent, request.directive, request.task_id), ('claude', 'Proceed with 001', '001'))
+            self.assertIn("exec claude 'Proceed with 001'", request.shell_command)
+            self.assertFalse(launch._launch_selected(state, task, 'claude', True, 'cancel')[0])
+            self.assertEqual(start.call_count, 1)
+        self.assertEqual(self.fixture.state(), before)
 
     def test_candidate_preview_checks_the_index_without_writing_a_tree(self):
         import test_run_integration

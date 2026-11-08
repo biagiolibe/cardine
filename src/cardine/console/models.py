@@ -92,8 +92,14 @@ class Task:
         if self.run_preview is not None:
             if self.readiness.startswith(('BLOCKED', 'UNKNOWN')):
                 return None
-            return (self.run_preview['next']['command']
-                    if self.run_preview['next'] and self.run_preview['outcome'] != 'blocked' else None)
+            if not self.run_preview['next'] or self.run_preview['outcome'] == 'blocked':
+                return None
+            work = self.run_preview.get('work') or {}
+            if work.get('role') == 'reviewer':
+                return f"Review {self.task_id}"
+            if self.changes_requested:
+                return f"Address review {self.task_id}"
+            return f"Proceed with {self.task_id}"
         if self.state_error or self.record_problem or self.delivery_pending or self.readiness == "MISMATCH":
             return None
         if self.is_resume:
@@ -133,7 +139,9 @@ class Task:
         if self.run_preview is not None:
             if self.run_preview['stop']:
                 return self.run_preview['stop']['code'] + ': ' + self.run_preview['stop']['detail']
-            return self.run_preview['next']['command'] if self.run_preview['next'] else 'Delivery complete'
+            if not self.run_preview['next']:
+                return 'Delivery complete'
+            return self.launch_command or self.run_preview['next']['command']
         if self.state_error:
             return self.state_error
         if self.is_resume and self.launch_command:
