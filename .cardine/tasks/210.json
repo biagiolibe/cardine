@@ -1,0 +1,95 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/console/launch.py",
+      "src/cardine/console/entry.py",
+      "tests/test_console_launch.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/210.md",
+    "title": "Task 210 \u2014 Open launched agents in a column beside the console",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_console_launch --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "463b4d1ee0a3324357c5e7753148dc93d3a7100033ea6c5b0dac66ed693d5c7f",
+        "digest": "067eef8f9e6ab528c3c48f7fd02b980296242dcb42ae4a0605cca3809c52053c",
+        "inputs": {
+          ".cardine/tasks/210.json": null,
+          "tasks/210.md": null
+        },
+        "kind": "creation",
+        "operation_id": "8b3e8eeee38c4078ac563cd952c96175",
+        "outputs": {
+          ".cardine/tasks/210.json": "80bfedcde16e70d4043caffdd4afbf301a43eedb5d3ecba81eb65b268c6fc110",
+          "tasks/210.md": "ca43ad8d26d02a4992abfdf1e9a343ac9f490b2ceccfa834730025c4d7bdf34e"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "d8239e50224eb1f38bf462aaea89276bf6b9182d",
+        "task_id": "210",
+        "tree": "8ac01bb1a732c4048b762f979f1bc42f87616b8e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "210",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
