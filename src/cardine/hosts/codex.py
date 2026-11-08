@@ -59,7 +59,9 @@ prefix_rule(pattern=["ps"], decision="allow")
 '''
 
 
-CODEX_USER_RULES = LEGACY_CODEX_USER_RULES.replace('# MERIDIAN:', '# CARDINE:')
+PREVIOUS_CODEX_USER_RULES = LEGACY_CODEX_USER_RULES.replace('# MERIDIAN:', '# CARDINE:')
+CODEX_USER_RULES = (PREVIOUS_CODEX_USER_RULES.replace('codex-user-rules v1', 'codex-user-rules v2')
+                    .replace('"execution", "task", "review"', '"execution", "task", "review", "run", "status"'))
 
 
 def plan_codex_user_rules(path: Path, *, legacy_tool_installed: bool = False) -> CodexUserRulesPlan:
@@ -76,10 +78,14 @@ def plan_codex_user_rules(path: Path, *, legacy_tool_installed: bool = False) ->
             end += 2
         elif text[end:end + 1] == "\n":
             end += 1
-        if text[start:end] != CODEX_USER_RULES:
+        if text[start:end] == PREVIOUS_CODEX_USER_RULES:
+            proposed = text[:start] + CODEX_USER_RULES + text[end:]
+            status = "stale"
+        elif text[start:end] == CODEX_USER_RULES:
+            proposed = text
+            status = "ready"
+        else:
             raise CardineError(f"Codex user-rules block in {path} has changed; reconcile it manually")
-        proposed = text
-        status = "ready"
     else:
         proposed = text + ("\n" if text and not text.endswith("\n") else "") + CODEX_USER_RULES
         status = "missing"

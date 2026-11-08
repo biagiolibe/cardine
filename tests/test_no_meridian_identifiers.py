@@ -55,7 +55,7 @@ ALLOWLIST = (
     Allowance(2, "9", r"src/cardine/hosts/codex\.py",
               r'^\s*legacy_name = "' + OLD + r'-worktrees"$'),
     Allowance(2, "9", r"src/cardine/hosts/codex\.py",
-              r"^CODEX_USER_RULES = LEGACY_CODEX_USER_RULES\.replace\('# " + OLD.upper() + r":', '# CARDINE:'\)$"),
+              r"^PREVIOUS_CODEX_USER_RULES = LEGACY_CODEX_USER_RULES\.replace\('# " + OLD.upper() + r":', '# CARDINE:'\)$"),
     Allowance(2, "9", r"src/cardine/hosts/codex\.py",
               r'^\s*elif legacy_path and "# ' + OLD.upper() + r':" in legacy_text and "codex-user-rules" in legacy_text:$'),
     Allowance(2, "9", r"src/cardine/hosts/codex\.py",
