@@ -258,6 +258,31 @@ else: finalize_task_integration('056', None, root)
             self.assertIsNone(run_integration_step(locations))
             landing.return_value.prepare_candidate.assert_not_called()
 
+    def test_cleanup_stop_waits_only_for_a_coherent_competing_lease(self):
+        self.ready()
+        from cardine.lifecycle.engine import dispatch_run
+        from cardine.stops.render import stop_error
+        locations = candidate.locations_for('056', self.primary)
+        cleanup_intent = candidate.operation_path(locations, 'cleanup')
+        cleanup_intent.parent.mkdir(parents=True, exist_ok=True)
+        cleanup_intent.write_text('')
+        _, lease, _ = self.paths()
+        foreign = json.loads(lease.read_bytes())
+        foreign.update(task_id='999', branch='task-999')
+        lease.write_text(json.dumps(foreign))
+        with mock.patch('cardine.integration.cleanup.finish_delivery', side_effect=stop_error('CLEANUP_BLOCKED', 'blocked')):
+            result = dispatch_run(locations)
+            self.assertEqual((result['step'], result['outcome'], result['action'], result['retry_after_seconds']),
+                             ('landing', 'waiting', 'wait-for-lease', 5))
+            self.assertEqual(result['next']['argv'], ['cardine', 'run', '056', '--project', str(locations.primary)])
+            lease.write_text(json.dumps({'task_id': '999'}))
+            self.assertEqual(dispatch_run(locations)['outcome'], 'blocked')
+            lease.unlink()
+            self.assertEqual(dispatch_run(locations)['outcome'], 'blocked')
+        lease.write_text(json.dumps(foreign))
+        with mock.patch('cardine.integration.cleanup.finish_delivery', side_effect=stop_error('COMMAND_REFUSED', 'blocked')):
+            self.assertEqual(dispatch_run(locations)['outcome'], 'blocked')
+
     def test_textual_conflict_and_transient_git_failure_are_distinct(self):
         self.ready()
         merge.abort_task_integration('056', self.primary)

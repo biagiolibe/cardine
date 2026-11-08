@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import atexit
+import contextlib
 import fcntl
 import json
 import os
@@ -696,6 +697,25 @@ class RunRecoveryTest(unittest.TestCase):
         foreign = self.run_cli(*self.cleanup_args())
         self.assertTrue(foreign.stderr.startswith("BLOCKED CLEANUP_BLOCKED:"), foreign.stderr)
         self.assertTrue(lease.exists())
+
+    def test_cleanup_names_tracked_changes_in_the_primary_checkout(self) -> None:
+        from cardine.integration.candidate import locations_for
+        self.landed_task()
+        head = self.git("rev-parse", "HEAD").strip()
+        (self.project / "new-file.txt").write_text("staged\n", encoding="utf-8")
+        self.git("add", "new-file.txt")
+        with contextlib.chdir(self.project):
+            locations = locations_for("056", self.project)
+            authority = {"accepted": True}
+            intent = {"binding": dict(task="056", project=str(locations.primary),
+                worker=str(locations.worktree), common=str(locations.common_dir), authority=authority,
+                origin=None, main=head, taskTip=head, finalDigest=None)}
+            with mock.patch.object(owner_cleanup.receipts, "require_authority", return_value=authority), \
+                    mock.patch.object(owner_cleanup, "_origin", return_value=None), \
+                    self.assertRaises(CardineStop) as raised:
+                owner_cleanup._landed(locations, intent)
+        self.assertEqual(raised.exception.code, "CLEANUP_BLOCKED")
+        self.assertIn("uncommitted tracked changes", raised.exception.detail)
 
     def test_dirty_primary_checkout_stays_a_guardrail(self) -> None:
         self._stage_ready_task_with_origin(local_ahead=True)
