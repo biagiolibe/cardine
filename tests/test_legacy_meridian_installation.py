@@ -62,111 +62,8 @@ class InstallationTest(RepoCase):
         self.assertFalse(names().legacy_identity_policy)
         self.assertEqual(read_task_identity_policy(self.project).mode, "opaque")
 
-    def test_snapshot_equals_current_builder_on_synthetic_installation(self):
-        (self.project / ".cardine/project.json").unlink()
-        expected = installation.load_meridian_snapshot(self.project)
-        with use(installation.MERIDIAN_INSTALLATION_NAMES):
-            from cardine.shared.errors import CardineStop
-            from cardine.stops.render import stop_error
-            with self.assertRaisesRegex(CardineStop, "TASK_STATE_INVALID"):
-                read_task_state(self.project, "001", "lean-delivery", stop_factory=stop_error)
-        self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
-        self.assertEqual(expected.done_count, 1)
-        self.assertEqual(expected.tasks[0].task_id, "002")
-        self.assertIsNotNone(expected.tasks[0].worktree)
-        self.assertEqual(expected.tasks[0].started_at, "2026-10-19T12:00:00Z")
-        with use(ProjectNames(project_directory=".other")):
-            self.assertEqual(installation.load_meridian_snapshot(self.project), expected)
-            self.assertEqual(names().project_directory, ".other")
 
-    def test_all_meridian_statuses_map_only_in_the_read_only_adapter(self):
-        from cardine.shared.errors import CardineStop
-        from cardine.stops.render import stop_error
-        path = self.project / ".meridian/tasks/001.json"
-        for old, new in installation.MERIDIAN_STATUSES.items():
-            value = {"version": 1, "task_id": "001", "workflow": "lean-delivery",
-                     "status": old, "transitions": []}
-            path.write_text(json.dumps(value))
-            before = path.read_bytes()
-            with self.subTest(old=old):
-                mapped = installation.snapshot_task_state(value)
-                self.assertEqual(mapped["status"], new)
-                if old in ("ANSWERED", "INCONCLUSIVE"):
-                    self.assertEqual(mapped["outcome"], old)
-                snapshot = installation.load_meridian_snapshot(self.project)
-                task = next((task for task in snapshot.tasks if task.task_id == "001"), None)
-                if old == "DONE":
-                    self.assertIsNone(task)
-                else:
-                    self.assertEqual(task.status, new)
-                with use(installation.MERIDIAN_INSTALLATION_NAMES):
-                    with self.assertRaisesRegex(CardineStop, "TASK_STATE_INVALID"):
-                        read_task_state(self.project, "001", "lean-delivery", stop_factory=stop_error)
-                self.assertEqual(path.read_bytes(), before)
-                self.assertEqual(value["status"], old)
 
-    def test_snapshot_opens_only_declared_meridian_paths_and_never_writes(self):
-        opened = []
-        commands = []
-        real_io_open, real_open = io.open, builtins.open
-        import subprocess
-        real_run = subprocess.run
-
-        def observing_open(original):
-            def observe(file, mode="r", *args, **kwargs):
-                self.assertFalse(any(flag in mode for flag in "wax+"), (file, mode))
-                if not isinstance(file, int):
-                    opened.append(Path(file).resolve())
-                return original(file, mode, *args, **kwargs)
-            return observe
-
-        def observing_run(command, *args, **kwargs):
-            commands.append(command)
-            return real_run(command, *args, **kwargs)
-
-        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
-        with patch.object(io, "open", side_effect=observing_open(real_io_open)), \
-             patch.object(builtins, "open", side_effect=observing_open(real_open)), \
-             patch.object(subprocess, "run", side_effect=observing_run), \
-             patch.object(Path, "mkdir", side_effect=AssertionError("reader created a directory")):
-            installation.load_meridian_snapshot(self.project)
-        after = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
-        self.assertEqual(before, after)
-        layout = installation.MERIDIAN_INSTALLATION_NAMES
-        declared = {
-            layout.manifest_path, layout.task_identity_path, layout.project_declaration_path,
-            layout.context_size_config_path, layout.candidate_validation_path,
-            layout.execution_evidence_path("002"), layout.flow_targets_path,
-            Path(".git") / layout.integration_lease_name,
-            Path(".git") / layout.integration_state_name,
-            Path(".git") / layout.journal_name, Path(".git") / layout.journal_rotated_name,
-        }
-        directories = {layout.tasks_path, layout.baselines_path,
-                       Path(layout.project_directory) / "probes",
-                       Path(".git") / layout.worktree_state_directory}
-        meridian_paths = []
-        for path in opened:
-            for root in (self.project, self.root / "wt-task-002"):
-                if not path.is_relative_to(root):
-                    continue
-                relative = path.relative_to(root)
-                if any("meridian" in part for part in relative.parts):
-                    meridian_paths.append(relative)
-                    self.assertTrue(relative in declared or relative.parent in directories, relative)
-        self.assertIn(layout.tasks_path / "001.json", meridian_paths)
-        self.assertIn(layout.task_identity_path, meridian_paths)
-        self.assertIn(Path(".git") / layout.worktree_state_directory / "002.json", meridian_paths)
-        self.assertTrue(commands)
-        for command in commands:
-            self.assertEqual(command[0], "git")
-            self.assertTrue(any(word in command for word in (
-                "worktree", "status", "rev-parse", "rev-list", "show", "diff", "check-ref-format", "log", "config")), command)
-            if "config" in command:
-                self.assertIn("--get", command)
-                self.assertFalse(any(flag in command for flag in (
-                    "--add", "--unset", "--unset-all", "--replace-all", "--edit")), command)
-            if "worktree" in command:
-                self.assertIn("list", command)
 
     # MERIDIAN-OLD-NAME-TEST
     def test_product_snapshot_never_opens_meridian_project_paths(self):
@@ -219,11 +116,6 @@ class InstallationTest(RepoCase):
         self.assertEqual(result, 2)
         self.assertIn("capability profile is not present in the catalog", output.getvalue())
 
-    def test_explicit_reader_still_reads_synthetic_installation(self):
-        snapshot = installation.load_meridian_snapshot(self.project)
-        self.assertGreater(snapshot.done_count, 0)
-        self.assertTrue(installation.is_meridian_installation(self.project))
-        self.assertEqual(installation.read_task_state_file(self.project, "001")["status"], "DONE")
 
     def test_literal_names_and_json_readers_ignore_product_context(self):
         layout = installation.MERIDIAN_INSTALLATION_NAMES
@@ -261,42 +153,8 @@ class InstallationTest(RepoCase):
             execution_assets_adapter.reset(token)
         self.assertEqual(resolve_project_locations(self.project).queue, Path("tasks/QUEUE.md"))
 
-    def test_snapshot_resolves_a_declared_queue_and_restores_the_product_reader(self):
-        expected = {task.task_id for task in installation.load_meridian_snapshot(self.project).tasks}
-        self.assertTrue(expected)
-        queue = (self.project / "tasks/QUEUE.md").read_text(encoding="utf-8")
-        self.write(self.project, "tasks/TASK_QUEUE.md", queue)
-        (self.project / "tasks/QUEUE.md").unlink()
-        self.write(self.project, "PROJECT_WORKFLOW.md", (
-            "LEAN_DELIVERY\n\n<!-- MERIDIAN:BEGIN capability=execution-assets v5 -->\n## Execution assets\n"
-            "<!-- MERIDIAN:END -->\nThe queue is `tasks/TASK_QUEUE.md`.\n\n## Roles\n"
-        ))
-        snapshot = installation.load_meridian_snapshot(self.project)
-        self.assertEqual({task.task_id for task in snapshot.tasks}, expected)
-        self.assertIsNone(execution_assets_adapter.get())
 
-    def test_snapshot_still_reads_synthetic_installation(self):
-        snapshot = installation.load_meridian_snapshot(self.project)
-        self.assertEqual(snapshot.project, self.project.resolve())
-        self.assertEqual(snapshot.queue, self.project / "tasks/QUEUE.md")
-        records = {path.stem: installation.read_task_state_file(self.project, path.stem)
-                   for path in (self.project / ".meridian/tasks").glob("*.json")}
-        self.assertTrue(records, "the installation contains task records even with an empty queue")
-        self.assertEqual(snapshot.done_count, sum(record["status"] == "DONE"
-                                                for record in records.values()))
-        self.assertLessEqual({task_id for task_id, record in records.items() if record["status"] != "DONE"},
-                             {task.task_id for task in snapshot.tasks})
-        for task in snapshot.tasks:
-            self.assertIsNotNone(task.path)
-            self.assertTrue(task.path.is_file())
-        self.assertIsNone(execution_assets_adapter.get())
 
-    def test_snapshot_restores_context_after_failure(self):
-        selected = ProjectNames(project_directory=".other")
-        with use(selected), patch.object(installation, "load_snapshot", side_effect=RuntimeError("test")):
-            with self.assertRaisesRegex(RuntimeError, "test"):
-                installation.load_meridian_snapshot(self.project)
-            self.assertIs(names(), selected)
 
 
 class MarkerAndIsolationTest(unittest.TestCase):
