@@ -1,0 +1,46 @@
+{
+  "197": [
+    {
+      "attemptId": "96454419c816469c9ae6786015d6c6d4",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "616f035ebebe132a021a722d553e9ebf24b95ac9",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/197.json#96454419c816469c9ae6786015d6c6d4/1/repository-check",
+      "round": 1,
+      "sourceDigest": "3617621c81452534d6bd5b1992bc66f3818bfd5737da818fcf2913aec1275ac3",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "96454419c816469c9ae6786015d6c6d4",
+      "command": "python3 scripts/run_tests.py --parallel --module test_setup_local_ignore --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+      "commit": "616f035ebebe132a021a722d553e9ebf24b95ac9",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/197.json#96454419c816469c9ae6786015d6c6d4/1/task-tests",
+      "round": 1,
+      "sourceDigest": "3617621c81452534d6bd5b1992bc66f3818bfd5737da818fcf2913aec1275ac3",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_setup_local_ignore,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=56 total=2128 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "96454419c816469c9ae6786015d6c6d4",
+      "command": "git diff --check",
+      "commit": "616f035ebebe132a021a722d553e9ebf24b95ac9",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/197.json#96454419c816469c9ae6786015d6c6d4/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "3617621c81452534d6bd5b1992bc66f3818bfd5737da818fcf2913aec1275ac3",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}

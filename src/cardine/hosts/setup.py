@@ -65,6 +65,39 @@ class PinnedSetupPlan(SetupPlan):
 
     inputs: Mapping[str, str | None] = field(default_factory=dict)
     hooks: HooksPlan | None = None
+    local_ignore: "LocalIgnorePlan | None" = None
+
+
+CLAUDE_LOCAL_SETTINGS = ".claude/settings.local.json"
+
+
+@dataclass(frozen=True)
+class LocalIgnorePlan:
+    """The repository-local exclude entry for the Claude settings file that setup writes.
+
+    The file holds one machine's permissions, so Git must not offer it for commit,
+    and an untracked copy must not make the primary checkout dirty. The entry goes
+    to the repository's own `info/exclude`, which is never committed.
+    """
+
+    path: Path
+    current_text: str
+    proposed_text: str | None
+
+
+def plan_local_ignore(project_root: Path) -> LocalIgnorePlan | None:
+    """None outside a repository, or when Git already tracks the settings file."""
+    if _run_git(project_root, "rev-parse", "--git-dir").returncode != 0:
+        return None
+    if _run_git(project_root, "ls-files", "--error-unmatch", CLAUDE_LOCAL_SETTINGS).returncode == 0:
+        return None
+    exclude = _run_git(project_root, "rev-parse", "--git-path", "info/exclude").stdout.strip()
+    path = (project_root / exclude).resolve()
+    current = path.read_text(encoding="utf-8") if path.is_file() else ""
+    if _run_git(project_root, "check-ignore", "-q", "--no-index", CLAUDE_LOCAL_SETTINGS).returncode == 0:
+        return LocalIgnorePlan(path, current, None)
+    separator = "" if not current or current.endswith("\n") else "\n"
+    return LocalIgnorePlan(path, current, f"{current}{separator}/{CLAUDE_LOCAL_SETTINGS}\n")
 
 
 def _input_digest(path: Path) -> str | None:
@@ -89,6 +122,8 @@ def _plan_inputs(plan: SetupPlan) -> dict[str, str | None]:
         "project-declaration": _input_digest(plan.project_declaration_path),
         "task-identity": _input_digest(plan.task_identity_path),
         "worktree-root": plan.directory_state,
+        **({"local-ignore": _input_digest(plan.local_ignore.path)}
+           if getattr(plan, "local_ignore", None) is not None else {}),
     }
 
 
@@ -404,7 +439,14 @@ def plan_setup(
         tuple(changes),
         tuple(warnings),
     )
-    pinned = PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__), hooks=hooks_plan)
+    local_ignore = plan_local_ignore(project_root) if claude_state != "blocked" else None
+    if (local_ignore is not None and local_ignore.proposed_text is not None
+            and not changes[0].startswith("none;")):
+        changes = [item for item in changes if item != "none"]
+        changes.append(f"exclude {CLAUDE_LOCAL_SETTINGS} from Git in {local_ignore.path}")
+        plan = replace(plan, changes=tuple(changes))
+    pinned = PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__), hooks=hooks_plan,
+                             local_ignore=local_ignore)
     return replace(pinned, inputs=_plan_inputs(pinned))
 
 
@@ -439,6 +481,10 @@ def print_setup_plan(plan: SetupPlan) -> None:
             print(f"hook-duplicate: {advisory}")
     print(f"claude-project-allowlist: {plan.claude_state}")
     print(f"claude-detail: {plan.claude_detail}")
+    local_ignore = getattr(plan, "local_ignore", None)
+    if local_ignore is not None:
+        state = "ready" if local_ignore.proposed_text is None else "approval-required"
+        print(f"claude-local-settings-ignore: {state} ({local_ignore.path})")
     print(
         "claude-deny-note: deny rules are prefix rules and defense in depth; a reworded command can "
         "evade them, and the managed denial text remains in force"
@@ -558,6 +604,13 @@ def apply_setup(plan: SetupPlan) -> bool:
         wrote = apply_codex_configuration(plan.codex_plan, active) or wrote
         wrote = apply_codex_user_rules(plan.user_rules, active) or wrote
         wrote = apply_claude_project_allowlist(plan.claude_plan, active) or wrote
+        local_ignore = getattr(plan, "local_ignore", None)
+        if local_ignore is not None and local_ignore.proposed_text is not None:
+            current = local_ignore.path.read_text(encoding="utf-8") if local_ignore.path.is_file() else ""
+            if current != local_ignore.current_text:
+                raise CardineError("Git exclude file changed since it was planned; rerun --check")
+            active.replace("local-ignore", local_ignore.path, local_ignore.proposed_text.encode("utf-8"))
+            wrote = True
         if getattr(plan, "hooks", None) is not None:
             wrote = apply_hooks(plan.hooks, active) or wrote
         if plan.candidate_validation_proposal is not None:
