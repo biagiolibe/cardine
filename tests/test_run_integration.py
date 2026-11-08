@@ -11,7 +11,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 sys.path.insert(0, str(ROOT / 'tests'))
-from cardine.integration import candidate, cleanup, merge
+from cardine.integration import candidate, cleanup, finalize, merge
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.tasks.state import state_path
@@ -336,6 +336,56 @@ else: finalize_task_integration('056', None, root)
         with self.assertRaises(CardineStop) as raised:
             candidate.require_budget(state, '056', self.primary)
         self.assertEqual(raised.exception.code, 'VALIDATION_RETRY_LIMIT')
+
+    def test_finalize_replay_returns_a_completed_landing_beside_foreign_work(self):
+        self.ready()
+        self.run_candidate()
+        _, lease, _ = self.paths()
+        foreign = json.loads(lease.read_bytes())
+        foreign.update(task_id='999', branch='task-999')
+        result = self.finalize()
+        (self.primary / 'new.txt').write_text('later work\n')
+        self.git('add', 'new.txt')
+        self.git('commit', '-m', 'later work')
+        lease.write_text(json.dumps(foreign))
+        foreign_bytes = lease.read_bytes()
+        feature = self.primary / 'feature.txt'
+        feature.write_text('uncommitted work\n')
+        self.assertEqual(self.finalize(), result)
+        self.assertEqual(lease.read_bytes(), foreign_bytes)
+        self.assertEqual(feature.read_text(), 'uncommitted work\n')
+
+    def test_landing_complete_requires_the_recorded_commit(self):
+        from copy import deepcopy
+        self.ready()
+        self.run_candidate()
+        _, lease, staged = self.paths()
+        original = lease.read_bytes()
+        self.finalize()
+        locations = candidate.locations_for('056', self.primary)
+        intent = receipts._load_intent(candidate.operation_path(locations, 'finalize'))
+        self.assertTrue(finalize._landing_complete(locations, intent, lease, staged))
+        changed = deepcopy(intent)
+        changed['binding']['tree'] = '0' * 40
+        self.assertFalse(finalize._landing_complete(locations, changed, lease, staged))
+        lease.write_bytes(original)
+        self.assertFalse(finalize._landing_complete(locations, intent, lease, staged))
+
+    def test_cleanup_wait_starts_once_the_landing_is_recorded(self):
+        from cardine.lifecycle.engine import _cleanup_wait
+        from cardine.stops.render import stop_error
+        self.ready()
+        self.run_candidate()
+        locations = candidate.locations_for('056', self.primary)
+        _, lease, _ = self.paths()
+        foreign = json.loads(lease.read_bytes())
+        foreign.update(task_id='999', branch='task-999')
+        error = stop_error('CLEANUP_BLOCKED', 'blocked')
+        self.assertIsNone(_cleanup_wait(locations, error))
+        self.finalize()
+        lease.write_text(json.dumps(foreign))
+        self.assertFalse(candidate.operation_path(locations, 'cleanup').exists())
+        self.assertEqual(_cleanup_wait(locations, error)['outcome'], 'waiting')
 
     def test_finalize_replay_preserves_a_foreign_lease_after_commit(self):
         self.ready()
