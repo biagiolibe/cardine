@@ -20,7 +20,7 @@ A refusal is a point where an operation stops because its inputs, its owner, or 
 | Precondition the engine can satisfy | `P` | Satisfies it (commit its own records, run the earlier step, push `main`, fast-forward `main`, prepare the worktree) and continues, or returns `next` with the one command that does. | No |
 | Failing work | `W` | Returns `iterate` with the paths or commands to fix. | No |
 
-`W` is not a sixth class in the task's list. It is the existing `failing-work` resolution, kept so that sites already typed that way are classified too.
+`W` and `D` are additions to the task's five classes. `W` is the existing `failing-work` resolution, kept so that sites already typed that way are classified too. `D` exists because a review verdict, a textual merge conflict, a rejected push or a project choice is not tamper, yet the engine cannot resolve it: folding them into `T` would label an honest stop as an attack, and leaving them out would leave the largest group of typed guardrails unclassified.
 
 ### How to decide between the classes
 
@@ -33,7 +33,7 @@ Apply the questions in order. The first yes wins. A site with several causes in 
 5. **Authority only the developer holds.** `D`.
 6. Otherwise the agent's own work is wrong: `W`.
 
-Changed inputs at an interrupted operation are the most common case. They are `N` when the operation published nothing, which is why task 201 can restart validation safely. They are `A` when a lease, a staged merge, a branch or a worktree already exists: the engine then owns a reversal (`abort` with `ENGINE_PRINCIPAL`, already used in `src/cardine/lifecycle/control.py` for candidate recovery) and must use it instead of asking.
+Changed inputs at an interrupted operation are the most common case. They are `N` when the operation published nothing, which is why task 201 can restart validation safely. They are `A` when a lease, a staged merge, a branch or a worktree already exists: the engine then owns a reversal (`abort_owned` with `ENGINE_PRINCIPAL`, defined in `src/cardine/lifecycle/control.py` and used by `recover_task_integration`, `src/cardine/integration/merge.py:430-432`) and must use it instead of asking.
 
 **Fail closed.** A refusal that no class claims stays a developer stop. Raising a plain `CardineError` therefore remains safe: it becomes `COMMAND_REFUSED`. A class below `T` and `D` is granted only by the site that proves it.
 
@@ -124,7 +124,7 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | Ref | Refusal | Class | Reason and deciding boundary |
 | --- | --- | --- | --- |
 | `control.py:63` | COMMAND_REFUSED: host role boundary unavailable: authorized channel required | `D` | No host channel and no interactive terminal: only the developer can confirm. Typed `COMMAND_REFUSED`; keep, but name the terminal command. |
-| `control.py:66` | COMMAND_REFUSED: verdict | `D` | Developer typed a wrong confirmation. Typed; keep. |
+| `control.py:66` | COMMAND_REFUSED | `D` | Developer typed a wrong confirmation. Typed; keep. |
 | `control.py:79` | host reviewer profile boundary unavailable or changed | `T` | Reviewer or implementer profile not enforced or identical. |
 | `control.py:85` | host denied bound operation | `D` | Host refused to authorize the bound action. |
 | `control.py:87` | host denied foreign review session | `T` | Principal differs from the issued review session. |
@@ -153,8 +153,8 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `preparation.py:108` | foreign branch changed during preparation | `T` | Branch tip is neither absent nor `base`. |
 | `preparation.py:111` | foreign worktree registration during preparation | `T` | Registered worktree has another branch or HEAD. |
 | `preparation.py:113` | foreign worktree path collision during preparation | `T` | Path exists without a registration. |
-| `preparation.py:118` | after_branch_create | `N` | `git branch` failed (`before_branch_create`); no effect. Retry once. |
-| `preparation.py:125` | after_worktree_registration | `A` | `git worktree add` failed after the branch exists (`after_branch_create`); retry the add. |
+| `preparation.py:118` | CardineError(result.stderr.strip()) (computed) | `N` | `git branch` failed (`before_branch_create`); no effect. Retry once. |
+| `preparation.py:125` | CardineError(result.stderr.strip()) (computed) | `A` | `git worktree add` failed after the branch exists (`after_branch_create`); retry the add. |
 | `preparation.py:140` | preparation lifecycle input changed | `T` | Persisted lifecycle bytes differ from the new ones. |
 | `preparation.py:142` | foreign lifecycle registration retained | `T` | Lifecycle file holds other bytes than the receipt. |
 | `preparation.py:155` | preparation repair authority changed | `T` | Repair authority differs. |
@@ -193,7 +193,7 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `finalize.py:112` | landed main was moved backwards | `T` | Main is at the pre-landing commit although a result is recorded. |
 | `finalize.py:115` | EVIDENCE_MISMATCH: candidate validation changed before commit | `A` | Candidate evidence changed before the commit; same reversal as 94. |
 | `finalize.py:120` | candidate changed immediately before commit | `A` | Candidate changed in the window `before_finalize_commit`; same reversal. |
-| `finalize.py:123` | integration commit failed; intent retained | `N` | `git commit` failed before the merge commit exists; intent retained. Retry once, then stop with `stderr`. |
+| `finalize.py:123` | CardineError(committed.stderr.strip() or 'integration commit failed; intent retained') (compute... | `N` | `git commit` failed before the merge commit exists; intent retained. Retry once, then stop with `stderr`. |
 | `finalize.py:132` | main does not match the intended landed commit | `T` | Main does not match tree and parents of the intended commit. |
 | `finalize.py:134` | landed commit changed | `T` | Recorded result commit differs from HEAD. |
 | `finalize.py:152` | foreign worker output preserved during finalize | `T` | Foreign dirt in the worker after landing. |
@@ -217,7 +217,7 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 
 | Ref | Refusal | Class | Reason and deciding boundary |
 | --- | --- | --- | --- |
-| `cleanup.py:30` | raise stop_error(code, detail, task_id=locations.task_id, project=locations.primary, resume=res... | `-` | Helper `_fail`: the raise for every `_fail` site below; not a refusal of its own. |
+| `cleanup.py:30` | stop_error(code, detail, task_id=locations.task_id, project=locations.primary, resume=resu (com... | `-` | Helper `_fail`: the raise for every `_fail` site below; not a refusal of its own. |
 | `cleanup.py:49` | main push not observed | `N+D` | N: push not observed and not refused (`GIT_OPERATION_FAILED`, `cleanup_push` effect): retry once. D: `PUSH_REJECTED`. |
 | `cleanup.py:64` | foreign cleanup owner or changed landing inputs | `T+D` | T: binding task, project, worker, common, authority or origin differ, or main is not a descendant. D: primary not on main or dirty. |
 | `cleanup.py:67` | landing receipt changed | `T` | Finalize receipt digest differs from the cleanup binding. |
@@ -230,8 +230,8 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `cleanup.py:126` | reused placeholder path preserved | `T` | Placeholder path identity differs. |
 | `cleanup.py:128` | reused worktree path preserved | `T` | Worktree path is not an empty directory. |
 | `cleanup.py:132` | foreign lifecycle registration preserved | `T` | Lifecycle file bytes differ. |
-| `cleanup.py:141` | branch deletion refused | `A+D` | `cleanup_branch_stop_code`: `CLEANUP_PARTIAL` is A (retry); unmerged branch is D. |
-| `cleanup.py:146` | _fail(locations, detail) | `A+D` | `worktree remove` partial (A, the message already says `registered-directory-present`/`missing`), or no write access to `.git` (D). |
+| `cleanup.py:141` | locations, done.stderr.strip() or 'branch deletion refused', code) (computed) | `A+D` | `cleanup_branch_stop_code`: `CLEANUP_PARTIAL` is A (retry); unmerged branch is D. |
+| `cleanup.py:146` | locations, detail) (computed) | `A+D` | `worktree remove` partial (A, the message already says `registered-directory-present`/`missing`), or no write access to `.git` (D). |
 | `cleanup.py:157` | changed CI push ownership | `T` | CI push binding differs. |
 | `cleanup.py:168` | primary checkout must be clean | `D` | Primary checkout dirty. Engine-owned residue is already recovered by `recover_landing_residue`; anything else is the developer's. |
 | `cleanup.py:175` | cleanup preflight failed: | `T+P` | P: `missing-worktree`/`unregistered-worktree` are filtered out as recoverable. T: any other inspection error. |
@@ -258,7 +258,7 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `merge.py:121` | REVIEW_NOT_APPROVED: cause: missing; no issued review decision receipt | `T` | Verdict has no issued decision receipt. |
 | `merge.py:125` | REVIEW_NOT_APPROVED: cause: stale; | `T` | Reviewed commit is not an ancestor of the task commit. |
 | `merge.py:138` | REVIEW_NOT_APPROVED: cause: stale; | `D` | Changes after approval touch more than governance paths: needs a new review. |
-| `merge.py:157` | could not stage the regenerated views | `-` | Internal raise caught at 160; becomes a `STALE` warning, not a refusal. |
+| `merge.py:157` | CardineError(staged.stderr.strip() or "could not stage the regenerated views") (computed) | `-` | Internal raise caught at 160; becomes a `STALE` warning, not a refusal. |
 | `merge.py:197` | staged integration state is mismatched or stale at {integration_path} | `A+T` | Staged integration exists but does not match: the 198 family. A when lease and staged name this task: abort the owned candidate and restage. T otherwise. |
 | `merge.py:199` | an interrupted integration lease is retained at {lease_path}; use `cardine worktree integrate a... | `A+L+T` | Retained lease: `lease_stop_code` splits idle owned (A), live writer (L), foreign (T). |
 | `merge.py:211` | task worktree is not ready: {', '.join(inspection['errors'])} | `P+T` | P: `missing-worktree`. T: other inspection errors. |
@@ -270,11 +270,11 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `merge.py:259` | EVIDENCE_MISMATCH: validated base {validated_base} differs from recorded base {inspection['base... | `P` | Validated base differs from the recorded base: renew validation. |
 | `merge.py:276` | paths changed after validation: {', '.join(offending)} | `P` | Commits after validation touch paths outside governance: revalidate. |
 | `merge.py:285` | SPIKE task changes disallowed path(s): | `W` | Spike changed disallowed paths: revert them. |
-| `merge.py:305` | EVIDENCE_MISMATCH: version | `P` | Integration-validation decision is BLOCKED: renew validation. |
+| `merge.py:305` | EVIDENCE_MISMATCH | `P` | Integration-validation decision is BLOCKED: renew validation. |
 | `merge.py:317` | LEASE_HELD: integration lease already exists: {lease_path} | `L+A` | Exclusive lease create failed: a live writer (L) or an idle leftover (A, `lease_stop_code`). |
 | `merge.py:328` | INTEGRATION_CONFLICT: GIT_OPERATION_FAILED | `D+N` | D: textual conflict. N: transient Git failure after the engine removed its lease. |
-| `merge.py:348` | could not stage landed task state | `N` | Staging the landed state failed; the `except` aborts the merge and removes the lease (lines 349-352). Retry once. |
-| `merge.py:353` | write-tree | `N` | Re-raise after the reversal at 349-352; the effect is undone, so the operation restarts. |
+| `merge.py:348` | CardineError(staged_state.stderr.strip() or "could not stage landed task state") (computed) | `N` | Staging the landed state failed; the `except` aborts the merge and removes the lease (lines 349-352). Retry once. |
+| `merge.py:353` | CardineError(str(error)) from error (computed) | `N` | Re-raise after the reversal at 349-352; the effect is undone, so the operation restarts. |
 
 
 ### Findings from the inventory
@@ -358,13 +358,18 @@ Families of remaining developer stops and what each message must carry:
 
 | Family | Rows | Expected and found | Resolve |
 | --- | --- | --- | --- |
-| Owner or authority mismatch | `preview.py:79`, `control.py:96`, `delivery.py:90`, `:138`, `:158`, `validation.py:157`, `:161`, `:164`, `preparation.py:76`, `:155`, `candidate.py:48` (first disjunct), `:146`, `finalize.py:88`, `cleanup.py:64`, `records.py:67` | the binding fields that differ, by name, with both values shortened | restore the recorded value, or `cardine cancel <id> --reason <text>` |
+| Owner or authority mismatch | `preview.py:79`, `control.py:96`, `delivery.py:90`, `:138`, `:158`, `validation.py:157`, `:161`, `:164`, `preparation.py:76`, `:155`, `candidate.py:48` (first disjunct), `:146`, `finalize.py:88`, `cleanup.py:64`, `cleanup.py:157`, `records.py:67` | the binding fields that differ, by name, with both values shortened | restore the recorded value, or `cardine cancel <id> --reason <text>` |
 | Foreign bytes or paths | `preparation.py:94`, `:108`, `:111`, `:113`, `:142`, `:167`, `finalize.py:24`, `:152`, `:156`, `records.py:50`, `:56`, `:69`, `cleanup.py:112`, `:115`, `:123`, `:126`, `:128`, `:132`, `:177` | the path and both digests (or branch and both tips) | the `git` command that shows the difference; never a delete |
 | Symlink guard | `preparation.py:51`, `:72`, `cleanup.py:99` | the path and its link target | remove the link after review: the path to remove |
-| Receipt or evidence missing or altered | `delivery.py:49`, `:61`, `:66`, `:96`, `:177`, `:180`, `merge.py:121`, `:125`, `finalize.py:73`, `:106`, `:112`, `:132`, `:134`, `records.py:87`, `cleanup.py:67`, `:191` | the receipt kind and the commit or tree it should cover, and what was found | the command that regenerates the receipt if one exists, else cancel and restart |
+| Receipt or evidence missing or altered | `delivery.py:49`, `:61`, `:66`, `:96`, `:177`, `:180`, `merge.py:121`, `:125`, `finalize.py:73`, `:106`, `:112`, `:132`, `:134`, `records.py:87`, `cleanup.py:67`, `:191`, `preparation.py:40`, `:140`, `:158` | the receipt kind and the commit or tree it should cover, and what was found | the command that regenerates the receipt if one exists, else cancel and restart |
 | Primary checkout state | `merge.py:213`, `:216`, `finalize.py:88` (second disjunct), `cleanup.py:64` (second disjunct), `:168` | current branch or the dirty paths, versus `main` and clean | `git switch main`, or commit or stash the listed paths; the engine never does it |
 | Budget and review | `validation.py:189`, `:192`, `:203`, `:206`, `:320`, `:322`, `candidate.py:91`, `:96`, `control.py:126`, `merge.py:110`, `:138` | counted failures against the limit; for review, the rounds and verdicts | `VALIDATION_RETRY_LIMIT` lists, per failed command, the id, exit status and last 20 lines of the log (today it prints `json.dumps(runs)`); the resolve names `cardine task contract update` to raise the limit, or cancel |
-| Remote | `cleanup.py:49`, `:232`, `:242`, `:269` | remote tip against the local landed tip, or the missing `origin` | `git fetch origin`, `git remote add origin <url>` |
+| Host or terminal authorization | `control.py:63`, `:66`, `:79`, `:85`, `:87` | the channel required (an enforced host profile, or stdin and stdout both a terminal) and what was found; for a wrong confirmation, the expected `<task-id> <commit>` and the typed text; for a profile failure, both profile ids | run the command from an interactive terminal and type the confirmation, or fix the host profile named |
+| State at the task commit | `merge.py:81`, `:86`, `:102`, `cleanup.py:188` | the tracked state file, valid UTF-8 JSON with status `in_progress` (on main: `done`), at the named commit, and the status or error found | `git show <commit>:<state path>` to read it |
+| Worktree identity | `delivery.py:81`, `validation.py:149`, `preview.py:136`, `merge.py:211`, `cleanup.py:175` (the `T` part; `missing-worktree` is `P`) | each inspection error with the expected canonical path, branch and base | `cardine worktree check <id> --project <primary>` |
+| Pending operation or landing mismatch | `preview.py:58`, `:66`, `:91`, `:115`, `delivery.py:166`, `candidate.py:56` (tree and working diff), `:271`, `merge.py:197`, `:199`, `cleanup.py:79` | the bound main commit, tree, parents or lease keys against the ones found, and the paths that are dirty | `cardine abort <id> --project <primary>` for a candidate or lease this task owns; for another task's lease, its task id and the instruction to wait for it or abort that task |
+| Project choice and merge conflict | `merge.py:242`, `:328` | for the missing validation declaration, the proposed declaration the message already prints and the file to write; for a conflict, the unmerged paths from `git ls-files --unmerged` | write the declaration to its path; resolve the conflict by hand on the task branch and rerun |
+| Remote and branch deletion | `cleanup.py:49`, `:93`, `:141`, `:146`, `:232`, `:242`, `:269` | remote tip against the local landed tip, or the missing `origin` | `git fetch origin`, `git remote add origin <url>`; for an unmerged branch, the `git log main..<branch>` that shows what would be lost |
 
 ## 5. Project decisions
 
@@ -387,13 +392,13 @@ The content is frozen, not only its digest. The execution profile is frozen as a
 **Delivered at the step.** `cardine run` output keeps its closed v1 shape. The decisions that apply to the step it reports travel in two existing places:
 
 - `work.decisions` (new optional property of `work` in `schemas/run-v1.schema.json`, `WorkRequest.decisions` in `src/cardine/lifecycle/model.py`): an array of `{id, text}` for the `implementation` and `review` steps. For outcome `iterate` the entries tagged `iterate` are added. Host launch records are rebuilt in `preview.py:92-96`; the new field defaults to empty for records written before it.
-- `diagnostics`: for steps without `work` (`validation`, `candidate`, `landing`, `waiting`, `blocked`), each applicable entry is one `{code: "DECISION", message: "<id>: <text>"}` item.
+- `diagnostics`: for every result without `work` (steps `validation`, `candidate`, `landing`, any `waiting` or `blocked` result, and the `iterate` results that `diagnostic_result` builds, which carry no `work`), each applicable entry is one `{code: "DECISION", message: "<id>: <text>"}` item.
 
 `diagnostic_result` takes `step="contract"` by default and `dispatch_run` and `preview_run` never pass another, so a stop raised in `validation` or `landing` reports step `contract` today. Delivering by step needs the real step, so `dispatch_run` records which stage (`run_integration_step`, `run_worktree_step`, `run_validation_step`) raised and passes it. An implementer who never meets a validation failure never receives the entries tagged `iterate`. The additive `work.decisions` property is a minor change under `docs/ADR_PUBLIC_SURFACE_AND_STABILITY.md` (additive stable surface), recorded under `Added` in the changelog.
 
 **Readable in one place.** `cardine execution contract <id>` (`src/cardine/cli.py:471`, `execution_contract` in `src/cardine/tasks/preflight.py:20`) prints the resolved contract block of the record; it is extended to print, after it, the frozen validation policy and the frozen decisions with their step tags. That one output is the full effective contract: record plus frozen decisions.
 
-**Enforced before written.** A decision the engine can check is a check, not a line. The table at the end of this part names, per old line, the existing check or the check to add. Only rules that need judgment stay as entries. The session briefing (`cardine hook briefing`, `src/cardine/hosts/briefing.py`) is extended to print the entries tagged `always`. It is a salience aid and not an authority: `docs/HOST_CAPABILITY_CONTRACT.md` marks the Codex briefing `unverified`, and `render_briefing` ignores the caller payload today. The frozen contract is the authority; the briefing repeats it.
+**Enforced before written.** A decision the engine can check is a check, not a line. The table at the end of this part names, per old line, the existing check or the check to add. Only rules that need judgment stay as entries. The session briefing (`cardine hook briefing`, `src/cardine/hosts/briefing.py`) is extended to print the entries tagged `always`. It is a salience aid and not an authority: `docs/HOST_CAPABILITY_CONTRACT.md` marks the Codex briefing `unverified`, and `render_briefing` ignores the caller payload today. The frozen contract is the authority; the briefing repeats it. The two do not compete. Delivery at the step carries each entry at the moment it applies. The briefing fires every turn, so it prints only the short list tagged `always` (the rules that need judgment and have no single step), as a reminder. A host where the briefing is unavailable loses a reminder, not a rule.
 
 ### ADR decisions changed or relied on
 
@@ -412,7 +417,7 @@ The block is `tasks/201.md` lines 361-401: an intro paragraph (three sentences) 
 
 | Ref | Rule (verbatim from `tasks/201.md`) | Label | Mechanism |
 | --- | --- | --- | --- |
-| intro.1 | hold however the task is launched, including a bare `Proceed with <TASK-ID>` from the project console (ADR decision 12). | project decision | Describes the mechanism. Not repeated per record once the contract carries the entries; deleted from the blueprint (F16). |
+| intro.1 | The developer records these decisions in the task contract, so that they hold however the task is launched, including a bare `Proceed with <TASK-ID>` from the project console (ADR decision 12). | project decision | Describes the mechanism. Not repeated per record once the contract carries the entries; deleted from the blueprint (F16). |
 | intro.2 | None of these situations needs a new decision from the developer. | removed by the stop fixes | True once the classes in part 1 resolve the situations (F1-F9). |
 | intro.3 | After fixing a failure, continue with revalidation in the same turn; do not stop to report the fix. | project decision | Entry `continue-after-fix`, steps `iterate`. Delivered in `work.decisions` of an `iterate` result. |
 | bullet 1.1 | A required command that exits non-zero because of a precondition the agent can satisfy (command order, an uncommitted worktree, a missing argument): satisfy it and run the command again, once. | removed by the stop fixes | Class `P`: the engine satisfies the precondition or returns `next` with the one command (`PRECONDITION_PENDING`). |
@@ -454,7 +459,7 @@ Each task is one implementer session. IDs are assigned by the coordinator with `
 | F10 | `enforce_scope` reports every out-of-surface path in one `SCOPE_CHANGE_REQUIRED` stop (it rejects at the first today, `scope.py` loop near line 84) | `src/cardine/lifecycle/scope.py`, `tests/test_execution_boundaries.py` | none |
 | F11 | Inventory and classify the out-of-module helpers named in part 2 (a docs spike) | `docs/ENGINE_STOP_CLASSIFICATION.md` | none |
 | F12 | Standing decisions: declaration key and validator, frozen `decisions` in the contract, digest comparison diagnostic at the `contract` step | `src/cardine/shared/project.py`, `src/cardine/tasks/contract.py`, `src/cardine/lifecycle/engine.py` (`contract` step only), `tests/test_single_workflow_config.py`, `tests/test_contract_snapshot_readers.py` | F1 |
-| F13 | Deliver decisions at the step: pass the raising stage as `step` to `diagnostic_result`, `WorkRequest.decisions`, `work.decisions` in the schema, `DECISION` diagnostics, `preview.py:92-96` rebuild | `src/cardine/lifecycle/model.py`, `src/cardine/lifecycle/engine.py`, `src/cardine/lifecycle/preview.py`, `schemas/run-v1.schema.json`, `docs/RUN_COMMANDS.md`, `tests/test_run_*.py` | F12, F7 (shares `preview.py`) |
+| F13 | Deliver decisions at the step: pass the raising stage as `step` to `diagnostic_result`, `WorkRequest.decisions`, `work.decisions` in the schema, `DECISION` diagnostics, `preview.py:92-96` rebuild | `src/cardine/lifecycle/model.py`, `src/cardine/lifecycle/engine.py`, `src/cardine/lifecycle/preview.py`, `schemas/run-v1.schema.json`, `docs/RUN_COMMANDS.md`, `tests/test_run_*.py` | F12, F7 (shares `preview.py`), F2 (shares `dispatch_run`) |
 | F14 | `cardine execution contract` prints frozen validation policy and decisions | `src/cardine/tasks/preflight.py`, `tests/test_execution_boundaries.py` | F12 |
 | F15 | Briefing delivers `always` entries | `src/cardine/hosts/briefing.py`, `tests/test_host_briefing.py` | F12 |
 | F16 | Move the project-wide block out of the task blueprint: add the `decisions` and a repository-guards baseline command to `.cardine/project.json`, remove the block from `tasks/TASK_BLUEPRINT.md`, amend ADR decisions 12 and 13 | `.cardine/project.json`, `tasks/TASK_BLUEPRINT.md`, `docs/ADR_CARDINE_1_0.md` | F2, F10, F13, F14, F15 |
