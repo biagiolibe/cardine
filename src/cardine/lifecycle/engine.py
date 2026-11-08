@@ -326,7 +326,7 @@ def dispatch_run(locations: RunLocations) -> dict:
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
     except CardineStop as error:
-        result = diagnostic_result(locations, error, step=stage)
+        result = _cleanup_wait(locations, error) or diagnostic_result(locations, error, step=stage)
     except Exception as error:
         # An unknown failure carries no ownership proof and must never suggest
         # successful progress or an automatic repair inferred from its prose.
@@ -341,6 +341,22 @@ def _integration_wait(locations):
         return None
     argv = ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
     return envelope(locations.task_id, str(locations.primary), step='candidate', outcome='waiting',
+                    action='wait-for-lease', retry_after_seconds=5,
+                    next_command=command_reference(argv, 'Wait for the competing integration'))
+
+
+def _cleanup_wait(locations, error):
+    """A cleanup stop raised while another task integrates is retried after that lease."""
+    from cardine.integration.candidate import operation_path, wait_for_lease
+    if error.code != 'CLEANUP_BLOCKED' or not operation_path(locations, 'cleanup').exists():
+        return None
+    try:
+        if wait_for_lease(locations, seconds=0):
+            return None
+    except CardineStop:
+        return None
+    argv = ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
+    return envelope(locations.task_id, str(locations.primary), step='landing', outcome='waiting',
                     action='wait-for-lease', retry_after_seconds=5,
                     next_command=command_reference(argv, 'Wait for the competing integration'))
 

@@ -58,10 +58,11 @@ def _landed(locations, intent):
             or binding['authority'] != receipts.require_authority(root)
             or binding['origin'] != _origin(root)
             or git_output(root, 'branch', '--show-current') != 'main'
-            or git_output(root, 'status', '--porcelain', '--untracked-files=no')
             or not _ancestor(root, binding['main'], 'HEAD')
             or not _ancestor(root, binding['taskTip'], binding['main'])):
         _fail(locations, 'foreign cleanup owner or changed landing inputs')
+    if git_output(root, 'status', '--porcelain', '--untracked-files=no'):
+        _fail(locations, 'the primary checkout has uncommitted tracked changes')
     final = operation_path(locations, 'finalize')
     if binding['finalDigest'] is not None and (not final.exists() or receipts.digest(final.read_bytes()) != binding['finalDigest']):
         _fail(locations, 'landing receipt changed')
