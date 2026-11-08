@@ -98,7 +98,7 @@ def finalize_candidate(task_id, project):
             landed = intent['result']['merge_commit']
             output = intent['workerState']
             if (lease.exists() or staged.exists() or _merge_head_path(root).exists()
-                    or git_output(root, 'status', '--porcelain')
+                    or git_output(root, 'status', '--porcelain', '--untracked-files=no')
                     or _run_git(root, 'merge-base', '--is-ancestor', landed, head).returncode
                     or git_output(root, 'show', '-s', '--format=%T', landed) != binding['tree']
                     or git_output(root, 'show', '-s', '--format=%P', landed).split() != [binding['main'], binding['source']]
@@ -128,7 +128,7 @@ def finalize_candidate(task_id, project):
         if (git_output(root, 'show', '-s', '--format=%T', head) != binding['tree']
                 or git_output(root, 'show', '-s', '--format=%P', head).split() != [binding['main'], binding['source']]
                 or _merge_head_path(root).exists()
-                or git_output(root, 'status', '--porcelain')):
+                or git_output(root, 'status', '--porcelain', '--untracked-files=no')):
             raise CardineError('main does not match the intended landed commit')
         if intent['result'] is not None and intent['result']['merge_commit'] != head:
             raise CardineError('landed commit changed')

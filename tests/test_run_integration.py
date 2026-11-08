@@ -11,7 +11,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'src'))
 sys.path.insert(0, str(ROOT / 'tests'))
-from cardine.integration import candidate, merge
+from cardine.integration import candidate, cleanup, merge
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.tasks.state import state_path
@@ -125,6 +125,10 @@ else: finalize_task_integration('056', None, root)
             self.assertEqual(self.run_candidate(), first)
 
     def test_untracked_files_do_not_invalidate_candidate(self):
+        origin = self.root / 'origin.git'
+        subprocess.run(['git', 'init', '--bare', '-b', 'main', str(origin)], check=True, capture_output=True)
+        self.git('remote', 'add', 'origin', str(origin))
+        self.git('push', 'origin', 'main')
         self.ready('printf candidate-output', lambda: (self.primary / 'unrelated.txt').write_text('before'))
         first = self.run_candidate()
         self.assertEqual(first['phase'], 'passed')
@@ -132,7 +136,10 @@ else: finalize_task_integration('056', None, root)
         with mock.patch.object(candidate, 'execute_command', side_effect=AssertionError('repeated process')):
             self.assertEqual(self.run_candidate(), first)
             self.finalize()
+            self.assertEqual(cleanup.finish_delivery(candidate.locations_for('056', self.primary))['status'], 'cleaned')
         self.assertEqual((self.primary / 'unrelated.txt').read_text(), 'before')
+        self.assertEqual((self.primary / 'another.txt').read_text(), 'after')
+        self.assertFalse(self.git('branch', '--list', 'task-056').stdout)
 
     def test_untracked_task_path_blocks_staging(self):
         with self.assertRaisesRegex(CardineStop, 'PRIMARY_DIRTY.*feature.txt'):
