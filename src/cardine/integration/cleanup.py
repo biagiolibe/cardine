@@ -68,6 +68,33 @@ def _landed(locations, intent):
     _inactive(locations)
 
 
+def completed(locations, intent):
+    """A finished cleanup, observed again from Git, needs no owner or authority check.
+
+    Every effect the intent requires is recorded done, and Git still shows the
+    result: `main` contains the landed commit, the branch, the registration, and the
+    lifecycle file are gone, and the placeholder is the one cleanup created. A later
+    `cardine authorize` changes the accepted authority, not this landed fact. Any
+    other observation falls through to the full replay, which preserves reused paths.
+    """
+    binding, effects = intent['binding'], intent.get('effects', {})
+    required = ['cleanup_worktree', 'cleanup_placeholder', 'cleanup_branch', 'cleanup_lifecycle']
+    if binding.get('finalDigest') is not None:
+        required.append('cleanup_push')
+    if binding.get('remote') is not None:
+        required.append('cleanup_remote')
+    root, worker = locations.primary, locations.worktree
+    return (all(effects.get(name) == 'done' for name in required)
+            and binding['task'] == locations.task_id and binding['project'] == str(root)
+            and binding['worker'] == str(worker)
+            and _ancestor(root, binding['main'], 'refs/heads/main')
+            and _branch_commit(root, binding['branch']) is None
+            and not any(Path(item['worktree']).resolve() == worker for item in _git_worktrees(root))
+            and not Path(binding['lifecycle']).exists()
+            and intent.get('placeholder') == _file_identity(worker)
+            and worker.is_dir() and not any(worker.iterdir()))
+
+
 def _inactive(locations):
     root = locations.primary
     identity = resolve_task_identity(root, locations.task_id, 'existing')
@@ -255,6 +282,10 @@ def finish_delivery(locations, *, delivery=True):
     _inactive(locations)  # Classify an idle owned lease before taking our own writer guard.
     with receipts.task_lock(root, task_id):
         intent = receipts._load_intent(path) if path.exists() else None
+        if intent is not None and completed(locations, intent):
+            return dict(version=1, task_id=task_id, status='cleaned', merge_commit=intent['binding']['main'],
+                        already_cleaned=True, **({'recovered_from': intent['recovered_from']}
+                                                 if intent.get('recovered_from') else {}))
         if intent is None:
             intent = _new_intent(locations, delivery=delivery)
             _landed(locations, intent)
