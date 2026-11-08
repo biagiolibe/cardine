@@ -140,6 +140,10 @@ ALLOWLIST = (
         r"\.cardine/tasks/[^/]+\.json",
     ),
     Allowance(
+        6, "kept: the evidence ledger records validation commands and their output, which name the guard module",
+        r"\.cardine/evidence/[^/]+\.json",
+    ),
+    Allowance(
         3, "10",
         r"\.codex/rules/local\.rules",
         r"^# (?:Project-local command approval additions for the " + OLD.capitalize() + r" task lifecycle\.|Kept outside the managed " + OLD + r"\.rules copy so `" + OLD + r" upgrade` does not|see drift\. Rules combine with " + OLD + r"\.rules and the most restrictive|Lifecycle commands that " + OLD + r"\.rules does not list yet\.)$",
