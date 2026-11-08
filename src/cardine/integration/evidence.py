@@ -82,7 +82,6 @@ def proposed_candidate_validation_declaration(project_root: Path) -> dict[str, o
     """Offer conservative detected-stack defaults; setup applies them only on --apply."""
     repository_check = "python3 scripts/check_repository.py"
     has_repository_check = (project_root / "scripts/check_repository.py").is_file()
-    has_python_tests = (project_root / "tests").is_dir()
     if not has_repository_check:
         return {"version": 1, "state": "undeclared"}
     outcomes: dict[str, list[str]] = {
@@ -90,7 +89,7 @@ def proposed_candidate_validation_declaration(project_root: Path) -> dict[str, o
         "BOUNDED": [repository_check],
         "FULL": [repository_check],
     }
-    if has_python_tests:
+    if (project_root / "tests").is_dir():
         outcomes["FULL"].append("python3 -m unittest discover -s tests")
     return {"version": 1, "state": "declared", "outcomes": outcomes}
 
