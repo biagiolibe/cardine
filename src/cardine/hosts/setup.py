@@ -10,7 +10,7 @@ from cardine.hosts import permissions
 from cardine.hosts.claude import apply_claude_project_allowlist
 from cardine.hosts.claude import claude_role_policy
 from cardine.hosts.effects import host_operation
-from cardine.hosts.hooks import HooksPlan, _commands, apply_hooks, hook_command, plan_hooks, registry_path
+from cardine.hosts.hooks import HooksPlan, _commands, apply_hooks, owns, plan_hooks, registry_path
 from cardine.lifecycle import receipts
 from cardine.hosts.claude import claude_hook_duplicate_advisories
 from cardine.hosts.claude import plan_claude_project_allowlist
@@ -913,6 +913,10 @@ def role_launch_states(host: str, project_root: Path, worktree_root: Path, home:
 _PROBE_LINES = 2000
 
 
+# The PATH a desktop app on macOS gives its child processes.
+HOST_BASE_PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
+
+
 def probe_hook_invocation(host: str, home: Path, *, timeout: int = 30) -> str:
     """Run the registered read-guard hook on a sentinel file inside a throwaway fixture.
 
@@ -925,13 +929,10 @@ def probe_hook_invocation(host: str, home: Path, *, timeout: int = 30) -> str:
         document = json.loads(registry.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return "missing"
-    wanted = hook_command(host, "read-guard")
-    if wanted not in set(_commands(document.get("hooks") if isinstance(document, dict) else None)):
+    registered = [command for command in _commands(document.get("hooks") if isinstance(document, dict) else None)
+                  if owns(command, host, "read-guard")]
+    if not registered:
         return "missing"
-    argv = shlex.split(wanted)
-    executable = shutil.which(argv[0])
-    if executable is None:
-        return "unverified: cardine is not on PATH"
     with tempfile.TemporaryDirectory(prefix="cardine-doctor-") as fixture:
         root = Path(fixture).resolve()
         (root / names().project_declaration_path).parent.mkdir()
@@ -940,10 +941,15 @@ def probe_hook_invocation(host: str, home: Path, *, timeout: int = 30) -> str:
         tool_input = {"file_path": str(root / "sentinel.txt")} if host == "claude" else {"command": "cat sentinel.txt"}
         payload = {"tool_name": "Read" if host == "claude" else "Bash", "tool_input": tool_input, "cwd": str(root)}
         try:
-            completed = subprocess.run([executable, *argv[1:]], input=json.dumps(payload), text=True,
-                                       capture_output=True, cwd=root, timeout=timeout, check=False)
+            # Run the registered text as a host started from a desktop app does: through
+            # `sh`, without the developer's interactive shell PATH.
+            completed = subprocess.run(["/bin/sh", "-c", registered[0]], input=json.dumps(payload), text=True,
+                                       capture_output=True, cwd=root, timeout=timeout, check=False,
+                                       env={"HOME": str(home), "PATH": HOST_BASE_PATH})
         except (OSError, subprocess.TimeoutExpired):
             return "unverified: probe interrupted"
+    if completed.returncode == 127:
+        return "unverified: the registered hook command does not resolve outside an interactive shell; rerun setup"
     return "ready" if completed.returncode == 2 and '"deny"' in completed.stdout else "unverified: no deny observed"
 
 

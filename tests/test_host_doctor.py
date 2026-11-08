@@ -61,11 +61,20 @@ class HostDoctorTest(unittest.TestCase):
     def test_missing_registration_and_missing_command_are_never_ready(self) -> None:
         self.assertEqual(owner_hosts_setup.probe_hook_invocation("claude", self.home), "missing")
         self.register("claude")
-        with mock.patch.dict(os.environ, {"PATH": "/nonexistent"}):
-            self.assertTrue(owner_hosts_setup.probe_hook_invocation("claude", self.home).startswith("unverified"))
+        # A bare command resolves only through the developer's shell PATH; a host started
+        # from a desktop app does not have it, so the probe does not use it either.
+        path = owner_hosts_hooks.registry_path(self.home, "claude")
+        path.write_text(json.dumps({"hooks": {"PreToolUse": [{"hooks": [
+            {"type": "command", "command": "cardine hook read-guard --host claude"}]}]}}), encoding="utf-8")
+        self.assertTrue(shutil.which("cardine"))
+        self.assertEqual(owner_hosts_setup.probe_hook_invocation("claude", self.home),
+                         "unverified: the registered hook command does not resolve outside an interactive shell; "
+                         "rerun setup")
 
     def test_a_hook_that_does_not_deny_is_not_effective(self) -> None:
-        self.register("codex")
+        path = self.register("codex")
+        path.write_text(json.dumps({"hooks": {"PreToolUse": [{"hooks": [
+            {"type": "command", "command": f"{self.bin / 'cardine'} hook read-guard --host codex"}]}]}}), encoding="utf-8")
         (self.bin / "cardine").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
         self.assertTrue(owner_hosts_setup.probe_hook_invocation("codex", self.home).startswith("unverified"))
 
