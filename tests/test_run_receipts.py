@@ -195,6 +195,22 @@ else:
         with self.assertRaisesRegex(CardineError, 'changed state'):
             receipts.verify_receipts(self.root, state)
 
+    def test_prose_only_record_revision_is_covered_without_changing_the_contract(self):
+        self.create()
+        before = self.state()
+        self.record.write_text(self.text.replace('## Objective', '## Objective\nClarified wording.\n', 1))
+        with self.assertRaisesRegex(CardineError, 'artifact'):
+            receipts.verify_receipts(self.root, before)
+        result = update_task_contract(self.root, '001')
+        self.assertEqual((result['updated'], result.get('record')), (False, 'covered'))
+        after = self.state()
+        self.assertEqual(after['contract'], before['contract'])
+        self.assertEqual(after.get('contract_history'), before.get('contract_history'))
+        self.assertEqual(after['run']['receipts'][-1]['kind'], 'contract_revision')
+        receipts.verify_receipts(self.root, after)
+        self.assertEqual(update_task_contract(self.root, '001')['updated'], False)
+        self.assertEqual(self.state(), after)
+
     def test_chain_tampering_missing_receipts_and_fabricated_result_refuse(self):
         self.create()
         self.revise()
