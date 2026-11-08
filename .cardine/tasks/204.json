@@ -1,0 +1,96 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "201"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_run_delivery.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/204.md",
+    "title": "Task 204 \u2014 Redeliver a new implementation after a completed validation attempt",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_delivery --module test_run_validation --module test_run_handoff --module test_run_ci --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "50467247c1630101fe15d91c06021ece3a60d7bb17e7f773925700ffb586f1e6",
+        "digest": "3394c6b6dcdf5973fe8727cfc6ec89d550fd3309d98ffc64db2b19244e0c106d",
+        "inputs": {
+          ".cardine/tasks/204.json": null,
+          "tasks/204.md": null
+        },
+        "kind": "creation",
+        "operation_id": "52fecd85ca7040ddba97352ec12bf787",
+        "outputs": {
+          ".cardine/tasks/204.json": "346607a21161e383232103c39e4165381249dadaa2e0849299ca3dc88bdb75aa",
+          "tasks/204.md": "d933cee52c710c05596d2962a87c118d472c650b3cbd1e3807cc246e9cc02b91"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "c3bffd8ff5e0d638c1cab3ff2ee6949237eaee36",
+        "task_id": "204",
+        "tree": "eed263ba1ec8485e537bf00c8c7edc980e344d36",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "204",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
