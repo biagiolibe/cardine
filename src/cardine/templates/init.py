@@ -82,6 +82,10 @@ def _binding(root: Path, outputs: dict[str, bytes]) -> dict:
         key: receipts.digest(value) for key, value in sorted(outputs.items())}))}
 
 
+# The accepted receipt authority and task-creation lock are machine-local.
+MACHINE_LOCAL_IGNORE = b"receipt-authority.json\ntask-creation.guard\n"
+
+
 def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: str,
               language: str, task_identity: str, validation: dict,
               refuse_existing: bool = True) -> InitPlan:
@@ -127,6 +131,7 @@ def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: s
             for outcome in ("REUSE", "BOUNDED", "FULL")},
     })
     outputs[names().task_identity_path.as_posix()] = _json({"version": 1, "mode": task_identity})
+    outputs[f"{names().project_directory}/.gitignore"] = MACHINE_LOCAL_IGNORE
     files = managed_files(framework, "single")
     for item in files:
         outputs[(names().baselines_path / baseline / item.target).as_posix()] = item.source.read_bytes()

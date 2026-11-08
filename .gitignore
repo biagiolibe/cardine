@@ -7,3 +7,4 @@ __pycache__/
 
 # Machine-local Cardine receipt authority (absolute paths of this checkout)
 .cardine/receipt-authority.json
+.cardine/task-creation.guard
