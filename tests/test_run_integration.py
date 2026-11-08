@@ -236,6 +236,28 @@ else: finalize_task_integration('056', None, root)
             lease.unlink()
         self.assertTrue(candidate.wait_for_lease(locations, sleep=release, clock=lambda: ticks[0]))
 
+    def test_implementation_waits_without_preparing_a_candidate_on_release(self):
+        self.ready()
+        from cardine.lifecycle.engine import dispatch_run, run_integration_step
+        locations = candidate.locations_for('056', self.primary)
+        _, lease, staged = self.paths()
+        foreign = json.loads(lease.read_bytes())
+        foreign.update(task_id='999', branch='task-999')
+        lease.write_text(json.dumps(foreign))
+        wait = candidate.wait_for_lease
+        with mock.patch.object(candidate, 'wait_for_lease', side_effect=lambda loc: wait(loc, seconds=0)):
+            result = dispatch_run(locations)
+        self.assertEqual((result['outcome'], result['action'], result['retry_after_seconds']),
+                         ('waiting', 'wait-for-lease', 5))
+        def release(loc):
+            lease.unlink()
+            staged.unlink()
+            return True
+        with mock.patch.object(candidate, 'wait_for_lease', side_effect=release), \
+             mock.patch('cardine.integration.landing.landing_for') as landing:
+            self.assertIsNone(run_integration_step(locations))
+            landing.return_value.prepare_candidate.assert_not_called()
+
     def test_textual_conflict_and_transient_git_failure_are_distinct(self):
         self.ready()
         merge.abort_task_integration('056', self.primary)
