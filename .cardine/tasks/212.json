@@ -98,10 +98,10 @@
   "run": {
     "delivery": {
       "base": "c30157f1e9fafdb357ffc84fd5dc88ac7f29bb29",
-      "contractDigest": "3f59d5fa9af3ac7853fafb1d4db5cd19c462984d9689f42ee6e61e4dadf9bef5",
-      "source": "c315ccc4403ed40e269176cea93c7cdfe45e3a4a",
-      "sourceDigest": "cb0c5baf591d737482665a490776d09a3a5cb42e57ca82374fd6bee42a7dc0b4",
-      "sourceTree": "5fe81dfa87e73efdf4b9b7c14db0e2191a80e504"
+      "contractDigest": "1182ba5b4e62af27ce8a17c1a5b6727d3ad589ba11dac0b8751958eca20a830f",
+      "source": "7d3d7f6ff94ba827736f95fd02629d1d3784b6c3",
+      "sourceDigest": "d6373242e5163d08e1fa660681fe9428622b239c7361df815ca4c6f012a360aa",
+      "sourceTree": "f25f7246b7666acaa0c534172110bd758d85407c"
     },
     "pending": null,
     "receipts": [
@@ -245,6 +245,28 @@
         "source": "fda4b02bd168d00b8623bca9a88d17236ce1ed62",
         "task_id": "212",
         "tree": "aade12ddd312d3d2a11d488c95d3605eca752fd9",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "1182ba5b4e62af27ce8a17c1a5b6727d3ad589ba11dac0b8751958eca20a830f",
+        "digest": "8f998832ddbbb4e94b13d735509f5e5c3b060de5156c0d309b18e5c66f0e567d",
+        "inputs": {
+          ".cardine/tasks/212.json": "497e104a92468cd247d6d7154a4215ae31aa57fdb10eeb0a66c9c6bd038c8aad"
+        },
+        "kind": "implementation-delivery",
+        "operation_id": "336678b43e2f459aa0ac9859911ed8f6",
+        "outputs": {
+          ".cardine/tasks/212.json": "3c0951f32fa3db4971bb709e24968bb3d0ad0e49609c9874a99be3e7376383ca"
+        },
+        "predecessor": "b0203f535f0c087ce0a66f9e025f4cc3af73adfea3f9f8f7030d0bc551d3a636",
+        "result": "verified",
+        "source": "7d3d7f6ff94ba827736f95fd02629d1d3784b6c3",
+        "task_id": "212",
+        "tree": "f25f7246b7666acaa0c534172110bd758d85407c",
         "version": 1
       }
     ],
