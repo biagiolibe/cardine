@@ -1,6 +1,6 @@
 # Brand assets
 
-Meridian's mark is a circle crossed by a vertical meridian. A vertical band is
+Cardine's mark is a circle crossed by a vertical meridian. A vertical band is
 cut out between the axis and the right half of the circle.
 
 | File | Use |
@@ -15,7 +15,7 @@ cut out between the axis and the right half of the circle.
 | Name | Light | Dark | Role |
 |------|-------|------|------|
 | Ink | `#1B2A41` | `#E9E5DA` | Circle and text |
-| Meridian red | `#E5544A` | `#E5544A` | The axis only; the same red on every background |
+| Axis red | `#E5544A` | `#E5544A` | The axis only; the same red on every background |
 | Night | — | `#0F1620` | Dark background |
 
 Typefaces: IBM Plex Sans for the name and text, IBM Plex Mono for commands

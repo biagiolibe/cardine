@@ -1,22 +1,15 @@
 # Security policy
 
-## Supported versions
-
-Security fixes follow the [support policy](CONTRIBUTING.md#support-policy):
-fixes land only in the newest release, without backports. Upgrade to the newest
-release before checking whether a suspected vulnerability still applies.
-The support policy also defines the upgrade window and unsupported installations.
-
 ## Reporting a vulnerability
 
-Use [GitHub private vulnerability reporting](https://github.com/biagiolibe/meridian/security/advisories/new)
+Use [GitHub private vulnerability reporting](https://github.com/biagiolibe/cardine/security/advisories/new)
 to report suspected vulnerabilities privately to the maintainers. Do not open a
 public issue or pull request with exploit details.
 
 Include, when available:
 
-- The Meridian version (`meridian --version`) and installation method.
-- The workflow mode, agent host, operating system, and relevant configuration.
+- The Cardine version (output of `cardine --version`) and installation method.
+- The preset, agent host, operating system, and relevant configuration.
 - Affected commands, hooks, files, and versions.
 - Reproduction steps or a minimal proof of concept, expected and actual behavior,
   and the potential impact (such as unintended Git operations or code execution).

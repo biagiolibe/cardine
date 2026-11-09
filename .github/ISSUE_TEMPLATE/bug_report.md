@@ -1,19 +1,19 @@
 ---
 name: Bug report
-about: Report a reproducible problem with Meridian.
+about: Report a reproducible problem with Cardine.
 title: ""
 labels: ""
 assignees: ""
 ---
 
-For suspected vulnerabilities, follow the [security policy](https://github.com/biagiolibe/meridian/blob/main/SECURITY.md)
+For suspected vulnerabilities, follow the [security policy](https://github.com/biagiolibe/cardine/blob/main/SECURITY.md)
 and report privately. Remove credentials and private project content from logs.
 
 ## Environment
 
-- Meridian version (output of `meridian --version`):
+- Cardine version (output of `cardine --version`):
 - Installation method:
-- Workflow mode (`LEAN_DELIVERY` or `GOVERNED_SDD`):
+- Preset (`lean` or `governed`):
 - Agent host and version (for example, Codex or Claude Code):
 - Operating system and version:
 
