@@ -1,0 +1,98 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/console/launch.py",
+      "tests/test_console_launch.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/232.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 232 \u2014 Launch a second agent from the console",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_console_launch --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "4ffcf8cc33e0f110d1386a119a07c9666d94636416a7f5fafea1f18c9ef6f567",
+        "digest": "1a0a841ce3a612f1992cfbbb32eee3fa386cd96a924965b2a0d6272974ccc450",
+        "inputs": {
+          ".cardine/tasks/232.json": null,
+          "tasks/232.md": null
+        },
+        "kind": "creation",
+        "operation_id": "c2a5a069e4e2468282d7b5632352fe0f",
+        "outputs": {
+          ".cardine/tasks/232.json": "5fa7ddcd6e6b455cc5f1e8e83e5933dc03563b6b65184cecf871e75c05a6f6e8",
+          "tasks/232.md": "9197c1f1ca33a34a1ec238c983996941924add6696a515c0ca24c295e86a0de8"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "aff54b0cd1916ee1dd50bef7bdaee3943ff28a93",
+        "task_id": "232",
+        "tree": "16e260ad6c30de466dfe67965d2146cb5d20e831",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "232",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
