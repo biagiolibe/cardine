@@ -1,0 +1,102 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "docs/PLATFORM_SUPPORT.md",
+      "docs/CONSUMER_PROFILES.md",
+      "docs/PROJECT_DECLARATION.md",
+      "docs/TASK_IDENTITY_POLICY.md",
+      "docs/GOVERNED_WORKFLOW.md",
+      "docs/examples/LEAN_DELIVERY_WALKTHROUGH.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/228.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 228 \u2014 Align platform support and project guidance with Cardine",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "844065f0d279f0dd32ee7a6bc4c14aa38adf373e04e8b619de745b3075d1d38f",
+        "digest": "bd5048afedc421ebbf52e987eaadad0363dfb879a430495d2813b00e5e58e1f0",
+        "inputs": {
+          ".cardine/tasks/228.json": null,
+          "tasks/228.md": null
+        },
+        "kind": "creation",
+        "operation_id": "c1f517ef61f244dd814d54f7b1ec73a7",
+        "outputs": {
+          ".cardine/tasks/228.json": "5424feda426797dbf8c01420fba6e49701d7ee1b1fa1629871fe82936d37cbb1",
+          "tasks/228.md": "232775b2bff7b7bd31597624d76a81c68d2ea1dd88c4784d435261e2398ee4dc"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
+        "task_id": "228",
+        "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "228",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

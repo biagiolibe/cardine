@@ -1,0 +1,114 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "213",
+      "223",
+      "224",
+      "225",
+      "226",
+      "227",
+      "228",
+      "229",
+      "230"
+    ],
+    "expectedCodeSurface": [
+      "VERSION",
+      ".claude-plugin/plugin.json",
+      ".cardine/manifest.json",
+      ".cardine/baselines/**",
+      "releases/**",
+      "capabilities/retired-text-v1.json",
+      "CHANGELOG.md",
+      "docs/RELEASING.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/231.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 231 \u2014 Prepare the 0.9.0 version",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_release --module test_prepare_release --module test_release_self_check --module test_console_snapshot --module test_update_repeatability --module test_template_manifest --module test_cli_startup --module test_check_repository --module test_init --module test_cardine_manifest_protocol --module test_synthetic_upgrade --module test_upgrade_repeatability --module test_template_retirement --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "08d1c12bb5920199ef7584a1346b7afbd5452fe8f2686ae774c6d59c4b6fa0cd",
+        "digest": "eeec2f8d68f0e22fd939a54197ce4549acf631724ab1542ab83fb86c92998e23",
+        "inputs": {
+          ".cardine/tasks/231.json": null,
+          "tasks/231.md": null
+        },
+        "kind": "creation",
+        "operation_id": "1dce11f9eaf64ec4b6983456a97ddd3b",
+        "outputs": {
+          ".cardine/tasks/231.json": "cec91e0568a17ae47e1eae6a1104c9c3e7e5837bdf48687197b621013f8ff3bd",
+          "tasks/231.md": "2dd469b04fb20bccdc61d66b099d695f3e171c01e611e0ca79cc41f8d061997b"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
+        "task_id": "231",
+        "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "231",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

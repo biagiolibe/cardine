@@ -1,0 +1,100 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "223"
+    ],
+    "expectedCodeSurface": [
+      "docs/HOW_TO_UPGRADE.md",
+      "docs/ADOPT_COMMANDS.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/227.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 227 \u2014 Rewrite the adoption and upgrade guides for Cardine",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "9037dff006d0637b648f9bec53fb82b0f2fef1170999c576a0892a065ea158f9",
+        "digest": "df1155ae521790c51862a4b0087b8a2945d2ca067c85ba51145f2564311383d0",
+        "inputs": {
+          ".cardine/tasks/227.json": null,
+          "tasks/227.md": null
+        },
+        "kind": "creation",
+        "operation_id": "08fe62ea0a2a485e8bf0ad7315857604",
+        "outputs": {
+          ".cardine/tasks/227.json": "ff835381e6d4547be19f60f769428a0b964a74f143cdfc9d185921d9a79b9bab",
+          "tasks/227.md": "5e32806789a334a76fe5d2ffc9aff145bcd0f677b8468d0a292822399500dac4"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
+        "task_id": "227",
+        "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "227",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

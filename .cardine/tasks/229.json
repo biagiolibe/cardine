@@ -1,0 +1,101 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "CONTRIBUTING.md",
+      "SECURITY.md",
+      "WORKFLOW_GUIDE.md",
+      ".github/ISSUE_TEMPLATE/bug_report.md",
+      "docs/assets/README.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/229.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 229 \u2014 Remove Meridian names from the contributor and community files",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "ef8fc7b8e3ed4cfdd6e940f447f8d84d14a47ca03a3911a543cc26326fed542d",
+        "digest": "fda38d4bdc764dd50cfd510570fc7bd49245bfec52aa56758dc9822b14857a8a",
+        "inputs": {
+          ".cardine/tasks/229.json": null,
+          "tasks/229.md": null
+        },
+        "kind": "creation",
+        "operation_id": "8e9dac60b174417ab5472e80d8924e74",
+        "outputs": {
+          ".cardine/tasks/229.json": "6c15ed7be159b205a2685c82312c0db79af82cab1de7d54a3195500829b1ac80",
+          "tasks/229.md": "090b30c78ecc4103d363ff01bc6689254954702b032a514909e7b71ad1777942"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
+        "task_id": "229",
+        "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "229",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

@@ -1,0 +1,110 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "225",
+      "226",
+      "227"
+    ],
+    "expectedCodeSurface": [
+      "scripts/check_repository.py",
+      "tests/test_check_repository.py",
+      "README.md",
+      "docs/QUICKSTART.md",
+      "docs/AGENT_OPERATIONS.md",
+      "docs/RUN_COMMANDS.md",
+      "docs/HOW_TO_UPGRADE.md",
+      "docs/ADOPT_COMMANDS.md",
+      "skills/cardine-delivery/SKILL.md",
+      "skills/cardine-project/SKILL.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/230.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 230 \u2014 Check that documented commands exist",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "31c005cb4df6ed49f948245b29c2f99617573e49cb35511cdbf65f6e80bd8f36",
+        "digest": "619b580db7fab3c908e6f4530a9ee40b971adfcf2e349ed5687947b713073c73",
+        "inputs": {
+          ".cardine/tasks/230.json": null,
+          "tasks/230.md": null
+        },
+        "kind": "creation",
+        "operation_id": "77704bce4cee4ae882826bf6b56156bd",
+        "outputs": {
+          ".cardine/tasks/230.json": "d0806fa828c9246cb14d5b7d05347f00332d3360ed07e3b756c35dadd372c835",
+          "tasks/230.md": "e7af1af4f212ec1433ec3955c4ef54e746463fea29871767e840172572dc9f27"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
+        "task_id": "230",
+        "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "230",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
