@@ -8,7 +8,7 @@ it. Paths are relative to the project and cannot contain `..`.
 {
   "version": 1,
   "preset": "lean",
-  "project": { "name": "Consumer project", "slug": "consumer-project" },
+  "project": { "name": "Contoso", "slug": "contoso" },
   "taskIdentity": { "mode": "opaque" },
   "taskDefaults": { "review": "required" },
   "validation": {
@@ -25,7 +25,7 @@ Both `version: 1` and `preset: lean|governed` are required. Both presets install
 The preset supplies defaults only. Neither queue shape nor workflow prose
 selects policy. Missing or malformed configuration is an error.
 
-| Task option | Lean | Governed |
+| Task option | `lean` | `governed` |
 | --- | --- | --- |
 | `review` | `not_required` | `required` |
 | `authorityRequired` | false | true |
@@ -71,8 +71,7 @@ commands. A passing attempt still requires a passing complete set in its last
 round. Each quick round is recorded and listed under `Measured validation`.
 
 Candidate validation always adds `git diff --check`. Task commands supplement
-the baseline. Retry limits are positive integers; the future runner owns their
-automatic counting. Context reading guards and evidence tiers remain available
+the baseline. Retry limits are positive integers. Context reading guards and evidence tiers remain available
 without spend counters.
 
 `ci` may be `none` or an object with `provider` and `requiredChecks`.
