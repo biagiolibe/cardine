@@ -1,0 +1,100 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "tests/test_template_commands.py",
+      "tests/synthetic_upgrade_support.py",
+      "tests/test_lean_walkthrough.py",
+      "tests/test_cardine_upgrade_merge.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/234.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 234 \u2014 Bring the full suite back to green after the 0.9 documentation tasks",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_cardine_upgrade_lifecycle --module test_cardine_upgrade_merge --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "03c2081c1d23ccefa13b27094b3cf6971732d282beaa7814255d9cb74b05bd78",
+        "digest": "c19026f5e9c47ca6e304aa77d2423eb7c177a8a6e8fe3ce85c08ebc116dda058",
+        "inputs": {
+          ".cardine/tasks/234.json": null,
+          "tasks/234.md": null
+        },
+        "kind": "creation",
+        "operation_id": "516540fcd72b4b7ab4470e074fc832ea",
+        "outputs": {
+          ".cardine/tasks/234.json": "49e57e559fc15389b53bb04223cb56504a06bf69a2ece709f11fff352abb1f93",
+          "tasks/234.md": "492807358577b074920d2db4fdf3e272c34ad0575c04c2884e0bb4cfd9421f41"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "bfdfa46b7340ebc166cdc2dbcbba4a0c7d951516",
+        "task_id": "234",
+        "tree": "430bae8bc9a8680591387441b65eece98562cc01",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "234",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
