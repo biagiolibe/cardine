@@ -639,7 +639,14 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
     if not staged.exists():
         if not prepare:
             return None
-        strategy.prepare_candidate(task_id, None, root)
+        try:
+            strategy.prepare_candidate(task_id, None, root)
+        except CardineStop as error:
+            if error.code != 'LEASE_HELD' or (lease.exists() and wait_for_lease(locations, seconds=0)):
+                raise
+            return envelope(task_id, str(root), step='candidate', outcome='waiting',
+                action='wait-for-lease', retry_after_seconds=5,
+                next_command=command_reference(argv, 'Wait for the competing integration'))
     from cardine.integration.candidate import verified_candidate
     try:
         measured = verified_candidate(locations)
