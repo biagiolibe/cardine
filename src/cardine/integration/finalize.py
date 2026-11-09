@@ -24,6 +24,23 @@ def _check_files(intent, lease, staged):
             raise CardineError('foreign integration output preserved during finalize')
 
 
+
+def _landing_complete(locations, intent, lease, staged):
+    """A recorded landing with none of its own files left has nothing to replay."""
+    binding, result = intent['binding'], intent['result']
+    if result is None:
+        return False
+    for path, expected in ((lease, binding['lease']), (staged, binding['staged'])):
+        content = _bytes(path)
+        if content is not None and receipts.digest(content) == expected:
+            return False
+    root, landed, output = locations.primary, result['merge_commit'], intent['workerState']
+    return (not _run_git(root, 'merge-base', '--is-ancestor', landed, 'HEAD').returncode
+            and git_output(root, 'show', '-s', '--format=%T', landed) == binding['tree']
+            and git_output(root, 'show', '-s', '--format=%P', landed).split() == [binding['main'], binding['source']]
+            and receipts.digest(receipts.safe_path(locations.worktree, output['path']).read_bytes()) == output['before'])
+
+
 def finalization_aborted(locations, intent=None):
     """Pure reconciliation: only a verified abort of this exact candidate counts."""
     from cardine.lifecycle.control import operation_state
@@ -92,6 +109,8 @@ def finalize_candidate(task_id, project):
                 or binding['source'] != git_output(locations.worktree, 'rev-parse', 'HEAD')
                 or binding['sourceDigest'] != source_digest(locations.worktree, task_id)):
             raise CardineError('finalize task inputs changed')
+        if _landing_complete(locations, intent, lease, staged):
+            return intent['result']
         _check_files(intent, lease, staged)
         head = git_output(root, 'rev-parse', 'HEAD')
         if intent['result'] is not None and head != intent['result']['merge_commit']:
