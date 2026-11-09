@@ -27,7 +27,8 @@ holds against weak and strong agents, were proposed and accepted on
 surface outside it until after 1.0. On 2026-11-03 the developer decided the
 questions of `docs/CONVERSION_PLAN.md`: a developer channel records verdicts,
 cancel, and abort while role launches are unsupported (decision 14, rule 2);
-`cardine.legacy` stays while `cardine adopt` reads Meridian projects; and the
+`cardine.legacy` stays while `cardine adopt` reads Meridian projects, until the last
+conversion (decision 10); and the
 maintainer's machine keeps Meridian until the last project is converted
 (decision 10). On 2026-11-05 the developer amended decisions 5 and 12: after a
 failure, declared quick commands can end an attempt early, only the complete
@@ -264,7 +265,7 @@ diagnosis and manual recovery.
 | Area | Decision |
 | --- | --- |
 | Migrations and release baselines | Removed. The migration mechanism stays for future releases. |
-| `adopt` from historical versions | Removed. `adopt` handles projects without Cardine and Meridian projects (decision 10). |
+| `adopt` from historical versions | Removed. `adopt` installs Cardine in an existing project; tasks come from `cardine task new` (decision 10). |
 | Maintainer-only commands (`profile`, `generate-*`, `report flow`, evaluations) | Moved out of the user CLI into development scripts. |
 | Duplicate implementations | One each, in Python. Hooks are no longer written in both shell and Python. One entry-router generator. `release.py` and `prepare_release.py` merge. |
 | Project console | Stays in 1.0, Experimental, rebuilt on the single task state and the `cardine run` engine. |
@@ -355,12 +356,15 @@ CLI. `cardine doctor` checks that the plugin and the CLI versions match.
    notes announce that Meridian will be archived.
 2. **Create `biagiolibe/cardine`.** Import the code and publish a `0.0.1`
    placeholder on PyPI to reserve the name.
-3. **Develop toward 0.9** with the work items below.
-4. **Convert open work only.** `cardine adopt` converts the open tasks, the ADR
-   log, and the project configuration: default assurances, validation commands,
-   and task identity. Closed tasks and review records stay in place as an
-   archive that Cardine ignores. Conversion runs on copies first, then on the
-   originals.
+3. **Develop toward 0.9** with the work items below. 0.9 is a `v0.9.0` Git tag,
+   installed from a clone (amended on 2026-11-08).
+4. **Convert open work only, once.** Amended on 2026-11-08: Contoso and Fabrikam are the
+   only Meridian users, so no product code exists for them alone. Each converts through a
+   one-shot preparation outside the product: its open records are rewritten by hand in
+   Cardine format, then `cardine adopt` installs Cardine and carries the ADR log and the
+   project configuration. Closed tasks and review records stay in place as an archive that
+   Cardine ignores. Conversion runs on copies first, then on the originals. After the last
+   conversion, Meridian support is removed from `cardine adopt` and `cardine.legacy`.
 5. **Field trial with an exit criterion.** Cardine 1.0.0 is released only when,
    on 0.9, at least one real task of each case has landed on `main` in Contoso or
    Fabrikam:
@@ -709,7 +713,8 @@ journal stop the tool could resolve itself. Their results set the scope of
 the work item 8 tasks. Rule 4 becomes an acceptance criterion of every work
 item 8 task that performs effects. The surface of options and modules is
 reviewed after work item 10. `cardine.legacy` stays while `cardine adopt`
-reads Meridian projects (decision 7; amended on 2026-11-03).
+reads Meridian projects (decision 7; amended on 2026-11-03), until the last
+conversion (decision 10).
 
 ## Work items to 0.9
 
@@ -802,7 +807,8 @@ surfaces only and leave those files unchanged.
     to it, such as the old shell hooks and the managed copy of
     `CONTEXT_BUDGET_POLICY.md`, are made. Items 11 and 12 run on Cardine.
 11. Documentation: README positioning, quick start, agent reference.
-12. Release: GitHub and PyPI publication from one script, which merges
+12. Amended on 2026-11-08: the merge of the two scripts and PyPI publication are needed for 1.0, not for the 0.9 tag.
+    Release: GitHub and PyPI publication from one script, which merges
     `release.py` and `prepare_release.py` (decision 7). Preparing Meridian
     1.4.0 (task 231) exposed three gaps that this script must close:
     - The release kind follows what changed. A template change without a

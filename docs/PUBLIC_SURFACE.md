@@ -10,7 +10,7 @@ If an interrupted pair is reported, rerun the command with `--recover` and the
 same proposal. Recovery preserves a complete pair and rolls back a partial
 pair only when its bytes match the creation journal; changed files are refused.
 
-The compatibility promise starts at **1.3.0**. The governing decisions are in
+The compatibility promise starts at **1.0.0**. The governing decisions are in
 [Public Surface and Stability](ADR_PUBLIC_SURFACE_AND_STABILITY.md); release
 and deprecation rules are in [CONTRIBUTING.md](../CONTRIBUTING.md#versioning-and-deprecation).
 
