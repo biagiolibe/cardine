@@ -1,14 +1,14 @@
 # Platform support
 
-Supported means Meridian's repository checks and full test suite run on that
+Supported means Cardine's repository checks and full test suite run on that
 OS in the release gate, which runs on macOS and Linux before each release is
-published. Each push to `main` also runs CI on Linux. Best-effort features depend on a local host, terminal, or desktop
+published. Pull requests and pushes to `main` or `task-*` also run CI on Linux. Best-effort features depend on a local host, terminal, or desktop
 integration that CI does not exercise end to end. Unsupported platforms and
 features have no support commitment.
 
 | Platform or requirement | macOS | Linux | Windows |
 |---|---|---|---|
-| Meridian CLI and workflow tooling | Supported (`macos-latest` release gate) | Supported (`ubuntu-latest` release gate and CI) | Unsupported |
+| Cardine CLI and workflow tooling | Supported (`macos-latest` release gate) | Supported (`ubuntu-latest` release gate and CI) | Unsupported |
 | Python 3.12 or later | Supported (3.12); best-effort (newer versions) | Supported (3.12); best-effort (newer versions) | Unsupported |
 | Git on `PATH`, including linked worktrees | Supported (runner-provided Git) | Supported (runner-provided Git) | Unsupported |
 | Claude Code host integration | Best-effort (local installation required) | Best-effort (local installation required) | Unsupported |
