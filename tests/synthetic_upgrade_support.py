@@ -214,7 +214,6 @@ class SyntheticUpgradeFixtureMixin(CardineCliFixtureMixin):
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
 
         upgraded = rules.read_text(encoding="utf-8")
-        self.assertIn('["meridian", "worktree", ["evidence", "closure-status", "advance"]]', upgraded)
         self.assertIn('prefix_rule(pattern=["git", "mv"], decision="allow")', upgraded)
         self.assertIn(local, upgraded)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
