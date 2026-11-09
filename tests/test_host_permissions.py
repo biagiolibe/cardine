@@ -265,7 +265,8 @@ class ReceiptPathInventoryTest(Fixture):
         """A new resolver fails here until its location is covered above and listed."""
         known = {"hosts/permissions.py", "lifecycle/receipts.py", "lifecycle/delivery.py", "lifecycle/validation.py",
                  "integration/candidate.py", "integration/residue.py", "lifecycle/control_abort.py",
-                 "console/snapshot.py"}  # snapshot only reads the cleanup record
+                 "console/snapshot.py",  # snapshot only reads the cleanup record
+                 "lifecycle/live.py"}  # the developer's run output, never receipt authority
         found = set()
         for path in sorted((ROOT / "src/cardine").rglob("*.py")):
             tree = ast.parse(path.read_text(encoding="utf-8"))

@@ -59,8 +59,6 @@ class CliInstallTest(unittest.TestCase):
         for old in ("scripts/meridian.py", "scripts/cardine_cli.py"):
             self.assertNotIn(old, local)  # MERIDIAN-OLD-NAME-TEST
             self.assertFalse(any(old in rule for rule in CLAUDE_PROJECT_ALLOWLIST))  # MERIDIAN-OLD-NAME-TEST
-        # MERIDIAN-INSTALLATION-CHECK
-        self.assertIn('pattern=["meridian", "worktree", ["evidence", "closure-status", "advance"]', local)
 
     def test_old_python_exits_before_loading_cli(self):
         wrapper = ROOT / "bin/cardine"

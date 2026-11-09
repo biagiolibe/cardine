@@ -728,4 +728,10 @@ def _committed_implementation(locations, state):
     base = str(_execution_location(root, locations.task_id, context=locations)['base_commit'])
     owned = _execution_owned_paths(root, locations.task_id, context=locations)
     changed = set(git_output(root, 'diff', '--name-only', base, 'HEAD').splitlines())
+    review = state.get('review', {})
+    if review.get('verdict') == 'CHANGES_REQUESTED':
+        # The rejected commit is not a new delivery; only a later change to the work is.
+        repaired = set(git_output(root, 'diff', '--name-only', review['reviewed_commit'], 'HEAD').splitlines())
+        if not repaired - owned:
+            return False
     return bool(changed - owned)
