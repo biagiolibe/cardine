@@ -1,6 +1,6 @@
 {
   "name": "cardine",
-  "version": "1.4.0",
+  "version": "0.9.0",
   "description": "Explicit tasks, isolated worktrees, verified integration. A delivery workflow for AI coding agents.",
   "license": "MIT",
   "author": {

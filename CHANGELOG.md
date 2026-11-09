@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Meridian are documented here. Versions before this file
+All notable changes to Cardine are documented here. Versions before this file
 existed are reconstructed from `migrations/*.json` and `VERSION`, which remain
 the authoritative, machine-checked source of truth (`scripts/check_repository.py`
 verifies the migration sequence is contiguous and ends at `VERSION`). This file
@@ -19,6 +19,10 @@ records which release moved it.
 
 - Stop distributing project-level Codex hooks; setup registers them in the user registry.
 
+
+## [0.9.0] - 2026-11-09
+
+CLI-only release. First Cardine tag: the delivery lifecycle runs through `cardine run`.
 
 ## [1.4.0]
 
