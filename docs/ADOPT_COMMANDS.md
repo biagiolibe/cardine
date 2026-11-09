@@ -1,5 +1,17 @@
 # Project adoption
 
-Use `cardine adopt --project <path> --check` to inspect the conversion plan without writes. The JSON result lists ordered output paths and digests, diagnostics, missing inputs, and refusals. Supply `--name`, `--slug`, `--language`, and `--validation <json-file>`; projects without a legacy installation also require `--preset lean|governed` and `--task-identity opaque|milestone`. Optionally supply `--ci <json-file>` for a CI declaration.
+`cardine adopt` installs Cardine in an existing project. For Contoso, declare
+validation commands in a JSON file as shown in [First 5 minutes](../README.md#first-5-minutes),
+then inspect the plan:
 
-Use `--rehearse` with the same inputs to convert and verify a disposable clone. `--apply` uses a matching rehearsal receipt or rehearses first, then converts the clean source project. Neither mode commits or pushes. The JSON envelope reports the plan, result, and diagnostics. Exit status is 0 on success, 2 on a guardrail or conversion failure, and 64 for invalid command syntax.
+```bash
+cardine adopt --project . --check --name "Contoso API" --slug contoso-api \
+  --preset lean --language English --task-identity opaque \
+  --validation ~/contoso-validation.json
+```
+
+Use the same inputs with `--rehearse` to verify adoption in a disposable clone,
+then with `--apply` to install it in the project. Apply uses a matching rehearsal
+receipt or rehearses first. Review and commit the changes. Create subsequent
+tasks with `cardine task new`; see [First 5 minutes](../README.md#first-5-minutes)
+for the task and setup steps.
