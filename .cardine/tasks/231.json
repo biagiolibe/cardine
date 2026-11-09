@@ -22,6 +22,7 @@
       ".cardine/baselines/**",
       "releases/**",
       "capabilities/retired-text-v1.json",
+      "tests/test_template_retirement.py",
       "CHANGELOG.md",
       "docs/RELEASING.md"
     ],
@@ -77,6 +78,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:23d3280d79d6008b731bd7902d098c2810defa893f09cd6a8e883d72ed7f7075",
+      "at": "2026-11-09T00:41:33.494101Z",
+      "before": "sha256:dc0a911211f38c1b75d80249ebc3d2b3f8026b0df202247151d8c157ffa5db67",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -102,6 +113,30 @@
         "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
         "task_id": "231",
         "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "636362333357220d233e4389e3f55fcce6271703666fb46eec840b4548a1d821",
+        "digest": "a97eb4e9b17d49f1383149b875f2165e47bb61042541d19ac0e18b37627bbefc",
+        "inputs": {
+          ".cardine/tasks/231.json": "89c961e4f1ed790aa9ec3de6e9e8760e40607a8212ba978d29bb3b22b08705f9",
+          "tasks/231.md": "026af7d0a2b9880274af0d70ec3ab683f2c0363db61258c308542904622b58d2"
+        },
+        "kind": "contract_revision",
+        "operation_id": "00fe41b844d945de83ce78b43c2b3e41",
+        "outputs": {
+          ".cardine/tasks/231.json": "1e06f0044942e5104ea9530dd1bba0ab901d93ff0a982b851bcf64de03798b4c",
+          "tasks/231.md": "026af7d0a2b9880274af0d70ec3ab683f2c0363db61258c308542904622b58d2"
+        },
+        "predecessor": "eeec2f8d68f0e22fd939a54197ce4549acf631724ab1542ab83fb86c92998e23",
+        "result": "verified",
+        "source": "2b48bcd048d6e6a211bf20358293ca247d29ffad",
+        "task_id": "231",
+        "tree": "4081eec714fd5bd40ef0298301ad55cb8c6c4952",
         "version": 1
       }
     ]
