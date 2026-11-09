@@ -10,7 +10,8 @@
     "expectedCodeSurface": [
       "src/cardine/integration/finalize.py",
       "src/cardine/lifecycle/engine.py",
-      "tests/test_run_integration.py"
+      "tests/test_run_integration.py",
+      "tests/test_run_receipts.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -64,6 +65,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:f0c86b46f451413f70677072c8bd4b04348ce4ca2c941704ab15083440394685",
+      "at": "2026-11-08T23:56:34.402722Z",
+      "before": "sha256:0c9ddfd42e9db76d5f202f8e38cb5a3492ff19d0ff5f39a5bae5dbcdada39a1b",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "delivery": {
       "base": "39a90a63004e785138f02bab6173d765144b2dd4",
@@ -141,8 +152,177 @@
         "task_id": "221",
         "tree": "d5279f22113d2dd4d91e685344146f1611b2cf1d",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "d056caedc981accee2ca15bedaa74f373002e9a3a12f359b37310ec933ae16a8",
+        "digest": "4dae7ff740c68d0b1bbaebdd9f87ffb2fba357571924dea6aca71ecec63aeecf",
+        "inputs": {
+          ".cardine/evidence/221.json": null,
+          ".cardine/tasks/221.json": "fbc73a3fa7d26bb31d3c249cde2ec1cb247409f98c148ba20651d0b53f3fb0cf",
+          "tasks/handoffs/221.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "45f20531fda5495ba15d420f14f3ed37",
+        "outputs": {
+          ".cardine/evidence/221.json": "8c34121185a2787e0229a03ac3418fa571e057740982c9c7343747773fab015d",
+          ".cardine/tasks/221.json": "6d9f3ad3d126b19efcad58461dd00ea641ed2d9131c060dabe6843ae2c97e991",
+          "tasks/handoffs/221.md": "4a4ac9bda97d8a9583ceee7a39bfddb90daf7209a315c430419c84f2fe6c9782"
+        },
+        "predecessor": "7abb00033086b5098e95a73bc2a405de084a947bc563847f4d3914da3930ce4b",
+        "result": "verified",
+        "source": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+        "task_id": "221",
+        "tree": "c0c5feb613dc632440c6e9e4af6f0154d2f40423",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "dd9bff5e5d61e12b10c0a8f34539015039b8ab6dcee55fa2e303cc51db82e9b8",
+        "digest": "4dd3f5de4356256650557c84e1f09028497ffd2bb39372510aac898e49ebef57",
+        "inputs": {
+          ".cardine/tasks/221.json": "f7588a322fe22593b82c2007b1a4464b9172a3488447013ede27165f437b6d31",
+          "tasks/221.md": "104858edaa27956c7f03ba5676bd4eaf3cbcd1b5424157ebef97b8f7bcc64ebd"
+        },
+        "kind": "contract_revision",
+        "operation_id": "66a3b53be8f64ca687940559194a6365",
+        "outputs": {
+          ".cardine/tasks/221.json": "e29d70de950b155ba9fcbf0f25a1c76e844d66f4e1d1de9d568f61759d274bab",
+          "tasks/221.md": "104858edaa27956c7f03ba5676bd4eaf3cbcd1b5424157ebef97b8f7bcc64ebd"
+        },
+        "predecessor": "4dae7ff740c68d0b1bbaebdd9f87ffb2fba357571924dea6aca71ecec63aeecf",
+        "result": "verified",
+        "source": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+        "task_id": "221",
+        "tree": "c0c5feb613dc632440c6e9e4af6f0154d2f40423",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/221.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "387ba5aa190357578f68dbfdc60c51bbbdcab5b7e6d9e0674e0a8eefc6cb9d9f",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_recovery --module test_worktree_cleanup --module test_run_receipts --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "d056caedc981accee2ca15bedaa74f373002e9a3a12f359b37310ec933ae16a8",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-221",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "182a353e1ae1540ab5dcdafb18295207d4bac868",
+        "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+        "sourceTree": "d5279f22113d2dd4d91e685344146f1611b2cf1d"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "task-tests"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/221.json#27daa15ba20f42b2aba160f8a462fdfe/1/repository-check",
+            "round": 1,
+            "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_recovery --module test_worktree_cleanup --module test_run_receipts --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/221.json#27daa15ba20f42b2aba160f8a462fdfe/1/task-tests",
+            "round": 1,
+            "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+            "stderr": "run_tests: 200 tests in 8 shards\nrun_tests: shard 4/8 finished in 168.4s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 7/8 finished in 181.5s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 1/8 finished in 185.3s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 2/8 finished in 185.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 8/8 finished in 212.4s: exit 1 ran=25 failures=1 errors=0\nrun_tests: shard 5/8 finished in 212.5s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 6/8 finished in 219.7s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 3/8 finished in 228.4s: exit 0 ran=25 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 8/8 (exit 1) ---\nshard=8/8 total=200 selected=25 digest=51c6f9bfa6082053d0eff525f189a006c691ce2d38628b1605dd0634c8c2a8a1\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle) ... ok\ntest_candidate_result_boundaries_replay_once (test_run_integration.CandidateTest.test_candidate_result_boundaries_replay_once) ... ok\ntest_declared_pass_file_has_no_authority (test_run_integration.CandidateTest.test_declared_pass_file_has_no_authority) ... ok\ntest_finalize_preserves_changed_worker_metadata_after_commit (test_run_integration.CandidateTest.test_finalize_preserves_changed_worker_metadata_after_commit) ... ok\ntest_later_cancellation_cannot_land_a_previously_validated_candidate (test_run_integration.CandidateTest.test_later_cancellation_cannot_land_a_previously_validated_candidate) ... ok\ntest_tracked_change_after_validation_invalidates_candidate (test_run_integration.CandidateTest.test_tracked_change_after_validation_invalidates_candidate) ... ok\ntest_task_state_publication_has_no_new_writer_bypass (test_run_receipts.ReceiptWriterProofTest.test_task_state_publication_has_no_new_writer_bypass) ... FAIL\ntest_writer_contract_revision_converges (test_run_receipts.ReceiptWriterProofTest.test_writer_contract_revision_converges) ... ok\ntest_writer_fixture_missing_observation_converges (test_run_receipts.ReceiptWriterProofTest.test_writer_fixture_missing_observation_converges) ... ok\ntest_writer_layout_fixture_converges (test_run_receipts.ReceiptWriterProofTest.test_writer_layout_fixture_converges) ... ok\ntest_authority_acceptance_and_observation_are_explicit_and_read_only (test_run_receipts.RunReceiptsTest.test_authority_acceptance_and_observation_are_explicit_and_read_only) ... ok\ntest_live_foreign_writer_and_unsafe_paths_refuse_without_effects (test_run_receipts.RunReceiptsTest.test_live_foreign_writer_and_unsafe_paths_refuse_without_effects) ... ok\ntest_pending_dependencies_keep_failed_results_as_guardrails (test_run_recovery.PolicyRecoveryTest.test_pending_dependencies_keep_failed_results_as_guardrails) ... ok\ntest_foreign_dirt_beside_owned_residue_preserves_everything (test_run_recovery.RunRecoveryTest.test_foreign_dirt_beside_owned_residue_preserves_everything) ... ok\ntest_owned_idle_lease_during_cleanup_is_recoverable_and_foreign_is_blocked (test_run_recovery.RunRecoveryTest.test_owned_idle_lease_during_cleanup_is_recoverable_and_foreign_is_blocked) ... ok\ntest_residue_clear_killed_at_before_residue_intent_converges (test_run_recovery.RunRecoveryTest.test_residue_clear_killed_at_before_residue_intent_converges) ... ok\ntest_stage_killed_at_after_stage_json_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_after_stage_json_recovers_the_owned_lease) ... ok\ntest_stage_killed_at_before_stage_json_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_before_stage_json_recovers_the_owned_lease) ... ok\ntest_retired_codes_have_no_static_dynamic_or_judgment_emitter (test_stop_registry.StopRegistryTest.test_retired_codes_have_no_static_dynamic_or_judgment_emitter) ... ok\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\ntest_cleanup_missing_branch_requires_tracked_terminal_state (test_worktree_cleanup.WorktreeCleanupTest.test_cleanup_missing_branch_requires_tracked_terminal_state) ... ok\ntest_stage_finalize_and_verified_cleanup (test_worktree_cleanup.WorktreeCleanupTest.test_stage_finalize_and_verified_cleanup) ... ok\n\n======================================================================\n\nRan 25 tests in 211.712s\n\nFAILED (failures=1)\nFAIL: test_task_state_publication_has_no_new_writer_bypass (test_run_receipts.ReceiptWriterProofTest.test_task_state_publication_has_no_new_writer_bypass)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-221/tests/test_run_receipts.py\", line 585, in test_task_state_publication_has_no_new_writer_bypass\n    self.assertEqual(observed, allowed)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^\nAssertionError: {'ado[1169 chars]ycle/live.py': [\"os.replace(self.log, self.log[2092 chars]))']} != {'ado[1169 chars]ycle/receipts.py': ['_durable(path, encoded(ac[1875 chars]))']}\nDiff is 5077 characters long. Set self.maxDiff to None to see it.\n\n----------------------------------------------------------------------\nresult ran=25 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_integration,test_run_recovery,test_worktree_cleanup,test_run_receipts,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=200 total=2162 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+            "command": "git diff --check",
+            "commit": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/221.json#27daa15ba20f42b2aba160f8a462fdfe/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/221.json#27daa15ba20f42b2aba160f8a462fdfe/2/repository-check",
+            "round": 2,
+            "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_recovery --module test_worktree_cleanup --module test_run_receipts --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/221.json#27daa15ba20f42b2aba160f8a462fdfe/2/task-tests",
+            "round": 2,
+            "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+            "stderr": "run_tests: 200 tests in 8 shards\nrun_tests: shard 4/8 finished in 256.3s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 7/8 finished in 271.7s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 1/8 finished in 274.9s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 2/8 finished in 276.4s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 5/8 finished in 305.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 8/8 finished in 306.3s: exit 1 ran=25 failures=1 errors=0\nrun_tests: shard 6/8 finished in 312.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 3/8 finished in 322.1s: exit 0 ran=25 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 8/8 (exit 1) ---\nshard=8/8 total=200 selected=25 digest=51c6f9bfa6082053d0eff525f189a006c691ce2d38628b1605dd0634c8c2a8a1\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle) ... ok\ntest_candidate_result_boundaries_replay_once (test_run_integration.CandidateTest.test_candidate_result_boundaries_replay_once) ... ok\ntest_declared_pass_file_has_no_authority (test_run_integration.CandidateTest.test_declared_pass_file_has_no_authority) ... ok\ntest_finalize_preserves_changed_worker_metadata_after_commit (test_run_integration.CandidateTest.test_finalize_preserves_changed_worker_metadata_after_commit) ... ok\ntest_later_cancellation_cannot_land_a_previously_validated_candidate (test_run_integration.CandidateTest.test_later_cancellation_cannot_land_a_previously_validated_candidate) ... ok\ntest_tracked_change_after_validation_invalidates_candidate (test_run_integration.CandidateTest.test_tracked_change_after_validation_invalidates_candidate) ... ok\ntest_task_state_publication_has_no_new_writer_bypass (test_run_receipts.ReceiptWriterProofTest.test_task_state_publication_has_no_new_writer_bypass) ... FAIL\ntest_writer_contract_revision_converges (test_run_receipts.ReceiptWriterProofTest.test_writer_contract_revision_converges) ... ok\ntest_writer_fixture_missing_observation_converges (test_run_receipts.ReceiptWriterProofTest.test_writer_fixture_missing_observation_converges) ... ok\ntest_writer_layout_fixture_converges (test_run_receipts.ReceiptWriterProofTest.test_writer_layout_fixture_converges) ... ok\ntest_authority_acceptance_and_observation_are_explicit_and_read_only (test_run_receipts.RunReceiptsTest.test_authority_acceptance_and_observation_are_explicit_and_read_only) ... ok\ntest_live_foreign_writer_and_unsafe_paths_refuse_without_effects (test_run_receipts.RunReceiptsTest.test_live_foreign_writer_and_unsafe_paths_refuse_without_effects) ... ok\ntest_pending_dependencies_keep_failed_results_as_guardrails (test_run_recovery.PolicyRecoveryTest.test_pending_dependencies_keep_failed_results_as_guardrails) ... ok\ntest_foreign_dirt_beside_owned_residue_preserves_everything (test_run_recovery.RunRecoveryTest.test_foreign_dirt_beside_owned_residue_preserves_everything) ... ok\ntest_owned_idle_lease_during_cleanup_is_recoverable_and_foreign_is_blocked (test_run_recovery.RunRecoveryTest.test_owned_idle_lease_during_cleanup_is_recoverable_and_foreign_is_blocked) ... ok\ntest_residue_clear_killed_at_before_residue_intent_converges (test_run_recovery.RunRecoveryTest.test_residue_clear_killed_at_before_residue_intent_converges) ... ok\ntest_stage_killed_at_after_stage_json_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_after_stage_json_recovers_the_owned_lease) ... ok\ntest_stage_killed_at_before_stage_json_recovers_the_owned_lease (test_run_recovery.RunRecoveryTest.test_stage_killed_at_before_stage_json_recovers_the_owned_lease) ... ok\ntest_retired_codes_have_no_static_dynamic_or_judgment_emitter (test_stop_registry.StopRegistryTest.test_retired_codes_have_no_static_dynamic_or_judgment_emitter) ... ok\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\ntest_cleanup_missing_branch_requires_tracked_terminal_state (test_worktree_cleanup.WorktreeCleanupTest.test_cleanup_missing_branch_requires_tracked_terminal_state) ... ok\ntest_stage_finalize_and_verified_cleanup (test_worktree_cleanup.WorktreeCleanupTest.test_stage_finalize_and_verified_cleanup) ... ok\n\n======================================================================\n\nRan 25 tests in 305.663s\n\nFAILED (failures=1)\nFAIL: test_task_state_publication_has_no_new_writer_bypass (test_run_receipts.ReceiptWriterProofTest.test_task_state_publication_has_no_new_writer_bypass)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-221/tests/test_run_receipts.py\", line 585, in test_task_state_publication_has_no_new_writer_bypass\n    self.assertEqual(observed, allowed)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^\nAssertionError: {'ado[1169 chars]ycle/live.py': [\"os.replace(self.log, self.log[2092 chars]))']} != {'ado[1169 chars]ycle/receipts.py': ['_durable(path, encoded(ac[1875 chars]))']}\nDiff is 5077 characters long. Set self.maxDiff to None to see it.\n\n----------------------------------------------------------------------\nresult ran=25 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_integration,test_run_recovery,test_worktree_cleanup,test_run_receipts,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=200 total=2162 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "27daa15ba20f42b2aba160f8a462fdfe",
+            "command": "git diff --check",
+            "commit": "65b89c0c2f32468a54833141d7482f00d55b3e98",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/221.json#27daa15ba20f42b2aba160f8a462fdfe/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "9daa310a3cca6b4e80f51228048d458078f6d0780927256b91d340f7318a99d3",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "221",

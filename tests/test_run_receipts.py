@@ -371,6 +371,11 @@ PUBLICATION_ALLOWLIST = {'adopt/rehearsal.py': ["plan_path.write_text(json.dumps
  'integration/merge.py': ['_write_json_atomic(integration_path, staged, exclusive=True)',
                           '_write_json_atomic(lease_path, lease, exclusive=True)'],
  'lifecycle/authorization.py': ['receipts._durable(plan.path, receipts.encoded(plan.accepted))'],
+ # The live view of a run, under the shared Git directory; never evidence or task state.
+ 'lifecycle/live.py': ["os.replace(self.log, self.log.with_name(self.log.name + '.1'))",
+                       'os.replace(temporary, self.status)',
+                       "self.log.open('ab')",
+                       "temporary.write_text(json.dumps(value, sort_keys=True) + '\\n')"],
  'lifecycle/receipts.py': ['_durable(path, encoded(accepted))',
                            '_durable(path, encoded(dict(value, digest=digest(encoded(value)))))',
                            "_durable(path, encoded(intent['pending_state']))",
