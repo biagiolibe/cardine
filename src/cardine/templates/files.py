@@ -50,7 +50,7 @@ def single_managed_files(root: Path) -> list[ManagedFile]:
         *[item.relative_to(root) for item in sorted((root / "docs").rglob("*.md"))],
     ]
     # Include optional managed files only when the template set supplies them.
-    for optional_path in (Path(".codex/rules/meridian.rules"),):
+    for optional_path in (Path(".codex/rules/cardine.rules"),):
         if (root / optional_path).is_file():
             paths.append(optional_path)
     result = []

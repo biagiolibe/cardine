@@ -274,7 +274,7 @@ class InitAdapterTest(unittest.TestCase):
         for preset in ("`lean`", "`governed`"):
             self.assertIn(preset, text)
         self.assertIn("exactly the same files", text)
-        for hidden in (".gitignore", ".claudeignore", ".codex/rules/meridian.rules"):
+        for hidden in (".gitignore", ".claudeignore", ".codex/rules/cardine.rules"):
             self.assertIn(hidden, text)
         self.assertIn("Do not copy from `templates/base/` or `templates/workflows/`", text)
         self.assertIn("Do not copy templates", text)

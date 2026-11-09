@@ -259,7 +259,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
             self.assertIn("CI_GATE profile=cardine-self-hosting worst=PASS", output.getvalue())
 
             # MERIDIAN-INSTALLATION-CHECK
-            (project / ".codex/rules/meridian.rules").unlink()
+            (project / ".codex/rules/cardine.rules").unlink()
             output = io.StringIO()
             with redirect_stdout(output):
                 return_code = owner_templates_audit.run_audit(
@@ -267,7 +267,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 )
             self.assertEqual(return_code, 2, output.getvalue())
             # MERIDIAN-INSTALLATION-CHECK
-            self.assertIn("missing managed-copy surface .codex/rules/meridian.rules", output.getvalue())
+            self.assertIn("missing managed-copy surface .codex/rules/cardine.rules", output.getvalue())
 
     def test_ci_profile_gate_rejects_missing_managed_policy_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -736,7 +736,7 @@ class CapabilityProfileManifestTest(unittest.TestCase):
                 # MERIDIAN-INSTALLATION-CHECK
                 "docs/EXECUTION_EVIDENCE_PROFILE.md",
                 # MERIDIAN-INSTALLATION-CHECK
-                ".codex/rules/meridian.rules",
+                ".codex/rules/cardine.rules",
             }
             <= lean_paths
         )
@@ -825,8 +825,8 @@ MERGED_DESTINATIONS = {
 HIDDEN_DESTINATIONS = {
     "base/.gitignore": ".gitignore",
     "base/.claudeignore": ".claudeignore",
-    "workflows/lean-delivery/.codex/rules/meridian.rules": ".codex/rules/meridian.rules",
-    "workflows/governed-sdd/.codex/rules/meridian.rules": ".codex/rules/meridian.rules",
+    "workflows/lean-delivery/.codex/rules/cardine.rules": ".codex/rules/cardine.rules",
+    "workflows/governed-sdd/.codex/rules/cardine.rules": ".codex/rules/cardine.rules",
 }
 
 
@@ -842,7 +842,7 @@ def legacy_template_sources() -> list[str]:
         'base/TECH_DESIGN.md',
         'base/tasks/QUEUE.md',
         'base/tasks/TASK_BLUEPRINT.md',
-        'workflows/governed-sdd/.codex/rules/meridian.rules',
+        'workflows/governed-sdd/.codex/rules/cardine.rules',
         'workflows/governed-sdd/AGENTS.md',
         'workflows/governed-sdd/CLAUDE.md',
         'workflows/governed-sdd/LANGUAGE_POLICY.md',
@@ -865,7 +865,7 @@ def legacy_template_sources() -> list[str]:
         'workflows/governed-sdd/docs/workflows/REVIEW.md',
         'workflows/governed-sdd/tasks/QUEUE.md',
         'workflows/governed-sdd/tasks/TASK_BLUEPRINT.md',
-        'workflows/lean-delivery/.codex/rules/meridian.rules',
+        'workflows/lean-delivery/.codex/rules/cardine.rules',
         'workflows/lean-delivery/AGENTS.md',
         'workflows/lean-delivery/CLAUDE.md',
         'workflows/lean-delivery/LANGUAGE_POLICY.md',

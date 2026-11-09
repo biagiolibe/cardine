@@ -181,7 +181,7 @@ class SyntheticUpgradeFixtureMixin(CardineCliFixtureMixin):
 
     def _assert_upgrade_installs_closure_command_policy(self, mode: str) -> None:
         workflow = self.framework / "templates/single"
-        relative = ".codex/rules/meridian.rules"
+        relative = ".codex/rules/cardine.rules"
         current = (workflow / relative).read_text(encoding="utf-8")
         previous = re.sub(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", "\n", current, flags=re.DOTALL)
         self.assertNotEqual(previous, current)
