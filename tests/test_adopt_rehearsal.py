@@ -90,7 +90,7 @@ class RehearsalTest(unittest.TestCase):
     def test_tampered_copy_blocks_apply(self):
         from cardine.adopt.verify import verify_adoption
         def tamper(root, framework, expected, *, env):
-            (root / '.codex/rules/meridian.rules').write_text('tampered')
+            (root / '.codex/rules/cardine.rules').write_text('tampered')
             return verify_adoption(root, framework, expected, env=env)
         before = tree_digest(self.root)
         with patch.object(receipts, 'host_path', side_effect=self.host_path), \

@@ -37,17 +37,17 @@ class CodexRulesUpgradeTest(unittest.TestCase):
                 destination = self.project / path.relative_to(source)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(path, destination)
-        self.rules = source / ".codex/rules/meridian.rules"
+        self.rules = source / ".codex/rules/cardine.rules"
         self.rules_text = self.rules.read_text(encoding="utf-8")
         (self.framework / "VERSION").write_text("1.1.37\n", encoding="utf-8")
         self.assertEqual(self.run_cli("lock", "--mode", "single").returncode, 0)
         # A 1.1.37 consumer predates task 040. Remove the new file from both
         # its live tree and recorded baseline while keeping the current
         # framework template intact as the incoming 1.1.38 source.
-        (self.project / ".codex/rules/meridian.rules").unlink()
+        (self.project / ".codex/rules/cardine.rules").unlink()
         (
             self.project
-            / ".cardine/baselines/1.1.37/.codex/rules/meridian.rules"
+            / ".cardine/baselines/1.1.37/.codex/rules/cardine.rules"
         ).unlink()
         (self.project / ".codex/rules").rmdir()
         (self.project / ".codex").rmdir()
@@ -77,23 +77,23 @@ class CodexRulesUpgradeTest(unittest.TestCase):
         self.assertFalse((self.project / ".codex").exists())
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertIn("ADD      .codex/rules/meridian.rules — new managed file", checked.stdout)
+        self.assertIn("ADD      .codex/rules/cardine.rules — new managed file", checked.stdout)
 
         applied = self.run_cli("upgrade", "--apply")
         self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
         self.assertEqual(
-            (self.project / ".codex/rules/meridian.rules").read_text(encoding="utf-8"),
+            (self.project / ".codex/rules/cardine.rules").read_text(encoding="utf-8"),
             self.rules_text,
         )
 
     def test_upgrade_conflicts_without_overwriting_locally_precreated_rules(self) -> None:
-        local = self.project / ".codex/rules/meridian.rules"
+        local = self.project / ".codex/rules/cardine.rules"
         local.parent.mkdir(parents=True, exist_ok=True)
         local.write_text("prefix_rule(pattern=[\"echo\"], decision=\"allow\")\n", encoding="utf-8")
 
         checked = self.run_cli("upgrade", "--check")
         self.assertNotEqual(checked.returncode, 0)
-        self.assertIn("CONFLICT .codex/rules/meridian.rules — managed baseline is missing", checked.stdout)
+        self.assertIn("CONFLICT .codex/rules/cardine.rules — managed baseline is missing", checked.stdout)
         self.assertEqual(local.read_text(encoding="utf-8"), "prefix_rule(pattern=[\"echo\"], decision=\"allow\")\n")
 
 

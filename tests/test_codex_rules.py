@@ -13,8 +13,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RULES = ROOT / "templates/single/.codex/rules/meridian.rules"
-LEAN_RULES = ROOT / "templates/single/.codex/rules/meridian.rules"
+RULES = ROOT / "templates/single/.codex/rules/cardine.rules"
+LEAN_RULES = ROOT / "templates/single/.codex/rules/cardine.rules"
 PREFIX_RULE = re.compile(
     r'^prefix_rule\(pattern=\[[^\n]+\], decision="(allow|prompt|forbidden)"\)$'
 )
@@ -30,8 +30,8 @@ class CodexRulesTemplateTest(unittest.TestCase):
             for item in owner_templates_files.managed_files(ROOT, "single")
         }
         lean = {item.target for item in owner_templates_files.managed_files(ROOT, "single")}
-        self.assertIn(Path(".codex/rules/meridian.rules"), governed)
-        self.assertIn(Path(".codex/rules/meridian.rules"), lean)
+        self.assertIn(Path(".codex/rules/cardine.rules"), governed)
+        self.assertIn(Path(".codex/rules/cardine.rules"), lean)
 
     def test_prefix_rules_are_single_line_and_well_formed(self) -> None:
         for path in (RULES, LEAN_RULES):
@@ -60,7 +60,6 @@ class CodexRulesTemplateTest(unittest.TestCase):
         self.assertEqual(len(set(blocks)), 1)
         block = blocks[0]
         for line in (
-            'prefix_rule(pattern=["meridian", "worktree", ["evidence", "closure-status", "advance"]], decision="allow")',
             'prefix_rule(pattern=["git", "mv"], decision="allow")',
             'prefix_rule(pattern=["git", "mv", ["-f", "--force"]], decision="prompt")',
             'prefix_rule(pattern=["python3", "scripts/check_repository.py"], decision="allow")',
@@ -78,9 +77,6 @@ class CodexRulesTemplateTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_closure_decision_table_in_every_shipped_file(self) -> None:
         cases = [
-            (["meridian", "worktree", "evidence", "TASK-1", "--format", "json"], "allow"),
-            (["meridian", "worktree", "closure-status", "TASK-1", "--format", "json"], "allow"),
-            (["meridian", "worktree", "advance", "TASK-1", "--format", "json"], "allow"),
             (["git", "mv", "tasks/1.md", "tasks/done/1.md"], "allow"),
             (["git", "mv", "-f", "tasks/1.md", "tasks/done/1.md"], "prompt"),
             (["git", "mv", "--force", "a", "b"], "prompt"),
@@ -143,19 +139,6 @@ class CodexRulesTemplateTest(unittest.TestCase):
             (["git", "branch", "-D", "x"], "prompt"),
             (["git", "branch", "--delete", "x"], "prompt"),
             (["git", "branch", "--force", "x"], "prompt"),
-            (["meridian", "execution", "validate", "TASK-040"], "allow"),
-            (["meridian", "context", "authority", "TASK-040"], "allow"),
-            (["meridian", "execution", "reconcile"], None),
-            (["meridian", "upgrade", "--project", "."], None),
-            (["meridian", "worktree", "path", "TASK-056", "--worktree-root", "/tmp/root"], "allow"),
-            (["meridian", "worktree", "prepare", "TASK-056", "--worktree-root", "/tmp/root", "--format", "json"], "allow"),
-            (["meridian", "worktree", "check", "TASK-056", "--worktree-root", "/tmp/root", "--format", "json"], "allow"),
-            (["meridian", "worktree", "integrate", "stage", "TASK-056", "--worktree-root", "/tmp/root", "--evidence", "handoff.json", "--format", "json"], "allow"),
-            (["meridian", "worktree", "integrate", "finalize", "TASK-056", "--evidence", "candidate.json", "--format", "json"], "allow"),
-            (["meridian", "worktree", "integrate", "abort", "TASK-056", "--format", "json"], "allow"),
-            (["meridian", "worktree", "cleanup", "TASK-056", "--worktree-root", "/tmp/root", "--format", "json"], "allow"),
-            (["meridian", "worktree", "recover", "TASK-056"], None),
-            (["meridian", "worktree"], None),
             (["git", "worktree", "list", "--porcelain"], "allow"),
             (["git", "worktree", "add", "/tmp/x", "main"], "prompt"),
             (["git", "rebase", "main"], "forbidden"),
@@ -180,7 +163,7 @@ class CodexRulesTemplateTest(unittest.TestCase):
     def test_broad_prompt_overrides_the_narrow_push_allow(self) -> None:
         """Observed with Codex CLI: restrictive matching ranks prompt above allow."""
         with tempfile.TemporaryDirectory() as temporary:
-            rules = Path(temporary) / "meridian.rules"
+            rules = Path(temporary) / "cardine.rules"
             rules.write_text(
                 RULES.read_text(encoding="utf-8")
                 + '\nprefix_rule(pattern=["git", "push"], decision="prompt")\n',

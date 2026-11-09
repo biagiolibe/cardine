@@ -83,11 +83,11 @@ class AdoptPlanTest(unittest.TestCase):
         (self.root / 'tasks').mkdir()
         (self.root / 'tasks/QUEUE.md').write_text('{}\n')
         (self.root / '.codex/rules').mkdir(parents=True)
-        (self.root / '.codex/rules/meridian.rules').symlink_to(self.root / 'tasks/QUEUE.md')
+        (self.root / '.codex/rules/cardine.rules').symlink_to(self.root / 'tasks/QUEUE.md')
         self.commit()
         plan = plan_adopt(self.root, ROOT, **self.choices(), preset='lean', task_identity='opaque')
         self.assertIn('ADOPT_RECORD', plan.refusals)
-        self.assertEqual(plan.diagnostics, ('existing path conflicts with adoption: .codex/rules/meridian.rules',
+        self.assertEqual(plan.diagnostics, ('existing path conflicts with adoption: .codex/rules/cardine.rules',
                                             'existing path conflicts with adoption: tasks/QUEUE.md'))
 
     def test_case_a_refuses_dirty_git_project(self):

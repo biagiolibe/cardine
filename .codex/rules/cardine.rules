@@ -1,9 +1,9 @@
-# Meridian task-worktree command approval policy.
+# Cardine task-worktree command approval policy.
 #
 # Codex loads this project-local file only after the project's .codex layer is
 # trusted in ~/.codex/config.toml. An untrusted project silently ignores it.
 # Check this file's decisions with:
-#   codex execpolicy check --rules .codex/rules/meridian.rules -- git status
+#   codex execpolicy check --rules .codex/rules/cardine.rules -- git status
 # Confirm activation separately: in a trusted session, an allowed
 # command that previously prompted must run without an approval prompt.
 #
@@ -31,17 +31,8 @@ prefix_rule(pattern=["git", "worktree", ["add", "remove", "prune"]], decision="p
 # Add a resolved local rule outside this managed template, for example:
 # prefix_rule(pattern=["git", "commit", "--author=Project Reviewer-Integrator <reviewer@project.local>", "-m"], decision="allow")
 
-# Read-only and validation-only Meridian commands. State-changing commands,
-# including `upgrade`, `adopt`, `lock`, `finalize-adoption`, `generate-*`, and
-# `execution reconcile`, intentionally retain Codex's normal approval flow.
-prefix_rule(pattern=["meridian", ["context", "locations", "adr", "budget", "audit"]], decision="allow")
-prefix_rule(pattern=["meridian", "codex", ["doctor", "worktree-path"]], decision="allow")
-prefix_rule(pattern=["meridian", "worktree", ["path", "prepare", "check", "cleanup"]], decision="allow")
-prefix_rule(pattern=["meridian", "worktree", "integrate", ["stage", "finalize", "abort"]], decision="allow")
-
 # Unattended-closure additions. These rules never run or write outside what the
 # task worktree already permits; the commands they name stay inside the sandbox.
-prefix_rule(pattern=["meridian", "worktree", ["evidence", "closure-status", "advance"]], decision="allow")
 # Prefixes match leading tokens only, so `git mv` cannot be limited to the
 # `tasks/done/` destination: any move inside the worktree is allowed. Forced
 # moves, which overwrite an existing path, keep prompting.
@@ -56,7 +47,6 @@ prefix_rule(pattern=["python3", "scripts/check_repository.py"], decision="allow"
 prefix_rule(pattern=["python3", "-m", "unittest", "discover", "-s", "tests"], decision="allow")
 prefix_rule(pattern=["set", "-o", "pipefail"], decision="allow")
 prefix_rule(pattern=[["ls", "cat", "head", "tail", "wc", "pwd", "grep"]], decision="allow")
-prefix_rule(pattern=["meridian", "execution", ["start", "deliver", "validate", "ready-check", "preflight", "contract"]], decision="allow")
 
 # More restrictive matches override the broad Git rules above.
 prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease", "--delete", "--mirror"]], decision="forbidden")

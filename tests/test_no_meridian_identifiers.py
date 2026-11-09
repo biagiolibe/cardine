@@ -41,11 +41,6 @@ ALLOWLIST = (
               r'^\s*proposed, "migrate the owned ' + OLD.capitalize() + r' profile", text\)$'),
     Allowance(
         2, "9",
-        r"(?:src|capabilities)/.*",
-        OLD + r"\.rules\b",
-    ),
-    Allowance(
-        2, "9",
         r"src/.*",
         OLD + r"-(?:lean-delivery|governed-sdd)(?:-claude-code)?\b",
     ),

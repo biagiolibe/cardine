@@ -310,7 +310,7 @@
           "forms": [
             "managed-copy"
           ],
-          "path": ".codex/rules/meridian.rules"
+          "path": ".codex/rules/cardine.rules"
         }
       ],
       "selfHostingEligible": true,

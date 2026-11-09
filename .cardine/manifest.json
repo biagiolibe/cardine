@@ -155,7 +155,7 @@
   },
   "frameworkVersion": "1.4.0",
   "managedFiles": {
-    ".codex/rules/meridian.rules": "a9645a548667548a20d7ddf163d06c886f6a0198bb504e588a463d3dbc360944",
+    ".codex/rules/cardine.rules": "bcdcfd0cbda37457338f97a7b738b6a2c39322f516e1d315e9edb039d778cbf3",
     "AGENTS.md": "d1eec58f259d07f9c618db29e7df29570bc658359d575a82bdf18b65dd3c53d8",
     "CLAUDE.md": "f5bbd2643f6f4673034605526086ab13572dad3108aa93f33c862bdf43622d7e",
     "LANGUAGE_POLICY.md": "306ca679c116aaf1e6bb8aec61e449c582b1b9717a9b0f879678fc460a3547f1",

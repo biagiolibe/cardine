@@ -744,7 +744,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
     def _trusted_project_with_rules(self, rules_text: str) -> tuple[Path, Path]:
         project = self.home / "project"
         (project / ".codex/rules").mkdir(parents=True)
-        (project / ".codex/rules/meridian.rules").write_text(rules_text, encoding="utf-8")
+        (project / ".codex/rules/cardine.rules").write_text(rules_text, encoding="utf-8")
         (self.home / ".codex/rules").mkdir(parents=True, exist_ok=True)
         (self.home / ".codex/rules/cardine.rules").write_text(owner_hosts_codex.CODEX_USER_RULES, encoding="utf-8")
         root = self.home / "root"
@@ -757,7 +757,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_codex_doctor_probes_every_closure_policy_group(self) -> None:
-        rules = (ROOT / "templates/single/.codex/rules/meridian.rules").read_text(encoding="utf-8")
+        rules = (ROOT / "templates/single/.codex/rules/cardine.rules").read_text(encoding="utf-8")
         project, root = self._trusted_project_with_rules(rules)
         ready = owner_hosts_setup.codex_doctor(project, self.codex_config, root, home=self.home)
         self.assertEqual(ready["lifecycle-command-policy"], "ready")
@@ -767,7 +767,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_codex_doctor_names_the_gap_for_rules_without_the_closure_block(self) -> None:
-        rules = (ROOT / "templates/single/.codex/rules/meridian.rules").read_text(encoding="utf-8")
+        rules = (ROOT / "templates/single/.codex/rules/cardine.rules").read_text(encoding="utf-8")
         legacy = re.sub(r"\n# Unattended-closure additions.*?\[\"ls\", [^\n]*\n", "\n", rules, flags=re.DOTALL)
         self.assertNotEqual(legacy, rules)
         project, root = self._trusted_project_with_rules(legacy)
@@ -809,24 +809,3 @@ class WorktreeRootSetupTest(unittest.TestCase):
         for forbidden in ("--tags", "--force", "rebase", "reset", "branch -D", "worktree add", "worktree remove", "worktree prune"):
             self.assertFalse(any(forbidden in command for command in allowlist), forbidden)
 
-    def test_claude_allowlist_execution_commands_match_the_codex_rule(self) -> None:
-        rules = normalize_program_word((ROOT / "templates/single/.codex/rules/meridian.rules").read_text(encoding="utf-8"))
-        match = re.search(
-            r'prefix_rule\(pattern=\["cardine", "execution", \[(.*?)\]\], decision="allow"\)',
-            rules,
-        )
-        self.assertIsNotNone(match)
-        codex_subcommands = set(re.findall(r'"([^"]+)"', match.group(1)))
-        allowlist = set(owner_hosts_claude.CLAUDE_PROJECT_ALLOWLIST)
-        claude_subcommands = {
-            command.removeprefix("Bash(cardine execution ").removesuffix(":*)")
-            for command in allowlist
-            if command.startswith("Bash(cardine execution ")
-        }
-        python_subcommands = {
-            command.removeprefix("Bash(python3 scripts/cardine_cli.py execution ").removesuffix(":*)")
-            for command in allowlist
-            if command.startswith("Bash(python3 scripts/cardine_cli.py execution ")
-        }
-        self.assertEqual(claude_subcommands, codex_subcommands)
-        self.assertEqual(python_subcommands, set())

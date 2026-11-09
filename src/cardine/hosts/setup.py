@@ -752,7 +752,7 @@ def codex_doctor(
     home = (home or Path.home()).expanduser().resolve()
     # The installed combined policy: the user layer plus any legacy project layer.
     rules = tuple(
-        path for path in (home / ".codex/rules/cardine.rules", project_root / ".codex/rules/meridian.rules")
+        path for path in (home / ".codex/rules/cardine.rules", project_root / ".codex/rules/cardine.rules")
         if path.is_file()
     )
     result["command-policy"] = "ready" if rules and trusted else ("approval-required" if rules else "blocked")
@@ -953,7 +953,7 @@ def role_launch_states(host: str, project_root: Path, worktree_root: Path, home:
         else:
             role_file = role_rules_path(home / ".codex", role)
             layers = tuple(path for path in (role_file, home / ".codex/rules/cardine.rules",
-                                             project_root / ".codex/rules/meridian.rules") if path.is_file())
+                                             project_root / ".codex/rules/cardine.rules") if path.is_file())
             if not role_file.is_file():
                 states[key] = "approval-required: role rules not installed"
             elif not executable:
