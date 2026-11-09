@@ -1,0 +1,99 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_host_permissions.py",
+      "tests/test_cli_install.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/222.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 222 \u2014 Stop redelivering rejected work and repair the failing suite",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_required_review --module test_run_delivery --module test_run_delivery_disposable --module test_run_receipts --module test_host_permissions --module test_cli_install --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "e26301d89519d8cb6157bbbaa315b30f29219beca0597adc475bbbb551c9f356",
+        "digest": "1f611de88e63bba9db84e38878c7bb4aaa65660619d74f97bba368b753cc9edf",
+        "inputs": {
+          ".cardine/tasks/222.json": null,
+          "tasks/222.md": null
+        },
+        "kind": "creation",
+        "operation_id": "e00120aefa23447cae093ad369d5c1ce",
+        "outputs": {
+          ".cardine/tasks/222.json": "8389a4618116505e398957ad6d51a5abc3a51c6092db1cc22ab545f2ddec0dae",
+          "tasks/222.md": "2568b5658981e7d58cf94ee82dea91b56c9f7f5a79cbd266a5bbf6ee89d04fbc"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "123299d1225e39cfd5586954605dbda28e9867ff",
+        "task_id": "222",
+        "tree": "a9e59a9091809a2eb74a64a95e942d2bf3bee9b7",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "222",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
