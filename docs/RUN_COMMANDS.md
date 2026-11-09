@@ -15,8 +15,8 @@ is not a template: no installed router or role read set includes it.
 | `cardine cancel <TASK-ID> --reason <text> [--project <path>]` | Record a terminal cancelled state. It deletes no work and satisfies no dependency. |
 | `cardine abort <TASK-ID> [--project <path>]` | Restore only the caller-owned integration candidate and lease. The task stays resumable. |
 
-`cardine console [--project <path>] [--interval <seconds>]` is Experimental. It
-renders the same verified facts as `run` and never executes a step.
+`cardine console [--project <path>] [--interval <seconds>]` is experimental.
+It displays project state and can launch agents to run task actions.
 
 Pass `--project` as either checkout of the repository. The command resolves the
 primary checkout and the canonical task worktree itself, so every emitted
@@ -45,7 +45,9 @@ Both presets (`lean` and `governed`) use the same steps.
 
 | Outcome | Exit status | Meaning |
 | --- | --- | --- |
-| `progress`, `next`, `done` | 0 | A step advanced, or the task is landed (`done` has no `next`). |
+| `progress` | 0 | A step advanced; continue with `next`. |
+| `next` | 0 | Another command or agent work is needed. |
+| `done` | 0 | The task is landed; there is no `next`. |
 | `waiting` | 0 | A check is pending. Rerun `next` after `retry_after_seconds`. |
 | `iterate` | 0 | Failing work. Fix it in the same turn using `work` and the diagnostics, then rerun `next`. |
 | `blocked` | 2 | A guardrail needs a human decision. `stop` names the code; stderr carries one `BLOCKED <CODE>: ...; resume: ...` line. |
