@@ -258,6 +258,41 @@ else: finalize_task_integration('056', None, root)
             self.assertIsNone(run_integration_step(locations))
             landing.return_value.prepare_candidate.assert_not_called()
 
+    def test_prepare_waits_when_another_task_wins_the_lease(self):
+        self.ready()
+        from cardine.lifecycle.engine import run_integration_step
+        from cardine.stops.render import stop_error
+        locations = candidate.locations_for('056', self.primary)
+        _, lease, _ = self.paths()
+        own = json.loads(lease.read_bytes())
+        foreign = dict(own, task_id='999', branch='task-999')
+        merge.abort_task_integration('056', self.primary)
+
+        def prepare_with(value, code='LEASE_HELD'):
+            def prepare(*args):
+                if value is not None:
+                    lease.write_text(json.dumps(value))
+                raise stop_error(code, 'lost')
+            return prepare
+
+        with mock.patch('cardine.integration.landing.landing_for') as landing:
+            for value in (foreign, None):
+                landing.return_value.prepare_candidate.side_effect = prepare_with(value)
+                result = run_integration_step(locations, prepare=True)
+                self.assertEqual((result['outcome'], result['action'], result['step'], result['retry_after_seconds']),
+                                 ('waiting', 'wait-for-lease', 'candidate', 5))
+                lease.unlink(missing_ok=True)
+            for value in ({'task_id': '999'}, own):
+                landing.return_value.prepare_candidate.side_effect = prepare_with(value)
+                with self.assertRaises(CardineStop) as raised:
+                    run_integration_step(locations, prepare=True)
+                self.assertEqual(raised.exception.code, 'LEASE_HELD')
+                lease.unlink(missing_ok=True)
+            landing.return_value.prepare_candidate.side_effect = prepare_with(None, 'COMMAND_REFUSED')
+            with self.assertRaises(CardineStop) as raised:
+                run_integration_step(locations, prepare=True)
+            self.assertEqual(raised.exception.code, 'COMMAND_REFUSED')
+
     def test_cleanup_stop_waits_only_for_a_coherent_competing_lease(self):
         self.ready()
         from cardine.lifecycle.engine import dispatch_run
