@@ -81,6 +81,9 @@ class TemplateCommandTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "repository"
             shutil.copytree(ROOT / "templates", root / "templates")
+            for name in cr.DOCUMENT_COMMAND_FILES:
+                (root / name).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, root / name)
             target = root / "templates/single/docs/CONTEXT_READING_POLICY.md"
             cr.check_template_commands(root)  # unchanged templates pass
             target.write_text(target.read_text(encoding="utf-8") + "\nRun `cardine frobnicate`.\n", encoding="utf-8")

@@ -11,7 +11,6 @@ import shutil
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import cardine_cli  # noqa: E402
 from cardine.templates import audit as owner_templates_audit
 from cardine.templates import markers as templates_markers
 
@@ -38,7 +37,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
             self.assertIn("Project-owned router note.", (self.project / name).read_text())
 
     def test_upgrade_check_reports_retired_text_without_writes_or_exit_change(self) -> None:
-        (self.framework / "VERSION").write_text(cardine_cli.read_version(ROOT) + "\n", encoding="utf-8")
+        (self.framework / "VERSION").write_text("1.4.0\n", encoding="utf-8")
         locked = self.run_cli("lock", "--mode", "single")
         self.assertEqual(locked.returncode, 0, locked.stdout + locked.stderr)
         baseline = self.run_cli("upgrade", "--check")
