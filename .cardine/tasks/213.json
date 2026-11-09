@@ -9,8 +9,7 @@
       "215"
     ],
     "expectedCodeSurface": [
-      ".github/workflows/validate.yml",
-      ".cardine/project.json"
+      ".github/workflows/validate.yml"
     ],
     "hostImpact": {
       "classification": null,
@@ -31,6 +30,10 @@
     "priority": "\ud83d\udd34 P1",
     "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
     "recordPath": "tasks/213.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
     "title": "Task 213 \u2014 Make CI a real gate before landing",
     "validation": {
       "baseline": [
@@ -70,6 +73,15 @@
         "expectedCodeSurface",
         "title",
         "validation"
+      ]
+    },
+    {
+      "after": "sha256:1bc692e4aab8590dad82cec3dd28d56b743833ca31dacf816bd31bf7a3cccff6",
+      "at": "2026-11-09T00:37:36.459171Z",
+      "before": "sha256:5127aa7144e4f2b60e206a4c92d70524c9e1d13ac2b56c47a72a18490af5b1f9",
+      "changedFields": [
+        "expectedCodeSurface",
+        "taskValidation"
       ]
     }
   ],
@@ -144,6 +156,30 @@
         "source": "fcea49c3d5dd37845c79cabf2a87d0494e89d288",
         "task_id": "213",
         "tree": "7dea422f22dae768b7c03f27984318742b231f5e",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "1af66ccc9ae7d308e58a5ee7a23f8fdd4e437c6a2f6e7dbecf0b86d8a70eb851",
+        "digest": "23e07bce0dc239ebd51fe387d56fbad34eb318792e6aea726524f434f4e8649c",
+        "inputs": {
+          ".cardine/tasks/213.json": "0caaf4b124b267e8b8e35996d67f2083dbef4daf09dd057b00e081f79f3528ad",
+          "tasks/213.md": "16e93f467ee516ad4f8cba3cd85cb54f0787d2fc27c981ff4b6ce4a47abd3d26"
+        },
+        "kind": "contract_revision",
+        "operation_id": "f809bfa6e0a348ffbb88647df9e5c47c",
+        "outputs": {
+          ".cardine/tasks/213.json": "4d995f323c50e6f114dc3e6abf7a7cf8c90a8a012a2249cd71f05b775c9e1c35",
+          "tasks/213.md": "16e93f467ee516ad4f8cba3cd85cb54f0787d2fc27c981ff4b6ce4a47abd3d26"
+        },
+        "predecessor": "cb067a6130e3a4c2056c3c35043ac68ea30bc8ba3de53b345b9d71bb68573be4",
+        "result": "verified",
+        "source": "fc239d8462436e4e4de6a5e0d63f9fd3965ee2f7",
+        "task_id": "213",
+        "tree": "7ea116ee83af92e905d01e42515ecd91b13d3bb2",
         "version": 1
       }
     ]
