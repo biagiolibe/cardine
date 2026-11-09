@@ -104,7 +104,7 @@ class RetiredTextAdvisoryTest(unittest.TestCase):
                 path = project / relative_path
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("\n".join(entry["phrases"]), encoding="utf-8")
-            self.assertEqual(owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": "1.2.8"}), [])
+            self.assertEqual(owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": "0.8.9"}), [])
             for version in ("1.2.9", "1.2.12"):
                 rows = owner_templates_audit.retired_text_advisories(project, ROOT, {"frameworkVersion": version})
                 self.assertEqual(len(rows), len(entry["files"]) * len(entry["phrases"]))

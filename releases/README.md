@@ -1,4 +1,4 @@
-# Meridian Release Ledger
+# Cardine Release Ledger
 
 Each `releases/<version>.json` file is an append-only record of one framework
 release, starting with the first release cut after this ledger was introduced

@@ -3,7 +3,7 @@
   "retirements": [
     {
       "capability": "reasoning-budget-contract",
-      "retiredIn": "1.2.9",
+      "retiredIn": "0.9.0",
       "phrases": [
         "fresh session at the declared value",
         "effective setting equals the task's",
