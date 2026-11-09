@@ -189,8 +189,107 @@
         "task_id": "231",
         "tree": "d2b5773d966b64c4aee8f9b3cfa35d34f170b839",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "636362333357220d233e4389e3f55fcce6271703666fb46eec840b4548a1d821",
+        "digest": "f22a3db46861a582c06e416499180cb1db414e65af8b0a67a9bdc318d99b8ffb",
+        "inputs": {
+          ".cardine/evidence/231.json": null,
+          ".cardine/tasks/231.json": "ecef09285f855518e410d94957d47ddd289db0b82e7cde7c0ad4f6c2cb9551f5",
+          "tasks/handoffs/231.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "84c8beda22354655977a795649db45c3",
+        "outputs": {
+          ".cardine/evidence/231.json": "785715ef9e64955d7821c15777535150b29805f49ea9241ef594738ee1267ad1",
+          ".cardine/tasks/231.json": "33db305ff4303987d177ebce92eac337be16b25a2e7ebb59fc153ddac3d41f53",
+          "tasks/handoffs/231.md": "71caeae79c845734d71cd03cc7aa3c5c40c9177e5d3e3adac42ec4da8857f95b"
+        },
+        "predecessor": "3b4c6651d0352d9432d366621844ca35fb703bda16d0d9ca538d4a9d0066a5e6",
+        "result": "verified",
+        "source": "8a4c547ecf82aa9f35578d85276c553253a146b6",
+        "task_id": "231",
+        "tree": "5157f88aa1d56397d5baba4e145700d7d11954cf",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "1b159b9c5d5443918c630ef3d7976408",
+      "consecutiveFailures": 0,
+      "evidence": ".cardine/evidence/231.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "42b58dfe8914c844a3f13e265683d019812bc0dc3929c55e536b5a2ccc20d052",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_release --module test_prepare_release --module test_release_self_check --module test_console_snapshot --module test_update_repeatability --module test_template_manifest --module test_cli_startup --module test_check_repository --module test_init --module test_cardine_manifest_protocol --module test_synthetic_upgrade --module test_upgrade_repeatability --module test_template_retirement --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "636362333357220d233e4389e3f55fcce6271703666fb46eec840b4548a1d821",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-231",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "6bd09c6e2f191491fe3b90f4f11b9ffca0d52edc",
+        "sourceDigest": "66716295300ddb3a1ad28a97d4ae2ada86c1be9a13baef39bbe1a6f95a3ebb78",
+        "sourceTree": "d2b5773d966b64c4aee8f9b3cfa35d34f170b839"
+      },
+      "intermittent": [],
+      "lastFailed": [],
+      "phase": "passed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "1b159b9c5d5443918c630ef3d7976408",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "8a4c547ecf82aa9f35578d85276c553253a146b6",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/231.json#1b159b9c5d5443918c630ef3d7976408/1/repository-check",
+            "round": 1,
+            "sourceDigest": "66716295300ddb3a1ad28a97d4ae2ada86c1be9a13baef39bbe1a6f95a3ebb78",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "1b159b9c5d5443918c630ef3d7976408",
+            "command": "python3 scripts/run_tests.py --parallel --module test_release --module test_prepare_release --module test_release_self_check --module test_console_snapshot --module test_update_repeatability --module test_template_manifest --module test_cli_startup --module test_check_repository --module test_init --module test_cardine_manifest_protocol --module test_synthetic_upgrade --module test_upgrade_repeatability --module test_template_retirement --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "8a4c547ecf82aa9f35578d85276c553253a146b6",
+            "exitStatus": 0,
+            "id": "task-tests",
+            "log": ".cardine/evidence/231.json#1b159b9c5d5443918c630ef3d7976408/1/task-tests",
+            "round": 1,
+            "sourceDigest": "66716295300ddb3a1ad28a97d4ae2ada86c1be9a13baef39bbe1a6f95a3ebb78",
+            "stderr": "run_tests: 377 tests in 8 shards\nrun_tests: shard 2/8 finished in 42.4s: exit 0 ran=47 failures=0 errors=0\nrun_tests: shard 7/8 finished in 58.4s: exit 0 ran=47 failures=0 errors=0\nrun_tests: shard 3/8 finished in 63.0s: exit 0 ran=47 failures=0 errors=0\nrun_tests: shard 1/8 finished in 65.0s: exit 0 ran=48 failures=0 errors=0\nrun_tests: shard 5/8 finished in 68.9s: exit 0 ran=47 failures=0 errors=0\nrun_tests: shard 4/8 finished in 69.0s: exit 0 ran=47 failures=0 errors=0\nrun_tests: shard 8/8 finished in 103.9s: exit 0 ran=47 failures=0 errors=0\nrun_tests: shard 6/8 finished in 110.1s: exit 0 ran=47 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "PARTIAL selection=module:test_release,test_prepare_release,test_release_self_check,test_console_snapshot,test_update_repeatability,test_template_manifest,test_cli_startup,test_check_repository,test_init,test_cardine_manifest_protocol,test_synthetic_upgrade,test_upgrade_repeatability,test_template_retirement,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=377 total=2164 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "1b159b9c5d5443918c630ef3d7976408",
+            "command": "git diff --check",
+            "commit": "8a4c547ecf82aa9f35578d85276c553253a146b6",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/231.json#1b159b9c5d5443918c630ef3d7976408/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "66716295300ddb3a1ad28a97d4ae2ada86c1be9a13baef39bbe1a6f95a3ebb78",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "231",
