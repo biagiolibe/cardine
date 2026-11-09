@@ -5,16 +5,14 @@ on:
   push:
     branches:
       - main
+      - task-*
 
 concurrency:
   group: validate-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   validate:
-    # A signal on Linux only: tasks validate locally and in a clean clone, and
-    # the release workflow gates on Linux and macOS.
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
