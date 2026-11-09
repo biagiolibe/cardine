@@ -1,0 +1,99 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": "none",
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/stops/causes.py",
+      "tests/test_run_integration.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": false,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:e73ea9efef71ae6670f09bc5dcc6c99c6299fd57074d3839f0670090632cfa2b",
+    "recordPath": "tasks/233.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 233 \u2014 Wait when another task wins the integration lease",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_integration --module test_run_preparation --module test_run_recovery --module test_run_receipts --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "e31e3775ddf445f167757d5a27a796b2cc805e61",
+          "policy": "1c2c6ebf34bbbef8462bed2af1f7d9301e3f97f0f0a487a54f862df6492cce00"
+        },
+        "contract_digest": "e8ce37238b16444550071d0bbc5cb6b81fac20dd0fcaaacc10e7ead9fb8d8f07",
+        "digest": "af6b74526a9b9ceeddfa29bc07b670c3ea9cca56ecc3f60b6a5d5b3cac2ca740",
+        "inputs": {
+          ".cardine/tasks/233.json": null,
+          "tasks/233.md": null
+        },
+        "kind": "creation",
+        "operation_id": "0eff0041c5bf43d88bc759c0595562e2",
+        "outputs": {
+          ".cardine/tasks/233.json": "24a8a1a61eb80f15d97cbdafcc629f527acbee862a73b646933c2a1e17315988",
+          "tasks/233.md": "26095a81595b315b6148e85b3788be43f10a84cc4ed3a220890e2a9ec6ab0dbf"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "ea500f52c61a677393114148a6b10c6122e101fa",
+        "task_id": "233",
+        "tree": "9192acfc7d2ae20f577d55dd81416c3db1b330b5",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "233",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
