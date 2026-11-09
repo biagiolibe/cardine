@@ -156,6 +156,11 @@ def check_template_budgets(root: Path = ROOT) -> None:
 
 COMMAND_SPAN = re.compile(r'`cardine\s+([^`]*)`|"cardine\s+([^"]*)"')
 COMMAND_WORD = re.compile(r"[a-z][a-z-]*")
+DOCUMENT_COMMAND_FILES = (
+    "README.md", "docs/QUICKSTART.md", "docs/AGENT_OPERATIONS.md",
+    "docs/RUN_COMMANDS.md", "docs/HOW_TO_UPGRADE.md", "docs/ADOPT_COMMANDS.md",
+    "skills/cardine-delivery/SKILL.md", "skills/cardine-project/SKILL.md",
+)
 
 
 def command_tree(parser: argparse.ArgumentParser) -> dict[str, dict]:
@@ -193,9 +198,38 @@ def unknown_template_commands(templates: Path, tree: dict[str, dict]) -> list[st
     return findings
 
 
+def unknown_document_commands(root: Path, tree: dict[str, dict]) -> list[str]:
+    """Check command paths in fenced bash examples without executing them."""
+    findings = []
+    for name in DOCUMENT_COMMAND_FILES:
+        fence = None
+        for line_number, line in enumerate((root / name).read_text(encoding="utf-8").splitlines(), 1):
+            if re.match(r"^\s*```", line):
+                if fence is not None:
+                    fence = None
+                else:
+                    fence = bool(re.match(r"^\s*```bash\s*$", line))
+                continue
+            if fence is not True:
+                continue
+            for match in re.finditer(r"(?:^|[;&|])\s*cardine\s+([^;&|#]*)", line):
+                node, words = tree, []
+                for token in match.group(1).split():
+                    if not COMMAND_WORD.fullmatch(token) or not node:
+                        break
+                    words.append(token)
+                    if token not in node:
+                        findings.append(f"{name}:{line_number}: unknown command `cardine {' '.join(words)}`")
+                        break
+                    node = node[token]
+    return findings
+
+
 def check_template_commands(root: Path = ROOT) -> None:
     """Fail on a template command that the argparse tree does not define."""
-    findings = unknown_template_commands(single_template_root(root), command_tree(cardine_cli.build_parser()))
+    tree = command_tree(cardine_cli.build_parser())
+    findings = unknown_template_commands(single_template_root(root), tree)
+    findings += unknown_document_commands(root, tree)
     if findings:
         fail("template names a command the CLI lacks: " + "; ".join(findings))
 

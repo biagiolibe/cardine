@@ -39,6 +39,36 @@ class RepositoryCheckTest(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
 
 
+class DocumentCommandsTest(RepositoryCheckTest):
+    def test_fenced_bash_commands_use_parser_paths(self) -> None:
+        for name in cr.DOCUMENT_COMMAND_FILES:
+            self.write(name, "")
+        self.write("README.md", """Prose: cardine nonexistent
+```text
+cardine nonexistent
+```
+```bash
+# cardine nonexistent
+cardine task new <ID> --quick
+cardine review verdict <ID> APPROVE
+cardine task invented <ID>
+cardine missing
+```
+""")
+        tree = cr.command_tree(cr.cardine_cli.build_parser())
+        self.assertEqual(cr.unknown_document_commands(self.root, tree), [
+            "README.md:9: unknown command `cardine task invented`",
+            "README.md:10: unknown command `cardine missing`",
+        ])
+
+    def test_every_selected_document_is_scanned(self) -> None:
+        for name in cr.DOCUMENT_COMMAND_FILES:
+            self.write(name, "```bash\ncardine nonexistent <ID>\n```\n")
+        findings = cr.unknown_document_commands(self.root, cr.command_tree(cr.cardine_cli.build_parser()))
+        self.assertEqual(findings, [f"{name}:2: unknown command `cardine nonexistent`"
+                                    for name in cr.DOCUMENT_COMMAND_FILES])
+
+
 class LocalMarkdownLinksTest(RepositoryCheckTest):
     def test_queue_link_to_archived_record_is_informational(self) -> None:
         self.write("tasks/QUEUE.md", "[Task](220-example.md#objective)")
