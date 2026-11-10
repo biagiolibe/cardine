@@ -21,7 +21,8 @@
       "src/cardine/hosts/setup.py",
       "README.md",
       "tests/test_template_commands.py",
-      "tests/test_host_doctor.py"
+      "tests/test_host_doctor.py",
+      "tests/test_template_router.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -74,12 +75,45 @@
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_template_router --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:da85a930f7abe3b970399ddcbaabb310136c7255c275665ca4476687612bccc8",
+      "at": "2026-11-10T10:40:32.257342Z",
+      "before": "sha256:40e9bb8fbf422d1535a38ddd5c33eef2286bed50495127523ebd4845f5690000",
+      "changedFields": [
+        "expectedCodeSurface",
+        "validation"
+      ]
+    }
+  ],
   "run": {
+    "ci": {
+      "binding": {
+        "attempt": 1,
+        "checks": [
+          "validate"
+        ],
+        "contract": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
+        "head": "32b9d5f384b40594df3fc0e94db5dcdbb774751d",
+        "origin": "https://github.com/biagiolibe/cardine.git",
+        "provider": "github",
+        "ref": "refs/heads/task-236",
+        "repository": "github.com/biagiolibe/cardine",
+        "task_id": "236"
+      },
+      "checks": [],
+      "phase": "pushed",
+      "push": {
+        "owned": true,
+        "ref": "refs/heads/task-236",
+        "sha": "32b9d5f384b40594df3fc0e94db5dcdbb774751d"
+      }
+    },
     "delivery": {
       "base": "1518e9561eccd5956b36e4965b5c4c001a48b159",
       "contractDigest": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
@@ -204,12 +238,84 @@
         "task_id": "236",
         "tree": "30e6f6bd9940ddd9a3c54fff08fe7a69a09a1160",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
+        "digest": "5146bfd4226c1980b40847616c7a54e48965344dad122c4dbf315b924f81597b",
+        "inputs": {
+          ".cardine/evidence/236.json": "2e62bb0f36dbc0952b7976148252c2f998e1a7a96951c9cc515195b03e9231e0",
+          ".cardine/tasks/236.json": "1a377c602b20b1044f3b13309ee460a5d99eb78b65adde508193ce2f9306e2b7",
+          "tasks/handoffs/236.md": "33ae196054bc202fc246cd161764a51ad6247bb49424c73196e41685d3807eb9"
+        },
+        "kind": "task-validation",
+        "operation_id": "b55da6ba5dd0440ca088dd97cf9cf99a",
+        "outputs": {
+          ".cardine/evidence/236.json": "cbdef6f3b3aa9ab51c005d5ec290bb69d9a8b46db8bd9a6d370a38e4f8c90859",
+          ".cardine/tasks/236.json": "6de4a3565341ca726e84ec0a34a0f4c16b1e89e206d5eea5de01a7e7b33a9fa8",
+          "tasks/handoffs/236.md": "2479f2c2827f95f29583e4ce77f5b6c69b2e8acf936b7718cb29ca333a41dfd9"
+        },
+        "predecessor": "3fbe76eb36a3c309de2e4293bb33c650c43ca87ddb2304409ef7e7add86b2f6d",
+        "result": "verified",
+        "source": "deef261903bfd0b067cd1b7b4e8d19bb9c526669",
+        "task_id": "236",
+        "tree": "5216d20be5889badd9073b954847dfc1b8afb4b2",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
+        "digest": "9f303c06b4bb7194366a69855bc1fabf1fbcc446faf9eac264a044cd2c5e7856",
+        "inputs": {
+          ".cardine/tasks/236.json": "f170d2080438e20caaccd2b0cb05f5fcf3f5c89b1a36fefdd473cddc0128b9fa"
+        },
+        "kind": "ci-push",
+        "operation_id": "d866f2047bae4303abb700055b05dd85",
+        "outputs": {
+          ".cardine/tasks/236.json": "824a75c67a8d363deca3714168828c72b8b5969544ea179ebad63abcc006e72b"
+        },
+        "predecessor": "5146bfd4226c1980b40847616c7a54e48965344dad122c4dbf315b924f81597b",
+        "result": "verified",
+        "source": "deef261903bfd0b067cd1b7b4e8d19bb9c526669",
+        "task_id": "236",
+        "tree": "5216d20be5889badd9073b954847dfc1b8afb4b2",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "96bed5c852463a26b5ffd2d327ec0c0ee77b4d998348c0df195b708a218b6c3b",
+        "digest": "63a213673e51f6c31745c2a2dbc2b1a899a35d10412e785197daf1e207c9b39e",
+        "inputs": {
+          ".cardine/tasks/236.json": "945efa9b310c75303b37ff61a2555759ad0ddad5e6e4be177d49cb4c547769f7",
+          "tasks/236.md": "a2b0c92f4507621113a2dc602801184d6024628713e428ff85fbab2c97e67ff2"
+        },
+        "kind": "contract_revision",
+        "operation_id": "627b96c574914c39a31ed52bb3fb9642",
+        "outputs": {
+          ".cardine/tasks/236.json": "da04bab606ec47108dbf24caa9a5b4be8a9bae59413e1cdab4baf6919f1b00bc",
+          "tasks/236.md": "a2b0c92f4507621113a2dc602801184d6024628713e428ff85fbab2c97e67ff2"
+        },
+        "predecessor": "9f303c06b4bb7194366a69855bc1fabf1fbcc446faf9eac264a044cd2c5e7856",
+        "result": "verified",
+        "source": "deef261903bfd0b067cd1b7b4e8d19bb9c526669",
+        "task_id": "236",
+        "tree": "5216d20be5889badd9073b954847dfc1b8afb4b2",
+        "version": 1
       }
     ],
     "validation": {
       "acceptanceReferences": [],
-      "attemptId": "44250e85a40540f589b94e7b8a80161a",
-      "consecutiveFailures": 1,
+      "attemptId": "fd51dd55499d4b7b89e22ffdb211c2bf",
+      "consecutiveFailures": 0,
       "evidence": ".cardine/evidence/236.json",
       "hostObservations": [],
       "inputs": {
@@ -223,101 +329,54 @@
         "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-236",
         "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
         "skips": [],
-        "source": "823c5973c5b16e41b52eecd4e26eaea8a05e5601",
-        "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
-        "sourceTree": "b0b64168db7fb0018b119cd38c96509f45f1875f"
+        "source": "32b9d5f384b40594df3fc0e94db5dcdbb774751d",
+        "sourceDigest": "b1dd030da04125f866543f94d760bfc60ad27d6188b01bc89489fb740ff67987",
+        "sourceTree": "30e6f6bd9940ddd9a3c54fff08fe7a69a09a1160"
       },
       "intermittent": [],
-      "lastFailed": [
-        "repository-check",
-        "task-tests"
-      ],
-      "phase": "failed",
+      "lastFailed": [],
+      "phase": "passed",
       "quickFailures": 0,
       "quickRounds": 0,
       "runs": [
         [
           {
-            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "attemptId": "fd51dd55499d4b7b89e22ffdb211c2bf",
             "command": "python3 scripts/check_repository.py",
-            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
-            "exitStatus": 1,
+            "commit": "deef261903bfd0b067cd1b7b4e8d19bb9c526669",
+            "exitStatus": 0,
             "id": "repository-check",
-            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/1/repository-check",
+            "log": ".cardine/evidence/236.json#fd51dd55499d4b7b89e22ffdb211c2bf/1/repository-check",
             "round": 1,
-            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "sourceDigest": "b1dd030da04125f866543f94d760bfc60ad27d6188b01bc89489fb740ff67987",
             "stderr": "",
             "stderrTruncated": false,
-            "stdout": "FAIL: governed-SDD mode lock is incomplete: commands/cardine-task.md\n",
+            "stdout": "Cardine repository checks passed.\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "attemptId": "fd51dd55499d4b7b89e22ffdb211c2bf",
             "command": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
-            "exitStatus": 1,
+            "commit": "deef261903bfd0b067cd1b7b4e8d19bb9c526669",
+            "exitStatus": 0,
             "id": "task-tests",
-            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/1/task-tests",
+            "log": ".cardine/evidence/236.json#fd51dd55499d4b7b89e22ffdb211c2bf/1/task-tests",
             "round": 1,
-            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
-            "stderr": "run_tests: 221 tests in 8 shards\nrun_tests: shard 5/8 finished in 33.1s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 4/8 finished in 35.0s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 3/8 finished in 35.3s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 6/8 finished in 35.5s: exit 1 ran=27 failures=1 errors=0\nrun_tests: shard 1/8 finished in 36.2s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 8/8 finished in 37.6s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 7/8 finished in 41.8s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 2/8 finished in 54.7s: exit 0 ran=28 failures=0 errors=0\n",
+            "sourceDigest": "b1dd030da04125f866543f94d760bfc60ad27d6188b01bc89489fb740ff67987",
+            "stderr": "run_tests: 221 tests in 8 shards\nrun_tests: shard 5/8 finished in 29.2s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 3/8 finished in 30.4s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 4/8 finished in 30.8s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 6/8 finished in 30.8s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 1/8 finished in 31.3s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 8/8 finished in 32.5s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 7/8 finished in 36.5s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 2/8 finished in 49.6s: exit 0 ran=28 failures=0 errors=0\n",
             "stderrTruncated": false,
-            "stdout": "--- shard 6/8 (exit 1) ---\nshard=6/8 total=221 selected=27 digest=b043f2823c62566dd61633c2597d3e53f5671531cb9f18469f69f6d9c8efe7f9\ntest_capability_catalog_is_valid_as_shipped (test_check_repository.CapabilityMarkerBaselineTest.test_capability_catalog_is_valid_as_shipped) ... ok\ntest_matching_catalog_passes (test_check_repository.CapabilityRequiredVersionsTest.test_matching_catalog_passes) ... ok\ntest_migration_in_tagged_release_ledger_passes (test_check_repository.CheckMigrationsVersionGateTest.test_migration_in_tagged_release_ledger_passes) ... ok\ntest_build_suffix_fails (test_check_repository.CheckReleasesTest.test_build_suffix_fails) ... ok\ntest_valid_ledger_passes (test_check_repository.CheckReleasesTest.test_valid_ledger_passes) ... ok\ntest_a_managed_block_naming_a_literal_location_fails_in_every_file (test_check_repository.GovernedLifecycleTextTest.test_a_managed_block_naming_a_literal_location_fails_in_every_file) ... ok\ntest_shipped_review_contract_passes (test_check_repository.GovernedReviewWorktreeContractTest.test_shipped_review_contract_passes) ... ok\ntest_untracked_file_is_ignored (test_check_repository.MachinePathTest.test_untracked_file_is_ignored) ... ok\ntest_listing_failure_fails_every_check (test_check_repository.RepositoryFilesTest.test_listing_failure_fails_every_check) ... ok\ntest_shipped_routers_pass (test_check_repository.RouterRoutesTest.test_shipped_routers_pass) ... ok\ntest_registered_text_passes_and_unrelated_uppercase_lists_are_ignored (test_check_repository.StopCodeRegistryCheckTest.test_registered_text_passes_and_unrelated_uppercase_lists_are_ignored) ... ok\ntest_verdict_proximity_does_not_exempt_a_stop (test_check_repository.StopCodeRegistryCheckTest.test_verdict_proximity_does_not_exempt_a_stop) ... ok\ntest_clean_and_dirty_resume_states_exit_zero (test_execution_boundaries.ExecutionBoundariesTest.test_clean_and_dirty_resume_states_exit_zero) ... ok\ntest_first_and_repeated_start_preserve_original_event_and_projections (test_execution_boundaries.ExecutionBoundariesTest.test_first_and_repeated_start_preserve_original_event_and_projections) ... ok\ntest_lean_review_required_spike_uses_the_same_delivery_and_verdict (test_execution_boundaries.ExecutionBoundariesTest.test_lean_review_required_spike_uses_the_same_delivery_and_verdict) ... ok\ntest_resume_preserves_history_and_requires_explicit_dirty_authorization (test_execution_boundaries.ExecutionBoundariesTest.test_resume_preserves_history_and_requires_explicit_dirty_authorization) ... ok\ntest_a_hook_that_does_not_deny_is_not_effective (test_host_doctor.HostDoctorTest.test_a_hook_that_does_not_deny_is_not_effective) ... ok\ntest_claude_role_launch_is_unsupported_and_never_inferred_from_settings (test_host_doctor.HostDoctorTest.test_claude_role_launch_is_unsupported_and_never_inferred_from_settings) ... ok\ntest_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control (test_host_doctor.HostDoctorTest.test_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control) ... ok\ntest_evidence_cannot_overwrite_another_task_from_a_task_branch (test_layout.LayoutTest.test_evidence_cannot_overwrite_another_task_from_a_task_branch) ... ok\ntest_nested_context_restores_after_exception_and_isolates_other_contexts (test_layout.LayoutTest.test_nested_context_restores_after_exception_and_isolates_other_contexts) ... ok\ntest_worktree_root_and_configuration_use_selected_names (test_layout.LayoutTest.test_worktree_root_and_configuration_use_selected_names) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... FAIL\ntest_cli_owns_bootstrap_and_setup_stays_separate (test_template_commands.InitSlashCommandTest.test_cli_owns_bootstrap_and_setup_stays_separate) ... ok\ntest_route_matrix_is_the_same_for_both_presets_and_hosts (test_template_commands.SharedSkillTest.test_route_matrix_is_the_same_for_both_presets_and_hosts) ... ok\ntest_slash_commands_call_the_installed_cli (test_template_commands.TemplateCommandTest.test_slash_commands_call_the_installed_cli) ... ok\ntest_allowlist_has_only_three_classes_and_creation_is_branch_scoped (test_text_gates.TextGateScannerTest.test_allowlist_has_only_three_classes_and_creation_is_branch_scoped) ... ok\n\n======================================================================\n\nRan 27 tests in 34.721s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/REMEDIATION.md: capability task-worktree-remediation names a literal location: 'tasks/reviews/'\nFAIL: templates/single/PROJECT_WORKFLOW.md: capability workflow-mode-lock names a literal location: 'tasks/reviews/'\nValidation 001/check: exit 0\nFAIL: test_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-236/tests/test_no_meridian_identifiers.py\", line 126, in test_repository_has_no_unallowed_identifiers_or_stale_allowances\n    self.assertEqual(failures, [], \"\\n\".join(failures))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['unused allowlist entry 0: group 2, 9, (?[34 chars]/.*'] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\n'unused allowlist entry 0: group 2, 9, (?:skills|commands|\\\\.claude-plugin)/.*'\n\n+ []\n- ['unused allowlist entry 0: group 2, 9, '\n-  '(?:skills|commands|\\\\.claude-plugin)/.*'] : unused allowlist entry 0: group 2, 9, (?:skills|commands|\\.claude-plugin)/.*\n\n----------------------------------------------------------------------\nresult ran=27 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_commands,test_host_doctor,test_execution_boundaries,test_public_surface,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=221 total=2165 failures=1 errors=0\n",
+            "stdout": "PARTIAL selection=module:test_template_commands,test_host_doctor,test_execution_boundaries,test_public_surface,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=221 total=2165 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "attemptId": "fd51dd55499d4b7b89e22ffdb211c2bf",
             "command": "git diff --check",
-            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "commit": "deef261903bfd0b067cd1b7b4e8d19bb9c526669",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/1/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/236.json#fd51dd55499d4b7b89e22ffdb211c2bf/1/adopt-466c2f308b48c766",
             "round": 1,
-            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "",
-            "stdoutTruncated": false
-          }
-        ],
-        [
-          {
-            "attemptId": "44250e85a40540f589b94e7b8a80161a",
-            "command": "python3 scripts/check_repository.py",
-            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
-            "exitStatus": 1,
-            "id": "repository-check",
-            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/2/repository-check",
-            "round": 2,
-            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "FAIL: governed-SDD mode lock is incomplete: commands/cardine-task.md\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "44250e85a40540f589b94e7b8a80161a",
-            "command": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
-            "exitStatus": 1,
-            "id": "task-tests",
-            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/2/task-tests",
-            "round": 2,
-            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
-            "stderr": "run_tests: 221 tests in 8 shards\nrun_tests: shard 5/8 finished in 31.7s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 3/8 finished in 34.5s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 4/8 finished in 34.5s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 6/8 finished in 34.6s: exit 1 ran=27 failures=1 errors=0\nrun_tests: shard 1/8 finished in 35.3s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 8/8 finished in 36.6s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 7/8 finished in 40.5s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 2/8 finished in 53.1s: exit 0 ran=28 failures=0 errors=0\n",
-            "stderrTruncated": false,
-            "stdout": "--- shard 6/8 (exit 1) ---\nshard=6/8 total=221 selected=27 digest=b043f2823c62566dd61633c2597d3e53f5671531cb9f18469f69f6d9c8efe7f9\ntest_capability_catalog_is_valid_as_shipped (test_check_repository.CapabilityMarkerBaselineTest.test_capability_catalog_is_valid_as_shipped) ... ok\ntest_matching_catalog_passes (test_check_repository.CapabilityRequiredVersionsTest.test_matching_catalog_passes) ... ok\ntest_migration_in_tagged_release_ledger_passes (test_check_repository.CheckMigrationsVersionGateTest.test_migration_in_tagged_release_ledger_passes) ... ok\ntest_build_suffix_fails (test_check_repository.CheckReleasesTest.test_build_suffix_fails) ... ok\ntest_valid_ledger_passes (test_check_repository.CheckReleasesTest.test_valid_ledger_passes) ... ok\ntest_a_managed_block_naming_a_literal_location_fails_in_every_file (test_check_repository.GovernedLifecycleTextTest.test_a_managed_block_naming_a_literal_location_fails_in_every_file) ... ok\ntest_shipped_review_contract_passes (test_check_repository.GovernedReviewWorktreeContractTest.test_shipped_review_contract_passes) ... ok\ntest_untracked_file_is_ignored (test_check_repository.MachinePathTest.test_untracked_file_is_ignored) ... ok\ntest_listing_failure_fails_every_check (test_check_repository.RepositoryFilesTest.test_listing_failure_fails_every_check) ... ok\ntest_shipped_routers_pass (test_check_repository.RouterRoutesTest.test_shipped_routers_pass) ... ok\ntest_registered_text_passes_and_unrelated_uppercase_lists_are_ignored (test_check_repository.StopCodeRegistryCheckTest.test_registered_text_passes_and_unrelated_uppercase_lists_are_ignored) ... ok\ntest_verdict_proximity_does_not_exempt_a_stop (test_check_repository.StopCodeRegistryCheckTest.test_verdict_proximity_does_not_exempt_a_stop) ... ok\ntest_clean_and_dirty_resume_states_exit_zero (test_execution_boundaries.ExecutionBoundariesTest.test_clean_and_dirty_resume_states_exit_zero) ... ok\ntest_first_and_repeated_start_preserve_original_event_and_projections (test_execution_boundaries.ExecutionBoundariesTest.test_first_and_repeated_start_preserve_original_event_and_projections) ... ok\ntest_lean_review_required_spike_uses_the_same_delivery_and_verdict (test_execution_boundaries.ExecutionBoundariesTest.test_lean_review_required_spike_uses_the_same_delivery_and_verdict) ... ok\ntest_resume_preserves_history_and_requires_explicit_dirty_authorization (test_execution_boundaries.ExecutionBoundariesTest.test_resume_preserves_history_and_requires_explicit_dirty_authorization) ... ok\ntest_a_hook_that_does_not_deny_is_not_effective (test_host_doctor.HostDoctorTest.test_a_hook_that_does_not_deny_is_not_effective) ... ok\ntest_claude_role_launch_is_unsupported_and_never_inferred_from_settings (test_host_doctor.HostDoctorTest.test_claude_role_launch_is_unsupported_and_never_inferred_from_settings) ... ok\ntest_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control (test_host_doctor.HostDoctorTest.test_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control) ... ok\ntest_evidence_cannot_overwrite_another_task_from_a_task_branch (test_layout.LayoutTest.test_evidence_cannot_overwrite_another_task_from_a_task_branch) ... ok\ntest_nested_context_restores_after_exception_and_isolates_other_contexts (test_layout.LayoutTest.test_nested_context_restores_after_exception_and_isolates_other_contexts) ... ok\ntest_worktree_root_and_configuration_use_selected_names (test_layout.LayoutTest.test_worktree_root_and_configuration_use_selected_names) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... FAIL\ntest_cli_owns_bootstrap_and_setup_stays_separate (test_template_commands.InitSlashCommandTest.test_cli_owns_bootstrap_and_setup_stays_separate) ... ok\ntest_route_matrix_is_the_same_for_both_presets_and_hosts (test_template_commands.SharedSkillTest.test_route_matrix_is_the_same_for_both_presets_and_hosts) ... ok\ntest_slash_commands_call_the_installed_cli (test_template_commands.TemplateCommandTest.test_slash_commands_call_the_installed_cli) ... ok\ntest_allowlist_has_only_three_classes_and_creation_is_branch_scoped (test_text_gates.TextGateScannerTest.test_allowlist_has_only_three_classes_and_creation_is_branch_scoped) ... ok\n\n======================================================================\n\nRan 27 tests in 33.928s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/REMEDIATION.md: capability task-worktree-remediation names a literal location: 'tasks/reviews/'\nFAIL: templates/single/PROJECT_WORKFLOW.md: capability workflow-mode-lock names a literal location: 'tasks/reviews/'\nValidation 001/check: exit 0\nFAIL: test_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-236/tests/test_no_meridian_identifiers.py\", line 126, in test_repository_has_no_unallowed_identifiers_or_stale_allowances\n    self.assertEqual(failures, [], \"\\n\".join(failures))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['unused allowlist entry 0: group 2, 9, (?[34 chars]/.*'] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\n'unused allowlist entry 0: group 2, 9, (?:skills|commands|\\\\.claude-plugin)/.*'\n\n+ []\n- ['unused allowlist entry 0: group 2, 9, '\n-  '(?:skills|commands|\\\\.claude-plugin)/.*'] : unused allowlist entry 0: group 2, 9, (?:skills|commands|\\.claude-plugin)/.*\n\n----------------------------------------------------------------------\nresult ran=27 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_commands,test_host_doctor,test_execution_boundaries,test_public_surface,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=221 total=2165 failures=1 errors=0\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "44250e85a40540f589b94e7b8a80161a",
-            "command": "git diff --check",
-            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
-            "exitStatus": 0,
-            "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/2/adopt-466c2f308b48c766",
-            "round": 2,
-            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "sourceDigest": "b1dd030da04125f866543f94d760bfc60ad27d6188b01bc89489fb740ff67987",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "",
