@@ -13,6 +13,26 @@ import copy
 import json
 
 
+def claude_plugin_state(home: Path, framework_root: Path | None) -> str:
+    """The installed Cardine plugin against this CLI; read only, and never proof of activation."""
+    registry = home / ".claude/plugins/installed_plugins.json"
+    try:
+        entries = json.loads(registry.read_text(encoding="utf-8"))["plugins"]["cardine@cardine"]
+        versions = sorted({entry["version"] for entry in entries})
+    except (OSError, ValueError, KeyError, TypeError):
+        return "absent"
+    if not versions:
+        return "absent"
+    if framework_root is None:
+        return "installed " + ", ".join(versions)
+    from cardine.release.version import read_version
+    cli = read_version(framework_root)
+    stale = [version for version in versions if version != cli]
+    if not stale:
+        return "match"
+    return f"mismatch: plugin {', '.join(stale)}, CLI {cli}; reinstall the plugin at tag v{cli}"
+
+
 CLAUDE_PROJECT_ALLOWLIST = (
     "Bash(git status:*)",
     "Bash(git diff:*)",

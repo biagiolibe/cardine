@@ -266,6 +266,18 @@ pipx install --editable ~/src/cardine
 cardine --version
 ```
 
+For Claude Code, also install the plugin, pinned to the same tag. It provides the
+`cardine-delivery` and `cardine-project` skills and the slash commands, which call the
+installed `cardine`. Codex receives the skills from `cardine setup`.
+
+```bash
+claude plugin marketplace add biagiolibe/cardine#v0.9.0
+claude plugin install cardine@cardine
+```
+
+`cardine doctor --host claude --project .` reports whether the plugin version matches the
+CLI.
+
 `pipx install cardine` arrives with 1.0, published on PyPI.
 
 ## Documentation

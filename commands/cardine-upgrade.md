@@ -5,19 +5,19 @@ description: "Check or apply a deterministic Cardine framework upgrade"
 Upgrade an existing Cardine project without overwriting local workflow
 customizations.
 
-Run the CLI from this plugin source. First inspect the plan:
+Run the installed `cardine` CLI. First inspect the plan:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/bin/cardine" upgrade --project . --check
+cardine upgrade --project . --check
 ```
 
-Conversion of projects without Cardine and of existing Meridian projects returns with work item 10, using the single Cardine workflow. Until then, the CLI provides no conversion command.
+To convert a project that does not use Cardine yet, use `cardine adopt`.
 
 If the plan has no `CONFLICT` entries and the developer authorizes the update,
 apply it:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/bin/cardine" upgrade --project . --apply
+cardine upgrade --project . --apply
 ```
 
 On interruption, rerun the same command with identical inputs; the existing
@@ -48,7 +48,7 @@ preserving the project's own structure and terminology, then register the
 result without touching any file automatically:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/bin/cardine" upgrade --project . --apply --owner-reconciled
+cardine upgrade --project . --apply --owner-reconciled
 ```
 
 This registers the new manifest and baseline but writes nothing to the

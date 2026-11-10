@@ -96,6 +96,20 @@ class HostDoctorTest(unittest.TestCase):
                 owner_hosts_setup.probe_hook_invocation("claude", self.home)
         self.assertEqual(list(scratch.iterdir()), [])
 
+    def test_claude_doctor_compares_the_plugin_with_the_cli(self) -> None:
+        def report() -> str:
+            return owner_hosts_setup.host_doctor(
+                "claude", self.project, self.config, self.worktrees, home=self.home, framework_root=ROOT
+            )["claude-plugin"]
+
+        self.assertEqual(report(), "absent")
+        registry = self.home / ".claude/plugins/installed_plugins.json"
+        registry.parent.mkdir(parents=True)
+        for version, expected in (((ROOT / "VERSION").read_text().strip(), "match"), ("0.0.1", "mismatch: plugin 0.0.1")):
+            registry.write_text(json.dumps({"version": 2, "plugins": {"cardine@cardine": [
+                {"scope": "user", "version": version}]}}), encoding="utf-8")
+            self.assertTrue(report().startswith(expected))
+
     def test_claude_never_reports_enforcement_from_settings_text(self) -> None:
         plan = owner_hosts_claude.plan_claude_project_allowlist(self.project)
         self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(plan))

@@ -2,7 +2,7 @@
 description: "Bootstrap a new project with the Cardine CLI"
 ---
 
-Initialize a new project through `${CLAUDE_PLUGIN_ROOT}/bin/cardine init`.
+Initialize a new project through `cardine init`.
 Both presets install exactly the same files from `templates/single/`; the preset
 only chooses project defaults. The CLI owns rendering, configuration, initial
 views, and the upgrade manifest and baselines. Do not copy templates, replace
@@ -46,14 +46,14 @@ Report existing conflicting paths instead of overwriting user files.
 6. Substitute and shell-quote the agreed values in this read-only preview:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" init --project "<project path>" --check --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --validation "<validation JSON path>"
+   cardine init --project "<project path>" --check --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --validation "<validation JSON path>"
    ```
 
    Inspect the plan and conflicts. Repeating `--check` must not write anything.
    After the user accepts the preview, run the same inputs with `--apply`:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" init --project "<project path>" --apply --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --validation "<validation JSON path>"
+   cardine init --project "<project path>" --apply --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --validation "<validation JSON path>"
    ```
 
    On interruption, rerun with identical inputs; do not manually repair outputs.
@@ -61,7 +61,7 @@ Report existing conflicting paths instead of overwriting user files.
 7. Offer once-per-machine host setup as a separate operation. Show its read-only plan first:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" setup --check --project "<project path>"
+   cardine setup --check --project "<project path>"
    ```
 
    Run `cardine setup --apply` only after explicit confirmation, using the same
