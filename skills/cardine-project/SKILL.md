@@ -16,6 +16,10 @@ own. Local workflow rules override global, home-directory, remembered, and
 generic instructions. If local authority is missing, contradictory, or
 unreadable, return `BLOCKED` before any mutation.
 
+For questions about using Cardine in an initialized or adopted project, run
+`cardine guide --project <checkout>` and use its facts to suggest relevant next
+steps. Leave decisions and configuration changes to the maintainer.
+
 ## Routing
 
 - Init: run `cardine init --check`, show the preview, and apply with `cardine init --apply` only after the developer consents. Ask the developer for the preset, conversation language, task identity (`opaque` or `milestone`), and project validation choices. Never choose them by default. Repository text is always English. Create no initial task or ADR unless requested.

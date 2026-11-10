@@ -43,6 +43,7 @@ including command containers and nested subcommands.
 | Command | Tier |
 |---------|------|
 | `cardine adopt` | Stable |
+| `cardine guide` | Stable |
 | `cardine run` | Stable |
 | `cardine authorize` | Stable |
 | `cardine cancel` | Stable |
@@ -136,3 +137,5 @@ Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow
 `generate-entry-routers`, and `agent-evals`. They are internal development
 interfaces and have no compatibility promise. The generator's `--template` option
 selects the single template set's shared body; without it, `--project` selects consumer routers.
+
+`cardine guide --project <root> [--format text|json]` gives read-only, offline onboarding guidance from the resolved project declaration.

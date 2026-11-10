@@ -15,6 +15,7 @@ Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORK
 - `Review <TASK-ID>` — use `cardine-delivery` for review.
 - `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — use `cardine-delivery` and `docs/LIFECYCLE_ORCHESTRATION.md`.
 - Init, adopt, upgrade, setup, or doctor — use `cardine-project`.
+- How to use Cardine — run `cardine guide --project <checkout>`; use its project facts to suggest next steps and leave decisions and configuration to the maintainer.
 - Status, project question, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
 - Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
 <!-- CARDINE:END -->
