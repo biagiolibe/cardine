@@ -1,0 +1,122 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/context.py",
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/lifecycle/model.py",
+      "src/cardine/lifecycle/preview.py",
+      "src/cardine/tasks/status.py",
+      "src/cardine/tasks/status_render.py",
+      "tests/test_run_preparation.py",
+      "tests/test_run_worktree_step.py",
+      "tests/test_run_resolution.py",
+      "tests/test_run_output.py",
+      "tests/test_task_status.py",
+      "tests/test_task_status_gates.py",
+      "tests/test_status_render.py",
+      "tests/test_run_console.py",
+      "tests/test_console_snapshot.py",
+      "docs/RUN_COMMANDS.md",
+      "docs/PUBLIC_SURFACE.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/246.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 246 \u2014 Recover when task records have not been committed",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_preparation --module test_run_worktree_step --module test_run_resolution --module test_run_output --module test_task_status --module test_task_status_gates --module test_status_render --module test_run_console --module test_console_snapshot --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "6039f6da726c54cc33892c2aa3a07f0b1a6fb9b21075164a923b7152b9b62a5f",
+        "digest": "7b232736663da5dfe15f3028241f644602b889c3b41d67b33291295d015793f7",
+        "inputs": {
+          ".cardine/tasks/246.json": null,
+          "tasks/246.md": null
+        },
+        "kind": "creation",
+        "operation_id": "f7b1e692f0a64aa0b833a6d22d8fce92",
+        "outputs": {
+          ".cardine/tasks/246.json": "f76fa7d96712afc0996bf411639bdf0d7bcbea450d9c03c7703f60f10402a940",
+          "tasks/246.md": "b7e710aea0e90521ac347561a22f5e7842c532e6f35f76984208a68205fd4d68"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "84f4039de6b330e982758f5ae1edac4725913970",
+        "task_id": "246",
+        "tree": "2166a1f9f39a86e84de4cc8d82931488efeae484",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "246",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
