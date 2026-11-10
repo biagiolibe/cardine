@@ -2,9 +2,9 @@
 
 from pathlib import Path
 import shlex
-import subprocess
 
 from cardine.shared.errors import CardineError
+from cardine.shared.git import _run_git
 from cardine.shared.project import read_project_declaration
 
 from cardine.shared.project import resolve_project_configuration
@@ -14,10 +14,7 @@ def project_guide(project: Path) -> dict:
     root = project.resolve()
     declaration = read_project_declaration(root)
     if declaration is None:
-        result = subprocess.run(
-            ['git', '-C', str(root), 'rev-parse', '--show-toplevel'],
-            capture_output=True, text=True, check=False,
-        ) if root.is_dir() else None
+        result = _run_git(root, 'rev-parse', '--show-toplevel') if root.is_dir() else None
         if not result or result.returncode or Path(result.stdout.strip()).resolve() != root:
             raise CardineError('unsupported checkout: --project must name the root of a non-bare Git checkout')
         target = shlex.quote(str(root))
