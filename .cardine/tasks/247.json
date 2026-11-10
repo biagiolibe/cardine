@@ -1,0 +1,127 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "pyproject.toml",
+      "src/cardine/__main__.py",
+      "src/cardine/shared/paths.py",
+      "src/cardine/cli.py",
+      "src/cardine/hosts/setup.py",
+      "src/cardine/hosts/hooks.py",
+      "src/cardine/stops/registry.py",
+      "src/cardine/tasks/state_core.py",
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/lifecycle/receipts.py",
+      "src/cardine/console/state.py",
+      "src/cardine/adopt/verify.py",
+      "src/cardine/adopt/rehearsal.py",
+      "scripts/check_installed_package.py",
+      ".github/workflows/validate.yml",
+      "tests/test_framework_paths.py",
+      "tests/test_host_hooks.py",
+      "tests/test_authorization.py",
+      "tests/test_module_inventory.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "release",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/247.md",
+    "taskValidation": [
+      "task-tests",
+      "installed-package",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 247 \u2014 Run Cardine from an installed package",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "installed-package",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "installed-package": "python3 scripts/check_installed_package.py",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_cli_install --module test_cli_startup --module test_cardine_cli --module test_authorization --module test_host_hooks --module test_host_doctor --module test_host_worktree_setup --module test_adopt_rehearsal --module test_self_update --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_framework_paths"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "872975c9374f6003d3b108eb7d950c9212e094a5172c8e2d812b5d7fc9d27802",
+        "digest": "61f6bbbb2f56c59a23913ea8af22c004531576f460454708eaf7540136e27949",
+        "inputs": {
+          ".cardine/tasks/247.json": null,
+          "tasks/247.md": null
+        },
+        "kind": "creation",
+        "operation_id": "cb57da19b5084d63b8ac653cc3ef4f44",
+        "outputs": {
+          ".cardine/tasks/247.json": "7ebbdabf300dc1dfb3c9269bae86a4da6c3d81f2f81a203d42f022ff85814380",
+          "tasks/247.md": "989c6b78e08a084a75943137889653eecb18017abf69c2e5cb1be070537c2869"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "cb35b716a25f162ddb038c7fa2776c1f3556f51b",
+        "task_id": "247",
+        "tree": "206f2162b5bb7fe618948d38ea78cfa4cdb51e27",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "247",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

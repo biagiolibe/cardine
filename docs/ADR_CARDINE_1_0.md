@@ -350,6 +350,21 @@ detects which installer owns the running CLI and runs its upgrade command.
 The Claude Code plugin keeps skills and slash commands and calls the installed
 CLI. `cardine doctor` checks that the plugin and the CLI versions match.
 
+Amended on 2026-11-11 by proposals P1–P7 of
+[the onboarding design](ONBOARDING_DESIGN.md), accepted by the developer for 1.0:
+
+- `init` and `adopt` default every project choice and detect the test command, and
+  `--test` replaces the validation JSON in the common case.
+- On an interactive terminal, `cardine init` with no mode flag chooses between init and
+  adoption, shows the plan, and applies after one confirmation. After a second
+  confirmation it commits only the paths it wrote and pushes `main`.
+- `cardine setup --apply` installs or realigns the Claude Code plugin at the CLI's
+  version, after showing it in `setup --check`.
+- `cardine self-update` also updates the plugin and names the checkouts that need
+  `cardine authorize`.
+
+The flags, the JSON output, and the check-then-apply protocol are unchanged for agents.
+
 ### 10. Transition from Meridian
 
 1. **Release Meridian 1.4.0.** Integrate tasks 227–230 and publish 1.4.0. Its
@@ -375,6 +390,7 @@ CLI. `cardine doctor` checks that the plugin and the CLI versions match.
    - a stop followed by a resume with `cardine run`.
 
    A case that does not work as it does today becomes a task and blocks 1.0.
+   Amended on 2026-11-11: the onboarding proposals P1–P7 of decision 9 also block 1.0.
 6. **Release Cardine 1.0.0** on GitHub and PyPI.
 7. **Archive Meridian.** Add a README notice, make the repository read-only, and
    remove the Meridian plugin from its marketplace.

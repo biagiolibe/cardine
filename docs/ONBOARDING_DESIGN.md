@@ -1,8 +1,9 @@
 # Onboarding Design
 
-Status: proposal, 2026-11-11. Nothing here is decided until the developer accepts it.
-Accepted parts become tasks; parts marked *needs ADR amendment* also amend
-`docs/ADR_CARDINE_1_0.md`.
+Status: decided, 2026-11-11. The developer accepted P1–P7 for 1.0 with the recommended
+answer to each open decision below. The ADR records them as an amendment to decision 9.
+P8 is deferred. Task 247 implements P1 and task 248 implements P2. The other proposals
+are planned once these two land, because their inputs depend on them.
 
 ## Problem
 
@@ -121,7 +122,9 @@ Each default is shown in the preview.
 4. asks one confirmation;
 5. applies, with the rehearsal inside apply as today.
 
-Off a TTY, or with `--check`/`--apply`, behaviour and output are unchanged. `cardine
+Off a TTY, or with `--check`/`--apply`, behaviour and output are unchanged. Some hosts
+give the agent a pseudo-terminal, so the record must say how an agent's call is kept from
+waiting on a prompt. A mode flag is always enough, and the skill always passes one. `cardine
 guide` stays as the read-only explanation; this is the same flow, performed instead of
 described.
 
