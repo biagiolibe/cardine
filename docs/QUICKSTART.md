@@ -55,6 +55,9 @@ project. Add generated test files such as `__pycache__/` to `.gitignore` and
 commit and push that change too: Cardine treats other untracked files as part
 of the change.
 
+Run `cardine guide --project .` for project-specific onboarding, or add
+`--format json` for structured output. The guide is read-only and works offline.
+
 ## Connect the host
 
 From the project, preview and apply setup:

@@ -7,6 +7,7 @@ from cardine.shared.layout import names
 from pathlib import Path
 import argparse
 import json
+import shlex
 import os
 import shlex
 import sys
@@ -68,6 +69,16 @@ def main() -> int:
         exit_code = emit_diagnostic(refused, journal)
         journal.write(exit_code)
         return exit_code
+    if preview_args[:1] == ["guide"]:
+        from cardine.shared.project_guide import project_guide, render_project_guide
+        args = build_parser().parse_args()
+        try:
+            guide = project_guide(args.project)
+            print(json.dumps(guide, sort_keys=True) if args.format == "json" else render_project_guide(guide))
+            return 0
+        except (CardineError, OSError, ValueError) as error:
+            print(f"error: {error}", file=sys.stderr)
+            return 2
     if preview_args[:1] == ["adopt"]:
         return _adopt_cli()
     if preview_args[:1] == ["hook"]:
@@ -109,6 +120,7 @@ def _adopt_cli() -> int:
                 result["result"] = rehearse_adoption(args.project, plan, args.framework_root)
             elif args.apply:
                 result["result"] = apply_rehearsed_adoption(args.project, plan, args.framework_root)
+                result["guide"] = f"cardine guide --project {shlex.quote(str(args.project.resolve()))}"
             code = 0
     except (CardineError, OSError, ValueError, KeyError, TypeError, UnicodeError) as error:
         result["outcome"] = "blocked"
@@ -132,6 +144,9 @@ def build_parser() -> CardineArgumentParser:
         help="print the framework SemVer, including prerelease and build metadata",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    guide = subparsers.add_parser("guide", help="show read-only project onboarding guidance")
+    guide.add_argument("--project", type=Path, default=Path.cwd())
+    guide.add_argument("--format", choices=("text", "json"), default="text")
     adopt = subparsers.add_parser("adopt", help="plan, rehearse, or apply project conversion")
     adopt.add_argument("--project", type=Path, required=True)
     adopt_mode = adopt.add_mutually_exclusive_group(required=True)

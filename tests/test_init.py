@@ -86,6 +86,7 @@ class InitTest(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()) as output:
             self.assertEqual(init_cli(args, ROOT), 0)
         self.assertIn("result: initialized", output.getvalue())
+        self.assertIn("cardine guide --project", output.getvalue())
         after = self.tree(self.home)
         with contextlib.redirect_stdout(io.StringIO()) as output:
             self.assertEqual(init_cli(args, ROOT), 0)

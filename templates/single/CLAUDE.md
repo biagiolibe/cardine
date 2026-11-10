@@ -1,6 +1,6 @@
 # [Project Name]
 
-Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORKFLOW.md` is the source of operational rules. If either is missing or they contradict, return `BLOCKED RULE_CONFLICT`. The shared rules below are generated from `AGENTS.md`.
+Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; the former governs operations. If missing or contradictory, return `BLOCKED RULE_CONFLICT`. Shared rules are generated from `AGENTS.md`.
 
 ## Commands
 
@@ -19,4 +19,6 @@ Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORK
 - Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
 <!-- CARDINE:END -->
 
-Advice: follow `docs/CODE_ORGANIZATION.md` for production-source changes.
+Cardine usage: `cardine guide --project <checkout>`.
+
+Production: follow `docs/CODE_ORGANIZATION.md` (advice).

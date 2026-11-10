@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import shlex
 from pathlib import Path
 import re
 import sys
@@ -202,6 +203,7 @@ def init_cli(arguments, framework: Path) -> int:
             print(f"project directory: {directory}")
         if arguments.apply:
             print("result: initialized" if apply_init(plan) else "result: no-op")
+            print(f"Next: cardine guide --project {shlex.quote(str(plan.root))}")
             print("Machine setup is separate: preview with `cardine setup --check`.")
         return 0
     except (CardineError, OSError, ValueError, UnicodeError) as error:
