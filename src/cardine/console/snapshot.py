@@ -404,7 +404,7 @@ def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str,
     from cardine.lifecycle.context import resolve_run_locations
     from cardine.lifecycle.preview import preview_run
     from cardine.lifecycle import receipts
-    from cardine.integration.cleanup import completed_for_display
+    from cardine.integration.cleanup import ambiguous_completion, completed_for_display
     locations = resolve_run_locations(row['id'], project)
     try:
         if completed_for_display(locations, receipts._load_intent(intent)):
@@ -414,8 +414,10 @@ def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str,
     preview = preview_run(locations)
     if preview['outcome'] == 'done':
         from cardine.lifecycle.engine import diagnostic_result
-        preview = diagnostic_result(locations, stop_error(
-            'CLEANUP_BLOCKED', 'cleanup completion evidence is ambiguous'))
+        try:
+            ambiguous_completion(locations)
+        except CardineStop as error:
+            preview = diagnostic_result(locations, error)
     cache.cleanup.pop(cache_key, None)
     path, text = _record_text(project, row, None)
     dependencies = tuple(row['dependencies'])

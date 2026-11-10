@@ -202,7 +202,8 @@ launch_run_request(locations, request,
         task = load_snapshot(self.fixture.root).tasks[0]
         state = SimpleNamespace(project=self.fixture.root)
         before = self.fixture.state()
-        with patch('cardine.lifecycle.control.host_adapter', return_value=None):
+        with patch('cardine.lifecycle.control.host_adapter', return_value=None), \
+             patch.dict(os.environ, {'ITERM_SESSION_ID': ''}):
             self.assertFalse(_launch_selected(state, task, 'codex', True)[0])
         self.assertEqual(self.fixture.state(), before)
         adapter = CodexProfileAdapter(FakeHost(self.worker.parent / 'actions', 'codex'), 'developer-channel')

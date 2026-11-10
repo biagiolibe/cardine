@@ -86,6 +86,10 @@ def completed_for_display(locations, intent):
     return _completed_observation(locations, intent, historical=True)
 
 
+def ambiguous_completion(locations):
+    _fail(locations, 'cleanup completion evidence is ambiguous')
+
+
 def _completed_observation(locations, intent, *, historical):
     binding, effects = intent['binding'], intent.get('effects', {})
     required = ['cleanup_worktree', 'cleanup_placeholder', 'cleanup_branch', 'cleanup_lifecycle']
