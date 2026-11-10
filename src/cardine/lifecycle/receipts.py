@@ -291,6 +291,25 @@ def _receipt_hash(receipt):
     return digest(encoded({k: v for k, v in receipt.items() if k != 'digest'}))
 
 
+def _policy_on_main(root, main, policy):
+    """A receipt stays valid under any policy that main's own line once declared.
+
+    Without this, the first policy change could never be accepted while a closed
+    task exists. A policy only a task branch held is not on the first-parent line.
+    """
+    if not main:
+        return False
+    path = str(names().project_declaration_path)
+    commits = _run_git(str(root), 'log', '--first-parent', '--format=%H', str(main), '--', path, text=True)
+    if commits.returncode:
+        return False
+    for commit in commits.stdout.split():
+        declared = _run_git(str(root), 'show', f'{commit}:{path}', text=False)
+        if declared.returncode == 0 and digest(declared.stdout) == policy:
+            return True
+    return False
+
+
 def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref=None, artifact_names=None, context=None,
                     accepted=None):
     """Verify chaining and current coverage against independently accepted policy.
@@ -309,6 +328,7 @@ def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref
     ids = set()
     coverage = {}
     accepted_bases = set()
+    accepted_policies = {accepted.get('policy')}
     for index, receipt in enumerate(receipts):
         if (receipt['task_id'] != state['task_id'] or receipt['predecessor'] != previous
                 or receipt['operation_id'] in ids or receipt['digest'] != _receipt_hash(receipt)):
@@ -317,8 +337,10 @@ def verify_receipts(root, state, *, artifacts=True, portable=False, artifact_ref
         # local authority file, not tracked state, now proves.
         authority = receipt['authority']
         base = authority.get('accepted_main')
-        if authority.get('policy') != accepted.get('policy'):
-            raise CardineError('receipt authority differs from accepted policy; ' + AUTHORIZE_HINT)
+        if authority.get('policy') not in accepted_policies:
+            if not _policy_on_main(root, accepted.get('accepted_main'), authority.get('policy')):
+                raise CardineError('receipt authority differs from accepted policy; ' + AUTHORIZE_HINT)
+            accepted_policies.add(authority.get('policy'))
         if base != accepted.get('accepted_main') and base not in accepted_bases:
             ancestor = _run_git(str(root), 'merge-base', '--is-ancestor', str(base),
                                 str(accepted.get('accepted_main')), text=False)

@@ -110,6 +110,35 @@ class AuthorizationTest(unittest.TestCase):
         self.assertIn('task 001', plan.detail)
         self.assertFalse((self.clone / '.cardine/receipt-authority.json').exists())
 
+    def changed_policy(self):
+        path = self.root / '.cardine/project.json'
+        path.write_bytes(path.read_bytes() + b'\n')
+        self.git(self.root, 'add', '.cardine/project.json')
+        self.git(self.root, 'commit', '-m', 'Change policy')
+        return receipts.digest(path.read_bytes())
+
+    def test_policy_committed_on_main_is_accepted_beside_earlier_receipts(self):
+        policy = self.changed_policy()
+        plan = authorization.plan_authorization(self.root)
+        self.assertEqual(plan.status, 'approval-required', plan.detail)
+        self.assertIn('policy', plan.changes)
+        self.assertTrue(authorization.apply_authorization(plan, confirm=accept))
+        self.assertEqual(receipts.require_authority(self.root)['policy'], policy)
+        receipts.verify_receipts(self.root, self.state(self.root))
+
+    def test_policy_held_only_by_a_branch_does_not_validate_a_receipt(self):
+        self.git(self.root, 'switch', '-q', '-c', 'task-999')
+        policy = self.changed_policy()
+        self.git(self.root, 'switch', '-q', 'main')
+        state = self.state(self.root)
+        previous = None
+        for receipt in state['run']['receipts']:
+            receipt['authority']['policy'] = policy
+            receipt['predecessor'] = previous
+            receipt['digest'] = previous = receipts._receipt_hash(receipt)
+        with self.assertRaisesRegex(CardineError, 'differs from accepted policy'):
+            receipts.verify_receipts(self.root, state)
+
     def test_linked_worktree_is_refused(self):
         worktree = self.base / 'linked'
         self.git(self.root, 'worktree', 'add', '-q', str(worktree), '-b', 'other')
