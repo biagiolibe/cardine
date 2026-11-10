@@ -16,7 +16,7 @@ first-task example.
 Install the latest release from a clone:
 
 ```bash
-git clone --branch v0.9.0 https://github.com/biagiolibe/cardine ~/src/cardine
+git clone --branch v0.9.1 https://github.com/biagiolibe/cardine ~/src/cardine
 pipx install --editable ~/src/cardine
 cardine --version
 ```

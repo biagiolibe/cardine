@@ -15,14 +15,40 @@ records which release moved it.
 
 ## [Unreleased]
 
-### Removed
+## [0.9.1] - 2026-11-10
 
-- Stop distributing project-level Codex hooks; setup registers them in the user registry.
+CLI-only release.
 
+### Added
+
+- `cardine doctor --host claude` reports `claude-plugin`: whether the installed Claude
+  Code plugin matches the CLI version.
+
+### Changed
+
+- `cardine status --write` regenerates only the queue.
+- `cardine init` and `cardine adopt` no longer create `PROJECT_PLAN.md` or
+  `TECH_DESIGN.md`. An existing `PROJECT_PLAN.md` is left as the project's own file.
+
+### Fixed
+
+- The Claude Code slash commands call the installed `cardine` instead of the plugin's own
+  copy, which the receipt authority refused.
+- The `cardine-project` skill and the slash commands describe `cardine adopt` instead of
+  saying that conversion is unavailable.
+
+### Documentation
+
+- The README shows the status badges, the 0.9 status, CI before landing, and how to
+  install the Claude Code plugin.
 
 ## [0.9.0] - 2026-11-09
 
 CLI-only release. First Cardine tag: the delivery lifecycle runs through `cardine run`.
+
+### Removed
+
+- Stop distributing project-level Codex hooks; setup registers them in the user registry.
 
 ## [1.4.0]
 

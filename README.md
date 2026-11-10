@@ -16,7 +16,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/biagiolibe/cardine" alt="MIT License"></a>
 </p>
 
-> **Status: 0.9.0, before 1.0.** Install the CLI from the `v0.9.0` tag.
+> **Status: 0.9.1, before 1.0.** Install the CLI from the `v0.9.1` tag.
 > The scope of 1.0 is
 > [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md); what is proven today is
 > listed under [Status and evidence](#status-and-evidence).
@@ -261,7 +261,7 @@ authenticated Claude Code or Codex.
 Install the latest release from a clone:
 
 ```bash
-git clone --branch v0.9.0 https://github.com/biagiolibe/cardine ~/src/cardine
+git clone --branch v0.9.1 https://github.com/biagiolibe/cardine ~/src/cardine
 pipx install --editable ~/src/cardine
 cardine --version
 ```
@@ -271,7 +271,7 @@ For Claude Code, also install the plugin, pinned to the same tag. It provides th
 installed `cardine`. Codex receives the skills from `cardine setup`.
 
 ```bash
-claude plugin marketplace add biagiolibe/cardine#v0.9.0
+claude plugin marketplace add biagiolibe/cardine#v0.9.1
 claude plugin install cardine@cardine
 ```
 
