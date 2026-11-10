@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from cardine.shared.errors import CardineError
 from cardine.tasks import status_render
-from cardine.tasks.status_render import REGION_BEGIN, REGION_END, splice_region, stale_views, write_views
+from cardine.tasks.status_render import stale_views, write_views
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,7 +42,7 @@ class StatusRenderTests(unittest.TestCase):
         freeze_record(self.root, task_id)
 
     def region_plan(self, before=b"Intro\n", after=b"\nOutro\n"):
-        return before + REGION_BEGIN.encode() + b"\nold\n" + REGION_END.encode() + after
+        return before + b"<!-- cardine-status:begin -->\nold\n<!-- cardine-status:end -->" + after
 
     def test_default_status_reads_without_writing_views(self):
         self.task("001")
@@ -96,7 +96,7 @@ class StatusRenderTests(unittest.TestCase):
         self.task("001")
         self.assertEqual(write_views(self.root), [self.queue])
         self.assertFalse(self.plan.exists())
-        for index, plan in enumerate((self.region_plan(), REGION_BEGIN.encode()), start=2):
+        for index, plan in enumerate((self.region_plan(), b"<!-- cardine-status:begin -->"), start=2):
             with self.subTest(plan=plan):
                 self.plan.write_bytes(plan)
                 self.task(f"{index:03d}")
@@ -143,10 +143,6 @@ class StatusRenderTests(unittest.TestCase):
         self.assertFalse((self.root / "docs/P.md").exists())
         self.assertFalse(self.queue.exists())
 
-    def test_splice_requires_exactly_one_ordered_pair(self):
-        with self.assertRaises(CardineError):
-            splice_region(b"nothing here", "x")
-
     def test_cli_write_round_trip(self):
         self.task("001")
         self.plan.write_bytes(self.region_plan())
@@ -158,13 +154,12 @@ class StatusRenderTests(unittest.TestCase):
                                capture_output=True, text=True)
         self.assertIn("already up to date", again.stdout)
 
-    def test_templates_carry_the_region_and_no_hand_maintained_status(self):
-        plan = (ROOT / "templates/single/PROJECT_PLAN.md").read_text()
+    def test_templates_ship_no_plan_and_no_hand_maintained_status(self):
+        self.assertFalse((ROOT / "templates/single/PROJECT_PLAN.md").exists())
+        self.assertFalse((ROOT / "templates/single/TECH_DESIGN.md").exists())
         queue = (ROOT / "templates/single/tasks/QUEUE.md").read_text()
-        self.assertEqual((plan.count(REGION_BEGIN), plan.count(REGION_END)), (1, 1))
         self.assertIn("cardine status --write", queue)
-        for text in (plan, queue):
-            self.assertNotRegex(text, r"`\[[ /x?-]\]`")
+        self.assertNotRegex(queue, r"`\[[ /x?-]\]`")
 
 
 if __name__ == "__main__":

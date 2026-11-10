@@ -14,7 +14,6 @@ from cardine.lifecycle import receipts
 from cardine.shared.git import _run_git, canonical_git_common_dir, git_output, parse_worktree_records
 from cardine.shared.atomic import file_digest
 from cardine.shared.layout import names
-from cardine.tasks.status_render import REGION_BEGIN, REGION_END
 from cardine.templates.init import plan_init
 
 
@@ -46,10 +45,9 @@ class AdoptPlan:
 def keep_project_files(root: Path, outputs: dict[str, bytes]) -> tuple[dict[str, bytes], dict[str, str], list[str]]:
     """Fit the initial outputs around the files a project without a workflow already has.
 
-    A managed file keeps the project's text after the template. The plan keeps its
-    text and gains the generated status region. Any other existing file stays as
-    it is. Cardine state, the generated queue, and JSON files cannot merge and are
-    conflicts.
+    A managed file keeps the project's text after the template. Any other existing
+    file stays as it is. Cardine state, the generated queue, and JSON files cannot
+    merge and are conflicts.
     """
     manifest = json.loads(outputs[names().manifest_path.as_posix()])
     managed = set(manifest.get("managedFiles", {}))
@@ -64,14 +62,6 @@ def keep_project_files(root: Path, outputs: dict[str, bytes]) -> tuple[dict[str,
         if (name.startswith(names().project_directory + "/") or name == "tasks/QUEUE.md"
               or name.endswith(".json") or path.is_symlink() or not path.is_file()):
             conflicts.append(name)
-        elif name == "PROJECT_PLAN.md":
-            text = content.decode("utf-8")
-            region = text[text.index(REGION_BEGIN):text.index(REGION_END) + len(REGION_END)]
-            old = path.read_text(encoding="utf-8")
-            if REGION_BEGIN in old or REGION_END in old:
-                conflicts.append(name)
-            else:
-                result[name] = (old.rstrip() + "\n\n" + region + "\n").encode()
         elif name in managed:
             old = path.read_text(encoding="utf-8")
             result[name] = content if not old.strip() else content.rstrip() + b"\n\n" + old.encode()

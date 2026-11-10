@@ -1,4 +1,4 @@
-"""Generate the queue on request; plan-region helpers remain for init and adopt."""
+"""Generate the queue on request."""
 from __future__ import annotations
 
 import hashlib
@@ -11,12 +11,8 @@ from cardine.shared.errors import CardineError
 from cardine.tasks.state import STATUSES
 from cardine.tasks.status import load_task_snapshot
 
-REGION_BEGIN = "<!-- cardine-status:begin -->"
-REGION_END = "<!-- cardine-status:end -->"
 COMMAND = "cardine status --write"
 DEFAULT_QUEUE = "tasks/QUEUE.md"
-DEFAULT_PLAN = "PROJECT_PLAN.md"
-PLAN_STUB = "# Project Plan\n\nHuman narrative and proposals live outside the generated region.\n\n"
 
 
 def _cell(value: object) -> str:
@@ -63,30 +59,6 @@ def render_queue(model: dict, digest: str, queue_path: str | Path) -> str:
         lines.append(f"| {row['status']} | {_cell(row['id'])} | {_cell(row['title'])} | {_cell(', '.join(row['dependencies']) or '-')} "
                      f"| {_cell(', '.join(row['blocked_by']) or '-')} | {str(row['startable']).lower()} | {record} |")
     return "\n".join(lines) + "\n"
-
-
-def render_plan_region(model: dict, digest: str) -> str:
-    """Every task, terminal ones included, between the region markers."""
-    lines = [REGION_BEGIN, *_header(digest), "", f"Preset: {model['preset']}", _totals(model), "",
-             "| Status | ID | Title | Phase |", "|--------|----|-------|-------|"]
-    lines.extend(f"| {row['status']} | {_cell(row['id'])} | {_cell(row['title'])} | {_cell(row['phase'] or '-')} |" for row in model["tasks"])
-    lines.append(REGION_END)
-    return "\n".join(lines) + "\n"
-
-
-def splice_region(plan: bytes | None, region: str) -> bytes:
-    """Replace the single generated region, preserving every other byte of the plan."""
-    block = region.rstrip("\n").encode()
-    if plan is None:
-        return PLAN_STUB.encode() + block + b"\n"
-    if not plan.strip():
-        return block + b"\n"
-    begin, end = REGION_BEGIN.encode(), REGION_END.encode()
-    if plan.count(begin) != 1 or plan.count(end) != 1 or plan.index(begin) > plan.index(end):
-        raise CardineError(f"plan has a missing or malformed generated region; expected exactly one {REGION_BEGIN} before one {REGION_END}")
-    start = plan.index(begin)
-    stop = plan.index(end) + len(end)
-    return plan[:start] + block + plan[stop:]
 
 
 def _read(path: Path) -> bytes | None:

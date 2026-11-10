@@ -124,20 +124,16 @@ def _verify_task(root, task_id, record):
         raise CardineError(f'completed adoption state changed: {task_id}')
 
 
-def _views(root, original_plan):
+def _views(root):
     from cardine.tasks.status import load_task_snapshot
-    from cardine.tasks.status_render import input_digest, render_queue, render_plan_region, splice_region
+    from cardine.tasks.status_render import input_digest, render_queue
     model, inputs, config = load_task_snapshot(root, all_tasks=True)
     if model['diagnostics'] or model['preset'] is None:
         raise CardineError(f"cannot render converted tasks: {model['diagnostics']}")
     locations = config.get('locations', {})
     queue = locations.get('queue', 'tasks/QUEUE.md')
-    plan = locations.get('plan', 'PROJECT_PLAN.md')
-    digest = input_digest(root, inputs, {_target(root, queue), _target(root, plan)})
-    region = render_plan_region(model, digest)
-    if original_plan and b'<!-- cardine-status:begin -->' not in original_plan:
-        original_plan = original_plan.rstrip() + b'\n\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n'
-    return {queue: render_queue(model, digest, queue).encode(), plan: splice_region(original_plan, region)}
+    digest = input_digest(root, inputs, {_target(root, queue)})
+    return {queue: render_queue(model, digest, queue).encode()}
 
 
 def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
@@ -186,7 +182,7 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             paths = set(outputs) | set(removals)
             if plan.case == 'B':
                 locations = json.loads(outputs['.cardine/project.json']).get('locations', {})
-                paths.update((locations.get('plan', 'PROJECT_PLAN.md'), locations.get('queue', 'tasks/QUEUE.md')))
+                paths.add(locations.get('queue', 'tasks/QUEUE.md'))
             before = {name: file_digest(_target(root, name)) for name in paths}
             store = _target(root, '.cardine/tasks')
             if store.exists() and (not store.is_dir() or any(store.iterdir())):
@@ -198,9 +194,6 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
             payload = {'outputs': _encode_outputs(outputs), 'tasks': tasks, 'removals': removals,
                        'directories': directories, 'before': before,
                        'plan': encode_plan(plan)}
-            if plan.case == 'B':
-                old_plan = _target(root, locations.get('plan', 'PROJECT_PLAN.md'))
-                payload['original_plan'] = base64.b64encode(old_plan.read_bytes() if old_plan.exists() else b'').decode('ascii')
             active.intent['adoption'] = payload
             active._save()
         outputs = {name: base64.b64decode(value) for name, value in payload['outputs'].items()}
@@ -235,8 +228,7 @@ def apply_adopt(project: Path, plan, framework: Path | None = None) -> bool:
                 _task_state(root, task_id, record)
         if plan.case == 'B':
             if 'views' not in payload:
-                original = base64.b64decode(payload['original_plan'])
-                payload['views'] = _encode_outputs(_views(root, original or None))
+                payload['views'] = _encode_outputs(_views(root))
                 payload['outputs'].update(payload['views'])
                 active._save()
             for name, value in sorted(payload['views'].items()):
