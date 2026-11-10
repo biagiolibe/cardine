@@ -1,0 +1,115 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "242"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/shared/project_guide.py",
+      "src/cardine/cli.py",
+      "skills/cardine-project/SKILL.md",
+      "docs/QUICKSTART.md",
+      "docs/PUBLIC_SURFACE.md",
+      "tests/test_project_guide.py",
+      "tests/test_cli_help.py",
+      "tests/test_public_surface.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/243.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 243 \u2014 Start Cardine onboarding before project configuration",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_project_guide --module test_init --module test_adopt_cli --module test_cli_help --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "ac85ad390f3e800cbb80073851160b4af9af4376b03a71f73c6c363c9d79d2e6",
+        "digest": "4d254ec2ea82f5672b9cb8dfdcf7d38141ec119fcb50e74188c986ab83222038",
+        "inputs": {
+          ".cardine/tasks/243.json": null,
+          "tasks/243.md": null
+        },
+        "kind": "creation",
+        "operation_id": "cf089c57ffa544e0b8df5cd7cce118fc",
+        "outputs": {
+          ".cardine/tasks/243.json": "57c885dbbf8dd926b3d46b6823728473daefcaa74f4b808eecad074ea9dde791",
+          "tasks/243.md": "1adfb0c0396997623219c3666b6f276e2eb9724784dbd9652a63ba45825387ef"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "dffed6acfae08f1c70305b7d3cca317ca3eb0ca8",
+        "task_id": "243",
+        "tree": "1570cded7738f35531e19ce79fc2312adee40707",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "243",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
