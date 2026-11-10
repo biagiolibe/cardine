@@ -1,0 +1,107 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "README.md",
+      "docs/QUICKSTART.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/235.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 235 \u2014 Align the README with the 0.9.0 release",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "4db49175402e0ce5ac1678f2021d3968f1844ea27525d5ee93f86ddc451e7544",
+        "digest": "a644132119a54ab478fa171c86f507fcd60ea1bb1f519a6dab42a265d9e804b3",
+        "inputs": {
+          ".cardine/tasks/235.json": null,
+          "tasks/235.md": null
+        },
+        "kind": "creation",
+        "operation_id": "1c90bc40715a48438342018625ace6e1",
+        "outputs": {
+          ".cardine/tasks/235.json": "1800aa4a8da90cb39efe6fe546d3fa036e3c94c9e96fc8bde0fb99ce03f14134",
+          "tasks/235.md": "1d2d9ce18229f3dd8c3a8e51230555eebe72bf7f213cb50d7876a4bbcd6db4da"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+        "task_id": "235",
+        "tree": "148fb9197a23744b70ef7bf362477367bb39723f",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "235",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
