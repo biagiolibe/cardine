@@ -1,0 +1,118 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/cli.py",
+      "src/cardine/shared/project_guide.py",
+      "src/cardine/templates/init.py",
+      "skills/cardine-project/SKILL.md",
+      "templates/single/AGENTS.md",
+      "templates/single/CLAUDE.md",
+      "docs/QUICKSTART.md",
+      "docs/PUBLIC_SURFACE.md",
+      "tests/test_project_guide.py",
+      "tests/test_init.py",
+      "tests/test_adopt_cli.py",
+      "tests/test_cli_help.py",
+      "tests/test_public_surface.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/242.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 242 \u2014 Guide new Cardine projects to their first landing",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_project_guide --module test_init --module test_adopt_cli --module test_cli_help --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "156aed4403f7b109101cc5a98290cf9ae9bd3251eceefa7a02a0c48745a2c754",
+        "digest": "079f4c9c06c577097c423c28f6d234a4660e4c722e0a159e245f2eaea9e88042",
+        "inputs": {
+          ".cardine/tasks/242.json": null,
+          "tasks/242.md": null
+        },
+        "kind": "creation",
+        "operation_id": "64ca128e617d4655999ae2ef58574c44",
+        "outputs": {
+          ".cardine/tasks/242.json": "d0943586563db5f333ae641a7e983c0653799ed029c53852522e51a4b9a17dc4",
+          "tasks/242.md": "daeccc46ee6748efa2cf580a294b6e3866059b31dfda88dac9b052b146fb8c88"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "fd0bd6e7606f52d7c8525d41bf2eed3fcdbae9e1",
+        "task_id": "242",
+        "tree": "800ebdf5ea9a7e9038a02878f22d6e563b2cd4f7",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "242",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
