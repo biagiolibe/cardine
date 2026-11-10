@@ -138,4 +138,4 @@ Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow
 interfaces and have no compatibility promise. The generator's `--template` option
 selects the single template set's shared body; without it, `--project` selects consumer routers.
 
-`cardine guide --project <root> [--format text|json]` gives read-only, offline onboarding guidance from the resolved project declaration.
+`cardine guide --project <root> [--format text|json]` gives read-only, offline onboarding guidance from the resolved project declaration, or bootstrap guidance for an unconfigured Git checkout. Invalid declarations and unsupported checkouts report errors.
