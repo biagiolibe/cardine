@@ -1,0 +1,117 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "237"
+    ],
+    "expectedCodeSurface": [
+      "templates/single/PROJECT_PLAN.md",
+      "templates/single/TECH_DESIGN.md",
+      "src/cardine/templates/init.py",
+      "src/cardine/adopt/plan.py",
+      "src/cardine/adopt/apply.py",
+      "src/cardine/tasks/status_render.py",
+      "tests/test_status_render.py",
+      "tests/test_template_manifest.py",
+      "tests/test_adopt_plan.py",
+      "tests/test_run_delivery_disposable.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/238.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 238 \u2014 Stop creating PROJECT_PLAN.md and TECH_DESIGN.md",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_status_render --module test_template_manifest --module test_adopt_plan --module test_adopt_apply --module test_adopt_interruption --module test_init --module test_run_delivery_disposable --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "1d40b81b1a9327405df616d5ed151bd24adda04de92aade1c9d944b876ba0b80",
+        "digest": "19e703bcdcbf2541d2867a3cbe62305737ac203f082ea309a8fd6fb1aa5caa54",
+        "inputs": {
+          ".cardine/tasks/238.json": null,
+          "tasks/238.md": null
+        },
+        "kind": "creation",
+        "operation_id": "b6a05bf4b29d41fdae433641debf5a86",
+        "outputs": {
+          ".cardine/tasks/238.json": "e83403734dea0220bd09f791359af0e788d96f5739a2217c144c4c56c9aa1a3a",
+          "tasks/238.md": "a997170a91016924484f880314a37405d66395399a3637a93f264e7abd407049"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "1518e9561eccd5956b36e4965b5c4c001a48b159",
+        "task_id": "238",
+        "tree": "4b494c66afd4d237158c5c538e647ad00f069e41",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "238",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

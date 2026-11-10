@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/tasks/status_render.py",
+      "src/cardine/integration/merge.py",
+      "tests/test_status_render.py",
+      "tests/test_queue_archival_state.py",
+      "tests/test_task_integration_state.py",
+      "tests/test_worktree_integration.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/237.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 237 \u2014 Regenerate only the queue as the status view",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_status_render --module test_queue_archival_state --module test_task_integration_state --module test_worktree_integration --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "57c7209210158bf30e5574d13d5098749c7671f52e9c6b14f60ad99c58b8ce9f",
+        "digest": "80fa71b8acb9a84db328924548ca8d855bcca576a9296a0bdae08d987224c7b3",
+        "inputs": {
+          ".cardine/tasks/237.json": null,
+          "tasks/237.md": null
+        },
+        "kind": "creation",
+        "operation_id": "28e3c926ec244f5e853237ae48d8d24c",
+        "outputs": {
+          ".cardine/tasks/237.json": "e9e9be104e9580220edf5c607c6046a213e69a0ccce54dbf26a0bcbe74bbfd5a",
+          "tasks/237.md": "9dd04935bb7d72c9d53b51781ffff17c4f26e58e58a4f751cf750ec8b2a7dbee"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "1518e9561eccd5956b36e4965b5c4c001a48b159",
+        "task_id": "237",
+        "tree": "4b494c66afd4d237158c5c538e647ad00f069e41",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "237",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
