@@ -95,6 +95,23 @@ Every step can be interrupted and rerun.
 history, create tags, delete unmerged branches, or resolve textual conflicts.
 Those stay with you.
 
+## Get started
+
+In a Git checkout, run `cardine guide --project .` to begin from the terminal.
+See the [Quickstart](docs/QUICKSTART.md) for installation and the full path to a
+first integrated task.
+
+In true Cardine fashion, you can delegate the setup, too.
+
+```text
+I want to use Cardine here. Read the Quickstart at
+https://github.com/biagiolibe/cardine/blob/main/docs/QUICKSTART.md and guide
+me from this checkout to the first integrated task.
+```
+
+When the Cardine project skill is available, “I want to use Cardine here” is
+sufficient. The [Quickstart](docs/QUICKSTART.md) covers this agent path too.
+
 ## First 5 minutes
 
 You need a Git repository on `main` with a writable `origin` (landing pushes

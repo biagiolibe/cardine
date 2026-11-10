@@ -41,3 +41,26 @@ class ProjectGuideTest(unittest.TestCase):
                 self.assertIn('task branch commit', text.stdout)
                 after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob('*') if p.is_file()}
                 self.assertEqual(before, after)
+
+    def test_unconfigured_checkout_and_invalid_inputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / 'project'
+            project.mkdir()
+            subprocess.run(['git', 'init', '-q', str(project)], check=True)
+            def run(path, *args):
+                return subprocess.run([str(ROOT / 'bin/cardine'), 'guide', '--project', str(path), *args], capture_output=True, text=True)
+            before = set(project.rglob('*'))
+            result = run(project, '--format', 'json')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            guide = json.loads(result.stdout)
+            self.assertEqual(guide['facts']['configuration'], 'missing')
+            text = run(project)
+            for entries in guide['sections'].values():
+                for entry in entries:
+                    self.assertIn(entry, text.stdout)
+            self.assertEqual(before, set(project.rglob('*')))
+            self.assertIn('unsupported checkout', run(root).stderr)
+            (project / '.cardine').mkdir()
+            (project / '.cardine/project.json').write_text('{broken')
+            self.assertIn('invalid project declaration', run(project).stderr)

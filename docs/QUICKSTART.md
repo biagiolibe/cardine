@@ -1,8 +1,22 @@
 # Cardine quick start
 
-Initialize or adopt a project, connect your agent host, and deliver a first
-task. See the [README](../README.md#first-5-minutes) for the complete
+Start in a Git checkout, configure Cardine, and deliver a first task. You can
+follow the terminal steps below or delegate them to an agent. See the [README](../README.md#first-5-minutes) for the complete
 first-task example.
+
+## Start with an agent
+
+With the Cardine project skill installed, ask: “I want to use Cardine here.”
+Without the skill, give the agent this self-contained request:
+
+```text
+I want to use Cardine here. Read the Quickstart at
+https://github.com/biagiolibe/cardine/blob/main/docs/QUICKSTART.md and guide
+me from this checkout to the first integrated task.
+```
+
+The agent should inspect prerequisites, collect your choices, show the plan and
+ask for consent before applying it. Setup is a separate consent decision.
 
 ## Prerequisites
 
@@ -21,7 +35,20 @@ pipx install --editable ~/src/cardine
 cardine --version
 ```
 
+For Claude Code, install the host plugin if missing:
+
+```bash
+claude plugin marketplace add biagiolibe/cardine#v0.9.1
+claude plugin install cardine@cardine
+```
+
+Codex receives the skills through the separate `cardine setup` step after
+project configuration. The self-contained prompt above works before that.
+
 ## Initialize or adopt
+
+From the root of the checkout, start with `cardine guide --project .`. It is
+read-only and works offline; `--format json` provides structured output.
 
 In the Contoso repository, put the project's actual validation commands in
 `~/contoso-validation.json`. For example, if its test command is
@@ -49,8 +76,11 @@ cardine adopt --project . --apply --name "Contoso API" --slug contoso-api \
   --validation ~/contoso-validation.json
 ```
 
-For a repository without a `README.md`, `AGENTS.md`, or `CLAUDE.md`, use
-`cardine init` with the same options instead. Commit and push the initialized
+For a new repository without conflicting generated paths, use `cardine init`
+with the same options instead. The preview reports any conflicts. For example, replace `adopt` in
+both commands with `init`. For adoption, also rehearse the plan on a disposable
+clone with `--rehearse` before applying. Inspect the preview and resolve any
+missing inputs before choosing to apply it. Commit and push the initialized
 project. Add generated test files such as `__pycache__/` to `.gitignore` and
 commit and push that change too: Cardine treats other untracked files as part
 of the change.
@@ -123,15 +153,18 @@ git commit -m "Add task 001"
 git push origin main
 ```
 
-Ask your agent to run `cardine run 001` and follow each returned `next.command`
-until the task is done. The agent implements in the worktree Cardine returns;
-Cardine runs validation and lands the task when its gates pass.
+Run `cardine run 001 --project .` and follow each returned `next.command`
+until the task is done. When `work` requests implementation, make and commit
+the change in the returned worktree, then run the next command. Cardine runs
+validation and lands the task when its gates pass. You can instead ask your
+agent to follow the same lifecycle. Required independent review needs a
+separate session.
 
 ## Stops and resume
 
 A `blocked` outcome identifies a guardrail needing a human decision. Read the
 stop code and its `resume` instruction, make the required decision or repair,
-then run the specified resume command. For a recoverable outcome, follow
+then run the specified resume command. Check the diagnostics and Git status to see what succeeded; do not repeat successful configuration, commits, or pushes. If a prerequisite is missing, install or configure it and retry the failed command. For a recoverable outcome, follow
 `next.command`; for `waiting`, wait the returned `retry_after_seconds`. For
 `iterate`, fix the failing work and run the next command again. See
 [run commands](RUN_COMMANDS.md#stops-and-recovery) for the outcome reference.

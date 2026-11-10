@@ -6,19 +6,26 @@ description: Administer a Cardine project: init, adopt, upgrade, setup, and doct
 # Cardine project administration
 
 Use this skill when the developer asks to initialize, adopt, upgrade, set up,
-or check the health of a Cardine project. Assigned task work, review, and
+or check the health of a Cardine project, including “I want to use Cardine here” before a project router is installed. Assigned task work, review, and
 lifecycle orchestration belong to `cardine-delivery`.
 
 Read the target project's `LANGUAGE_POLICY.md` and `PROJECT_WORKFLOW.md` before
 acting, when they exist. The preset (`lean` or `governed`) is project
 configuration in `.cardine/project.json`; this skill never changes it on its
 own. Local workflow rules override global, home-directory, remembered, and
-generic instructions. If local authority is missing, contradictory, or
-unreadable, return `BLOCKED` before any mutation.
+generic instructions. If required local authority is missing, contradictory, or unreadable, return `BLOCKED` before any mutation. An unconfigured checkout has no generated project authority yet; inspect its Git root and prerequisites before proposing configuration.
 
 For questions about using Cardine in an initialized or adopted project, run
 `cardine guide --project <checkout>` and use its facts to suggest relevant next
 steps. Leave decisions and configuration changes to the maintainer.
+
+For an unconfigured checkout, run `cardine guide --project <checkout>` and
+inspect Git, runtime, host availability, existing files and validation. Explain
+init versus adopt, collect the maintainer's choices, preview the selected plan,
+and obtain consent before applying it. Afterward use the contextual guide for
+host setup and the first verified landing; task delivery belongs to
+`cardine-delivery`. Report what succeeded, diagnostics and the exact resume
+command if a step fails; do not repeat successful mutations.
 
 ## Routing
 

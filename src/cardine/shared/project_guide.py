@@ -3,11 +3,35 @@
 from pathlib import Path
 import shlex
 
+from cardine.shared.errors import CardineError
+from cardine.shared.git import _run_git
+from cardine.shared.project import read_project_declaration
+
 from cardine.shared.project import resolve_project_configuration
 
 
 def project_guide(project: Path) -> dict:
     root = project.resolve()
+    declaration = read_project_declaration(root)
+    if declaration is None:
+        result = _run_git(root, 'rev-parse', '--show-toplevel') if root.is_dir() else None
+        if not result or result.returncode or Path(result.stdout.strip()).resolve() != root:
+            raise CardineError('unsupported checkout: --project must name the root of a non-bare Git checkout')
+        target = shlex.quote(str(root))
+        return {
+            'version': 1, 'project': str(root),
+            'facts': {'configuration': 'missing'},
+            'sections': {
+                'bootstrap': [
+                    'This Git checkout has no Cardine project declaration. Use init for a new repository with no conflicting generated paths; use adopt for an existing project. The preview reports conflicts.',
+                    'Prepare a project name and slug, preset (lean or governed), conversation language, task identity (opaque or milestone), and a JSON file declaring validation commands, baseline and candidate choices. Repository text remains English.',
+                    f'Preview with cardine init --project {target} --check or cardine adopt --project {target} --check, supplying the chosen inputs; see docs/QUICKSTART.md for complete commands. Adopt can also be rehearsed on a disposable clone.',
+                    'Review the plan and missing inputs, then replace --check with --apply after consenting. If a step fails, inspect its diagnostics and applied changes, correct the cause, and resume the indicated step.',
+                    f'After configuration, run cardine guide --project {target} again for host setup and the first verified landing.',
+                ],
+                'references': ['docs/QUICKSTART.md'],
+            },
+        }
     config = resolve_project_configuration(root)
     defaults = config['taskDefaults']
     ci = config.get('ci', 'none')
