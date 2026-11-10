@@ -97,9 +97,10 @@ Those stay with you.
 
 ## Get started
 
-In a Git checkout, run `cardine guide --project .` to begin from the terminal.
-See the [Quickstart](docs/QUICKSTART.md) for installation and the full path to a
-first integrated task.
+Choose a starting path:
+
+- **Terminal:** follow the [terminal walkthrough](docs/QUICKSTART.md#start-in-the-terminal) to install Cardine and deliver a first task.
+- **Agent:** follow the [agent walkthrough](docs/QUICKSTART.md#start-with-an-agent) from your project checkout.
 
 In true Cardine fashion, you can delegate the setup, too.
 
@@ -110,111 +111,17 @@ me from this checkout to the first integrated task.
 ```
 
 When the Cardine project skill is available, “I want to use Cardine here” is
-sufficient. The [Quickstart](docs/QUICKSTART.md) covers this agent path too.
+sufficient. The console is optional: maintainers can inspect task status and
+see the next action in an interactive terminal. See [the console](docs/QUICKSTART.md#project-console).
+
+![Console showing task 001 in progress with elapsed time and current gate](docs/assets/cardine-console.png)
+
+*Console development preview, commit `0132b8add339bc1e2808fd486201bf99a5ab37bb` (the displayed version is 0.9.1).*
 
 ## First 5 minutes
 
-You need a Git repository on `main` with a writable `origin` (landing pushes
-`main`) and a test command that passes on `main`. Install the CLI first; see
-[Install](#install).
-
-Declare the project's validation commands once, in a small JSON file outside
-the repository, `~/contoso-validation.json`:
-
-```json
-{"commands": {"test": "python3 -m unittest"},
- "baseline": ["test"],
- "candidate": {"REUSE": [], "BOUNDED": ["test"], "FULL": ["test"]}}
-```
-
-Convert the project. `--check` shows the plan and changes nothing. Your
-files are kept; an existing `AGENTS.md` or `CLAUDE.md` gets Cardine's text
-followed by yours. In a repository without a `README.md`, `AGENTS.md`, or
-`CLAUDE.md`, `cardine init` takes the same options.
-
-```bash
-cardine adopt --project . --check --name "Contoso API" --slug contoso-api \
-  --preset lean --language English --task-identity opaque \
-  --validation ~/contoso-validation.json
-```
-
-Run it again with `--apply` instead of `--check`, then commit and push:
-
-```bash
-git add -A && git commit -m "Adopt Cardine" && git push origin main
-```
-
-Add the patterns for files your tests generate to `.gitignore`, such as
-`__pycache__/` for Python, then commit that file. Cardine treats any other
-untracked file as part of the change.
-
-```bash
-printf "__pycache__/\n" >> .gitignore
-git add .gitignore && git commit -m "Ignore generated test files" && git push origin main
-```
-
-Connect your host. `setup --check` shows every change it would make; nothing
-is written until `--apply`.
-
-```bash
-cardine setup --check --project .
-cardine setup --apply --project .
-cardine doctor --host claude --project .
-```
-
-Write a first task as a quick contract, `~/proposal-001.md`:
-
-```markdown
-# Task 001 — Document the configuration defaults
-
-> **ID**: `001`
-> **Category**: Quick
-
-## Objective
-
-Document the defaults used when no configuration file exists.
-
-## Acceptance Criteria
-
-- README.md lists each default and the option that overrides it.
-
-## Expected code surface
-
-- `README.md`
-
-## Dependencies
-
-None.
-
-## Validation
-
-- `test`: `python3 -m unittest`
-```
-
-```bash
-cardine task new 001 --quick --record ~/proposal-001.md --project .
-git add -A && git commit -m "Add task 001" && git push origin main
-```
-
-Then ask your agent to deliver it:
-
-```text
-Run `cardine run 001` and follow its next command until the task is done.
-```
-
-Each call prints one JSON result. One of them, with the path shortened and
-the other fields left out:
-
-```json
-{"task_id": "001", "step": "landing", "outcome": "next", "action": "finalize",
- "next": {"command": "cardine run 001 --project /path/to/contoso-api",
-          "reason": "Push and clean up the landed task"},
- "stop": null}
-```
-
-`outcome` is one of `progress`, `next`, `waiting`, `iterate`, `blocked`, or
-`done`. The agent keeps going until the task is `done` on `main`, or until a
-`blocked` result names the command you run to resume.
+The complete [walkthrough](docs/QUICKSTART.md#start-in-the-terminal) covers
+installation, project setup and a first integrated task.
 
 ## Lean or Governed
 
@@ -272,14 +179,14 @@ Not yet proven or measured:
 
 ## Install
 
-Requires macOS or Linux, Python 3.12 or later, Git, pipx, and an installed,
-authenticated Claude Code or Codex.
+Requires macOS or Linux, Python 3.12 or later, Git, and pipx. An installed,
+authenticated Claude Code or Codex host is optional for terminal-only use.
 
-Install the latest release from a clone:
+Install the published release from a runtime clone (separate from your project):
 
 ```bash
-git clone --branch v0.9.1 https://github.com/biagiolibe/cardine ~/src/cardine
-pipx install --editable ~/src/cardine
+git clone --branch v0.9.1 https://github.com/biagiolibe/cardine ~/src/cardine-runtime
+pipx install --editable ~/src/cardine-runtime
 cardine --version
 ```
 
