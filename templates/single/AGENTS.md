@@ -2,7 +2,7 @@
 
 Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting or responding. Both bind; if missing or contradictory, return `BLOCKED RULE_CONFLICT`.
 
-Work only on assigned tasks or authorized read-only requests. Read the task and `git status --short`; preserve unrelated work. Ask for mixed requests.
+Work only on assigned tasks or authorized read-only requests. Read the task and `git status --short`; preserve unrelated changes. Ask for mixed requests.
 
 <!-- CARDINE:BEGIN capability=command-triggers v3 -->
 ## Command triggers
