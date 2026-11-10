@@ -401,17 +401,21 @@ def _orphaned_cleanup_task(project: Path, row: dict, by_id: dict, preset: str,
     if intent_stat is None:
         cache.cleanup.pop(cache_key, None)
         return None
-    cached = cache.cleanup.get(cache_key)
-    if cached and main_commit and cached[0] == (intent_stat, main_commit, _stat_identity(cached[1])):
-        return None
     from cardine.lifecycle.context import resolve_run_locations
     from cardine.lifecycle.preview import preview_run
+    from cardine.lifecycle import receipts
+    from cardine.integration.cleanup import completed_for_display
     locations = resolve_run_locations(row['id'], project)
+    try:
+        if completed_for_display(locations, receipts._load_intent(intent)):
+            return None
+    except (CardineError, OSError, ValueError, KeyError, TypeError):
+        pass
     preview = preview_run(locations)
     if preview['outcome'] == 'done':
-        if main_commit:
-            cache.cleanup[cache_key] = ((intent_stat, main_commit, _stat_identity(locations.worktree)), locations.worktree)
-        return None
+        from cardine.lifecycle.engine import diagnostic_result
+        preview = diagnostic_result(locations, stop_error(
+            'CLEANUP_BLOCKED', 'cleanup completion evidence is ambiguous'))
     cache.cleanup.pop(cache_key, None)
     path, text = _record_text(project, row, None)
     dependencies = tuple(row['dependencies'])
