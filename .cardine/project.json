@@ -1,5 +1,10 @@
 {
-  "ci": "none",
+  "ci": {
+    "provider": "github",
+    "requiredChecks": [
+      "validate"
+    ]
+  },
   "locations": {
     "adrLog": "docs/ARCHITECTURE_DECISIONS.md",
     "handoffRoot": "tasks/handoffs",
@@ -24,21 +29,28 @@
     ],
     "candidate": {
       "BOUNDED": [
-        "adopt-2a6132d9dfc5a78d"
+        "adopt-2a6132d9dfc5a78d",
+        "repository-guards"
       ],
       "FULL": [
         "adopt-2a6132d9dfc5a78d",
-        "adopt-ae1cbbf1076d9cc4"
+        "adopt-ae1cbbf1076d9cc4",
+        "repository-guards"
       ],
       "REUSE": [
-        "adopt-2a6132d9dfc5a78d"
+        "adopt-2a6132d9dfc5a78d",
+        "repository-guards"
       ]
     },
     "commands": {
       "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
       "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
-      "repository-check": "python3 scripts/check_repository.py"
+      "repository-check": "python3 scripts/check_repository.py",
+      "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
     }
   },
-  "version": 1
+  "version": 1,
+  "taskDefaults": {
+    "ciBeforeLanding": true
+  }
 }
