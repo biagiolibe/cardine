@@ -75,8 +75,8 @@ class AdoptPlanTest(unittest.TestCase):
         self.assertNotIn('.gitignore', plan.outputs)
         self.assertTrue(plan.outputs['AGENTS.md'].endswith(b'\n\nUse make.\n'))
         self.assertIn(b'CARDINE:BEGIN', plan.outputs['AGENTS.md'])
-        self.assertTrue(plan.outputs['PROJECT_PLAN.md'].startswith(b'# Roadmap\n\n<!-- cardine-status:begin -->'))
-        self.assertEqual(set(plan.existing), {'AGENTS.md', 'PROJECT_PLAN.md'})
+        self.assertNotIn('PROJECT_PLAN.md', plan.outputs)
+        self.assertEqual(set(plan.existing), {'AGENTS.md'})
         self.assertEqual(tree_digest(self.base), before)
 
     def test_case_a_refuses_paths_it_cannot_merge(self):

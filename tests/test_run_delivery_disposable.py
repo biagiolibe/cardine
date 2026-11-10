@@ -163,6 +163,8 @@ class InitializedProjectDeliveryTest(unittest.TestCase):
                         'PROJECT_PLAN.md': '# Roadmap\n\n- Ship v2.\n'}
             if bootstrap == 'init':
                 call(sys.executable, str(cardine), 'init', '--project', '.', '--apply', *choices)
+                self.assertFalse((project / 'PROJECT_PLAN.md').exists())
+                self.assertFalse((project / 'TECH_DESIGN.md').exists())
             else:
                 for name, text in existing.items():
                     (project / name).write_text(text)
@@ -172,9 +174,7 @@ class InitializedProjectDeliveryTest(unittest.TestCase):
                 for name in ('README.md', '.gitignore'):
                     self.assertEqual((project / name).read_text(), existing[name])
                 self.assertTrue((project / 'AGENTS.md').read_text().endswith(existing['AGENTS.md']))
-                plan = (project / 'PROJECT_PLAN.md').read_text()
-                self.assertTrue(plan.startswith(existing['PROJECT_PLAN.md']))
-                self.assertIn('<!-- cardine-status:begin -->', plan)
+                self.assertEqual((project / 'PROJECT_PLAN.md').read_text(), existing['PROJECT_PLAN.md'])
             commit('Initialize Cardine')
             record = base / 'proposal.md'
             record.write_text(INIT_RECORD.replace('git diff --check HEAD~1', check))

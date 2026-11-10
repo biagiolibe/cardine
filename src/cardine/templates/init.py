@@ -16,7 +16,7 @@ from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
 from cardine.shared.project import parse_project_declaration, project_validation_commands
 from cardine.tasks.state import STATUSES
-from cardine.tasks.status_render import input_digest, render_queue, render_plan_region, splice_region
+from cardine.tasks.status_render import input_digest, render_queue
 from cardine.templates.files import latest_migration_to, managed_files
 from cardine.templates.adoption import declare_capability_profile
 from cardine.templates.manifest import manifest_bytes
@@ -147,7 +147,6 @@ def plan_init(project: Path, framework: Path, *, name: str, slug: str, preset: s
     model = {"preset": preset, "totals": dict.fromkeys((*STATUSES, "total"), 0), "tasks": []}
     digest = input_digest(root, {root / declaration: outputs[declaration]}, set())
     outputs["tasks/QUEUE.md"] = render_queue(model, digest, "tasks/QUEUE.md").encode()
-    outputs["PROJECT_PLAN.md"] = splice_region(outputs["PROJECT_PLAN.md"], render_plan_region(model, digest))
     directories = {root, root / "tasks/done", root / names().tasks_path}
     for relative in outputs:
         directories.update((root / relative).parents)
