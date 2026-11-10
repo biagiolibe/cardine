@@ -1,0 +1,106 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "commands/cardine-init.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/239.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 239 \u2014 Stop pointing new projects at removed plan files",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_template_router --module test_host_codex_access --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "f9f734b9f232ead14a32e409c531eccb80b83f6e30c971bafeeaa3636f58aec5",
+        "digest": "bd64cfdbb1ca16c9683165a6f650d0d576078b76ac67224e211a943fed5964f9",
+        "inputs": {
+          ".cardine/tasks/239.json": null,
+          "tasks/239.md": null
+        },
+        "kind": "creation",
+        "operation_id": "00d6fa3f98f34d5d9f65d11cb9ffa84d",
+        "outputs": {
+          ".cardine/tasks/239.json": "d92214d688a1af5a7de7a34217874d49ea19fb2a6c0772bb6e37a6e60b2deba8",
+          "tasks/239.md": "7b0ff832ac92243e13905142db010fe9ab30b5ed9d7a2443561ba42178d97245"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "2f7c318b2420be19b2233d66e5899d87b9d2dbad",
+        "task_id": "239",
+        "tree": "f30f6efee7c627b14c021344496b467705820f40",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "239",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
