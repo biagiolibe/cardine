@@ -1,0 +1,116 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "commands/cardine-adopt.md",
+      "commands/cardine-audit.md",
+      "commands/cardine-init.md",
+      "commands/cardine-task.md",
+      "commands/cardine-upgrade.md",
+      "skills/cardine-project/SKILL.md",
+      "src/cardine/hosts/claude.py",
+      "src/cardine/hosts/setup.py",
+      "README.md",
+      "tests/test_template_commands.py",
+      "tests/test_host_doctor.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/236.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 236 \u2014 Make the Claude Code plugin call the installed CLI",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
+        "digest": "1dd486edfc2fae6b36e3399e4593fdf0ff0cf5b6b4b685424cfd933e4c4b2687",
+        "inputs": {
+          ".cardine/tasks/236.json": null,
+          "tasks/236.md": null
+        },
+        "kind": "creation",
+        "operation_id": "1540f75b42ef4edf96963a544ef9a0f6",
+        "outputs": {
+          ".cardine/tasks/236.json": "35119a8e90891ce16d8bc4d573b08b5d448bd502c6aca01d5fa963d72116eb3a",
+          "tasks/236.md": "2434427cafe2ac9fba8d7bf52a6ce7670fc576e9731894c9136d11fd0f035a8f"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "915aa2f849b9ed0e69e73290624a712192a4cee1",
+        "task_id": "236",
+        "tree": "b55696e5386662c32ac7d6fe45b6f0fdfacfc993",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "236",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
