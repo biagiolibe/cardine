@@ -297,7 +297,7 @@ class ProjectConsoleTest(unittest.TestCase):
         self.assertEqual(lines[0], "Task details")
         self.assertLess(lines.index("Dependencies"), lines.index("Objective"))
         self.assertLess(lines.index("Objective"), lines.index("Acceptance criteria"))
-        self.assertLess(lines.index("Dependencies"), lines.index("Next directive"))
+        self.assertLess(lines.index("Next directive"), lines.index("Dependencies"))
         self.assertIn("- [ ] Second check.", lines)
 
     def test_detail_sections_accept_governed_headings_and_show_dependency_states(self) -> None:
@@ -347,12 +347,11 @@ class ProjectConsoleTest(unittest.TestCase):
         )}
         owner_console_render._draw_header(screen, state, palette, "All", 140)
         writes = [call.args for call in screen.addnstr.call_args_list]
-        self.assertTrue(any(y == 0 and x > 70 and "refreshed" in value
+        self.assertTrue(any(y == 0 and x > 70 and "clean" in value
                             for y, x, value, *_ in writes))
-        self.assertTrue(any(y == 1 and "All 1" in value
-                            for y, x, value, *_ in writes))
-        self.assertTrue(any(y == 2 and "━" in value
-                            for y, x, value, *_ in writes))
+        self.assertFalse(any("refreshed" in value for _, _, value, *_ in writes))
+        self.assertTrue(any(y == 1 and "Open" in value for y, x, value, *_ in writes))
+        self.assertFalse(any(y == 2 and "━" in value for y, x, value, *_ in writes))
         self.assertTrue(any(y == 0 and "v" in value for y, x, value, *_ in writes))
 
     def test_tab_wraps_through_all_and_empty_tabs_remain_clickable(self) -> None:

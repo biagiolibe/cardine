@@ -10,7 +10,7 @@ import time
 from cardine.console.launch import _agent_defaults, _launch_selected
 from cardine.console.models import FrameworkIdentity, Snapshot, Task
 from cardine.console.render import _elapsed
-from cardine.console.snapshot import DeliveryCache, IdentityCache, load_snapshot
+from cardine.console.snapshot import DeliveryCache, IdentityCache, load_snapshot, load_initial_snapshot
 from cardine.shared.console_workflow import ConsoleError
 
 
@@ -84,6 +84,14 @@ class ConsoleState:
 
     def _run(self) -> None:
         try:
+            if self.snapshot is None:
+                try:
+                    initial = load_initial_snapshot(self.project)
+                except (ConsoleError, OSError, ValueError):
+                    initial = None
+                if initial is not None:
+                    with self._lock:
+                        self._pending = (initial, None)
             result = self._load()
         except Exception as error:  # a worker must never die silently
             result = (None, f"Refresh failed: {error}")

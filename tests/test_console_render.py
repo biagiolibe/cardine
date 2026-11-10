@@ -70,6 +70,27 @@ class ConsoleListLayoutTest(unittest.TestCase):
                            self.PALETTE, all_tasks)
         return screen
 
+    def test_narrow_list_shows_elapsed_gate_and_full_title_in_detail(self) -> None:
+        from dataclasses import replace
+        task = replace(self.task("244", "A recognizable title that is considerably longer"),
+                       started_at="2026-01-01T00:00:00+00:00",
+                       run_preview={"step": "validation", "outcome": "next", "next": None,
+                                    "stop": None})
+        screen = self.render([task], 80)
+        self.assertIn("Elapsed", screen.row(3))
+        self.assertIn("Gate", screen.row(3))
+        self.assertIn("Validation", screen.row(6))
+        self.assertIn("recognizable", screen.row(6))
+        details = " ".join(line for line, _ in owner_console_render._detail_lines(task, 80, self.PALETTE))
+        self.assertIn(task.title, details)
+
+    def test_loading_is_distinct_and_cannot_launch(self) -> None:
+        from dataclasses import replace
+        task = replace(self.task("244"), loading=True)
+        self.assertEqual(owner_console_render._gate_label(task), "Loading")
+        self.assertIsNone(task.launch_command)
+        self.assertIn("Loading", task.next_action)
+
     def test_live_states_in_details_and_row(self) -> None:
         from dataclasses import replace
         live = owner_console_models.LiveCommand("validation", "task-tests", 1, "test",
@@ -122,7 +143,7 @@ class ConsoleListLayoutTest(unittest.TestCase):
                 self.assertEqual(row[layout.title_x:layout.title_x + 15], "○ Visible title")
                 self.assertEqual(row[layout.status_x:layout.status_x + 5], "Ready")
                 self.assertEqual(screen.row(3)[layout.status_x:layout.status_x + 6], "Status")
-                self.assertEqual(screen.row(3)[layout.age_x:layout.age_x + 7], "Updated")
+                self.assertEqual(screen.row(3)[layout.age_x:layout.age_x + 7], "Elapsed")
 
     def test_two_level_groups_render_once_and_search_both_labels(self) -> None:
         # Phases come from the task contract snapshot, with an optional group above them.
