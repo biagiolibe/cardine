@@ -35,8 +35,6 @@ class TerminalTasksStayInViewsTest(unittest.TestCase):
         write_project_config(self.root, "lean")
         self.queue = self.root / "tasks/QUEUE.md"
         self.archive = self.root / "tasks/QUEUE_ARCHIVE.md"
-        self.plan = self.root / "PROJECT_PLAN.md"
-        self.plan.write_text(f"Narrative.\n{status_render.REGION_BEGIN}\n{status_render.REGION_END}\n", encoding="utf-8")
 
     def task(self, task_id: str, status: str, dependencies: str = "none") -> None:
         steps = {"queued": (), "in_progress": ("in_progress",), "done": ("in_progress", "done"),
@@ -62,7 +60,6 @@ class TerminalTasksStayInViewsTest(unittest.TestCase):
         self.assertFalse(self.archive.exists())
         self.assertNotIn("| A |", self.queue.read_text())
         self.assertIn("total=2", self.queue.read_text())
-        self.assertIn("| done | A |", self.plan.read_text())
 
     def test_queue_of_only_terminal_tasks_still_renders_without_an_archive(self) -> None:
         self.task("A", "done")
@@ -70,7 +67,6 @@ class TerminalTasksStayInViewsTest(unittest.TestCase):
         status_render.write_views(self.root)
         self.assertFalse(self.archive.exists())
         self.assertIn("done=1, cancelled=1, total=2", self.queue.read_text())
-        self.assertIn("| cancelled | B |", self.plan.read_text())
 
     def test_landing_a_task_never_writes_an_archive_file(self) -> None:
         self.task("A", "in_progress")

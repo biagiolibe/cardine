@@ -143,7 +143,7 @@ def _integration_task_state(
 
 
 def _regenerate_status_views(project_root: Path) -> dict[str, object]:
-    """Regenerate the queue and plan views once on the candidate tree and stage what changed.
+    """Regenerate the queue view once on the candidate tree and stage what changed.
 
     A failed write leaves the already written landed state in place and reports
     the stale view with the command that regenerates it.
