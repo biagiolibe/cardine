@@ -156,8 +156,154 @@
         "task_id": "236",
         "tree": "b0b64168db7fb0018b119cd38c96509f45f1875f",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
+        "digest": "6175334a967a4429985763bf83d4e94f65af951fd19ea9a5b6b9dc5d4e51d10f",
+        "inputs": {
+          ".cardine/evidence/236.json": null,
+          ".cardine/tasks/236.json": "738f0d812c3061c37f8e1e49018104f6c62512a4461b0fd374425d7cf36d2784",
+          "tasks/handoffs/236.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "2639f9a9a1af40baa44830e40dd34eeb",
+        "outputs": {
+          ".cardine/evidence/236.json": "2e62bb0f36dbc0952b7976148252c2f998e1a7a96951c9cc515195b03e9231e0",
+          ".cardine/tasks/236.json": "030aa229dd7d48d154d0e1352003ae38bc2d428eb702cece94f237979811b40f",
+          "tasks/handoffs/236.md": "33ae196054bc202fc246cd161764a51ad6247bb49424c73196e41685d3807eb9"
+        },
+        "predecessor": "3912e5eccc23720fc7d18364bd38c08ed05acc727d215aa1682c81d09830da08",
+        "result": "verified",
+        "source": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+        "task_id": "236",
+        "tree": "88f890f6d6e1f8b2350882e9ec69a3b5225d2949",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "44250e85a40540f589b94e7b8a80161a",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/236.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "09b791627651fb4e7ee6bc65030e10057cb2b5e4c08ae909ae1e445941a7b94a",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        },
+        "contractDigest": "d021e60b54116f696220829338eec68e011929d011a5751a08ce86ce3403ff65",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-236",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "823c5973c5b16e41b52eecd4e26eaea8a05e5601",
+        "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+        "sourceTree": "b0b64168db7fb0018b119cd38c96509f45f1875f"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "repository-check",
+        "task-tests"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "exitStatus": 1,
+            "id": "repository-check",
+            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/1/repository-check",
+            "round": 1,
+            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "FAIL: governed-SDD mode lock is incomplete: commands/cardine-task.md\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "command": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/1/task-tests",
+            "round": 1,
+            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "stderr": "run_tests: 221 tests in 8 shards\nrun_tests: shard 5/8 finished in 33.1s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 4/8 finished in 35.0s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 3/8 finished in 35.3s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 6/8 finished in 35.5s: exit 1 ran=27 failures=1 errors=0\nrun_tests: shard 1/8 finished in 36.2s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 8/8 finished in 37.6s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 7/8 finished in 41.8s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 2/8 finished in 54.7s: exit 0 ran=28 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 6/8 (exit 1) ---\nshard=6/8 total=221 selected=27 digest=b043f2823c62566dd61633c2597d3e53f5671531cb9f18469f69f6d9c8efe7f9\ntest_capability_catalog_is_valid_as_shipped (test_check_repository.CapabilityMarkerBaselineTest.test_capability_catalog_is_valid_as_shipped) ... ok\ntest_matching_catalog_passes (test_check_repository.CapabilityRequiredVersionsTest.test_matching_catalog_passes) ... ok\ntest_migration_in_tagged_release_ledger_passes (test_check_repository.CheckMigrationsVersionGateTest.test_migration_in_tagged_release_ledger_passes) ... ok\ntest_build_suffix_fails (test_check_repository.CheckReleasesTest.test_build_suffix_fails) ... ok\ntest_valid_ledger_passes (test_check_repository.CheckReleasesTest.test_valid_ledger_passes) ... ok\ntest_a_managed_block_naming_a_literal_location_fails_in_every_file (test_check_repository.GovernedLifecycleTextTest.test_a_managed_block_naming_a_literal_location_fails_in_every_file) ... ok\ntest_shipped_review_contract_passes (test_check_repository.GovernedReviewWorktreeContractTest.test_shipped_review_contract_passes) ... ok\ntest_untracked_file_is_ignored (test_check_repository.MachinePathTest.test_untracked_file_is_ignored) ... ok\ntest_listing_failure_fails_every_check (test_check_repository.RepositoryFilesTest.test_listing_failure_fails_every_check) ... ok\ntest_shipped_routers_pass (test_check_repository.RouterRoutesTest.test_shipped_routers_pass) ... ok\ntest_registered_text_passes_and_unrelated_uppercase_lists_are_ignored (test_check_repository.StopCodeRegistryCheckTest.test_registered_text_passes_and_unrelated_uppercase_lists_are_ignored) ... ok\ntest_verdict_proximity_does_not_exempt_a_stop (test_check_repository.StopCodeRegistryCheckTest.test_verdict_proximity_does_not_exempt_a_stop) ... ok\ntest_clean_and_dirty_resume_states_exit_zero (test_execution_boundaries.ExecutionBoundariesTest.test_clean_and_dirty_resume_states_exit_zero) ... ok\ntest_first_and_repeated_start_preserve_original_event_and_projections (test_execution_boundaries.ExecutionBoundariesTest.test_first_and_repeated_start_preserve_original_event_and_projections) ... ok\ntest_lean_review_required_spike_uses_the_same_delivery_and_verdict (test_execution_boundaries.ExecutionBoundariesTest.test_lean_review_required_spike_uses_the_same_delivery_and_verdict) ... ok\ntest_resume_preserves_history_and_requires_explicit_dirty_authorization (test_execution_boundaries.ExecutionBoundariesTest.test_resume_preserves_history_and_requires_explicit_dirty_authorization) ... ok\ntest_a_hook_that_does_not_deny_is_not_effective (test_host_doctor.HostDoctorTest.test_a_hook_that_does_not_deny_is_not_effective) ... ok\ntest_claude_role_launch_is_unsupported_and_never_inferred_from_settings (test_host_doctor.HostDoctorTest.test_claude_role_launch_is_unsupported_and_never_inferred_from_settings) ... ok\ntest_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control (test_host_doctor.HostDoctorTest.test_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control) ... ok\ntest_evidence_cannot_overwrite_another_task_from_a_task_branch (test_layout.LayoutTest.test_evidence_cannot_overwrite_another_task_from_a_task_branch) ... ok\ntest_nested_context_restores_after_exception_and_isolates_other_contexts (test_layout.LayoutTest.test_nested_context_restores_after_exception_and_isolates_other_contexts) ... ok\ntest_worktree_root_and_configuration_use_selected_names (test_layout.LayoutTest.test_worktree_root_and_configuration_use_selected_names) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... FAIL\ntest_cli_owns_bootstrap_and_setup_stays_separate (test_template_commands.InitSlashCommandTest.test_cli_owns_bootstrap_and_setup_stays_separate) ... ok\ntest_route_matrix_is_the_same_for_both_presets_and_hosts (test_template_commands.SharedSkillTest.test_route_matrix_is_the_same_for_both_presets_and_hosts) ... ok\ntest_slash_commands_call_the_installed_cli (test_template_commands.TemplateCommandTest.test_slash_commands_call_the_installed_cli) ... ok\ntest_allowlist_has_only_three_classes_and_creation_is_branch_scoped (test_text_gates.TextGateScannerTest.test_allowlist_has_only_three_classes_and_creation_is_branch_scoped) ... ok\n\n======================================================================\n\nRan 27 tests in 34.721s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/REMEDIATION.md: capability task-worktree-remediation names a literal location: 'tasks/reviews/'\nFAIL: templates/single/PROJECT_WORKFLOW.md: capability workflow-mode-lock names a literal location: 'tasks/reviews/'\nValidation 001/check: exit 0\nFAIL: test_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-236/tests/test_no_meridian_identifiers.py\", line 126, in test_repository_has_no_unallowed_identifiers_or_stale_allowances\n    self.assertEqual(failures, [], \"\\n\".join(failures))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['unused allowlist entry 0: group 2, 9, (?[34 chars]/.*'] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\n'unused allowlist entry 0: group 2, 9, (?:skills|commands|\\\\.claude-plugin)/.*'\n\n+ []\n- ['unused allowlist entry 0: group 2, 9, '\n-  '(?:skills|commands|\\\\.claude-plugin)/.*'] : unused allowlist entry 0: group 2, 9, (?:skills|commands|\\.claude-plugin)/.*\n\n----------------------------------------------------------------------\nresult ran=27 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_commands,test_host_doctor,test_execution_boundaries,test_public_surface,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=221 total=2165 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "command": "git diff --check",
+            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "exitStatus": 1,
+            "id": "repository-check",
+            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/2/repository-check",
+            "round": 2,
+            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "FAIL: governed-SDD mode lock is incomplete: commands/cardine-task.md\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "command": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_doctor --module test_execution_boundaries --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/2/task-tests",
+            "round": 2,
+            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "stderr": "run_tests: 221 tests in 8 shards\nrun_tests: shard 5/8 finished in 31.7s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 3/8 finished in 34.5s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 4/8 finished in 34.5s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 6/8 finished in 34.6s: exit 1 ran=27 failures=1 errors=0\nrun_tests: shard 1/8 finished in 35.3s: exit 0 ran=28 failures=0 errors=0\nrun_tests: shard 8/8 finished in 36.6s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 7/8 finished in 40.5s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 2/8 finished in 53.1s: exit 0 ran=28 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 6/8 (exit 1) ---\nshard=6/8 total=221 selected=27 digest=b043f2823c62566dd61633c2597d3e53f5671531cb9f18469f69f6d9c8efe7f9\ntest_capability_catalog_is_valid_as_shipped (test_check_repository.CapabilityMarkerBaselineTest.test_capability_catalog_is_valid_as_shipped) ... ok\ntest_matching_catalog_passes (test_check_repository.CapabilityRequiredVersionsTest.test_matching_catalog_passes) ... ok\ntest_migration_in_tagged_release_ledger_passes (test_check_repository.CheckMigrationsVersionGateTest.test_migration_in_tagged_release_ledger_passes) ... ok\ntest_build_suffix_fails (test_check_repository.CheckReleasesTest.test_build_suffix_fails) ... ok\ntest_valid_ledger_passes (test_check_repository.CheckReleasesTest.test_valid_ledger_passes) ... ok\ntest_a_managed_block_naming_a_literal_location_fails_in_every_file (test_check_repository.GovernedLifecycleTextTest.test_a_managed_block_naming_a_literal_location_fails_in_every_file) ... ok\ntest_shipped_review_contract_passes (test_check_repository.GovernedReviewWorktreeContractTest.test_shipped_review_contract_passes) ... ok\ntest_untracked_file_is_ignored (test_check_repository.MachinePathTest.test_untracked_file_is_ignored) ... ok\ntest_listing_failure_fails_every_check (test_check_repository.RepositoryFilesTest.test_listing_failure_fails_every_check) ... ok\ntest_shipped_routers_pass (test_check_repository.RouterRoutesTest.test_shipped_routers_pass) ... ok\ntest_registered_text_passes_and_unrelated_uppercase_lists_are_ignored (test_check_repository.StopCodeRegistryCheckTest.test_registered_text_passes_and_unrelated_uppercase_lists_are_ignored) ... ok\ntest_verdict_proximity_does_not_exempt_a_stop (test_check_repository.StopCodeRegistryCheckTest.test_verdict_proximity_does_not_exempt_a_stop) ... ok\ntest_clean_and_dirty_resume_states_exit_zero (test_execution_boundaries.ExecutionBoundariesTest.test_clean_and_dirty_resume_states_exit_zero) ... ok\ntest_first_and_repeated_start_preserve_original_event_and_projections (test_execution_boundaries.ExecutionBoundariesTest.test_first_and_repeated_start_preserve_original_event_and_projections) ... ok\ntest_lean_review_required_spike_uses_the_same_delivery_and_verdict (test_execution_boundaries.ExecutionBoundariesTest.test_lean_review_required_spike_uses_the_same_delivery_and_verdict) ... ok\ntest_resume_preserves_history_and_requires_explicit_dirty_authorization (test_execution_boundaries.ExecutionBoundariesTest.test_resume_preserves_history_and_requires_explicit_dirty_authorization) ... ok\ntest_a_hook_that_does_not_deny_is_not_effective (test_host_doctor.HostDoctorTest.test_a_hook_that_does_not_deny_is_not_effective) ... ok\ntest_claude_role_launch_is_unsupported_and_never_inferred_from_settings (test_host_doctor.HostDoctorTest.test_claude_role_launch_is_unsupported_and_never_inferred_from_settings) ... ok\ntest_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control (test_host_doctor.HostDoctorTest.test_one_wrong_decision_never_enforces_a_denial_or_a_false_deny_control) ... ok\ntest_evidence_cannot_overwrite_another_task_from_a_task_branch (test_layout.LayoutTest.test_evidence_cannot_overwrite_another_task_from_a_task_branch) ... ok\ntest_nested_context_restores_after_exception_and_isolates_other_contexts (test_layout.LayoutTest.test_nested_context_restores_after_exception_and_isolates_other_contexts) ... ok\ntest_worktree_root_and_configuration_use_selected_names (test_layout.LayoutTest.test_worktree_root_and_configuration_use_selected_names) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... FAIL\ntest_cli_owns_bootstrap_and_setup_stays_separate (test_template_commands.InitSlashCommandTest.test_cli_owns_bootstrap_and_setup_stays_separate) ... ok\ntest_route_matrix_is_the_same_for_both_presets_and_hosts (test_template_commands.SharedSkillTest.test_route_matrix_is_the_same_for_both_presets_and_hosts) ... ok\ntest_slash_commands_call_the_installed_cli (test_template_commands.TemplateCommandTest.test_slash_commands_call_the_installed_cli) ... ok\ntest_allowlist_has_only_three_classes_and_creation_is_branch_scoped (test_text_gates.TextGateScannerTest.test_allowlist_has_only_three_classes_and_creation_is_branch_scoped) ... ok\n\n======================================================================\n\nRan 27 tests in 33.928s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/REMEDIATION.md: capability task-worktree-remediation names a literal location: 'tasks/reviews/'\nFAIL: templates/single/PROJECT_WORKFLOW.md: capability workflow-mode-lock names a literal location: 'tasks/reviews/'\nValidation 001/check: exit 0\nFAIL: test_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-236/tests/test_no_meridian_identifiers.py\", line 126, in test_repository_has_no_unallowed_identifiers_or_stale_allowances\n    self.assertEqual(failures, [], \"\\n\".join(failures))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Lists differ: ['unused allowlist entry 0: group 2, 9, (?[34 chars]/.*'] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\n'unused allowlist entry 0: group 2, 9, (?:skills|commands|\\\\.claude-plugin)/.*'\n\n+ []\n- ['unused allowlist entry 0: group 2, 9, '\n-  '(?:skills|commands|\\\\.claude-plugin)/.*'] : unused allowlist entry 0: group 2, 9, (?:skills|commands|\\.claude-plugin)/.*\n\n----------------------------------------------------------------------\nresult ran=27 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_commands,test_host_doctor,test_execution_boundaries,test_public_surface,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_command_word ran=221 total=2165 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "44250e85a40540f589b94e7b8a80161a",
+            "command": "git diff --check",
+            "commit": "fc59b15cfb15538e0ec4eb73c4b442cc78acff79",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/236.json#44250e85a40540f589b94e7b8a80161a/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "0151c3420394d2c5805848f129276b3792d849de13e781a0d08db6879059edbc",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "236",
