@@ -1,7 +1,7 @@
 # Cardine quick start
 
-Initialize or adopt a Contoso project, connect your agent host, and deliver a
-first task. See the [README](../README.md#first-5-minutes) for the complete
+Initialize or adopt a project, connect your agent host, and deliver a first
+task. See the [README](../README.md#first-5-minutes) for the complete
 first-task example.
 
 ## Prerequisites
@@ -13,10 +13,10 @@ first-task example.
 
 ## Install
 
-Until the first release, install from a clone:
+Install the latest release from a clone:
 
 ```bash
-git clone https://github.com/biagiolibe/cardine ~/src/cardine
+git clone --branch v0.9.0 https://github.com/biagiolibe/cardine ~/src/cardine
 pipx install --editable ~/src/cardine
 cardine --version
 ```

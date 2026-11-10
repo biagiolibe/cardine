@@ -9,8 +9,15 @@
 
 <p align="center"><strong>The delivery discipline for AI coding agents.</strong></p>
 
-> **Status: in development, before 0.9.** There is no release yet: install the
-> CLI from a clone of this repository. The scope of 1.0 is
+<p align="center">
+  <a href="https://github.com/biagiolibe/cardine/releases/latest"><img src="https://img.shields.io/github/v/release/biagiolibe/cardine" alt="Latest release"></a>
+  <a href="https://github.com/biagiolibe/cardine/actions/workflows/validate.yml"><img src="https://github.com/biagiolibe/cardine/actions/workflows/validate.yml/badge.svg?branch=main" alt="Validate status on main"></a>
+  <img src="https://img.shields.io/badge/python-3.12%2B-blue" alt="Python 3.12 or later">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/biagiolibe/cardine" alt="MIT License"></a>
+</p>
+
+> **Status: 0.9.0, before 1.0.** Install the CLI from the `v0.9.0` tag.
+> The scope of 1.0 is
 > [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md); what is proven today is
 > listed under [Status and evidence](#status-and-evidence).
 
@@ -47,6 +54,9 @@ orchestrator: it is the lifecycle your agent follows.
 5. **Review**, when the task requires it.
 6. **Candidate.** Validate `main` plus the task before merging.
 7. **Landing.** Merge, push `main`, clean up the worktree and branch.
+
+A project can also require CI to pass on the task branch before landing, with the
+`ciBeforeLanding` task default. See the [project declaration](docs/PROJECT_DECLARATION.md).
 
 Every outcome falls into one of three classes:
 
@@ -248,27 +258,26 @@ Not yet proven or measured:
 Requires macOS or Linux, Python 3.12 or later, Git, pipx, and an installed,
 authenticated Claude Code or Codex.
 
-Until the first release, install from a clone:
+Install the latest release from a clone:
 
 ```bash
-git clone https://github.com/biagiolibe/cardine ~/src/cardine
+git clone --branch v0.9.0 https://github.com/biagiolibe/cardine ~/src/cardine
 pipx install --editable ~/src/cardine
 cardine --version
 ```
 
-0.9 will be a Git tag, installed the same way from a clone. `pipx install
-cardine` arrives with 1.0, published on PyPI.
+`pipx install cardine` arrives with 1.0, published on PyPI.
 
 ## Documentation
 
-- **Using Cardine:** [run commands](docs/RUN_COMMANDS.md),
+- **Using Cardine:** [quick start](docs/QUICKSTART.md),
+  [run commands](docs/RUN_COMMANDS.md),
   [converting an existing project](docs/ADOPT_COMMANDS.md),
+  [agent operations](docs/AGENT_OPERATIONS.md),
+  [upgrade guide](docs/HOW_TO_UPGRADE.md),
   [platform support](docs/PLATFORM_SUPPORT.md).
 - **Design:** [design decisions](docs/ADR_CARDINE_1_0.md),
   [public surface](docs/PUBLIC_SURFACE.md).
-- **Being rewritten from Meridian:** [quick start](docs/QUICKSTART.md),
-  [agent operations](docs/AGENT_OPERATIONS.md),
-  [upgrade guide](docs/HOW_TO_UPGRADE.md).
 - **Contributing:** [contributing](CONTRIBUTING.md).
 
 Tooling must read `--format json` output; human-readable output is never
