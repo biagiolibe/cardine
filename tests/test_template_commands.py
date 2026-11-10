@@ -36,6 +36,11 @@ def findings_for(text: str, name: str = "docs/EXAMPLE.md") -> list[str]:
 
 
 class TemplateCommandTest(unittest.TestCase):
+    def test_slash_commands_call_the_installed_cli(self) -> None:
+        for name in ("adopt", "audit", "init", "task", "upgrade"):
+            with self.subTest(name=name):
+                self.assertNotIn("CLAUDE_PLUGIN_ROOT", (ROOT / f"commands/cardine-{name}.md").read_text())
+
     def test_every_command_the_shipped_templates_name_exists(self) -> None:
         self.assertEqual(cr.unknown_template_commands(TEMPLATES, tree()), [])
 
@@ -119,7 +124,7 @@ class InitSlashCommandTest(unittest.TestCase):
             for key, value in values.items():
                 block = block.replace(f"<{key}>", value)
             words = shlex.split(block)
-            self.assertEqual(words[0], "${CLAUDE_PLUGIN_ROOT}/bin/cardine")
+            self.assertEqual(words[0], "cardine")
             self.routes.append(words[1:])
 
     def test_renamed_command_routes_to_argparse_with_all_inputs(self) -> None:
@@ -170,7 +175,7 @@ class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase)
             for key, value in values.items():
                 block = block.replace(f"<{key}>", value)
             words = shlex.split(block)
-            self.assertEqual(words.pop(0), "${CLAUDE_PLUGIN_ROOT}/bin/cardine")
+            self.assertEqual(words.pop(0), "cardine")
             index = words.index("--project") + 1
             words[index] = str(self.project)
             result.append(words)
@@ -207,7 +212,7 @@ class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase)
         self.assertTrue(parsed["task"][3].write)
         self.assertEqual(parsed["audit"][0].command, "audit")
         self.assertIsNone(parsed["audit"][0].mode)
-        self.assertIn("GOVERNED_SDD", self.texts["task"])
+        self.assertIn("cardine adopt", self.texts["task"])
         self.assertIn("BLOCKED", self.texts["task"])
         self.assertIn("Do not add checkbox status", self.texts["task"])
 

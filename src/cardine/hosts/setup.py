@@ -8,7 +8,7 @@ from cardine.worktree.paths import repository_identity
 
 from cardine.hosts import permissions
 from cardine.hosts.claude import apply_claude_project_allowlist
-from cardine.hosts.claude import claude_role_policy
+from cardine.hosts.claude import claude_plugin_state, claude_role_policy
 from cardine.hosts.effects import host_operation
 from cardine.hosts.hooks import HooksPlan, _commands, apply_hooks, owns, plan_hooks, registry_path
 from cardine.lifecycle import receipts
@@ -825,13 +825,14 @@ def codex_doctor(
     return result
 
 
-def claude_doctor(project_root: Path, *, home: Path | None = None) -> dict[str, str]:
+def claude_doctor(project_root: Path, *, home: Path | None = None, framework_root: Path | None = None) -> dict[str, str]:
     """Claude has no host command-decision probe, so enforcement is never inferred from settings."""
     home = (home or Path.home()).expanduser().resolve()
     plan = plan_claude_project_allowlist(project_root)
     return {
         "claude-project-allowlist": "installed" if plan.status == "ready" else plan.status,
         "claude-command-policy": "unverified",
+        "claude-plugin": claude_plugin_state(home, framework_root),
         "hook-invocation": probe_hook_invocation("claude", home),
         **role_launch_states("claude", project_root, home, home),
     }
@@ -839,7 +840,7 @@ def claude_doctor(project_root: Path, *, home: Path | None = None) -> dict[str, 
 
 def host_doctor(host: str, project_root: Path, config_path: Path, worktree_root: Path, **options) -> dict[str, str]:
     if host == "claude":
-        return claude_doctor(project_root, home=options.get("home"))
+        return claude_doctor(project_root, home=options.get("home"), framework_root=options.get("framework_root"))
     return codex_doctor(project_root, config_path, worktree_root, **options)
 
 

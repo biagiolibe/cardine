@@ -8,9 +8,8 @@ Create only the task the user requests. Do not select another queue item.
 
 Read `PROJECT_WORKFLOW.md`, the local `AGENTS.md` or `CLAUDE.md`, and
 `LANGUAGE_POLICY.md` before taking action. Follow the project's local rules.
-A legacy `GOVERNED_SDD` or `LEAN_DELIVERY` mode lock is not the single Cardine
-lifecycle: return `BLOCKED` without changing repository state and report that
-conversion returns with work item 10. Missing or contradictory workflow
+A project without `.cardine/project.json` does not use Cardine yet: return
+`BLOCKED` without changing repository state and point to `cardine adopt`. Missing or contradictory workflow
 instructions also return `BLOCKED`; do not infer a lifecycle from global rules.
 
 For a Cardine project, read `.cardine/project.json`. The `lean` and `governed`
@@ -22,7 +21,7 @@ separate lifecycle based on the preset.
 1. Resolve the configured task roots and queue location:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" locations --project .
+   cardine locations --project .
    ```
 
 2. Read `taskIdentity.mode` in `.cardine/project.json`. In `opaque` mode, ask
@@ -31,7 +30,7 @@ separate lifecycle based on the preset.
    uppercase workstream, then run:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" task identity next --project . --milestone "<milestone>" --workstream "<workstream>" --format json
+   cardine task identity next --project . --milestone "<milestone>" --workstream "<workstream>" --format json
    ```
 
    Show the returned canonical ID and `task_path` and get confirmation. Use
@@ -50,7 +49,7 @@ separate lifecycle based on the preset.
    shell-quote the agreed inputs:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" task new "<task ID>" --project . --record "<proposed record path>" --format json
+   cardine task new "<task ID>" --project . --record "<proposed record path>" --format json
    ```
 
    Use `--quick` only for a quick task. If interrupted, inspect the reported
@@ -60,7 +59,7 @@ separate lifecycle based on the preset.
 5. Regenerate the configured queue and plan views from state:
 
    ```bash
-   "${CLAUDE_PLUGIN_ROOT}/bin/cardine" status --project . --write
+   cardine status --project . --write
    ```
 
    Do not add checkbox status or queue rows by hand, archive a new record, or

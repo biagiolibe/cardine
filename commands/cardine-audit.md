@@ -7,7 +7,7 @@ Run a deterministic, read-only integrity check on a Cardine project's
 [the capability catalog](../capabilities/catalog-v1.json).
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/bin/cardine" audit --project .
+cardine audit --project .
 ```
 
 The CLI validates `.cardine/project.json` and uses the single distribution.
