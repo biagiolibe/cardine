@@ -1,4 +1,4 @@
-"""Deterministic generated queue and plan status region, written only on request."""
+"""Generate the queue on request; plan-region helpers remain for init and adopt."""
 from __future__ import annotations
 
 import hashlib
@@ -23,15 +23,12 @@ def _cell(value: object) -> str:
     return re.sub(r"\s+", " ", str(value)).replace("|", "\\|").strip()
 
 
-def _view_paths(root: Path, config: dict) -> tuple[Path, Path]:
-    locations = config.get("locations", {})
-    paths = []
-    for relative in (locations.get("queue", DEFAULT_QUEUE), locations.get("plan", DEFAULT_PLAN)):
-        path = (root / relative).resolve()
-        if root != path and root not in path.parents:
-            raise CardineError(f"view path escapes the project: {relative}")
-        paths.append(path)
-    return paths[0], paths[1]
+def _queue_path(root: Path, config: dict) -> Path:
+    relative = config.get("locations", {}).get("queue", DEFAULT_QUEUE)
+    path = (root / relative).resolve()
+    if root != path and root not in path.parents:
+        raise CardineError(f"view path escapes the project: {relative}")
+    return path
 
 
 def input_digest(root: Path, inputs: dict[Path, bytes], excluded: set[Path]) -> str:
@@ -111,29 +108,27 @@ def _stage(path: Path, content: bytes) -> str:
     return temporary
 
 
-def _render_views(project_root: Path) -> tuple[dict, Path, Path, bytes, bytes, bytes | None, bytes | None]:
+def _render_views(project_root: Path) -> tuple[Path, bytes, bytes | None]:
     root = Path(project_root).resolve()
     model, inputs, config = load_task_snapshot(root, all_tasks=True)
     if model["preset"] is None or model["diagnostics"]:
         detail = "; ".join(f"{item['path']}: {item['error']}" for item in model["diagnostics"])
         raise CardineError(f"incomplete status snapshot, views not written: {detail}")
-    queue, plan = _view_paths(root, config)
-    digest = input_digest(root, inputs, {queue, plan})
-    old_queue, old_plan = _read(queue), _read(plan)
-    return (model, queue, plan, render_queue(model, digest, queue.relative_to(root)).encode(),
-            splice_region(old_plan, render_plan_region(model, digest)), old_queue, old_plan)
+    queue = _queue_path(root, config)
+    digest = input_digest(root, inputs, {queue})
+    return queue, render_queue(model, digest, queue.relative_to(root)).encode(), _read(queue)
 
 
 def stale_views(project_root: Path) -> list[Path]:
-    """Read-only drift check: the views a `--write` would change."""
-    _, queue, plan, new_queue, new_plan, old_queue, old_plan = _render_views(project_root)
-    return [path for path, new, old in ((queue, new_queue, old_queue), (plan, new_plan, old_plan)) if new != old]
+    """Read-only drift check for the queue."""
+    queue, new_queue, old_queue = _render_views(project_root)
+    return [queue] if new_queue != old_queue else []
 
 
 def write_views(project_root: Path) -> list[Path]:
-    """Replace the queue and the plan region from one snapshot; both change or neither does."""
-    _, queue, plan, new_queue, new_plan, old_queue, old_plan = _render_views(project_root)
-    changed = [(path, new, old) for path, new, old in ((queue, new_queue, old_queue), (plan, new_plan, old_plan)) if new != old]
+    """Replace the queue from one snapshot."""
+    queue, new_queue, old_queue = _render_views(project_root)
+    changed = [(queue, new_queue, old_queue)] if new_queue != old_queue else []
     staged: list[tuple[str, Path, bytes | None]] = []
     replaced: list[tuple[Path, bytes | None]] = []
     try:

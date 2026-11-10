@@ -1,7 +1,6 @@
-"""Generated queue and plan status region: read-only default, atomic explicit write."""
+"""Generated queue: read-only default, atomic explicit write."""
 from task_contract_support import freeze_record
 import json
-import os
 import subprocess
 import sys
 import tempfile
@@ -53,7 +52,7 @@ class StatusRenderTests(unittest.TestCase):
         self.assertFalse(self.queue.exists())
         self.assertEqual(self.plan.read_bytes(), self.region_plan())
 
-    def test_write_renders_queue_and_plan_region_with_totals_and_all_tasks(self):
+    def test_write_renders_queue_with_totals_and_open_tasks(self):
         self.task("001", "done")
         self.task("002", "queued", dependencies="001")
         self.plan.write_bytes(self.region_plan())
@@ -63,9 +62,6 @@ class StatusRenderTests(unittest.TestCase):
         self.assertIn("Totals: queued=1, in_progress=0, in_review=0, done=1, cancelled=0, total=2", queue)
         self.assertIn("| queued | 002 |", queue)
         self.assertNotIn("| done | 001 |", queue)
-        plan = self.plan.read_text()
-        self.assertIn("| done | 001 |", plan)
-        self.assertIn("| queued | 002 |", plan)
 
     def test_second_write_is_byte_identical_and_changes_nothing(self):
         self.task("001")
@@ -96,43 +92,21 @@ class StatusRenderTests(unittest.TestCase):
         write_views(self.root)
         self.assertIn("| queued | 001 |", self.queue.read_text())
 
-    def test_plan_bytes_outside_the_region_are_preserved_including_crlf(self):
+    def test_the_plan_file_is_neither_written_nor_read(self):
         self.task("001")
-        plan = self.region_plan(b"Line one\r\nsecond \xe2\x9c\x93\r\n", b"\r\ntail without newline")
-        self.plan.write_bytes(plan)
-        write_views(self.root)
-        result = self.plan.read_bytes()
-        self.assertTrue(result.startswith(b"Line one\r\nsecond \xe2\x9c\x93\r\n" + REGION_BEGIN.encode()))
-        self.assertTrue(result.endswith(REGION_END.encode() + b"\r\ntail without newline"))
-
-    def test_missing_or_malformed_region_is_diagnosed_without_touching_either_file(self):
-        self.task("001")
-        self.queue.write_text("hand queue\n")
-        for plan in (b"Narrative only\n",
-                     REGION_BEGIN.encode() + b"\nonly begin\n",
-                     REGION_END.encode() + b"\n" + REGION_BEGIN.encode() + b"\n",
-                     self.region_plan() + self.region_plan()):
+        self.assertEqual(write_views(self.root), [self.queue])
+        self.assertFalse(self.plan.exists())
+        for index, plan in enumerate((self.region_plan(), REGION_BEGIN.encode()), start=2):
             with self.subTest(plan=plan):
                 self.plan.write_bytes(plan)
-                with self.assertRaisesRegex(CardineError, "generated region"):
-                    write_views(self.root)
+                self.task(f"{index:03d}")
+                self.assertEqual(write_views(self.root), [self.queue])
                 self.assertEqual(self.plan.read_bytes(), plan)
-                self.assertEqual(self.queue.read_text(), "hand queue\n")
-
-    def test_empty_and_missing_plans_receive_only_the_region(self):
-        self.task("001")
-        self.plan.write_bytes(b"")
-        write_views(self.root)
-        text = self.plan.read_text()
-        self.assertTrue(text.startswith(REGION_BEGIN) and text.rstrip().endswith(REGION_END))
-        self.plan.unlink()
-        write_views(self.root)
-        self.assertIn(REGION_BEGIN, self.plan.read_text())
+                self.assertEqual(stale_views(self.root), [])
 
     def test_zero_task_snapshot_renders_empty_views(self):
         write_views(self.root)
         self.assertIn("total=0", self.queue.read_text())
-        self.assertIn("total=0", self.plan.read_text())
 
     def test_incomplete_snapshot_writes_nothing(self):
         self.task("001")
@@ -143,26 +117,14 @@ class StatusRenderTests(unittest.TestCase):
         self.assertEqual(self.queue.read_text(), "keep\n")
         self.assertFalse(self.plan.exists())
 
-    def test_failed_second_replace_restores_the_first_view(self):
+    def test_failed_replace_keeps_the_old_queue_and_no_temporary_file(self):
         self.task("001")
         self.queue.write_text("old queue\n")
-        self.plan.write_bytes(self.region_plan())
-        real = os.replace
-        calls = []
-
-        def failing(source, target):
-            calls.append(target)
-            if len(calls) == 2:
-                raise OSError("disk full")
-            return real(source, target)
-
-        with patch.object(status_render, "_replace", side_effect=failing):
+        with patch.object(status_render, "_replace", side_effect=OSError("disk full")):
             with self.assertRaisesRegex(CardineError, "previous content restored"):
                 write_views(self.root)
         self.assertEqual(self.queue.read_text(), "old queue\n")
-        self.assertEqual(self.plan.read_bytes(), self.region_plan())
-        self.assertEqual([path.name for path in (self.root).glob(".*") if path.is_file()], [])
-        self.assertEqual([path.name for path in (self.root / "tasks").glob(".*")], [])
+        self.assertEqual(list((self.root / "tasks").glob(".*")), [])
 
     def test_failed_staging_leaves_no_partial_views(self):
         self.task("001")
@@ -178,7 +140,7 @@ class StatusRenderTests(unittest.TestCase):
             {"version": 1, "preset": "lean", "locations": {"queue": "docs/Q.md", "plan": "docs/P.md"}}))
         write_views(self.root)
         self.assertIn("Pipe \\| title", (self.root / "docs/Q.md").read_text())
-        self.assertTrue((self.root / "docs/P.md").is_file())
+        self.assertFalse((self.root / "docs/P.md").exists())
         self.assertFalse(self.queue.exists())
 
     def test_splice_requires_exactly_one_ordered_pair(self):

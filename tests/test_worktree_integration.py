@@ -176,10 +176,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
             encoding="utf-8",
         )
         plan = self.primary / "PROJECT_PLAN.md"
-        plan.write_text(
-            plan.read_text(encoding="utf-8") + "\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n",
-            encoding="utf-8",
-        )
+        plan_bytes = plan.read_bytes()
         self.git("add", "tasks/QUEUE.md", "PROJECT_PLAN.md")
         self.git("commit", "-m", "register tasks on main")
         self.measure(task_worktree)
@@ -189,7 +186,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
         self.assertIn("cardine status --write", queue.read_text(encoding="utf-8"))
         self.assertNotIn("Registered", queue.read_text(encoding="utf-8"))
-        self.assertIn("| done | 056 |", plan.read_text(encoding="utf-8"))
+        self.assertEqual(plan.read_bytes(), plan_bytes)
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
@@ -211,7 +208,8 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.git("commit", "-m", "register unreadable section")
         self.measure(task_worktree)
 
-        staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
+        with mock.patch.object(owner_integration_merge.status_render, "_stage", side_effect=OSError("no space")):
+            staged = owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
         self.assertNotIn("archival", staged)
         self.assertEqual(staged["views"]["status"], "STALE")
         self.assertEqual(len(staged["warnings"]), 1)
@@ -221,7 +219,7 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 
-    def test_stage_uses_the_declared_project_plan(self) -> None:
+    def test_stage_leaves_the_declared_project_plan_untouched(self) -> None:
         plan = self.primary / "docs/PLAN.md"
         plan.parent.mkdir()
         (self.primary / "PROJECT_PLAN.md").rename(plan)
@@ -242,10 +240,9 @@ class WorktreeIntegrationTest(support.BoundedWorktreeLifecycleFixture):
         self.measure(task_worktree)
 
         owner_integration_merge.stage_task_integration("056", self.worktree_root, None, self.primary)
-        self.assertIn("| done | 056 |", plan.read_text(encoding="utf-8"))
-        self.assertTrue(plan.read_text(encoding="utf-8").startswith("Narrative.\n"))
+        self.assertEqual(plan.read_text(encoding="utf-8"), "Narrative.\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n")
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
-        self.assertIn("docs/PLAN.md", self.git("diff", "--cached", "--name-only").stdout.splitlines())
+        self.assertNotIn("docs/PLAN.md", self.git("diff", "--cached", "--name-only").stdout.splitlines())
         owner_integration_merge.abort_task_integration("056", self.primary)
 
 

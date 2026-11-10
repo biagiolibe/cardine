@@ -332,12 +332,11 @@ class TaskIntegrationStateTest(unittest.TestCase):
         staged = self.stage()
         self.assertEqual(staged["landed_status"], "done")
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
-        self.assertIn("| done | 056 |", (self.primary / "PROJECT_PLAN.md").read_text())
         self.assertNotIn("| 056 |", (self.primary / "tasks/QUEUE.md").read_text())
         plan = (self.primary / "PROJECT_PLAN.md").read_text()
-        self.assertTrue(plan.startswith("Narrative stays.\n\n") and plan.endswith("\n\nTail stays.\n"))
+        self.assertEqual(plan, "Narrative stays.\n\n<!-- cardine-status:begin -->\n<!-- cardine-status:end -->\n\nTail stays.\n")
         self.assertEqual(self.git("diff", "--cached", "--name-only").stdout.split(),
-                         [".cardine/evidence/056.json", ".cardine/tasks/056.json", "PROJECT_PLAN.md", "feature.txt", "tasks/QUEUE.md",
+                         [".cardine/evidence/056.json", ".cardine/tasks/056.json", "feature.txt", "tasks/QUEUE.md",
                           "tasks/handoffs/056.md"])
         owner_integration_merge.abort_task_integration("056", self.primary)
 
@@ -354,7 +353,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.measure_worker()
         staged = self.stage()
         self.assertEqual(staged["views"]["status"], "REGENERATED", staged)
-        self.assertTrue((self.primary / "PROJECT_PLAN.md").is_file())
+        self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
         owner_integration_merge.abort_task_integration("056", self.primary)
         self.assertFalse((self.primary / "PROJECT_PLAN.md").exists())
         self.assertEqual((self.primary / "tasks/QUEUE.md").read_bytes(), queue)
@@ -366,7 +365,8 @@ class TaskIntegrationStateTest(unittest.TestCase):
         self.start(workflow="single", preset="lean", plan="No region here.\n")
         self.write_state(required=False)
         self.measure_worker()
-        staged = self.stage()
+        with mock.patch.object(owner_integration_merge.status_render, "_stage", side_effect=OSError("no space")):
+            staged = self.stage()
         self.assertEqual(staged["landed_status"], "done")
         self.assertEqual(staged["views"]["status"], "STALE")
         self.assertIn("cardine status --write", staged["warnings"][0])
