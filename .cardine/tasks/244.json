@@ -1,0 +1,119 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "241"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/console/entry.py",
+      "src/cardine/console/state.py",
+      "src/cardine/console/snapshot.py",
+      "src/cardine/console/models.py",
+      "src/cardine/console/render.py",
+      "tests/test_console_render.py",
+      "tests/test_console_refresh.py",
+      "tests/test_console_snapshot.py",
+      "tests/test_console_states.py",
+      "tests/test_console_launch.py",
+      "tests/test_console_closure.py",
+      "tests/test_run_console.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/244.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 244 \u2014 Make the console faster to open and easier to scan",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_console_render --module test_console_refresh --module test_console_snapshot --module test_console_states --module test_console_launch --module test_console_closure --module test_run_console --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "c14f6b2bfc12cbadda0a6ec4db90f52ae596f47790d4b4bfbc919be9a8b9c848",
+        "digest": "8cc9459991c5e767e4e41a1cba6d654967b1002223c0d21bb03da529e891f44c",
+        "inputs": {
+          ".cardine/tasks/244.json": null,
+          "tasks/244.md": null
+        },
+        "kind": "creation",
+        "operation_id": "c060890493784fdfb89266aa8ab14b8e",
+        "outputs": {
+          ".cardine/tasks/244.json": "22018cf24d910fce68dcf42ad2ff79005e35c84b0746e99cae9d1371ec2427bf",
+          "tasks/244.md": "990b3691b1dcdabb84efa8b8ce6284692da46d37ee07d66892da223f371f47a7"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "7cc9d3d53995eb614c7e6d631d7b8dd7f1084785",
+        "task_id": "244",
+        "tree": "70b363a7a7f4566f6f401742772ca66d26630e11",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "244",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
