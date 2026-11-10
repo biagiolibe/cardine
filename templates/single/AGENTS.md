@@ -1,19 +1,20 @@
 # [Project Name] — Agent Router
 
-Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before responding or acting; both are binding. If either is missing or they contradict, return `BLOCKED RULE_CONFLICT`.
+Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting or responding. Both bind; if missing or contradictory, return `BLOCKED RULE_CONFLICT`.
 
-Work only on assigned tasks or authorized read-only requests. Read the task and `git status --short`; preserve unrelated edits. Ask about mixed requests.
+Work only on assigned tasks or authorized read-only requests. Read the task and `git status --short`; preserve unrelated work. Ask for mixed requests.
 
 <!-- CARDINE:BEGIN capability=command-triggers v3 -->
 ## Command triggers
 
-- `Proceed with <TASK-ID>` or `Address review <TASK-ID>` — use `cardine-delivery`.
-- `Review <TASK-ID>` — use `cardine-delivery`.
+- `Proceed with <TASK-ID>` or `Address review <TASK-ID>` — use `cardine-delivery` for the engine action.
+- `Review <TASK-ID>` — use `cardine-delivery` for review.
 - `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — use `cardine-delivery` and `docs/LIFECYCLE_ORCHESTRATION.md`.
 - Init, adopt, upgrade, setup, or doctor — use `cardine-project`.
-- Cardine usage — `cardine guide --project <checkout>`.
-- Status, project questions, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
-- Audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
+- Status, project question, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
+- Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
 <!-- CARDINE:END -->
 
-Production changes: follow `docs/CODE_ORGANIZATION.md` (advice).
+Cardine usage: `cardine guide --project <checkout>`.
+
+Production: follow `docs/CODE_ORGANIZATION.md` (advice).
