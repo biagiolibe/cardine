@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/console/snapshot.py",
+      "src/cardine/integration/cleanup.py",
+      "tests/test_run_console.py",
+      "tests/test_console_closure.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/241.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 241 \u2014 Keep finished cleanups out of the console",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_console --module test_console_closure --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "ced954ac8dbe7d01d25ee359a45679453be336508ced6f0f3f94004037b200d0",
+        "digest": "cb92e953c515e1c939518cb61a21567440c80cefe96b8c2f5dd3e1890983f56b",
+        "inputs": {
+          ".cardine/tasks/241.json": null,
+          "tasks/241.md": null
+        },
+        "kind": "creation",
+        "operation_id": "5ba32e6767424af7a1cd0d3be457188a",
+        "outputs": {
+          ".cardine/tasks/241.json": "9b36f63509a6c16fc8a36f2368fa951f114772ea0717a64d17fe4f965c1e8445",
+          "tasks/241.md": "9def6d4928ce28af211bdd776fd39a39103edd4dbe3a5db16615ad64bb0a7cf0"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "2b63f639540ddb8beb547d8ac86cbb797e03d36d",
+        "task_id": "241",
+        "tree": "818a6e56fdd8c69a7de61f5a649818deabc97390",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "241",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
