@@ -280,7 +280,7 @@ class InitAdapterTest(unittest.TestCase):
         self.assertIn("Do not copy templates", text)
         for retired in ("overlay", "classic", "workflow mode"):
             self.assertNotIn(retired, text)
-        self.assertIn('cardine" init', text)
+        self.assertIn('cardine init', text)
 
     def test_init_does_not_create_project_codex_hooks(self) -> None:
         from cardine.templates.init import apply_init, plan_init
