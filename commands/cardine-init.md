@@ -70,5 +70,5 @@ Report existing conflicting paths instead of overwriting user files.
    commands for later use. Never edit host configuration implicitly or infer
    effective enforcement from policy text; use a host probe or observed decision.
 
-8. Confirm the project name and preset. Direct the user to fill in
-   `TECH_DESIGN.md` and plan their first features in `PROJECT_PLAN.md`.
+8. Confirm the project name and preset. Direct the user to create the first
+   task with `/cardine-task`, which registers it through `cardine task new`.
