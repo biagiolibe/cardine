@@ -101,6 +101,8 @@ FILTERS = ("Ready", "Working", "Blocked", "Unknown", "Review", "Mismatch", "Clos
 
 
 def _state_label(task: Task) -> tuple[str, str]:
+    if task.loading:
+        return "Loading", "unknown"
     if task.state_error:
         return "Unknown", "blocked"
     if task.cleanup_pending:
@@ -290,6 +292,22 @@ def _draw_output(screen, view: OutputView, task_id: str, width: int, height: int
     for y, line in enumerate(lines, 4):
         _put(screen, y, 2, line, width - 4, palette['base'])
 
+def _gate_label(task: Task) -> str:
+    if task.loading:
+        return "Loading"
+    if task.cleanup_pending or task.lifecycle == "closing":
+        return "Cleanup" if task.cleanup_pending else "Delivery"
+    preview = task.run_preview or {}
+    step = preview.get("step", "")
+    if step == "landing" and (preview.get("action") == "cleanup" or "cleanup" in str((preview.get("next") or {}).get("reason", "")).lower()):
+        return "Cleanup"
+    if step == "candidate" and preview.get("outcome") == "waiting":
+        return "Waiting for CI" if "ci" in str(preview).lower() else "Waiting"
+    return {"worktree": "Preparation", "implementation": "Implementation",
+            "validation": "Validation", "review": "Review", "candidate": "Candidate",
+            "landing": "Landing"}.get(step, "Unknown" if task.state_error else step.capitalize())
+
+
 def _detail_lines(task: Task, width: int, palette: dict[str, int],
                   compact: bool = False) -> list[tuple[str, int]]:
     lines: list[tuple[str, int]] = []
@@ -300,6 +318,22 @@ def _detail_lines(task: Task, width: int, palette: dict[str, int],
 
     label, color = _state_label(task)
     add("Task details", "text")
+    add(task.title, "title")
+    add("Next directive", "muted")
+    command = task.launch_command
+    action = "Resume" if task.is_resume else "launch"
+    add(f"{command}  [copy]  [l {action}]" if command else task.next_action, "action")
+    add(f"Elapsed: {_elapsed(task.started_at) if task.started_at else 'not started'}", "muted")
+    add(f"Current phase: {_gate_label(task) or task.readiness}", "muted")
+    if task.run_preview and task.run_preview.get("next"):
+        add(task.run_preview["next"].get("reason", ""), "muted")
+    if task.remaining_gates:
+        add("Remaining gates: " + ", ".join(task.remaining_gates), "muted")
+    if task.objective:
+        add("Objective: " + _clip(" ".join(task.objective), 180), "muted")
+    if compact:
+        return lines
+    add("Full record", "text")
     add("")
     if not compact:
         add("")
@@ -398,39 +432,15 @@ def _draw_header(screen, state: ConsoleState, palette: dict[str, int],
     _put(screen, 0, 1, left, width - 2, palette["text"])
     ahead = re.search(r"\[ahead (\d+)", snapshot.branch) if snapshot else None
     local = f"↑ {ahead.group(1)} local · " if ahead else ""
-    age = _age(int(state.last_success.timestamp())) if state.last_success else "never"
-    right = f"{local}{summary} · refreshed {age}"
+    right = f"{local}{summary}"
     right_x = width - len(right) - 2
     if right_x > len(left) + 2:
         _put(screen, 0, right_x, right, len(right), palette["blocked"])
     if state.error:
-        _put(screen, 1, max(1, width - 9), "STALE", 7, palette["stale"])
-    counts = _filter_counts(snapshot)
-    tabs = (("All", len(snapshot.tasks) if snapshot else 0), *((name, count) for name, count in counts.items()))
-    x = 1
-    for name, count in tabs:
-        label = f" {name} {count} "
-        attr = palette["tab"] if name == status_filter else palette[
-            {"All": "text", "Ready": "ready", "Working": "working",
-             "Blocked": "blocked", "Unknown": "unknown", "Review": "ready",
-             "Closing": "working", "Mismatch": "blocked"}[name]
-        ]
-        _put(screen, 1, x, label, len(label), attr)
-        x += len(label) + 1
-    if snapshot and x + 9 < width:
-        _put(screen, 1, x + 1, f"Done {snapshot.done_count}", width - x - 2, palette["muted"])
-    hint = "tab/shift+tab filter"
-    if width - len(hint) - 2 > x + 9:
-        _put(screen, 1, width - len(hint) - 2, hint, len(hint), palette["muted"])
+        _put(screen, 1, 1, f"STALE: {state.error}", width - 2, palette["stale"])
+    elif snapshot:
+        _put(screen, 1, 1, f"Open {snapshot.open_count}  Done {snapshot.done_count}" + ("  Checking task details and cleanup…" if any(t.loading for t in snapshot.tasks) else ""), width - 2, palette["muted"])
     _put(screen, 2, 0, "─" * max(0, width - 1), width - 1, palette["line"])
-    selected_x = 1
-    for name, count in tabs:
-        label_width = len(f" {name} {count} ")
-        if name == status_filter:
-            _put(screen, 2, selected_x + 1, "━" * max(1, label_width - 2),
-                 label_width - 2, palette["tab_underline"])
-            break
-        selected_x += label_width + 1
 
 
 LIST_ID_X = 3
@@ -440,6 +450,8 @@ LIST_STATUS_WIDTH = 11
 
 
 LIST_AGE_WIDTH = 9
+
+LIST_GATE_WIDTH = 15
 
 
 LIST_MIN_TITLE_WIDTH = 8
@@ -453,6 +465,7 @@ class ListLayout:
     title_width: int
     status_x: int
     age_x: int
+    gate_x: int
 
 
 def _list_layout(all_tasks: tuple[Task, ...] | list[Task], left_width: int) -> ListLayout:
@@ -462,7 +475,7 @@ def _list_layout(all_tasks: tuple[Task, ...] | list[Task], left_width: int) -> L
     or searching never moves a column. It is capped at a third of the pane and
     never squeezes the title below its minimum width.
     """
-    status_x = left_width - LIST_STATUS_WIDTH - LIST_AGE_WIDTH - 2
+    status_x = max(LIST_ID_X + LIST_MIN_TITLE_WIDTH + 4, left_width - LIST_STATUS_WIDTH - LIST_AGE_WIDTH - LIST_GATE_WIDTH - 3)
     longest = max((len(task.task_id) for task in all_tasks), default=0)
     room = status_x - 2 - LIST_MIN_TITLE_WIDTH - LIST_ID_X - 1
     id_width = max(1, min(longest, left_width // 3, room))
@@ -470,7 +483,7 @@ def _list_layout(all_tasks: tuple[Task, ...] | list[Task], left_width: int) -> L
     return ListLayout(
         LIST_ID_X, id_width, title_x,
         max(LIST_MIN_TITLE_WIDTH, status_x - 2 - title_x),
-        status_x, left_width - LIST_AGE_WIDTH - 1,
+        status_x, status_x + LIST_STATUS_WIDTH + 1, left_width - LIST_GATE_WIDTH - 1,
     )
 
 
@@ -482,7 +495,8 @@ def _draw_list(screen, tasks: list[Task], selected_id: str | None,
     title_width = layout.title_width
     _put(screen, 3, 2, "Tasks", layout.title_x + title_width - 2, palette["muted"])
     _put(screen, 3, layout.status_x, "Status", LIST_STATUS_WIDTH, palette["muted"])
-    _put(screen, 3, layout.age_x, "Updated", LIST_AGE_WIDTH, palette["muted"])
+    _put(screen, 3, layout.age_x, "Elapsed", LIST_AGE_WIDTH, palette["muted"])
+    _put(screen, 3, layout.gate_x, "Gate", LIST_GATE_WIDTH, palette["muted"])
     entries: list[tuple[str, Task | None]] = []
     previous: tuple[str, ...] = ()
     for task in tasks:
@@ -522,18 +536,20 @@ def _draw_list(screen, tasks: list[Task], selected_id: str | None,
              f"{label} {flags}" if flags else label, LIST_STATUS_WIDTH,
              row_attr if selected else palette[color])
         _put(screen, line_number, layout.age_x,
-             _age(task.updated_at), LIST_AGE_WIDTH, row_attr if selected else palette["muted"])
+             _elapsed(task.started_at) if task.started_at else "", LIST_AGE_WIDTH, row_attr if selected else palette["muted"])
+        _put(screen, line_number, layout.gate_x, _gate_label(task), LIST_GATE_WIDTH,
+             row_attr if selected else palette["muted"])
     if not tasks:
         _put(screen, body_top + 1, 2, "No matching open tasks", left_width - 4, palette["muted"])
     return offset
 
 
 def _detail_view(task: Task | None, width: int, height: int, top: int,
-                 offset: int, palette: dict[str, int]) -> tuple[list[tuple[str, int]], int, int]:
+                 offset: int, palette: dict[str, int], panel: bool = False) -> tuple[list[tuple[str, int]], int, int]:
     """Build a detail viewport and clamp its offset for this exact terminal size."""
     if task is None:
         return [], 0, 1
-    lines = _detail_lines(task, width - 2, palette, compact=height < 30)
+    lines = _detail_lines(task, width - 2, palette, compact=panel)
     body_lines = max(1, height - top - 2)
     return lines, min(max(0, offset), max(0, len(lines) - body_lines)), body_lines
 
@@ -545,11 +561,11 @@ def _scroll_detail(task: Task | None, width: int, height: int, top: int,
 
 
 def _draw_detail(screen, task: Task | None, x: int, top: int, width: int,
-                 height: int, offset: int, palette: dict[str, int]) -> set[int]:
+                 height: int, offset: int, palette: dict[str, int], panel: bool = False) -> set[int]:
     if task is None:
         _put(screen, top, x, "No task selected", width, palette["muted"])
         return set()
-    lines, offset, body_lines = _detail_view(task, width, height, top, offset, palette)
+    lines, offset, body_lines = _detail_view(task, width, height, top, offset, palette, panel=panel)
     for y, (value, attr) in enumerate(lines[offset:offset + body_lines], top):
         _put(screen, y, x, value, width - 1, attr)
     if offset:

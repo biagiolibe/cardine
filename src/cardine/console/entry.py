@@ -10,7 +10,7 @@ import time
 
 from cardine.console.launch import _set_terminal_title
 from cardine.console.models import Task
-from cardine.console.render import OutputView, _draw_output, _action_hit, _copy_to_clipboard, _cycle_filter, _detail_view, _draw_detail, _draw_header, _draw_launch_prompt, _draw_list, _palette, _put, _scroll_detail, _tab_at, _visible_tasks
+from cardine.console.render import OutputView, _draw_output, _action_hit, _copy_to_clipboard, _detail_view, _draw_detail, _draw_header, _draw_launch_prompt, _draw_list, _palette, _put, _scroll_detail, _visible_tasks
 from cardine.console.state import ConsoleState, one_shot
 
 
@@ -69,15 +69,13 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             wide = width >= 110
             if help_visible:
                 help_lines = (
-                    "Navigation", "↑/↓ or j/k  Select task", "Tab/Shift+Tab  Filter by status",
+                    "Navigation", "↑/↓ or j/k  Select task",
                     "Enter  Open full task details", "o  Open run output", "Esc  Return to task list",
                     "/  Search task ID or title", "[ / ]  Scroll task details",
                     "c or click [copy]  Copy a permitted task directive",
                     "l  Choose Claude Code or Codex to launch an iTerm2 split pane",
-                    "Tab  Cycle All and nonempty states; click any tab",
                     "r  Refresh now", "q  Quit", "",
                     "Project state is read-only; copy writes to the clipboard.",
-                    "Updated is the last committed change to the task file.",
                     "Agent activity is unavailable without a verified source.",
                     "Launching uses macOS iTerm2 after selecting an agent.",
                 )
@@ -106,10 +104,10 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                     detail_width = width - left_width - 2
                     detail_bounds = (detail_x, width - 3)
                     _, detail_offset, _ = _detail_view(selected_task, detail_width, height, 4,
-                                                       detail_offset, palette)
+                                                       detail_offset, palette, panel=True)
                     action_rows = _draw_detail(screen, selected_task, detail_x, 4,
                                                width - left_width - 2, height,
-                                               detail_offset, palette)
+                                               detail_offset, palette, panel=True)
                     action_bounds = (detail_x, width - 3, action_rows)
             _draw_launch_prompt(screen, width, height, launch_task, launch_confirmation,
                                 state.project,
@@ -127,7 +125,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             elif detail_open or help_visible:
                 footer = "Esc back   [/] scroll   r refresh   q quit"
             else:
-                footer = ("? help   ↑/↓ move   [/] scroll detail   tab filter   enter details   "
+                footer = ("? help   ↑/↓ move   [/] scroll detail   enter details   "
                           "o output   c copy   l launch   x cancel task   a abort   / search   r refresh   q quit")
             _put(screen, height - 2, 0, "─" * max(0, width - 1),
                  width - 1, palette["line"])
@@ -180,11 +178,7 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                 continue
             if not button_state & (curses.BUTTON1_CLICKED | curses.BUTTON1_RELEASED):
                 continue
-            tab = _tab_at(snapshot, mouse_x, mouse_y)
-            if tab and not help_visible and not detail_open:
-                status_filter = tab
-                offset = detail_offset = 0
-            elif selected_task and _action_hit(mouse_x, mouse_y, action_bounds):
+            if selected_task and _action_hit(mouse_x, mouse_y, action_bounds):
                 command = selected_task.launch_command
                 if command:
                     notice = (f"Copied: {command}" if _copy_to_clipboard(command)
@@ -257,10 +251,6 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
         elif key == ord("]") and selected_task and detail_width:
             detail_offset = _scroll_detail(selected_task, detail_width, height, 4,
                                            detail_offset, 1, palette)
-        elif key in (9, curses.KEY_BTAB) and not detail_open and not help_visible:
-            direction = -1 if key == curses.KEY_BTAB else 1
-            status_filter = _cycle_filter(snapshot, status_filter, direction)
-            offset = detail_offset = 0
         elif key in (10, 13) and selected_task and not help_visible:
             detail_open = True
             detail_focused = True

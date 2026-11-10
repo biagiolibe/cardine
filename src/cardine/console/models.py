@@ -87,6 +87,7 @@ class Task:
     run_preview: dict | None = None
     live_command: LiveCommand | None = None
     live_log: Path | None = None
+    loading: bool = False
 
     @property
     def is_resume(self) -> bool:
@@ -101,7 +102,7 @@ class Task:
 
     @property
     def launch_command(self) -> str | None:
-        if self.state_error or self.record_problem or self.readiness == 'MISMATCH':
+        if self.loading or self.state_error or self.record_problem or self.readiness == 'MISMATCH':
             return None
         if self.run_preview is not None:
             if self.readiness.startswith(('BLOCKED', 'UNKNOWN')):
@@ -150,6 +151,8 @@ class Task:
 
     @property
     def next_action(self) -> str:
+        if self.loading:
+            return "Loading task details and run state"
         if self.run_preview is not None:
             if self.run_preview['stop']:
                 return self.run_preview['stop']['code'] + ': ' + self.run_preview['stop']['detail']

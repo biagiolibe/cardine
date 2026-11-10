@@ -37,6 +37,28 @@ from console_support import HEADER, RESUME_001
 import console_support as support
 
 class BackgroundRefreshTest(unittest.TestCase):
+    def test_initial_list_is_published_before_slow_full_snapshot(self) -> None:
+        state = owner_console_state.ConsoleState(Path('/p'))
+        initial = self.snapshot('initial')
+        finished = threading.Event()
+        release = threading.Event()
+        def slow(*_args):
+            finished.set()
+            release.wait(5)
+            return self.snapshot('full')
+        with mock.patch.object(owner_console_state, 'load_initial_snapshot', return_value=initial), \
+             mock.patch.object(owner_console_state, 'load_snapshot', side_effect=slow):
+            try:
+                self.assertTrue(state.start_refresh())
+                self.assertTrue(finished.wait(5))
+                state.apply_pending()
+                self.assertEqual(state.snapshot.branch, 'initial')
+            finally:
+                release.set()
+                self.wait_idle(state)
+            state.apply_pending()
+            self.assertEqual(state.snapshot.branch, 'full')
+
     def test_poll_interval_starts_after_slow_load_finishes(self) -> None:
         state = owner_console_state.ConsoleState(Path('/p'))
         starts, finishes = [], []
@@ -191,3 +213,8 @@ class BackgroundRefreshTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+# Startup measurement (post-241 checkout, 61 registered tasks, 80-column layout):
+# PYTHONPATH=src python3 -c '... load_snapshot(Path(".")) ...' took 2.948 s;
+# the same monotonic perf_counter method using load_initial_snapshot took 0.060 s
+# and published the three open rows. Full lifecycle probes continue in the worker.

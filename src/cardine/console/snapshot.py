@@ -504,6 +504,33 @@ def _live_command(log: Path, status: Path, task_id: str) -> LiveCommand | None:
         return None
 
 @scoped_command
+def load_initial_snapshot(project: Path) -> Snapshot:
+    """Publish inexpensive main-checkout facts while lifecycle probes run."""
+    project = project.expanduser().resolve()
+    model, inputs, _ = load_task_snapshot(project, all_tasks=True)
+    if model["preset"] is None:
+        raise ConsoleError("Cannot read project status")
+    tasks = []
+    for row in model["tasks"]:
+        if row["status"] in ("done", "cancelled"):
+            continue
+        state_file = project / names().tasks_path / (row["id"] + ".json")
+        try:
+            state = json.loads(inputs[state_file].decode("utf-8"))
+            started = next((x["at"] for x in state["transitions"] if x["to"] == "in_progress"), None)
+        except (KeyError, ValueError, UnicodeError):
+            started = None
+        tasks.append(Task(row["id"], row["title"], row["status"],
+            (row["phase"],) if row["phase"] else (), tuple(row["dependencies"]),
+            None, (), (), lifecycle=LIFECYCLE[row["status"]], readiness="LOADING",
+            started_at=started, legacy=False, loading=True))
+    totals = model["totals"]
+    return Snapshot(project, project / names().tasks_path, "loading", "loading", 0,
+                    tuple(tasks), totals["done"] + totals["cancelled"], model["preset"],
+                    tuple(totals.items()))
+
+
+@scoped_command
 def load_snapshot(project: Path, identities: IdentityCache | None = None,
                   deliveries: DeliveryCache | None = None) -> Snapshot:
     return _load_snapshot(project, identities, deliveries=deliveries)
@@ -538,7 +565,19 @@ def _load_snapshot(project: Path, identities: IdentityCache | None = None,
             except (CardineError, OSError, ValueError) as error:
                 tasks.append(replace(task, state_error=str(error)))
                 continue
-            tasks.append(replace(task, run_preview=preview, progress_phase=preview['step'],
+            step = preview['step']
+            gates = {
+                'contract': ('Prepare worktree', 'Implement task', 'Validate task', 'Validate candidate', 'Land and clean up'),
+                'worktree': ('Implement task', 'Validate task', 'Validate candidate', 'Land and clean up'),
+                'implementation': ('Validate task', 'Validate candidate', 'Land and clean up'),
+                'validation': ('Validate candidate', 'Land and clean up'),
+                'review': ('Complete independent review', 'Validate candidate', 'Land and clean up'),
+                'candidate': ('Land and clean up',),
+                'landing': ('Finish delivery and cleanup',),
+            }.get(step, ())
+            if step in ('contract', 'worktree', 'implementation', 'validation') and task.review == 'REQUIRED':
+                gates = (*gates[:-2], 'Complete independent review', *gates[-2:])
+            tasks.append(replace(task, run_preview=preview, progress_phase=step, remaining_gates=task.remaining_gates or gates,
                 live_log=log, live_command=_live_command(log, status, task.task_id),
                 state_error=None if preview['work'] and task.state_error_origin == 'worktree' else task.state_error,
                 closure_stop_reason=preview['stop']['code'] if preview['stop'] else None,
