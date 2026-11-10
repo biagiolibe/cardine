@@ -17,6 +17,7 @@
       "src/cardine/cli.py",
       "skills/cardine-project/SKILL.md",
       "docs/QUICKSTART.md",
+      "README.md",
       "docs/PUBLIC_SURFACE.md",
       "tests/test_project_guide.py",
       "tests/test_cli_help.py",
@@ -78,6 +79,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:80f7f0cf8ade352ab15aabe4a834cbfff9bfbdf5ec721c19cbba722ffdd05d74",
+      "at": "2026-11-10T16:40:24.159424Z",
+      "before": "sha256:0742a88cca8ed99b81b466674908d90c8464b4450e9ceecdee99755f16fbf890",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -103,6 +114,30 @@
         "source": "dffed6acfae08f1c70305b7d3cca317ca3eb0ca8",
         "task_id": "243",
         "tree": "1570cded7738f35531e19ce79fc2312adee40707",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "3f2b8c88e21b7b85de6cbc0ef67c85f9cde2f014a8552e80a790be30f738548a",
+        "digest": "1e5f630118f28f26bd38478cf1faf844c33c1ac14be7311b4f3417261d8ed5c5",
+        "inputs": {
+          ".cardine/tasks/243.json": "cf8a9193e17ebf119fd1d6845a715c229507ea818e283563f0ecee465ba74965",
+          "tasks/243.md": "6477aa15a525845cece0481fc5d583d869370031bc8e032989ebd9491079aea2"
+        },
+        "kind": "contract_revision",
+        "operation_id": "1e231c0b206949de95b0c315709987ac",
+        "outputs": {
+          ".cardine/tasks/243.json": "a3c0cc779c6d8da43332c787f3b3b2d70291c74eda51ad46a73267c8d3cffab3",
+          "tasks/243.md": "6477aa15a525845cece0481fc5d583d869370031bc8e032989ebd9491079aea2"
+        },
+        "predecessor": "4d254ec2ea82f5672b9cb8dfdcf7d38141ec119fcb50e74188c986ab83222038",
+        "result": "verified",
+        "source": "4b834ad27693143c3fac41b78b49c3163fc2b538",
+        "task_id": "243",
+        "tree": "69e41203f7c1163b60636eec0a1b92f5168d4d4b",
         "version": 1
       }
     ]
