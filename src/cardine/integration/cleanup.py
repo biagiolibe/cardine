@@ -78,6 +78,19 @@ def completed(locations, intent):
     `cardine authorize` changes the accepted authority, not this landed fact. Any
     other observation falls through to the full replay, which preserves reused paths.
     """
+    return _completed_observation(locations, intent, historical=False)
+
+
+def completed_for_display(locations, intent):
+    """Observe historical completion without granting permission to replay cleanup."""
+    return _completed_observation(locations, intent, historical=True)
+
+
+def ambiguous_completion(locations):
+    _fail(locations, 'cleanup completion evidence is ambiguous')
+
+
+def _completed_observation(locations, intent, *, historical):
     binding, effects = intent['binding'], intent.get('effects', {})
     required = ['cleanup_worktree', 'cleanup_placeholder', 'cleanup_branch', 'cleanup_lifecycle']
     if binding.get('finalDigest') is not None:
@@ -85,6 +98,11 @@ def completed(locations, intent):
     if binding.get('remote') is not None:
         required.append('cleanup_remote')
     root, worker = locations.primary, locations.worktree
+    def same_placeholder():
+        recorded, actual = intent.get('placeholder'), _file_identity(worker)
+        return (recorded == actual if not historical else
+                isinstance(recorded, list) and len(recorded) == 3
+                and actual is not None and recorded[1:] == actual[1:])
     return (all(effects.get(name) == 'done' for name in required)
             and binding['task'] == locations.task_id and binding['project'] == str(root)
             and binding['worker'] == str(worker)
@@ -92,7 +110,7 @@ def completed(locations, intent):
             and _branch_commit(root, binding['branch']) is None
             and not any(Path(item['worktree']).resolve() == worker for item in _git_worktrees(root))
             and not Path(binding['lifecycle']).exists()
-            and intent.get('placeholder') == _file_identity(worker)
+            and same_placeholder()
             and worker.is_dir() and not any(worker.iterdir()))
 
 

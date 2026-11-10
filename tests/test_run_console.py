@@ -202,7 +202,8 @@ launch_run_request(locations, request,
         task = load_snapshot(self.fixture.root).tasks[0]
         state = SimpleNamespace(project=self.fixture.root)
         before = self.fixture.state()
-        with patch('cardine.lifecycle.control.host_adapter', return_value=None):
+        with patch('cardine.lifecycle.control.host_adapter', return_value=None), \
+             patch.dict(os.environ, {'ITERM_SESSION_ID': ''}):
             self.assertFalse(_launch_selected(state, task, 'codex', True)[0])
         self.assertEqual(self.fixture.state(), before)
         adapter = CodexProfileAdapter(FakeHost(self.worker.parent / 'actions', 'codex'), 'developer-channel')
@@ -300,3 +301,31 @@ launch_run_request(locations, request,
             self.assertEqual(load_snapshot(fixture.primary), snapshot)
         fixture.finish()
         self.assertNotIn('056', [task.task_id for task in load_snapshot(fixture.primary).tasks])
+
+    def test_historical_cleanup_device_change_is_display_only(self):
+        import test_run_cleanup
+        from cardine.integration.candidate import operation_path
+        fixture = test_run_cleanup.CleanupTest()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        self.addCleanup(fixture.tearDown)
+        fixture.finish()
+        path = operation_path(fixture.locations, 'cleanup')
+        intent = receipts._load_intent(path)
+        intent['placeholder'][0] += 1
+        intent['binding']['authority'] = {}
+        receipts._save_intent(path, intent)
+        before = path.read_bytes()
+        worker_stat = fixture.worker.stat()
+        with patch.object(receipts, '_durable', side_effect=AssertionError('snapshot wrote')):
+            snapshot = load_snapshot(fixture.primary)
+            self.assertNotIn('056', [task.task_id for task in snapshot.tasks])
+            self.assertEqual(load_snapshot(fixture.primary), snapshot)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(fixture.worker.stat(), worker_stat)
+        with self.assertRaises(CardineError):
+            fixture.finish()
+        (fixture.worker / 'foreign').write_text('keep')
+        task = next(task for task in load_snapshot(fixture.primary).tasks if task.task_id == '056')
+        self.assertEqual(task.lifecycle, 'closing')
+        self.assertEqual(task.closure_stop_reason, 'CLEANUP_BLOCKED')
