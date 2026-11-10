@@ -7,7 +7,7 @@ change, and no template change adds a migration before 1.0 (ADR work item 4).
 1. Confirm that no task is in progress.
 2. A task bumps `VERSION` and `.claude-plugin/plugin.json`, adds
    `releases/<VERSION>.json`, writes the `CHANGELOG.md` section, consumes the fragments in
-   `changelog.d/`, and replaces the previous tag in `README.md` and `docs/QUICKSTART.md`.
+   `changelog.d/`, and replaces the previous tag in `README.md` and `docs/QUICKSTART.md`. Check the CLI commands, agent prompt, plugin pin, links, and console keys against that tag. Switch the recommended path to `guide` only when the new tag provides it; remove the old version-specific instructions together.
 3. Run `python3 scripts/check_repository.py`.
 4. Confirm that the full suite is green on `main` in CI.
 5. The developer runs `git tag v<VERSION>` and `git push origin v<VERSION>`.
@@ -16,3 +16,5 @@ change, and no template change adds a migration before 1.0 (ADR work item 4).
    the Claude Code plugin; `cardine doctor --host claude` reports a mismatch.
 
 PyPI publication and the merge of `release.py` and `prepare_release.py` come with 1.0.
+
+After publication, open the new GitHub release page and smoke-test both the terminal and agent paths in isolated environments with no existing runtime or project configuration. Record the published documentation revision, runtime and plugin versions, and evidence that each first task reached `main`. Repair any mismatch in a subsequent documentation change.
