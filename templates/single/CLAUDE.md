@@ -11,13 +11,13 @@ Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting; `PROJECT_WORK
 <!-- CARDINE:BEGIN capability=command-triggers v3 -->
 ## Command triggers
 
-- `Proceed with <TASK-ID>` or `Address review <TASK-ID>` — use `cardine-delivery` for the engine action.
-- `Review <TASK-ID>` — use `cardine-delivery` for review.
+- `Proceed with <TASK-ID>` or `Address review <TASK-ID>` — use `cardine-delivery`.
+- `Review <TASK-ID>` — use `cardine-delivery`.
 - `Run lifecycle <TASK-ID>` or `Accept <TASK-ID>` — use `cardine-delivery` and `docs/LIFECYCLE_ORCHESTRATION.md`.
 - Init, adopt, upgrade, setup, or doctor — use `cardine-project`.
-- How to use Cardine — run `cardine guide --project <checkout>`; use its project facts to suggest next steps and leave decisions and configuration to the maintainer.
-- Status, project question, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
-- Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
+- Cardine usage — `cardine guide --project <checkout>`.
+- Status, project questions, or tech-design alignment — use `docs/CONTEXT_READING_POLICY.md`.
+- Audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
 <!-- CARDINE:END -->
 
-Advice: follow `docs/CODE_ORGANIZATION.md` for production-source changes.
+Production changes: follow `docs/CODE_ORGANIZATION.md` (advice).
