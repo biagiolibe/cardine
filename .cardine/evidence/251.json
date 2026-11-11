@@ -1,0 +1,88 @@
+{
+  "251": [
+    {
+      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/1/repository-check",
+      "round": 1,
+      "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+      "command": "python3 scripts/run_tests.py --parallel --module test_interactive_init --module test_init --module test_adopt_cli --module test_adopt_rehearsal --module test_template_commands --module test_public_surface --module test_run_tests --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+      "exitStatus": 1,
+      "id": "task-tests",
+      "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/1/task-tests",
+      "round": 1,
+      "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+      "stderr": "run_tests: 138 tests in 8 shards\nrun_tests: shard 5/8 finished in 2.3s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 3/8 finished in 6.2s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 4/8 finished in 7.5s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 1/8 finished in 7.8s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 8/8 finished in 10.1s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 7/8 finished in 13.4s: exit 1 ran=17 failures=1 errors=0\nrun_tests: shard 2/8 finished in 15.2s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 6/8 finished in 54.4s: exit 0 ran=17 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=138 selected=17 digest=70331d108489710a08e598c165e7b1fd7a790663468a8f28aaef6ec384bdb97b\ntest_clone_preserves_source_and_rebuilds_after_interruptions (test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions) ... ok\ntest_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused (test_init.InitTest.test_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused) ... ok\ntest_symlinks_directories_changed_inputs_and_owned_edits_are_preserved (test_init.InitTest.test_symlinks_directories_changed_inputs_and_owned_edits_are_preserved) ... ok\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle) ... FAIL\ntest_check_needing_history_fails_in_clone_and_passes_in_checkout (test_run_tests.CleanCloneTest.test_check_needing_history_fails_in_clone_and_passes_in_checkout) ... run_tests: clean-clone: cloned 40323c0\nrun_tests: clean-clone: scripts/check_repository.py started\nrun_tests: clean-clone: scripts/check_repository.py exit 128 in 0.0s\nok\ntest_module_path_class_id_and_union_from_another_directory (test_run_tests.FocusedTestRunnerTest.test_module_path_class_id_and_union_from_another_directory) ... ok\ntest_coverage_proof_matches_list_and_the_union_of_shards (test_run_tests.ParallelTestRunnerTest.test_coverage_proof_matches_list_and_the_union_of_shards) ... ok\ntest_passing_run_prints_a_short_summary_and_is_repeatable (test_run_tests.ParallelTestRunnerTest.test_passing_run_prints_a_short_summary_and_is_repeatable) ... ok\ntest_tests_do_not_share_ports_global_git_config_or_process_environment (test_run_tests.ParallelTestRunnerTest.test_tests_do_not_share_ports_global_git_config_or_process_environment) ... ok\ntest_invalid_shards_exit_with_usage_status (test_run_tests.ShardedTestRunnerTest.test_invalid_shards_exit_with_usage_status) ... ok\ntest_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer (test_template_commands.RemainingSlashCommandTest.test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer) ... ok\ntest_a_made_up_subcommand_is_reported_although_its_prefix_exists (test_template_commands.TemplateCommandTest.test_a_made_up_subcommand_is_reported_although_its_prefix_exists) ... ok\ntest_allowlist_exceptions_are_exact_and_named (test_text_gates.ResidualRatchetTest.test_allowlist_exceptions_are_exact_and_named) ... ok\ntest_script_imports_are_transitive_and_unimported_scripts_are_excluded (test_text_gates.TextGateScannerTest.test_script_imports_are_transitive_and_unimported_scripts_are_excluded) ... ok\n\n======================================================================\n\nRan 17 tests in 13.028s\n\nFAILED (failures=1)\nFAIL: test_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 174, in test_package_import_graph_has_no_cycle\n    visit(name, [])\n    ~~~~~^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  [Previous line repeated 2 more times]\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 166, in visit\n    self.assertNotIn(name, stack, \" -> \".join([*stack, name]))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'cardine.adopt.plan' unexpectedly found in ['cardine.__main__', 'cardine.cli', 'cardine.adopt.plan', 'cardine.templates.init', 'cardine.templates.interactive_init'] : cardine.__main__ -> cardine.cli -> cardine.adopt.plan -> cardine.templates.init -> cardine.templates.interactive_init -> cardine.adopt.plan\n\n----------------------------------------------------------------------\nresult ran=17 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_interactive_init,test_init,test_adopt_cli,test_adopt_rehearsal,test_template_commands,test_public_surface,test_run_tests,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=138 total=2190 failures=1 errors=0\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+      "command": "git diff --check",
+      "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/2/repository-check",
+      "round": 2,
+      "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+      "command": "python3 scripts/run_tests.py --parallel --module test_interactive_init --module test_init --module test_adopt_cli --module test_adopt_rehearsal --module test_template_commands --module test_public_surface --module test_run_tests --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+      "exitStatus": 1,
+      "id": "task-tests",
+      "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/2/task-tests",
+      "round": 2,
+      "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+      "stderr": "run_tests: 138 tests in 8 shards\nrun_tests: shard 5/8 finished in 2.8s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 3/8 finished in 7.1s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 4/8 finished in 8.4s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 1/8 finished in 8.6s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 8/8 finished in 11.3s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 7/8 finished in 14.5s: exit 1 ran=17 failures=1 errors=0\nrun_tests: shard 2/8 finished in 16.4s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 6/8 finished in 56.6s: exit 0 ran=17 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=138 selected=17 digest=70331d108489710a08e598c165e7b1fd7a790663468a8f28aaef6ec384bdb97b\ntest_clone_preserves_source_and_rebuilds_after_interruptions (test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions) ... ok\ntest_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused (test_init.InitTest.test_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused) ... ok\ntest_symlinks_directories_changed_inputs_and_owned_edits_are_preserved (test_init.InitTest.test_symlinks_directories_changed_inputs_and_owned_edits_are_preserved) ... ok\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle) ... FAIL\ntest_check_needing_history_fails_in_clone_and_passes_in_checkout (test_run_tests.CleanCloneTest.test_check_needing_history_fails_in_clone_and_passes_in_checkout) ... run_tests: clean-clone: cloned 98c0038\nrun_tests: clean-clone: scripts/check_repository.py started\nrun_tests: clean-clone: scripts/check_repository.py exit 128 in 0.1s\nok\ntest_module_path_class_id_and_union_from_another_directory (test_run_tests.FocusedTestRunnerTest.test_module_path_class_id_and_union_from_another_directory) ... ok\ntest_coverage_proof_matches_list_and_the_union_of_shards (test_run_tests.ParallelTestRunnerTest.test_coverage_proof_matches_list_and_the_union_of_shards) ... ok\ntest_passing_run_prints_a_short_summary_and_is_repeatable (test_run_tests.ParallelTestRunnerTest.test_passing_run_prints_a_short_summary_and_is_repeatable) ... ok\ntest_tests_do_not_share_ports_global_git_config_or_process_environment (test_run_tests.ParallelTestRunnerTest.test_tests_do_not_share_ports_global_git_config_or_process_environment) ... ok\ntest_invalid_shards_exit_with_usage_status (test_run_tests.ShardedTestRunnerTest.test_invalid_shards_exit_with_usage_status) ... ok\ntest_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer (test_template_commands.RemainingSlashCommandTest.test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer) ... ok\ntest_a_made_up_subcommand_is_reported_although_its_prefix_exists (test_template_commands.TemplateCommandTest.test_a_made_up_subcommand_is_reported_although_its_prefix_exists) ... ok\ntest_allowlist_exceptions_are_exact_and_named (test_text_gates.ResidualRatchetTest.test_allowlist_exceptions_are_exact_and_named) ... ok\ntest_script_imports_are_transitive_and_unimported_scripts_are_excluded (test_text_gates.TextGateScannerTest.test_script_imports_are_transitive_and_unimported_scripts_are_excluded) ... ok\n\n======================================================================\n\nRan 17 tests in 14.083s\n\nFAILED (failures=1)\nFAIL: test_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 174, in test_package_import_graph_has_no_cycle\n    visit(name, [])\n    ~~~~~^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  [Previous line repeated 2 more times]\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 166, in visit\n    self.assertNotIn(name, stack, \" -> \".join([*stack, name]))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'cardine.adopt.plan' unexpectedly found in ['cardine.__main__', 'cardine.cli', 'cardine.adopt.plan', 'cardine.templates.init', 'cardine.templates.interactive_init'] : cardine.__main__ -> cardine.cli -> cardine.adopt.plan -> cardine.templates.init -> cardine.templates.interactive_init -> cardine.adopt.plan\n\n----------------------------------------------------------------------\nresult ran=17 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_interactive_init,test_init,test_adopt_cli,test_adopt_rehearsal,test_template_commands,test_public_surface,test_run_tests,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=138 total=2190 failures=1 errors=0\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+      "command": "git diff --check",
+      "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/2/adopt-466c2f308b48c766",
+      "round": 2,
+      "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
