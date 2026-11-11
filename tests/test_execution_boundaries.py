@@ -567,3 +567,29 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.assertIn('cardine run <TASK-ID>', orchestration)
         self.assertNotIn('execution start', orchestration)
         self.assertNotIn('execution deliver', orchestration)
+
+
+class PreventiveScopeExpansionTest(unittest.TestCase):
+    def test_contract_is_revised_before_new_file_and_run_resumes(self):
+        from run_delivery_support import DisposableDelivery
+        from cardine.tasks.contract_update import update_task_contract
+
+        with DisposableDelivery() as project:
+            project.run()
+            project.run()
+            worker = project.locations.worktree
+            new_file = worker / 'approved.txt'
+            record = worker / 'tasks/001.md'
+            self.assertFalse(new_file.exists())
+            record.write_text(record.read_text().replace('- `src/**`',
+                              '- `src/**`\n- `approved.txt`'))
+            update_task_contract(worker, '001')
+            state = json.loads((worker / '.cardine/tasks/001.json').read_text())
+            self.assertIn('approved.txt', state['contract']['expectedCodeSurface'])
+            self.assertTrue(state['contract_history'])
+            self.assertFalse(new_file.exists())
+            new_file.write_text('approved\n')
+            project.commit_implementation()
+            project.deliver()
+            self.assertEqual(project.drive()[-1], ('landing', 'cleanup', 'done'))
+            self.assertEqual(project.git('show', 'main:approved.txt'), 'approved')

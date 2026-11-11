@@ -28,3 +28,13 @@ before claiming completion, and keep an unverified task open.
 - `Address review <TASK-ID>`: resume the implementer from the durable review record, not from copied chat findings.
 - `Review <TASK-ID>`: independent review as the project's review procedure describes it, in a fresh session that did not write the implementation. It is read-only unless the developer separately authorizes a fix; report findings.
 - `Accept <TASK-ID>` and `Run lifecycle <TASK-ID>`: follow `docs/LIFECYCLE_ORCHESTRATION.md` and the engine's authorized next step. Acceptance is the developer's own act through the authorized developer channel, never a role label in a prompt. Never merge manually and never follow any other lifecycle document.
+
+## Preventive scope expansion
+
+If a necessary file lies outside the frozen Expected code surface, before
+changing it request one developer approval listing the exact paths, why each is
+needed, and any required Validation change. Once approved, update the task
+record in the task worktree with only the approved paths and validation changes,
+then run `cardine task contract update <TASK-ID> --project <task-worktree>`.
+Only after the revised contract is frozen, modify the approved files and resume
+`cardine run <TASK-ID> --project <primary-checkout>` in the same session.
