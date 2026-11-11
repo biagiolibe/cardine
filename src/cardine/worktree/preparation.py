@@ -33,7 +33,7 @@ def verify_preparation(project, root, identity, path, lifecycle):
     """Check covered registration bytes and root identity before using them."""
     operation = receipts._load_intent(_path(project, identity))
     if (operation['binding'] != _binding(project, root, identity, path)
-            or operation['authority'] != receipts.require_authority(project)
+            or not receipts.authority_covers(operation['authority'], receipts.require_authority(project), project)
             or operation.get('result') != 'verified'
             or operation.get('output') != receipts.digest(receipts.encoded(lifecycle))
             or operation.get('output') != receipts.digest(_lifecycle_paths(project, identity)[0].read_bytes())):
@@ -72,7 +72,7 @@ def prepare_owned_pair(project, root, identity, path, base, *, resume):
         raise CardineError('foreign preparation receipt symlink')
     if operation_path.exists():
         operation = receipts._load_intent(operation_path)
-        if operation['binding'] != binding or operation['authority'] != authority:
+        if operation['binding'] != binding or not receipts.authority_covers(operation['authority'], authority, project):
             raise CardineError('preparation input or owner changed')
         if operation.get('result') == 'verified':
             import json
@@ -151,7 +151,7 @@ def repair_preparation(project, identity, before, after):
     """Cover a proven Git fast-forward repair; retain exact inputs for replay."""
     path = _path(project, identity)
     operation = receipts._load_intent(path)
-    if operation['authority'] != receipts.require_authority(project):
+    if not receipts.authority_covers(operation['authority'], receipts.require_authority(project), project):
         raise CardineError('preparation repair authority changed')
     if operation.get('result') == 'verified':
         if operation['output'] != receipts.digest(receipts.encoded(before)):

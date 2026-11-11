@@ -306,6 +306,26 @@ def bound_authority(accepted):
     return {key: value for key, value in accepted.items() if key != 'runtime'}
 
 
+def authority_covers(recorded, current, root):
+    """Whether an operation recorded under ``recorded`` stays valid under ``current``.
+
+    Mirrors ``require_authority``: every field must match, and the recorded
+    accepted main must be the current one or one of its ancestors, because a
+    developer reauthorization that advances the accepted base is ordinary
+    delivery. Policy, runtime-free identity and paths are never relaxed.
+    """
+    if not isinstance(recorded, dict) or not isinstance(current, dict) or set(recorded) != set(current):
+        return False
+    if any(recorded[key] != current[key] for key in current if key != 'accepted_main'):
+        return False
+    base, main = recorded.get('accepted_main'), current.get('accepted_main')
+    if base == main:
+        return True
+    if not base or not main:
+        return False
+    return _run_git(str(root), 'merge-base', '--is-ancestor', str(base), str(main), text=False).returncode == 0
+
+
 def _receipt_hash(receipt):
     return digest(encoded({k: v for k, v in receipt.items() if k != 'digest'}))
 

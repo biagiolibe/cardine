@@ -86,7 +86,7 @@ def deliver_implementation(root, task_id, *, context=None):
         name = state_path(root, task_id).relative_to(root).as_posix()
         if operation.exists():
             intent = receipts._load_intent(operation)
-            if (intent['task_id'] != task_id or intent['authority'] != receipts.require_authority(root, context=context)
+            if (intent['task_id'] != task_id or not receipts.authority_covers(intent['authority'], receipts.require_authority(root, context=context), root)
                     or intent['root'] != str(root) or intent['base'] != base):
                 raise CardineError('delivery operation owner or authority changed')
             if intent['result'] == 'verified':

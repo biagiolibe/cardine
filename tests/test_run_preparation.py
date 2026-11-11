@@ -272,6 +272,42 @@ execution_start(Path(sys.argv[1]), '001')
         self.assertEqual(self.git('branch', '--list', 'task-001'), '')
         self.assertEqual(len(self.git('worktree', 'list', '--porcelain').split('worktree ')) - 1, 1)
 
+    def test_preparation_survives_reauthorizations_that_advance_accepted_main(self):
+        from cardine.lifecycle import authorization
+        self.prepare()
+        prepared = json.loads((self.root / '.git/cardine-worktrees/001.preparation').read_text())['authority']
+        policy = self.root / '.cardine/project.json'
+        original = policy.read_bytes()
+        # A policy change and its revert, each accepted by the developer, move the
+        # accepted base forward while the final policy equals the prepared one.
+        for content, message in ((original + b'\n', 'Change policy'), (original, 'Restore policy')):
+            policy.write_bytes(content)
+            self.git('add', '.cardine/project.json')
+            self.git('commit', '-m', message)
+            plan = authorization.plan_authorization(self.root)
+            self.assertEqual(plan.status, 'approval-required', plan.detail)
+            self.assertTrue(authorization.apply_authorization(plan, confirm=lambda _plan: None))
+        current = receipts.require_authority(self.root)
+        self.assertNotEqual(current['accepted_main'], prepared['accepted_main'])
+        self.assertEqual(current['policy'], prepared['policy'])
+        report, _ready = inspect_task_worktree('001', self.worktrees, self.root, require_effective_worktree=False)
+        self.assertNotIn('preparation-receipt-mismatch', report['errors'])
+
+    def test_authority_cover_requires_an_ancestor_base_and_equal_fields(self):
+        authority = receipts.require_authority(self.root)
+        self.git('switch', '-q', '-c', 'elsewhere')
+        self.git('commit', '--allow-empty', '-m', 'Not on main')
+        foreign = self.git('rev-parse', 'HEAD')
+        self.git('switch', '-q', 'main')
+        self.git('commit', '--allow-empty', '-m', 'Later main')
+        later = dict(authority, accepted_main=self.git('rev-parse', 'HEAD'))
+        self.assertTrue(receipts.authority_covers(authority, later, self.root))
+        self.assertTrue(receipts.authority_covers(authority, authority, self.root))
+        self.assertFalse(receipts.authority_covers(later, authority, self.root))
+        self.assertFalse(receipts.authority_covers(dict(authority, accepted_main=foreign), later, self.root))
+        self.assertFalse(receipts.authority_covers(dict(authority, policy='0' * 64), later, self.root))
+        self.assertFalse(receipts.authority_covers({**authority, 'extra': 1}, later, self.root))
+
     def test_coherent_state_contract_and_dependency_forgery_are_rejected(self):
         original = self.read()
         state = deepcopy(original)

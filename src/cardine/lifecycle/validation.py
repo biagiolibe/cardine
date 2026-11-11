@@ -215,7 +215,7 @@ def run_task_validation(root, task_id, *, context=None):
         intent = receipts._load_intent(path) if path.exists() else None
         authority = receipts.require_authority(root)
         if intent and (intent['task_id'] != task_id or intent['root'] != str(root)
-                       or intent['authority'] != authority):
+                       or not receipts.authority_covers(intent['authority'], authority, root)):
             raise CardineError('validation operation has foreign owner or changed authority')
         with receipts.task_lock(root, task_id):
             if receipts.pending_operation(root, task_id):

@@ -225,14 +225,14 @@ def implementation_delivery(locations: RunLocations) -> dict | None:
     if set(inspection['errors']) - {'dirty-worktree'} or inspection['integration_active']:
         raise CardineError('implementation progress requires the canonical task worktree')
     from cardine.lifecycle.delivery import _operation_path
-    from cardine.lifecycle.receipts import _load_intent, require_authority
+    from cardine.lifecycle.receipts import _load_intent, authority_covers, require_authority
     operation = _operation_path(root, locations.task_id)
     intent = None
     if operation.exists():
         intent = _load_intent(operation)
         if (intent['task_id'] != locations.task_id or intent['root'] != str(root.resolve())
                 or intent['base'] != str(inspection['base_commit'])
-                or intent['authority'] != require_authority(root)):
+                or not authority_covers(intent['authority'], require_authority(root), root)):
             raise CardineError('implementation progress has a foreign delivery operation')
         if intent['result'] != 'verified':
             return None  # The dispatcher must reconcile the owned operation first.
