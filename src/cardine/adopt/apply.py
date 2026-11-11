@@ -52,12 +52,15 @@ def _encode_outputs(outputs):
 
 
 def encode_plan(plan) -> dict:
-    return {'case': plan.case, 'outputs': _encode_outputs(plan.outputs),
+    result = {'case': plan.case, 'outputs': _encode_outputs(plan.outputs),
             'diagnostics': list(plan.diagnostics), 'missing': list(plan.missing),
             'refusals': list(plan.refusals),
             'dropped_dependencies': {k: list(v) for k, v in plan.dropped_dependencies.items()},
             'dropped_validation': {k: list(v) for k, v in plan.dropped_validation.items()},
             'existing': dict(plan.existing)}
+    if plan.choices is not None:
+        result['choices'] = plan.choices
+    return result
 
 
 def decode_plan(data):
@@ -66,7 +69,7 @@ def decode_plan(data):
                      tuple(data['diagnostics']), tuple(data['missing']), tuple(data['refusals']),
                      {k: tuple(v) for k, v in data['dropped_dependencies'].items()},
                      {k: tuple(v) for k, v in data.get('dropped_validation', {}).items()},
-                     dict(data.get('existing', {})))
+                     dict(data.get('existing', {})), data.get('choices'))
 
 
 def _saved_plan(receipt):

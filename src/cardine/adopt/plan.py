@@ -30,7 +30,7 @@ class AdoptPlan:
     dropped_validation: dict[str, tuple[str, ...]] = field(default_factory=dict)
     # Case A: digest of each existing file an output was fitted around, at planning.
     existing: dict[str, str] = field(default_factory=dict)
-    choices: dict = field(default_factory=dict)
+    choices: dict | None = None
 
     def bytes(self):
         value = {"case": self.case, "operations": [
@@ -38,7 +38,9 @@ class AdoptPlan:
             for path, data in sorted(self.outputs.items())],
             "diagnostics": self.diagnostics, "missing": self.missing,
             "refusals": self.refusals, "dropped_dependencies": self.dropped_dependencies,
-            "dropped_validation": self.dropped_validation, "choices": self.choices}
+            "dropped_validation": self.dropped_validation}
+        if self.choices is not None:
+            value["choices"] = self.choices
         if self.existing:
             value["existing"] = self.existing
         return (json.dumps(value, sort_keys=True, indent=2) + "\n").encode()

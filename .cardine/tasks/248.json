@@ -16,6 +16,7 @@
       "src/cardine/cli.py",
       "src/cardine/templates/init.py",
       "src/cardine/adopt/plan.py",
+      "src/cardine/adopt/apply.py",
       "src/cardine/shared/project_defaults.py",
       "src/cardine/shared/project_guide.py",
       "skills/cardine-project/SKILL.md",
@@ -25,6 +26,7 @@
       "tests/test_init.py",
       "tests/test_adopt_plan.py",
       "tests/test_adopt_cli.py",
+      "tests/test_adopt_apply.py",
       "tests/test_project_guide.py"
     ],
     "hostImpact": {
@@ -83,6 +85,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:8f2d00530aa5123730df82509d94ee70938be26f5cbd77cf9987187b5bee827d",
+      "at": "2026-11-11T00:52:29.415825Z",
+      "before": "sha256:938304754f1fa43dc0345d5733f5369d518ee9fba84004e5594e820584521cca",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -130,6 +142,30 @@
         "source": "42145c1cdd3c951475acdb44774cff786e1e0752",
         "task_id": "248",
         "tree": "09f329f7a14d6e94ba98b40a7d9631f4a7daa5c8",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "5eaa5e78e8e5127bfab429e7668d26c100b0014a15cf81ae0b69cfe596972c3d",
+        "digest": "473fbcca5039740cb22fb26d4101b938c319747e38cd4795565e2428bad31f6d",
+        "inputs": {
+          ".cardine/tasks/248.json": "8bdeda3d4d7063fd9d1acee98a22da1380496ed0f0d85239c782afc8af468ba0",
+          "tasks/248.md": "752ad01d2c1fe97bad0925ca91a956608bc114388a516d2799e7d94f9239515f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "4514aa1019e048d9936b0899a536dad0",
+        "outputs": {
+          ".cardine/tasks/248.json": "31203f3cc27ef69c3b9eaffdd2a8422eab09f7d78eb837a650d117cad02a71fc",
+          "tasks/248.md": "752ad01d2c1fe97bad0925ca91a956608bc114388a516d2799e7d94f9239515f"
+        },
+        "predecessor": "d8092a316d5ac4d6b910d5b1c7f442005f96f85a738ae3b33f28878f0b907248",
+        "result": "verified",
+        "source": "b83aa7b5b1d0c580140f0bf42805d3ac6da218ad",
+        "task_id": "248",
+        "tree": "b03db32448a0e01d9c0f1f9b25c99954780a1d1d",
         "version": 1
       }
     ]
