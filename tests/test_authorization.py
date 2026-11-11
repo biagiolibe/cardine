@@ -165,6 +165,34 @@ class AuthorizationTest(unittest.TestCase):
         self.git(self.root, 'worktree', 'add', '-q', str(worktree), '-b', 'other')
         self.assertEqual(authorization.plan_authorization(worktree).status, 'blocked')
 
+    def test_check_lists_a_task_worktree_whose_policy_predates_main(self):
+        worktree = self.base / 'task-001'
+        self.git(self.root, 'worktree', 'add', '-q', str(worktree), '-b', 'task-001')
+        self.assertEqual(authorization.plan_authorization(self.root).task_policies, ())
+        self.changed_policy()
+        plan = authorization.plan_authorization(self.root)
+        self.assertEqual(plan.task_policies,
+                         ('task-policy: 001 predates main; cardine run 001 will merge main',))
+        self.assertTrue(authorization.apply_authorization(plan, confirm=accept))
+        ready = authorization.plan_authorization(self.root)
+        self.assertEqual((ready.status, ready.task_policies), ('ready', plan.task_policies))
+
+    def test_a_recorded_policy_is_covered_only_by_main_history(self):
+        earlier = receipts.require_authority(self.root)
+        self.changed_policy()
+        plan = authorization.plan_authorization(self.root)
+        authorization.apply_authorization(plan, confirm=accept)
+        current = receipts.require_authority(self.root)
+        self.assertTrue(receipts.authority_covers(earlier, current, self.root))
+        self.git(self.root, 'switch', '-q', '-c', 'task-999')
+        path = self.root / '.cardine/project.json'
+        path.write_bytes(path.read_bytes() + b'\n')
+        self.git(self.root, 'commit', '-q', '-am', 'Branch-only policy')
+        branch_policy = receipts.digest(path.read_bytes())
+        self.git(self.root, 'switch', '-q', 'main')
+        branch_only = dict(earlier, policy=branch_policy)
+        self.assertFalse(receipts.authority_covers(branch_only, current, self.root))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -263,6 +263,26 @@ def authorize_project(root, *, accepted, new=False):
     return accepted
 
 
+def _authority_difference(root, primary, accepted, observed):
+    """Say which checkout differs and what resolves it; authorizing is named only when it can."""
+    differing = ({key for key in observed if not isinstance(accepted, dict) or accepted.get(key) != observed[key]}
+                 - {'accepted_main'})
+    if differing != {'policy'}:
+        where = 'the primary checkout' if root == primary else f'the checkout {root}'
+        return f'{where} differs; ' + AUTHORIZE_HINT
+    if root == primary:
+        return f'the policy of the primary checkout {primary} (main) differs from the accepted policy; ' + AUTHORIZE_HINT
+    relative = str(names().project_declaration_path)
+    main = _run_git(str(primary), 'show', f'main:{relative}', text=False)
+    if main.returncode or digest(main.stdout) != accepted.get('policy'):
+        return ("the policy on main differs from the accepted policy; "
+                'run `cardine authorize --check --project <primary-checkout>` from the developer terminal')
+    return (f'the policy of the task checkout {root} differs from the accepted policy, which main declares. '
+            f'A task cannot land a policy change: restore {relative} from main in that checkout. '
+            'If the task did not change it, `cardine run <task-id>` merges main into the task branch. '
+            'Authorizing cannot resolve this')
+
+
 def require_authority(root, *, context=None):
     observed = observed_authority(root, context=context)
     primary = Path(observed['project']).resolve()
@@ -281,7 +301,8 @@ def require_authority(root, *, context=None):
     # Advancing main is ordinary delivery; it cannot replace the accepted base.
     if (not isinstance(accepted, dict) or set(accepted) != set(observed)
             or any(accepted.get(key) != observed[key] for key in observed if key != 'accepted_main')):
-        raise CardineError('developer reauthorization required: project/runtime/policy changed; ' + AUTHORIZE_HINT)
+        raise CardineError('developer reauthorization required: project/runtime/policy changed; '
+                           + _authority_difference(root, primary, accepted, observed))
     base, main = accepted['accepted_main'], observed['accepted_main']
     if base != main:
         if base is None and main:
@@ -312,13 +333,17 @@ def authority_covers(recorded, current, root):
     Mirrors ``require_authority``: every field must match, and the recorded
     accepted main must be the current one or one of its ancestors, because a
     developer reauthorization that advances the accepted base is ordinary
-    delivery. Policy, runtime-free identity and paths are never relaxed.
+    delivery. Identity and paths are never relaxed. The recorded policy may
+    differ only when the first-parent history of the current accepted main once
+    declared it: a policy that only a task branch held never covers anything.
     """
     if not isinstance(recorded, dict) or not isinstance(current, dict) or set(recorded) != set(current):
         return False
-    if any(recorded[key] != current[key] for key in current if key != 'accepted_main'):
+    if any(recorded[key] != current[key] for key in current if key not in ('accepted_main', 'policy')):
         return False
     base, main = recorded.get('accepted_main'), current.get('accepted_main')
+    if recorded['policy'] != current['policy'] and not _policy_on_main(root, main, recorded['policy']):
+        return False
     if base == main:
         return True
     if not base or not main:

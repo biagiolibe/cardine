@@ -388,6 +388,10 @@ def dispatch_run(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60
             result = run_integration_step(locations, lease_seconds=lease_seconds)
             live.note(run_summary(result))
             return result
+        refreshed = run_policy_refresh(locations)
+        if refreshed is not None:
+            live.note(run_summary(refreshed))
+            return refreshed
         from cardine.lifecycle.control import operation_state
         active = operation_state(locations.worktree, locations.task_id)[0] if locations.worktree.is_dir() else state
         from cardine.lifecycle.control import require_review_budget
@@ -634,12 +638,47 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
 
 
 @scoped_command
+def run_policy_refresh(locations: RunLocations) -> dict | None:
+    """Merge main into a task branch that only predates the policy accepted on main."""
+    from cardine.integration import refresh
+    if not locations.worktree.is_dir() or refresh.policy_refresh_blocked(locations):
+        return None
+    main = refresh.policy_predates_main(locations)
+    if main is None:
+        return None
+    task_id, argv = locations.task_id, ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
+    message = 'the task branch predates the policy accepted on main; merging main'
+    if refresh.dirty(locations):
+        return envelope(task_id, str(locations.primary), step='implementation', action='commit-before-refresh',
+            next_command=command_reference(argv, f'Commit the implementation, then run cardine run {task_id} again'),
+            diagnostics=[dict(code='REFRESH_NEEDS_COMMIT', message=(
+                f'{message}; the task worktree has uncommitted changes, so nothing was merged. '
+                f'Commit the implementation and run `cardine run {task_id}` again'))])
+    done = refresh.refresh_to(locations, main)
+    return envelope(task_id, str(locations.primary), step='implementation', action='refresh-from-main',
+        next_command=command_reference(argv, 'Continue on the refreshed task branch'),
+        evidence=[dict(kind='refresh', path=str(locations.worktree), identity=done['head'])],
+        diagnostics=[dict(code='REFRESHED_FROM_MAIN', message=message)])
+
+
+@scoped_command
 def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict, *, wait_seconds=0) -> dict | None:
     """Gate the direct candidate on CI for the delivered head when the contract requires it."""
     from dataclasses import replace
     from cardine.integration import ci
     if ci.ci_policy(state['contract']) is None:
         return None
+    from cardine.integration import refresh
+    due = refresh.refresh_inputs(locations, state)
+    if due is not None:
+        done = refresh.refresh_from_main(locations, due)
+        return envelope(locations.task_id, str(locations.primary), step='implementation', action='refresh-from-main',
+            next_command=command_reference(['cardine', 'run', locations.task_id, '--project', str(locations.primary)],
+                                           'Validate and run CI on the refreshed task branch'),
+            evidence=[dict(kind='refresh', path=str(locations.worktree), identity=done['head'])],
+            diagnostics=[dict(code='REFRESHED_FROM_MAIN', message=(
+                f"merged main {done['main']} into the task branch; task paths that interacted with it: "
+                + (', '.join(done['paths']) or 'none')))])
     outcome = ci.ci_gate(locations, wait_seconds=wait_seconds) if wait_seconds else ci.ci_gate(locations)
     if outcome is None or (outcome['phase'] == 'passed' and not outcome['changed']):
         return None

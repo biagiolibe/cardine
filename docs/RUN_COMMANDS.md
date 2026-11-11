@@ -64,6 +64,32 @@ returns a retry without altering the competing lease. Explicit budgets are
 retained in continuations. Both options are runtime settings and do not
 change the task contract.
 
+### Bringing the task branch up to date with main
+
+`run` returns `action: refresh-from-main` as an ordinary `next` when it merged
+`main` into the task branch. This happens before CI is requested, in two cases.
+With `ciBeforeLanding` and direct landing, it happens when `main` has changed
+paths that the task also changed, so the integration decision would be `FULL`.
+Cardine runs `git merge --no-ff` of the current `main`, with the message
+`Merge main into task-<ID>`, and records the merged `main` commit as the task's
+base. It never rebases or rewrites the branch. The diagnostic names the merged
+`main` commit and the task paths that interacted with it. Task validation then
+runs again on the new head, followed by CI on that head, and the candidate is
+`REUSE`. A refresh is progress, not a retry, and consumes no validation retry.
+A textual conflict aborts the merge, leaves the branch unchanged, and stops with
+`INTEGRATION_CONFLICT`: merge `main` into the task branch in the task
+worktree, resolve and commit, then run `cardine run <ID>` again.
+
+Independently of CI, the same refresh runs when the task worktree's policy
+differs from the accepted policy, `main` holds the accepted policy, and the task
+did not change `.cardine/project.json`. The diagnostic is "the task branch
+predates the policy accepted on main; merging main". With uncommitted changes,
+nothing is merged and `run` returns `action: commit-before-refresh`: commit the
+implementation and run `cardine run <ID>` again. A policy written on the task
+branch is never accepted, and keeps the stop. `cardine authorize --check` prints
+`task-policy: <ID> predates main; cardine run <ID> will merge main` for each
+prepared task worktree in that state.
+
 Run `next.command` unchanged. It is rendered from `next.argv` with POSIX
 quoting and names the absolute primary path.
 
