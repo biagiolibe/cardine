@@ -11,11 +11,11 @@ import sys
 from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
 from cardine.tasks.state import STATUSES
-from cardine.tasks.status import load_task_status
+from cardine.tasks.status import apply_task_branch_observations, load_task_status
 
 
 def render_status_lines(project_root: Path) -> str:
-    return _status_lines(load_task_status(project_root))
+    return _status_lines(apply_task_branch_observations(project_root, load_task_status(project_root)))
 
 
 def _status_lines(model: dict) -> str:
@@ -52,7 +52,7 @@ def _language_line(project_root: Path) -> str:
 
 def render_briefing(project_root: Path, payload: str) -> str:
     """Ignore caller prose; only project files contribute output."""
-    model = load_task_status(project_root)
+    model = apply_task_branch_observations(project_root, load_task_status(project_root))
     prefix = f"Preset: {model['preset']}\n" if model["preset"] is not None else ""
     return _language_line(project_root) + prefix + _status_lines(model)
 

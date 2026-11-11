@@ -1,6 +1,7 @@
 """State-first status regressions and incomplete snapshot diagnostics."""
 from task_contract_support import freeze_record
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -168,3 +169,103 @@ class TaskStatusTests(unittest.TestCase):
         model = load_task_status(self.root)
         self.assertTrue(model['diagnostics'])
         self.assertFalse(next(row for row in model['tasks'] if row['id'] == '001')['startable'])
+
+
+class BranchStatusDisplayTests(unittest.TestCase):
+    setUp = TaskStatusTests.setUp
+    configure = TaskStatusTests.configure
+    task = TaskStatusTests.task
+    def git_display(self, *args, cwd=None):
+        return subprocess.run(['git', '-C', str(cwd or self.root), *args],
+                              check=True, capture_output=True, text=True).stdout
+
+    def prepare_display_branch(self, main_status='queued', *, run=False):
+        self.task('001', main_status)
+        if run:
+            from project_config_support import write_project_config
+            from task_contract_support import contract_record, VALIDATION
+            write_project_config(self.root, 'lean', validation=VALIDATION)
+            (self.root / 'tasks/001.md').write_text(contract_record())
+            freeze_record(self.root, '001')
+        self.git_display('init', '-b', 'main')
+        self.git_display('config', 'user.name', 'Cardine Test')
+        self.git_display('config', 'user.email', 'cardine@example.invalid')
+        if run:
+            from task_contract_support import seal_state
+            with patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(self.root / 'worktrees')}):
+                seal_state(self.root, '001')
+        self.git_display('add', '.')
+        self.git_display('commit', '-m', 'Register task')
+        if run:
+            result = subprocess.run([sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
+                                     'run', '001', '--project', str(self.root)],
+                                    env={**os.environ, 'CARDINE_WORKTREE_ROOT': str(self.root / 'worktrees')},
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report['action'], 'execution-start', report)
+            return Path(report['evidence'][0]['path'])
+        worktree = self.root / 'worktree'
+        self.git_display('worktree', 'add', '-b', 'task-001', str(worktree))
+        return worktree
+
+    def display_report(self):
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
+                                 'status', '--project', str(self.root), '--format', 'json'],
+                                check=True, capture_output=True, text=True)
+        return json.loads(result.stdout)
+
+    def test_branch_display_worktree_then_retained_branch(self):
+        worktree = self.prepare_display_branch(run=True)
+        (worktree / 'uncommitted.txt').write_text('Work in progress\n')
+        report = self.display_report()
+        row = report['tasks'][0]
+        self.assertEqual(row['status'], 'in_progress')
+        self.assertFalse(row['startable'])
+        self.assertEqual(row['source'], 'task state in worktree task-001')
+        self.assertEqual(report['totals']['queued'], 0)
+        self.assertEqual(report['totals']['in_progress'], 1)
+        self.assertIn('| source: task state in worktree task-001', render_task_status(report))
+        self.assertEqual(load_task_status(self.root)['tasks'][0]['status'], 'queued')
+        (worktree / 'uncommitted.txt').unlink()
+        self.git_display('worktree', 'remove', str(worktree))
+        row = self.display_report()['tasks'][0]
+        self.assertEqual(row['status'], 'in_progress')
+        self.assertEqual(row['source'], 'task state on branch task-001')
+
+    def test_prepared_worktree_and_write_views_are_independent(self):
+        worktree = self.prepare_display_branch()
+        command = [sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
+                   'status', '--project', str(self.root), '--write']
+        subprocess.run(command, check=True, capture_output=True)
+        queue = (self.root / 'tasks/QUEUE.md').read_bytes()
+        self.assertEqual(self.display_report()['tasks'][0]['status'], 'in_progress')
+        self.git_display('worktree', 'remove', str(worktree))
+        subprocess.run(command, check=True, capture_output=True)
+        self.assertEqual((self.root / 'tasks/QUEUE.md').read_bytes(), queue)
+        self.assertNotIn('source', self.display_report()['tasks'][0])
+
+    def test_invalid_branch_state_is_ignored(self):
+        worktree = self.prepare_display_branch()
+        path = worktree / '.cardine/tasks/001.json'
+        for content in ('{', 'null', '{}', '{"status":"in_progress"}', '[]'):
+            with self.subTest(content=content):
+                path.write_text(content)
+                report = self.display_report()
+                self.assertEqual(report['tasks'][0]['status'], 'queued')
+                self.assertNotIn('source', report['tasks'][0])
+                self.assertEqual(report['diagnostics'], [])
+        self.git_display('add', '.', cwd=worktree)
+        self.git_display('commit', '-m', 'Invalid advisory state', cwd=worktree)
+        self.git_display('worktree', 'remove', str(worktree))
+        self.assertNotIn('source', self.display_report()['tasks'][0])
+
+    def test_branch_never_regresses_or_cancels_main(self):
+        from task_state_support import set_state
+        worktree = self.prepare_display_branch('in_review')
+        for status in ('queued', 'in_progress', 'cancelled'):
+            with self.subTest(status=status):
+                set_state(worktree, '001', status, required=False)
+                row = self.display_report()['tasks'][0]
+                self.assertEqual(row['status'], 'in_review')
+                self.assertNotIn('source', row)

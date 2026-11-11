@@ -156,10 +156,31 @@ def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[
     return model, inputs, config
 
 
+def apply_task_branch_observations(project_root: Path, model: dict) -> dict:
+    """Advance display rows only; authoritative snapshots and views stay unchanged."""
+    from copy import deepcopy
+    from cardine.tasks.branch_state import observe_task_branches
+
+    displayed = deepcopy(model)
+    progression = {status: index for index, status in enumerate(("queued", "in_progress", "in_review", "done"))}
+    observations = observe_task_branches(project_root, model)
+    for row in displayed["tasks"]:
+        observed = observations.get(row["id"])
+        if observed is None or row["status"] not in progression:
+            continue
+        status = observed["status"]
+        if status not in progression or progression[status] <= progression[row["status"]]:
+            continue
+        displayed["totals"][row["status"]] -= 1
+        displayed["totals"][status] += 1
+        row.update(status=status, startable=False, source=observed["source"])
+    return displayed
+
+
 def render_task_status(model: dict) -> str:
     """Render the same filtered model exposed by JSON, including global totals."""
     lines = [f"Preset: {model['preset']}", 'Totals: ' + ', '.join(f"{key}={model['totals'][key]}" for key in (*STATUSES, 'total'))]
     for row in model['tasks']:
-        lines.append(f"{row['id']} | {row['title']} | {row['status']} | dependencies: {', '.join(row['dependencies']) or '-'} | blocked_by: {', '.join(row['blocked_by']) or '-'} | startable: {str(row['startable']).lower()} | registration_missing: {', '.join(row['registration_missing']) or '-'}")
+        lines.append(f"{row['id']} | {row['title']} | {row['status']} | dependencies: {', '.join(row['dependencies']) or '-'} | blocked_by: {', '.join(row['blocked_by']) or '-'} | startable: {str(row['startable']).lower()} | registration_missing: {', '.join(row['registration_missing']) or '-'}" + (f" | source: {row['source']}" if 'source' in row else ''))
     lines.extend(f"Diagnostic: {item['path']}: {item['error']}" for item in model['diagnostics'])
     return '\n'.join(lines)
