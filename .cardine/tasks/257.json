@@ -9,7 +9,10 @@
     },
     "class": "standard",
     "deliverables": [],
-    "dependencies": [],
+    "dependencies": [
+      "258",
+      "259"
+    ],
     "expectedCodeSurface": [
       "VERSION",
       ".claude-plugin/plugin.json",
@@ -72,6 +75,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:20190f00f1f0907f4d4871bf9fc01845356031a56b39e957939da756f6d5c3bf",
+      "at": "2026-11-11T16:06:17.646879Z",
+      "before": "sha256:39bdffd0143136c6d60f432cae416e9f8797f611587d92d3d23ad016605a21b0",
+      "changedFields": [
+        "dependencies"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -97,6 +110,30 @@
         "source": "8b627c3a71ec360b5d5dfbe23cca3be4c7a7282b",
         "task_id": "257",
         "tree": "65db9a3b9270654a5b7cd20288a831727cea5540",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "665c2e65baf2739a60e934ebae0254881c18a21d1fc135333c469e079b8ed55a",
+        "digest": "0aad23251a14756daaf4c7f0317befe3c546a9b866b690530b2f5591db4ec895",
+        "inputs": {
+          ".cardine/tasks/257.json": "86759e1e4332bc9c4edbf980b13669a328eca063bc9b71b61dd1be780f81f1dc",
+          "tasks/257.md": "7a04ebb116c39bff873e07124c5234d014be58d8c20ab63ca86a73d0e3d0ae25"
+        },
+        "kind": "contract_revision",
+        "operation_id": "cef00514941e431b8a75b210607409cd",
+        "outputs": {
+          ".cardine/tasks/257.json": "2c51f62ba8c52e47e2b3c02227d2f59530d65f080322ebc264dd373058d90ef7",
+          "tasks/257.md": "7a04ebb116c39bff873e07124c5234d014be58d8c20ab63ca86a73d0e3d0ae25"
+        },
+        "predecessor": "05627627925ec9253111c3470f6b6129e305098c1855dce5698d6c16d9eccbfe",
+        "result": "verified",
+        "source": "6a011dae2279c21140e766c51d0814d572cd7ddd",
+        "task_id": "257",
+        "tree": "1e6c35fa470934df6109ac40b671acf3802402ee",
         "version": 1
       }
     ]

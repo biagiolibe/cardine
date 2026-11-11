@@ -1,0 +1,119 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/shared/project_guide.py",
+      "src/cardine/cli.py",
+      "src/cardine/templates/interactive_init.py",
+      "src/cardine/hosts/setup.py",
+      "src/cardine/stops/causes.py",
+      "tests/test_project_guide.py",
+      "tests/test_cli_help.py",
+      "tests/test_interactive_init.py",
+      "tests/test_host_worktree_setup.py",
+      "tests/test_host_repeatability.py",
+      "tests/test_host_hooks.py",
+      "tests/test_codex_user_rules.py",
+      "tests/test_setup_local_ignore.py",
+      "tests/test_host_coexistence.py",
+      "tests/test_task_identity_project.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/258.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 258 \u2014 Make guide, setup and the bare command point the way",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_project_guide --module test_init --module test_interactive_init --module test_adopt_cli --module test_cli_help --module test_cli_startup --module test_cardine_cli --module test_host_worktree_setup --module test_host_repeatability --module test_host_hooks --module test_codex_user_rules --module test_setup_local_ignore --module test_host_coexistence --module test_task_identity_project --module test_public_surface --module test_command_word --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_run_recovery"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "c8bd7a2948032b55a4ede7238c69bc2bb111707b57b92dd46f7cbee095f5f117",
+        "digest": "481344b8eb41ad20debc324adeeeb1622c64a0872f2538fca6d4191b26245faa",
+        "inputs": {
+          ".cardine/tasks/258.json": null,
+          "tasks/258.md": null
+        },
+        "kind": "creation",
+        "operation_id": "16c9c3895f1141869deb8017d9bbbea4",
+        "outputs": {
+          ".cardine/tasks/258.json": "06c3df45460aaeed845f3b78e6a17cf4988bb832f42be40916c797452b3c4c28",
+          "tasks/258.md": "caab1cbb112df292e38b14f9127d4bb0a79539b006d341b6b0aa9b222fa6a32c"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "6a011dae2279c21140e766c51d0814d572cd7ddd",
+        "task_id": "258",
+        "tree": "1e6c35fa470934df6109ac40b671acf3802402ee",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "258",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
