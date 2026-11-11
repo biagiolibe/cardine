@@ -3,7 +3,7 @@
 The chain is empty. Cardine 1.0 starts with no migration records; the records
 Meridian accumulated before 1.0 were deleted with the history they described.
 Until 1.0, template changes follow the no-migration rule in
-[CONTRIBUTING.md](../CONTRIBUTING.md#managed-copies-of-this-repository). An
+[CONTRIBUTING.md](../CONTRIBUTING.md#managed-copies). An
 empty chain is valid: the upgrade CLI applies nothing, and a release that
 changes no template is a CLI-only release.
 
@@ -19,7 +19,7 @@ versions, a concise description, its managed paths, and post-upgrade
 verification. It must be append-only after release. Do not replace a migration
 to rewrite historical behavior; add a corrective migration instead.
 
-The records do not authorize an overwrite. `meridian upgrade --apply` first
+The records do not authorize an overwrite. `cardine upgrade --apply` first
 plans a three-way merge for every managed file and applies nothing if any file
 conflicts.
 
@@ -29,7 +29,7 @@ framework-owned file that becomes managed for the first time after consumers
 may already have received a copy. When the installed baseline lacks a declared
 path, upgrade keeps an existing copy that already matches the target. If the
 copy differs, the plan reports that it will be replaced and names the adjacent
-backup written first: `<filename>.meridian-pre-adoption.bak`, followed by `.1`,
+backup written first: `<filename>.cardine-pre-adoption.bak`, followed by `.1`,
 `.2`, and so on when earlier backups exist. The apply output repeats that plan.
 Either case records the target baseline so later upgrades return to the normal
 three-way merge. An undeclared path retains the blocking missing-baseline
@@ -45,7 +45,7 @@ diverges from the template, so the marker catalog in
 [capabilities/](../capabilities/) is the source of truth. A version-bump
 migration also declares a `delta` describing only what changed, so an
 implementer's job stays scoped instead of implying a from-scratch rewrite.
-`meridian audit` mechanically verifies a project's protected capability
+`cardine audit` mechanically verifies a project's protected capability
 regions still match the framework's released text.
 
 A migration may declare `restructures`, a list of `{path, retiredMarkers,
@@ -53,7 +53,7 @@ replacedBy}` entries, when a standalone block replaces inline markers that sit
 inside prose. Unlike `removes`, the scope is one managed path, so a capability
 that another file still carries stays required. When a three-way merge of that
 path conflicts around a retired inline marker, upgrade writes the current file
-to an adjacent `<filename>.meridian-pre-restructure.bak` (numeric suffix when the
+to an adjacent `<filename>.cardine-pre-restructure.bak` (numeric suffix when the
 name exists), installs the template, carries the project's own level-2 sections
 after it, and reports the backup.
 
@@ -62,7 +62,7 @@ entries, when a new block wraps text the file already carried unmarked. If the
 three-way merge conflicts and the local file lacks the block, the plan reports a
 conflict instead of adding a second copy of the wrapped text.
 
-`.meridian/baselines/<version>/` in a generated project is a snapshot of the
+`.cardine/baselines/<version>/` in a generated project is a snapshot of the
 templates installed at that version — the merge base for the next upgrade's
 three-way merge. Only the snapshot matching the manifest's current
 `workflowBaselineVersion` is ever read again, so a completed `upgrade --apply`
@@ -75,6 +75,5 @@ branch instead if a project needs to inspect a historical baseline.
 Task 034 removed `release-baselines/1.0.0/` and historical-version adoption
 from Cardine. The immutable Governed SDD snapshot remains in
 [Meridian v1.4.0](https://github.com/biagiolibe/meridian/tree/v1.4.0/release-baselines/1.0.0),
-the version from which Cardine was imported. Conversion of projects without
-Cardine and of existing Meridian projects returns with work item 10 on the
-single Cardine workflow. Until then, the CLI has no conversion command.
+the version from which Cardine was imported. `cardine init` converts an existing
+project; see [the adoption commands](../docs/ADOPT_COMMANDS.md).

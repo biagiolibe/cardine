@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Propose a focused improvement to Meridian.
+about: Propose a focused improvement to Cardine.
 title: ""
 labels: ""
 assignees: ""
@@ -21,4 +21,4 @@ Include existing commands or workarounds and their limitations.
 ## Scope and context
 
 Which workflow mode and agent hosts would this affect? Explain how the proposal
-fits Meridian's stack-agnostic scope and mention relevant documentation or tasks.
+fits Cardine's stack-agnostic scope and mention relevant documentation or tasks.

@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement through
-[GitHub private vulnerability reporting](https://github.com/biagiolibe/meridian/security/advisories/new),
+[GitHub private vulnerability reporting](https://github.com/biagiolibe/cardine/security/advisories/new),
 the same private channel named in [SECURITY.md](SECURITY.md). For a conduct
 report, identify it as such and include the incident, relevant links or evidence,
 and any immediate concerns; do not post sensitive details in public issues.
@@ -118,7 +118,7 @@ community.
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org),
 version 2.1, available at
 https://www.contributor-covenant.org/version/2/1/code_of_conduct.html.
-The adaptation specifies Meridian's private enforcement channel and reporting
+The adaptation specifies Cardine's private enforcement channel and reporting
 guidance. This document is licensed under
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
