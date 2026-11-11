@@ -1,0 +1,112 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/scope.py",
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/shared/errors.py",
+      "src/cardine/stops/render.py",
+      "tests/test_run_field_cases.py",
+      "tests/test_run_output.py",
+      "docs/RUN_COMMANDS.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "Task 246 scope-change recovery",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/249.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 249 \u2014 Show how to resume after a scope change",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_field_cases --module test_run_output --module test_run_resolution --module test_run_delivery --module test_run_validation --module test_stop_registry --module test_layout --module test_module_inventory --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "1f06e4450cfc4f3f864dc4f319fed57f6b5dd78868bf9e346dec6a1808585e5e",
+        "digest": "7cccfd7f3e5257a2200c2cb1276b8df9cb85feba6c37db950469139dc56c0970",
+        "inputs": {
+          ".cardine/tasks/249.json": null,
+          "tasks/249.md": null
+        },
+        "kind": "creation",
+        "operation_id": "885446a0900c490da9715110f4d84f80",
+        "outputs": {
+          ".cardine/tasks/249.json": "49cf6058edb418de40196eaa99c77b64a21c7dc5d4d610716a5343753e458e03",
+          "tasks/249.md": "2fb1f33d091e5cd596c8764e00ff7f4511e3daf0a0ae6f9f764bdf73097e728e"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "42145c1cdd3c951475acdb44774cff786e1e0752",
+        "task_id": "249",
+        "tree": "09f329f7a14d6e94ba98b40a7d9631f4a7daa5c8",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "249",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
