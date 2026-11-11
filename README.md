@@ -16,7 +16,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/biagiolibe/cardine" alt="MIT License"></a>
 </p>
 
-> **Status: 0.9.2, before 1.0.** Install the CLI from the `v0.9.2` tag.
+> **Status: 0.9.2, before 1.0.** Install the CLI from the `v0.9.2` tag; see [Get started](#get-started).
 > The scope of 1.0 is
 > [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md); what is proven today is
 > listed under [Status and evidence](#status-and-evidence).
@@ -97,22 +97,27 @@ Those stay with you.
 
 ## Get started
 
-Choose a starting path:
+Install Cardine on macOS or Linux with Python 3.12 or later, Git, and pipx:
 
-- **Terminal:** follow the [terminal walkthrough](docs/QUICKSTART.md#start-in-the-terminal) to install Cardine and deliver a first task.
-- **Agent:** follow the [agent walkthrough](docs/QUICKSTART.md#start-with-an-agent) from your project checkout.
-
-In true Cardine fashion, you can delegate the setup, too.
-
-```text
-I want to use Cardine here. Read the Quickstart at
-https://github.com/biagiolibe/cardine/blob/main/docs/QUICKSTART.md and guide
-me from this checkout to the first integrated task.
+```sh
+pipx install git+https://github.com/biagiolibe/cardine@v0.9.2
 ```
 
-When the Cardine project skill is available, “I want to use Cardine here” is
-sufficient. The console is optional: maintainers can inspect task status and
-see the next action in an interactive terminal. See [the console](docs/QUICKSTART.md#project-console).
+Then, from your project checkout:
+
+```sh
+cardine init
+cardine setup --check
+cardine setup --apply
+```
+
+`init` configures the project and asks before it writes or publishes anything. `setup`
+connects Claude Code or Codex. Then ask your agent: “I want to use Cardine here.” To
+deliver a first task from the terminal, follow the [quick start](docs/QUICKSTART.md).
+Run `cardine guide` at any time to see where the checkout stands and what to do next.
+
+The console is optional: it shows task status and the next action in an interactive
+terminal. See [the console](docs/QUICKSTART.md#project-console).
 
 ![Console showing task 001 in progress with elapsed time and current gate](docs/assets/cardine-console.png)
 
@@ -147,18 +152,6 @@ A `spike` task class for exploratory work, with an `ANSWERED` or
   for 1.1.
 
 The project console, `cardine console`, is experimental.
-
-## Install
-
-Use macOS or Linux with Python 3.12 or later, Git, and pipx.
-
-```sh
-pipx install git+https://github.com/biagiolibe/cardine@v0.9.2
-```
-
-Run `cardine init` from your project checkout. To connect a host, preview
-with `cardine setup --check` and apply the reviewed changes from your
-terminal with `cardine setup --apply`.
 
 ## Status and evidence
 

@@ -1,13 +1,14 @@
 # Project adoption
 
-`cardine adopt` installs Cardine in an existing project. Preview the choices with:
+`cardine init` adopts an existing project when it finds one, so most users never call
+`cardine adopt` directly. See the [quick start](QUICKSTART.md#start-in-the-terminal).
+
+For automation, `cardine adopt` takes explicit flags. Preview, then apply:
 
 ```sh
 cardine adopt --project . --check --test "python3 -m unittest"
+cardine adopt --project . --apply --test "python3 -m unittest"
 ```
 
-Use the same inputs with `--rehearse` to verify adoption in a disposable clone,
-then with `--apply` to install it in the project. Apply uses a matching rehearsal
-receipt or rehearses first. Review and commit the changes. Create subsequent
-tasks with `cardine task new`; see the [Quickstart terminal section](QUICKSTART.md#start-in-the-terminal)
-for the task and setup steps.
+Apply first rehearses the adoption in a disposable clone. `--rehearse` runs only that
+rehearsal.
