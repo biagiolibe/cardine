@@ -46,7 +46,7 @@ from cardine.tasks.identity import read_task_identity_policy
 from cardine.tasks.identity import read_installation_identity_policy
 from cardine.worktree.storage import _read_user_configuration
 from cardine.worktree.storage import resolve_worktree_root
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 import difflib
 import re
@@ -197,6 +197,7 @@ def plan_setup(
     user_config: Path | None = None,
     framework_root: Path | None = None,
     project_root: Path | None = None,
+    which: Callable[[str], str | None] = shutil.which,
 ) -> SetupPlan:
     home = (home or Path.home()).expanduser().resolve()
     framework_root = (framework_root or resolve_framework_root()).expanduser().resolve()
@@ -436,8 +437,15 @@ def plan_setup(
         changes = [item for item in changes if item != "none"]
         changes.append(f"exclude {CLAUDE_LOCAL_SETTINGS} from Git in {local_ignore.path}")
         plan = replace(plan, changes=tuple(changes))
+    plugin_state = _plugin_state(home, framework_root)
+    if (plugin_state == "absent" or plugin_state.startswith("mismatch")) and which("claude") is not None:
+        if not changes[0].startswith("none;"):
+            from cardine.release.version import read_version
+            changes = [item for item in changes if item != "none"]
+            changes.append(f"align the Claude Code plugin to v{read_version(framework_root)}")
+            plan = replace(plan, changes=tuple(changes))
     pinned = PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__), hooks=hooks_plan,
-                             local_ignore=local_ignore, claude_plugin=_plugin_state(home, framework_root))
+                             local_ignore=local_ignore, claude_plugin=plugin_state)
     return replace(pinned, inputs=_plan_inputs(pinned))
 
 
@@ -533,9 +541,6 @@ def print_setup_plan(plan: SetupPlan) -> None:
         print('shell-profile-PATH: export PATH="$CARDINE_ROOT/bin:$PATH"')
     for warning in plan.warnings:
         print(f"warning: {warning}")
-    print("changes:")
-    for change in plan.changes:
-        print(f"- {change}")
 
 
 def apply_setup(plan: SetupPlan) -> bool:

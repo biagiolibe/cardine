@@ -716,10 +716,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             print_setup_plan(plan)
             if arguments.apply:
                 changed = apply_setup(plan)
-                print("result: updated; restart Codex" if changed else "result: no-op")
                 from cardine.hosts.claude import align_claude_plugin
                 from cardine.release.version import read_version
-                align_claude_plugin(Path.home(), read_version(framework_root))
+                plugin_result = align_claude_plugin(Path.home(), read_version(framework_root))
+                print("result: updated; restart your agent so it loads the changes"
+                      if changed or plugin_result == "aligned" else "result: no-op")
         elif arguments.command == "doctor":
             report = host_doctor(
                 arguments.host,
