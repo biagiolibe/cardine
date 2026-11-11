@@ -17,6 +17,7 @@
       "commands/cardine-upgrade.md",
       "skills/cardine-project/SKILL.md",
       "tests/test_template_commands.py",
+      "tests/test_template_router.py",
       "changelog.d/268.md"
     ],
     "hostImpact": {
@@ -74,6 +75,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:a4078a3016022f2c89d78ccbad53b77573b36eaabedf1b2238c7fe5b0ffd0086",
+      "at": "2026-11-11T20:51:08.039580Z",
+      "before": "sha256:f3934f4e48f9f973db352cc8c9c45583090ce32330804145b1162aba45c07446",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "delivery": {
       "base": "db4527202f969a4dc5d9d3f692b764e62c8e8e2e",
@@ -151,8 +162,177 @@
         "task_id": "268",
         "tree": "85c0409b7df002d7babe90ecab07e6080dbfa409",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "b0cab4325b82b7d2e6bf697230c23b5306cee8f6c48a6ac9a9a5c5cb84ab012f",
+        "digest": "86f40b73ef7204ca896c634915469093111c53f54fe41013df3b1ad55cc5e2b1",
+        "inputs": {
+          ".cardine/evidence/268.json": null,
+          ".cardine/tasks/268.json": "d00ee593f92029590c5eb50e34622bc04863e5ed601a57b5fa057883564f329c",
+          "tasks/handoffs/268.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "d4e8fdc2e6b24a99a20a5c0e58f1ac1d",
+        "outputs": {
+          ".cardine/evidence/268.json": "2d4ebd1383452491a03701d47ef587da4c33461afb093c0d7b41e4e2f6ad6d46",
+          ".cardine/tasks/268.json": "02a03086c18d846c3679ab9649918f98c16c51aa5351ebffc9a190d62f6cc457",
+          "tasks/handoffs/268.md": "9fe9caa64d9a09699024750fadb1ced864d2abed6ddba8d49e786e7ffab10b65"
+        },
+        "predecessor": "c2c41a8ff0f0ab06dd6ff6e162f6e1ef7d6857b17797e804d448ee0e79efde4c",
+        "result": "verified",
+        "source": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+        "task_id": "268",
+        "tree": "d9e1ede309a47bc4a55022bd37afd0a38798981e",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "6b8409cf3910f33b253f2a7104f0ec628a4c7aa07bf9e06118f94fcea5a8ab90",
+        "digest": "9bafe16d9c4e0660220df9f3b60598e4032aa3fbca95946ece78ce3e1013510d",
+        "inputs": {
+          ".cardine/tasks/268.json": "4c31989c00df39127089ed25101fccaf57e4dbdf1a12d6f41b6c777fd36adf99",
+          "tasks/268.md": "8146811ee48e873bb49d48ae952db9d2035c7a9ce51ed7a09f6bde4da44ea851"
+        },
+        "kind": "contract_revision",
+        "operation_id": "fa9b8414878447ba948117c375bd398b",
+        "outputs": {
+          ".cardine/tasks/268.json": "7ab499f4d3dddf46e4145988401cd025ff784abafe58767629da95061ae94d9a",
+          "tasks/268.md": "8146811ee48e873bb49d48ae952db9d2035c7a9ce51ed7a09f6bde4da44ea851"
+        },
+        "predecessor": "86f40b73ef7204ca896c634915469093111c53f54fe41013df3b1ad55cc5e2b1",
+        "result": "verified",
+        "source": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+        "task_id": "268",
+        "tree": "d9e1ede309a47bc4a55022bd37afd0a38798981e",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "be8288e9a2b54612bad5294208ae4729",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/268.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "a49f368010362ab33187f862e2f21b4db95bf74b188210438bb4b17106b8dffc",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_codex_access --module test_host_distribution --module test_template_router --module test_check_repository --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+        },
+        "contractDigest": "b0cab4325b82b7d2e6bf697230c23b5306cee8f6c48a6ac9a9a5c5cb84ab012f",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-268",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "e492430311ea66a49ba18db2a44acec023a5ef30",
+        "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+        "sourceTree": "85c0409b7df002d7babe90ecab07e6080dbfa409"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "task-tests"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "be8288e9a2b54612bad5294208ae4729",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/268.json#be8288e9a2b54612bad5294208ae4729/1/repository-check",
+            "round": 1,
+            "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "be8288e9a2b54612bad5294208ae4729",
+            "command": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_codex_access --module test_host_distribution --module test_template_router --module test_check_repository --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+            "commit": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/268.json#be8288e9a2b54612bad5294208ae4729/1/task-tests",
+            "round": 1,
+            "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+            "stderr": "run_tests: 197 tests in 8 shards\nrun_tests: shard 4/8 finished in 1.8s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 6/8 finished in 3.2s: exit 0 ran=24 failures=0 errors=0\nrun_tests: shard 3/8 finished in 3.7s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 5/8 finished in 4.0s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 7/8 finished in 4.3s: exit 0 ran=24 failures=0 errors=0\nrun_tests: shard 8/8 finished in 6.3s: exit 1 ran=24 failures=1 errors=0\nrun_tests: shard 2/8 finished in 11.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 1/8 finished in 18.1s: exit 1 ran=25 failures=1 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=197 selected=25 digest=12e2045e6b0537a61c685adc30c3e0f2409ba68e94e2d3ea746c425c8a1fca01\ntest_a_capability_removed_without_a_removes_declaration_still_fails (test_check_repository.CapabilityMarkerBaselineTest.test_a_capability_removed_without_a_removes_declaration_still_fails)\nThe baseline guard's original task-014 behavior: an absence with ... ok\ntest_missing_baseline_file_fails (test_check_repository.CapabilityMarkerBaselineTest.test_missing_baseline_file_fails) ... ok\ntest_requirement_above_shipped_version_fails (test_check_repository.CapabilityRequiredVersionsTest.test_requirement_above_shipped_version_fails) ... ok\ntest_same_version_migration_fails_and_names_the_file (test_check_repository.CheckMigrationsVersionGateTest.test_same_version_migration_fails_and_names_the_file) ... ok\ntest_missing_record_for_current_version_fails (test_check_repository.CheckReleasesTest.test_missing_record_for_current_version_fails) ... ok\ntest_edited_managed_copy_is_checked (test_check_repository.ConditionalInstallationChecksTest.test_edited_managed_copy_is_checked) ... ok\ntest_managed_block_that_edits_a_queue_row_fails_in_either_template (test_check_repository.GovernedLifecycleTextTest.test_managed_block_that_edits_a_queue_row_fails_in_either_template) ... ok\ntest_allowed_exception_passes_only_for_that_file (test_check_repository.MachinePathTest.test_allowed_exception_passes_only_for_that_file) ... ok\ntest_binary_artifacts_cannot_hide_ascii_names (test_check_repository.PrivateNameGuardTest.test_binary_artifacts_cannot_hide_ascii_names) ... ok\ntest_template_link_exemptions_are_preserved (test_check_repository.RepositoryFilesTest.test_template_link_exemptions_are_preserved) ... ok\ntest_blocked_line_without_a_code_in_managed_text_fails (test_check_repository.StopCodeRegistryCheckTest.test_blocked_line_without_a_code_in_managed_text_fails) ... ok\ntest_tool_code_without_a_test_or_with_a_missing_test_fails (test_check_repository.StopCodeRegistryCheckTest.test_tool_code_without_a_test_or_with_a_missing_test_fails) ... ok\ntest_atomic_replace_failure_keeps_original (test_host_codex_access.CodexWorktreeAccessTest.test_atomic_replace_failure_keeps_original) ... ok\ntest_managed_requirements_must_allow_the_profile (test_host_codex_access.CodexWorktreeAccessTest.test_managed_requirements_must_allow_the_profile) ... ok\ntest_kill_before_and_after_every_copy_and_publication_converges (test_host_distribution.HostDistributionTest.test_kill_before_and_after_every_copy_and_publication_converges) ... ok\ntest_evidence_rejects_traversal_and_links_to_another_task (test_layout.LayoutTest.test_evidence_rejects_traversal_and_links_to_another_task) ... ok\ntest_old_adoption_backups_do_not_reserve_product_backup_names (test_layout.LayoutTest.test_old_adoption_backups_do_not_reserve_product_backup_names) ... ok\ntest_adopt_package_exists_and_defines_nothing_yet (test_module_inventory.ModuleInventoryTest.test_adopt_package_exists_and_defines_nothing_yet) ... ok\ntest_scope_and_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_scope_and_stale_allowances) ... ok\ntest_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer (test_template_commands.RemainingSlashCommandTest.test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer) ... ok\ntest_a_made_up_subcommand_is_reported_although_its_prefix_exists (test_template_commands.TemplateCommandTest.test_a_made_up_subcommand_is_reported_although_its_prefix_exists) ... ok\ntest_cli_check_and_write_round_trip_on_a_stale_copy (test_template_router.GenerateClaudeMdTest.test_cli_check_and_write_round_trip_on_a_stale_copy) ... ok\ntest_audit_reports_generated_drift_missing_route_and_budget_failure (test_template_router.GeneratedEntryRouterTest.test_audit_reports_generated_drift_missing_route_and_budget_failure) ... ok\ntest_init_writes_a_project_declaration_that_the_schema_accepts (test_template_router.InitAdapterTest.test_init_writes_a_project_declaration_that_the_schema_accepts) ... FAIL\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\n\n======================================================================\n\nRan 25 tests in 17.705s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/IMPLEMENTATION.md: recorded capability=spike-routing baseline no longer present in the template\nFAIL: capability marker baseline is missing: capabilities/marker-baselines.json\nFAIL: templates/single/docs/workflows/REVIEW.md: capability task-worktree-review-procedure says a role edits a queue row: 'queue row'\nFAIL: templates/single/PROJECT_WORKFLOW.md: capability workflow-mode-lock says a role edits a queue row: 'queue row'\nFAIL: test_init_writes_a_project_declaration_that_the_schema_accepts (test_template_router.InitAdapterTest.test_init_writes_a_project_declaration_that_the_schema_accepts)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-268/tests/test_template_router.py\", line 300, in test_init_writes_a_project_declaration_that_the_schema_accepts\n    self.assertIsNotNone(block)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^\nAssertionError: unexpectedly None\n\n----------------------------------------------------------------------\nresult ran=25 failures=1 errors=0 skipped=0\n--- shard 8/8 (exit 1) ---\nshard=8/8 total=197 selected=24 digest=12e2045e6b0537a61c685adc30c3e0f2409ba68e94e2d3ea746c425c8a1fca01\ntest_committed_baseline_matches_the_repository_as_shipped (test_check_repository.CapabilityMarkerBaselineTest.test_committed_baseline_matches_the_repository_as_shipped) ... ok\ntest_required_capability_without_a_marker_fails (test_check_repository.CapabilityRequiredVersionsTest.test_required_capability_without_a_marker_fails) ... ok\ntest_non_contiguous_migration_chain_still_fails (test_check_repository.CheckMigrationsVersionGateTest.test_non_contiguous_migration_chain_still_fails) ... ok\ntest_latest_baseline_mismatch_fails (test_check_repository.CheckReleasesTest.test_latest_baseline_mismatch_fails) ... ok\ntest_cardine_digest_checks_match_product_exemptions (test_check_repository.ConditionalInstallationChecksTest.test_cardine_digest_checks_match_product_exemptions) ... ok\ntest_each_retired_or_placeholder_text_fails (test_check_repository.GovernedLifecycleTextTest.test_each_retired_or_placeholder_text_fails) ... ok\ntest_queue_link_to_archived_record_is_informational (test_check_repository.LocalMarkdownLinksTest.test_queue_link_to_archived_record_is_informational) ... ok\ntest_mismatched_plugin_version_names_both_values (test_check_repository.PluginVersionTest.test_mismatched_plugin_version_names_both_values) ... ok\ntest_nested_checkouts_are_ignored_with_or_without_ignore_rules (test_check_repository.RepositoryFilesTest.test_nested_checkouts_are_ignored_with_or_without_ignore_rules) ... ok\ntest_the_workflow_must_carry_its_lock_marker (test_check_repository.RouterRoutesTest.test_the_workflow_must_carry_its_lock_marker) ... ok\ntest_resolution_is_required_and_human_decisions_require_guardrails (test_check_repository.StopCodeRegistryCheckTest.test_resolution_is_required_and_human_decisions_require_guardrails) ... ok\ntest_upgrade_conflicts_without_overwriting_locally_precreated_rules (test_host_codex_access.CodexRulesUpgradeTest.test_upgrade_conflicts_without_overwriting_locally_precreated_rules) ... ok\ntest_local_identity_contains_name_and_common_directory_hash (test_host_codex_access.CodexWorktreeAccessTest.test_local_identity_contains_name_and_common_directory_hash) ... ok\ntest_foreign_paths_links_and_changed_owned_files_are_preserved (test_host_distribution.HostDistributionTest.test_foreign_paths_links_and_changed_owned_files_are_preserved) ... ok\ntest_evidence_cannot_overwrite_another_task_from_a_task_branch (test_layout.LayoutTest.test_evidence_cannot_overwrite_another_task_from_a_task_branch) ... ok\ntest_nested_context_restores_after_exception_and_isolates_other_contexts (test_layout.LayoutTest.test_nested_context_restores_after_exception_and_isolates_other_contexts) ... ok\ntest_worktree_root_and_configuration_use_selected_names (test_layout.LayoutTest.test_worktree_root_and_configuration_use_selected_names) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... ok\ntest_documented_checks_repeat_without_project_or_home_writes (test_template_commands.RemainingSlashCommandTest.test_documented_checks_repeat_without_project_or_home_writes) ... ok\ntest_a_made_up_command_is_reported_with_its_file_and_line (test_template_commands.TemplateCommandTest.test_a_made_up_command_is_reported_with_its_file_and_line) ... ok\ntest_the_walk_sees_the_commands_the_templates_rely_on (test_template_commands.TemplateCommandTest.test_the_walk_sees_the_commands_the_templates_rely_on) ... ok\ntest_allows_a_comment_only_host_overlay_but_rejects_instruction_text (test_template_router.GeneratedEntryRouterTest.test_allows_a_comment_only_host_overlay_but_rejects_instruction_text) ... ok\ntest_init_routes_to_the_single_set_and_defaults_to_lean (test_template_router.InitAdapterTest.test_init_routes_to_the_single_set_and_defaults_to_lean) ... FAIL\ntest_named_references_aliases_and_qualified_functions (test_text_gates.TextGateScannerTest.test_named_references_aliases_and_qualified_functions) ... ok\n\n======================================================================\n\nRan 24 tests in 5.908s\n\nFAILED (failures=1)\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: task-<TASK-ID>\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: <PROJECT_NAME>\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: <project-slug>\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: cardine Reviewer-Integrator\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: Project integration smoke command\nFAIL: workflow lock is incomplete: PROJECT_WORKFLOW.md\nFAIL: test_init_routes_to_the_single_set_and_defaults_to_lean (test_template_router.InitAdapterTest.test_init_routes_to_the_single_set_and_defaults_to_lean)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-268/tests/test_template_router.py\", line 273, in test_init_routes_to_the_single_set_and_defaults_to_lean\n    self.assertIn(\"offering `lean` as the default\", text)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'offering `lean` as the default' not found in '---\\ndescription: \"Bootstrap a new project with the Cardine CLI\"\\n---\\n\\nInitialize a new project through `cardine init`.\\nBoth presets install exactly the same files from `templates/single/`; the preset\\nonly chooses project defaults. The CLI owns rendering, configuration, initial\\nviews, and the upgrade manifest and baselines. Do not copy templates, replace\\nplaceholders, write `.cardine/project.json`, or run `cardine lock` manually.\\nThe CLI includes hidden files `.gitignore`, `.claudeignore`,\\nand `.codex/rules/cardine.rules`.\\nReport existing conflicting paths instead of overwriting user files.\\n\\n## Steps\\n\\n1. Run the read-only preview and show every `choice:` line with its source:\\n\\n   ```bash\\n   cardine init --project \"<project path>\" --check\\n   ```\\n\\n   The preview chooses initialization or adoption on its own. Ask the developer\\n   to confirm or change each choice. When it reports `missing: validation`, ask\\n   for the project\\'s test command; never invent one. Repeating `--check` writes\\n   nothing.\\n\\n2. Substitute and shell-quote the confirmed values as explicit flags:\\n\\n   ```bash\\n   cardine init --project \"<project path>\" --apply --name \"<project name>\" --slug \"<project slug>\" --preset \"<lean|governed>\" --language \"<conversation language>\" --task-identity \"<opaque|milestone>\" --test \"<test command>\"\\n   ```\\n\\n   For several validation commands, pass `--validation <JSON file>` in place of\\n   `--test`; see `cardine init --help`. On interruption, rerun with identical\\n   inputs. All committed repository text must always be English.\\n\\n3. With `--apply` and no terminal, `cardine init` neither commits nor pushes.\\n   Show the diff, then commit and push the configuration on `main` after the\\n   developer approves it.\\n\\n4. Offer once-per-machine host setup as a separate operation. Show its read-only plan first:\\n\\n   ```bash\\n   cardine setup --check --project \"<project path>\"\\n   ```\\n\\n   Run `cardine setup --apply` only after explicit confirmation, using the same\\n   project path. A decline, missing permission, or unavailable user configuration\\n   layer does not invalidate initialization. Report the exact check and apply\\n   commands for later use. Never edit host configuration implicitly or infer\\n   effective enforcement from policy text; use a host probe or observed decision.\\n\\n5. Confirm the project name and preset. Direct the user to create the first\\n   task with `/cardine-task`, which registers it through `cardine task new`.\\n'\n\n----------------------------------------------------------------------\nresult ran=24 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_commands,test_host_codex_access,test_host_distribution,test_template_router,test_check_repository,test_public_surface,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=197 total=2228 failures=2 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "be8288e9a2b54612bad5294208ae4729",
+            "command": "git diff --check",
+            "commit": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/268.json#be8288e9a2b54612bad5294208ae4729/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "be8288e9a2b54612bad5294208ae4729",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/268.json#be8288e9a2b54612bad5294208ae4729/2/repository-check",
+            "round": 2,
+            "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "be8288e9a2b54612bad5294208ae4729",
+            "command": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_codex_access --module test_host_distribution --module test_template_router --module test_check_repository --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+            "commit": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/268.json#be8288e9a2b54612bad5294208ae4729/2/task-tests",
+            "round": 2,
+            "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+            "stderr": "run_tests: 197 tests in 8 shards\nrun_tests: shard 4/8 finished in 2.5s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 6/8 finished in 4.6s: exit 0 ran=24 failures=0 errors=0\nrun_tests: shard 3/8 finished in 5.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 5/8 finished in 8.2s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 7/8 finished in 8.3s: exit 0 ran=24 failures=0 errors=0\nrun_tests: shard 8/8 finished in 10.3s: exit 1 ran=24 failures=1 errors=0\nrun_tests: shard 2/8 finished in 15.6s: exit 0 ran=25 failures=0 errors=0\nrun_tests: shard 1/8 finished in 22.2s: exit 1 ran=25 failures=1 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=197 selected=25 digest=12e2045e6b0537a61c685adc30c3e0f2409ba68e94e2d3ea746c425c8a1fca01\ntest_a_capability_removed_without_a_removes_declaration_still_fails (test_check_repository.CapabilityMarkerBaselineTest.test_a_capability_removed_without_a_removes_declaration_still_fails)\nThe baseline guard's original task-014 behavior: an absence with ... ok\ntest_missing_baseline_file_fails (test_check_repository.CapabilityMarkerBaselineTest.test_missing_baseline_file_fails) ... ok\ntest_requirement_above_shipped_version_fails (test_check_repository.CapabilityRequiredVersionsTest.test_requirement_above_shipped_version_fails) ... ok\ntest_same_version_migration_fails_and_names_the_file (test_check_repository.CheckMigrationsVersionGateTest.test_same_version_migration_fails_and_names_the_file) ... ok\ntest_missing_record_for_current_version_fails (test_check_repository.CheckReleasesTest.test_missing_record_for_current_version_fails) ... ok\ntest_edited_managed_copy_is_checked (test_check_repository.ConditionalInstallationChecksTest.test_edited_managed_copy_is_checked) ... ok\ntest_managed_block_that_edits_a_queue_row_fails_in_either_template (test_check_repository.GovernedLifecycleTextTest.test_managed_block_that_edits_a_queue_row_fails_in_either_template) ... ok\ntest_allowed_exception_passes_only_for_that_file (test_check_repository.MachinePathTest.test_allowed_exception_passes_only_for_that_file) ... ok\ntest_binary_artifacts_cannot_hide_ascii_names (test_check_repository.PrivateNameGuardTest.test_binary_artifacts_cannot_hide_ascii_names) ... ok\ntest_template_link_exemptions_are_preserved (test_check_repository.RepositoryFilesTest.test_template_link_exemptions_are_preserved) ... ok\ntest_blocked_line_without_a_code_in_managed_text_fails (test_check_repository.StopCodeRegistryCheckTest.test_blocked_line_without_a_code_in_managed_text_fails) ... ok\ntest_tool_code_without_a_test_or_with_a_missing_test_fails (test_check_repository.StopCodeRegistryCheckTest.test_tool_code_without_a_test_or_with_a_missing_test_fails) ... ok\ntest_atomic_replace_failure_keeps_original (test_host_codex_access.CodexWorktreeAccessTest.test_atomic_replace_failure_keeps_original) ... ok\ntest_managed_requirements_must_allow_the_profile (test_host_codex_access.CodexWorktreeAccessTest.test_managed_requirements_must_allow_the_profile) ... ok\ntest_kill_before_and_after_every_copy_and_publication_converges (test_host_distribution.HostDistributionTest.test_kill_before_and_after_every_copy_and_publication_converges) ... ok\ntest_evidence_rejects_traversal_and_links_to_another_task (test_layout.LayoutTest.test_evidence_rejects_traversal_and_links_to_another_task) ... ok\ntest_old_adoption_backups_do_not_reserve_product_backup_names (test_layout.LayoutTest.test_old_adoption_backups_do_not_reserve_product_backup_names) ... ok\ntest_adopt_package_exists_and_defines_nothing_yet (test_module_inventory.ModuleInventoryTest.test_adopt_package_exists_and_defines_nothing_yet) ... ok\ntest_scope_and_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_scope_and_stale_allowances) ... ok\ntest_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer (test_template_commands.RemainingSlashCommandTest.test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer) ... ok\ntest_a_made_up_subcommand_is_reported_although_its_prefix_exists (test_template_commands.TemplateCommandTest.test_a_made_up_subcommand_is_reported_although_its_prefix_exists) ... ok\ntest_cli_check_and_write_round_trip_on_a_stale_copy (test_template_router.GenerateClaudeMdTest.test_cli_check_and_write_round_trip_on_a_stale_copy) ... ok\ntest_audit_reports_generated_drift_missing_route_and_budget_failure (test_template_router.GeneratedEntryRouterTest.test_audit_reports_generated_drift_missing_route_and_budget_failure) ... ok\ntest_init_writes_a_project_declaration_that_the_schema_accepts (test_template_router.InitAdapterTest.test_init_writes_a_project_declaration_that_the_schema_accepts) ... FAIL\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\n\n======================================================================\n\nRan 25 tests in 21.755s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/IMPLEMENTATION.md: recorded capability=spike-routing baseline no longer present in the template\nFAIL: capability marker baseline is missing: capabilities/marker-baselines.json\nFAIL: templates/single/docs/workflows/REVIEW.md: capability task-worktree-review-procedure says a role edits a queue row: 'queue row'\nFAIL: templates/single/PROJECT_WORKFLOW.md: capability workflow-mode-lock says a role edits a queue row: 'queue row'\nFAIL: test_init_writes_a_project_declaration_that_the_schema_accepts (test_template_router.InitAdapterTest.test_init_writes_a_project_declaration_that_the_schema_accepts)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-268/tests/test_template_router.py\", line 300, in test_init_writes_a_project_declaration_that_the_schema_accepts\n    self.assertIsNotNone(block)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^\nAssertionError: unexpectedly None\n\n----------------------------------------------------------------------\nresult ran=25 failures=1 errors=0 skipped=0\n--- shard 8/8 (exit 1) ---\nshard=8/8 total=197 selected=24 digest=12e2045e6b0537a61c685adc30c3e0f2409ba68e94e2d3ea746c425c8a1fca01\ntest_committed_baseline_matches_the_repository_as_shipped (test_check_repository.CapabilityMarkerBaselineTest.test_committed_baseline_matches_the_repository_as_shipped) ... ok\ntest_required_capability_without_a_marker_fails (test_check_repository.CapabilityRequiredVersionsTest.test_required_capability_without_a_marker_fails) ... ok\ntest_non_contiguous_migration_chain_still_fails (test_check_repository.CheckMigrationsVersionGateTest.test_non_contiguous_migration_chain_still_fails) ... ok\ntest_latest_baseline_mismatch_fails (test_check_repository.CheckReleasesTest.test_latest_baseline_mismatch_fails) ... ok\ntest_cardine_digest_checks_match_product_exemptions (test_check_repository.ConditionalInstallationChecksTest.test_cardine_digest_checks_match_product_exemptions) ... ok\ntest_each_retired_or_placeholder_text_fails (test_check_repository.GovernedLifecycleTextTest.test_each_retired_or_placeholder_text_fails) ... ok\ntest_queue_link_to_archived_record_is_informational (test_check_repository.LocalMarkdownLinksTest.test_queue_link_to_archived_record_is_informational) ... ok\ntest_mismatched_plugin_version_names_both_values (test_check_repository.PluginVersionTest.test_mismatched_plugin_version_names_both_values) ... ok\ntest_nested_checkouts_are_ignored_with_or_without_ignore_rules (test_check_repository.RepositoryFilesTest.test_nested_checkouts_are_ignored_with_or_without_ignore_rules) ... ok\ntest_the_workflow_must_carry_its_lock_marker (test_check_repository.RouterRoutesTest.test_the_workflow_must_carry_its_lock_marker) ... ok\ntest_resolution_is_required_and_human_decisions_require_guardrails (test_check_repository.StopCodeRegistryCheckTest.test_resolution_is_required_and_human_decisions_require_guardrails) ... ok\ntest_upgrade_conflicts_without_overwriting_locally_precreated_rules (test_host_codex_access.CodexRulesUpgradeTest.test_upgrade_conflicts_without_overwriting_locally_precreated_rules) ... ok\ntest_local_identity_contains_name_and_common_directory_hash (test_host_codex_access.CodexWorktreeAccessTest.test_local_identity_contains_name_and_common_directory_hash) ... ok\ntest_foreign_paths_links_and_changed_owned_files_are_preserved (test_host_distribution.HostDistributionTest.test_foreign_paths_links_and_changed_owned_files_are_preserved) ... ok\ntest_evidence_cannot_overwrite_another_task_from_a_task_branch (test_layout.LayoutTest.test_evidence_cannot_overwrite_another_task_from_a_task_branch) ... ok\ntest_nested_context_restores_after_exception_and_isolates_other_contexts (test_layout.LayoutTest.test_nested_context_restores_after_exception_and_isolates_other_contexts) ... ok\ntest_worktree_root_and_configuration_use_selected_names (test_layout.LayoutTest.test_worktree_root_and_configuration_use_selected_names) ... ok\ntest_repository_has_no_unallowed_identifiers_or_stale_allowances (test_no_meridian_identifiers.IdentifierGuardTest.test_repository_has_no_unallowed_identifiers_or_stale_allowances) ... ok\ntest_documented_checks_repeat_without_project_or_home_writes (test_template_commands.RemainingSlashCommandTest.test_documented_checks_repeat_without_project_or_home_writes) ... ok\ntest_a_made_up_command_is_reported_with_its_file_and_line (test_template_commands.TemplateCommandTest.test_a_made_up_command_is_reported_with_its_file_and_line) ... ok\ntest_the_walk_sees_the_commands_the_templates_rely_on (test_template_commands.TemplateCommandTest.test_the_walk_sees_the_commands_the_templates_rely_on) ... ok\ntest_allows_a_comment_only_host_overlay_but_rejects_instruction_text (test_template_router.GeneratedEntryRouterTest.test_allows_a_comment_only_host_overlay_but_rejects_instruction_text) ... ok\ntest_init_routes_to_the_single_set_and_defaults_to_lean (test_template_router.InitAdapterTest.test_init_routes_to_the_single_set_and_defaults_to_lean) ... FAIL\ntest_named_references_aliases_and_qualified_functions (test_text_gates.TextGateScannerTest.test_named_references_aliases_and_qualified_functions) ... ok\n\n======================================================================\n\nRan 24 tests in 9.861s\n\nFAILED (failures=1)\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: task-<TASK-ID>\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: <PROJECT_NAME>\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: <project-slug>\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: cardine Reviewer-Integrator\nFAIL: templates/single/PROJECT_WORKFLOW.md contains retired or placeholder text: Project integration smoke command\nFAIL: workflow lock is incomplete: PROJECT_WORKFLOW.md\nFAIL: test_init_routes_to_the_single_set_and_defaults_to_lean (test_template_router.InitAdapterTest.test_init_routes_to_the_single_set_and_defaults_to_lean)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-268/tests/test_template_router.py\", line 273, in test_init_routes_to_the_single_set_and_defaults_to_lean\n    self.assertIn(\"offering `lean` as the default\", text)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'offering `lean` as the default' not found in '---\\ndescription: \"Bootstrap a new project with the Cardine CLI\"\\n---\\n\\nInitialize a new project through `cardine init`.\\nBoth presets install exactly the same files from `templates/single/`; the preset\\nonly chooses project defaults. The CLI owns rendering, configuration, initial\\nviews, and the upgrade manifest and baselines. Do not copy templates, replace\\nplaceholders, write `.cardine/project.json`, or run `cardine lock` manually.\\nThe CLI includes hidden files `.gitignore`, `.claudeignore`,\\nand `.codex/rules/cardine.rules`.\\nReport existing conflicting paths instead of overwriting user files.\\n\\n## Steps\\n\\n1. Run the read-only preview and show every `choice:` line with its source:\\n\\n   ```bash\\n   cardine init --project \"<project path>\" --check\\n   ```\\n\\n   The preview chooses initialization or adoption on its own. Ask the developer\\n   to confirm or change each choice. When it reports `missing: validation`, ask\\n   for the project\\'s test command; never invent one. Repeating `--check` writes\\n   nothing.\\n\\n2. Substitute and shell-quote the confirmed values as explicit flags:\\n\\n   ```bash\\n   cardine init --project \"<project path>\" --apply --name \"<project name>\" --slug \"<project slug>\" --preset \"<lean|governed>\" --language \"<conversation language>\" --task-identity \"<opaque|milestone>\" --test \"<test command>\"\\n   ```\\n\\n   For several validation commands, pass `--validation <JSON file>` in place of\\n   `--test`; see `cardine init --help`. On interruption, rerun with identical\\n   inputs. All committed repository text must always be English.\\n\\n3. With `--apply` and no terminal, `cardine init` neither commits nor pushes.\\n   Show the diff, then commit and push the configuration on `main` after the\\n   developer approves it.\\n\\n4. Offer once-per-machine host setup as a separate operation. Show its read-only plan first:\\n\\n   ```bash\\n   cardine setup --check --project \"<project path>\"\\n   ```\\n\\n   Run `cardine setup --apply` only after explicit confirmation, using the same\\n   project path. A decline, missing permission, or unavailable user configuration\\n   layer does not invalidate initialization. Report the exact check and apply\\n   commands for later use. Never edit host configuration implicitly or infer\\n   effective enforcement from policy text; use a host probe or observed decision.\\n\\n5. Confirm the project name and preset. Direct the user to create the first\\n   task with `/cardine-task`, which registers it through `cardine task new`.\\n'\n\n----------------------------------------------------------------------\nresult ran=24 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_commands,test_host_codex_access,test_host_distribution,test_template_router,test_check_repository,test_public_surface,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=197 total=2228 failures=2 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "be8288e9a2b54612bad5294208ae4729",
+            "command": "git diff --check",
+            "commit": "0576b1c3b2c74d936da059dbef9d8e7b06a2501b",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/268.json#be8288e9a2b54612bad5294208ae4729/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "a0d1b10be46175785fb3142b5d95d55b7cb4611e51104034a27aaf846bb0e04b",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "268",
