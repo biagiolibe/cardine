@@ -21,6 +21,8 @@ class CardineStop(CardineError):
         self.code = code
         self._render = render
         self.detail: str | None = None
+        self.scope_paths: tuple[str, ...] = ()
+        self.scope_record: str | None = None
         self.resume: Callable[[], str] | None = None
 
     def __str__(self) -> str:

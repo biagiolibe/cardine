@@ -101,6 +101,35 @@ class RunOutputTests(unittest.TestCase):
         self.assertEqual(result['stop']['resume_argv'], result['next']['argv'])
         self.assertEqual(shlex.split(result['next']['command']), result['next']['argv'])
 
+    def test_scope_guidance_quotes_worktree_and_excludes_unsafe_causes(self):
+        from cardine.lifecycle.engine import diagnostic_result
+        from cardine.lifecycle.model import RunLocations
+        from cardine.lifecycle.scope import enforce_scope
+        from cardine.shared.errors import CardineStop
+        primary = Path('/tmp/primary project')
+        worker = Path('/tmp/worktree ; $(touch BAD)')
+        locations = RunLocations('001', primary, primary / '.git', worker, worker)
+        state = {'task_id': '001', 'contract': {'recordPath': 'tasks/001.md',
+                                                  'expectedCodeSurface': ['src/**']}}
+        for paths, surface, proposed in [({'outside.txt'}, ['src/**'], True),
+                                         ({'../unsafe'}, ['src/**'], False),
+                                         (set(), [], False), (set(), ['../bad'], False)]:
+            state['contract']['expectedCodeSurface'] = surface
+            with patch('cardine.lifecycle.scope.changed_paths', return_value=paths):
+                with self.assertRaises(CardineStop) as caught:
+                    enforce_scope(worker, state, 'base')
+            result = diagnostic_result(locations, caught.exception)
+            detail = result['stop']['detail']
+            self.assertEqual('Approval is requested' in detail, proposed)
+            if proposed:
+                update = detail.split('then run: ', 1)[1].split('. If declined', 1)[0]
+                self.assertEqual(shlex.split(update), ['cardine', 'task', 'contract', 'update', '001',
+                                                       '--project', str(worker)])
+                stderr = StringIO()
+                with redirect_stdout(StringIO()), redirect_stderr(stderr):
+                    self.assertEqual(emit_run(result, validate_output), 2)
+                self.assertIn(update, stderr.getvalue())
+
     def test_invalid_invocation_is_single_json_object(self):
         for argv in ([], ['001', '--unknown'], ['001', '--project', '/missing/project']):
             output = StringIO()

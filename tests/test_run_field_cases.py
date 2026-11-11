@@ -8,6 +8,9 @@ plays the implementer; it never touches the real home directory or real hosts.
 import contextlib
 import io
 import json
+import shlex
+import subprocess
+import sys
 from pathlib import Path
 import unittest
 
@@ -124,7 +127,7 @@ class AuthorityFieldCaseTest(unittest.TestCase):
             status, stopped = printed(['001', '--project', str(project.root)])
             self.assertEqual((status, stopped['step'], stopped['outcome']), (2, 'validation', 'blocked'))
             self.assertEqual(stopped['stop']['code'], 'SCOPE_CHANGE_REQUIRED')
-            self.assertEqual(stopped['stop']['detail'], 'path outside expected surface: stray.txt')
+            self.assertIn('path outside expected surface: stray.txt', stopped['stop']['detail'])
             with self.assertRaisesRegex(CardineError, 'SCOPE_CHANGE_REQUIRED'):
                 project.deliver()
             (worker / 'stray.txt').unlink()
@@ -142,8 +145,34 @@ class AuthorityFieldCaseTest(unittest.TestCase):
                 (worker / name).write_text('outside\n')
             status, stopped = printed(['001', '--project', str(project.root)])
             self.assertEqual((status, stopped['stop']['code']), (2, 'SCOPE_CHANGE_REQUIRED'))
-            self.assertEqual(stopped['stop']['detail'],
-                             'paths outside expected surface: stray_a.txt, stray_b.txt')
+            detail = stopped['stop']['detail']
+            self.assertIn('paths outside expected surface: stray_a.txt, stray_b.txt', detail)
+            self.assertTrue(stopped['stop']['human_decision'])
+            self.assertEqual(stopped['stop']['resume'], stopped['next']['command'])
+            update = detail.split('then run: ', 1)[1].split('. If declined', 1)[0]
+            self.assertEqual(shlex.split(update), ['cardine', 'task', 'contract', 'update', '001',
+                                                    '--project', str(worker)])
+            state_path = worker / '.cardine/tasks/001.json'
+            before = state_path.read_bytes()
+            self.assertEqual(printed(['001', '--project', str(project.root)])[1]['stop']['code'],
+                             'SCOPE_CHANGE_REQUIRED')
+            self.assertEqual(state_path.read_bytes(), before)
+            record = worker / 'tasks/001.md'
+            record.write_text(record.read_text().replace('- `src/**`',
+                              '- `src/**`\n- `stray_a.txt`\n- `stray_b.txt`'))
+            argv = shlex.split(update)
+            result = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] /
+                                    'scripts/cardine_cli.py'), *argv[1:]], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            state = json.loads(state_path.read_text())
+            self.assertEqual(state['contract']['expectedCodeSurface'],
+                             ['src/**', 'stray_a.txt', 'stray_b.txt'])
+            self.assertTrue(state['contract_history'])
+            project.git('add', '.', cwd=worker)
+            project.git('commit', '-m', 'Expand approved surface', cwd=worker)
+            project.deliver()
+            self.assertEqual(project.drive()[-1], ('landing', 'cleanup', 'done'))
+            self.assertEqual(project.git('show', 'main:stray_a.txt'), 'outside')
 
 
 class StopThenResumeFieldCaseTest(unittest.TestCase):

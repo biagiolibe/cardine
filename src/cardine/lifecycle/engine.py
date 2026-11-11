@@ -580,6 +580,14 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
     if error.code not in load_stop_registry() or error.detail is None or error.resume is None:
         error = stop_error("COMMAND_REFUSED", "unknown or untyped diagnostic: " + error.code)
     detail = error.detail
+    if error.code == "SCOPE_CHANGE_REQUIRED" and error.scope_paths and error.scope_record:
+        update = shlex.join(["cardine", "task", "contract", "update", locations.task_id,
+                             "--project", str(locations.worktree)])
+        record = str(locations.worktree / error.scope_record)
+        detail += (f". Approval is requested to expand task {locations.task_id}'s frozen Expected code surface "
+                   f"to include these paths. If approved, add only the approved paths to {shlex.quote(record)} "
+                   f"in the task worktree, update Validation if another check is required, then run: {update}. "
+                   "If declined, restore the changes to the approved surface before retrying")
     outcome = outcome_for_code(error.code)
     run_argv = ["cardine", "run", locations.task_id, "--project", str(locations.primary)]
     resume_argv = shlex.split(error.resume()) if outcome == "next" else run_argv
