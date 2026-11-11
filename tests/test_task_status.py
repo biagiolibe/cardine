@@ -78,6 +78,15 @@ class TaskStatusTests(unittest.TestCase):
             self.assertFalse(model['tasks'][0]['startable'])
             self.assertEqual(model['diagnostics'], [])
 
+    def test_unborn_main_marks_registration_missing_without_diagnostics(self):
+        subprocess.run(['git', '-C', str(self.root), 'init', '-b', 'main'], check=True, capture_output=True)
+        self.task('001')
+        model = load_task_status(self.root)
+        self.assertEqual(model['diagnostics'], [])
+        self.assertFalse(model['tasks'][0]['startable'])
+        self.assertEqual(set(model['tasks'][0]['registration_missing']),
+                         {'tasks/001.md', '.cardine/tasks/001.json'})
+
     def test_spike_dependencies(self):
         self.task('001', 'done', outcome='ANSWERED')
         self.task('002', 'done', outcome='INCONCLUSIVE')

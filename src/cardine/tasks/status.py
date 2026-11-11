@@ -12,12 +12,14 @@ from cardine.shared.project import parse_project_declaration
 from cardine.tasks.state import STATUSES, TaskStateInvalid, dependency_satisfied, validate_task_state
 
 
-def registration_missing_from_main(root: Path, paths: tuple[Path, ...]) -> tuple[str, ...]:
+def registration_missing_from_main(root: Path, paths: tuple[Path, ...], *, allow_missing_main=False) -> tuple[str, ...]:
     """Return registration paths absent from the commit used for preparation."""
     from cardine.shared.git import _run_git
     relative_paths = tuple(path.relative_to(root).as_posix() for path in paths)
     if _run_git(root, 'show', *(f'main:{path}' for path in relative_paths)).returncode == 0:
         return ()
+    if allow_missing_main and _run_git(root, 'rev-parse', '--verify', '--quiet', 'refs/heads/main').returncode == 1:
+        return relative_paths
     missing = []
     for path in paths:
         relative = path.relative_to(root).as_posix()
@@ -141,7 +143,7 @@ def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[
         missing_registration = ()
         if row['status'] == 'queued' and task_id in records:
             if (root / '.git').exists():
-                missing_registration = registration_missing_from_main(root, (root / states[task_id]['contract']['recordPath'], root / names().tasks_path / f'{task_id}.json'))
+                missing_registration = registration_missing_from_main(root, (root / states[task_id]['contract']['recordPath'], root / names().tasks_path / f'{task_id}.json'), allow_missing_main=True)
         row['registration_missing'] = list(missing_registration)
         row['startable'] = (not missing_registration and row['status'] == 'queued' and not row['blocked_by']
                             and task_id not in cyclic | invalid_records and task_id in records)
