@@ -76,6 +76,8 @@ without spend counters.
 
 `ci` may be `none` or an object with `provider` and `requiredChecks`.
 `ciBeforeLanding: true` requires a supported provider and nonempty checks.
+When `main` has changed paths that the task also changed, Cardine merges `main` into the
+task branch first, so CI validates the tree that will land.
 Only direct landing is supported in 1.0; `pull-request` is rejected without
 probing a forge.
 

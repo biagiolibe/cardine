@@ -29,6 +29,7 @@ from cardine.shared.authority import find_adr_log
 from cardine.shared.git import canonical_git_common_dir
 from cardine.shared.git import git_output
 from cardine.worktree.checkout import inspect_task_worktree
+from dataclasses import dataclass
 import os
 import re
 from cardine.tasks.state import read_task_state
@@ -161,6 +162,67 @@ def _regenerate_status_views(project_root: Path) -> dict[str, object]:
     return {"status": "REGENERATED", "paths": changed, "command": command, "warning": None}
 
 
+@dataclass(frozen=True)
+class IntegrationDecisionInputs:
+    """The measured and Git-derived facts of one integration validation decision."""
+
+    decision: object
+    validated_task: str
+    validated_base: str
+    current_main: str
+    task_paths: tuple[str, ...]
+    main_paths: tuple[str, ...]
+
+
+def integration_decision_inputs(
+    project_root: Path, identity: ResolvedTaskIdentity, task_commit: str, task_state: dict, measured: dict,
+) -> IntegrationDecisionInputs:
+    """Compute the integration validation decision; staging and the CI step share it."""
+    validated_task = str(measured["validated_task_commit"])
+    validated_base = str(measured["validated_base_commit"])
+    base_is_ancestor = _run_git(
+        project_root, "merge-base", "--is-ancestor", validated_base, validated_task
+    ).returncode == 0
+    validated_is_ancestor = _run_git(
+        project_root, "merge-base", "--is-ancestor", validated_task, task_commit
+    ).returncode == 0
+    relevant_unchanged = validated_task == task_commit
+    if validated_is_ancestor and not relevant_unchanged:
+        relevant_unchanged, offending = _lifecycle_changes_after_validation(
+            project_root, identity, validated_task, task_commit
+        )
+        if offending:
+            raise CardineError(f"paths changed after validation: {', '.join(offending)}")
+    current_main = git_output(project_root, "rev-parse", "main")
+    task_paths = tuple(filter(None, git_output(
+        project_root, "diff", "--name-only", validated_base, validated_task
+    ).splitlines()))
+    disallowed_spike_paths = _spike_disallowed_paths(
+        project_root, identity, validated_base, validated_task, task_state
+    )
+    if disallowed_spike_paths:
+        raise CardineError(
+            "SPIKE task changes disallowed path(s): " + ", ".join(disallowed_spike_paths)
+        )
+    main_paths = tuple(
+        filter(None, git_output(project_root, "diff", "--name-only", validated_base, current_main).splitlines())
+    ) if current_main != validated_base else ()
+    decision = decide_integration_validation(
+        validation_measured=True,
+        validated_task_commit=validated_task,
+        current_task_commit=task_commit,
+        validated_base_commit=validated_base,
+        current_main_commit=current_main,
+        validated_base_is_task_ancestor=base_is_ancestor,
+        validated_task_is_current_ancestor=validated_is_ancestor,
+        relevant_tree_unchanged_after_validation=relevant_unchanged,
+        task_paths=task_paths,
+        main_advanced_paths=main_paths,
+        pinned_paths=(names().project_declaration_path.as_posix(), names().candidate_validation_path.as_posix()),
+    )
+    return IntegrationDecisionInputs(decision, validated_task, validated_base, current_main, task_paths, main_paths)
+
+
 @scoped_command
 def stage_task_integration(
     task_id: str,
@@ -265,7 +327,6 @@ def stage_task_integration(
         )
     from cardine.integration.ci import require_ci_pass
     require_ci_pass(Path(str(inspection["worktree"])), project_root, identity.canonical_id, task_state)
-    validated_task = str(measured["validated_task_commit"])
     validated_base = str(measured["validated_base_commit"])
     if validated_base != inspection["base_commit"]:
         raise stop_error(
@@ -273,46 +334,9 @@ def stage_task_integration(
             f"validated base {validated_base} differs from recorded base {inspection['base_commit']}; renew validation evidence",
             task_id=identity.canonical_id, project=project_root,
         )
-    base_is_ancestor = _run_git(
-        project_root, "merge-base", "--is-ancestor", validated_base, validated_task
-    ).returncode == 0
-    validated_is_ancestor = _run_git(
-        project_root, "merge-base", "--is-ancestor", validated_task, task_commit
-    ).returncode == 0
-    relevant_unchanged = validated_task == task_commit
-    if validated_is_ancestor and not relevant_unchanged:
-        relevant_unchanged, offending = _lifecycle_changes_after_validation(
-            project_root, identity, validated_task, task_commit
-        )
-        if offending:
-            raise CardineError(f"paths changed after validation: {', '.join(offending)}")
-    current_main = git_output(project_root, "rev-parse", "main")
-    task_paths = tuple(filter(None, git_output(
-        project_root, "diff", "--name-only", validated_base, validated_task
-    ).splitlines()))
-    disallowed_spike_paths = _spike_disallowed_paths(
-        project_root, identity, validated_base, validated_task, task_state
-    )
-    if disallowed_spike_paths:
-        raise CardineError(
-            "SPIKE task changes disallowed path(s): " + ", ".join(disallowed_spike_paths)
-        )
-    main_paths = tuple(
-        filter(None, git_output(project_root, "diff", "--name-only", validated_base, current_main).splitlines())
-    ) if current_main != validated_base else ()
-    decision = decide_integration_validation(
-        validation_measured=True,
-        validated_task_commit=validated_task,
-        current_task_commit=task_commit,
-        validated_base_commit=validated_base,
-        current_main_commit=current_main,
-        validated_base_is_task_ancestor=base_is_ancestor,
-        validated_task_is_current_ancestor=validated_is_ancestor,
-        relevant_tree_unchanged_after_validation=relevant_unchanged,
-        task_paths=task_paths,
-        main_advanced_paths=main_paths,
-        pinned_paths=(names().project_declaration_path.as_posix(), names().candidate_validation_path.as_posix()),
-    )
+    inputs = integration_decision_inputs(project_root, identity, task_commit, task_state, measured)
+    validated_task, current_main = inputs.validated_task, inputs.current_main
+    task_paths, main_paths, decision = inputs.task_paths, inputs.main_paths, inputs.decision
     if decision.outcome == IntegrationValidationOutcome.BLOCKED:
         raise stop_error("EVIDENCE_MISMATCH", decision.reason, task_id=identity.canonical_id, project=project_root)
     lease = {

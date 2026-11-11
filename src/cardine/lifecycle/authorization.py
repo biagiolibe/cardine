@@ -25,6 +25,7 @@ class AuthorizationPlan:
     accepted: dict | None
     changes: tuple[str, ...]
     detail: str
+    task_policies: tuple[str, ...] = ()
 
 
 def _task_states(root: Path):
@@ -35,8 +36,39 @@ def _task_states(root: Path):
             yield path.stem, path
 
 
+def _task_policy_lines(root: Path, policy: str) -> tuple[str, ...]:
+    """One line per prepared task worktree whose branch policy differs from ``policy``."""
+    from cardine.shared.git import _git_worktrees
+    from cardine.tasks.identity import resolve_task_identity
+    relative = names().project_declaration_path
+    prepared = {str(item.get('branch', '')).removeprefix('refs/heads/'): Path(item['worktree'])
+                for item in _git_worktrees(root)}
+    lines = []
+    for task_id, _path in _task_states(root):
+        try:
+            worktree = prepared.get(resolve_task_identity(root, task_id, 'existing').branch_name)
+            if worktree is not None and worktree != root and receipts.digest((worktree / relative).read_bytes()) != policy:
+                lines.append(f'task-policy: {task_id} predates main; cardine run {task_id} will merge main')
+        except (CardineError, OSError):
+            continue
+    return tuple(lines)
+
+
 def plan_authorization(project: Path) -> AuthorizationPlan:
     """Read-only: what re-acceptance would write, after verifying every task state."""
+    plan = _plan_authorization(project)
+    root = Path(project).resolve()
+    from cardine.shared.git import primary_project_root
+    if Path(primary_project_root(root)).resolve() != root:
+        return plan
+    try:
+        lines = _task_policy_lines(root, receipts.observed_authority(root)['policy'])
+    except (CardineError, OSError):
+        lines = ()
+    return AuthorizationPlan(plan.status, plan.path, plan.accepted, plan.changes, plan.detail, lines)
+
+
+def _plan_authorization(project: Path) -> AuthorizationPlan:
     root = Path(project).resolve()
     from cardine.shared.git import primary_project_root
     if Path(primary_project_root(root)).resolve() != root:
@@ -119,3 +151,5 @@ def print_authorization_plan(plan: AuthorizationPlan) -> None:
     if plan.changes:
         print("changed: " + ", ".join(plan.changes))
     print(f"detail: {plan.detail}")
+    for line in plan.task_policies:
+        print(line)
