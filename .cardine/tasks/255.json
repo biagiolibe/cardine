@@ -1,0 +1,116 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "254"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/integration/refresh.py",
+      "src/cardine/integration/merge.py",
+      "src/cardine/integration/decision.py",
+      "src/cardine/integration/ci.py",
+      "src/cardine/lifecycle/engine.py",
+      "docs/RUN_COMMANDS.md",
+      "docs/PROJECT_DECLARATION.md",
+      "tests/test_run_refresh.py",
+      "tests/test_run_ci.py",
+      "tests/test_run_integration_decision.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/255.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 255 \u2014 Bring the task branch up to date with main before CI",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_ci --module test_run_integration --module test_run_integration_decision --module test_run_refresh --module test_worktree_checkout --module test_run_output --module test_run_resolution --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "3813f3febd36036b2293f95f5d032ecae9d7fafa",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "f593643de88278c041ef799047229f5ce01c6b28c7a2bf39c91021d7c31b4748",
+        "digest": "c0b0cddd92dc17bcb83724163e8260277824c0cd796d5a89708bb559e467a531",
+        "inputs": {
+          ".cardine/tasks/255.json": null,
+          "tasks/255.md": null
+        },
+        "kind": "creation",
+        "operation_id": "8f215bf1259c497ab9c17268d92bbe5b",
+        "outputs": {
+          ".cardine/tasks/255.json": "9cfb2d59c767967b2bafde04b3c9e511041b984c781c273b884a4945e4b08db9",
+          "tasks/255.md": "89888bb81f84946f24cc67d8d478d51d279c8be5394f5e938634624e5fbb73a6"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "3813f3febd36036b2293f95f5d032ecae9d7fafa",
+        "task_id": "255",
+        "tree": "3ce79b20d537a01389deab6317b533ea9687e74e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "255",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
