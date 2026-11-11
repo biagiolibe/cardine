@@ -2,8 +2,9 @@
 
 Status: decided, 2026-11-11. The developer accepted P1–P7 for 1.0 with the recommended
 answer to each open decision below. The ADR records them as an amendment to decision 9.
-P8 is deferred. Task 247 implements P1 and task 248 implements P2. The other proposals
-are planned once these two land, because their inputs depend on them.
+P8 is deferred. Tasks 247 (P1) and 248 (P2) have landed. Tasks 251 (P3–P4),
+252 (P5–P6), and 253 (P7) are registered. Release preparation follows 253 once
+the developer decides how to handle the managed router changes since v0.9.1.
 
 ## Problem
 
@@ -186,17 +187,14 @@ every existing task contract.
 
 ## Task cut
 
-| Order | Task | Proposals | Depends on |
+| Task | Change | Proposals | Depends on |
 | --- | --- | --- | --- |
-| 1 | Package data and an installed-package framework root; verify an install from a built wheel | P1 | — |
-| 2 | Install and upgrade documents for the Git-tag install; superseded notice | P7 (part), P1 docs | 1 |
-| 3 | `--test` and a detected test command, with defaults shown in the preview | P2 | ADR amendment |
-| 4 | Interactive `init` with one confirmation, and optional publication of the configuration | P3, P4 | 3 |
-| 5 | Plugin installed by `setup`; `self-update` that updates the plugin and names stale checkouts | P5, P6 | 1 |
-| 6 | Short quick start and README | P7 | 2, 4, 5 |
-
-Tasks 1 and 2 can ship as 0.9.2 without any ADR change. Tasks 3 to 5 change the public
-surface (`docs/PUBLIC_SURFACE.md`) and need the ADR amendments named above.
+| 247 | Package data and an installed-package framework root with a wheel smoke test | P1 | — |
+| 248 | `--test`, test command detection, and defaults with their sources | P2 | 247 |
+| 251 | Interactive `init` with separate confirmations for apply and publication | P3, P4 | 248 |
+| 252 | Plugin alignment from `setup` and installer-aware `self-update` | P5, P6 | 247, 251 |
+| 253 | Quickstart, README, and upgrade documentation for the next Git tag | P7 | 251, 252 |
+| Pending | Prepare the release for the install tag used in task 253 | Release preparation | 253 |
 
 ## Open decisions for the developer
 

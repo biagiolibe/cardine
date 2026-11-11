@@ -1,0 +1,151 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "251",
+      "252"
+    ],
+    "expectedCodeSurface": [
+      "README.md",
+      "WORKFLOW_GUIDE.md",
+      "docs/QUICKSTART.md",
+      "docs/HOW_TO_UPGRADE.md",
+      "docs/DISTRIBUTION_AND_UPDATE_DESIGN.md",
+      "docs/ADOPT_COMMANDS.md",
+      "docs/examples/LEAN_DELIVERY_WALKTHROUGH.md",
+      "docs/*.md",
+      "docs/examples/*.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "P7 of the onboarding design",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/253.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 253 \u2014 Shorten the onboarding and upgrade guides",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_public_surface --module test_text_gates --module test_command_word --module test_check_repository --module test_no_meridian_identifiers --module test_layout"
+      }
+    },
+    "validationScoping": []
+  },
+  "contract_history": [
+    {
+      "after": "sha256:e52cfb22c22eac71fa1fb7da11d12184601ee7bf0534b137922aad0a979ed3ae",
+      "at": "2026-11-11T11:40:35.352406Z",
+      "before": "sha256:cc775bbce6408fcbc5d88203bfa6946230c7d044da0d5f20a1a6ea60006da691",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "a824376251d10d750b733ac76dcf00c8c98b9eb130c90e9504282f9a904e7558",
+        "digest": "161cbf4c0ad1bfe84acd4d68b0622c7554cf844d61f4d59af3214362aed28ddc",
+        "inputs": {
+          ".cardine/tasks/253.json": null,
+          "tasks/253.md": null
+        },
+        "kind": "creation",
+        "operation_id": "249d9ebb69d640d9a8d208c4945c7ae1",
+        "outputs": {
+          ".cardine/tasks/253.json": "ae7db04e21ceba57e5b6e6818076b5f492c7d172cc884e896e9dd0b9aab654cf",
+          "tasks/253.md": "2f8a8f65a0579c8fecee28e2be71144cb99bc6feabe2e71dca01c65998de38df"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "387b01c1088ea3b78b460d6573703ebcff582601",
+        "task_id": "253",
+        "tree": "19165e90877732c7333dc7ae3d9983a581b4bb2a",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "994562247120c51b3fa5735f9c1aa4a2392f0aca4fe2249653adc8488e34914c",
+        "digest": "3493dbcdb737968b4908e17882c45cf3347a4b76c3533a395e5678527e571ea3",
+        "inputs": {
+          ".cardine/tasks/253.json": "a743344fe56aa5ff5c35c9f55fb9b3eec3714273a90dc9a45d845147cb991726",
+          "tasks/253.md": "cbea832cf6268408830a72c61589c4c0a874f6eebc18bee9fce7deab2cd36077"
+        },
+        "kind": "contract_revision",
+        "operation_id": "153f682df42647c98a3e985cd0548c5e",
+        "outputs": {
+          ".cardine/tasks/253.json": "bde9ef5e7f40d4eabed449c26559427cf4e91e036018ac6255eb47276e8ccb83",
+          "tasks/253.md": "cbea832cf6268408830a72c61589c4c0a874f6eebc18bee9fce7deab2cd36077"
+        },
+        "predecessor": "161cbf4c0ad1bfe84acd4d68b0622c7554cf844d61f4d59af3214362aed28ddc",
+        "result": "verified",
+        "source": "387b01c1088ea3b78b460d6573703ebcff582601",
+        "task_id": "253",
+        "tree": "19165e90877732c7333dc7ae3d9983a581b4bb2a",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "253",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

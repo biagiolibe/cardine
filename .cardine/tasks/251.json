@@ -1,0 +1,150 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "248"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/cli.py",
+      "src/cardine/templates/init.py",
+      "src/cardine/templates/interactive_init.py",
+      "skills/cardine-project/SKILL.md",
+      "docs/PUBLIC_SURFACE.md",
+      "tests/test_interactive_init.py",
+      "tests/test_init.py",
+      "tests/test_adopt_*.py",
+      "tests/test_template_commands.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "P3 and P4 of the onboarding design",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/251.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 251 \u2014 Make init interactive and publish the configuration",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_interactive_init --module test_init --module test_adopt_cli --module test_adopt_rehearsal --module test_template_commands --module test_public_surface --module test_run_tests --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "contract_history": [
+    {
+      "after": "sha256:67a9f13e3fd7575a154f4960df09250f9e077a36169722e3f4f6d829cd2c2af1",
+      "at": "2026-11-11T11:40:33.930896Z",
+      "before": "sha256:d513352257037ffb6d7b2e8c8e13b3cc6da63bcaf8b92744b8c023a6a0959915",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "8b2536877d029b6b42c7e060a6f024c0c1b65a652894646b050078dbf0472f4f",
+        "digest": "5f52c99830bf82dd512164aafb253146bb9bafdaf46367a3fbc22ca47df9d436",
+        "inputs": {
+          ".cardine/tasks/251.json": null,
+          "tasks/251.md": null
+        },
+        "kind": "creation",
+        "operation_id": "b98b8ea5ff064656b60c4d4c88441de8",
+        "outputs": {
+          ".cardine/tasks/251.json": "de92abd15b320a14bb780aa758a7c81be115182bd39c2e039cfd4b092c48a5d7",
+          "tasks/251.md": "fea56d0ed09761b65c560b94bf7ff25510270f4efd2c2a8c1524646b78f3d2bf"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "387b01c1088ea3b78b460d6573703ebcff582601",
+        "task_id": "251",
+        "tree": "19165e90877732c7333dc7ae3d9983a581b4bb2a",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "fc46fc071be9cf5ade1564bc747af58115edc6c8b7400340b2a3cc8ed9f276ab",
+        "digest": "6caac0ca90ad69c349a8f2e4a3f8c042a7da640e5219fe8a99d76c87e3de558c",
+        "inputs": {
+          ".cardine/tasks/251.json": "15c98ab9f4399546cc107cebbea1de2677fe85540f6413889cc74633fb237f37",
+          "tasks/251.md": "4c3d5ab3d00a2c93be335a838c7679c0bfbb38ea3a2f91b62b414b234206721c"
+        },
+        "kind": "contract_revision",
+        "operation_id": "ddbea2f84e30477f829f54cb586e8d68",
+        "outputs": {
+          ".cardine/tasks/251.json": "d60f407c633219fabf836e58043f49f4b29d70391bbe1910f4f9133598b9e5c3",
+          "tasks/251.md": "4c3d5ab3d00a2c93be335a838c7679c0bfbb38ea3a2f91b62b414b234206721c"
+        },
+        "predecessor": "5f52c99830bf82dd512164aafb253146bb9bafdaf46367a3fbc22ca47df9d436",
+        "result": "verified",
+        "source": "387b01c1088ea3b78b460d6573703ebcff582601",
+        "task_id": "251",
+        "tree": "19165e90877732c7333dc7ae3d9983a581b4bb2a",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "251",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
