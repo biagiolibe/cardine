@@ -301,8 +301,10 @@ def require_authority(root, *, context=None):
     # Advancing main is ordinary delivery; it cannot replace the accepted base.
     if (not isinstance(accepted, dict) or set(accepted) != set(observed)
             or any(accepted.get(key) != observed[key] for key in observed if key != 'accepted_main')):
-        raise CardineError('developer reauthorization required: project/runtime/policy changed; '
-                           + _authority_difference(root, primary, accepted, observed))
+        detail = _authority_difference(root, primary, accepted, observed)
+        lead = ('developer reauthorization required: ' if AUTHORIZE_HINT in detail
+                else 'task checkout policy differs from the accepted policy: ')
+        raise CardineError(lead + detail)
     base, main = accepted['accepted_main'], observed['accepted_main']
     if base != main:
         if base is None and main:
