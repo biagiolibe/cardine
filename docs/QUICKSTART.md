@@ -1,33 +1,19 @@
 # Cardine quick start
 
-Use a Git checkout on `main` with a writable `origin` and a passing test
-command. For a new repository, create and publish the first commit before
-configuring Cardine.
+## Prerequisites
+
+macOS or Linux, Python 3.12 or later, Git, and pipx. A Git checkout of your project on
+`main`, with a writable `origin` and a test command that passes. For a new repository,
+create and push a first commit before you start.
 
 ## Install
-
-Use macOS or Linux with Python 3.12 or later, Git, and pipx.
 
 ```sh
 pipx install git+https://github.com/biagiolibe/cardine@v0.9.2
 ```
 
-## Start with an agent
-
-Open your agent in the project checkout and ask it to guide you from setup
-through the first task. If the Cardine skill is unavailable, give it this
-request:
-
-```text
-I want to use Cardine here. Read the Quickstart at
-https://github.com/biagiolibe/cardine/blob/main/docs/QUICKSTART.md and guide
-me from this checkout to the first integrated task.
-```
-
-Review the choices and the setup plan. Confirm before the agent applies
-project configuration or publishes it under your project's permissions.
-The agent uses explicit mode flags. Run host setup from your terminal when
-the agent identifies a host change that needs your approval.
+Run `cardine guide` in your project checkout at any time. It says where the checkout
+stands and what to do next.
 
 ## Start in the terminal
 
@@ -37,37 +23,92 @@ From your project checkout, run:
 cardine init
 ```
 
-Cardine chooses initialization or adoption. Press Enter to keep a displayed
-choice or type a replacement. Confirm the plan to apply it. After inspecting
-the written paths and commit message, confirm again to commit and push the
-configuration. If the push fails, Cardine prints the retry command.
+Cardine chooses between initialization and adoption and shows each choice with a
+default. Press Enter to keep a choice or type a replacement. Confirm the plan to apply
+it, then confirm again to commit and push the configuration. If no test command is
+detected, run `cardine init --test "<command>"`. If the push fails, Cardine prints the
+command to retry.
 
-To connect an agent host, preview with `cardine setup --check`. Apply the
-reviewed changes from your terminal with `cardine setup --apply`. Terminal
-users can proceed without setting up an agent host.
+Then connect your agent from the same terminal:
+
+```sh
+cardine setup --check
+cardine setup --apply
+```
+
+Skip `setup` if you work only from the terminal.
+
+## Start with an agent
+
+Run `cardine init` and `cardine setup --apply` as above, then open your agent in the
+project checkout and ask: “I want to use Cardine here.” The agent proposes a first task
+and asks you to approve it.
+
+To let the agent configure the project as well, install Cardine, open the agent in the
+project checkout, and give it this request:
+
+```text
+I want to use Cardine here. Read the quick start at
+https://github.com/biagiolibe/cardine/blob/v0.9.2/docs/QUICKSTART.md and guide
+me from this checkout to the first integrated task.
+```
+
+The agent shows you each choice and asks before it applies or publishes the
+configuration. It asks you to run `cardine setup --apply` in your terminal, because host
+setup is yours to approve.
 
 ## Deliver your first task
 
-Ask your agent to register a small change with an objective, acceptance
-criteria, the files it may edit, and the checks it must pass. After the
-registration is committed on `main`, ask it to proceed with that task.
+With an agent, describe a small change. The agent drafts the task, asks for your
+approval, registers it, and delivers it with `cardine run`.
 
-From a terminal, prepare the record using the project's task blueprint, then
-register it. This example uses task 001. Substitute your chosen ID and the
-path to your draft.
+From the terminal, write a short record outside the checkout, for example
+`~/task-001.md`:
 
-```sh
-cardine task new 001 --record /path/to/draft.md --project .
-cardine status --write --project .
+```markdown
+# Task 001 — Describe the project in the README
+
+> **ID**: `001`
+> **Category**: Quick
+
+## Objective
+
+Add one sentence to README.md that says what the project does.
+
+## Acceptance Criteria
+
+- README.md describes the project in one sentence.
+
+## Expected code surface
+
+- `README.md`
+
+## Dependencies
+
+None.
+
+## Validation
+
+- `test`: `python3 -m unittest`
 ```
 
-Review and commit the registration and queue, then publish them under your
-project's workflow. Run `cardine run 001 --project .` and follow each action
-it returns until it reports `done` or asks for a decision.
+Replace `python3 -m unittest` with your test command. Register the task, publish its
+records, and deliver it:
 
-For advanced validation configuration, see `cardine init --help` and
-its `--validation` option.
+```sh
+cardine task new 001 --quick --record ~/task-001.md
+cardine status --write
+git add tasks/001.md tasks/QUEUE.md .cardine/tasks/001.json
+git commit -m "Add task 001"
+git push origin main
+cardine run 001
+```
+
+Run `cardine run 001` again after each step, following the `next` command it prints,
+until it reports `done` or asks for your decision. The full record format is in
+`tasks/TASK_BLUEPRINT.md` in your project. For advanced validation settings, see
+`cardine init --help`.
 
 ## Project console
 
-Run `cardine console --project .` to inspect task status and the current step.
+Run `cardine console` to see task status and the current step.
