@@ -282,6 +282,18 @@ class HostDoctorTest(unittest.TestCase):
         for role in permissions.ROLES:
             self.assertEqual(report["role-launch-" + role], "unsupported (D3): no host decision probe")
 
+    def test_review_verdict_fact_names_who_records_verdicts(self) -> None:
+        report = owner_hosts_setup.host_doctor("claude", self.project, self.config, self.worktrees, home=self.home)
+        self.assertTrue(report["review-verdict"].startswith("owner only; record verdicts with cardine review verdict"))
+        self.assertNotIn("required by default", owner_hosts_setup.review_verdict_fact({}, self.root / "missing"))
+        self.assertEqual(owner_hosts_setup.review_verdict_fact({"role-launch-reviewer": "ready"}, self.project),
+                         "launched reviewer or owner")
+        governed = self.root / "governed"
+        (governed / ".cardine").mkdir(parents=True)
+        (governed / ".cardine/project.json").write_text(json.dumps({"preset": "governed"}), encoding="utf-8")
+        with mock.patch("cardine.shared.project.read_project_declaration", return_value={"preset": "governed"}):
+            self.assertTrue(owner_hosts_setup.review_verdict_fact({}, governed).endswith("; required by default in this project"))
+
     def test_codex_without_installed_role_rules_is_not_ready(self) -> None:
         report = owner_hosts_setup.host_doctor("codex", self.project, self.config, self.worktrees, home=self.home)
         for role in permissions.ROLES:

@@ -847,10 +847,28 @@ def claude_doctor(project_root: Path, *, home: Path | None = None, framework_roo
     }
 
 
+def review_verdict_fact(states: dict[str, str], project_root: Path) -> str:
+    """Say who can record a review verdict; an unreadable declaration only drops the suffix."""
+    if states.get("role-launch-reviewer") == "ready":
+        return "launched reviewer or owner"
+    fact = ("owner only; record verdicts with cardine review verdict <TASK-ID> <VERDICT> --owner "
+            "from an interactive terminal")
+    try:
+        from cardine.shared.project import resolve_project_configuration
+        if resolve_project_configuration(project_root)["taskDefaults"]["review"] == "required":
+            fact += "; required by default in this project"
+    except (CardineError, OSError, ValueError, KeyError, TypeError):
+        pass
+    return fact
+
+
 def host_doctor(host: str, project_root: Path, config_path: Path, worktree_root: Path, **options) -> dict[str, str]:
     if host == "claude":
-        return claude_doctor(project_root, home=options.get("home"), framework_root=options.get("framework_root"))
-    return codex_doctor(project_root, config_path, worktree_root, **options)
+        report = claude_doctor(project_root, home=options.get("home"), framework_root=options.get("framework_root"))
+    else:
+        report = codex_doctor(project_root, config_path, worktree_root, **options)
+    report["review-verdict"] = review_verdict_fact(report, project_root)
+    return report
 
 
 # -- Runtime role proofs (D3) --------------------------------------------------

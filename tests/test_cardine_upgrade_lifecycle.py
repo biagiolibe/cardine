@@ -380,7 +380,7 @@ worktree before the branch only after validated integration succeeds.
 
         upgraded = review.read_text(encoding="utf-8")
         self.assertNotIn("capability=implementer-reviewer-handoff", upgraded)
-        self.assertIn("capability=task-worktree-review-procedure v4", upgraded)
+        self.assertIn("capability=task-worktree-review-procedure v5", upgraded)
         self.assertIn("Consumer-owned review note.", upgraded)
         self.assertNotIn("uses that same primary checkout", upgraded)
         self.assertNotIn("git switch <task-branch>", upgraded)
@@ -391,7 +391,7 @@ worktree before the branch only after validated integration succeeds.
     def test_upgrade_installs_codex_profile_recovery_across_a_cli_only_release(self) -> None:
         """Migration 053 reaches a baseline-1.1.49 project locked under CLI-only release 1.1.50."""
         recovery = re.compile(
-            r"\n\nThe reviewer is a separate session from the implementer.*?(?=<!-- CARDINE:END -->)",
+            r"\n\nA session other than the implementer's reviews.*?(?=<!-- CARDINE:END -->)",
             re.DOTALL,
         )
         for mode in ("single", "single"):
@@ -407,7 +407,7 @@ worktree before the branch only after validated integration succeeds.
                 template = workflow / "PROJECT_WORKFLOW.md"
                 current = template.read_text(encoding="utf-8")
                 previous = recovery.sub("\n", current, count=1).replace(
-                    "capability=review-policy v2", "capability=review-policy v1"
+                    "capability=review-policy v3", "capability=review-policy v1"
                 )
                 self.assertNotEqual(previous, current)
                 template.write_text(previous, encoding="utf-8")
@@ -432,7 +432,7 @@ worktree before the branch only after validated integration succeeds.
                 applied = self.run_cli("upgrade", "--apply")
                 self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
                 upgraded = project_workflow.read_text(encoding="utf-8")
-                self.assertIn("capability=review-policy v2", upgraded)
+                self.assertIn("capability=review-policy v3", upgraded)
                 self.assertIn("nobody approves their own work", upgraded)
                 self.assertIn("Consumer-owned note.", upgraded)
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -485,7 +485,7 @@ worktree before the branch only after validated integration succeeds.
         current = {relative: (workflow / relative).read_text(encoding="utf-8") for relative in paths}
         previous = {
             relative: text.replace("task-worktree-handoff v5", "task-worktree-handoff v3").replace(
-                "task-worktree-review-procedure v4", "task-worktree-review-procedure v3"
+                "task-worktree-review-procedure v5", "task-worktree-review-procedure v3"
             )
             for relative, text in current.items()
         }
@@ -513,7 +513,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertNotIn("Current task commit", upgraded_report)
         self.assertIn("Consumer-owned handoff note.", upgraded_report)
         upgraded_review = (self.project / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
-        self.assertIn("capability=task-worktree-review-procedure v4", upgraded_review)
+        self.assertIn("capability=task-worktree-review-procedure v5", upgraded_review)
         self.assertIn("hands off only a committed `in_review` delivery with a clean worktree", " ".join(upgraded_review.split()))
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["workflowBaselineVersion"], "1.1.55")
@@ -630,7 +630,7 @@ worktree before the branch only after validated integration succeeds.
                 flags=re.DOTALL,
             ),
             "docs/workflows/REVIEW.md": re.sub(
-                r"\n<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v4 -->.*?<!-- CARDINE:END -->\n",
+                r"\n<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v5 -->.*?<!-- CARDINE:END -->\n",
                 "\n",
                 current["docs/workflows/REVIEW.md"],
                 flags=re.DOTALL,
@@ -668,7 +668,7 @@ worktree before the branch only after validated integration succeeds.
         self.assertIn("`Proceed with <TASK-ID>` means: run `cardine run <TASK-ID>", upgraded_workflow)
         self.assertIn("capability=task-worktree-boundary v3", upgraded_implementation)
         self.assertIn("Stop writing once it asks for review", upgraded_implementation)
-        self.assertIn("capability=task-worktree-review-procedure v4", upgraded_review)
+        self.assertIn("capability=task-worktree-review-procedure v5", upgraded_review)
         self.assertIn("`cardine run` lands the task", upgraded_review)
         self.assertIn("Consumer-owned closure note.", upgraded_implementation)
         manifest = json.loads((self.project / ".cardine/manifest.json").read_text(encoding="utf-8"))

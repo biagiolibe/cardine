@@ -103,7 +103,7 @@ KEPT = {
     "IM-08-kept": (IMPLEMENTATION, "clean committed HEAD", "one line"),
     "RV-06": (REVIEW, "committed `in_review` delivery with a clean worktree", "one line"),
     "RV-14": (REVIEW, "Edit no implementation file", "one line"),
-    "RV-17-kept": (REVIEW, "--request-id <launch-request-id>", "enforce"),
+    "RV-17-kept": (REVIEW, "--owner --project <work.worktree>", "enforce"),
     "IP-08": (REVIEW, "completed CI run for this exact commit", "enforce"),
     "CP-04": (REVIEW, "actionable findings", "advice"),
     "CP-05": (REVIEW, "## Project review checklist", "advice"),

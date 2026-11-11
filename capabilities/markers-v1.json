@@ -218,7 +218,7 @@
       "adoptionRecord": null
     },
     "review-policy": {
-      "requiredVersion": 2,
+      "requiredVersion": 3,
       "retired": false,
       "required": true,
       "adoptionRecord": "061-governed-phase-reads"
@@ -308,7 +308,7 @@
       "adoptionRecord": null
     },
     "task-worktree-review-procedure": {
-      "requiredVersion": 4,
+      "requiredVersion": 5,
       "retired": false,
       "required": true,
       "adoptionRecord": "067-execution-boundaries"
