@@ -806,6 +806,22 @@
       "summary": "a project not yet converted has incomplete conversion input",
       "test": "tests.test_adopt_plan.AdoptPlanTest.test_record_refusal",
       "resolution": "failing-work"
+    },
+    {
+      "code": "CI_NOT_STARTED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "cardine.integration.ci.ci_gate",
+      "human_decision": true,
+      "resume": "cardine run {task_id} --project {project} --ci-wait-seconds {wait_seconds}",
+      "kind": "stop",
+      "summary": "the provider has not started required CI for the delivered commit",
+      "test": "tests.test_run_ci.CiTest.test_missing_ci_stops_after_300_seconds",
+      "resolution": "recoverable"
     }
   ]
 }

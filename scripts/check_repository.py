@@ -573,7 +573,8 @@ def check_stop_code_registry(root: Path = ROOT) -> None:
             fail(f"stop code {code} has a missing or invalid resolution")
         if not isinstance(entry.get("human_decision"), bool):
             fail(f"stop code {code} must declare human_decision as a boolean")
-        if entry["human_decision"] and entry["resolution"] != "guardrail":
+        if (entry["human_decision"] and entry["resolution"] != "guardrail"
+                and not (code == "CI_NOT_STARTED" and entry["resolution"] == "recoverable")):
             fail(f"stop code {code} needs human_decision only on a guardrail")
         if entry["class"] != "tool":
             continue

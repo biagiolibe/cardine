@@ -57,6 +57,9 @@ For direct landing with required CI, `run` waits up to 900 seconds for checks.
 Use `--ci-wait-seconds <seconds>` to change the nonnegative budget; zero
 queries once. On timeout, `next.command` retains the budget. Rerunning it
 starts a fresh wait on the same published SHA when the delivery is unchanged.
+An expired wait of at least 300 seconds with no check run for the delivered commit
+stops with `CI_NOT_STARTED`; pushing the same commit to another branch that
+triggers the workflow lets the resumed command accept its checks.
 A competing integration lease has a separate 180-second default; use
 `--lease-wait-seconds <seconds>` to override it or zero to check once.
 After release, the same invocation rechecks state and continues. A timeout
@@ -97,9 +100,10 @@ quoting and names the absolute primary path.
 
 Every outcome code comes from `capabilities/stop-codes-v1.json`.
 
-- `guardrail` entries are the only ones with `human_decision: true`. Stop,
-  report the code and the `resume` text, and wait for the developer.
-- `recoverable` entries carry a `next` command. Run it once; rerunning the
+- Entries with `human_decision: true` stop: report the code and the `resume`
+  text, and wait for the developer. This includes `CI_NOT_STARTED`, whose
+  recoverable provider condition requires a human to trigger CI.
+- Other `recoverable` entries carry a `next` command. Run it once; rerunning the
   identical command converges without duplicating a commit, verdict, counter or
   foreign file.
 - `failing-work` entries return `iterate` with the failure.

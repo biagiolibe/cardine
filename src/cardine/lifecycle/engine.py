@@ -50,8 +50,8 @@ def envelope(task_id: str, project: str, *, step: str | None,
         raise ValueError("only waiting may request a positive polling interval")
     if stop is not None:
         entry = load_stop_registry().get(stop.get("code"))
-        if not entry or entry["resolution"] != "guardrail" or not entry["human_decision"]:
-            raise ValueError("only registered human guardrails can block")
+        if not entry or not entry["human_decision"]:
+            raise ValueError("only registered stops requiring a human can block")
         if (stop.get("resolution") != "guardrail" or stop.get("human_decision") is not True
                 or next_command is None or next_command["argv"] != stop.get("resume_argv")
                 or next_command["command"] != stop.get("resume")):
@@ -116,8 +116,8 @@ def validate_output(value: dict) -> None:
         raise ValueError("unresolved invocation cannot fabricate a next command")
     if value["stop"] is not None:
         entry = load_stop_registry().get(value["stop"]["code"])
-        if not entry or entry["resolution"] != "guardrail" or entry["human_decision"] is not True:
-            raise ValueError("only registered human guardrails can block")
+        if not entry or entry["human_decision"] is not True:
+            raise ValueError("only registered stops requiring a human can block")
     if value["stop"] is not None and (value["next"]["command"] != value["stop"]["resume"]
                                        or value["next"]["argv"] != value["stop"]["resume_argv"]):
         raise ValueError("guardrail resume must equal next")
@@ -696,7 +696,7 @@ def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict, 
             next_command=command_reference(argv, 'Repair the task implementation'))
     if outcome['phase'] == 'waiting':
         result = resolve_run(replace(facts, ci_pending=True))
-        result['diagnostics'] = [dict(code='CI_PENDING', message=outcome['detail'])]
+        result['diagnostics'] = [dict(code=outcome.get('diagnostic', 'CI_PENDING'), message=outcome['detail'])]
         result['next'] = command_reference([*argv, '--ci-wait-seconds', str(wait_seconds)], 'Wait for required CI')
     else:
         result = resolve_run(facts)
@@ -733,7 +733,7 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
         # Guardrails recheck the same task after the missing decision. Internal
         # recoveries instead retain their cause-specific command unchanged.
         next_command = command_reference(
-            ["cardine", "run", locations.task_id, "--project", str(locations.primary)],
+            shlex.split(error.resume()) if error.code == "CI_NOT_STARTED" else run_argv,
             "Recheck the guardrail after the required decision")
         stop = dict(code=error.code, resolution="guardrail", human_decision=True,
                     detail=detail, resume=next_command["command"], resume_argv=next_command["argv"])

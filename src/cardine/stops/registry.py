@@ -40,7 +40,9 @@ def load_stop_registry() -> dict[str, dict[str, object]]:
                 or code in registry
                 or entry.get("resolution") not in {"guardrail", "recoverable", "failing-work"}
                 or not isinstance(entry.get("human_decision"), bool)
-                or ((entry.get("resolution") == "guardrail") != entry.get("human_decision"))
+                or ((entry.get("resolution") == "guardrail") != entry.get("human_decision")
+                    and not (code == "CI_NOT_STARTED" and entry.get("resolution") == "recoverable"
+                             and entry.get("human_decision") is True))
                 or not isinstance(entry.get("resume"), str)
                 or not isinstance(entry.get("summary"), str)
                 or not set(entry) <= STOP_REGISTRY_FIELDS

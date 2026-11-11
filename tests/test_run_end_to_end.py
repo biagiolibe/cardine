@@ -53,11 +53,11 @@ def has_test(dotted: str) -> bool:
 class RegistryAuditTest(unittest.TestCase):
     """Every then-current registry entry, not a sample."""
 
-    def test_blocked_exactly_for_guardrails_that_need_a_human(self) -> None:
+    def test_blocked_exactly_for_stops_that_need_a_human(self) -> None:
         for code, entry in load_stop_registry().items():
             with self.subTest(code=code):
                 blocked = outcome_for_code(code) == "blocked"
-                self.assertEqual(blocked, entry["resolution"] == "guardrail")
+                self.assertEqual(blocked, entry["resolution"] == "guardrail" or code == "CI_NOT_STARTED")
                 self.assertEqual(blocked, entry["human_decision"])
 
     def test_every_recoverable_entry_has_an_executable_progress_proof(self) -> None:
@@ -75,7 +75,7 @@ class RegistryAuditTest(unittest.TestCase):
             if not entry["resume"].startswith("cardine "):
                 continue
             with self.subTest(code=code):
-                text = stop_resume(code, task_id="115", project=WEIRD).replace("<STATUS>", "in_progress")
+                text = stop_resume(code, task_id="115", project=WEIRD, wait_seconds=300).replace("<STATUS>", "in_progress")
                 argv = shlex.split(text)
                 self.assertEqual(argv[0], "cardine")
                 if "{project}" in entry["resume"]:  # one quoted argument, never shell text
