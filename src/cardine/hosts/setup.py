@@ -56,7 +56,7 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
-from cardine.shared.paths import SCRIPTS_ROOT
+from cardine.shared.paths import framework_root as resolve_framework_root
 
 
 @dataclass(frozen=True)
@@ -197,7 +197,7 @@ def plan_setup(
     project_root: Path | None = None,
 ) -> SetupPlan:
     home = (home or Path.home()).expanduser().resolve()
-    framework_root = (framework_root or SCRIPTS_ROOT.parent).expanduser().resolve()
+    framework_root = (framework_root or resolve_framework_root()).expanduser().resolve()
     project_root = primary_project_root((project_root or Path.cwd()).expanduser().resolve())
     environment = os.environ if environment is None else environment
     if task_identity not in (None, "opaque", "milestone"):
@@ -806,7 +806,7 @@ def codex_doctor(
         root_write = "ready" if os.access(worktree_root, os.W_OK | os.X_OK) else "blocked"
     result["worktree-root-write"] = root_write
     result["git-metadata"] = "ready" if lifecycle_policy == "ready" else "approval-required"
-    framework_root = (framework_root or SCRIPTS_ROOT.parent).expanduser().resolve()
+    framework_root = (framework_root or resolve_framework_root()).expanduser().resolve()
     try:
         result["user-command-policy"] = plan_codex_user_rules(home / ".codex/rules/cardine.rules").status
     except CardineError:

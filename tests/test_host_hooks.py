@@ -28,6 +28,21 @@ def owned(host, name, timeout=5, matcher=None):
     return {**group, "hooks": [{"type": "command", "command": hooks.hook_command(host, name), "timeout": timeout}]}
 
 
+class HookLauncherTest(unittest.TestCase):
+    def test_source_launcher_and_ownership(self):
+        launcher = (sys.executable, str(ROOT / "bin/cardine"))
+        self.assertEqual(hooks.launcher(), launcher)
+        command = shlex.join((*launcher, "hook", "briefing", "--host", "codex"))
+        self.assertTrue(hooks.owns(command, "codex", "briefing"))
+
+    def test_installed_launcher_and_ownership(self):
+        with patch.object(hooks, "source_checkout", return_value=None):
+            self.assertEqual(hooks.launcher(), (sys.executable, "-m", "cardine"))
+            command = hooks.hook_command("codex", "briefing")
+        self.assertTrue(hooks.owns(command, "codex", "briefing"))
+        self.assertFalse(hooks.owns(command, "claude", "briefing"))
+
+
 class HostHooksTest(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()

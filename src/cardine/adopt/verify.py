@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import subprocess
+import sys
 
 from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
@@ -44,7 +45,7 @@ def _compare_audits(copy, reference):
 def verify_adoption(root: Path, framework: Path, expected_tasks: int, *, env=None):
     """Audit, inspect all converted tasks, start each, and run declared baseline."""
     root, framework = Path(root), Path(framework)
-    command = [str(framework / 'bin/cardine')]
+    command = [sys.executable, '-m', 'cardine', '--framework-root', str(framework)]
     config = json.loads((root / '.cardine/project.json').read_text())
     validation = config['validation']
     reference = root.parent / 'reference'

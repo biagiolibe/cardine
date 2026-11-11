@@ -19,6 +19,7 @@ from cardine.lifecycle.live import LiveLog
 from cardine.lifecycle.context import resolve_run_locations
 from cardine.lifecycle.model import OUTCOMES, STEPS, RunFacts, RunLocations
 from cardine.shared.errors import CardineError, CardineStop
+from cardine.shared.paths import framework_root
 from cardine.stops.registry import load_stop_registry
 
 
@@ -66,7 +67,7 @@ def envelope(task_id: str, project: str, *, step: str | None,
 def validate_output(value: dict) -> None:
     """Enforce closed typed objects without adding a runtime dependency."""
     from cardine.tasks.state import _validate_schema
-    schema_path = Path(__file__).resolve().parents[3] / "schemas/run-v1.schema.json"
+    schema_path = framework_root() / "schemas/run-v1.schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
 
     def check(item, rule):

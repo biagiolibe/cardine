@@ -516,7 +516,7 @@ class WorktreeLifecycleCliTest(unittest.TestCase):
                 else:
                     candidate["resolution"] = resolution
                 path.write_text(json.dumps({"version": 1, "stops": [candidate]}), encoding="utf-8")
-                with mock.patch.object(stops_registry, "SCRIPTS_ROOT", self.root / "scripts"), \
+                with mock.patch.object(stops_registry, "framework_root", return_value=self.root), \
                      mock.patch.object(stops_registry, "_stop_registry_cache", None), \
                      self.assertRaises(shared_errors.InternalStopError):
                     stops_registry.load_stop_registry()

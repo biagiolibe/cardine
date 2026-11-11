@@ -1,6 +1,7 @@
 """Developer re-acceptance of the local receipt authority (decision 14, amended 2026-11-07)."""
 from copy import deepcopy
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -16,6 +17,26 @@ from task_contract_support import contract_record, VALIDATION
 
 def accept(_plan):
     return None
+
+
+class RuntimeIdentityTest(unittest.TestCase):
+    def test_source_runtime_measures_the_existing_file_set(self):
+        checkout = Path(__file__).resolve().parent.parent
+        patterns = ('src/cardine/**/*.py', 'schemas/*.json', 'capabilities/*.json',
+                    'migrations/**/*', 'templates/**/*', 'scripts/*.py')
+        expected = {
+            str(path.relative_to(checkout)): receipts.digest(path.read_bytes())
+            for pattern in patterns for path in checkout.glob(pattern)
+            if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'
+        }
+        receipts._runtime_identity.cache_clear()
+        self.addCleanup(receipts._runtime_identity.cache_clear)
+        with patch.dict(os.environ):
+            os.environ.pop('CARDINE_ROOT', None)
+            runtime, measured = receipts._runtime_identity()
+
+        self.assertEqual(runtime, checkout / 'src/cardine')
+        self.assertEqual(measured, receipts.digest(receipts.encoded(expected)))
 
 
 class AuthorizationTest(unittest.TestCase):

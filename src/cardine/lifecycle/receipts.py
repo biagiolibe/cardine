@@ -23,6 +23,7 @@ import uuid
 
 from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
+from cardine.shared.paths import framework_root, source_checkout
 
 
 # Enforced operation families; command-specific identities follow a colon.
@@ -161,20 +162,38 @@ def _git(root, *args):
 _RUNTIME_LOCK = Lock()
 
 
+def _runtime_files(root, patterns):
+    return {path for pattern in patterns for path in root.glob(pattern)
+            if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc'}
+
+
 @cache
 def _runtime_identity():
-    runtime = Path(__file__).resolve().parents[3]
-    files = sorted({p for pattern in ('src/cardine/**/*.py', 'schemas/*.json',
-                    'capabilities/*.json', 'migrations/**/*', 'templates/**/*', 'scripts/*.py')
-                    for p in runtime.glob(pattern) if p.is_file()
-                    and '__pycache__' not in p.parts and p.suffix != '.pyc'})
-    return runtime, digest(encoded({str(p.relative_to(runtime)): digest(p.read_bytes()) for p in files}))
+    runtime = Path(__file__).resolve().parent.parent
+    framework = framework_root()
+    checkout = source_checkout()
+    package_prefix = 'src/cardine' if checkout is not None else 'cardine'
+    files = {
+        f'{package_prefix}/{path.relative_to(runtime)}': digest(path.read_bytes())
+        for path in _runtime_files(runtime, ('**/*.py',))
+    }
+    files.update({
+        str(path.relative_to(framework)): digest(path.read_bytes())
+        for path in _runtime_files(framework, ('schemas/*.json', 'capabilities/*.json',
+                                               'migrations/**/*', 'templates/**/*'))
+    })
+    if checkout is not None:
+        files.update({
+            str(path.relative_to(checkout)): digest(path.read_bytes())
+            for path in _runtime_files(checkout, ('scripts/*.py',))
+        })
+    return runtime, digest(encoded(files))
 
 
 def runtime_digest_once():
     with _RUNTIME_LOCK:
         runtime, measured = _runtime_identity()
-    if runtime != Path(__file__).resolve().parents[3]:
+    if runtime != Path(__file__).resolve().parent.parent:
         raise CardineError('developer reauthorization required: executing runtime changed')
     return measured
 
