@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "268"
+    ],
+    "expectedCodeSurface": [
+      "docs/PROJECT_DECLARATION.md",
+      "skills/cardine-project/SKILL.md",
+      "changelog.d/271.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/271.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 271 \u2014 Document how to change the project declaration",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_check_repository --module test_public_surface --module test_text_gates --module test_module_inventory --module test_layout --module test_no_meridian_identifiers"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "7605f4596773a398120065d005c1ae693f503128b282df6722c34e302cafb189",
+        "digest": "76c377fa449ba09f5a0924972aed709a536dff2dfbd880242c6c8e7ee0564562",
+        "inputs": {
+          ".cardine/tasks/271.json": null,
+          "tasks/271.md": null
+        },
+        "kind": "creation",
+        "operation_id": "c341afa7d9db40f4a18f660e83590b26",
+        "outputs": {
+          ".cardine/tasks/271.json": "1f1f9f9a410c4451035428deb295da71593df1d727aac9092ca2707c00521598",
+          "tasks/271.md": "ff425bae0ca94104c76c2573ea5787301897d7b7e1921da859b00cfc2778de78"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "610dedcf782d9aec846e69e8827bf12c6f6526fc",
+        "task_id": "271",
+        "tree": "aca259b3e9c0c30f359993f795c04dafda1942e0",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "271",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
