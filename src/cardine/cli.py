@@ -16,6 +16,17 @@ from cardine.shared.errors import CardineError, CardineStop
 from cardine.shared.paths import PACKAGE_ROOT, framework_root as resolve_framework_root, source_checkout
 
 
+EVERYDAY_COMMANDS = """Everyday commands:
+  guide        where this checkout stands and what to do next
+  init         configure this project (interactive on a terminal)
+  setup        connect Claude Code or Codex (--check, then --apply)
+  run          deliver a task, one step per call
+  status       task status
+  doctor       check a host
+  self-update  update Cardine
+Run `cardine guide` when unsure."""
+
+
 class CardineArgumentParser(argparse.ArgumentParser):
     """Use sysexits-style usage status for machine-oriented namespaces."""
 
@@ -65,11 +76,14 @@ def main() -> int:
         exit_code = emit_diagnostic(refused, journal)
         journal.write(exit_code)
         return exit_code
+    if not preview_args:
+        print(EVERYDAY_COMMANDS)
+        return 0
     if preview_args[:1] == ["guide"]:
         from cardine.shared.project_guide import project_guide, render_project_guide
         args = build_parser().parse_args()
         try:
-            guide = project_guide(args.project)
+            guide = project_guide(args.project, args.framework_root)
             print(json.dumps(guide, sort_keys=True) if args.format == "json" else render_project_guide(guide))
             return 0
         except (CardineError, OSError, ValueError) as error:
@@ -128,7 +142,8 @@ def _adopt_cli() -> int:
 
 def build_parser() -> CardineArgumentParser:
     """Build the CLI parser, also used to verify the published command surface."""
-    parser = CardineArgumentParser(prog="cardine")
+    parser = CardineArgumentParser(prog="cardine", epilog=EVERYDAY_COMMANDS,
+                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
         "--framework-root",
         type=Path,

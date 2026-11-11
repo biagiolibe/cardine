@@ -37,8 +37,12 @@ class ProjectGuideTest(unittest.TestCase):
                 for entries in guide['sections'].values():
                     for entry in entries:
                         self.assertIn(entry, text.stdout)
-                self.assertIn('validation is missing', text.stdout)
-                self.assertIn('task branch commit', text.stdout)
+                self.assertIn('Validation: not declared; run cardine init', text.stdout)
+                for literal in ('{', '}', 'True', 'False', 'None'):
+                    self.assertNotIn(literal, text.stdout)
+                self.assertIn('Next steps:', text.stdout)
+                self.assertIn('This project:', text.stdout)
+                self.assertEqual(sorted(guide['sections']), ['choices', 'first_task', 'references'])
                 after = {str(p.relative_to(root)): p.read_bytes() for p in root.rglob('*') if p.is_file()}
                 self.assertEqual(before, after)
 
@@ -60,6 +64,10 @@ class ProjectGuideTest(unittest.TestCase):
                 for entry in entries:
                     self.assertIn(entry, text.stdout)
             self.assertEqual(before, set(project.rglob('*')))
+            self.assertEqual(guide['sections']['bootstrap'][0], 'This checkout is not configured for Cardine yet.')
+            self.assertIn('cardine init --project', guide['sections']['bootstrap'][1])
+            self.assertRegex(guide['sections']['references'][0],
+                             r'^https://github.com/biagiolibe/cardine/blob/v\d+\.\d+\.\d+[^/]*/docs/QUICKSTART.md$')
             self.assertIn('unsupported checkout', run(root).stderr)
             (project / '.cardine').mkdir()
             (project / '.cardine/project.json').write_text('{broken')

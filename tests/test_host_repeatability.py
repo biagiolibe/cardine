@@ -521,11 +521,11 @@ class HostRepeatabilityTest(unittest.TestCase):
 
     def test_root_config_and_declarations_replay_to_a_fresh_install_with_private_modes(self):
         expected_effects = {
-            'custom-root': {'directory:cardine-root', 'file:worktree-config', 'file:project-declaration',
+            'custom-root': {'directory:cardine-root', 'file:worktree-config',
                             'file:task-identity', 'file:candidate-validation'},
-            'default-root': {'directory:cardine-root', 'file:project-declaration', 'file:task-identity',
+            'default-root': {'directory:cardine-root', 'file:task-identity',
                             'file:candidate-validation'},
-            'config-removed': {'directory:cardine-root', 'file:worktree-config', 'file:project-declaration',
+            'config-removed': {'directory:cardine-root', 'file:worktree-config',
                                'file:candidate-validation'},
         }
         for scenario, required in expected_effects.items():
@@ -534,8 +534,8 @@ class HostRepeatabilityTest(unittest.TestCase):
             expected = self.declaring_tree(reference)
             root = reference / (self.SCENARIOS[scenario]['root'] or '.cardine/worktrees')
             self.assertEqual(root.stat().st_mode & 0o777, 0o700)
-            for private in ('project/.cardine/project.json', 'project/.cardine/candidate-validation.json'):
-                self.assertEqual((reference / private).stat().st_mode & 0o777, 0o600)
+            self.assertFalse((reference / 'project/.cardine/project.json').exists(), scenario)
+            self.assertEqual((reference / 'project/.cardine/candidate-validation.json').stat().st_mode & 0o777, 0o600)
             config = reference / 'xdg/cardine/config.json'
             self.assertEqual(config.exists(), scenario == 'custom-root')
             if config.exists():
@@ -589,7 +589,6 @@ class HostRepeatabilityTest(unittest.TestCase):
     def test_edited_declarations_and_config_are_preserved_between_a_kill_and_its_retry(self):
         for seam, target, edit in (
                 ('after_file:worktree-config', 'xdg/cardine/config.json', '{"version": 1, "worktreeRoot": "/elsewhere"}\n'),
-                ('after_file:project-declaration', 'project/.cardine/project.json', '{"edited": true}\n'),
                 ('after_file:task-identity', 'project/.cardine/task-identity.json', '{"version": 1, "mode": "opaque"}\n'),
                 ('after_file:candidate-validation', 'project/.cardine/candidate-validation.json', '{"edited": true}\n')):
             with self.subTest(seam=seam):
