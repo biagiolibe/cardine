@@ -20,7 +20,9 @@
       "tests/test_cardine_migration_retirement.py",
       "tests/test_cardine_upgrade_lifecycle.py",
       "tests/test_host_doctor.py",
-      "changelog.d/273.md"
+      "changelog.d/273.md",
+      "tests/test_template_marker_heading.py",
+      "tests/test_cardine_upgrade_merge.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -77,6 +79,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:56cae7f0bae45494a101f03f5f258e71847e81652c4827e2dced670c6887e89c",
+      "at": "2026-11-11T22:05:35.903616Z",
+      "before": "sha256:508fa0d1de383bcc741d33cc6fadd5dc91bc01f1c930f22e93b095337e15b593",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -124,6 +136,30 @@
         "source": "ff44638545c8f9f5184435f7a06bc4628ee51120",
         "task_id": "273",
         "tree": "7d631518fd177506bab330756da03ed58c02abcb",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "04bcd296681ef9a8bdc6828811b364f5337a5a6ae5b98c1582507262f0ad7e09",
+        "digest": "1fc8ba4d838eec474a8fbf21dc25a8b750da57d391848253f9379cf90edb6fcb",
+        "inputs": {
+          ".cardine/tasks/273.json": "057d9db29a32a4dcbd62418b2167ab57f9be81dfcd5834de00c4b5d677cae5d0",
+          "tasks/273.md": "52e8600498505bb1448a131c71f9df8e8a04ae986fba58b69e03e184d62e365f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "426bd0643d3a4731b1fdd87da9400aa9",
+        "outputs": {
+          ".cardine/tasks/273.json": "d5f4a0ac8a80ad54ef4f1911867788942acf2338df90f59086fe48c62700e051",
+          "tasks/273.md": "52e8600498505bb1448a131c71f9df8e8a04ae986fba58b69e03e184d62e365f"
+        },
+        "predecessor": "05a839b80b49d4fe96ea066182e0c2be66720cfa93a33d51d1dd7400fd019c00",
+        "result": "verified",
+        "source": "a26bc7a06b5cc095340aae779b58d51f60c769f7",
+        "task_id": "273",
+        "tree": "36186f5a3d0c1beb334ffcb2912ad706d51632cf",
         "version": 1
       }
     ]

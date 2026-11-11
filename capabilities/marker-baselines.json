@@ -23,8 +23,8 @@
       "version": 4
     },
     "review-policy": {
-      "sha256": "596d1577ed524d8be425ee1298327f6837aceaa791369d07746c3203f5efa468",
-      "version": 2
+      "sha256": "df54031753969c2f00e3fcc4ed8ad17214faa7fd352f44bc55ce7d436ff74539",
+      "version": 3
     },
     "task-lifecycle": {
       "sha256": "6a488685dfd000a06555547384b7d570ecd1abb193b9d3d908f7c9bf688be514",
@@ -121,8 +121,8 @@
   },
   "templates/single/docs/workflows/REVIEW.md": {
     "task-worktree-review-procedure": {
-      "sha256": "1e5e6fb728e7e419f28181846ec5f29ae5a13576a0cbb23164b632a658fac51f",
-      "version": 4
+      "sha256": "bc723bffbb347de79bf0adef739b3cdaa1ec9aa6943dabab49ba9a24d7718a52",
+      "version": 5
     }
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
