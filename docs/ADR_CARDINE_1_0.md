@@ -25,7 +25,7 @@ holds against weak and strong agents, were proposed and accepted on
 2026-10-22. On 2026-10-23 the developer set the trust boundary of decision
 14, rule 2, at the host's permission system and left the installation
 surface outside it until after 1.0. On 2026-11-03 the developer decided the
-questions of `docs/CONVERSION_PLAN.md`: a developer channel records verdicts,
+questions of the conversion plan (task 141, deleted by task 267; see Git history): a developer channel records verdicts,
 cancel, and abort while role launches are unsupported (decision 14, rule 2);
 `cardine.legacy` stays while `cardine adopt` reads Meridian projects, until the last
 conversion (decision 10); and the
@@ -877,7 +877,7 @@ surfaces only and leave those files unchanged.
 | Risk | Mitigation |
 | --- | --- |
 | Scope grows during the rewrite ("second system") | This ADR is the 1.0 scope; new ideas wait until after 1.0. |
-| Behavior is lost while the code is split | Item 3 is mechanical. The existing suite of more than 1,000 tests stays green with its assertions unchanged; tests change only their imports, patch targets, and file locations (`docs/MODULE_SPLIT_PLAN.md`). |
+| Behavior is lost while the code is split | Item 3 is mechanical. The existing suite of more than 1,000 tests stays green with its assertions unchanged; tests change only their imports, patch targets, and file locations (the module split plan, deleted by task 267; see Git history). |
 | The single workflow misses a Governed SDD use | The parity table in decision 3 and the field-trial exit criterion in decision 10. |
 | Agent autonomy erodes a guardrail (decision 12) | Guardrails are the registry codes with `human_decision`, and they always stop. Writing false state, running a denied action, and changing scope stay forbidden. Recoverable codes need a test proving their next action. |
 | The `cardine` PyPI name is taken meanwhile | Publish a `0.0.1` placeholder first. |
