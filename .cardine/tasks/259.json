@@ -9,9 +9,13 @@
     },
     "class": "standard",
     "deliverables": [],
-    "dependencies": [],
+    "dependencies": [
+      "258"
+    ],
     "expectedCodeSurface": [
-      "README.md"
+      "README.md",
+      "docs/QUICKSTART.md",
+      "docs/ADOPT_COMMANDS.md"
     ],
     "hostImpact": {
       "classification": null,
@@ -33,42 +37,54 @@
     "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
     "recordPath": "tasks/259.md",
     "taskValidation": [
-      "test"
+      "task-tests",
+      "adopt-466c2f308b48c766"
     ],
     "title": "Task 259 \u2014 One onboarding path in the README and quick start",
     "validation": {
       "baseline": [
         "repository-check",
-        "test"
+        "task-tests",
+        "adopt-466c2f308b48c766"
       ],
       "candidate": {
         "BOUNDED": [
           "adopt-2a6132d9dfc5a78d",
-          "repository-guards",
-          "candidate-diff-check"
+          "repository-guards"
         ],
         "FULL": [
           "adopt-2a6132d9dfc5a78d",
-          "repository-guards",
-          "candidate-diff-check"
+          "repository-guards"
         ],
         "REUSE": [
           "adopt-2a6132d9dfc5a78d",
-          "repository-guards",
-          "candidate-diff-check"
+          "repository-guards"
         ]
       },
       "commands": {
         "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
-        "candidate-diff-check": "git diff --check",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "test": "python3 -m unittest"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_public_surface --module test_check_repository --module test_cli_install --module test_text_gates --module test_command_word --module test_layout --module test_no_meridian_identifiers --module test_stop_registry --module test_module_inventory"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:4f059607b70bee572240eef420d4810dc616fd8fdb3eff4597f2924800c72773",
+      "at": "2026-11-11T16:15:43.028052Z",
+      "before": "sha256:a299d86fdb9183475a2a18071843af5d6685445a25947a30c0df0c812492be84",
+      "changedFields": [
+        "dependencies",
+        "expectedCodeSurface",
+        "taskValidation",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -94,6 +110,30 @@
         "source": "6a011dae2279c21140e766c51d0814d572cd7ddd",
         "task_id": "259",
         "tree": "1e6c35fa470934df6109ac40b671acf3802402ee",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "eb025a5c80328030b304dfa69081118cf8ff39f7a7b6a0638a2643270954456f",
+        "digest": "2eb834aacdfb2a9841838bd3c19a73fe27451941bc238bb56cbbfa13228f1667",
+        "inputs": {
+          ".cardine/tasks/259.json": "8434440608051b48941170cd4fc64986a7f06e0bfee7343e1e896b81e3728757",
+          "tasks/259.md": "f0f7dd5174c9a990c2bb877c49cc05bf08d874b4b5d39186c5002f031870ac7a"
+        },
+        "kind": "contract_revision",
+        "operation_id": "490c752859bb42bb8134ac96f16905cd",
+        "outputs": {
+          ".cardine/tasks/259.json": "2309431a474d57d0b978dc21689fc25d6eba3475f2ab49c7fa7e7cf761fe9f7c",
+          "tasks/259.md": "f0f7dd5174c9a990c2bb877c49cc05bf08d874b4b5d39186c5002f031870ac7a"
+        },
+        "predecessor": "ab9905f7cdf54206ce878b3168eb280688c01222763c8da810018ccb04b1ea62",
+        "result": "verified",
+        "source": "322fa26eeedd9c6c9b0db1a76c0cafb348ceab27",
+        "task_id": "259",
+        "tree": "ad1d28039deb4e1d283ae4a362702175acb55b32",
         "version": 1
       }
     ]
