@@ -12,6 +12,21 @@ from cardine.shared.project import parse_project_declaration
 from cardine.tasks.state import STATUSES, TaskStateInvalid, dependency_satisfied, validate_task_state
 
 
+def registration_missing_from_main(root: Path, paths: tuple[Path, ...]) -> tuple[str, ...]:
+    """Return registration paths absent from the commit used for preparation."""
+    from cardine.shared.git import _run_git
+    missing = []
+    for path in paths:
+        relative = path.relative_to(root).as_posix()
+        result = _run_git(root, 'cat-file', '-e', 'main:' + relative)
+        if result.returncode:
+            if 'does not exist in' in result.stderr or 'exists on disk, but not in' in result.stderr:
+                missing.append(relative)
+            else:
+                raise CardineError('cannot inspect registration on main: ' + result.stderr.strip())
+    return tuple(missing)
+
+
 def _inputs(root: Path, config: dict) -> dict[Path, bytes]:
     paths = {root / names().project_declaration_path}
     paths.update((root / names().tasks_path).glob('*.json'))
@@ -120,7 +135,13 @@ def load_task_snapshot(project_root: Path, *, all_tasks: bool = False) -> tuple[
                 row['blocked_by'].append(dependency)
         if task_id in cyclic:
             diagnose(path, f'dependency cycle involving {task_id}')
-        row['startable'] = (row['status'] == 'queued' and not row['blocked_by']
+        missing_registration = ()
+        if row['status'] == 'queued' and task_id in records:
+            from cardine.shared.git import _run_git
+            if _run_git(root, 'rev-parse', '--verify', 'refs/heads/main').returncode == 0:
+                missing_registration = registration_missing_from_main(root, (root / states[task_id]['contract']['recordPath'], root / names().tasks_path / f'{task_id}.json'))
+        row['registration_missing'] = list(missing_registration)
+        row['startable'] = (not missing_registration and row['status'] == 'queued' and not row['blocked_by']
                             and task_id not in cyclic | invalid_records and task_id in records)
     def order(row):
         priority = priorities[row['id']]
@@ -135,6 +156,6 @@ def render_task_status(model: dict) -> str:
     """Render the same filtered model exposed by JSON, including global totals."""
     lines = [f"Preset: {model['preset']}", 'Totals: ' + ', '.join(f"{key}={model['totals'][key]}" for key in (*STATUSES, 'total'))]
     for row in model['tasks']:
-        lines.append(f"{row['id']} | {row['title']} | {row['status']} | dependencies: {', '.join(row['dependencies']) or '-'} | blocked_by: {', '.join(row['blocked_by']) or '-'} | startable: {str(row['startable']).lower()}")
+        lines.append(f"{row['id']} | {row['title']} | {row['status']} | dependencies: {', '.join(row['dependencies']) or '-'} | blocked_by: {', '.join(row['blocked_by']) or '-'} | startable: {str(row['startable']).lower()} | registration_missing: {', '.join(row['registration_missing']) or '-'}")
     lines.extend(f"Diagnostic: {item['path']}: {item['error']}" for item in model['diagnostics'])
     return '\n'.join(lines)

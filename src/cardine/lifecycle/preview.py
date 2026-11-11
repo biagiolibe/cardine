@@ -18,7 +18,8 @@ from cardine.tasks.state import read_task_state, state_path
 def preview_run(locations):
     """Return the same closed next-step envelope without executing that step."""
     try:
-        return resolve_run(observe_run(locations))
+        observed = observe_run(locations)
+        return observed if isinstance(observed, dict) else resolve_run(observed)
     except CardineStop as error:
         return diagnostic_result(locations, error)
     except (CardineError, OSError, ValueError, KeyError) as error:
@@ -131,6 +132,10 @@ def observe_run(locations):
     from cardine.lifecycle.control import require_review_budget
     require_review_budget(root, task, state)
     if root == locations.primary:
+        from cardine.lifecycle.context import registration_recovery
+        recovery = registration_recovery(locations) if facts.status == 'queued' else None
+        if recovery is not None:
+            return recovery
         return facts
     from cardine.lifecycle.execution import _execution_location
     inspection = _execution_location(root, task, context=locations)

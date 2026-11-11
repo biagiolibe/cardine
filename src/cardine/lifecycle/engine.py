@@ -313,6 +313,14 @@ def dispatch_run(locations: RunLocations) -> dict:
         from cardine.lifecycle.control import require_review_budget
         if active['status'] != 'cancelled':
             require_review_budget(locations.worktree, locations.task_id, active)
+        if active['status'] == 'queued' and not locations.worktree.is_dir():
+            from cardine.tasks.preflight import check_dependencies
+            from cardine.lifecycle.context import registration_recovery
+            check_dependencies(locations.primary, locations.task_id, '')
+            recovery = registration_recovery(locations)
+            if recovery is not None:
+                live.note(run_summary(recovery))
+                return recovery
         stage = "candidate"
         result = (resolve_run(RunFacts(locations.task_id, locations.primary, 'cancelled'))
                   if active['status'] == 'cancelled' else run_integration_step(locations))

@@ -77,6 +77,74 @@ class RunPreparationTest(unittest.TestCase):
     def prepare(self, **kwargs):
         return prepare_task_worktree('001', self.worktrees, self.root, **kwargs)
 
+    def test_unpublished_registration_recovers_before_preparation(self):
+        import tempfile
+        from unittest.mock import patch
+        from cardine.lifecycle.context import resolve_run_locations
+        from cardine.lifecycle.engine import dispatch_run
+        from cardine.lifecycle.preview import preview_run
+        from cardine.tasks.status import load_task_status
+        from cardine.tasks.identity import resolve_task_identity
+        from cardine.worktree.storage import _lifecycle_paths
+
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            root = base / 'project'
+            root.mkdir()
+            def git(*args):
+                return subprocess.run(['git', '-C', str(root), *args], check=True,
+                                      capture_output=True, text=True).stdout.strip()
+            subprocess.run(['git', 'init', '--bare', str(base / 'origin.git')], check=True, capture_output=True)
+            git('init', '-b', 'main')
+            git('config', 'user.name', 'Preparation Test')
+            git('config', 'user.email', 'preparation@example.test')
+            git('remote', 'add', 'origin', str(base / 'origin.git'))
+            write_project_config(root, 'lean', validation=deepcopy(VALIDATION))
+            git('add', '.')
+            git('commit', '-m', 'Initial policy')
+            git('push', '-u', 'origin', 'main')
+            with patch.dict(os.environ, {'CARDINE_WORKTREE_ROOT': str(base / 'worktrees')}):
+                create_task(root, '001', contract_record().replace(
+                    'Change the documented deliverable only.', '- `docs/result.md`'))
+                locations = resolve_run_locations('001', root)
+                result = dispatch_run(locations)
+                self.assertEqual(result['action'], 'publish-registration')
+                self.assertEqual(result, preview_run(locations))
+                row = load_task_status(root)['tasks'][0]
+                self.assertFalse(row['startable'])
+                self.assertEqual(set(row['registration_missing']), {'tasks/001.md', '.cardine/tasks/001.json'})
+                self.assertFalse(locations.worktree.exists())
+                self.assertEqual(git('branch', '--list', 'task-001'), '')
+                identity = resolve_task_identity(root, '001', 'existing')
+                self.assertFalse(any(path.exists() for path in _lifecycle_paths(root, identity)))
+                subprocess.run(result['next']['argv'], check=True, capture_output=True)
+                staged = dispatch_run(locations)
+                self.assertEqual(staged['next']['argv'][3], 'commit')
+                subprocess.run(staged['next']['argv'], check=True, capture_output=True)
+                git('push', 'origin', 'main')
+                self.assertTrue(load_task_status(root)['tasks'][0]['startable'])
+                self.assertEqual(dispatch_run(locations)['action'], 'execution-start')
+                result = dispatch_run(locations)
+                self.assertEqual(result['step'], 'implementation', result)
+
+    def test_registration_committed_only_on_another_branch_is_recovered(self):
+        from cardine.lifecycle.context import resolve_run_locations
+        from cardine.lifecycle.engine import dispatch_run
+        from cardine.lifecycle.preview import preview_run
+        self.git('switch', '-c', 'registration')
+        create_task(self.root, '002', contract_record('002'))
+        self.git('add', 'tasks/002.md', '.cardine/tasks/002.json')
+        self.git('commit', '-m', 'Register task on another branch')
+        locations = resolve_run_locations('002', self.root)
+        result = dispatch_run(locations)
+        self.assertEqual(result['action'], 'publish-registration')
+        self.assertEqual(result, preview_run(locations))
+        self.assertFalse(locations.worktree.exists())
+        subprocess.run(result['next']['argv'], check=True, capture_output=True)
+        self.assertEqual(self.git('branch', '--show-current'), 'main')
+        self.assertTrue((self.root / 'tasks/002.md').is_file())
+        self.assertEqual(dispatch_run(locations)['next']['argv'][3], 'add')
+
     def test_queued_task_waits_for_competing_integration(self):
         from unittest.mock import patch
         from cardine.integration import candidate
