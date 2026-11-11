@@ -43,9 +43,11 @@ class RunOutputTests(unittest.TestCase):
                 if result['stop']:
                     self.assertIn('; resume: ' + result['next']['command'], stderr.getvalue())
 
-    def test_every_registered_diagnostic_uses_its_resolution(self):
+    def test_every_registered_diagnostic_uses_its_human_decision_and_resolution(self):
         for code, entry in load_stop_registry().items():
             expected = {'guardrail': 'blocked', 'recoverable': 'next', 'failing-work': 'iterate'}[entry['resolution']]
+            if entry['human_decision']:
+                expected = 'blocked'
             self.assertEqual(outcome_for_code(code), expected)
             text = str(stop_error(code, 'measured cause', resume='cardine status --project /tmp/project'))
             self.assertEqual(text.startswith('BLOCKED '), entry['human_decision'])
