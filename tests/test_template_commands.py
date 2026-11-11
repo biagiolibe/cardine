@@ -301,7 +301,17 @@ class SharedSkillTest(unittest.TestCase):
         self.assertIn("only after explicit consent", text)
         self.assertIn("separate operation from init", text)
         self.assertIn("never proof that a host rule, hook, or profile is in force", text)
-        self.assertIn("Never choose them by default", text)
+        for operation in ("Init", "Adopt"):
+            with self.subTest(operation=operation):
+                line = next(line for line in text.splitlines() if line.startswith(f"- {operation}:"))
+                preview = line.index("--check")
+                show = line.index("show every choice and source")
+                confirm = line.index("ask the developer to confirm or change them")
+                apply = line.index("apply confirmed values as explicit flags")
+                self.assertLess(preview, show)
+                self.assertLess(show, confirm)
+                self.assertLess(confirm, apply)
+                self.assertNotIn("Never choose them by default", line)
 
 
 if __name__ == "__main__":
