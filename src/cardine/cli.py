@@ -197,6 +197,8 @@ def build_parser() -> CardineArgumentParser:
     update_mode.add_argument("--check", action="store_true")
     update_mode.add_argument("--apply", action="store_true")
     self_update.add_argument("--to", dest="target_tag")
+    self_update.add_argument("--project", type=Path,
+                             help="checkout checked for a stale accepted runtime after apply (default: current directory)")
 
     console = subparsers.add_parser(
         "console", help="open the read-only project state console (experimental)",
@@ -578,12 +580,27 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
     )
     try:
         if arguments.command == "self-update":
+            from cardine.hosts.claude import align_claude_plugin
+            from cardine.release import installer
             from cardine.release.update import run_self_update
+            from cardine.release.version import read_version
 
             # Environment and --framework-root select upgrade inputs, never the
             # checkout that owns this running executable.
-            return run_self_update(source_checkout() or PACKAGE_ROOT,
-                                   apply=arguments.apply, target_tag=arguments.target_tag)
+            kind = installer.detect_installer()
+            if kind in ("pipx", "uv"):
+                updated = installer.run_installer_update(
+                    kind, read_version(framework_root), apply=arguments.apply, target_tag=arguments.target_tag)
+                if updated is not None:
+                    align_claude_plugin(Path.home(), updated)
+                    installer.stale_runtime_report(project_root or Path.cwd())
+                return 0
+            checkout = source_checkout() or PACKAGE_ROOT
+            result = run_self_update(checkout, apply=arguments.apply, target_tag=arguments.target_tag)
+            if result == 0 and arguments.apply:
+                align_claude_plugin(Path.home(), read_version(checkout))
+                installer.stale_runtime_report(project_root or Path.cwd())
+            return result
         if arguments.command == "self-check":
             from cardine.release.update import run_self_check
 
@@ -682,6 +699,9 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             if arguments.apply:
                 changed = apply_setup(plan)
                 print("result: updated; restart Codex" if changed else "result: no-op")
+                from cardine.hosts.claude import align_claude_plugin
+                from cardine.release.version import read_version
+                align_claude_plugin(Path.home(), read_version(framework_root))
         elif arguments.command == "doctor":
             report = host_doctor(
                 arguments.host,

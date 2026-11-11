@@ -184,5 +184,106 @@ class SelfUpdateTest(unittest.TestCase):
 
 
 
+class InstallerUpdateTest(unittest.TestCase):
+    def opener(self, request, timeout):
+        tag = request.full_url.rsplit('/', 1)[-1]
+        tag = 'v2.0.0' if tag == 'latest' else tag
+        return io.BytesIO(json.dumps({'tag_name': tag, 'body': 'Template-changing release: example'}).encode())
+
+    def test_detection(self):
+        from cardine.release.installer import detect_installer
+        base = Path('/h/.local/pipx/venvs/cardine/lib/python3/site-packages/cardine')
+        self.assertEqual(detect_installer(base, None), 'pipx')
+        self.assertEqual(detect_installer(Path('/h/.local/share/uv/tools/cardine/lib/cardine'), None), 'uv')
+        self.assertEqual(detect_installer(Path('/x/site-packages/cardine'), None), 'unknown')
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / '.git').mkdir()
+            self.assertEqual(detect_installer(base, Path(directory)), 'clone')
+
+    def update(self, kind, runner, **kwargs):
+        from cardine.release.installer import run_installer_update
+        lines = []
+        result = run_installer_update(kind, '1.0.0', urlopen_fn=self.opener, runner=runner,
+                                      out=lines.append, **kwargs)
+        return result, lines
+
+    def test_targets_and_preview_runs_nothing(self):
+        for kind, prefix in (('pipx', ['pipx', 'install', '--force']), ('uv', ['uv', 'tool', 'install', '--force'])):
+            for target, tag in ((None, 'v2.0.0'), ('v1.5.0', 'v1.5.0')):
+                calls = []
+                result, lines = self.update(kind, calls.append, apply=False, target_tag=target)
+                self.assertIsNone(result)
+                self.assertEqual(calls, [])
+                self.assertIn(' '.join(prefix) + f' git+https://github.com/biagiolibe/cardine@{tag}', ' '.join(lines))
+                calls = []
+                result, _ = self.update(kind, lambda argv: calls.append(argv) or 0, apply=True, target_tag=target)
+                self.assertEqual(result, tag[1:])
+                self.assertEqual(calls, [prefix + [f'git+https://github.com/biagiolibe/cardine@{tag}']])
+
+    def test_failures_precede_alignment(self):
+        from cardine.shared.errors import CardineError
+        with self.assertRaises(CardineError):
+            self.update('pipx', lambda argv: 3, apply=True)
+        with self.assertRaises(CardineError):
+            self.update('pipx', lambda argv: 0, apply=True, target_tag='main')
+        from cardine.release.installer import run_installer_update
+        calls = []
+        with patch.object(self, 'opener', side_effect=URLError('offline')), self.assertRaises(CardineError):
+            run_installer_update('uv', '1.0.0', apply=True, urlopen_fn=self.opener, runner=calls.append, out=print)
+        self.assertEqual(calls, [])
+
+    def test_stale_runtime_report_is_read_only(self):
+        from cardine.release.installer import stale_runtime_report
+        from cardine.lifecycle import receipts
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'my project'
+            root.mkdir()
+            lines = []
+            self.assertFalse(stale_runtime_report(root, out=lines.append))
+            path = receipts._local_authority_path(root)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('{}')
+            self.assertTrue(stale_runtime_report(root, out=lines.append))
+            self.assertIn(f"cardine authorize --apply --project '{root.resolve()}'", lines[-1])
+            self.assertEqual(path.read_text(), '{}')
+        self.assertFalse(stale_runtime_report(None))
+
+    def test_plugin_alignment(self):
+        from cardine.hosts.claude import align_claude_plugin
+        from cardine.shared.errors import CardineError
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            registry = home / '.claude/plugins/installed_plugins.json'
+            def write(version):
+                registry.parent.mkdir(parents=True, exist_ok=True)
+                registry.write_text(json.dumps({'plugins': {'cardine@cardine': [{'version': version}]}}))
+            add = ['claude', 'plugin', 'marketplace', 'add', 'biagiolibe/cardine#v2.0.0']
+            install = ['claude', 'plugin', 'install', 'cardine@cardine']
+            remove = ['claude', 'plugin', 'marketplace', 'remove', 'cardine']
+            found = lambda name: '/bin/claude'
+            calls = []
+            run = lambda argv: calls.append(argv) or 0
+            self.assertEqual(align_claude_plugin(home, '2.0.0', runner=run, which=found, out=lambda t: None), 'aligned')
+            self.assertEqual(calls, [add, install])
+            write('2.0.0')
+            calls.clear()
+            self.assertEqual(align_claude_plugin(home, '2.0.0', runner=run, which=found, out=lambda t: None), 'match')
+            self.assertEqual(calls, [])
+            write('1.0.0')
+            align_claude_plugin(home, '2.0.0', runner=run, which=found, out=lambda t: None)
+            self.assertEqual(calls, [remove, add, install])
+            lines = []
+            calls.clear()
+            self.assertEqual(align_claude_plugin(home, '2.0.0', runner=run, which=lambda n: None, out=lines.append), 'printed')
+            self.assertEqual(calls, [])
+            self.assertIn('  claude plugin install cardine@cardine', lines)
+            outcomes = iter([0, 5, 0, 0, 0])
+            failing = lambda argv: next(outcomes)
+            with self.assertRaises(CardineError) as error:
+                align_claude_plugin(home, '2.0.0', runner=failing, which=found, out=lambda t: None)
+            self.assertIn('exit 5', str(error.exception))
+            self.assertEqual(align_claude_plugin(home, '2.0.0', runner=failing, which=found, out=lambda t: None), 'aligned')
+
+
 if __name__ == '__main__':
     unittest.main()

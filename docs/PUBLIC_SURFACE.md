@@ -109,6 +109,23 @@ including command containers and nested subcommands.
 | `cardine hook read-guard` | Host-facing |
 | `cardine hook stop-audit` | Host-facing |
 
+## Setup and self-update behavior
+
+- `cardine setup --check` prints `claude-plugin: absent`, `match` or `mismatch`
+  and runs no mutating command. `cardine setup --apply` then aligns the Claude
+  plugin: `absent` adds the marketplace `biagiolibe/cardine#v<version>` and
+  installs `cardine@cardine`; `mismatch` first removes the `cardine`
+  marketplace; `match` runs nothing. Without `claude` on PATH the commands are
+  printed.
+- `cardine self-update --check|--apply [--to v<version>] [--project <path>]`
+  detects the owner of the running CLI. For pipx or uv it reinstalls from the
+  requested tag or the latest release; for an editable Git clone it keeps the
+  existing checkout update. `--check` is read-only. After a successful
+  `--apply` the plugin is aligned to the new version, and a stale accepted
+  runtime in the `--project` checkout (default: the current directory) is
+  listed with its `cardine authorize --apply --project <path>` command, which
+  self-update never runs.
+
 ## Stable registries and identities
 
 The following also belong to the stable surface:

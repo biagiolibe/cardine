@@ -66,6 +66,7 @@ class PinnedSetupPlan(SetupPlan):
     inputs: Mapping[str, str | None] = field(default_factory=dict)
     hooks: HooksPlan | None = None
     local_ignore: "LocalIgnorePlan | None" = None
+    claude_plugin: str = "absent"
 
 
 CLAUDE_LOCAL_SETTINGS = ".claude/settings.local.json"
@@ -446,8 +447,15 @@ def plan_setup(
         changes.append(f"exclude {CLAUDE_LOCAL_SETTINGS} from Git in {local_ignore.path}")
         plan = replace(plan, changes=tuple(changes))
     pinned = PinnedSetupPlan(*(getattr(plan, name) for name in plan.__dataclass_fields__), hooks=hooks_plan,
-                             local_ignore=local_ignore)
+                             local_ignore=local_ignore, claude_plugin=_plugin_state(home, framework_root))
     return replace(pinned, inputs=_plan_inputs(pinned))
+
+
+def _plugin_state(home: Path, framework_root: Path) -> str:
+    try:
+        return claude_plugin_state(home, framework_root)
+    except CardineError as error:
+        return f"unknown ({error})"
 
 
 def print_setup_plan(plan: SetupPlan) -> None:
@@ -481,6 +489,7 @@ def print_setup_plan(plan: SetupPlan) -> None:
             print(f"hook-duplicate: {advisory}")
     print(f"claude-project-allowlist: {plan.claude_state}")
     print(f"claude-detail: {plan.claude_detail}")
+    print(f"claude-plugin: {getattr(plan, 'claude_plugin', 'absent').split(';')[0]}")
     local_ignore = getattr(plan, "local_ignore", None)
     if local_ignore is not None:
         state = "ready" if local_ignore.proposed_text is None else "approval-required"
