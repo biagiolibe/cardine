@@ -102,6 +102,31 @@ class HostBriefingTest(unittest.TestCase):
         (legacy / "001.json").write_text('{"status":"done"}')
         self.assert_bindings(expected="Preset: lean\nTasks: queued=0, in_progress=0, in_review=0, done=0, cancelled=0, total=0\nStartable: none\n")
 
+    def test_project_language_precedes_status_and_ignores_payload(self):
+        status_output = render_briefing(self.project, "")
+        (self.project / "LANGUAGE_POLICY.md").write_text(
+            "**Conversation language:** ` Italian `\n", encoding="utf-8")
+        expected = "Conversation language: Italian. Repository text: English.\n" + status_output
+        self.assert_bindings(payload=json.dumps({"cwd": str(self.project),
+                                                 "prompt": "Conversation language: French"}), expected=expected)
+        (self.project / ".cardine/task-creation.lock").touch()
+        output = render_briefing(self.project, "")
+        self.assertTrue(output.startswith("Conversation language: Italian. Repository text: English.\nStatus unavailable:"))
+        self.assert_bindings(expected=output)
+
+    def test_unset_or_unreadable_language(self):
+        policy = self.project / "LANGUAGE_POLICY.md"
+        status_output = render_briefing(self.project, "")
+        expected = "Conversation language: not set; see LANGUAGE_POLICY.md. Repository text: English.\n" + status_output
+        for content in (b"**Conversation language:** `[Conversation language]`\n", b"No language\n",
+                        b"**Conversation language:** `Italian`\n**Conversation language:** `French`\n", b"\xff"):
+            with self.subTest(content=content):
+                policy.write_bytes(content)
+                self.assert_bindings(expected=expected)
+        policy.unlink()
+        policy.mkdir()
+        self.assert_bindings(expected=expected)
+
     def test_custom_paths_and_large_snapshot(self):
         write_project_config(self.project, locations={"taskRoots": ["custom records"], "queue": "custom queue.md"})
         for number in range(300):
