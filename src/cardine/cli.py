@@ -639,13 +639,13 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             mode = arguments.mode or detect_mode(project_root)
             return run_audit(project_root, framework_root, mode, arguments.ci_profile)
         elif arguments.command == "status":
-            from cardine.tasks.status import load_task_status, render_task_status
+            from cardine.tasks.status import apply_task_branch_observations, load_task_status, render_task_status
             if arguments.write:
                 from cardine.tasks.status_render import write_views
                 written = write_views(project_root)
                 print("\n".join(f"updated {path.relative_to(project_root.resolve())}" for path in written) or "views already up to date")
                 return 0
-            report = load_task_status(project_root, all_tasks=arguments.all)
+            report = apply_task_branch_observations(project_root, load_task_status(project_root, all_tasks=arguments.all))
             print(json.dumps(report, sort_keys=True) if arguments.format == "json" else render_task_status(report))
             return 2 if report["diagnostics"] else 0
         elif arguments.command == "locations":

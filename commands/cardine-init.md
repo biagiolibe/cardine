@@ -8,57 +8,37 @@ only chooses project defaults. The CLI owns rendering, configuration, initial
 views, and the upgrade manifest and baselines. Do not copy templates, replace
 placeholders, write `.cardine/project.json`, or run `cardine lock` manually.
 The CLI includes hidden files `.gitignore`, `.claudeignore`,
-and `.codex/rules/cardine.rules`. Do not copy from `templates/base/` or `templates/workflows/`.
+and `.codex/rules/cardine.rules`.
 Report existing conflicting paths instead of overwriting user files.
 
 ## Steps
 
-1. Ask for the **project path**, **project name**, and lowercase **project slug**.
-
-2. Ask for a **preset**, offering `lean` as the default when the user has no preference:
-   - `lean` — task review is not required; authority and expected code surface are optional.
-   - `governed` — task review, authority, and expected code surface are required.
-   Each task can override these defaults in either direction.
-
-3. Ask for the **task-identity mode**, without choosing a default:
-   - `opaque` — project-defined labels, compatible with existing IDs.
-   - `milestone` — new IDs use `M<milestone>-<WORKSTREAM>-<ordinal>`.
-
-4. Ask for literal **validation commands**, their stable IDs, the baseline,
-   and commands for each candidate outcome (`REUSE`, `BOUNDED`, `FULL`).
-   Do not invent commands. Save the agreed validation object in a temporary JSON
-   file outside the target project and pass its path as `--validation`:
-
-   ```json
-   {
-     "commands": { "<id>": "<literal command>" },
-     "baseline": ["<id>"],
-     "candidate": { "REUSE": ["<id>"], "BOUNDED": ["<id>"], "FULL": ["<id>"] }
-   }
-   ```
-
-   Every outcome is required. Empty maps and lists must be explicit user choices.
-
-5. Ask for the **conversation language**. It persists across sessions; a prompt
-   in another language does not change it. All committed repository text must
-   always be English.
-
-6. Substitute and shell-quote the agreed values in this read-only preview:
+1. Run the read-only preview and show every `choice:` line with its source:
 
    ```bash
-   cardine init --project "<project path>" --check --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --validation "<validation JSON path>"
+   cardine init --project "<project path>" --check
    ```
 
-   Inspect the plan and conflicts. Repeating `--check` must not write anything.
-   After the user accepts the preview, run the same inputs with `--apply`:
+   The preview chooses initialization or adoption on its own. Ask the developer
+   to confirm or change each choice. When it reports `missing: validation`, ask
+   for the project's test command; never invent one. Repeating `--check` writes
+   nothing.
+
+2. Substitute and shell-quote the confirmed values as explicit flags:
 
    ```bash
-   cardine init --project "<project path>" --apply --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --validation "<validation JSON path>"
+   cardine init --project "<project path>" --apply --name "<project name>" --slug "<project slug>" --preset "<lean|governed>" --language "<conversation language>" --task-identity "<opaque|milestone>" --test "<test command>"
    ```
 
-   On interruption, rerun with identical inputs; do not manually repair outputs.
+   For several validation commands, pass `--validation <JSON file>` in place of
+   `--test`; see `cardine init --help`. On interruption, rerun with identical
+   inputs. All committed repository text must always be English.
 
-7. Offer once-per-machine host setup as a separate operation. Show its read-only plan first:
+3. With `--apply` and no terminal, `cardine init` neither commits nor pushes.
+   Show the diff, then commit and push the configuration on `main` after the
+   developer approves it.
+
+4. Offer once-per-machine host setup as a separate operation. Show its read-only plan first:
 
    ```bash
    cardine setup --check --project "<project path>"
@@ -70,5 +50,5 @@ Report existing conflicting paths instead of overwriting user files.
    commands for later use. Never edit host configuration implicitly or infer
    effective enforcement from policy text; use a host probe or observed decision.
 
-8. Confirm the project name and preset. Direct the user to create the first
+5. Confirm the project name and preset. Direct the user to create the first
    task with `/cardine-task`, which registers it through `cardine task new`.

@@ -5,6 +5,7 @@ from __future__ import annotations
 from cardine_cli_support import CLI, ROOT
 import json
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -267,16 +268,18 @@ class InitAdapterTest(unittest.TestCase):
 
     COMMAND = ROOT / "commands" / "cardine-init.md"
 
-    def test_init_routes_to_the_single_set_and_defaults_to_lean(self) -> None:
+    def test_init_routes_to_the_single_set_and_previews_choices(self) -> None:
         text = self.COMMAND.read_text(encoding="utf-8")
         self.assertIn("`templates/single/`", text)
-        self.assertIn("offering `lean` as the default", text)
-        for preset in ("`lean`", "`governed`"):
-            self.assertIn(preset, text)
+        self.assertIn('cardine init --project "<project path>" --check', text)
+        self.assertIn("show every `choice:` line with its source", text)
+        self.assertIn("confirm or change each choice", text)
+        self.assertIn("<lean|governed>", text)
         self.assertIn("exactly the same files", text)
         for hidden in (".gitignore", ".claudeignore", ".codex/rules/cardine.rules"):
             self.assertIn(hidden, text)
-        self.assertIn("Do not copy from `templates/base/` or `templates/workflows/`", text)
+        for retired_template in ("templates/base/", "templates/workflows/"):
+            self.assertNotIn(retired_template, text)
         self.assertIn("Do not copy templates", text)
         for retired in ("overlay", "classic", "workflow mode"):
             self.assertNotIn(retired, text)
@@ -296,27 +299,24 @@ class InitAdapterTest(unittest.TestCase):
 
     def test_init_writes_a_project_declaration_that_the_schema_accepts(self) -> None:
         text = self.COMMAND.read_text(encoding="utf-8")
-        block = re.search(r"```json\n(.*?)```", text, re.DOTALL)
-        self.assertIsNotNone(block)
+        blocks = re.findall(r"```bash\n(.*?)```", text, re.DOTALL)
+        apply_block = next(block for block in blocks if "--apply" in shlex.split(block))
         for preset in ("lean", "governed"):
-            with self.subTest(preset=preset):
-                validation = json.loads(
-                    block.group(1)
-                    .replace("<lean|governed>", preset)
-                    .replace("<opaque|milestone>", "opaque")
-                    .replace("<project name>", "Example")
-                    .replace("<project slug>", "example")
-                    .replace("<id>", "check")
-                    .replace("<literal command>", "python3 -m unittest")
-                )
-                with tempfile.TemporaryDirectory() as directory:
-                    project = Path(directory)
-                    declaration = {"version": 1, "project": {"name": "Example", "slug": "example"},
-                                   "preset": preset, "taskIdentity": {"mode": "opaque"},
-                                   "validation": validation, "ci": "none"}
-                    (project / ".cardine").mkdir()
-                    (project / ".cardine/project.json").write_text(json.dumps(declaration), encoding="utf-8")
-                    configuration = resolve_project_configuration(project)
+            with self.subTest(preset=preset), tempfile.TemporaryDirectory() as directory:
+                project = Path(directory).resolve() / "project with spaces"
+                values = {"project path": str(project), "project name": "Example",
+                          "project slug": "example", "lean|governed": preset,
+                          "conversation language": "English", "opaque|milestone": "opaque",
+                          "test command": "python3 -m example_tests"}
+                command = apply_block
+                for key, value in values.items():
+                    command = command.replace(f"<{key}>", value)
+                route = shlex.split(command)
+                self.assertEqual(route.pop(0), "cardine")
+                result = subprocess.run([sys.executable, str(CLI), "--framework-root", str(ROOT), *route],
+                                        stdin=subprocess.DEVNULL, text=True, capture_output=True, check=False)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                configuration = resolve_project_configuration(project)
                 self.assertEqual(configuration["preset"], preset)
                 self.assertEqual(sorted(configuration["validation"]["candidate"]), ["BOUNDED", "FULL", "REUSE"])
 

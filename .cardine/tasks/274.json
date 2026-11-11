@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/integration/ci.py",
+      "src/cardine/lifecycle/engine.py",
+      "capabilities/stop-codes-v1.json",
+      "src/cardine/stops/causes.py",
+      "tests/test_run_ci.py",
+      "docs/RUN_COMMANDS.md",
+      "changelog.d/274.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/274.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 274 \u2014 Stop when the CI provider never starts a run for the delivered commit",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_ci --module test_stop_registry --module test_run_end_to_end --module test_run_nonrun_causes --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "8c651bf86e7019fe49729ede7cfc9ddb9c9d0e487d5fd3b6cf1fb721307512dd",
+        "digest": "049985f289a15438b5e61c4025a0950cde8fe3845d59952def0dc13f85f459c7",
+        "inputs": {
+          ".cardine/tasks/274.json": null,
+          "tasks/274.md": null
+        },
+        "kind": "creation",
+        "operation_id": "e68180c4ceec4d4f987cabfaebc6c01b",
+        "outputs": {
+          ".cardine/tasks/274.json": "6bc45dfafe7d4cb238781bdb9bdf2aa57269fd8c2975fa71ea3f4a9931cbd6f6",
+          "tasks/274.md": "c5d5d37e67e0eb4cb829a986d3bc9d4c9422abf43ae9cf68ebb4fa4e919942f2"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "d6411e8d51dafe7bad9332a223291c574068544f",
+        "task_id": "274",
+        "tree": "5ae8da85afec3c17fdfd892b8d53cbfac13d9356",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "274",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
