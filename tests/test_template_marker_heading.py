@@ -123,6 +123,8 @@ class CapabilityMarkerTest(unittest.TestCase):
         self.assertNotIn("## 1. Report project status", prompts)
     def test_operator_prompts_resolve_locations_and_bound_framework_maintenance(self) -> None:
         prompts = (self.WORKFLOW / "docs/OPERATOR_PROMPTS.md").read_text(encoding="utf-8")
+        self.assertIn("## Everyday requests", prompts)
+        self.assertIn("cardine task new", prompts)
         self.assertIn("Resolve the queue and task locations with `cardine locations --project .`", prompts)
         self.assertIn("`Class: SPIKE` task", prompts)
         # TR2b deleted the upgrade-check prompt (OP-07); the cookbook no longer names upgrade commands.

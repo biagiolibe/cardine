@@ -40,7 +40,8 @@ if you work only from the terminal.
 Open your agent in the project checkout and ask: “I want to use Cardine here.” Then
 describe a small change. The agent drafts the task record, asks for your approval,
 registers it, and delivers it with `cardine run` until the change is integrated on
-`main`. It asks you when a decision is yours.
+`main`. It asks you when a decision is yours. `docs/OPERATOR_PROMPTS.md` in your
+project lists the requests you can make every day and a prompt to plan a milestone.
 
 In true Cardine fashion, you can delegate the installation too. Open your agent in the
 project checkout, before installing anything, and ask:
