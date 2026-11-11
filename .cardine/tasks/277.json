@@ -11,6 +11,7 @@
     "deliverables": [],
     "dependencies": [],
     "expectedCodeSurface": [
+      "scripts/cardine_cli.py",
       "scripts/release.py",
       "scripts/upgrade_project.sh",
       "src/cardine/release/update.py",
@@ -77,6 +78,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:a0905f838dd645fcaa1190fa12c43767ae68e4ddd2d51e0eda00914489b50e72",
+      "at": "2026-11-11T23:51:36.933864Z",
+      "before": "sha256:61bda29b1160de1dcfc0fdc126c0e89d8677c866191b5d9beb6cb8068121db96",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -124,6 +135,30 @@
         "source": "9c69983c94f6c5e318b09f34e3edbb35f42ff2d7",
         "task_id": "277",
         "tree": "7750d3a8cd4306d25e708f16013820baed706151",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "1ea28c476dde54c3537f1bd12657ef737e01687780a4d989c5e04b1baa38c084",
+        "digest": "1dc041b7c0205ad43ee424311c32d48e5044b048590f21f0a511df8341b4cb8d",
+        "inputs": {
+          ".cardine/tasks/277.json": "b2f3c8d75e6663a86ace03d43b6fcc3a39de49e00430753aac0596865cf69d1d",
+          "tasks/277.md": "07da41ac26c90cd81560bae6c7e014d59b7b6fa3612245769ac685c34128dcda"
+        },
+        "kind": "contract_revision",
+        "operation_id": "aba1e11ccdee4892a67a3d0d2f9868f9",
+        "outputs": {
+          ".cardine/tasks/277.json": "491d049e1c086b68316a0cdedaa335ae57841c7c6e5bad9cb4cd9c22a0739d28",
+          "tasks/277.md": "07da41ac26c90cd81560bae6c7e014d59b7b6fa3612245769ac685c34128dcda"
+        },
+        "predecessor": "eb4c630deccb53ca57351eeec7276a1f412bdfcd830bf8ed507abb111abfdff6",
+        "result": "verified",
+        "source": "eb63e3952c44d7c9d0bebb5e45dbadc044d34c76",
+        "task_id": "277",
+        "tree": "a0388c0fd76ec55572627de0e9476c7bcacd84a6",
         "version": 1
       }
     ]

@@ -82,9 +82,9 @@ class SelfCheckPluginTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": "/custom/claude"}):
             self.assertEqual(owner_release_update.claude_plugin_registry_path(),
                              Path("/custom/claude/plugins/installed_plugins.json"))
-        with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": ""}), mock.patch.object(Path, "home", return_value=Path("/home/test")):
+        with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": ""}), mock.patch.object(Path, "home", return_value=Path("/example-home")):
             self.assertEqual(owner_release_update.claude_plugin_registry_path(),
-                             Path("/home/test/.claude/plugins/installed_plugins.json"))
+                             Path("/example-home/.claude/plugins/installed_plugins.json"))
 
     def test_self_check_prints_plugin_and_keeps_exit_codes_without_writes(self) -> None:
         installed = (ROOT / "VERSION").read_text(encoding="utf-8").strip()

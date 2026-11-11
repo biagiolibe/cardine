@@ -50,7 +50,7 @@ from cardine.templates.catalog import manifest_workflow_mode, _parse_catalog_sur
 from cardine.shared import project as shared_project
 from cardine.shared.paths import SCRIPTS_ROOT
 from cardine.tasks.state import TaskStateInvalid, machine, read_task_state, state_path, validate_task_state
-from cardine.release.update import fetch_latest_release, run_self_update, claude_user_settings_path, plugin_marketplace_ref, plugin_ref_report, run_self_check
+from cardine.release.update import fetch_latest_release, run_self_update, claude_plugin_registry_path, installed_plugin_versions, installed_plugin_report, run_self_check
 from cardine.review.verdict import record_review_verdict, _review_verdict_projection, _review_attempt_text
 from cardine.shared.context import _context_path_references, _context_relative_references, _context_phase_reads, _context_router, _context_routed_workflow, _context_file_record, _context_configuration, _context_threshold, context_router_files, context_size_report, format_context_size_report
 from cardine.shared.journal import JOURNAL_NAME, JOURNAL_ROTATED_NAME, JOURNAL_MAX_BYTES, JOURNAL_VERSION, JOURNALED_WORKTREE_COMMANDS, JOURNALED_INTEGRATE_COMMANDS, LifecycleJournalEntry, append_journal_line
