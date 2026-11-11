@@ -16,7 +16,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/biagiolibe/cardine" alt="MIT License"></a>
 </p>
 
-> **Status: 0.9.1, before 1.0.** Install the CLI from the `v0.9.1` tag.
+> **Status: 0.9.2, before 1.0.** Install the CLI from the `v0.9.2` tag.
 > The scope of 1.0 is
 > [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md); what is proven today is
 > listed under [Status and evidence](#status-and-evidence).
@@ -118,11 +118,6 @@ see the next action in an interactive terminal. See [the console](docs/QUICKSTAR
 
 *Console development preview, commit `0132b8add339bc1e2808fd486201bf99a5ab37bb` (the displayed version is 0.9.1).*
 
-## First 5 minutes
-
-The complete [walkthrough](docs/QUICKSTART.md#start-in-the-terminal) covers
-installation, project setup and a first integrated task.
-
 ## Lean or Governed
 
 One lifecycle, two presets. A preset sets the project's defaults; each task
@@ -153,6 +148,18 @@ A `spike` task class for exploratory work, with an `ANSWERED` or
 
 The project console, `cardine console`, is experimental.
 
+## Install
+
+Use macOS or Linux with Python 3.12 or later, Git, and pipx.
+
+```sh
+pipx install git+https://github.com/biagiolibe/cardine@v0.9.2
+```
+
+Run `cardine init` from your project checkout. To connect a host, preview
+with `cardine setup --check` and apply the reviewed changes from your
+terminal with `cardine setup --apply`.
+
 ## Status and evidence
 
 Proven:
@@ -161,7 +168,7 @@ Proven:
   review, from queued to landed on `main`; a task with required review and
   one round of requested changes; an agent that followed only what
   `cardine run` printed; a stop followed by a resume;
-- the path of [First 5 minutes](#first-5-minutes), from `cardine adopt` and
+- the path of the [Quickstart terminal section](docs/QUICKSTART.md#start-in-the-terminal), from `cardine adopt` and
   a quick task to landing, in a disposable project with the CLI installed
   from a clone;
 - on Cardine's own repository: its tasks land through `cardine run`.
@@ -176,33 +183,6 @@ Not yet proven or measured:
   Results will be published with the disclosure that the author of Cardine
   arbitrated disagreements, and they will state what they do not cover: the
   `lean` preset on a real adopter, Codex, and other models.
-
-## Install
-
-Requires macOS or Linux, Python 3.12 or later, Git, and pipx. An installed,
-authenticated Claude Code or Codex host is optional for terminal-only use.
-
-Install the published release from a runtime clone (separate from your project):
-
-```bash
-git clone --branch v0.9.1 https://github.com/biagiolibe/cardine ~/src/cardine-runtime
-pipx install --editable ~/src/cardine-runtime
-cardine --version
-```
-
-For Claude Code, also install the plugin, pinned to the same tag. It provides the
-`cardine-delivery` and `cardine-project` skills and the slash commands, which call the
-installed `cardine`. Codex receives the skills from `cardine setup`.
-
-```bash
-claude plugin marketplace add biagiolibe/cardine#v0.9.1
-claude plugin install cardine@cardine
-```
-
-`cardine doctor --host claude --project .` reports whether the plugin version matches the
-CLI.
-
-`pipx install cardine` arrives with 1.0, published on PyPI.
 
 ## Documentation
 
