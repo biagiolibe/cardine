@@ -6,7 +6,7 @@ Receipt integrity is relative to accepted policy, never proof of authorship.
 from dataclasses import replace
 
 from cardine.lifecycle import receipts
-from cardine.lifecycle.engine import resolve_run, diagnostic_result
+from cardine.lifecycle.engine import resolve_run, diagnostic_result, registration_recovery
 from cardine.lifecycle.model import RunFacts, WorkRequest
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.shared.git import scoped_command
@@ -132,7 +132,6 @@ def observe_run(locations):
     from cardine.lifecycle.control import require_review_budget
     require_review_budget(root, task, state)
     if root == locations.primary:
-        from cardine.lifecycle.context import registration_recovery
         recovery = registration_recovery(locations) if facts.status == 'queued' else None
         if recovery is not None:
             return recovery

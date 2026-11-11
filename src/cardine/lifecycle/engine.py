@@ -287,6 +287,44 @@ def run_summary(result):
     return text
 
 
+
+def registration_recovery(locations):
+    """Describe the explicit Git step needed before preparing from main."""
+    import shlex
+    from cardine.shared.git import _run_git
+    from cardine.tasks.state import state_path
+    from cardine.tasks.status import registration_missing_from_main
+    root = locations.primary
+    paths = (root / locations.record_path, state_path(root, locations.task_id))
+    missing = registration_missing_from_main(root, paths)
+    if not missing:
+        return None
+    all_paths = list(missing)
+    branch = _run_git(root, 'branch', '--show-current').stdout.strip()
+    staged = all(_run_git(root, 'cat-file', '-e', ':' + path).returncode == 0 for path in all_paths)
+    if branch != 'main':
+        # Preserve paths that exist only on this branch without overwriting
+        # working files left by the switch. Each command remains visible.
+        switch = shlex.join(['git', '-C', str(root), 'switch', 'main'])
+        restores = []
+        for path in missing:
+            target = shlex.quote(str(root / path))
+            restore = shlex.join(['git', '-C', str(root), 'restore', '--source', branch, '--worktree', '--', path])
+            restores.append(f'(test -e {target} || {restore})')
+        argv = ['sh', '-c', ' && '.join([switch, *restores])]
+
+    elif not staged:
+        argv = ['git', '-C', str(root), 'add', '--', *all_paths]
+    else:
+        argv = ['git', '-C', str(root), 'commit', '-m', f'Register task {locations.task_id}', '--', *all_paths]
+    retry = shlex.join(['cardine', 'run', locations.task_id, '--project', str(root)])
+    reason = ('Registration missing from main: ' + ', '.join(missing)
+              + '. Stage and commit the missing registration files on main, push when required by the workflow, then retry: ' + retry)
+    return envelope(locations.task_id, str(root), step='contract', outcome='next',
+                    action='publish-registration', next_command=command_reference(argv, reason),
+                    diagnostics=[{'code': 'REGISTRATION_UNCOMMITTED', 'message': reason}])
+
+
 @scoped_command
 def dispatch_run(locations: RunLocations) -> dict:
     """Execute one Stable engine step; console actions share this entry point."""
@@ -315,7 +353,6 @@ def dispatch_run(locations: RunLocations) -> dict:
             require_review_budget(locations.worktree, locations.task_id, active)
         if active['status'] == 'queued' and not locations.worktree.is_dir():
             from cardine.tasks.preflight import check_dependencies
-            from cardine.lifecycle.context import registration_recovery
             check_dependencies(locations.primary, locations.task_id, '')
             recovery = registration_recovery(locations)
             if recovery is not None:
