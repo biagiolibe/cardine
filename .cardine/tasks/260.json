@@ -1,0 +1,107 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/hosts/briefing.py",
+      "tests/test_host_briefing.py",
+      "tests/test_single_workflow_briefing.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/260.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 260 \u2014 Name the conversation language in the per-turn briefing",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_host_briefing --module test_single_workflow_briefing --module test_host_hooks --module test_cli_startup --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "8e361f3d79f96a233e429854a0b73178344eee6720610978b3174ed454628c0b",
+        "digest": "bb25cd475d916e94e4e5cb17167ebbc05487df9eecfebdf1b1dcb2c69c9a2fbd",
+        "inputs": {
+          ".cardine/tasks/260.json": null,
+          "tasks/260.md": null
+        },
+        "kind": "creation",
+        "operation_id": "ae45768c9d3c4594be63f254ff1ebb0a",
+        "outputs": {
+          ".cardine/tasks/260.json": "274530486ce74bedf8d233815d02d7557bf2abef5c6323c026e3c4371d786567",
+          "tasks/260.md": "88263a4db5087828be867065e5b16ab9d94130f2070ac75979bf706158cda937"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "38d945cfd91681a2c4800b511ab937d9d7da65fe",
+        "task_id": "260",
+        "tree": "d0e164d785d37d30817a9750260f7730f370f62f",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "260",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

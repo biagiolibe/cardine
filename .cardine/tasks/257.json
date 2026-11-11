@@ -11,7 +11,8 @@
     "deliverables": [],
     "dependencies": [
       "258",
-      "259"
+      "259",
+      "260"
     ],
     "expectedCodeSurface": [
       "VERSION",
@@ -83,6 +84,14 @@
       "changedFields": [
         "dependencies"
       ]
+    },
+    {
+      "after": "sha256:c0ecda1c2700efb9530f088dbf375a9ebe4d7a37911c39f3397d2c4660d3d49b",
+      "at": "2026-11-11T16:42:49.615218Z",
+      "before": "sha256:20190f00f1f0907f4d4871bf9fc01845356031a56b39e957939da756f6d5c3bf",
+      "changedFields": [
+        "dependencies"
+      ]
     }
   ],
   "run": {
@@ -134,6 +143,30 @@
         "source": "6a011dae2279c21140e766c51d0814d572cd7ddd",
         "task_id": "257",
         "tree": "1e6c35fa470934df6109ac40b671acf3802402ee",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "ddce1273f9a1fc684dc130e9999a06ec350366667bff031a797fe54ffd1bc714",
+        "digest": "c9b6ea6be31899ece1e797e5ef0b9f5bcb6f1e4c1d754389f5be32e009c640a6",
+        "inputs": {
+          ".cardine/tasks/257.json": "7d9a5ab86a4946207c4b4e81e463c4a5977166fdadf42d55d1330065f5bb2273",
+          "tasks/257.md": "d6a6143d1c253baacf38dcd9bf5387c48bba8fe9b0c177d700cc0334d7bcb7b5"
+        },
+        "kind": "contract_revision",
+        "operation_id": "fa0c4c3f39994900b5902103ec72ae15",
+        "outputs": {
+          ".cardine/tasks/257.json": "d985c7f7a080bb742afb14e471a32806d40d8e1e8b5261aba83c99f52bf0e019",
+          "tasks/257.md": "d6a6143d1c253baacf38dcd9bf5387c48bba8fe9b0c177d700cc0334d7bcb7b5"
+        },
+        "predecessor": "0aad23251a14756daaf4c7f0317befe3c546a9b866b690530b2f5591db4ec895",
+        "result": "verified",
+        "source": "38d945cfd91681a2c4800b511ab937d9d7da65fe",
+        "task_id": "257",
+        "tree": "d0e164d785d37d30817a9750260f7730f370f62f",
         "version": 1
       }
     ]
