@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/integration/refresh.py",
+      "src/cardine/lifecycle/delivery.py",
+      "src/cardine/lifecycle/receipts.py",
+      "src/cardine/stops/causes.py",
+      "tests/test_run_refresh.py",
+      "tests/test_run_delivery.py",
+      "tests/test_authorization.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/256.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 256 \u2014 Start a new delivery after a refresh and fix the authority stop wording",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_refresh --module test_run_delivery --module test_run_delivery_disposable --module test_authorization --module test_run_recovery --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "594c8b22d01e1d1923f521c5ce39445db984374511243a11137c7ecb79025597",
+        "digest": "4ac6af127569cdd32847b6aa8e05b598cc911ca14adda3dbd1d4b85e191ec3d0",
+        "inputs": {
+          ".cardine/tasks/256.json": null,
+          "tasks/256.md": null
+        },
+        "kind": "creation",
+        "operation_id": "57b9f9b89898447cb568bfb3d861db99",
+        "outputs": {
+          ".cardine/tasks/256.json": "2e998cbbee34cfb0baec8f8aedf6120e5dad98056b679a47be8ecf2b06bc4599",
+          "tasks/256.md": "ca73ae8c01d12cf28251b1453abb5e8b9fa0afa93d9154f20a9c6b02e36ec737"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "a0a7197d5f5e3d6f780c45f8edb231e61e89d779",
+        "task_id": "256",
+        "tree": "15a9c11fdf09989f61259b0c03d7d42884dd0f94",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "256",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
