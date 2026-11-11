@@ -1,7 +1,7 @@
 # Run commands
 
 Product reference for the commands that drive a task from a queued contract to
-a landed, cleaned-up branch. The design authority is `docs/RUN_ENGINE_PLAN.md`;
+a landed, cleaned-up branch. The design authority is [the 1.0 ADR](ADR_CARDINE_1_0.md);
 this page states only what a person or an agent types and what comes back. It
 is not a template: no installed router or role read set includes it.
 
