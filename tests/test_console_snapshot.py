@@ -532,7 +532,11 @@ class RefreshCostTest(support.StateConsoleFixture):
         for task_id in tasks:
             self.branch_state(self.worktree(f"task-{task_id}"), task_id, "in_progress")
         calls = self.subprocess_calls(owner_console_snapshot.IdentityCache())
-        self.assertEqual([call for call in calls if "show" in call], [])
+        shows = [call for call in calls if "show" in call]
+        self.assertEqual(len(shows), len(tasks))
+        self.assertTrue(all(str(self.project) in call and
+                            all(value.startswith("main:") for value in call[call.index("show") + 1:])
+                            for call in shows))
         self.assertEqual(self.load()["003"].source, "task state in worktree task-003")
 
     def test_warm_refresh_rechecks_each_preview_identity_once(self) -> None:

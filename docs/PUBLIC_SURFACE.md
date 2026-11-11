@@ -139,3 +139,14 @@ interfaces and have no compatibility promise. The generator's `--template` optio
 selects the single template set's shared body; without it, `--project` selects consumer routers.
 
 `cardine guide --project <root> [--format text|json]` gives read-only, offline onboarding guidance from the resolved project declaration, or bootstrap guidance for an unconfigured Git checkout. Invalid declarations and unsupported checkouts report errors.
+
+### Registration not committed on main
+
+For a queued task whose record or state is absent from committed `main`,
+`run` and its read-only preview return `action: publish-registration` before
+preparation. The diagnostic identifies the paths; `next` gives an explicit Git
+step and the reason includes the exact retry command. Follow each returned
+step, publish `main` when the project workflow requires it, and retry. Cardine
+does not commit or push the registration itself. Status reports the paths in
+`registration_missing` and marks the task not startable until both are on
+`main`; this is separate from dependency blocking.
