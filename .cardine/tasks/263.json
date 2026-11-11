@@ -1,0 +1,108 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/hosts/skills.py",
+      "src/cardine/hosts/setup.py",
+      "CHANGELOG.md",
+      "tests/test_host_worktree_setup.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/263.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 263 \u2014 Link the Codex skills from an installed package",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_host_worktree_setup --module test_host_repeatability --module test_host_codex_repair --module test_codex_user_rules --module test_host_coexistence --module test_setup_local_ignore --module test_cli_install --module test_release --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "1b2f5f1e2c270c4599fb568c71463df68d7f91bd38d62a24359ea29f909c4459",
+        "digest": "389baf46518ed69a55fd47080c2089da286763e588b6c53ad554455fafe2b6aa",
+        "inputs": {
+          ".cardine/tasks/263.json": null,
+          "tasks/263.md": null
+        },
+        "kind": "creation",
+        "operation_id": "135747e1ea874631b63475c83b56876d",
+        "outputs": {
+          ".cardine/tasks/263.json": "3f6bc60c4c91c418a348ecb240720f0c56e903cb62b9a9ccb3f9b11d2bcd0240",
+          "tasks/263.md": "866add4899156fc714ba659364de62c2970a969b23422ccea8aba2fd324773ef"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "1c0367d8fae02c0a3b17a7a09f70a584811499da",
+        "task_id": "263",
+        "tree": "10cc87effd41ba5132da69eb184293f273c137bd",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "263",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

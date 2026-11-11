@@ -1,0 +1,106 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/lifecycle/engine.py",
+      "docs/QUICKSTART.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/262.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 262 \u2014 Tell a terminal user where to implement the task",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_delivery --module test_run_preparation --module test_run_recovery --module test_run_control --module test_lifecycle_journal_flow --module test_check_repository --module test_public_surface --module test_text_gates --module test_command_word --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_stop_registry"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "4077384da67ca9e807e6820d34732515fe58aee11a302534bcb6390b327ad617",
+        "digest": "4a729a5f3004ca570d2e87ddf8a675361b956009c43717c970bec1af76870071",
+        "inputs": {
+          ".cardine/tasks/262.json": null,
+          "tasks/262.md": null
+        },
+        "kind": "creation",
+        "operation_id": "6dd4ebc7deca44caaede281cb4454393",
+        "outputs": {
+          ".cardine/tasks/262.json": "dd00af2e7acfea7921c5852184fdc9b62ae88aab9033dc7a95cd7f9ade19498e",
+          "tasks/262.md": "a269378cfc509e7aafdeb9ab6738cb7baeb0a0cea5baa948f98db8a3fdc7b134"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "1c0367d8fae02c0a3b17a7a09f70a584811499da",
+        "task_id": "262",
+        "tree": "10cc87effd41ba5132da69eb184293f273c137bd",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "262",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
