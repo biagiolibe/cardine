@@ -11,8 +11,6 @@
     "deliverables": [],
     "dependencies": [],
     "expectedCodeSurface": [
-      "scripts/suggest_task_tests.py",
-      "tests/test_suggest_task_tests.py",
       "tasks/TASK_BLUEPRINT.md"
     ],
     "hostImpact": {
@@ -38,7 +36,7 @@
       "task-tests",
       "adopt-466c2f308b48c766"
     ],
-    "title": "Task 250 \u2014 Suggest cross-cutting tests when planning a task",
+    "title": "Task 250 \u2014 Select cross-cutting tests when planning a task",
     "validation": {
       "baseline": [
         "repository-check",
@@ -66,11 +64,23 @@
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_suggest_task_tests --module test_run_tests --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:fd8da3259bff1b5f9020c5bce57ced2acbfab72b963489d316af376836ee809c",
+      "at": "2026-11-11T01:14:49.602636Z",
+      "before": "sha256:89a9e341a8fecd6d963a18cf787cf9f093771e6386f1c9660d7a5382a9158eed",
+      "changedFields": [
+        "expectedCodeSurface",
+        "title",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -96,6 +106,30 @@
         "source": "f2d5467da943ff70942a889902267a74b647cd77",
         "task_id": "250",
         "tree": "25615755859cdf918ca7e7c1be5a78fe8942aaf9",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "8ce771e9968dfb25a1458a5814bf57e73c95b43d80211890051c7a3260e3e5f5",
+        "digest": "7d3a628bf534550afa0c9f370bba36e5e02ca532b728c733e41bdc9f6e45a3a2",
+        "inputs": {
+          ".cardine/tasks/250.json": "0ff122e6eade4f92ae87d24899aaec041182b5f3210faf248e18aa2ce7abe7ad",
+          "tasks/250.md": "93b87e717257a076a52fbda46c7c4d5c415c61afe4c61d17332cace14142b370"
+        },
+        "kind": "contract_revision",
+        "operation_id": "e76cc2dd01b0477babe8f7d94dfadb44",
+        "outputs": {
+          ".cardine/tasks/250.json": "819a865f78e9b1beceaca2fe74766dfea7ce72a574ce64b501a44dd1c523d272",
+          "tasks/250.md": "93b87e717257a076a52fbda46c7c4d5c415c61afe4c61d17332cace14142b370"
+        },
+        "predecessor": "f4c19ea083049b7bc43756ff8b57d18af7d3f80123dc02765f1090764b0443be",
+        "result": "verified",
+        "source": "c2a7b8754f368378ec258c7efff7afa95d9595d5",
+        "task_id": "250",
+        "tree": "86190f431e8889207c53081f9e6d393fd5e4b67d",
         "version": 1
       }
     ]
