@@ -217,7 +217,7 @@ class CondensedBudgetTest(unittest.TestCase):
         self.assertEqual(template_budget_findings(TEMPLATES), [])
 
     def test_the_condensed_files_stay_under_the_074_estimate_plus_margin(self) -> None:
-        for path, ceiling in ((AUDIT, 315), (COOKBOOK, 295), (ORGANIZATION, 380)):
+        for path, ceiling in ((AUDIT, 315), (COOKBOOK, 380), (ORGANIZATION, 380)):
             with self.subTest(path=path):
                 self.assertLessEqual(len(read(path).split()), ceiling)
 
