@@ -69,6 +69,8 @@ by hand, outside the managed block.
 - The per-turn briefing names the conversation language again.
 - `cardine setup` no longer writes a project declaration with stale values in a project
   that `cardine init` has not configured.
+- `cardine setup` links the Codex skills from a pipx or uv installation, and no
+  longer suggests a `CARDINE_ROOT` export for one.
 
 ## [0.9.1] - 2026-11-10
 

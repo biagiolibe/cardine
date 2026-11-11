@@ -25,6 +25,7 @@ from cardine.hosts.codex import plan_codex_user_rules
 from cardine.hosts.skills import _aggregate_skill_state
 from cardine.hosts.skills import _directory_setup_state
 from cardine.hosts.skills import _framework_skill_links
+from cardine.hosts.skills import _is_checkout_root
 from cardine.hosts.skills import _setup_codex_state
 from cardine.hosts.skills import _stale_codex_skill_warnings
 from cardine.hosts.skills import _remove_old_skill_links
@@ -527,8 +528,9 @@ def print_setup_plan(plan: SetupPlan) -> None:
     for name, path, state, detail in plan.skill_links:
         print(f"codex-skill-{name}: {state} ({path}; {detail})")
     print(f"CARDINE_ROOT: {plan.cardine_root_state}")
-    print(f"shell-profile-CARDINE_ROOT: export CARDINE_ROOT={plan.framework_root}")
-    print('shell-profile-PATH: export PATH="$CARDINE_ROOT/bin:$PATH"')
+    if _is_checkout_root(plan.framework_root):
+        print(f"shell-profile-CARDINE_ROOT: export CARDINE_ROOT={plan.framework_root}")
+        print('shell-profile-PATH: export PATH="$CARDINE_ROOT/bin:$PATH"')
     for warning in plan.warnings:
         print(f"warning: {warning}")
     print("changes:")
