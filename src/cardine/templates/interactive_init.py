@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import shlex
-import subprocess
 import sys
 from pathlib import Path
 
@@ -12,12 +11,13 @@ from cardine.adopt.release import conversion_outputs
 from cardine.adopt.rehearsal import apply_rehearsed_adoption
 from cardine.lifecycle.control import _interactive
 from cardine.shared.errors import CardineError
+from cardine.shared.git import _run_git
 from cardine.shared.project_defaults import test_validation
 from cardine.templates.init import apply_init, plan_init
 
 
 def _git(root, *args):
-    result = subprocess.run(['git', *args], cwd=root, text=True, capture_output=True)
+    result = _run_git(root, *args)
     if result.returncode:
         raise CardineError(result.stderr.strip() or result.stdout.strip() or 'git failed')
     return result.stdout
