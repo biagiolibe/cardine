@@ -170,9 +170,74 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(result['phase'], 'waiting')
         self.assertIn(head, result['detail'])
         self.assertIn('lint', result['detail'])
-        self.assertIn('3 seconds', result['detail'])
+        self.assertEqual(result['diagnostic'], 'CI_NOT_STARTED')
         self.assertEqual(ci.ci_gate(locations)['head'], head)
         self.assertEqual(self.push_count(), 1)
+
+    def run_with_fake_wait(self, locations, seconds):
+        now = [0.0]
+        gate = ci.ci_gate
+        def sleep(duration):
+            now[0] += duration
+        def timed_gate(locations, *, wait_seconds=0):
+            return gate(locations, wait_seconds=wait_seconds, clock=lambda: now[0], sleep=sleep)
+        with mock.patch.object(ci, 'ci_gate', side_effect=timed_gate):
+            return engine.dispatch_run(locations, ci_wait_seconds=seconds)
+
+    def test_missing_ci_stops_after_300_seconds(self):
+        locations = self.ready()
+        result = self.run_with_fake_wait(locations, 300)
+        engine.validate_output(result)
+        self.assertEqual(result['outcome'], 'blocked')
+        self.assertEqual(result['stop']['code'], 'CI_NOT_STARTED')
+        self.assertTrue(result['stop']['human_decision'])
+        from cardine.stops.render import format_stop
+        self.assertTrue(format_stop('CI_NOT_STARTED', result['stop']['detail'],
+                                    resume=result['stop']['resume']).startswith('BLOCKED CI_NOT_STARTED:'))
+        self.assertEqual(result['stop']['resume'],
+                         f'cardine run 056 --project {self.primary} --ci-wait-seconds 300')
+        self.assertIn(self.head(), result['stop']['detail'])
+        self.assertIn('refs/heads/task-056', result['stop']['detail'])
+        self.assertIn('lint, validate', result['stop']['detail'])
+        self.assertIn(f'git push origin {self.head()}:refs/heads/task-056-ci', result['stop']['detail'])
+
+    def test_missing_ci_waits_below_threshold(self):
+        locations = self.ready()
+        for seconds in (0, 30, 299):
+            with self.subTest(seconds=seconds):
+                result = self.run_with_fake_wait(locations, seconds)
+                self.assertEqual(result['outcome'], 'waiting')
+                self.assertEqual(result['diagnostics'][0]['code'], 'CI_NOT_STARTED')
+                self.assertIn('provider has not started CI', result['diagnostics'][0]['message'])
+        self.assertEqual(self.push_count(), 1)
+
+    def test_queued_ci_still_waits_after_300_seconds(self):
+        locations = self.ready()
+        self.checks(self.head(), status='queued', conclusion=None, names=('validate',))
+        result = self.run_with_fake_wait(locations, 300)
+        self.assertEqual(result['outcome'], 'waiting')
+        self.assertEqual(result['diagnostics'][0]['code'], 'CI_PENDING')
+        self.assertIn('300 seconds', result['diagnostics'][0]['message'])
+
+    def test_unanswered_provider_does_not_prove_ci_never_started(self):
+        locations = self.ready()
+        now = [0.0]
+        def sleep(seconds):
+            now[0] += seconds
+        with mock.patch.object(ci, '_provider', return_value=None):
+            result = ci.ci_gate(locations, wait_seconds=300, clock=lambda: now[0], sleep=sleep)
+        self.assertEqual(result['phase'], 'waiting')
+        self.assertNotIn('diagnostic', result)
+
+    def test_successful_checks_on_another_ref_pass(self):
+        locations = self.ready()
+        head = self.head()
+        self.checks(head)
+        state = json.loads(self.gh_state.read_text())
+        for run in state['runs'][head]:
+            run['check_suite'] = dict(head_branch='task-056-ci')
+        self.gh_state.write_text(json.dumps(state))
+        self.assertEqual(self.gate(locations)['phase'], 'passed')
 
     def test_pagination_uses_remaining_deadline(self):
         now = [0.0]

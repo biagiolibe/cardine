@@ -196,7 +196,10 @@ def query_checks(binding, *, deadline=None, clock=time.monotonic):
             f'{c["name"]} concluded {c["conclusion"]} for {binding["head"]}' for c in failed))
     if len(checks) < len(binding['checks']) or any(c['status'] != 'completed' for c in checks):
         waiting = [n for n in binding['checks'] if n not in {c['name'] for c in checks if c['status'] == 'completed'}]
-        return dict(phase='waiting', checks=checks, detail='waiting for ' + ', '.join(waiting))
+        return dict(phase='waiting', checks=checks, not_started=not checks,
+                    detail=(f'no `{", ".join(binding["checks"])}` check run exists for {binding["head"]} on '
+                            f'{binding["repository"]}; the provider has not started CI for this commit'
+                            if not checks else 'waiting for ' + ', '.join(waiting)))
     return dict(phase='passed', checks=checks, detail='')
 
 
@@ -278,7 +281,8 @@ def ci_gate(locations, *, wait_seconds=0, clock=time.monotonic, sleep=time.sleep
             break
         outcome = query_checks(binding, deadline=deadline, clock=clock) if deadline is not None else query_checks(binding)
         if deadline is not None and clock() >= deadline:
-            outcome = dict(phase='waiting', checks=[], detail='CI provider deadline expired')
+            if outcome['phase'] != 'waiting':
+                outcome = dict(phase='waiting', checks=[], detail='CI provider deadline expired')
             break
         if deadline is None or outcome['phase'] != 'waiting':
             break
@@ -293,10 +297,22 @@ def ci_gate(locations, *, wait_seconds=0, clock=time.monotonic, sleep=time.sleep
     if (pending or latest != state
             or ci_binding(locations, latest, ci_policy(latest['contract'])) != binding):
         raise CardineError('CI inputs changed before the result write')
-    if deadline is not None and outcome['phase'] == 'waiting' and clock() >= deadline:
+    if (deadline is not None and outcome['phase'] == 'waiting' and clock() >= deadline
+            and not outcome.get('not_started')):
         completed = {c['name'] for c in outcome['checks'] if c['status'] == 'completed'}
         names = ', '.join(name for name in binding['checks'] if name not in completed)
         outcome['detail'] = f'CI wait budget of {wait_seconds} seconds expired for {binding["head"]}; pending checks: {names}'
+    if outcome['phase'] == 'waiting' and outcome.get('not_started'):
+        if wait_seconds >= 300 and deadline is not None and clock() >= deadline:
+            code = 'CI_NOT_STARTED'
+            raise stop_error(code, outcome['detail'] + f'; delivered ref: {binding["ref"]}; '
+                             f'required checks: {", ".join(binding["checks"])}. Pushing the same commit to another '
+                             f'branch that triggers the workflow starts a run accepted by head_sha, for example: '
+                             f'git push origin {binding["head"]}:{binding["ref"]}-ci',
+                             task_id=task_id, project=locations.primary, wait_seconds=wait_seconds)
+        result = _result(binding, 'waiting', replayed, outcome['checks'], outcome['detail'])
+        result['diagnostic'] = 'CI_NOT_STARTED'
+        return result
     if outcome['phase'] != 'passed':
         return _result(binding, outcome['phase'], replayed, outcome['checks'], outcome['detail'])
     _publish(locations, path, binding, state,

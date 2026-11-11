@@ -50,7 +50,7 @@ def envelope(task_id: str, project: str, *, step: str | None,
         raise ValueError("only waiting may request a positive polling interval")
     if stop is not None:
         entry = load_stop_registry().get(stop.get("code"))
-        if not entry or entry["resolution"] != "guardrail" or not entry["human_decision"]:
+        if not entry or not entry["human_decision"]:
             raise ValueError("only registered human guardrails can block")
         if (stop.get("resolution") != "guardrail" or stop.get("human_decision") is not True
                 or next_command is None or next_command["argv"] != stop.get("resume_argv")
@@ -696,7 +696,7 @@ def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict, 
             next_command=command_reference(argv, 'Repair the task implementation'))
     if outcome['phase'] == 'waiting':
         result = resolve_run(replace(facts, ci_pending=True))
-        result['diagnostics'] = [dict(code='CI_PENDING', message=outcome['detail'])]
+        result['diagnostics'] = [dict(code=outcome.get('diagnostic', 'CI_PENDING'), message=outcome['detail'])]
         result['next'] = command_reference([*argv, '--ci-wait-seconds', str(wait_seconds)], 'Wait for required CI')
     else:
         result = resolve_run(facts)
@@ -720,7 +720,7 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
                    f"to include these paths. If approved, add only the approved paths to {shlex.quote(record)} "
                    f"in the task worktree, update Validation if another check is required, then run: {update}. "
                    "If declined, restore the changes to the approved surface before retrying")
-    outcome = outcome_for_code(error.code)
+    outcome = "blocked" if load_stop_registry()[error.code]["human_decision"] else outcome_for_code(error.code)
     run_argv = ["cardine", "run", locations.task_id, "--project", str(locations.primary)]
     resume_argv = shlex.split(error.resume()) if outcome == "next" else run_argv
     # Historical advice is not an executable recovery. Keep it in diagnostics
@@ -733,7 +733,7 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
         # Guardrails recheck the same task after the missing decision. Internal
         # recoveries instead retain their cause-specific command unchanged.
         next_command = command_reference(
-            ["cardine", "run", locations.task_id, "--project", str(locations.primary)],
+            shlex.split(error.resume()) if error.code == "CI_NOT_STARTED" else run_argv,
             "Recheck the guardrail after the required decision")
         stop = dict(code=error.code, resolution="guardrail", human_decision=True,
                     detail=detail, resume=next_command["command"], resume_argv=next_command["argv"])
