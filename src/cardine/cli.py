@@ -178,6 +178,9 @@ def build_parser() -> CardineArgumentParser:
                                 "next command until the task is done or a guardrail stops it.")
     run.add_argument("task_id")
     run.add_argument("--project", type=Path)
+    run.add_argument("--ci-wait-seconds", type=int, default=900, help="CI wait budget in seconds (default: 900; 0 queries once)")
+
+    run.add_argument("--lease-wait-seconds", type=int, default=180, help="integration lease wait budget in seconds (default: 180; 0 checks once)")
 
     self_check = subparsers.add_parser(
         "self-check", help="inspect this Cardine installation"

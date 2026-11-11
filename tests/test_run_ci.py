@@ -122,6 +122,70 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
             self.assertIsNone(engine.run_ci_step(locations, None, None, self.state()))
         self.assertEqual((self.gh_calls(), self.push_count()), (0, 0))
 
+    def test_wait_polls_to_pass_or_failure_without_another_push(self):
+        locations = self.ready()
+        head = self.head()
+        now = [0.0]
+        def sleep(seconds):
+            now[0] += seconds
+            self.checks(head)
+        result = ci.ci_gate(locations, wait_seconds=20, clock=lambda: now[0], sleep=sleep)
+        self.assertEqual(result['phase'], 'passed')
+        self.assertEqual(self.push_count(), 1)
+
+    def test_wait_detects_failure_and_interruption_does_not_repush(self):
+        locations = self.ready()
+        head = self.head()
+        def interrupted(seconds):
+            raise KeyboardInterrupt()
+        with self.assertRaises(KeyboardInterrupt):
+            ci.ci_gate(locations, wait_seconds=20, sleep=interrupted)
+        now = [0.0]
+        def fail(seconds):
+            now[0] += seconds
+            self.checks(head, conclusion='failure')
+        result = ci.ci_gate(locations, wait_seconds=20, clock=lambda: now[0], sleep=fail)
+        self.assertEqual(result['phase'], 'failed')
+        self.assertEqual(self.push_count(), 1)
+        self.assertNotIn('ci-result', self.kinds())
+
+    def test_changed_delivery_during_wait_cannot_publish_old_result(self):
+        locations = self.ready()
+        old = self.head()
+        def replace_delivery(seconds):
+            self.implement('changed while waiting')
+            self.checks(old)
+        with self.assertRaisesRegex(CardineError, 'CI inputs changed'):
+            ci.ci_gate(locations, wait_seconds=30, sleep=replace_delivery)
+        self.assertNotEqual(self.head(), old)
+        self.assertNotIn('ci-result', self.kinds())
+
+    def test_wait_timeout_reuses_published_head(self):
+        locations = self.ready()
+        head = self.head()
+        now = [0.0]
+        def sleep(seconds):
+            now[0] += seconds
+        result = ci.ci_gate(locations, wait_seconds=3, clock=lambda: now[0], sleep=sleep)
+        self.assertEqual(result['phase'], 'waiting')
+        self.assertIn(head, result['detail'])
+        self.assertIn('lint', result['detail'])
+        self.assertIn('3 seconds', result['detail'])
+        self.assertEqual(ci.ci_gate(locations)['head'], head)
+        self.assertEqual(self.push_count(), 1)
+
+    def test_pagination_uses_remaining_deadline(self):
+        now = [0.0]
+        binding = dict(repository='github.com/a/b', head='a' * 40, checks=['check'])
+        def provider(binding, endpoint, timeout):
+            self.assertLessEqual(timeout, 2 - now[0])
+            now[0] += 1
+            return dict(total_count=500, check_runs=[{}])
+        with mock.patch.object(ci, '_provider', side_effect=provider):
+            result = ci.query_checks(binding, deadline=2, clock=lambda: now[0])
+        self.assertEqual(result['phase'], 'waiting')
+        self.assertEqual(now[0], 2)
+
     def test_missing_gh_stops_before_any_push(self):
         locations = self.ready()
         with mock.patch.object(ci.shutil, 'which', return_value=None), \
@@ -352,7 +416,7 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
 
     def test_run_command_emits_a_valid_waiting_envelope_from_an_unrelated_directory(self):
         self.ready()
-        command = [sys.executable, '-m', 'cardine.cli', 'run', '056', '--project', str(self.primary)]
+        command = [sys.executable, '-m', 'cardine.cli', 'run', '056', '--project', str(self.primary), '--ci-wait-seconds', '0']
         result = subprocess.run(command, cwd=self.root, env=dict(os.environ), capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         value = json.loads(result.stdout)

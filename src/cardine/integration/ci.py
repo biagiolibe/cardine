@@ -19,12 +19,13 @@ import os
 import re
 import shutil
 import subprocess
+import time
 
 from cardine.integration.candidate import operation_path
 from cardine.lifecycle import receipts
 from cardine.lifecycle.control import operation_state
 from cardine.shared.errors import CardineError
-from cardine.shared.git import _run_git, scoped_command
+from cardine.shared.git import _run_git, invalidate_facts, scoped_command
 from cardine.stops.render import stop_error
 from cardine.tasks.identity import resolve_task_identity
 
@@ -135,13 +136,13 @@ def _require_gh():
     return gh
 
 
-def _provider(binding, endpoint):
+def _provider(binding, endpoint, timeout=QUERY_SECONDS):
     """One bounded read-only provider call; None means the provider did not answer."""
     gh = _require_gh()
     host = binding['repository'].split('/')[0]
     try:
         done = subprocess.run([gh, 'api', '--hostname', host, '-H', 'Accept: application/vnd.github+json', endpoint],
-                              capture_output=True, text=True, timeout=QUERY_SECONDS, check=False,
+                              capture_output=True, text=True, timeout=timeout, check=False,
                               env={**os.environ, 'GH_PROMPT_DISABLED': '1'})
     except subprocess.TimeoutExpired:
         return None
@@ -158,12 +159,19 @@ def _provider(binding, endpoint):
     return value
 
 
-def query_checks(binding):
+def query_checks(binding, *, deadline=None, clock=time.monotonic):
     """Required checks for the exact repository and SHA: passed, failed or waiting."""
     host, owner, name = binding['repository'].split('/', 2)
     runs, page = [], 1
     while True:
-        data = _provider(binding, f'repos/{owner}/{name}/commits/{binding["head"]}/check-runs?per_page=100&page={page}')
+        endpoint = f'repos/{owner}/{name}/commits/{binding["head"]}/check-runs?per_page=100&page={page}'
+        if deadline is None:
+            data = _provider(binding, endpoint)
+        else:
+            remaining = deadline - clock()
+            if remaining <= 0:
+                return dict(phase='waiting', checks=[], detail='CI provider deadline expired')
+            data = _provider(binding, endpoint, timeout=min(QUERY_SECONDS, remaining))
         if data is None:
             return dict(phase='waiting', checks=[], detail='CI provider did not answer')
         listed, total = data.get('check_runs'), data.get('total_count')
@@ -217,7 +225,7 @@ def _result(binding, phase, changed, checks=(), detail=''):
 
 
 @scoped_command
-def ci_gate(locations):
+def ci_gate(locations, *, wait_seconds=0, clock=time.monotonic, sleep=time.sleep):
     """One bounded CI step; None means no CI is required."""
     worker, task_id = locations.worktree, locations.task_id
     state, pending = operation_state(worker, task_id)
@@ -263,8 +271,32 @@ def ci_gate(locations):
                          'ci-push')
         cached, replayed = state['run']['ci'], True
     receipts.boundary('before_ci_query')
-    outcome = query_checks(binding)
+    deadline = clock() + wait_seconds if wait_seconds else None
+    outcome = dict(phase='waiting', checks=[], detail='CI provider deadline expired')
+    while True:
+        if deadline is not None and clock() >= deadline:
+            break
+        outcome = query_checks(binding, deadline=deadline, clock=clock) if deadline is not None else query_checks(binding)
+        if deadline is not None and clock() >= deadline:
+            outcome = dict(phase='waiting', checks=[], detail='CI provider deadline expired')
+            break
+        if deadline is None or outcome['phase'] != 'waiting':
+            break
+        sleep(min(10, max(0, deadline - clock())))
+        invalidate_facts()
+        latest, pending = operation_state(worker, task_id)
+        if pending or latest != state or ci_binding(locations, latest, ci_policy(latest['contract'])) != binding:
+            raise CardineError('CI inputs changed during the wait')
     receipts.boundary('after_ci_query')
+    invalidate_facts()
+    latest, pending = operation_state(worker, task_id)
+    if (pending or latest != state
+            or ci_binding(locations, latest, ci_policy(latest['contract'])) != binding):
+        raise CardineError('CI inputs changed before the result write')
+    if deadline is not None and outcome['phase'] == 'waiting' and clock() >= deadline:
+        completed = {c['name'] for c in outcome['checks'] if c['status'] == 'completed'}
+        names = ', '.join(name for name in binding['checks'] if name not in completed)
+        outcome['detail'] = f'CI wait budget of {wait_seconds} seconds expired for {binding["head"]}; pending checks: {names}'
     if outcome['phase'] != 'passed':
         return _result(binding, outcome['phase'], replayed, outcome['checks'], outcome['detail'])
     _publish(locations, path, binding, state,

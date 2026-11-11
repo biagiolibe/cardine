@@ -140,6 +140,79 @@ class RunOutputTests(unittest.TestCase):
             self.assertIsNone(result['next'])
             self.assertIsNone(result['stop'])
 
+    def test_wait_budget_arguments_and_continuations(self):
+        from cardine.lifecycle import engine
+        from types import SimpleNamespace
+        location = SimpleNamespace(task_id='001', primary=Path('/project'))
+        base = envelope('001', '/project', step='candidate', outcome='waiting', action='poll-ci',
+                        retry_after_seconds=10, next_command=command_reference(
+                            ['cardine', 'run', '001', '--project', '/project'], 'retry'))
+        for extra, expected in (([], (900, 0)), (['--ci-wait-seconds', '0', '--lease-wait-seconds', '0'], (0, 0)),
+                                (['--ci-wait-seconds', '1200', '--lease-wait-seconds', '3'], (1200, 0))):
+            with self.subTest(extra=extra), patch.object(engine, 'resolve_run_locations', return_value=location), \
+                    patch.object(engine, 'dispatch_run', return_value=__import__('copy').deepcopy(base)) as dispatch, \
+                    redirect_stdout(StringIO()) as output:
+                self.assertEqual(run_preview_cli(['001', *extra]), 0)
+            self.assertEqual((dispatch.call_args.kwargs['ci_wait_seconds'], dispatch.call_args.kwargs['lease_seconds']), expected)
+            result = json.loads(output.getvalue())
+            self.assertIn('--ci-wait-seconds', result['next']['argv'])
+            if '--lease-wait-seconds' in extra:
+                self.assertEqual(result['next']['argv'][-2:], extra[-2:])
+        for flag in ('--ci-wait-seconds', '--lease-wait-seconds'):
+            for value in ('-1', 'abc', '1.5'):
+                with redirect_stdout(StringIO()):
+                    self.assertEqual(run_preview_cli(['001', flag, value]), 64)
+
+    def test_lease_release_resumes_same_invocation(self):
+        from cardine.lifecycle import engine
+        from types import SimpleNamespace
+        location = SimpleNamespace(task_id='001', primary=Path('/project'))
+        waiting = envelope('001', '/project', step='candidate', outcome='waiting', action='wait-for-lease',
+                           retry_after_seconds=5, next_command=command_reference(
+                               ['cardine', 'run', '001', '--project', '/project'], 'retry'))
+        done = envelope('001', '/project', step='landing', outcome='done')
+        with patch.object(engine, 'resolve_run_locations', return_value=location), \
+                patch.object(engine, 'dispatch_run', side_effect=[waiting, done]) as dispatch, \
+                patch('cardine.integration.candidate.wait_for_lease', return_value=True), \
+                redirect_stdout(StringIO()) as output:
+            self.assertEqual(run_preview_cli(['001', '--lease-wait-seconds', '2']), 0)
+        self.assertEqual(dispatch.call_count, 2)
+        self.assertEqual(json.loads(output.getvalue())['outcome'], 'done')
+
+    def test_default_lease_budget_is_180_seconds(self):
+        from cardine.lifecycle import engine
+        from types import SimpleNamespace
+        location = SimpleNamespace(task_id='001', primary=Path('/project'))
+        waiting = envelope('001', '/project', step='candidate', outcome='waiting', action='wait-for-lease',
+                           retry_after_seconds=5, next_command=command_reference(
+                               ['cardine', 'run', '001', '--project', '/project'], 'retry'))
+        with patch.object(engine, 'resolve_run_locations', return_value=location), \
+                patch.object(engine, 'dispatch_run', return_value=waiting), \
+                patch.object(engine.time, 'monotonic', return_value=0), \
+                patch('cardine.integration.candidate.wait_for_lease', return_value=False) as wait, \
+                redirect_stdout(StringIO()):
+            self.assertEqual(run_preview_cli(['001']), 0)
+        self.assertEqual(wait.call_args.kwargs['seconds'], 180)
+
+    def test_lease_timeout_preserves_both_explicit_budgets(self):
+        from cardine.lifecycle import engine
+        from types import SimpleNamespace
+        location = SimpleNamespace(task_id='001', primary=Path('/project'))
+        for step in ('candidate', 'landing'):
+            waiting = envelope('001', '/project', step=step, outcome='waiting', action='wait-for-lease',
+                               retry_after_seconds=5, next_command=command_reference(
+                                   ['cardine', 'run', '001', '--project', '/project'], 'retry'))
+            with self.subTest(step=step), patch.object(engine, 'resolve_run_locations', return_value=location), \
+                    patch.object(engine, 'dispatch_run', return_value=waiting), \
+                    patch('cardine.integration.candidate.wait_for_lease', return_value=False), \
+                    redirect_stdout(StringIO()) as output:
+                self.assertEqual(run_preview_cli(['001', '--ci-wait-seconds', '12', '--lease-wait-seconds', '2']), 0)
+            result = json.loads(output.getvalue())
+            self.assertEqual(result['outcome'], 'waiting')
+            self.assertEqual(result['next']['argv'][-4:], ['--ci-wait-seconds', '12', '--lease-wait-seconds', '2'])
+            self.assertGreater(result['retry_after_seconds'], 0)
+            self.assertIn('2 seconds', result['diagnostics'][0]['message'])
+
     def test_structured_work_is_closed_and_role_bound(self):
         request = WorkRequest('implementer', Path('/tmp/worktree'), 'sha256:contract',
                               ('src/*',), ('contract:acceptance',), ('task-check',), ('committed-source',))

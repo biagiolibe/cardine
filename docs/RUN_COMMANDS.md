@@ -53,6 +53,17 @@ Both presets (`lean` and `governed`) use the same steps.
 | `blocked` | 2 | A guardrail needs a human decision. `stop` names the code; stderr carries one `BLOCKED <CODE>: ...; resume: ...` line. |
 | invalid invocation | 64 | The arguments were wrong; no task was touched. |
 
+For direct landing with required CI, `run` waits up to 900 seconds for checks.
+Use `--ci-wait-seconds <seconds>` to change the nonnegative budget; zero
+queries once. On timeout, `next.command` retains the budget. Rerunning it
+starts a fresh wait on the same published SHA when the delivery is unchanged.
+A competing integration lease has a separate 180-second default; use
+`--lease-wait-seconds <seconds>` to override it or zero to check once.
+After release, the same invocation rechecks state and continues. A timeout
+returns a retry without altering the competing lease. Explicit budgets are
+retained in continuations. Both options are runtime settings and do not
+change the task contract.
+
 Run `next.command` unchanged. It is rendered from `next.argv` with POSIX
 quoting and names the absolute primary path.
 
