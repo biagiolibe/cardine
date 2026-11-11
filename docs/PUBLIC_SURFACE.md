@@ -150,3 +150,5 @@ step, publish `main` when the project workflow requires it, and retry. Cardine
 does not commit or push the registration itself. Status reports the paths in
 `registration_missing` and marks the task not startable until both are on
 `main`; this is separate from dependency blocking.
+
+Interactive `cardine init` defaults to the current project and requires a TTY on both stdin and stdout. It previews choices and their sources, asks for confirmation before applying, then separately offers to commit the written paths and push main. Use `--check` or `--apply` for non-interactive operation. Existing installations and conflicting paths route through adoption and its rehearsal.

@@ -36,3 +36,5 @@ command if a step fails; do not repeat successful mutations.
 - Doctor: report the unified doctor's results exactly as printed. Static files are never proof that a host rule, hook, or profile is in force; only a host evaluating a probe or an observed host decision is. When the doctor is not available in the installed CLI, say so and change nothing. Use `cardine audit --project .` for the read-only marker check.
 
 Every `--check` is read-only and repeats without writing project or home files.
+
+Every agent invocation of `cardine init` or `cardine adopt` must include an explicit mode flag, even when the host provides a pseudo-terminal.

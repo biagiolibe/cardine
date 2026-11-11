@@ -62,15 +62,10 @@ class InitTest(unittest.TestCase):
                 "--slug", "example-project", "--preset", "lean", "--language", "Italian",
                 "--task-identity", "opaque", "--validation", str(self.validation)]
 
-    def test_project_and_operation_are_required(self):
-        args = self.args()
-        for flag in ("--project", "--check"):
-            reduced = args.copy()
-            index = reduced.index(flag)
-            del reduced[index:index + (1 if flag == "--check" else 2)]
-            with self.subTest(flag=flag), contextlib.redirect_stderr(io.StringIO()):
-                with self.assertRaises(SystemExit):
-                    build_parser().parse_args(reduced)
+    def test_project_and_operation_have_interactive_defaults(self):
+        args = build_parser().parse_args(["init"])
+        self.assertEqual(args.project, Path.cwd())
+        self.assertFalse(args.check or args.apply)
         self.assertFalse(self.root.exists())
 
     def test_detected_make_and_conflicting_validation_flags(self):

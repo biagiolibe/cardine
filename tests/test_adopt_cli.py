@@ -62,6 +62,12 @@ class AdoptCliTest(unittest.TestCase):
             self.assertEqual(result.returncode, 2)
             self.assertEqual(json.loads(result.stdout)['outcome'], 'blocked')
 
+    def test_adopt_still_requires_an_explicit_mode(self):
+        with tempfile.TemporaryDirectory() as temp:
+            result = self.invoke(Path(temp), '--project', temp)
+            self.assertEqual(result.returncode, 64)
+            self.assertEqual(json.loads(result.stdout)['outcome'], 'invalid')
+
     def test_invalid_invocation(self):
         with tempfile.TemporaryDirectory() as temp:
             result = self.invoke(Path(temp), '--project', temp, '--check', '--apply')

@@ -159,8 +159,8 @@ def build_parser() -> CardineArgumentParser:
     adopt_validation.add_argument("--test")
     adopt.add_argument("--ci", type=Path)
     init = subparsers.add_parser("init", help="preview or apply a configured project bootstrap", epilog="Start with cardine guide --project . for onboarding guidance.")
-    init.add_argument("--project", type=Path, required=True)
-    init_mode = init.add_mutually_exclusive_group(required=True)
+    init.add_argument("--project", type=Path, default=Path.cwd())
+    init_mode = init.add_mutually_exclusive_group()
     init_mode.add_argument("--check", action="store_true")
     init_mode.add_argument("--apply", action="store_true")
     init.add_argument("--name")
@@ -565,6 +565,9 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
     journal.begin(arguments)
     framework_root = arguments.framework_root.resolve()
     if arguments.command == "init":
+        if not arguments.check and not arguments.apply:
+            from cardine.templates.interactive_init import interactive_init
+            return interactive_init(arguments, framework_root)
         from cardine.templates.init import init_cli
 
         return init_cli(arguments, framework_root)
