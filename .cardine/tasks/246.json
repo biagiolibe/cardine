@@ -26,6 +26,7 @@
       "tests/test_status_render.py",
       "tests/test_run_console.py",
       "tests/test_console_snapshot.py",
+      "tests/test_command_context.py",
       "docs/RUN_COMMANDS.md",
       "docs/PUBLIC_SURFACE.md"
     ],
@@ -80,11 +81,22 @@
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_preparation --module test_run_worktree_step --module test_run_resolution --module test_run_output --module test_task_status --module test_task_status_gates --module test_status_render --module test_run_console --module test_console_snapshot --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_preparation --module test_run_worktree_step --module test_run_resolution --module test_run_output --module test_task_status --module test_task_status_gates --module test_status_render --module test_run_console --module test_console_snapshot --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word --module test_command_context"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:2920b55d43b5a69f16620f2c754bfc403045d45a0cf773bfaf5bade4b9fd8d79",
+      "at": "2026-11-11T00:46:23.347522Z",
+      "before": "sha256:0f032bf8fbcb03277a995d813b66dd3675a57eb87ee46618cb42dcad434feb47",
+      "changedFields": [
+        "expectedCodeSurface",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "ci": {
       "binding": {
@@ -301,6 +313,30 @@
         "source": "84d93c189b7ac93bcb4c1343248887c55056ae6f",
         "task_id": "246",
         "tree": "167ec69804d5d679241e2229b29b3ab61afbb19d",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "b09ac9bce0edffde0c54378b3fb3e2e7153bcbb50fcb091aeed2800bd6b0b7c2",
+        "digest": "fa3dcc12f34f9db0ff93fc99b7567fd3463d8599550724d1e0609a7f8c0bfbe6",
+        "inputs": {
+          ".cardine/tasks/246.json": "e48b521fb3861bef2ca28f4b5a38cf91b37cd84e24a1c6210e91b306805f8fbc",
+          "tasks/246.md": "53e7efbde9f34e642df7223699427aac70897fae8adecff24b1bcd5b1537c156"
+        },
+        "kind": "contract_revision",
+        "operation_id": "6acc127fa5d646a0b29efe8e2958630f",
+        "outputs": {
+          ".cardine/tasks/246.json": "5fae6d473609a57e184f3cde04d55920859645c8f40a0dcd42d7ef99e02fe1d5",
+          "tasks/246.md": "53e7efbde9f34e642df7223699427aac70897fae8adecff24b1bcd5b1537c156"
+        },
+        "predecessor": "21375880786a9886951b10cdf05e8549e714062999b764c94ada86e0edf8ea9c",
+        "result": "verified",
+        "source": "d23131ea9bac6c669fe9250a43f481ded380beb4",
+        "task_id": "246",
+        "tree": "79cee599bc2d6e113d8ae6e8524e3ba04869a143",
         "version": 1
       }
     ],
