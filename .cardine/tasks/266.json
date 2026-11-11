@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "templates/single/docs/OPERATOR_PROMPTS.md",
+      "tests/test_template_marker_heading.py",
+      "tests/test_template_cookbook_actions.py",
+      "docs/QUICKSTART.md",
+      "changelog.d/266.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "developer request",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/266.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 266 \u2014 Rewrite the operator prompts around everyday requests",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_cookbook_actions --module test_template_marker_heading --module test_template_entry_actions --module test_template_reference_actions --module test_template_word_budget --module test_template_replacement --module test_template_manifest --module test_marker_structure_audit --module test_project_guide --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "5cbc7821c268c68853b1d118811194872aefb45a24ebc6749391b3e6b97b41cf",
+        "digest": "c60fe17617c64f9ed885af5defea4ef5fc60469e46b7b5de3885423ebce2733b",
+        "inputs": {
+          ".cardine/tasks/266.json": null,
+          "tasks/266.md": null
+        },
+        "kind": "creation",
+        "operation_id": "ae619ef821324d748b8e2e68154d92a9",
+        "outputs": {
+          ".cardine/tasks/266.json": "c7bd74dcd08ad04a09990042686c1c0e36abc392c91203b0a0964d9263269a9d",
+          "tasks/266.md": "785cb9a502a6254887400584642badfa3c40b28f2bcc2c0e5b448922934e62e5"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "e14a040c3eea85a209ab4c6ae0e6a75183847346",
+        "task_id": "266",
+        "tree": "b25373825017d3f2f7b1ce5332a9aba88f48ffb3",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "266",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

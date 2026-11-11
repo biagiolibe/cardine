@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "commands/cardine-init.md",
+      "commands/cardine-adopt.md",
+      "commands/cardine-task.md",
+      "commands/cardine-upgrade.md",
+      "skills/cardine-project/SKILL.md",
+      "tests/test_template_commands.py",
+      "changelog.d/268.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "maintenance",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/268.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 268 \u2014 Align the plugin commands and the project skill with `cardine init`",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_commands --module test_host_codex_access --module test_host_distribution --module test_template_router --module test_check_repository --module test_public_surface --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "b0cab4325b82b7d2e6bf697230c23b5306cee8f6c48a6ac9a9a5c5cb84ab012f",
+        "digest": "eed1b8255c45925b17519e2e0b090c67dd9085fa185f86464df6c1e6adb414b7",
+        "inputs": {
+          ".cardine/tasks/268.json": null,
+          "tasks/268.md": null
+        },
+        "kind": "creation",
+        "operation_id": "26f739feed8f4de5b1ebffb047c6cea7",
+        "outputs": {
+          ".cardine/tasks/268.json": "e0aaf132d6a6eac99eaf3b7e60f38972196313351c8c85eaaefb6a3e89dd5b55",
+          "tasks/268.md": "40ded887b8a82f0808282d262d347ab2fb1286c4bf425f725927718f5e95caa1"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "e14a040c3eea85a209ab4c6ae0e6a75183847346",
+        "task_id": "268",
+        "tree": "b25373825017d3f2f7b1ce5332a9aba88f48ffb3",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "268",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
