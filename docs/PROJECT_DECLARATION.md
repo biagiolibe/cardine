@@ -74,6 +74,28 @@ Candidate validation always adds `git diff --check`. Task commands supplement
 the baseline. Retry limits are positive integers. Context reading guards and evidence tiers remain available
 without spend counters.
 
+## Change the declaration
+
+1. Commit the change to `.cardine/project.json` on `main` first.
+   `cardine authorize` refuses while the declaration in the checkout differs
+   from `main`: "project declaration differs from main; commit or restore it first".
+2. Then the developer runs `cardine authorize --check --project .` and
+   `cardine authorize --apply --project .` from their own terminal. Until
+   reauthorization, every task operation stops with "developer reauthorization required".
+3. Queued tasks keep their frozen contract. To use the new declaration, run
+   `cardine task contract update <ID>`: it rebuilds the contract from the task
+   record and the new declaration, preserves the status, transitions, and record
+   path, and adds a `contract_history` entry. The `projectDigest` field records
+   provenance only; nothing compares it.
+4. Prepared tasks need no action. `authorize --check` lists each task whose
+   declaration predates `main` as
+   `task-policy: <ID> predates main; cardine run <ID> will merge main`.
+   The next `cardine run` merges `main` into the task branch once the work is
+   committed, as described in [Run commands](RUN_COMMANDS.md). Earlier receipts
+   stay valid.
+5. Advice: letting open tasks land first avoids merging `main` into a task
+   under review and repeating its validation.
+
 `ci` may be `none` or an object with `provider` and `requiredChecks`.
 `ciBeforeLanding: true` requires a supported provider and nonempty checks.
 When `main` has changed paths that the task also changed, Cardine merges `main` into the
