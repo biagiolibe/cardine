@@ -104,8 +104,11 @@ git push origin main
 cardine run 001
 ```
 
-Run `cardine run 001` again after each step, following the `next` command it prints,
-until it reports `done` or asks for your decision. The full record format is in
+`cardine run` prints JSON. When `step` is `implementation`, make the change in the
+directory that `work.worktree` names and commit it there; that worktree is the
+task's branch, not your checkout. Then run `cardine run 001` again after each step,
+following the `next` command it prints, until it reports `done` or a stop with its
+reason and the command to resume. The full record format is in
 `tasks/TASK_BLUEPRINT.md` in your project. For advanced validation settings, see
 `cardine init --help`.
 

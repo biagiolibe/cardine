@@ -166,7 +166,7 @@ def resolve_run(facts: RunFacts) -> dict:
     if facts.validation_failed or facts.review_changes_requested:
         return result("implementation", "Repair the delivered implementation", outcome="iterate")
     if not facts.implementation_delivered:
-        return result("implementation", "Obtain committed implementation and acceptance evidence")
+        return result("implementation", "Make and commit the change in the task worktree, then run this command again")
     if not facts.validation_passed:
         return result("validation", "Run the complete current validation command set")
     if facts.review_required and not facts.review_approved:
@@ -527,7 +527,7 @@ def run_worktree_step(locations: RunLocations, active: dict) -> dict | None:
     receipts.boundary('after_run_execution_start')
     argv = ['cardine', 'run', task_id, '--project', str(locations.primary)]
     return envelope(task_id, str(locations.primary), step='worktree', action='execution-start',
-                    next_command=command_reference(argv, 'Obtain committed implementation and acceptance evidence'),
+                    next_command=command_reference(argv, 'Make and commit the change in the task worktree, then run this command again'),
                     evidence=[dict(kind='worktree', path=str(worktree),
                                    identity=str(started['commit']))])
 
