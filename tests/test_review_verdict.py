@@ -18,13 +18,15 @@ from control_support import issued_verdict
 
 
 class ReviewVerdictTest(unittest.TestCase):
+    config = {}
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "tasks").mkdir()
         self.git("init", "-q", "-b", "main")
-        write_project_config(self.root, "governed", validation=VALIDATION)
+        write_project_config(self.root, "governed", validation=VALIDATION, **self.config)
         (self.root / "LANGUAGE_POLICY.md").write_text("English\n")
         (self.root / "AGENTS.md").write_text("Read `PROJECT_WORKFLOW.md`.\n")
         self.record = self.root / "tasks/001.md"
@@ -136,6 +138,28 @@ class ReviewVerdictTest(unittest.TestCase):
         result = self.cli("APPROVE", "--owner")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["review"]["approved_by"], "owner")
+
+    def test_owner_refused_when_sources_exclude_owner(self):
+        from cardine.shared import project
+        self.config = {"review": {"sources": ["forge"]}}
+        with mock.patch.object(project, "AVAILABLE_REVIEW_SOURCES", frozenset({"owner", "forge"})):
+            self.setUp()
+            state = json.loads(self.path.read_text())
+            self.assertEqual(state["contract"]["reviewSources"], ["forge"])
+            result = self.cli("APPROVE", "--owner")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("REVIEW_NOT_APPROVED", result.stderr)
+        self.assertIn("cause: source", result.stderr)
+
+    def test_contract_carries_review_sources_only_when_declared(self):
+        state = json.loads(self.path.read_text())
+        self.assertNotIn("reviewSources", state["contract"])
+        write_project_config(self.root, "governed", validation=VALIDATION, review={"sources": ["owner"]})
+        (self.root / "tasks/002.md").write_text(contract_record(extra="Status: queued\n").replace("001", "002"))
+        path = self.root / ".cardine/tasks/002.json"
+        path.write_text(json.dumps({"version": 1, "task_id": "002", "workflow": "single", "status": "queued", "transitions": []}))
+        freeze_record(self.root, "002")
+        self.assertEqual(json.loads(path.read_text())["contract"]["reviewSources"], ["owner"])
 
     def test_attempts_and_existing_prose_are_preserved(self):
         self.assertEqual(self.cli("CHANGES_REQUESTED", "--body", "First findings").returncode, 0)

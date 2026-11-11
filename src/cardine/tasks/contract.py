@@ -130,8 +130,11 @@ def resolve_task_contract(project_root: Path, task_id: str, *, text: str | None 
     for references in validation["candidate"].values():
         if diff_id not in references and diff_id not in validation["baseline"]:
             references.append(diff_id)
+    review_sources = ({"reviewSources": list(configuration["review"]["sources"])}
+                      if "review" in configuration else {})
     return {
         **resolve_human_fields(project_root, identity, text, task_class),
+        **review_sources,
         "preset": configuration["preset"], "class": task_class,
         "projectDigest": "sha256:" + hashlib.sha256(
             json.dumps(declaration, sort_keys=True, separators=(",", ":")).encode("utf-8")

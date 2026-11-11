@@ -41,6 +41,11 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         if state['status'] != 'in_review' and (not saved or saved['binding']['source'] != head):
             raise stop_error('TASK_STATE_INVALID', 'review status: allowed in_review', task_id=task_id, project=root)
         session = None
+        sources = state['contract'].get('reviewSources', ['owner'])
+        if owner and 'owner' not in sources:
+            raise stop_error('REVIEW_NOT_APPROVED',
+                             f"cause: source; the task contract's reviewSources ({', '.join(sources)}) exclude owner; project key review.sources",
+                             task_id=task_id, project=root)
         if not owner:
             record = state.get('run', {}).get('hostLaunches', {}).get(request_id)
             if not record or not record['session'] or not record['response']:
