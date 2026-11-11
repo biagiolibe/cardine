@@ -161,15 +161,17 @@ Proven:
   review, from queued to landed on `main`; a task with required review and
   one round of requested changes; an agent that followed only what
   `cardine run` printed; a stop followed by a resume;
-- the path of the [Quickstart terminal section](docs/QUICKSTART.md#start-in-the-terminal), from `cardine adopt` and
-  a quick task to landing, in a disposable project with the CLI installed
-  from a clone;
+- the [quick start](docs/QUICKSTART.md) path for release 0.9.2, in a
+  disposable home and project: installation with pipx from the `v0.9.2` tag,
+  `cardine init`, `cardine setup` with the Claude Code plugin aligned to the
+  release and the Codex skills linked, and a quick task from the terminal to
+  landing on `main`;
 - on Cardine's own repository: its tasks land through `cardine run`.
 
 Not yet proven or measured:
 
 - a task landed through Cardine in another project;
-- installation from a released package;
+- the path where an agent installs Cardine and delivers the first task;
 - the field trial that gates 1.0 (ADR decision 10);
 - the comparison with and without Cardine. Its
   [protocol](docs/BENCHMARK_PROTOCOL.md) is decided; nothing has been run.
