@@ -1,6 +1,6 @@
 # ADR: Sources of a review verdict
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 

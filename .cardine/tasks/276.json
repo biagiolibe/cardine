@@ -1,0 +1,108 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "docs/FORGE_PROBE.md",
+      "docs/ADR_REVIEW_VERDICT_SOURCES.md",
+      "src/cardine/review/forge.py",
+      "tests/test_review_forge.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/276.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 276 \u2014 Probe the forge facts and read pull request reviews",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_review_forge --module test_run_ci --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "7bc43b73b17e3c16c389d86595baef9ce32ae083647f00254bd0681a2e321990",
+        "digest": "786d26e60383c9c79353abe04e4fd506a02740989a47c66b4d675b5edfcfced2",
+        "inputs": {
+          ".cardine/tasks/276.json": null,
+          "tasks/276.md": null
+        },
+        "kind": "creation",
+        "operation_id": "4a9557006f2640cbad2422c2b5534dd6",
+        "outputs": {
+          ".cardine/tasks/276.json": "c3b5e656951d9018df4e21203bf0689c3e037f565542b6e47f697344b00f03a5",
+          "tasks/276.md": "d9426486693e55a40e059508e4d812170cb2cad335307866d39fe725416d12db"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "c0ad769a588ad71b5a37a04c8922990531462cb3",
+        "task_id": "276",
+        "tree": "e9b2648cacbb70e7c3ce9654894b10d38dc82059",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "276",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
