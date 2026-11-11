@@ -1,0 +1,116 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "257"
+    ],
+    "expectedCodeSurface": [
+      "scripts/run_pilot.py",
+      "tests/test_run_pilot.py",
+      "evals/pilot/README.md",
+      "evals/pilot/inputs.json",
+      "evals/pilot/checks/check_small.py",
+      "evals/pilot/checks/check_medium.py",
+      "evals/pilot/project/stock.py",
+      "evals/pilot/project/store.py",
+      "evals/pilot/project/test_inventory.py",
+      "evals/pilot/project/README.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "developer request",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/261.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 261 \u2014 Build the kit for a pilot comparison with and without Cardine",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_pilot --module test_agent_evals --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_command_word --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "dce8709d679ff82ec2ff5ac2ea6da003ab6a52c08276a9f9b8a4826e064cc9af",
+        "digest": "025cb01f40d1ba38e8b3adb2633ab6a888f5d8e2c7e03119b93d0a855c911533",
+        "inputs": {
+          ".cardine/tasks/261.json": null,
+          "tasks/261.md": null
+        },
+        "kind": "creation",
+        "operation_id": "9c29cdb847a74451990240a3643a0dc8",
+        "outputs": {
+          ".cardine/tasks/261.json": "f8a370c18df037c3dba7183af247069f4eda8df590c08e29547245a1ce91bc18",
+          "tasks/261.md": "c69849b22ce0bde42fe15f938aa7e190a5e0e39a52101644fb8b4b57275c4b44"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "aa66a9a41ab13d32222d8d35fb9ebe40b63cd363",
+        "task_id": "261",
+        "tree": "ea4a4ca2b0314cf5f81c332ed2ddf5bc79b09009",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "261",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
