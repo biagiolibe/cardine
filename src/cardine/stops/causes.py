@@ -139,6 +139,7 @@ EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
     ("src/cardine/tasks/recording.py", "record_validation", "WRONG_WORKTREE"): ("guardrail", "a task branch cannot record another task's evidence"),
     ("src/cardine/lifecycle/engine.py", "diagnostic_result", "COMMAND_REFUSED"): ("guardrail", "unregistered or untyped diagnostic cannot authorize repair"),
     ("src/cardine/lifecycle/engine.py", "dispatch_run", "COMMAND_REFUSED"): ("guardrail", "unknown resolved-task failure has no safe ownership or recovery proof"),
+    ("src/cardine/lifecycle/engine.py", "run_preview_cli", "COMMAND_REFUSED"): ("guardrail", "unexpected failure while waiting for the integration lease has no safe ownership or recovery proof"),
     ("src/cardine/lifecycle/preview.py", "preview_run", "COMMAND_REFUSED"): ("guardrail", "read-only preview refuses uncovered state or foreign operation inputs without executing recovery"),
     ("src/cardine/tasks/preflight.py", "check_dependencies", "DEPENDENCY_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
     ("src/cardine/tasks/preflight.py", "execution_preflight", "TASK_STEP_PENDING"): ("split", "read-only resolution of valid task order or pending landed dependency"),
