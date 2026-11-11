@@ -8,17 +8,13 @@ from pathlib import Path
 import argparse
 import json
 import shlex
-import os
-import shlex
 import sys
 
 from cardine.release.version import parse_semver, read_raw_version
 from cardine.shared.constants import USAGE_HOSTS
 from cardine.shared.errors import CardineError, CardineStop
-from cardine.shared.paths import SCRIPTS_ROOT
+from cardine.shared.paths import PACKAGE_ROOT, framework_root as resolve_framework_root, source_checkout
 
-if str(SCRIPTS_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS_ROOT))
 
 class CardineArgumentParser(argparse.ArgumentParser):
     """Use sysexits-style usage status for machine-oriented namespaces."""
@@ -136,7 +132,7 @@ def build_parser() -> CardineArgumentParser:
     parser.add_argument(
         "--framework-root",
         type=Path,
-        default=Path(os.environ.get("CARDINE_ROOT", SCRIPTS_ROOT.parent)),
+        default=resolve_framework_root(),
     )
     parser.add_argument(
         "--version",
@@ -579,7 +575,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
 
             # Environment and --framework-root select upgrade inputs, never the
             # checkout that owns this running executable.
-            return run_self_update(SCRIPTS_ROOT.parent,
+            return run_self_update(source_checkout() or PACKAGE_ROOT,
                                    apply=arguments.apply, target_tag=arguments.target_tag)
         if arguments.command == "self-check":
             from cardine.release.update import run_self_check
@@ -590,10 +586,6 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 raise CardineError("--interval must be between 0.2 and 60")
             if not sys.stdin.isatty() or not sys.stdout.isatty():
                 raise CardineError("interactive console requires a terminal")
-            console_path = framework_root / "scripts" / "project_console.py"
-            if not console_path.is_file():
-                raise CardineError(f"console is unavailable from framework root: {framework_root}")
-            sys.path.insert(0, str(console_path.parent))
             from cardine.console import entry as project_console
 
             return project_console.main([

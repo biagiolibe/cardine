@@ -6,7 +6,7 @@ from pathlib import Path
 import json
 
 from cardine.shared.errors import InternalStopError
-from cardine.shared.paths import SCRIPTS_ROOT
+from cardine.shared.paths import framework_root
 
 
 STOP_REGISTRY_PATH = Path("capabilities/stop-codes-v1.json")
@@ -24,7 +24,7 @@ def load_stop_registry() -> dict[str, dict[str, object]]:
     """Load the stop-code registry that every CLI stop is emitted through."""
     global _stop_registry_cache
     if _stop_registry_cache is None:
-        path = SCRIPTS_ROOT.parent / STOP_REGISTRY_PATH
+        path = framework_root() / STOP_REGISTRY_PATH
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as error:

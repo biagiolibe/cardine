@@ -21,6 +21,7 @@ from cardine.hosts.claude import claude_legacy_plugin_advisories
 from cardine.hosts.effects import changed
 from cardine.lifecycle.file_operation import Operation
 from cardine.shared.errors import CardineError
+from cardine.shared.paths import source_checkout
 
 # event -> (matcher, command suffix, timeout). Matchers follow the payloads the
 # shared read guard decodes: Claude's native Read tool, Codex's shell tool.
@@ -67,14 +68,18 @@ class HooksPlan:
 
 
 def launcher() -> tuple[str, ...]:
-    """The interpreter and launcher of the running Cardine checkout.
+    """The interpreter and launcher of the running Cardine installation.
 
     Hosts started from a desktop app run hooks without the developer's interactive
     shell PATH, where neither `cardine` nor a recent `python3` resolves. Absolute
     paths make the registered command independent of that PATH.
     """
-    script = Path(__file__).resolve().parents[3] / "bin" / "cardine"
-    return (sys.executable, str(script)) if script.is_file() else ("cardine",)
+    checkout = source_checkout()
+    if checkout is not None:
+        script = checkout / "bin" / "cardine"
+        if script.is_file():
+            return sys.executable, str(script)
+    return sys.executable, "-m", "cardine"
 
 
 def hook_command(host: str, name: str) -> str:

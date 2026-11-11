@@ -15,6 +15,7 @@ from cardine.legacy.conversion_reader import read_legacy_project
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
+from cardine.shared.paths import PACKAGE_ROOT
 from cardine.worktree.storage import resolve_worktree_root
 
 
@@ -49,7 +50,7 @@ def rehearse_adoption(project: Path, plan, framework: Path):
         env = os.environ.copy()
         env.update(HOME=str(scratch / 'home'), XDG_CONFIG_HOME=str(scratch / 'home/config'),
                    CARDINE_WORKTREE_ROOT=str(scratch / 'worktrees'),
-                   TMPDIR=str(scratch / 'tmp'), PYTHONPATH=str(framework / 'src'))
+                   TMPDIR=str(scratch / 'tmp'), PYTHONPATH=str(PACKAGE_ROOT.parent))
         (scratch / 'home').mkdir()
         (scratch / 'tmp').mkdir()
         receipts.boundary('before_rehearsal_clone')

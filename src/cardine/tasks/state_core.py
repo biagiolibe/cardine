@@ -7,6 +7,7 @@ This module has no dependency on the CLI; the CLI supplies its registered stop f
 from __future__ import annotations
 
 from cardine.shared.layout import names
+from cardine.shared.paths import framework_root
 
 import json
 import re
@@ -23,7 +24,7 @@ STATE_MACHINE = {
     "in_review": ("in_progress", "cancelled"),
     "done": (), "cancelled": (),
 }
-SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schemas/task-state-v1.schema.json"
+SCHEMA_PATH = framework_root() / "schemas/task-state-v1.schema.json"
 
 
 class TaskStateInvalid(ValueError):

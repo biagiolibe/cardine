@@ -12,12 +12,13 @@ from cardine.console.models import FrameworkIdentity, Snapshot, Task
 from cardine.console.render import _elapsed
 from cardine.console.snapshot import DeliveryCache, IdentityCache, load_snapshot, load_initial_snapshot
 from cardine.shared.console_workflow import ConsoleError
+from cardine.shared.paths import framework_root
 
 
 def _framework_identity(script_path: Path | None = None) -> FrameworkIdentity:
     """Read this running framework's identity once; identity lookup must not block the console."""
     root = (script_path.resolve().parent.parent if script_path is not None
-            else Path(__file__).resolve().parents[3])
+            else framework_root())
     try:
         version = (root / "VERSION").read_text(encoding="utf-8").strip()
     except (OSError, UnicodeError):
