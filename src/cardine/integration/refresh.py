@@ -82,24 +82,6 @@ def record_base(locations, main: str) -> None:
     state = _read_json_object(path, 'worktree lifecycle state')
     if state.get('base_commit') != main:
         repair_preparation(locations.primary, identity, dict(state), dict(state, base_commit=main))
-    rebase_delivery(locations, main)
-
-
-def rebase_delivery(locations, main: str) -> None:
-    """Carry the finished delivery record to the new base.
-
-    The delivery it records is stale against the new base, so ``verify_delivery``
-    returns nothing and the merged head is delivered and validated as new work.
-    A delivery still in flight is left untouched.
-    """
-    from cardine.lifecycle import receipts
-    from cardine.lifecycle.delivery import _operation_path
-    operation = _operation_path(locations.worktree, locations.task_id)
-    if not operation.exists():
-        return
-    intent = receipts._load_intent(operation)
-    if intent.get('result') == 'verified' and intent.get('base') != main:
-        receipts._save_intent(operation, dict(intent, base=main))
 
 
 def refresh_to(locations, main: str) -> dict:

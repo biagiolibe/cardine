@@ -82,6 +82,19 @@ class RefreshTest(test_run_ci.CiTest):
         self.assertEqual(integration['decision'], 'REUSE')
         self.assertEqual(integration['validated_base_commit'], main)
 
+    def test_the_refresh_writes_no_delivery_operation_and_the_next_run_delivers_the_merged_head(self):
+        from cardine.lifecycle import receipts
+        from cardine.lifecycle.delivery import _operation_path
+        locations = self.overlapping()
+        operation = _operation_path(self.worker, '056')
+        before = operation.read_bytes() if operation.exists() else None
+        first = engine.run_validation_step(locations)
+        self.assertEqual(first['action'], 'refresh-from-main')
+        self.assertEqual(operation.read_bytes() if operation.exists() else None, before)
+        self.drive(locations)
+        if operation.exists():
+            self.assertEqual(receipts._load_intent(operation)['base'], self.git('rev-parse', 'main').stdout.strip())
+
     def merge_in_progress(self):
         path = self.git('rev-parse', '--git-path', 'MERGE_HEAD', cwd=self.worker).stdout.strip()
         return (self.worker / path).exists()
@@ -252,6 +265,7 @@ class PolicyRefreshTest(unittest.TestCase):
         self.assertIn('task', result['stop']['detail'])
         self.assertIn(str(self.worker), result['stop']['detail'])
         self.assertNotIn('cardine authorize', result['stop']['detail'])
+        self.assertNotIn('developer reauthorization required', result['stop']['detail'])
         self.assertEqual(self.git(self.worker, 'rev-parse', 'HEAD'), head)
 
     def test_a_main_policy_that_was_not_accepted_keeps_the_stop(self):

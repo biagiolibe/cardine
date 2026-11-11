@@ -212,6 +212,29 @@ deliver_implementation(Path(sys.argv[1]), '001')
         self.assertIsNone(verify_delivery(self.worker, self.state(), self.base))
         self.assertEqual(self.deliver()['source'], source)
 
+    def test_a_verified_delivery_on_an_ancestor_base_is_superseded_and_other_bases_are_refused(self):
+        first = self.deliver()
+        operation = _operation_path(self.worker, '001')
+        intent = receipts._load_intent(operation)
+        ancestor = self.git('rev-parse', f'{self.base}~1')
+        receipts._save_intent(operation, dict(intent, base=ancestor))
+        (self.worker / 'src/result.py').write_text('result = 3\n')
+        self.git('add', '.')
+        self.git('commit', '-m', 'Revise after the refresh')
+        source = self.git('rev-parse', 'HEAD')
+        again = self.deliver()
+        self.assertEqual(again['source'], source)
+        self.assertNotEqual(again['source'], first['source'])
+        renewed = receipts._load_intent(operation)
+        self.assertEqual((renewed['base'], renewed['result']), (self.base, 'verified'))
+        unrelated = self.git('commit-tree', f'{self.base}^{{tree}}', '-m', 'unrelated')
+        receipts._save_intent(operation, dict(renewed, base=unrelated))
+        with self.assertRaisesRegex(CardineError, 'owner or authority changed'):
+            self.deliver()
+        receipts._save_intent(operation, dict(renewed, base=ancestor, result='pending'))
+        with self.assertRaisesRegex(CardineError, 'owner or authority changed'):
+            self.deliver()
+
     def attempt(self, phase):
         """Leave a validation intent in the given phase, as a finished or running attempt would."""
         from cardine.lifecycle.validation import operation_path

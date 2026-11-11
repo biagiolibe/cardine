@@ -87,9 +87,14 @@ def deliver_implementation(root, task_id, *, context=None):
         if operation.exists():
             intent = receipts._load_intent(operation)
             if (intent['task_id'] != task_id or not receipts.authority_covers(intent['authority'], receipts.require_authority(root, context=context), root)
-                    or intent['root'] != str(root) or intent['base'] != base):
+                    or intent['root'] != str(root)):
                 raise CardineError('delivery operation owner or authority changed')
-            if intent['result'] == 'verified':
+            if intent['base'] != base and not (
+                    intent['result'] == 'verified'
+                    and _run_git(root, 'merge-base', '--is-ancestor', str(intent['base']), base).returncode == 0):
+                raise CardineError('delivery operation owner or authority changed')
+            superseded = intent['base'] != base
+            if intent['result'] == 'verified' and not superseded:
                 state = _execution_state(root, task_id, context=context)
                 current = verify_delivery(root, state, base, context=context)
                 if current is not None:
@@ -100,6 +105,9 @@ def deliver_implementation(root, task_id, *, context=None):
                     return current
                 # An ordinary new implementation can start another delivery;
                 # no stale receipt is promoted to validation or acceptance.
+                intent = None
+            elif superseded:
+                # Verified against an earlier base that is an ancestor of this one.
                 intent = None
         else:
             intent = None
