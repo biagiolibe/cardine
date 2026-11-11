@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from cardine.adopt.release import conversion_outputs, strip_managed_blocks
 from cardine.tasks.status_render import render_queue
 from cardine.tasks.state import STATUSES
-from cardine.adopt.apply import apply_adopt
+from cardine.adopt.apply import apply_adopt, encode_plan, decode_plan
 from cardine.adopt.plan import AdoptPlan
 from cardine.lifecycle import receipts
 from cardine.shared.errors import CardineError
@@ -113,6 +113,26 @@ class ApplyInitTest(unittest.TestCase):
                 self.assertEqual((root / 'a.txt').read_bytes(), b'one')
                 self.assertEqual((root / 'dir/b.txt').read_bytes(), b'two')
                 self.assertFalse(apply_adopt(root, plan))
+
+    def test_resume_preserves_choices_and_legacy_plan_digest(self):
+        choices = {'name': {'value': 'Example', 'source': 'flag'}}
+        for original_choices in (choices, None):
+            with self.subTest(choices=original_choices), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory) / 'project'
+                root.mkdir()
+                plan = AdoptPlan('A', {'a.txt': b'one'}, (), (), (), {}, choices=original_choices)
+                saved = encode_plan(plan)
+                self.assertEqual('choices' in saved, original_choices is not None)
+                restored = decode_plan(saved)
+                self.assertEqual(restored.choices, original_choices)
+                self.assertEqual(restored.bytes(), plan.bytes())
+                def interrupt(name):
+                    if name == 'before_adopt_write:a.txt':
+                        raise RuntimeError(name)
+                with patch.object(receipts, 'boundary', interrupt), self.assertRaises(RuntimeError):
+                    apply_adopt(root, plan)
+                self.assertTrue(apply_adopt(root, None))
+                self.assertEqual((root / 'a.txt').read_bytes(), b'one')
 
     def test_writes_over_an_existing_file_only_as_planned(self):
         with tempfile.TemporaryDirectory() as directory:

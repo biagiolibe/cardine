@@ -1,13 +1,9 @@
 # Project adoption
 
-`cardine adopt` installs Cardine in an existing project. For Contoso, declare
-validation commands in a JSON file as shown in [First 5 minutes](../README.md#first-5-minutes),
-then inspect the plan:
+`cardine adopt` installs Cardine in an existing project. Preview the choices with:
 
-```bash
-cardine adopt --project . --check --name "Contoso API" --slug contoso-api \
-  --preset lean --language English --task-identity opaque \
-  --validation ~/contoso-validation.json
+```sh
+cardine adopt --project . --check --test "python3 -m unittest"
 ```
 
 Use the same inputs with `--rehearse` to verify adoption in a disposable clone,

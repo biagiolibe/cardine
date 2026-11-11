@@ -131,7 +131,7 @@ list of entries. Changes follow the versioning and deprecation rules above.
 
 ## Project conversion
 
-`cardine adopt` plans, rehearses, and applies conversion of projects without Cardine and existing legacy installations. See [Adoption commands](ADOPT_COMMANDS.md).
+`cardine adopt` plans, rehearses, and applies conversion of projects without Cardine and existing legacy installations. Its JSON plan includes `choices` with each value and source. Both `cardine init` and `cardine adopt` accept `--test` to declare a test command. See [Adoption commands](ADOPT_COMMANDS.md).
 
 Maintainer commands live under `python3 scripts/dev.py`: `profile`, `report flow`,
 `generate-entry-routers`, and `agent-evals`. They are internal development

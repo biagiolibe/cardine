@@ -16,6 +16,7 @@ from cardine.shared.constants import PROTOCOL_VERSION
 from cardine.shared.errors import CardineError
 from cardine.shared.layout import names
 from cardine.shared.project import parse_project_declaration, project_validation_commands
+from cardine.shared.project_defaults import resolve_choices
 from cardine.tasks.state import STATUSES
 from cardine.tasks.status_render import input_digest, render_queue
 from cardine.templates.files import latest_migration_to, managed_files
@@ -190,13 +191,18 @@ def apply_init(plan: InitPlan) -> bool:
 
 def init_cli(arguments, framework: Path) -> int:
     try:
-        validation = json.loads(arguments.validation.read_text(encoding="utf-8"))
-        plan = plan_init(arguments.project, framework, name=arguments.name, slug=arguments.slug,
-                         preset=arguments.preset, language=arguments.language,
-                         task_identity=arguments.task_identity, validation=validation)
+        validation = json.loads(arguments.validation.read_text(encoding="utf-8")) if arguments.validation else None
+        choices = resolve_choices(arguments.project, name=arguments.name, slug=arguments.slug,
+                                  preset=arguments.preset, language=arguments.language,
+                                  task_identity=arguments.task_identity, validation=validation, test=arguments.test)
+        for name, choice in choices.items():
+            print(f"choice: {name} = {choice['value']} ({choice['source']})")
+        if choices["validation"]["value"] is None:
+            print('missing: validation; pass --test "<command>"')
+            return 2 if arguments.apply else 0
+        values = {key: choice["value"] for key, choice in choices.items()}
+        plan = plan_init(arguments.project, framework, **values)
         print(f"init plan: {plan.root}; digest {plan.binding['digest']}")
-        print("choices: " + json.dumps(json.loads(plan.outputs[names().project_declaration_path.as_posix()]), sort_keys=True))
-        print(f"conversation language: {arguments.language}")
         for relative in plan.outputs:
             print(f"project output: {relative}")
         for directory in plan.directories:
