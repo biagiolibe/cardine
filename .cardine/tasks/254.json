@@ -1,0 +1,114 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/integration/ci.py",
+      "src/cardine/lifecycle/engine.py",
+      "src/cardine/cli.py",
+      "docs/RUN_COMMANDS.md",
+      "docs/PUBLIC_SURFACE.md",
+      "tests/test_run_ci.py",
+      "tests/test_run_output.py",
+      "tests/test_run_resolution.py",
+      "tests/test_cli_help.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "Repeated model calls while waiting for CI",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/254.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 254 \u2014 Wait for required CI within one run invocation",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_ci --module test_run_output --module test_run_resolution --module test_run_integration --module test_cli_help --module test_public_surface --module test_run_tests --module test_layout --module test_module_inventory --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "47685c88ac9510f404fcb955e735255401e8c53538154b5490e056623ada50c5",
+        "digest": "2869e90f795b94af1fd7a9bdc38c781ee7651b9c709ccbd9b19be1bb46b6d569",
+        "inputs": {
+          ".cardine/tasks/254.json": null,
+          "tasks/254.md": null
+        },
+        "kind": "creation",
+        "operation_id": "8fcc315a5283474ea887b1a85df057a8",
+        "outputs": {
+          ".cardine/tasks/254.json": "8f162bb39c0f493d660991721b6e4492c2c4f218183db56651279b7a1e8aae88",
+          "tasks/254.md": "d60f041fbfcf32c748eb375b3e04d3f73365da4d0707598a3deaefb38ad32984"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "60f1eed0e5caeab55d33256ac064ae1615c249e5",
+        "task_id": "254",
+        "tree": "7c69969d9770ccd8aff805546c2b70a7a562270f",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "254",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
