@@ -63,5 +63,11 @@ claude "$(cat tasks/[NNN]-name.md)"$'\n\nExecute this task in the current projec
 
 ## Validation
 
+Before registering the task, search the tests for the behavior or text you
+plan to change. Check callers and shared checks, including tests in modules
+with different names. Choose the relevant modules and add each to `task-tests`
+with a separate `--module` flag alongside the feature tests and standard
+guards. The planner owns the selection. The full suite runs in CI.
+
 - `task-tests`: `python3 scripts/run_tests.py --parallel --module <touched test modules> --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word`
 - `adopt-466c2f308b48c766`: `git diff --check`
