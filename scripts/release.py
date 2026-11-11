@@ -791,9 +791,10 @@ def wait_for_publication(root: Path, version: str, repository: str | None, tag_h
 def adopter_steps() -> str:
     return "\n".join((
         "Adopter update steps (not run):",
-        "  Claude Code: /plugin marketplace add biagiolibe/meridian#v<version>",
-        "  Claude Code, ref \"stable\": /plugin marketplace update meridian",
-        "  Codex: git -C \"$CARDINE_ROOT\" fetch --tags && git -C \"$CARDINE_ROOT\" checkout v<version>",
+        "  cardine self-update --check --project .",
+        "  cardine self-update --apply --project .",
+        "  then, in each project: cardine upgrade --check --project .",
+        "  Guide: docs/HOW_TO_UPGRADE.md",
     ))
 
 

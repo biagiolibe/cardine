@@ -19,6 +19,17 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import release  # noqa: E402
 
 
+class AdopterStepsTest(unittest.TestCase):
+    def test_update_steps(self) -> None:
+        self.assertEqual(release.adopter_steps(), "\n".join((
+            "Adopter update steps (not run):",
+            "  cardine self-update --check --project .",
+            "  cardine self-update --apply --project .",
+            "  then, in each project: cardine upgrade --check --project .",
+            "  Guide: docs/HOW_TO_UPGRADE.md",
+        )))
+
+
 class ReleasePrepareTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()

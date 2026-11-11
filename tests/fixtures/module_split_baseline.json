@@ -1183,17 +1183,17 @@
       "line": 4667
     },
     {
-      "name": "claude_user_settings_path",
+      "name": "claude_plugin_registry_path",
       "kind": "FunctionDef",
       "line": 4761
     },
     {
-      "name": "plugin_marketplace_ref",
+      "name": "installed_plugin_versions",
       "kind": "FunctionDef",
       "line": 4766
     },
     {
-      "name": "plugin_ref_report",
+      "name": "installed_plugin_report",
       "kind": "FunctionDef",
       "line": 4783
     },

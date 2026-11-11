@@ -230,6 +230,6 @@ cat <<EOF
      reload the updated workflow text and settings.
 
   Framework updates (before the next project upgrade, not per project):
-       Claude Code:  /plugin marketplace update meridian
-       Codex:        git -C "\$CARDINE_ROOT" fetch --tags && git -C "\$CARDINE_ROOT" checkout v<version>
+       cardine self-update --check --project "$PROJECT"
+       cardine self-update --apply --project "$PROJECT"
 EOF

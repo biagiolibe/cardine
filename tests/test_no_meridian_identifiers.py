@@ -55,11 +55,6 @@ ALLOWLIST = (
         r"(?:\"" + OLD + r"\"|" + OLD + r"@local)",
     ),
     Allowance(
-        2, "9",
-        r"src/cardine/release/update\.py",
-        r"(?:biagiolibe/|extraKnownMarketplaces\.|cache/|marketplace update |get\(\"|\{\")" + OLD + r"\b",
-    ),
-    Allowance(
         5, "10",
         r"src/cardine/legacy/(?:" + OLD + r"_installation|" + OLD + r"_locations|snapshot|conversion_reader)\.py",
     ),

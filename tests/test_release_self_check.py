@@ -5,6 +5,7 @@ from __future__ import annotations
 from cardine_cli_support import ROOT
 import io
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -32,57 +33,81 @@ class FakeLatestReleaseResponse:
         return self.payload[:limit]
 
 
-class SelfCheckPluginRefTest(unittest.TestCase):
-    def report(self, settings: object | None, latest: str | None = "1.2.7", *, raw: str | None = None) -> str:
+class SelfCheckPluginTest(unittest.TestCase):
+    @staticmethod
+    def installed(*versions: str) -> dict[str, object]:
+        return {"plugins": {"cardine@cardine": [{"version": version} for version in versions]}}
+
+    def report(self, registry: object | None, latest: str | None = "1.2.7", *, raw: str | None = None) -> str:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "settings.json"
-            if raw is not None:
-                path.write_text(raw, encoding="utf-8")
-            elif settings is not None:
-                path.write_text(json.dumps(settings), encoding="utf-8")
-            report = owner_release_update.plugin_ref_report(path, latest)
-            expected_files = [path.name] if raw is not None or settings is not None else []
-            self.assertEqual([item.name for item in Path(directory).iterdir()], expected_files)
+            path = Path(directory) / "plugins/installed_plugins.json"
+            if raw is not None or registry is not None:
+                path.parent.mkdir()
+                path.write_text(raw if raw is not None else json.dumps(registry), encoding="utf-8")
+            before = {item.relative_to(directory): item.read_bytes()
+                      for item in Path(directory).rglob("*") if item.is_file()}
+            report = owner_release_update.installed_plugin_report(path, latest)
+            after = {item.relative_to(directory): item.read_bytes()
+                     for item in Path(directory).rglob("*") if item.is_file()}
+            self.assertEqual(after, before)
         return report
 
-    @staticmethod
-    def declared(ref: str) -> dict[str, object]:
-        return {"extraKnownMarketplaces": {"meridian": {"source": {"source": "github", "repo": "biagiolibe/meridian", "ref": ref}}}}
+    def test_current_and_newer_versions(self) -> None:
+        self.assertEqual(self.report(self.installed("1.2.7", "1.3.0")),
+                         "Plugin: 1.2.7, 1.3.0 (latest release)")
 
-    def test_stable_ref(self) -> None:
-        self.assertEqual(self.report(self.declared("stable")), "Plugin ref: stable")
+    def test_old_version_names_the_remedy(self) -> None:
+        self.assertEqual(self.report(self.installed("1.2.6", "1.2.7")),
+                         "Plugin: 1.2.6, 1.2.7 (older than latest release 1.2.7; run cardine self-update --apply)")
 
-    def test_current_tag(self) -> None:
-        self.assertIn("(latest release)", self.report(self.declared("v1.2.7")))
+    def test_unknown_latest(self) -> None:
+        self.assertEqual(self.report(self.installed("1.2.6"), None),
+                         "Plugin: 1.2.6 (latest release unknown)")
 
-    def test_old_tag_names_the_remedy(self) -> None:
-        report = self.report(self.declared("v1.2.6"))
-        self.assertIn("older than latest release 1.2.7", report)
-        self.assertIn('"stable" or "v1.2.7"', report)
+    def test_not_installed(self) -> None:
+        for registry in (None, {}, {"plugins": {"other@other": [{"version": "1.0.0"}]}}, self.installed()):
+            with self.subTest(registry=registry):
+                self.assertEqual(self.report(registry), "Plugin: not installed")
 
-    def test_tag_with_unknown_latest(self) -> None:
-        self.assertIn("latest release unknown", self.report(self.declared("v1.2.6"), None))
+    def test_unreadable_or_invalid_registry(self) -> None:
+        self.assertTrue(self.report(None, raw="{not json").startswith("Plugin: unknown ("))
+        for registry in ([], {"plugins": []}, {"plugins": {"cardine@cardine": {}}},
+                         {"plugins": {"cardine@cardine": [{}]}}, self.installed("not-a-version")):
+            with self.subTest(registry=registry):
+                self.assertTrue(self.report(registry).startswith("Plugin: unknown ("))
+        with mock.patch.object(Path, "read_text", side_effect=PermissionError("denied")):
+            self.assertIn("unreadable", owner_release_update.installed_plugin_report(Path("registry"), None))
 
-    def test_missing_unreadable_or_undeclared_settings_are_unknown(self) -> None:
-        for report in (self.report(None), self.report(None, raw="{not json"), self.report({}), self.report({"extraKnownMarketplaces": []})):
-            self.assertTrue(report.startswith("Plugin ref: unknown ("), report)
+    def test_config_directory_resolution(self) -> None:
+        with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": "/custom/claude"}):
+            self.assertEqual(owner_release_update.claude_plugin_registry_path(),
+                             Path("/custom/claude/plugins/installed_plugins.json"))
+        with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": ""}), mock.patch.object(Path, "home", return_value=Path("/home/test")):
+            self.assertEqual(owner_release_update.claude_plugin_registry_path(),
+                             Path("/home/test/.claude/plugins/installed_plugins.json"))
 
-    def test_self_check_prints_ref_and_keeps_exit_codes(self) -> None:
+    def test_self_check_prints_plugin_and_keeps_exit_codes_without_writes(self) -> None:
         installed = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
         payload = json.dumps({"tag_name": f"v{installed}", "body": "CLI-only release: x\n"}).encode("utf-8")
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "settings.json"
-            path.write_text(json.dumps(self.declared("stable")), encoding="utf-8")
-            output = io.StringIO()
-            with redirect_stdout(output):
-                result = owner_release_update.run_self_check(ROOT, urlopen_fn=mock.Mock(return_value=FakeLatestReleaseResponse(payload)), settings_path=path)
-            self.assertEqual(result, 0)
-            self.assertIn("Plugin ref: stable", output.getvalue())
-            output = io.StringIO()
-            with redirect_stdout(output):
-                result = owner_release_update.run_self_check(ROOT, urlopen_fn=mock.Mock(side_effect=URLError("offline")), settings_path=path)
-            self.assertEqual(result, shared_constants.SELF_CHECK_UNKNOWN)
-            self.assertIn("Plugin ref: stable", output.getvalue())
+            path = Path(directory) / "plugins/installed_plugins.json"
+            path.parent.mkdir()
+            path.write_text(json.dumps(self.installed(installed)), encoding="utf-8")
+            before = path.read_bytes()
+            with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": directory}):
+                for opener, expected, line in (
+                    (mock.Mock(return_value=FakeLatestReleaseResponse(payload)), 0, f"Plugin: {installed} (latest release)"),
+                    (mock.Mock(side_effect=URLError("offline")), shared_constants.SELF_CHECK_UNKNOWN,
+                     f"Plugin: {installed} (latest release unknown)"),
+                ):
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        result = owner_release_update.run_self_check(ROOT, urlopen_fn=opener)
+                    self.assertEqual(result, expected)
+                    self.assertIn(line, output.getvalue())
+            self.assertEqual(path.read_bytes(), before)
+            self.assertEqual(sorted(str(item.relative_to(directory)) for item in Path(directory).rglob("*")),
+                             ["plugins", "plugins/installed_plugins.json"])
 
 
 class SelfCheckLatestTest(unittest.TestCase):
