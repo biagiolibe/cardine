@@ -70,6 +70,8 @@ def outcome_for_code(code: str) -> str:
     entry = load_stop_registry().get(code)
     if entry is None:
         raise InternalStopError(f"unregistered stop code: {code}")
+    if entry["human_decision"]:
+        return "blocked"
     return {"guardrail": "blocked", "recoverable": "next", "failing-work": "iterate"}[entry["resolution"]]
 
 

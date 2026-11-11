@@ -51,7 +51,7 @@ def envelope(task_id: str, project: str, *, step: str | None,
     if stop is not None:
         entry = load_stop_registry().get(stop.get("code"))
         if not entry or not entry["human_decision"]:
-            raise ValueError("only registered human guardrails can block")
+            raise ValueError("only registered stops requiring a human can block")
         if (stop.get("resolution") != "guardrail" or stop.get("human_decision") is not True
                 or next_command is None or next_command["argv"] != stop.get("resume_argv")
                 or next_command["command"] != stop.get("resume")):
@@ -116,8 +116,8 @@ def validate_output(value: dict) -> None:
         raise ValueError("unresolved invocation cannot fabricate a next command")
     if value["stop"] is not None:
         entry = load_stop_registry().get(value["stop"]["code"])
-        if not entry or entry["resolution"] != "guardrail" or entry["human_decision"] is not True:
-            raise ValueError("only registered human guardrails can block")
+        if not entry or entry["human_decision"] is not True:
+            raise ValueError("only registered stops requiring a human can block")
     if value["stop"] is not None and (value["next"]["command"] != value["stop"]["resume"]
                                        or value["next"]["argv"] != value["stop"]["resume_argv"]):
         raise ValueError("guardrail resume must equal next")
@@ -720,7 +720,7 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
                    f"to include these paths. If approved, add only the approved paths to {shlex.quote(record)} "
                    f"in the task worktree, update Validation if another check is required, then run: {update}. "
                    "If declined, restore the changes to the approved surface before retrying")
-    outcome = "blocked" if load_stop_registry()[error.code]["human_decision"] else outcome_for_code(error.code)
+    outcome = outcome_for_code(error.code)
     run_argv = ["cardine", "run", locations.task_id, "--project", str(locations.primary)]
     resume_argv = shlex.split(error.resume()) if outcome == "next" else run_argv
     # Historical advice is not an executable recovery. Keep it in diagnostics

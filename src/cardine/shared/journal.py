@@ -78,7 +78,7 @@ class LifecycleJournalEntry:
     def stopped(self, code: str | None) -> None:
         if code is not None and code in load_stop_registry():
             self.stop_code = code
-            self.blocked = load_stop_registry()[code]["resolution"] == "guardrail"
+            self.blocked = load_stop_registry()[code]["human_decision"]
         else:
             self.blocked = True
 

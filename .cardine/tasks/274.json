@@ -17,7 +17,13 @@
       "src/cardine/stops/causes.py",
       "tests/test_run_ci.py",
       "docs/RUN_COMMANDS.md",
-      "changelog.d/274.md"
+      "changelog.d/274.md",
+      "src/cardine/stops/registry.py",
+      "src/cardine/stops/render.py",
+      "src/cardine/shared/journal.py",
+      "scripts/check_repository.py",
+      "tests/test_run_end_to_end.py",
+      "tests/test_command_word.py"
     ],
     "hostImpact": {
       "classification": null,
@@ -74,6 +80,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:7f5735433df411dd24b06a4e63c7edebb2f633058ad16f6b10a5fd83e8a559f4",
+      "at": "2026-11-11T22:37:49.610996Z",
+      "before": "sha256:921f2bfaa50c3bb4b7888881ab528f156e21f9a76dc63d2ee41b1dca5292a3d9",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -121,6 +137,30 @@
         "source": "a97dd04e85cf1179f621ba3b5b1ab55eed872b8c",
         "task_id": "274",
         "tree": "5ada676bbbbaf91f84b38ec830c2647ade1fec99",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "13bdd098f7b67b0d7a653d552ada80ba789780a8bde97418b65fb24340d4a5d8",
+        "digest": "bc319ff8933c286676d260bb2a0e2fc671c78c19c066c186f183412e28727cfb",
+        "inputs": {
+          ".cardine/tasks/274.json": "31e80f7def0464170ef1bf2b633ab13efd63ebbe463a3be06c00ae3623877c28",
+          "tasks/274.md": "34029face925c98a01d884055260c02219d84c41c5a4b1d00207cc65a49e121e"
+        },
+        "kind": "contract_revision",
+        "operation_id": "6c38a82879d7413aa0e0c3f01c316915",
+        "outputs": {
+          ".cardine/tasks/274.json": "16c6517d3de3c8db2787e67b8cecc2018abd25c236b3389a9e7a0fbeb4ce6f08",
+          "tasks/274.md": "34029face925c98a01d884055260c02219d84c41c5a4b1d00207cc65a49e121e"
+        },
+        "predecessor": "ad4b5be3dd049bce2cb55ee1acc5bf054437211c8b28bd1f39c200d71eb4aa00",
+        "result": "verified",
+        "source": "1c51a9025499f672c27e8c41c9e62ee373919781",
+        "task_id": "274",
+        "tree": "e55c13955aac69f8ce4fcfd0353b239fc846df72",
         "version": 1
       }
     ]
