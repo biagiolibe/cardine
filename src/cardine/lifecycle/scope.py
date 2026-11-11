@@ -89,6 +89,6 @@ def enforce_scope(root, state, base, *, owned=()):
         error = stop_error('SCOPE_CHANGE_REQUIRED', f'{noun} outside expected surface: ' + ', '.join(outside),
                            task_id=state['task_id'], project=root)
         error.scope_paths = tuple(outside)
-        error.scope_record = state['contract']['recordPath']
+        error.scope_record = state['contract'].get('recordPath')
         raise error
     return paths - set(owned)
