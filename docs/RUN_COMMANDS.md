@@ -71,6 +71,25 @@ An interrupted effect is resumed by the same command that was interrupted. A
 live foreign operation, a corrupt or foreign state, denied access and an
 unmerged or protected branch stay guardrails.
 
+### Scope change recovery
+
+When `SCOPE_CHANGE_REQUIRED` lists ordinary paths outside the frozen surface,
+the developer may approve an expansion, including the precise task record
+revision in the initial approval. Add only the approved paths to Expected code
+surface in the task worktree, update Validation if needed, and run the printed
+worktree-specific `cardine task contract update` command. This freezes the
+revised contract before validation resumes. If the expansion is declined,
+restore the changes to the approved surface. In either case, retry using the
+printed primary-checkout `cardine run` command. Unsafe paths and missing or
+invalid surfaces require their own correction and receive no expansion proposal.
+
+Before changing a necessary file outside the frozen surface, the implementer
+requests one approval identifying the exact paths, why they are needed, and any
+validation change. After approval, update the task record in the task worktree
+and run `cardine task contract update <TASK-ID> --project <task-worktree>`
+before modifying the approved files. Then resume `cardine run <TASK-ID>
+--project <primary-checkout>` in the same session.
+
 ## Developer channel
 
 The owner verdict (`review verdict --owner`), `cancel` and `abort` are
@@ -100,22 +119,3 @@ Operation receipts detect inconsistent, stale and incomplete state. They are
 written by the same user that runs the agent, so Cardine 1.0 claims no
 authenticity against an agent that deliberately bypasses host permissions. The
 host boundary is reported as unavailable until its deny rules are installed.
-
-### Scope change recovery
-
-When `SCOPE_CHANGE_REQUIRED` lists ordinary paths outside the frozen surface,
-the developer may approve an expansion, including the precise task record
-revision in the initial approval. Add only the approved paths to Expected code
-surface in the task worktree, update Validation if needed, and run the printed
-worktree-specific `cardine task contract update` command. This freezes the
-revised contract before validation resumes. If the expansion is declined,
-restore the changes to the approved surface. In either case, retry using the
-printed primary-checkout `cardine run` command. Unsafe paths and missing or
-invalid surfaces require their own correction and receive no expansion proposal.
-
-Before changing a necessary file outside the frozen surface, the implementer
-requests one approval identifying the exact paths, why they are needed, and any
-validation change. After approval, update the task record in the task worktree
-and run `cardine task contract update <TASK-ID> --project <task-worktree>`
-before modifying the approved files. Then resume `cardine run <TASK-ID>
---project <primary-checkout>` in the same session.
