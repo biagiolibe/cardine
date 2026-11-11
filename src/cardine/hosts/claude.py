@@ -15,6 +15,14 @@ import json
 
 def claude_plugin_state(home: Path, framework_root: Path | None) -> str:
     """The installed Cardine plugin against this CLI; read only, and never proof of activation."""
+    if framework_root is None:
+        return plugin_state_for(home, None)
+    from cardine.release.version import read_version
+    return plugin_state_for(home, read_version(framework_root))
+
+
+def plugin_state_for(home: Path, cli: str | None) -> str:
+    """`absent`, `match`, `mismatch...` against version `cli`, or `installed ...` without one."""
     registry = home / ".claude/plugins/installed_plugins.json"
     try:
         entries = json.loads(registry.read_text(encoding="utf-8"))["plugins"]["cardine@cardine"]
@@ -23,14 +31,47 @@ def claude_plugin_state(home: Path, framework_root: Path | None) -> str:
         return "absent"
     if not versions:
         return "absent"
-    if framework_root is None:
+    if cli is None:
         return "installed " + ", ".join(versions)
-    from cardine.release.version import read_version
-    cli = read_version(framework_root)
     stale = [version for version in versions if version != cli]
     if not stale:
         return "match"
     return f"mismatch: plugin {', '.join(stale)}, CLI {cli}; reinstall the plugin at tag v{cli}"
+
+
+def plugin_alignment_commands(state: str, version: str) -> list[list[str]]:
+    """The ordered Claude commands that align the plugin with `version`; none on a match."""
+    if state == "match":
+        return []
+    commands = [["claude", "plugin", "marketplace", "add", f"biagiolibe/cardine#v{version}"],
+                ["claude", "plugin", "install", "cardine@cardine"]]
+    if state.startswith("mismatch"):
+        commands.insert(0, ["claude", "plugin", "marketplace", "remove", "cardine"])
+    return commands
+
+
+def align_claude_plugin(home: Path, version: str, *, runner=None, which=None, out=print) -> str:
+    """Align the Claude plugin with `version`; returns match, aligned, or printed (no claude on PATH)."""
+    import shlex
+    import shutil
+    import subprocess
+    state = plugin_state_for(home, version)
+    commands = plugin_alignment_commands(state, version)
+    if not commands:
+        out("claude-plugin: match")
+        return "match"
+    if (shutil.which if which is None else which)("claude") is None:
+        out("claude-plugin: claude is not on PATH; run these commands:")
+        for command in commands:
+            out("  " + shlex.join(command))
+        return "printed"
+    run = runner or (lambda argv: subprocess.run(argv, check=False).returncode)
+    for command in commands:
+        code = run(command)
+        if code:
+            raise CardineError(f"{shlex.join(command)} failed with exit {code}; fix the cause and rerun to converge")
+    out(f"claude-plugin: aligned to v{version}")
+    return "aligned"
 
 
 CLAUDE_PROJECT_ALLOWLIST = (
