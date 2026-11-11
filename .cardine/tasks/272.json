@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "spike",
+    "deliverables": [
+      "docs/ADR_REVIEW_VERDICT_SOURCES.md",
+      "docs/ADR_CARDINE_1_0.md"
+    ],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "docs/ADR_REVIEW_VERDICT_SOURCES.md",
+      "docs/ADR_CARDINE_1_0.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/272.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 272 \u2014 Decide the sources of a review verdict",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_public_surface --module test_text_gates --module test_module_inventory --module test_layout --module test_no_meridian_identifiers"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "6e77fd3bf9ffc07945c8afefad42af77f55bb48c7cb8a31cc447f7d8a76c8422",
+        "digest": "c01102a1132abf6ddcffbfbca7b0a76f69353be3061375c914fbb662f292441a",
+        "inputs": {
+          ".cardine/tasks/272.json": null,
+          "tasks/272.md": null
+        },
+        "kind": "creation",
+        "operation_id": "924cf5323c7b4938855cc95d54eda4a9",
+        "outputs": {
+          ".cardine/tasks/272.json": "9922d8638add60563dc66ec6783e8ebb12c4feffc19a7d5015b5e92b7fc12cd3",
+          "tasks/272.md": "bbae738c18ff78e16c751a3f1a69a9a54bf7a5c71183a57350db05d698ea4e2f"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "9a697405c9d14ddcd53179beafd3be98bb4e9207",
+        "task_id": "272",
+        "tree": "51311fffe184f107e81b83555aa6bc3e97a4de5d",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "272",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
