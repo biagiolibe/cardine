@@ -706,6 +706,13 @@ Five rules follow:
    command to reauthorize, and any change to the Cardine runtime made every
    existing task state unusable.
 
+   **Verdict sources (amended on 2026-11-11).** A verdict may come from the
+   developer's terminal, from a pull request approval by another account read
+   from the forge, or from a reviewer session that Cardine launches once a host
+   proves its role profile. `docs/ADR_REVIEW_VERDICT_SOURCES.md` (Proposed)
+   defines each source, what it records, and its declared limit. The developer
+   channel above stays the only source until work items of that ADR ship.
+
    The installation surface (the manifest, marker baselines, and capability
    evidence) is outside this boundary until after 1.0. Those files describe
    the installed templates and do not decide whether a task lands.
