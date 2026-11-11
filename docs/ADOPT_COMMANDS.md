@@ -1,7 +1,7 @@
 # Project adoption
 
 `cardine init` adopts an existing project when it finds one, so most users never call
-`cardine adopt` directly. See the [quick start](QUICKSTART.md#start-in-the-terminal).
+`cardine adopt` directly. See the [quick start](QUICKSTART.md#configure-the-project).
 
 For automation, `cardine adopt` takes explicit flags. Preview, then apply:
 
