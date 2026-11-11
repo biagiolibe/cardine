@@ -9,7 +9,7 @@ Create only the task the user requests. Do not select another queue item.
 Read `PROJECT_WORKFLOW.md`, the local `AGENTS.md` or `CLAUDE.md`, and
 `LANGUAGE_POLICY.md` before taking action. Follow the project's local rules.
 A project without `.cardine/project.json` does not use Cardine yet: return
-`BLOCKED` without changing repository state and point to `cardine adopt`. This includes
+`BLOCKED` without changing repository state and point to `cardine init`. This includes
 legacy Meridian projects using `GOVERNED_SDD`. Missing or contradictory workflow
 instructions also return `BLOCKED`; do not infer a lifecycle from global rules.
 

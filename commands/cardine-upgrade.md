@@ -11,7 +11,7 @@ Run the installed `cardine` CLI. First inspect the plan:
 cardine upgrade --project . --check
 ```
 
-To convert a project that does not use Cardine yet, use `cardine adopt`.
+To convert a project that does not use Cardine yet, use `cardine init`.
 
 If the plan has no `CONFLICT` entries and the developer authorizes the update,
 apply it:

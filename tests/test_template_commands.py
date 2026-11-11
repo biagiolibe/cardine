@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import contextlib
 import io
-import json
 import os
 import re
 import shlex
@@ -113,12 +112,9 @@ class InitSlashCommandTest(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         self.text = (ROOT / "commands/cardine-init.md").read_text(encoding="utf-8")
-        self.validation = self.home / "validation.json"
-        self.validation.write_text(json.dumps({"commands": {}, "baseline": [],
-                                              "candidate": {"REUSE": [], "BOUNDED": [], "FULL": []}}))
         values = {"project path": str(self.home / "project with spaces"), "project name": "Example Project",
                   "project slug": "example-project", "lean|governed": "lean", "conversation language": "Italian",
-                  "opaque|milestone": "opaque", "validation JSON path": str(self.validation)}
+                  "opaque|milestone": "opaque", "test command": "python3 -m pytest"}
         self.routes = []
         for block in re.findall(r"```bash\n(.*?)```", self.text, re.DOTALL):
             for key, value in values.items():
@@ -133,9 +129,13 @@ class InitSlashCommandTest(unittest.TestCase):
         self.assertEqual([args.command for args in parsed], ["init", "init", "setup"])
         self.assertTrue(parsed[0].check)
         self.assertTrue(parsed[1].apply)
-        self.assertEqual([word if word != "--check" else "--apply" for word in self.routes[0]], self.routes[1])
-        self.assertEqual(parsed[0].name, "Example Project")
-        self.assertEqual(parsed[0].validation, self.validation)
+        self.assertEqual(self.routes[0], ["init", "--project", str(self.home / "project with spaces"), "--check"])
+        self.assertEqual(parsed[1].test, "python3 -m pytest")
+        self.assertEqual(parsed[1].name, "Example Project")
+        self.assertEqual(parsed[1].slug, "example-project")
+        self.assertEqual(parsed[1].preset, "lean")
+        self.assertEqual(parsed[1].language, "Italian")
+        self.assertEqual(parsed[1].task_identity, "opaque")
         self.assertTrue(parsed[2].check)
         self.assertIn("only after explicit confirmation", self.text)
 
@@ -146,7 +146,7 @@ class InitSlashCommandTest(unittest.TestCase):
                 self.assertEqual(cr.cardine_cli.main(), 0)
             self.assertEqual(before, {p.relative_to(self.home): p.read_bytes()
                                       for p in self.home.rglob("*") if p.is_file()})
-            self.assertEqual(list(self.home.iterdir()), [self.validation])
+            self.assertEqual(list(self.home.iterdir()), [])
 
     def test_cli_owns_bootstrap_and_setup_stays_separate(self) -> None:
         self.assertIn("Do not copy templates", self.text)
@@ -212,7 +212,7 @@ class RemainingSlashCommandTest(SyntheticUpgradeFixtureMixin, unittest.TestCase)
         self.assertTrue(parsed["task"][3].write)
         self.assertEqual(parsed["audit"][0].command, "audit")
         self.assertIsNone(parsed["audit"][0].mode)
-        self.assertIn("cardine adopt", self.texts["task"])
+        self.assertIn("cardine init", self.texts["task"])
         self.assertIn("BLOCKED", self.texts["task"])
         self.assertIn("Do not add checkbox status", self.texts["task"])
 
