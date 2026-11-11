@@ -1,47 +1,26 @@
 # Upgrade Cardine
 
-Update the CLI only when no project has a task in progress. A task in progress
-binds its operation to the current runtime. After updating Cardine, the developer
-must run `cardine authorize` in each checkout from an interactive terminal.
+Finish any in-progress tasks before updating. Run the update from your
+terminal. Preview the latest release, then apply it from your project checkout.
 
-## Update the CLI
-
-Cardine is installed from a clone. For a new installation:
-
-```bash
-git clone https://github.com/biagiolibe/cardine ~/src/cardine
-pipx install --editable ~/src/cardine
+```sh
+cardine self-update --check --project .
+cardine self-update --apply --project .
 ```
 
-To update an existing installation, update the clone to the desired version.
-For Cardine 0.9, select its Git tag in the clone. Review the release notes in
-[CHANGELOG.md](../CHANGELOG.md) before updating projects.
+To select a release explicitly, add `--to v0.9.2` to both commands.
+Self-update uses the installer that owns the CLI, aligns the Claude Code
+plugin, and prints the command for any checkout it finds that needs to
+re-accept the runtime.
 
-## Authorize each checkout
+Run the printed command in your terminal for each affected checkout. For
+example, to inspect and re-accept the current checkout:
 
-In each project checkout, inspect and then apply authorization from the
-developer's interactive terminal:
-
-```bash
-cardine authorize --check --project /path/to/contoso
-cardine authorize --apply --project /path/to/contoso
+```sh
+cardine authorize --check --project .
+cardine authorize --apply --project .
 ```
 
-Authorization verifies task states and refuses while an operation is pending.
-It re-accepts the checkout and runtime for the project's task states.
-
-## Upgrade a project
-
-From the Contoso checkout, inspect the upgrade plan:
-
-```bash
-cardine upgrade --check --project /path/to/contoso
-```
-
-Review the plan and address any reported blockers. Then apply the upgrade:
-
-```bash
-cardine upgrade --apply --project /path/to/contoso
-```
-
-Review the resulting changes, run the project's validation, and commit them.
+For project template changes announced in a release, inspect
+`cardine upgrade --check --project .`, then apply the reviewed plan with
+`cardine upgrade --apply --project .`. Validate and commit the project changes.

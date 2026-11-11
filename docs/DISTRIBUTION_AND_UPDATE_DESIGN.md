@@ -1,3 +1,5 @@
+> **Superseded by ADR decision 9.**
+
 # Distribution and Update Channel Design
 
 Status: decided by task 049, with the project console CLI surface added by task
