@@ -112,3 +112,10 @@ revised contract before validation resumes. If the expansion is declined,
 restore the changes to the approved surface. In either case, retry using the
 printed primary-checkout `cardine run` command. Unsafe paths and missing or
 invalid surfaces require their own correction and receive no expansion proposal.
+
+Before changing a necessary file outside the frozen surface, the implementer
+requests one approval identifying the exact paths, why they are needed, and any
+validation change. After approval, update the task record in the task worktree
+and run `cardine task contract update <TASK-ID> --project <task-worktree>`
+before modifying the approved files. Then resume `cardine run <TASK-ID>
+--project <primary-checkout>` in the same session.
