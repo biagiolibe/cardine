@@ -90,6 +90,28 @@
     }
   ],
   "run": {
+    "ci": {
+      "binding": {
+        "attempt": 1,
+        "checks": [
+          "validate"
+        ],
+        "contract": "fc46fc071be9cf5ade1564bc747af58115edc6c8b7400340b2a3cc8ed9f276ab",
+        "head": "cd75c595e82c5160546c7fd6a5973535cd029920",
+        "origin": "https://github.com/biagiolibe/cardine.git",
+        "provider": "github",
+        "ref": "refs/heads/task-251",
+        "repository": "github.com/biagiolibe/cardine",
+        "task_id": "251"
+      },
+      "checks": [],
+      "phase": "pushed",
+      "push": {
+        "owned": true,
+        "ref": "refs/heads/task-251",
+        "sha": "cd75c595e82c5160546c7fd6a5973535cd029920"
+      }
+    },
     "delivery": {
       "base": "60f1eed0e5caeab55d33256ac064ae1615c249e5",
       "contractDigest": "fc46fc071be9cf5ade1564bc747af58115edc6c8b7400340b2a3cc8ed9f276ab",
@@ -238,12 +260,60 @@
         "task_id": "251",
         "tree": "8bb62d77700bdb79c3a0e82cf3463df6a5b3b9e5",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "fc46fc071be9cf5ade1564bc747af58115edc6c8b7400340b2a3cc8ed9f276ab",
+        "digest": "44109b667073a07632a99cd6697b73c45768168e87544a67e3aeefa4715f984e",
+        "inputs": {
+          ".cardine/evidence/251.json": "49b66f918bc7bbbe2f4185d8ae9258eea4ccb390d9917e92a009172f43d56581",
+          ".cardine/tasks/251.json": "bc1add13ca940599d560da83dc02d1ecdf8f8a251f2dd0a3b2c08fde6ef20da1",
+          "tasks/handoffs/251.md": "e3be33461a9bebf156b5ef2d3a4f33388a6fe7c0ba122ae1b285954f684553e1"
+        },
+        "kind": "task-validation",
+        "operation_id": "4783c725cb974312925900f9d6b8d67a",
+        "outputs": {
+          ".cardine/evidence/251.json": "7eca702fefa725b5aa8f581db765ab34d8dd472410bf5b9c061a76061594114c",
+          ".cardine/tasks/251.json": "258e33c74fb7d16cac5c7e13086f0541bc54c4d13e826d19b297800f0ae2bd59",
+          "tasks/handoffs/251.md": "9b372c5aa7ed085be267989526f962b5938c78207d0515a4dcb2f37a8a336bef"
+        },
+        "predecessor": "70a9570fe46be58791496225efebf2f176f74dc9610db8e9617f8eb5797cdeb0",
+        "result": "verified",
+        "source": "ee12969a1bf525cfb9f95cbe2e421c3f2f8fb556",
+        "task_id": "251",
+        "tree": "aa179e3d70d159e9fa6af35fb7cb824195ca2840",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "fc46fc071be9cf5ade1564bc747af58115edc6c8b7400340b2a3cc8ed9f276ab",
+        "digest": "78605ce052bbd748004212b7f6543d5a8d016aecb0b9f1bb5db8da84b84d65a6",
+        "inputs": {
+          ".cardine/tasks/251.json": "b57e506953df2c8a24146db531c3be5736a60ff8983e3772845791e25f3ed463"
+        },
+        "kind": "ci-push",
+        "operation_id": "ce426090a9a24d51bd59d6fe68035494",
+        "outputs": {
+          ".cardine/tasks/251.json": "87fa06ffc36325110436ddce9f052c7aa36a526822619bc90085526487ce8baa"
+        },
+        "predecessor": "44109b667073a07632a99cd6697b73c45768168e87544a67e3aeefa4715f984e",
+        "result": "verified",
+        "source": "ee12969a1bf525cfb9f95cbe2e421c3f2f8fb556",
+        "task_id": "251",
+        "tree": "aa179e3d70d159e9fa6af35fb7cb824195ca2840",
+        "version": 1
       }
     ],
     "validation": {
       "acceptanceReferences": [],
-      "attemptId": "6ee08a7569ad47beaae9974ef745a627",
-      "consecutiveFailures": 1,
+      "attemptId": "477d9af028e8468a869508e94ad2d544",
+      "consecutiveFailures": 0,
       "evidence": ".cardine/evidence/251.json",
       "hostObservations": [],
       "inputs": {
@@ -257,100 +327,54 @@
         "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251",
         "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
         "skips": [],
-        "source": "10cdcd039b162e6227eaec0823e60a90ff706445",
-        "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
-        "sourceTree": "527b04b7ed198d238a676bef603ae1d00d3a6167"
+        "source": "cd75c595e82c5160546c7fd6a5973535cd029920",
+        "sourceDigest": "5340ff609c519e0dd61b39553908fb73c0343ab6ba0dd2fe998bd5565055cdc4",
+        "sourceTree": "8bb62d77700bdb79c3a0e82cf3463df6a5b3b9e5"
       },
       "intermittent": [],
-      "lastFailed": [
-        "task-tests"
-      ],
-      "phase": "failed",
+      "lastFailed": [],
+      "phase": "passed",
       "quickFailures": 0,
       "quickRounds": 0,
       "runs": [
         [
           {
-            "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+            "attemptId": "477d9af028e8468a869508e94ad2d544",
             "command": "python3 scripts/check_repository.py",
-            "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+            "commit": "ee12969a1bf525cfb9f95cbe2e421c3f2f8fb556",
             "exitStatus": 0,
             "id": "repository-check",
-            "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/1/repository-check",
+            "log": ".cardine/evidence/251.json#477d9af028e8468a869508e94ad2d544/1/repository-check",
             "round": 1,
-            "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+            "sourceDigest": "5340ff609c519e0dd61b39553908fb73c0343ab6ba0dd2fe998bd5565055cdc4",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "Cardine repository checks passed.\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+            "attemptId": "477d9af028e8468a869508e94ad2d544",
             "command": "python3 scripts/run_tests.py --parallel --module test_interactive_init --module test_init --module test_adopt_cli --module test_adopt_rehearsal --module test_template_commands --module test_public_surface --module test_run_tests --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
-            "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
-            "exitStatus": 1,
+            "commit": "ee12969a1bf525cfb9f95cbe2e421c3f2f8fb556",
+            "exitStatus": 0,
             "id": "task-tests",
-            "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/1/task-tests",
+            "log": ".cardine/evidence/251.json#477d9af028e8468a869508e94ad2d544/1/task-tests",
             "round": 1,
-            "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
-            "stderr": "run_tests: 138 tests in 8 shards\nrun_tests: shard 5/8 finished in 2.3s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 3/8 finished in 6.2s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 4/8 finished in 7.5s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 1/8 finished in 7.8s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 8/8 finished in 10.1s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 7/8 finished in 13.4s: exit 1 ran=17 failures=1 errors=0\nrun_tests: shard 2/8 finished in 15.2s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 6/8 finished in 54.4s: exit 0 ran=17 failures=0 errors=0\n",
+            "sourceDigest": "5340ff609c519e0dd61b39553908fb73c0343ab6ba0dd2fe998bd5565055cdc4",
+            "stderr": "run_tests: 138 tests in 8 shards\nrun_tests: shard 5/8 finished in 2.7s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 3/8 finished in 8.1s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 1/8 finished in 9.3s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 4/8 finished in 11.2s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 8/8 finished in 16.7s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 7/8 finished in 22.0s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 2/8 finished in 23.3s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 6/8 finished in 89.8s: exit 0 ran=17 failures=0 errors=0\n",
             "stderrTruncated": false,
-            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=138 selected=17 digest=70331d108489710a08e598c165e7b1fd7a790663468a8f28aaef6ec384bdb97b\ntest_clone_preserves_source_and_rebuilds_after_interruptions (test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions) ... ok\ntest_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused (test_init.InitTest.test_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused) ... ok\ntest_symlinks_directories_changed_inputs_and_owned_edits_are_preserved (test_init.InitTest.test_symlinks_directories_changed_inputs_and_owned_edits_are_preserved) ... ok\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle) ... FAIL\ntest_check_needing_history_fails_in_clone_and_passes_in_checkout (test_run_tests.CleanCloneTest.test_check_needing_history_fails_in_clone_and_passes_in_checkout) ... run_tests: clean-clone: cloned 40323c0\nrun_tests: clean-clone: scripts/check_repository.py started\nrun_tests: clean-clone: scripts/check_repository.py exit 128 in 0.0s\nok\ntest_module_path_class_id_and_union_from_another_directory (test_run_tests.FocusedTestRunnerTest.test_module_path_class_id_and_union_from_another_directory) ... ok\ntest_coverage_proof_matches_list_and_the_union_of_shards (test_run_tests.ParallelTestRunnerTest.test_coverage_proof_matches_list_and_the_union_of_shards) ... ok\ntest_passing_run_prints_a_short_summary_and_is_repeatable (test_run_tests.ParallelTestRunnerTest.test_passing_run_prints_a_short_summary_and_is_repeatable) ... ok\ntest_tests_do_not_share_ports_global_git_config_or_process_environment (test_run_tests.ParallelTestRunnerTest.test_tests_do_not_share_ports_global_git_config_or_process_environment) ... ok\ntest_invalid_shards_exit_with_usage_status (test_run_tests.ShardedTestRunnerTest.test_invalid_shards_exit_with_usage_status) ... ok\ntest_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer (test_template_commands.RemainingSlashCommandTest.test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer) ... ok\ntest_a_made_up_subcommand_is_reported_although_its_prefix_exists (test_template_commands.TemplateCommandTest.test_a_made_up_subcommand_is_reported_although_its_prefix_exists) ... ok\ntest_allowlist_exceptions_are_exact_and_named (test_text_gates.ResidualRatchetTest.test_allowlist_exceptions_are_exact_and_named) ... ok\ntest_script_imports_are_transitive_and_unimported_scripts_are_excluded (test_text_gates.TextGateScannerTest.test_script_imports_are_transitive_and_unimported_scripts_are_excluded) ... ok\n\n======================================================================\n\nRan 17 tests in 13.028s\n\nFAILED (failures=1)\nFAIL: test_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 174, in test_package_import_graph_has_no_cycle\n    visit(name, [])\n    ~~~~~^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  [Previous line repeated 2 more times]\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 166, in visit\n    self.assertNotIn(name, stack, \" -> \".join([*stack, name]))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'cardine.adopt.plan' unexpectedly found in ['cardine.__main__', 'cardine.cli', 'cardine.adopt.plan', 'cardine.templates.init', 'cardine.templates.interactive_init'] : cardine.__main__ -> cardine.cli -> cardine.adopt.plan -> cardine.templates.init -> cardine.templates.interactive_init -> cardine.adopt.plan\n\n----------------------------------------------------------------------\nresult ran=17 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_interactive_init,test_init,test_adopt_cli,test_adopt_rehearsal,test_template_commands,test_public_surface,test_run_tests,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=138 total=2190 failures=1 errors=0\n",
+            "stdout": "PARTIAL selection=module:test_interactive_init,test_init,test_adopt_cli,test_adopt_rehearsal,test_template_commands,test_public_surface,test_run_tests,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=138 total=2190 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "6ee08a7569ad47beaae9974ef745a627",
+            "attemptId": "477d9af028e8468a869508e94ad2d544",
             "command": "git diff --check",
-            "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
+            "commit": "ee12969a1bf525cfb9f95cbe2e421c3f2f8fb556",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/1/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/251.json#477d9af028e8468a869508e94ad2d544/1/adopt-466c2f308b48c766",
             "round": 1,
-            "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "",
-            "stdoutTruncated": false
-          }
-        ],
-        [
-          {
-            "attemptId": "6ee08a7569ad47beaae9974ef745a627",
-            "command": "python3 scripts/check_repository.py",
-            "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
-            "exitStatus": 0,
-            "id": "repository-check",
-            "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/2/repository-check",
-            "round": 2,
-            "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "Cardine repository checks passed.\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "6ee08a7569ad47beaae9974ef745a627",
-            "command": "python3 scripts/run_tests.py --parallel --module test_interactive_init --module test_init --module test_adopt_cli --module test_adopt_rehearsal --module test_template_commands --module test_public_surface --module test_run_tests --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
-            "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
-            "exitStatus": 1,
-            "id": "task-tests",
-            "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/2/task-tests",
-            "round": 2,
-            "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
-            "stderr": "run_tests: 138 tests in 8 shards\nrun_tests: shard 5/8 finished in 2.8s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 3/8 finished in 7.1s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 4/8 finished in 8.4s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 1/8 finished in 8.6s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 8/8 finished in 11.3s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 7/8 finished in 14.5s: exit 1 ran=17 failures=1 errors=0\nrun_tests: shard 2/8 finished in 16.4s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 6/8 finished in 56.6s: exit 0 ran=17 failures=0 errors=0\n",
-            "stderrTruncated": false,
-            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=138 selected=17 digest=70331d108489710a08e598c165e7b1fd7a790663468a8f28aaef6ec384bdb97b\ntest_clone_preserves_source_and_rebuilds_after_interruptions (test_adopt_rehearsal.RehearsalTest.test_clone_preserves_source_and_rebuilds_after_interruptions) ... ok\ntest_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused (test_init.InitTest.test_existing_unrelated_project_files_are_preserved_and_conflicts_are_refused) ... ok\ntest_symlinks_directories_changed_inputs_and_owned_edits_are_preserved (test_init.InitTest.test_symlinks_directories_changed_inputs_and_owned_edits_are_preserved) ... ok\ntest_candidate_validation_reads_selected_directory (test_layout.LayoutTest.test_candidate_validation_reads_selected_directory) ... ok\ntest_journal_write_rotation_and_flow_read_use_selected_names (test_layout.LayoutTest.test_journal_write_rotation_and_flow_read_use_selected_names) ... ok\ntest_setup_plan_uses_selected_paths_in_temporary_home (test_layout.LayoutTest.test_setup_plan_uses_selected_paths_in_temporary_home) ... ok\ntest_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle) ... FAIL\ntest_check_needing_history_fails_in_clone_and_passes_in_checkout (test_run_tests.CleanCloneTest.test_check_needing_history_fails_in_clone_and_passes_in_checkout) ... run_tests: clean-clone: cloned 98c0038\nrun_tests: clean-clone: scripts/check_repository.py started\nrun_tests: clean-clone: scripts/check_repository.py exit 128 in 0.1s\nok\ntest_module_path_class_id_and_union_from_another_directory (test_run_tests.FocusedTestRunnerTest.test_module_path_class_id_and_union_from_another_directory) ... ok\ntest_coverage_proof_matches_list_and_the_union_of_shards (test_run_tests.ParallelTestRunnerTest.test_coverage_proof_matches_list_and_the_union_of_shards) ... ok\ntest_passing_run_prints_a_short_summary_and_is_repeatable (test_run_tests.ParallelTestRunnerTest.test_passing_run_prints_a_short_summary_and_is_repeatable) ... ok\ntest_tests_do_not_share_ports_global_git_config_or_process_environment (test_run_tests.ParallelTestRunnerTest.test_tests_do_not_share_ports_global_git_config_or_process_environment) ... ok\ntest_invalid_shards_exit_with_usage_status (test_run_tests.ShardedTestRunnerTest.test_invalid_shards_exit_with_usage_status) ... ok\ntest_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer (test_template_commands.RemainingSlashCommandTest.test_documented_upgrade_retains_adopter_overlay_and_uses_existing_writer) ... ok\ntest_a_made_up_subcommand_is_reported_although_its_prefix_exists (test_template_commands.TemplateCommandTest.test_a_made_up_subcommand_is_reported_although_its_prefix_exists) ... ok\ntest_allowlist_exceptions_are_exact_and_named (test_text_gates.ResidualRatchetTest.test_allowlist_exceptions_are_exact_and_named) ... ok\ntest_script_imports_are_transitive_and_unimported_scripts_are_excluded (test_text_gates.TextGateScannerTest.test_script_imports_are_transitive_and_unimported_scripts_are_excluded) ... ok\n\n======================================================================\n\nRan 17 tests in 14.083s\n\nFAILED (failures=1)\nFAIL: test_package_import_graph_has_no_cycle (test_module_inventory.ModuleInventoryTest.test_package_import_graph_has_no_cycle)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 174, in test_package_import_graph_has_no_cycle\n    visit(name, [])\n    ~~~~~^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 170, in visit\n    visit(dependency, [*stack, name])\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  [Previous line repeated 2 more times]\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-251/tests/test_module_inventory.py\", line 166, in visit\n    self.assertNotIn(name, stack, \" -> \".join([*stack, name]))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 'cardine.adopt.plan' unexpectedly found in ['cardine.__main__', 'cardine.cli', 'cardine.adopt.plan', 'cardine.templates.init', 'cardine.templates.interactive_init'] : cardine.__main__ -> cardine.cli -> cardine.adopt.plan -> cardine.templates.init -> cardine.templates.interactive_init -> cardine.adopt.plan\n\n----------------------------------------------------------------------\nresult ran=17 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_interactive_init,test_init,test_adopt_cli,test_adopt_rehearsal,test_template_commands,test_public_surface,test_run_tests,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=138 total=2190 failures=1 errors=0\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "6ee08a7569ad47beaae9974ef745a627",
-            "command": "git diff --check",
-            "commit": "0db077ac4457eb8342da85f0568803f44098b2e8",
-            "exitStatus": 0,
-            "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/251.json#6ee08a7569ad47beaae9974ef745a627/2/adopt-466c2f308b48c766",
-            "round": 2,
-            "sourceDigest": "d95792a27ff32e5d74575b23d4cfce5ef6c4cadd63c39352f0b1a40f2e86faf1",
+            "sourceDigest": "5340ff609c519e0dd61b39553908fb73c0343ab6ba0dd2fe998bd5565055cdc4",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "",
