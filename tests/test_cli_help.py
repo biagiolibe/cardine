@@ -2,6 +2,7 @@
 import io
 from contextlib import redirect_stdout
 from pathlib import Path
+import subprocess
 import unittest
 
 from cardine.cli import build_parser
@@ -52,3 +53,16 @@ class RunHelpTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BareCommandTest(unittest.TestCase):
+    def test_bare_command_and_top_level_help_print_the_everyday_commands(self):
+        from cardine.cli import EVERYDAY_COMMANDS
+        bare = subprocess.run([str(ROOT / "bin/cardine")], capture_output=True, text=True)
+        self.assertEqual(bare.returncode, 0, bare.stderr)
+        self.assertEqual(bare.stdout.strip(), EVERYDAY_COMMANDS)
+        self.assertTrue(EVERYDAY_COMMANDS.endswith("Run `cardine guide` when unsure."))
+        text = help_of()
+        self.assertIn(EVERYDAY_COMMANDS, text)
+        for name in ("guide", "init", "setup", "run", "status", "doctor", "self-update", "adopt", "console"):
+            self.assertIn(name, text)

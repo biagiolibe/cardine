@@ -12,6 +12,7 @@ from cardine.adopt.rehearsal import apply_rehearsed_adoption
 from cardine.lifecycle.control import _interactive
 from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
+from cardine.shared.project_guide import _project_option
 from cardine.shared.project_defaults import test_validation
 from cardine.templates.init import apply_init, plan_init
 
@@ -84,6 +85,7 @@ def interactive_init(arguments, framework: Path) -> int:
             print(f'written: {path}')
         if not _confirm('Commit these paths and push main?'):
             print('result: applied; publication declined')
+            print(f'Next: cardine guide{_project_option(root)}')
             return 0
         if _git(root, 'branch', '--show-current').strip() != 'main':
             raise CardineError('publication requires the main branch')
@@ -95,6 +97,7 @@ def interactive_init(arguments, framework: Path) -> int:
         except CardineError as error:
             raise CardineError(f'push failed: {error}\nRetry: {retry}') from error
         print('result: committed and pushed main')
+        print(f'Next: cardine guide{_project_option(root)}')
         return 0
     except (CardineError, OSError, ValueError, UnicodeError, EOFError) as error:
         print(f'error: {error}', file=sys.stderr)

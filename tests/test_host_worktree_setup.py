@@ -551,14 +551,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
             owner_hosts_setup.apply_setup(plan)
         self.assertEqual(identity_path.read_text(encoding="utf-8"), "not json\n")
 
-    def test_setup_milestone_identity_is_reported_by_the_resolver(self) -> None:
+    def test_setup_without_a_project_declaration_writes_none(self) -> None:
         project = self.home / "project"
         (project / "tasks").mkdir(parents=True)
-        (project / "tasks/M2-API-001.md").write_text("ID: M2-API-001\n", encoding="utf-8")
-        (project / "tasks/QUEUE.md").write_text(
-            "| ID | Status | Task file |\n|---|---|---|\n| M2-API-001 | TODO | [M2-API-001](M2-API-001.md) |\n",
-            encoding="utf-8",
-        )
         plan = owner_hosts_setup.plan_setup(
             self.home / "root",
             self.codex_config,
@@ -567,17 +562,19 @@ class WorktreeRootSetupTest(unittest.TestCase):
             home=self.home,
             project_root=project,
         )
+        self.assertEqual(plan.project_declaration_state, "missing")
+        self.assertIsNone(plan.project_declaration_proposal)
         self.assertTrue(owner_hosts_setup.apply_setup(plan))
+        self.assertFalse((project / ".cardine/project.json").exists())
         checked = subprocess.run(
-            [sys.executable, str(CLI), "task", "identity", "check", "M2-API-001", "--project", str(project), "--format", "json"],
-            text=True,
-            capture_output=True,
-            check=False,
+            [sys.executable, str(CLI), "setup", "--check", "--project", str(project),
+             "--worktree-root", str(self.home / "root")],
+            text=True, capture_output=True, check=False,
+            env={**os.environ, "HOME": str(self.home)},
         )
-        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-        self.assertEqual(json.loads(checked.stdout)["mode"], "milestone")
-        self.assertEqual(json.loads((project / ".cardine/project.json").read_text())["taskIdentity"],
-                         {"mode": "milestone"})
+        self.assertTrue(checked.stdout.startswith("changes on --apply: "), checked.stdout + checked.stderr)
+        self.assertIn("project-declaration: missing; run cardine init first", checked.stdout)
+        self.assertNotIn("project-declaration-proposal", checked.stdout)
 
     def test_setup_adds_the_project_claude_allowlist_only_after_apply(self) -> None:
         project = self.home / "project"

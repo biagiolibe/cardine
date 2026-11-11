@@ -279,18 +279,7 @@ def plan_setup(
                     "project": proposed_project_identity(project_root),
                 }
         else:
-            project_declaration_state = "advisory-missing"
-            project_declaration_proposal = {
-                "version": 1,
-                "preset": "lean",
-                "project": proposed_project_identity(project_root),
-                "locations": {
-                    "queue": "tasks/QUEUE.md", "taskRoots": ["tasks"],
-                    "reviewRoot": "tasks/reviews", "handoffRoot": "tasks/handoffs",
-                    "adrLog": "docs/ARCHITECTURE_DECISIONS.md", "plan": "PROJECT_PLAN.md",
-                },
-            }
-            parse_project_declaration(project_declaration_proposal)
+            project_declaration_state = "missing"
     except CardineError:
         project_declaration_state = "blocked"
 
@@ -459,6 +448,12 @@ def _plugin_state(home: Path, framework_root: Path) -> str:
 
 
 def print_setup_plan(plan: SetupPlan) -> None:
+    changes = [change for change in plan.changes if change != "none"]
+    count = 0 if changes == ["none; setup is blocked before mutation"] else len(changes)
+    print(f"changes on --apply: {count}")
+    for change in changes:
+        print(f"- {change}")
+    print("next: cardine setup --apply" if count else "nothing to change")
     print(f"codex-user-rules: {plan.user_rules.status} ({plan.user_rules.path})")
     if plan.user_rules.proposed_text is not None:
         print("".join(difflib.unified_diff(
@@ -503,7 +498,10 @@ def print_setup_plan(plan: SetupPlan) -> None:
     print(f"candidate-validation-commands: {plan.candidate_validation_state}")
     if plan.candidate_validation_proposal is not None:
         print("candidate-validation-proposal: " + json.dumps(plan.candidate_validation_proposal, sort_keys=True))
-    print(f"project-declaration: {plan.project_declaration_state}")
+    if plan.project_declaration_state == "missing":
+        print("project-declaration: missing; run cardine init first")
+    else:
+        print(f"project-declaration: {plan.project_declaration_state}")
     if plan.project_declaration_proposal is not None:
         print("project-declaration-proposal: " + json.dumps(plan.project_declaration_proposal, sort_keys=True))
     print(f"task-identity: {plan.task_identity_state}")

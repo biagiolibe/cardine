@@ -1,0 +1,46 @@
+{
+  "258": [
+    {
+      "attemptId": "424ef45a25f74453a7233563f1f7f10f",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "dcec0ae2a02921f158acd5646f4a3d128a32c5e1",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/258.json#424ef45a25f74453a7233563f1f7f10f/1/repository-check",
+      "round": 1,
+      "sourceDigest": "b3da133c1d28f3de3413b8be7a7ef4f6b40ded956c4bfe415a9c0d9cdabd8127",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "424ef45a25f74453a7233563f1f7f10f",
+      "command": "python3 scripts/run_tests.py --parallel --module test_project_guide --module test_init --module test_interactive_init --module test_adopt_cli --module test_cli_help --module test_cli_startup --module test_cardine_cli --module test_host_worktree_setup --module test_host_repeatability --module test_host_hooks --module test_codex_user_rules --module test_setup_local_ignore --module test_host_coexistence --module test_task_identity_project --module test_public_surface --module test_command_word --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_run_recovery",
+      "commit": "dcec0ae2a02921f158acd5646f4a3d128a32c5e1",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/258.json#424ef45a25f74453a7233563f1f7f10f/1/task-tests",
+      "round": 1,
+      "sourceDigest": "b3da133c1d28f3de3413b8be7a7ef4f6b40ded956c4bfe415a9c0d9cdabd8127",
+      "stderr": "run_tests: 262 tests in 8 shards\nrun_tests: shard 7/8 finished in 41.6s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 3/8 finished in 42.2s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 5/8 finished in 47.7s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 8/8 finished in 53.6s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 1/8 finished in 59.3s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 2/8 finished in 61.7s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 4/8 finished in 115.2s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 6/8 finished in 117.5s: exit 0 ran=33 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_project_guide,test_init,test_interactive_init,test_adopt_cli,test_cli_help,test_cli_startup,test_cardine_cli,test_host_worktree_setup,test_host_repeatability,test_host_hooks,test_codex_user_rules,test_setup_local_ignore,test_host_coexistence,test_task_identity_project,test_public_surface,test_command_word,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_stop_registry,test_run_recovery ran=262 total=2224 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "424ef45a25f74453a7233563f1f7f10f",
+      "command": "git diff --check",
+      "commit": "dcec0ae2a02921f158acd5646f4a3d128a32c5e1",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/258.json#424ef45a25f74453a7233563f1f7f10f/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "b3da133c1d28f3de3413b8be7a7ef4f6b40ded956c4bfe415a9c0d9cdabd8127",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}

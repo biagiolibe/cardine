@@ -70,6 +70,7 @@ class InteractiveInitTest(unittest.TestCase):
         code, out, err = self.invoke(['Custom', 'custom', 'governed', 'Italian', 'opaque', 'true', 'y', 'n'])
         self.assertEqual(code, 0, err)
         self.assertIn('publication declined', out)
+        self.assertEqual(out.strip().splitlines()[-1].split(' --project')[0], 'Next: cardine guide')
         self.assertIn('Custom', (self.root / '.cardine/project.json').read_text())
         self.assertEqual(self.git('rev-list', '--count', 'HEAD').strip(), '1')
 
