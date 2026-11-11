@@ -105,11 +105,11 @@ def _adopt_cli() -> int:
         ci = json.loads(args.ci.read_text(encoding="utf-8")) if args.ci else "none"
         plan = plan_adopt(args.project, args.framework_root, name=args.name, slug=args.slug,
                           preset=args.preset, language=args.language, task_identity=args.task_identity,
-                          validation=validation, ci=ci)
+                          validation=validation, test=args.test, ci=ci)
         result["plan"] = json.loads(plan.bytes())
         if plan.refusals or (not args.check and plan.missing):
             result["outcome"] = "blocked"
-            result["diagnostics"] = list(plan.refusals) + [f"missing: {item}" for item in plan.missing]
+            result["diagnostics"] = list(plan.refusals) + [f'missing: {item}; pass --test "<command>"' if item == "validation" else f"missing: {item}" for item in plan.missing]
             code = 2
         else:
             if args.rehearse:
@@ -154,19 +154,23 @@ def build_parser() -> CardineArgumentParser:
     adopt.add_argument("--preset", choices=("lean", "governed"))
     adopt.add_argument("--language")
     adopt.add_argument("--task-identity", choices=("opaque", "milestone"))
-    adopt.add_argument("--validation", type=Path)
+    adopt_validation = adopt.add_mutually_exclusive_group()
+    adopt_validation.add_argument("--validation", type=Path)
+    adopt_validation.add_argument("--test")
     adopt.add_argument("--ci", type=Path)
     init = subparsers.add_parser("init", help="preview or apply a configured project bootstrap", epilog="Start with cardine guide --project . for onboarding guidance.")
     init.add_argument("--project", type=Path, required=True)
     init_mode = init.add_mutually_exclusive_group(required=True)
     init_mode.add_argument("--check", action="store_true")
     init_mode.add_argument("--apply", action="store_true")
-    init.add_argument("--name", required=True)
-    init.add_argument("--slug", required=True)
-    init.add_argument("--preset", choices=("lean", "governed"), required=True)
-    init.add_argument("--language", required=True)
-    init.add_argument("--task-identity", choices=("opaque", "milestone"), required=True)
-    init.add_argument("--validation", type=Path, required=True,
+    init.add_argument("--name")
+    init.add_argument("--slug")
+    init.add_argument("--preset", choices=("lean", "governed"))
+    init.add_argument("--language")
+    init.add_argument("--task-identity", choices=("opaque", "milestone"))
+    init_validation = init.add_mutually_exclusive_group()
+    init_validation.add_argument("--test")
+    init_validation.add_argument("--validation", type=Path,
                       help="JSON file containing commands, baseline and candidate choices; empty lists are explicit")
     run = subparsers.add_parser("run", help="perform the next bounded lifecycle step of a task and print one JSON result",
                                 description="Resolve the earliest unsatisfied step (contract, worktree, implementation, validation, "

@@ -62,10 +62,9 @@ class InitTest(unittest.TestCase):
                 "--slug", "example-project", "--preset", "lean", "--language", "Italian",
                 "--task-identity", "opaque", "--validation", str(self.validation)]
 
-    def test_every_policy_choice_and_operation_is_required(self):
+    def test_project_and_operation_are_required(self):
         args = self.args()
-        for flag in ("--project", "--check", "--name", "--slug", "--preset", "--language",
-                     "--task-identity", "--validation"):
+        for flag in ("--project", "--check"):
             reduced = args.copy()
             index = reduced.index(flag)
             del reduced[index:index + (1 if flag == "--check" else 2)]
@@ -74,12 +73,26 @@ class InitTest(unittest.TestCase):
                     build_parser().parse_args(reduced)
         self.assertFalse(self.root.exists())
 
+    def test_detected_make_and_conflicting_validation_flags(self):
+        self.root.mkdir()
+        (self.root / "Makefile").write_text("test:\n\t@true\n")
+        args = build_parser().parse_args(["init", "--project", str(self.root), "--check"])
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(init_cli(args, ROOT), 0)
+        self.assertIn("make test", output.getvalue())
+        self.assertIn("detected from Makefile", output.getvalue())
+        for command in ("init", "adopt"):
+            with self.subTest(command=command), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    build_parser().parse_args([command, "--project", str(self.root), "--check",
+                                               "--test", "true", "--validation", str(self.validation)])
+
     def test_preview_repeats_without_writes_and_apply_is_idempotent(self):
         before = self.tree(self.home)
         for _ in range(2):
             with patch.object(sys, "argv", ["cardine", *self.args()]), contextlib.redirect_stdout(io.StringIO()) as output:
                 self.assertEqual(main(), 0)
-            self.assertIn("choices:", output.getvalue())
+            self.assertIn("choice: name = Example Project (flag)", output.getvalue())
             self.assertIn("manifest.json", output.getvalue())
             self.assertEqual(self.tree(self.home), before)
         args = build_parser().parse_args([x if x != "--check" else "--apply" for x in self.args()])

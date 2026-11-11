@@ -24,7 +24,7 @@ def project_guide(project: Path) -> dict:
             'sections': {
                 'bootstrap': [
                     'This Git checkout has no Cardine project declaration. Use init for a new repository with no conflicting generated paths; use adopt for an existing project. The preview reports conflicts.',
-                    'Prepare a project name and slug, preset (lean or governed), conversation language, task identity (opaque or milestone), and a JSON file declaring validation commands, baseline and candidate choices. Repository text remains English.',
+                    'Every choice has a default shown in the preview. Use --test "<command>" when test detection finds none. Repository text remains English.',
                     f'Preview with cardine init --project {target} --check or cardine adopt --project {target} --check, supplying the chosen inputs; see docs/QUICKSTART.md for complete commands. Adopt can also be rehearsed on a disposable clone.',
                     'Review the plan and missing inputs, then replace --check with --apply after consenting. If a step fails, inspect its diagnostics and applied changes, correct the cause, and resume the indicated step.',
                     f'After configuration, run cardine guide --project {target} again for host setup and the first verified landing.',
