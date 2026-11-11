@@ -236,6 +236,26 @@ else: finalize_task_integration('056', None, root)
             lease.unlink()
         self.assertTrue(candidate.wait_for_lease(locations, sleep=release, clock=lambda: ticks[0]))
 
+    def test_lease_wait_respects_short_budget_and_rechecks_new_owner(self):
+        self.ready()
+        locations = candidate.locations_for('056', self.primary)
+        _, lease, _ = self.paths()
+        foreign = json.loads(lease.read_bytes())
+        foreign.update(task_id='999', branch='task-999')
+        lease.write_text(json.dumps(foreign))
+        original = lease.read_bytes()
+        ticks = [0]
+        def sleep(seconds):
+            ticks[0] += seconds
+            replacement = dict(foreign, task_id='998', branch='task-998')
+            lease.write_text(json.dumps(replacement))
+        self.assertFalse(candidate.wait_for_lease(locations, seconds=2, sleep=sleep, clock=lambda: ticks[0]))
+        self.assertEqual(ticks[0], 2)
+        self.assertNotEqual(lease.read_bytes(), original)
+        self.assertEqual(json.loads(lease.read_text())['task_id'], '998')
+        lease.unlink()
+        self.assertTrue(candidate.wait_for_lease(locations, seconds=0, sleep=sleep, clock=lambda: ticks[0]))
+
     def test_implementation_waits_without_preparing_a_candidate_on_release(self):
         self.ready()
         from cardine.lifecycle.engine import dispatch_run, run_integration_step

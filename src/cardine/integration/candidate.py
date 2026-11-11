@@ -267,13 +267,19 @@ def run_candidate_validation(task_id, project):
 
 def wait_for_lease(locations, *, seconds=60, poll=5, sleep=time.sleep, clock=time.monotonic):
     """Wait only for a coherent competing task lease; never abort foreign work."""
-    seconds, poll = min(60, max(0, seconds)), max(5, poll)
+    seconds, poll = max(0, seconds), max(5, poll)
     identity = resolve_task_identity(locations.primary, locations.task_id, 'existing')
     _, lease_path, _ = _lifecycle_paths(locations.primary, identity)
     deadline = clock() + seconds
     while lease_path.exists():
         receipts.safe_path(lease_path.parent, lease_path.name)
-        lease = _read_json_object(lease_path, 'integration lease')
+        try:
+            lease = _read_json_object(lease_path, 'integration lease')
+        except CardineError:
+            if lease_path.exists():
+                raise
+            invalidate_facts()
+            return True
         if lease.get('task_id') == locations.task_id:
             return True
         owner = lease.get('task_id')
@@ -281,8 +287,8 @@ def wait_for_lease(locations, *, seconds=60, poll=5, sleep=time.sleep, clock=tim
                 or lease.get('branch') != 'task-' + owner.lower()):
             raise stop_error('LEASE_HELD', 'unverified competing lease', task_id=locations.task_id, project=locations.primary)
         remaining = deadline - clock()
-        if remaining < poll:
+        if remaining <= 0:
             return False
-        sleep(poll)
+        sleep(min(poll, remaining))
         invalidate_facts()  # Release must recompute main, paths and the decision.
     return True

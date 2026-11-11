@@ -12,6 +12,7 @@ import contextlib
 import json
 import os
 import shlex
+import time
 from pathlib import Path
 from collections.abc import Iterable
 
@@ -264,17 +265,57 @@ def run_preview_cli(argv: list[str]) -> int:
     parser = InvocationParser(prog="cardine run")
     parser.add_argument("task_id")
     parser.add_argument("--project", type=Path)
+    parser.add_argument("--ci-wait-seconds", type=int)
+    parser.add_argument("--lease-wait-seconds", type=int)
     from cardine.shared.errors import CardineStop
     from cardine.stops.render import emit_run
     locations = None
     try:
         args = parser.parse_args(argv)
+        for name in ("ci_wait_seconds", "lease_wait_seconds"):
+            value = getattr(args, name)
+            if value is not None and value < 0:
+                raise CardineError("--" + name.replace("_", "-") + " must be a nonnegative integer")
         locations = resolve_run_locations(args.task_id, args.project)
     except (CardineError, OSError, ValueError) as error:
         result = envelope("", "", step=None, diagnostics=[dict(code="INVALID_INVOCATION", message=str(error))])
         emit_run(result, validate_output)
         return 64
-    return emit_run(dispatch_run(locations), validate_output)
+    ci_seconds = 900 if args.ci_wait_seconds is None else args.ci_wait_seconds
+    lease_seconds = 180 if args.lease_wait_seconds is None else args.lease_wait_seconds
+    deadline = time.monotonic() + lease_seconds
+    while True:
+        result = dispatch_run(locations, ci_wait_seconds=ci_seconds, lease_seconds=0)
+        if result['outcome'] != 'waiting' or result['action'] != 'wait-for-lease':
+            break
+        from cardine.integration.candidate import wait_for_lease
+        try:
+            if (lease_seconds and time.monotonic() < deadline
+                    and wait_for_lease(locations, seconds=max(0, deadline - time.monotonic()))
+                    and time.monotonic() <= deadline):
+                continue
+        except CardineStop as error:
+            result = diagnostic_result(locations, error, step=result['step'])
+            break
+        except (CardineError, OSError) as error:
+            result = diagnostic_result(locations, stop_error('COMMAND_REFUSED', str(error)), step=result['step'])
+            break
+        result['diagnostics'] = [dict(code='LEASE_PENDING', message=f'Integration lease wait budget of {lease_seconds} seconds expired')]
+        break
+    reference = result['next']
+    if reference and reference['argv'][:2] == ['cardine', 'run']:
+        argv = reference['argv']
+        for flag, value in (('--ci-wait-seconds', args.ci_wait_seconds), ('--lease-wait-seconds', args.lease_wait_seconds)):
+            if flag in argv:
+                index = argv.index(flag)
+                del argv[index:index + 2]
+            if value is not None or (flag == '--ci-wait-seconds' and result['action'] == 'poll-ci'):
+                argv.extend([flag, str(ci_seconds if flag == '--ci-wait-seconds' else value)])
+        result['next'] = command_reference(argv, reference['reason'])
+        if result['stop']:
+            result['stop']['resume'] = result['next']['command']
+            result['stop']['resume_argv'] = result['next']['argv']
+    return emit_run(result, validate_output)
 
 
 def run_summary(result):
@@ -327,7 +368,7 @@ def registration_recovery(locations):
 
 
 @scoped_command
-def dispatch_run(locations: RunLocations) -> dict:
+def dispatch_run(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60) -> dict:
     """Execute one Stable engine step; console actions share this entry point."""
     from cardine.tasks.state import read_task_state
     from cardine.stops.render import stop_error
@@ -344,7 +385,7 @@ def dispatch_run(locations: RunLocations) -> dict:
         # independent; editable progress cannot skip those receipt checks.
         from cardine.integration.candidate import operation_path
         if operation_path(locations, 'cleanup').exists():
-            result = run_integration_step(locations)
+            result = run_integration_step(locations, lease_seconds=lease_seconds)
             live.note(run_summary(result))
             return result
         from cardine.lifecycle.control import operation_state
@@ -361,13 +402,13 @@ def dispatch_run(locations: RunLocations) -> dict:
                 return recovery
         stage = "candidate"
         result = (resolve_run(RunFacts(locations.task_id, locations.primary, 'cancelled'))
-                  if active['status'] == 'cancelled' else run_integration_step(locations))
+                  if active['status'] == 'cancelled' else run_integration_step(locations, lease_seconds=lease_seconds))
         if result is None and active['status'] != 'cancelled':
             stage = "worktree"
-            result = _integration_wait(locations) or run_worktree_step(locations, active)
+            result = _integration_wait(locations, seconds=lease_seconds) or run_worktree_step(locations, active)
         if result is None and active['status'] != 'cancelled':
             stage = "validation"
-            result = _integration_wait(locations) or run_validation_step(locations)
+            result = _integration_wait(locations, seconds=lease_seconds) or run_validation_step(locations, ci_wait_seconds=ci_wait_seconds, lease_seconds=lease_seconds)
         stage = "contract"
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
@@ -381,9 +422,9 @@ def dispatch_run(locations: RunLocations) -> dict:
     return result
 
 
-def _integration_wait(locations):
+def _integration_wait(locations, *, seconds=60):
     from cardine.integration.candidate import wait_for_lease
-    if wait_for_lease(locations):
+    if (wait_for_lease(locations) if seconds == 60 else wait_for_lease(locations, seconds=seconds)):
         return None
     argv = ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
     return envelope(locations.task_id, str(locations.primary), step='candidate', outcome='waiting',
@@ -482,7 +523,7 @@ def run_worktree_step(locations: RunLocations, active: dict) -> dict | None:
 
 
 @scoped_command
-def run_validation_step(locations: RunLocations) -> dict | None:
+def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60) -> dict | None:
     """Recover missing task evidence and return the review or C6 boundary."""
     from cardine.lifecycle.validation import byproducts_path, operation_path, run_task_validation
     from cardine.lifecycle.execution import _execution_state
@@ -581,10 +622,10 @@ def run_validation_step(locations: RunLocations) -> dict | None:
             result['action'] = 'C6'
             result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
             return add_byproducts(result)
-        gated = run_ci_step(locations, facts, request, state)
+        gated = run_ci_step(locations, facts, request, state, wait_seconds=ci_wait_seconds)
         if gated is not None:
             return add_byproducts(gated)
-        return add_byproducts(run_integration_step(locations, prepare=True))
+        return add_byproducts(run_integration_step(locations, prepare=True, lease_seconds=lease_seconds))
     result['action'] = 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
     if not passed:
@@ -593,13 +634,13 @@ def run_validation_step(locations: RunLocations) -> dict | None:
 
 
 @scoped_command
-def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict) -> dict | None:
+def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict, *, wait_seconds=0) -> dict | None:
     """Gate the direct candidate on CI for the delivered head when the contract requires it."""
     from dataclasses import replace
     from cardine.integration import ci
     if ci.ci_policy(state['contract']) is None:
         return None
-    outcome = ci.ci_gate(locations)
+    outcome = ci.ci_gate(locations, wait_seconds=wait_seconds) if wait_seconds else ci.ci_gate(locations)
     if outcome is None or (outcome['phase'] == 'passed' and not outcome['changed']):
         return None
     task_id, argv = locations.task_id, ['cardine', 'run', locations.task_id, '--project', str(locations.primary)]
@@ -611,6 +652,7 @@ def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict) 
     if outcome['phase'] == 'waiting':
         result = resolve_run(replace(facts, ci_pending=True))
         result['diagnostics'] = [dict(code='CI_PENDING', message=outcome['detail'])]
+        result['next'] = command_reference([*argv, '--ci-wait-seconds', str(wait_seconds)], 'Wait for required CI')
     else:
         result = resolve_run(facts)
     result['action'] = 'poll-ci' if outcome['phase'] == 'waiting' else 'ci-passed'
@@ -656,7 +698,7 @@ def diagnostic_result(locations: RunLocations, error, *, step: str = "contract")
 
 
 @scoped_command
-def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | None:
+def run_integration_step(locations: RunLocations, *, prepare=False, lease_seconds=60) -> dict | None:
     """One bounded candidate, finalize or verified delivery step."""
     from cardine.integration.candidate import (operation_path, wait_for_lease,
         require_budget)
@@ -686,7 +728,7 @@ def run_integration_step(locations: RunLocations, *, prepare=False) -> dict | No
             evidence=[dict(kind='landing', path=str(final), identity=landed['merge_commit'])])
     if not staged.exists() and not prepare:
         return None
-    if not wait_for_lease(locations):
+    if not (wait_for_lease(locations) if lease_seconds == 60 else wait_for_lease(locations, seconds=lease_seconds)):
         return envelope(task_id, str(root), step='candidate', outcome='waiting',
             action='wait-for-lease', retry_after_seconds=5,
             next_command=command_reference(argv, 'Wait for the competing integration'))
