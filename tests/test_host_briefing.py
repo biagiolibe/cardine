@@ -93,6 +93,35 @@ class HostBriefingTest(unittest.TestCase):
             (self.project / "tasks/QUEUE.md").write_text("")
             self.assert_bindings(expected=output)
 
+    def test_briefing_observes_prepared_and_started_task_worktree(self):
+        from task_state_support import set_state
+        from cardine.hosts.briefing import render_status_lines
+        write_task(self.project, "001")
+        def git(*args, cwd=None):
+            subprocess.run(["git", "-C", str(cwd or self.project), *args],
+                           check=True, capture_output=True)
+        git("init", "-b", "main")
+        git("config", "user.name", "Cardine Test")
+        git("config", "user.email", "cardine@example.invalid")
+        git("add", ".")
+        git("commit", "-m", "Register task")
+        worktree = self.project / "worktree"
+        git("worktree", "add", "-b", "task-001", str(worktree))
+        for started in (False, True):
+            if started:
+                set_state(worktree, "001", "in_progress")
+                git("add", ".", cwd=worktree)
+                git("commit", "-m", "Start task 001", cwd=worktree)
+            before = self.snapshot()
+            output = render_briefing(self.project, "")
+            self.assertIn("In progress: 001", output)
+            self.assertIn("Startable: none", output)
+            self.assertIn("in_progress=1", render_status_lines(self.project))
+            self.assert_bindings(expected=output)
+            self.assertEqual(self.snapshot(), before)
+        git("worktree", "remove", str(worktree))
+        self.assertIn("In progress: 001", render_briefing(self.project, ""))
+
     def test_no_state_never_falls_back_to_legacy_counts(self):
         (self.project / "tasks").mkdir()
         (self.project / "tasks/QUEUE.md").write_text("| 001 | QUEUED |\n")
