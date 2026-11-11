@@ -1,0 +1,114 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "scripts/release.py",
+      "scripts/upgrade_project.sh",
+      "src/cardine/release/update.py",
+      "tests/test_release.py",
+      "tests/test_self_update.py",
+      "tests/test_run_nonrun_causes.py",
+      "tests/test_release_self_check.py",
+      "tests/test_no_meridian_identifiers.py",
+      "tests/fixtures/module_split_baseline.json",
+      "changelog.d/277.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/277.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 277 \u2014 Print the Cardine plugin and update commands instead of the Meridian ones",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_self_update --module test_run_nonrun_causes --module test_release_self_check --module test_no_meridian_identifiers --module test_command_word --module test_release --module test_module_inventory --module test_check_repository --module test_layout --module test_text_gates --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "c92bb68b838e663295b4902a9273b2f9b2d74ccdc1d15df86400a7cfc8a80640",
+        "digest": "4582a7d727fa7bfaa2136b9daf564680e81b9767cf9753c5b47d2aab34ac67b3",
+        "inputs": {
+          ".cardine/tasks/277.json": null,
+          "tasks/277.md": null
+        },
+        "kind": "creation",
+        "operation_id": "afde0504082c4b2db830005a330ec825",
+        "outputs": {
+          ".cardine/tasks/277.json": "d0340666420471bef761137e56456d0bb902cd241cfc75420725e7c5c192431b",
+          "tasks/277.md": "583c3aa608d35a9a0e1e57e07989f926d6ade427fd84224ed7f84093d882fc2e"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "028ea1a2f828c3eb9333b2a918db80519af8e601",
+        "task_id": "277",
+        "tree": "4918f8be8c370e4dbec7eb85152d010d80aef1b4",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "277",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
