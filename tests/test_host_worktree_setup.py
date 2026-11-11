@@ -430,6 +430,10 @@ class WorktreeRootSetupTest(unittest.TestCase):
         command = [sys.executable, str(CLI), "setup", "--project", str(project),
                    "--worktree-root", str(self.home / "root"), "--config", str(self.codex_config)]
         environment = {**os.environ, **self.environment}
+        environment["PATH"] = os.pathsep.join(
+            entry for entry in os.get_exec_path(environment)
+            if not (Path(entry) / "claude").is_file()
+        )
         checked = subprocess.run(command + ["--check"], text=True, capture_output=True, env=environment)
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         line = next(line for line in checked.stdout.splitlines() if line.startswith("candidate-validation-proposal: "))
@@ -479,6 +483,10 @@ class WorktreeRootSetupTest(unittest.TestCase):
             "--task-identity", "milestone",
         ]
         environment = {**os.environ, **self.environment}
+        environment["PATH"] = os.pathsep.join(
+            entry for entry in os.get_exec_path(environment)
+            if not (Path(entry) / "claude").is_file()
+        )
         checked = subprocess.run(
             command + ["--check"], text=True, capture_output=True, check=False, env=environment
         )
