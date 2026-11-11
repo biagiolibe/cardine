@@ -1,10 +1,11 @@
-"""Render only shared task status for per-turn host briefings, without writes."""
+"""Render project language and shared task status for per-turn briefings."""
 
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
+import re
 import sys
 
 from cardine.shared.errors import CardineError
@@ -34,11 +35,26 @@ def _status_lines(model: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _language_line(project_root: Path) -> str:
+    try:
+        policy = (project_root / "LANGUAGE_POLICY.md").read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+    except (OSError, UnicodeError, ValueError):
+        policy = ""
+    matches = [match.group(1).strip() for line in policy.splitlines()
+               if (match := re.match(r"\*\*Conversation language:\*\*[ \t]*`([^`]+)`", line))]
+    language = matches[0] if len(matches) == 1 else ""
+    if not language or language == "[Conversation language]":
+        return "Conversation language: not set; see LANGUAGE_POLICY.md. Repository text: English.\n"
+    return f"Conversation language: {language}. Repository text: English.\n"
+
+
 def render_briefing(project_root: Path, payload: str) -> str:
-    """Ignore caller prose; only validated product state contributes output."""
+    """Ignore caller prose; only project files contribute output."""
     model = load_task_status(project_root)
     prefix = f"Preset: {model['preset']}\n" if model["preset"] is not None else ""
-    return prefix + _status_lines(model)
+    return _language_line(project_root) + prefix + _status_lines(model)
 
 
 def _payload_project(payload: str, host: str) -> Path | None:
