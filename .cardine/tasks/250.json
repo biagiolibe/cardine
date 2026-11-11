@@ -1,0 +1,108 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "scripts/suggest_task_tests.py",
+      "tests/test_suggest_task_tests.py",
+      "tasks/TASK_BLUEPRINT.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "Late CI failures on tasks 246\u2013248",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:15e650769854f751a8f080e40e5a285f790eeafaf345004480e1e35d66fa092b",
+    "recordPath": "tasks/250.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 250 \u2014 Suggest cross-cutting tests when planning a task",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "adopt-ae1cbbf1076d9cc4",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_suggest_task_tests --module test_run_tests --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "dcdf4e5a1a5915442fd6ab7ad083805b41249dc37de19aeadf5b277561683a05",
+        "digest": "f4c19ea083049b7bc43756ff8b57d18af7d3f80123dc02765f1090764b0443be",
+        "inputs": {
+          ".cardine/tasks/250.json": null,
+          "tasks/250.md": null
+        },
+        "kind": "creation",
+        "operation_id": "84173d67330d4b28a39e4dfe4aaef8d2",
+        "outputs": {
+          ".cardine/tasks/250.json": "8ec66384b37532e5060c634357a321e81c5a9296369d72816f712ed587cd35ff",
+          "tasks/250.md": "eaf96003370138ebd577d1a263e8d2bde51f84f7090e3b9b77bfad541412a132"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "f2d5467da943ff70942a889902267a74b647cd77",
+        "task_id": "250",
+        "tree": "25615755859cdf918ca7e7c1be5a78fe8942aaf9",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "250",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
