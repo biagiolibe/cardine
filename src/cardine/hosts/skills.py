@@ -78,10 +78,17 @@ def _old_link_absent(path: Path, target: Path) -> bool:
     return False
 
 
+def _is_checkout_root(framework_root: Path) -> bool:
+    checkout = _run_git(framework_root, "rev-parse", "--show-toplevel")
+    return checkout.returncode == 0 and Path(checkout.stdout.strip()).resolve() == framework_root.resolve()
+
+
 def _framework_skill_links(framework_root: Path, home: Path) -> tuple[tuple[str, Path, str, str], ...]:
     target_root = (framework_root / "skills").resolve()
-    checkout = _run_git(framework_root, "rev-parse", "--show-toplevel")
-    if checkout.returncode != 0 or Path(checkout.stdout.strip()).resolve() != framework_root.resolve():
+    installed = (framework_root.name == "_framework" and (framework_root / "VERSION").is_file()
+                 and framework_root.parent.name == "cardine"
+                 and (framework_root.parent / "__init__.py").is_file())
+    if not installed and not _is_checkout_root(framework_root):
         reason = "framework root is not the root of a Git checkout"
         return tuple((name, home / ".agents/skills" / name, "skipped", reason) for name in CODEX_SKILL_NAMES)
     missing_assets = [name for name in CODEX_SKILL_NAMES if not (target_root / name / "SKILL.md").is_file()]

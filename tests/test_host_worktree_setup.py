@@ -292,6 +292,42 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.assertEqual(again.skill_links_state, "ready")
         self.assertFalse(owner_hosts_setup.apply_setup(again))
 
+    def test_installed_framework_links_skills_and_omits_shell_advice(self) -> None:
+        framework = self.home / "cardine/_framework"
+        framework.mkdir(parents=True)
+        (framework.parent / "__init__.py").write_text("", encoding="utf-8")
+        (framework / "VERSION").write_text("1\n", encoding="utf-8")
+        for name in owner_hosts_skills.CODEX_SKILL_NAMES:
+            skill = framework / "skills" / name / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("skill\n", encoding="utf-8")
+        plan = owner_hosts_setup.plan_setup(
+            self.home / "root", self.codex_config, environment=self.environment,
+            home=self.home, framework_root=framework,
+        )
+        self.assertEqual([link[2] for link in plan.skill_links], ["missing", "missing"])
+        output = io.StringIO()
+        with redirect_stdout(output):
+            owner_hosts_setup.print_setup_plan(plan)
+        self.assertIn("CARDINE_ROOT:", output.getvalue())
+        self.assertNotIn("shell-profile-", output.getvalue())
+        self.assertTrue(owner_hosts_setup.apply_setup(plan))
+        for name in owner_hosts_skills.CODEX_SKILL_NAMES:
+            link = self.home / ".agents/skills" / name
+            self.assertTrue(link.is_symlink())
+            self.assertEqual(link.resolve(), framework / "skills" / name)
+
+    def test_checkout_setup_prints_shell_advice(self) -> None:
+        plan = owner_hosts_setup.plan_setup(
+            self.home / "root", self.codex_config, environment=self.environment,
+            home=self.home, framework_root=ROOT,
+        )
+        output = io.StringIO()
+        with redirect_stdout(output):
+            owner_hosts_setup.print_setup_plan(plan)
+        self.assertIn("shell-profile-CARDINE_ROOT:", output.getvalue())
+        self.assertIn("shell-profile-PATH:", output.getvalue())
+
     def test_setup_refuses_conflicting_or_blocked_skill_links(self) -> None:
         skills = self.home / ".agents/skills"
         skills.mkdir(parents=True)
