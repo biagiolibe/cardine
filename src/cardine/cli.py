@@ -565,6 +565,9 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
     journal.begin(arguments)
     framework_root = arguments.framework_root.resolve()
     if arguments.command == "init":
+        if not arguments.check and not arguments.apply:
+            from cardine.templates.interactive_init import interactive_init
+            return interactive_init(arguments, framework_root)
         from cardine.templates.init import init_cli
 
         return init_cli(arguments, framework_root)

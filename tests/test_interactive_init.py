@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from cardine.cli import build_parser
 from cardine.templates.init import init_cli
+from cardine.templates.interactive_init import interactive_init
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,7 +42,7 @@ class InteractiveInitTest(unittest.TestCase):
         out, err = io.StringIO(), io.StringIO()
         with patch('cardine.templates.interactive_init._interactive', return_value=tty), \
              patch('builtins.input', side_effect=answers), contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-            code = init_cli(self.args, ROOT)
+            code = interactive_init(self.args, ROOT)
         return code, out.getvalue(), err.getvalue()
 
     def test_real_tty_probe_and_explicit_check(self):
@@ -53,7 +54,7 @@ class InteractiveInitTest(unittest.TestCase):
             self.assertEqual(init_cli(args, ROOT), 0)
             self.assertIn('missing: validation', output.getvalue())
         with patch('sys.stdin', Terminal('\n\n\n\n\ntrue\nn\n')), patch('sys.stdout', Terminal()) as output:
-            self.assertEqual(init_cli(self.args, ROOT), 0)
+            self.assertEqual(interactive_init(self.args, ROOT), 0)
             self.assertIn('result: cancelled', output.getvalue())
 
     def test_no_tty_and_decline_apply(self):

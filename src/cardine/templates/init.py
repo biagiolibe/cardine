@@ -190,9 +190,6 @@ def apply_init(plan: InitPlan) -> bool:
 
 
 def init_cli(arguments, framework: Path) -> int:
-    if not arguments.check and not arguments.apply:
-        from cardine.templates.interactive_init import interactive_init
-        return interactive_init(arguments, framework)
     try:
         validation = json.loads(arguments.validation.read_text(encoding="utf-8")) if arguments.validation else None
         choices = resolve_choices(arguments.project, name=arguments.name, slug=arguments.slug,
