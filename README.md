@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/meridian-mark-dark.svg">
-    <img src="docs/assets/meridian-mark-light.svg" alt="Cardine logo" width="96" height="96">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/cardine-mark-dark.svg">
+    <img src="docs/assets/cardine-mark-light.svg" alt="Cardine logo" width="96" height="96">
   </picture>
 </p>
 

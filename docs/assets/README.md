@@ -5,10 +5,10 @@ cut out between the axis and the right half of the circle.
 
 | File | Use |
 |------|-----|
-| `meridian-mark.svg` | Adapts to the viewer's light or dark color scheme. Use it on web pages. |
-| `meridian-mark-light.svg` | Fixed colors for light backgrounds, such as the README `<picture>` fallback. |
-| `meridian-mark-dark.svg` | Fixed colors for dark backgrounds. |
-| `meridian-social-preview.png` | GitHub social preview, 1280 × 640. Upload it in the repository settings under Social preview. |
+| `cardine-mark.svg` | Adapts to the viewer's light or dark color scheme. Use it on web pages. |
+| `cardine-mark-light.svg` | Fixed colors for light backgrounds, such as the README `<picture>` fallback. |
+| `cardine-mark-dark.svg` | Fixed colors for dark backgrounds. |
+| `cardine-social-preview.png` | GitHub social preview, 1280 × 640. Upload it in the repository settings under Social preview. |
 
 ## Colors
 
@@ -22,4 +22,4 @@ Typefaces: IBM Plex Sans for the name and text, IBM Plex Mono for commands
 and data.
 
 GitHub does not read the social preview from the repository: after changing
-`meridian-social-preview.png`, upload it again in the repository settings.
+`cardine-social-preview.png`, upload it again in the repository settings.
