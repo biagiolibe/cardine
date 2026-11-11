@@ -16,6 +16,7 @@ import tomllib
 import unittest
 from program_word_support import normalize_program_word
 from contextlib import redirect_stdout
+from functools import partial
 from pathlib import Path
 from unittest import mock
 from cardine.integration import merge as owner_integration_merge
@@ -35,14 +36,80 @@ class WorktreeRootSetupTest(unittest.TestCase):
         self.home = Path(self.temporary.name).resolve()
         self.cwd_patch = mock.patch.object(cardine_cli.Path, "cwd", return_value=self.home)
         self.cwd_patch.start()
+        self.plan_patch = mock.patch.object(
+            owner_hosts_setup, "plan_setup",
+            side_effect=partial(owner_hosts_setup.plan_setup, which=lambda _: None),
+        )
+        self.plan_patch.start()
         self.xdg = self.home / "xdg"
         self.user_config = self.xdg / "cardine/config.json"
         self.codex_config = self.home / "codex/config.toml"
         self.environment = {"HOME": str(self.home), "XDG_CONFIG_HOME": str(self.xdg)}
 
     def tearDown(self) -> None:
+        self.plan_patch.stop()
         self.cwd_patch.stop()
         self.temporary.cleanup()
+
+    def test_plugin_alignment_is_counted_once_in_a_ready_plan(self) -> None:
+        with mock.patch.object(owner_hosts_setup, "_plugin_state", return_value="match"):
+            initial = owner_hosts_setup.plan_setup(
+                None, self.codex_config, environment=self.environment, home=self.home,
+            )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                owner_hosts_setup.print_setup_plan(initial)
+            lines = output.getvalue().splitlines()
+            self.assertNotIn("changes:", lines)
+            for change in initial.changes:
+                self.assertEqual(lines.count(f"- {change}"), 1)
+            owner_hosts_setup.apply_setup(initial)
+        for state in ("absent", "mismatch: plugin 0.9.1, CLI 0.9.2", "match"):
+            for executable in (None, "/fake/claude"):
+                with self.subTest(state=state, executable=executable), mock.patch.object(
+                    owner_hosts_setup, "_plugin_state", return_value=state,
+                ), mock.patch("cardine.release.version.read_version", return_value="0.9.2"):
+                    which = mock.Mock(return_value=executable)
+                    plan = owner_hosts_setup.plan_setup(
+                        None, self.codex_config, environment=self.environment, home=self.home,
+                        which=which,
+                    )
+                    expected = state != "match" and executable is not None
+                    change = "align the Claude Code plugin to v0.9.2"
+                    self.assertEqual(plan.changes, (change,) if expected else ("none",))
+                    self.assertEqual(plan.claude_plugin, state)
+                    self.assertEqual(plan.inputs, owner_hosts_setup._plan_inputs(plan))
+                    output = io.StringIO()
+                    with redirect_stdout(output):
+                        owner_hosts_setup.print_setup_plan(plan)
+                    lines = output.getvalue().splitlines()
+                    self.assertEqual(lines[0], f"changes on --apply: {int(expected)}")
+                    self.assertEqual(lines.count(f"- {change}"), int(expected))
+                    self.assertNotIn("changes:", lines)
+                    self.assertIn("next: cardine setup --apply" if expected else "nothing to change", lines)
+
+    def test_setup_result_follows_plugin_alignment_and_combines_both_changes(self) -> None:
+        from cardine import cli
+
+        for changed in (False, True):
+            for plugin_result in ("aligned", "match", "printed"):
+                with self.subTest(changed=changed, plugin_result=plugin_result):
+                    output = io.StringIO()
+
+                    def align(*args):
+                        print(f"claude-plugin: {plugin_result}")
+                        return plugin_result
+
+                    with mock.patch.object(sys, "argv", ["cardine", "setup", "--apply"]), \
+                            mock.patch.object(owner_hosts_setup, "plan_setup"), \
+                            mock.patch.object(owner_hosts_setup, "print_setup_plan"), \
+                            mock.patch.object(owner_hosts_setup, "apply_setup", return_value=changed), \
+                            mock.patch.object(owner_hosts_claude, "align_claude_plugin", side_effect=align), \
+                            redirect_stdout(output):
+                        self.assertEqual(cli._run_cli(mock.Mock()), 0)
+                    result = ("result: updated; restart your agent so it loads the changes"
+                              if changed or plugin_result == "aligned" else "result: no-op")
+                    self.assertEqual(output.getvalue().splitlines(), [f"claude-plugin: {plugin_result}", result])
 
     def resolve(self, explicit: Path | None = None, **environment: str) -> cardine_cli.ResolvedWorktreeRoot:
         return owner_worktree_storage.resolve_worktree_root(
