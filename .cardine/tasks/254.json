@@ -12,11 +12,14 @@
     "dependencies": [],
     "expectedCodeSurface": [
       "src/cardine/integration/ci.py",
+      "src/cardine/integration/candidate.py",
       "src/cardine/lifecycle/engine.py",
       "src/cardine/cli.py",
       "docs/RUN_COMMANDS.md",
       "docs/PUBLIC_SURFACE.md",
       "tests/test_run_ci.py",
+      "tests/test_run_integration.py",
+      "tests/test_run_preparation.py",
       "tests/test_run_output.py",
       "tests/test_run_resolution.py",
       "tests/test_cli_help.py"
@@ -34,7 +37,7 @@
       "review": "not_required",
       "validationRetryLimit": 3
     },
-    "origin": "Repeated model calls while waiting for CI",
+    "origin": "Repeated model calls while waiting for CI or another integration",
     "phase": "",
     "preset": "lean",
     "priority": "\ud83d\udfe0 P2",
@@ -44,7 +47,7 @@
       "task-tests",
       "adopt-466c2f308b48c766"
     ],
-    "title": "Task 254 \u2014 Wait for required CI within one run invocation",
+    "title": "Task 254 \u2014 Wait for CI and integration leases within one run invocation",
     "validation": {
       "baseline": [
         "repository-check",
@@ -72,11 +75,24 @@
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_ci --module test_run_output --module test_run_resolution --module test_run_integration --module test_cli_help --module test_public_surface --module test_run_tests --module test_layout --module test_module_inventory --module test_no_meridian_identifiers --module test_text_gates"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_ci --module test_run_output --module test_run_resolution --module test_run_integration --module test_run_preparation --module test_cli_help --module test_public_surface --module test_run_tests --module test_layout --module test_module_inventory --module test_no_meridian_identifiers --module test_text_gates"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:c17e4338881dba76a4e04677083791c16f8c9e71d0d6ba0a417a8e5315d3b2bb",
+      "at": "2026-11-11T12:18:02.993474Z",
+      "before": "sha256:5add028686bf1b32bba4c0dd75e85c40d4826fa4a2c0243d887f72f9d0da3f1d",
+      "changedFields": [
+        "expectedCodeSurface",
+        "origin",
+        "title",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -124,6 +140,30 @@
         "source": "861f622104c3477462586dbfe77b5888f33b1598",
         "task_id": "254",
         "tree": "7a34b65bc229594fe00b37c59102a73ac3d889fb",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "128082fe4f853dd9fb2020d442f40797f36dc74c",
+          "policy": "ed28990daf5a444824360281ecb377ffbd45bce3f573b4a458967b8d6d708e8e"
+        },
+        "contract_digest": "9b738f38777bac699e1b786b1643697699bbf8dcea1f2d82aa3e6fc803b3ac0b",
+        "digest": "4b00bd724d5d70fbaaf81d9c2bb54b506232434dfbba5c67f71fd59fe1bb62bd",
+        "inputs": {
+          ".cardine/tasks/254.json": "3e43a3491c4fefcaafd6dde218faa4efdc84b9874c511c02366b3b01432e5ae7",
+          "tasks/254.md": "e04cbc896c90d10981891ecd65b8535fa6ad02f8aae445077f7185832a36a83e"
+        },
+        "kind": "contract_revision",
+        "operation_id": "9c2aec0ae1324e43a0af893b50f88678",
+        "outputs": {
+          ".cardine/tasks/254.json": "829f84c99f08823c1017064ec8cb5639bbe7fa0e97b8ceceecd507eda449bf29",
+          "tasks/254.md": "e04cbc896c90d10981891ecd65b8535fa6ad02f8aae445077f7185832a36a83e"
+        },
+        "predecessor": "db7742abf4f749158c4e03855e5869432d355b34e5f35666a1aaf77987bdd4dd",
+        "result": "verified",
+        "source": "197cfea4b603f6d0997b2c925e4ef8c1b422daf2",
+        "task_id": "254",
+        "tree": "7f0b0954ae601c945a69c78a31905ac947323b6a",
         "version": 1
       }
     ]
