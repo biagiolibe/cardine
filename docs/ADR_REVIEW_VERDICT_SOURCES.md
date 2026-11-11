@@ -53,12 +53,12 @@ it starts. Nothing here was run against a paid agent.
 
 | # | Fact | Mark |
 |---|------|------|
-| G1 | A pull request review has `id`, `user.login`, `state` (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`, `DISMISSED`, `PENDING`) and `commit_id`, the commit the review was made on. https://docs.github.com/en/rest/pulls/reviews | documented |
-| G2 | The author of a pull request cannot approve it. https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews | documented |
-| G3 | A dismissed review keeps its record with state `DISMISSED`; a repository can dismiss approvals automatically when new commits are pushed. https://docs.github.com/en/rest/pulls/reviews and https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches | documented |
-| G4 | A pull request can exist for a branch that is later landed outside GitHub (a direct merge and push of `main`); GitHub marks it merged or closed from the pushed history. | probe |
-| G5 | A review by the account of the token that opened the pull request, when the repository is private and has one collaborator, is refused. The author rule holds for a token-owned account the same way as for a person. | probe |
-| G6 | `gh api` with the developer's existing login can read reviews without a write scope. | probe |
+| G1 | A pull request review has `id`, `user.login`, `state` (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`, `DISMISSED`, `PENDING`) and `commit_id`, the commit the review was made on. https://docs.github.com/en/rest/pulls/reviews | documented, re-read 2026-11-12: fields yes, state values and `commit_id` meaning not stated; see docs/FORGE_PROBE.md |
+| G2 | The author of a pull request cannot approve it. https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews | verified by probe, see docs/FORGE_PROBE.md |
+| G3 | A dismissed review keeps its record with state `DISMISSED`; a repository can dismiss approvals automatically when new commits are pushed. https://docs.github.com/en/rest/pulls/reviews and https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches | documented, re-read 2026-11-12: automatic dismissal yes, `DISMISSED` record not stated; see docs/FORGE_PROBE.md |
+| G4 | A pull request can exist for a branch that is later landed outside GitHub (a direct merge and push of `main`); GitHub marks it merged or closed from the pushed history. | verified by probe, see docs/FORGE_PROBE.md |
+| G5 | A review by the account of the token that opened the pull request, when the repository is private and has one collaborator, is refused. The author rule holds for a token-owned account the same way as for a person. | verified by probe, see docs/FORGE_PROBE.md |
+| G6 | `gh api` with the developer's existing login can read reviews without a write scope. | verified by probe, see docs/FORGE_PROBE.md |
 | C1 | Claude Code runs non-interactively with `claude -p`, restricts tools with `--allowedTools` / `--disallowedTools`, and returns structured output with `--output-format json`. https://code.claude.com/docs/en/cli-reference | documented |
 | C2 | Claude Code `permissions.deny` rules are honored in headless mode and can deny `Bash(cardine review verdict:*)` and edit tools. https://code.claude.com/docs/en/permissions | documented |
 | C3 | A headless child cannot widen its own permissions; a deny rule from a settings file passed with `--settings` wins over an allow. | probe |
