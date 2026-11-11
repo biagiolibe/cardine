@@ -97,6 +97,19 @@ class SingleWorkflowConfigTest(unittest.TestCase):
         with self.assertRaises(CardineError):
             parse_project_declaration(self.declaration(ci=None))
 
+    def test_review_sources(self):
+        parse_project_declaration(self.declaration(review={"sources": ["owner"]}))
+        parse_project_declaration(self.declaration())
+        for value in ([], ["owner", "owner"], ["robot"], "owner", {"sources": ["owner"], "x": 1}, {"sources": "owner"}):
+            review = value if isinstance(value, dict) else {"sources": value}
+            if value == "owner":
+                review = "owner"
+            with self.subTest(review=review), self.assertRaises(CardineError):
+                parse_project_declaration(self.declaration(review=review))
+        for source in ("forge", "launched"):
+            with self.subTest(source=source), self.assertRaisesRegex(CardineError, "not available in this version"):
+                parse_project_declaration(self.declaration(review={"sources": [source]}))
+
     def test_validation_composes_baseline_and_candidate(self):
         configuration = self.declaration(validation=self.validation())
         parse_project_declaration(configuration)

@@ -113,11 +113,28 @@ def _safe_project_path(value: object, key: str) -> Path:
     return Path(value)
 
 
+KNOWN_REVIEW_SOURCES = ("owner", "forge", "launched")
+AVAILABLE_REVIEW_SOURCES = frozenset({"owner"})
+
+
+def _validate_review_sources(review: object) -> None:
+    """Accept only distinct known sources that this version can record."""
+    sources = review.get("sources") if isinstance(review, dict) else None
+    if (not isinstance(review, dict) or set(review) != {"sources"} or not isinstance(sources, list)
+            or not sources or len(sources) != len(set(map(str, sources)))
+            or not all(isinstance(item, str) and item in KNOWN_REVIEW_SOURCES for item in sources)):
+        raise CardineError("project declaration key 'review.sources' must be a nonempty list of distinct values from "
+                           + ", ".join(KNOWN_REVIEW_SOURCES))
+    for item in sources:
+        if item not in AVAILABLE_REVIEW_SOURCES:
+            raise CardineError(f"project declaration key 'review.sources': source '{item}' is not available in this version")
+
+
 def parse_project_declaration(declaration: object) -> dict[str, object]:
     """Validate the closed, consumer-owned project declaration v1."""
     if not isinstance(declaration, dict):
         raise CardineError("project declaration must be a JSON object")
-    allowed = {"version", "preset", "taskDefaults", "taskIdentity", "validation", "project", "locations", "validationScoping", "ci"}
+    allowed = {"version", "preset", "taskDefaults", "taskIdentity", "validation", "project", "locations", "validationScoping", "ci", "review"}
     unknown = sorted(set(declaration) - allowed)
     if unknown:
         raise CardineError(f"project declaration unknown key: {unknown[0]}")
@@ -171,6 +188,8 @@ def parse_project_declaration(declaration: object) -> dict[str, object]:
     if "ci" in declaration and ci != "none":
         if not isinstance(ci, dict) or set(ci) != {"provider", "requiredChecks"} or not isinstance(ci["provider"], str) or not ci["provider"] or not isinstance(ci["requiredChecks"], list) or not all(isinstance(item, str) and item for item in ci["requiredChecks"]):
             raise CardineError("project declaration key 'ci' must be 'none' or contain provider and requiredChecks")
+    if "review" in declaration:
+        _validate_review_sources(declaration["review"])
     if defaults["ciBeforeLanding"] and (
         not isinstance(ci, dict) or ci["provider"] != "github" or not ci["requiredChecks"]
     ):

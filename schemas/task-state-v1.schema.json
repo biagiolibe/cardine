@@ -160,6 +160,12 @@
         "validationScoping"
       ],
       "properties": {
+        "reviewSources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["owner", "forge", "launched"]}
+        },
         "taskValidation": {
           "type": "array",
           "items": {"type": "string"},

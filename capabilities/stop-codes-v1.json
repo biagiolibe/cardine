@@ -548,7 +548,7 @@
       "resume": "obtain independent review of the current task commit, then rerun the interrupted command",
       "tool_hint": "cardine review verdict",
       "kind": "stop",
-      "summary": "cause missing or stale: independent approval for the current implementation is unavailable",
+      "summary": "cause missing or stale, or source: independent approval for the current implementation is unavailable, or the task's review sources exclude the owner",
       "test": "tests.test_task_integration_state.TaskIntegrationStateTest.test_missing_verdict_stop",
       "resolution": "guardrail"
     },

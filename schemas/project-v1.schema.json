@@ -115,6 +115,19 @@
         }
       ]
     },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["owner", "forge", "launched"]}
+        }
+      }
+    },
     "preset": {
       "enum": [
         "lean",

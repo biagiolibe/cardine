@@ -74,6 +74,17 @@ Candidate validation always adds `git diff --check`. Task commands supplement
 the baseline. Retry limits are positive integers. Context reading guards and evidence tiers remain available
 without spend counters.
 
+## Review sources
+
+An optional `review` object, `{"sources": ["owner"]}`, names which sources may
+record a review verdict. An absent key means `["owner"]`. The list is frozen
+into each new task contract as `reviewSources`, like the other options, so a
+change affects new tasks only. Only `owner` is available in this version;
+`forge` and `launched` are known names that the declaration refuses until a
+command can record them. When the frozen sources exclude `owner`,
+`cardine review verdict --owner` stops with `REVIEW_NOT_APPROVED` and
+`cause: source`. `docs/ADR_REVIEW_VERDICT_SOURCES.md` is the reference.
+
 ## Change the declaration
 
 1. Commit the change to `.cardine/project.json` on `main` first.
