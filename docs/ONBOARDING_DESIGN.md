@@ -3,8 +3,8 @@
 Status: decided, 2026-11-11. The developer accepted P1–P7 for 1.0 with the recommended
 answer to each open decision below. The ADR records them as an amendment to decision 9.
 P8 is deferred. Tasks 247 (P1) and 248 (P2) have landed. Tasks 251 (P3–P4),
-252 (P5–P6), and 253 (P7) are registered. Release preparation follows 253 once
-the developer decides how to handle the managed router changes since v0.9.1.
+252 (P5–P6), and 253 (P7) are registered. Release 0.9.2 (task 257) is CLI-only: the
+router changes since v0.9.1 lie outside the managed block.
 
 ## Problem
 
