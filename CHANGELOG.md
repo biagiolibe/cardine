@@ -15,6 +15,61 @@ records which release moved it.
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-11
+
+CLI-only release. Managed project templates are unchanged. New projects get shorter
+router sentences and a pointer to `cardine guide`. An existing project can add the line
+``Cardine usage: `cardine guide --project <checkout>`.`` to `AGENTS.md` and `CLAUDE.md`
+by hand, outside the managed block.
+
+### Added
+
+- Installation from a Git tag:
+  `pipx install git+https://github.com/biagiolibe/cardine@v0.9.2`. The framework assets
+  ship inside the package, and `python -m cardine` runs the CLI.
+- `cardine guide` prints onboarding guidance for a checkout, before and after
+  configuration.
+- `cardine init` without `--check` or `--apply`, on an interactive terminal, chooses
+  between init and adoption, shows the plan, and applies it after one confirmation.
+  After a second confirmation it commits and pushes the configuration.
+- `cardine init` and `cardine adopt` give every project choice a default, detect the test
+  command from a `Makefile`, `package.json`, or Python configuration, and accept
+  `--test "<command>"` instead of a validation JSON file.
+- `cardine setup --apply` installs or realigns the Claude Code plugin at the CLI's
+  version.
+- `cardine self-update` updates a pipx, uv, or clone installation, aligns the plugin, and
+  names the checkouts to reauthorize.
+- `cardine run` waits for required CI (`--ci-wait-seconds`, default 900) and for the
+  integration lease (`--lease-wait-seconds`, default 180) within one invocation.
+- With `ciBeforeLanding`, when `main` has changed paths that the task also changed,
+  `cardine run` merges `main` into the task branch, so CI validates the tree that will
+  land.
+
+### Changed
+
+- When a task branch's policy predates the policy accepted on `main`, `cardine run`
+  brings the branch up to date instead of stopping, and `cardine authorize --check` lists
+  such task worktrees.
+- The README and the quick start give one onboarding path, and the upgrade guide is
+  shorter.
+- `cardine guide` speaks plainly and links the quick start of the installed version. A
+  bare `cardine` lists the everyday commands, and `cardine setup --check` starts with a
+  summary.
+- The console opens faster and no longer shows finished cleanups.
+- The task blueprint asks the planner to select cross-cutting tests.
+
+### Fixed
+
+- Receipts bound to an earlier accepted `main` stay valid after a reauthorization that
+  advances it.
+- Task records that were never committed are recovered before worktree preparation.
+- A scope-change stop says how to resume.
+- The authority stop no longer asks for reauthorization when authorizing cannot resolve
+  it.
+- The per-turn briefing names the conversation language again.
+- `cardine setup` no longer writes a project declaration with stale values in a project
+  that `cardine init` has not configured.
+
 ## [0.9.1] - 2026-11-10
 
 CLI-only release.
