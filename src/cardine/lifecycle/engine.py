@@ -231,10 +231,16 @@ def implementation_delivery(locations: RunLocations) -> dict | None:
     intent = None
     if operation.exists():
         intent = _load_intent(operation)
+        current_base = str(inspection['base_commit'])
         if (intent['task_id'] != locations.task_id or intent['root'] != str(root.resolve())
-                or intent['base'] != str(inspection['base_commit'])
                 or not authority_covers(intent['authority'], require_authority(root), root)):
             raise CardineError('implementation progress has a foreign delivery operation')
+        if intent['base'] != current_base:
+            from cardine.shared.git import _run_git
+            if (intent['result'] != 'verified'
+                    or _run_git(root, 'merge-base', '--is-ancestor', str(intent['base']), current_base).returncode):
+                raise CardineError('implementation progress has a foreign delivery operation')
+            return None  # Verified against an earlier base: a new delivery is due.
         if intent['result'] != 'verified':
             return None  # The dispatcher must reconcile the owned operation first.
     state = _execution_state(root, locations.task_id)
