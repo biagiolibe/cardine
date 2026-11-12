@@ -1,0 +1,88 @@
+{
+  "285": [
+    {
+      "attemptId": "491fb1bce4b3467e831a7e028eb9b588",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "f2827da6759f9c5d8cb6786bac2e7563d29cb237",
+      "exitStatus": 1,
+      "id": "repository-check",
+      "log": ".cardine/evidence/285.json#491fb1bce4b3467e831a7e028eb9b588/1/repository-check",
+      "round": 1,
+      "sourceDigest": "9c205a5627780fe66a726cad3d0bb650d89e2dca5ab116173baefa428fbe7870",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "FAIL: /Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-285/changelog.d/285.md: line 3: subsection content must be a bullet or an indented bullet continuation\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "491fb1bce4b3467e831a7e028eb9b588",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_cleanup --module test_run_console --module test_run_delivery_disposable --module test_run_recovery --module test_run_end_to_end --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "f2827da6759f9c5d8cb6786bac2e7563d29cb237",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/285.json#491fb1bce4b3467e831a7e028eb9b588/1/task-tests",
+      "round": 1,
+      "sourceDigest": "9c205a5627780fe66a726cad3d0bb650d89e2dca5ab116173baefa428fbe7870",
+      "stderr": "run_tests: 253 tests in 8 shards\nrun_tests: shard 7/8 finished in 68.0s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 8/8 finished in 73.8s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 1/8 finished in 78.0s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 5/8 finished in 79.5s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 2/8 finished in 87.0s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 4/8 finished in 87.5s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 6/8 finished in 111.8s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 3/8 finished in 136.3s: exit 0 ran=32 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_cleanup,test_run_console,test_run_delivery_disposable,test_run_recovery,test_run_end_to_end,test_stop_registry,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=253 total=2286 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "491fb1bce4b3467e831a7e028eb9b588",
+      "command": "git diff --check",
+      "commit": "f2827da6759f9c5d8cb6786bac2e7563d29cb237",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/285.json#491fb1bce4b3467e831a7e028eb9b588/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "9c205a5627780fe66a726cad3d0bb650d89e2dca5ab116173baefa428fbe7870",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "491fb1bce4b3467e831a7e028eb9b588",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "f2827da6759f9c5d8cb6786bac2e7563d29cb237",
+      "exitStatus": 1,
+      "id": "repository-check",
+      "log": ".cardine/evidence/285.json#491fb1bce4b3467e831a7e028eb9b588/2/repository-check",
+      "round": 2,
+      "sourceDigest": "9c205a5627780fe66a726cad3d0bb650d89e2dca5ab116173baefa428fbe7870",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "FAIL: /Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-285/changelog.d/285.md: line 3: subsection content must be a bullet or an indented bullet continuation\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "491fb1bce4b3467e831a7e028eb9b588",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_cleanup --module test_run_console --module test_run_delivery_disposable --module test_run_recovery --module test_run_end_to_end --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "f2827da6759f9c5d8cb6786bac2e7563d29cb237",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/285.json#491fb1bce4b3467e831a7e028eb9b588/2/task-tests",
+      "round": 2,
+      "sourceDigest": "9c205a5627780fe66a726cad3d0bb650d89e2dca5ab116173baefa428fbe7870",
+      "stderr": "run_tests: 253 tests in 8 shards\nrun_tests: shard 7/8 finished in 68.8s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 8/8 finished in 74.9s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 1/8 finished in 78.8s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 5/8 finished in 80.6s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 2/8 finished in 88.2s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 4/8 finished in 88.6s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 6/8 finished in 113.2s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 3/8 finished in 142.8s: exit 0 ran=32 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_cleanup,test_run_console,test_run_delivery_disposable,test_run_recovery,test_run_end_to_end,test_stop_registry,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=253 total=2286 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "491fb1bce4b3467e831a7e028eb9b588",
+      "command": "git diff --check",
+      "commit": "f2827da6759f9c5d8cb6786bac2e7563d29cb237",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/285.json#491fb1bce4b3467e831a7e028eb9b588/2/adopt-466c2f308b48c766",
+      "round": 2,
+      "sourceDigest": "9c205a5627780fe66a726cad3d0bb650d89e2dca5ab116173baefa428fbe7870",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
