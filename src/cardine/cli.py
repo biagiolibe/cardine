@@ -618,7 +618,8 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                     return SELF_CHECK_UNKNOWN
                 return 0
             checkout = source_checkout() or PACKAGE_ROOT
-            result = run_self_update(checkout, apply=arguments.apply, target_tag=arguments.target_tag, finish=finish)
+            result = run_self_update(checkout, apply=arguments.apply, target_tag=arguments.target_tag,
+                                     **({"finish": finish} if arguments.apply else {}))
             return result
         if arguments.command == "self-check":
             from cardine.release.update import run_self_check

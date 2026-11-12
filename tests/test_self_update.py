@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch, ANY
+from unittest.mock import patch
 from urllib.error import URLError, HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -196,7 +196,7 @@ class SelfUpdateTest(unittest.TestCase):
                 owner_release_update, 'run_self_update', return_value=0) as update:
             self.assertEqual(owner_cli._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
         update.assert_called_once_with(Path(cardine_cli.__file__).resolve().parents[1],
-                                       apply=False, target_tag=None, finish=ANY)
+                                       apply=False, target_tag=None)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             owner_cli.build_parser().parse_args(['self-update'])
 
