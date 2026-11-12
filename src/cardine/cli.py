@@ -600,13 +600,13 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
         if arguments.command == "self-update":
             from cardine.hosts.claude import align_claude_plugin
             from cardine.release import installer
-            from cardine.release.update import run_self_update
+            from cardine.release.update import run_self_update, finish_update
             from cardine.release.version import read_version
 
             # Environment and --framework-root select upgrade inputs, never the
             # checkout that owns this running executable.
             def finish(version, templates, *, out=print):
-                installer.finish_update(version, templates, project=project_root,
+                finish_update(version, templates, project=project_root, stale_check=installer.stale_runtime_report,
                     align=lambda value, out: align_claude_plugin(Path.home(), value, out=out), out=out)
 
             kind = installer.detect_installer()

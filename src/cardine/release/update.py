@@ -221,7 +221,6 @@ def _run_self_update(framework_root: Path, *, apply: bool = False,
         intent['result'] = dict(head=target, version=version, verified=True)
         receipts._save_intent(receipt_path, intent)
         print(terminal.done(terminal.step(3, 4, "Verify checkout")))
-        from cardine.release.installer import finish_update
         (finish or finish_update)(version, templates)
         return 0
     except CardineStop:
@@ -322,3 +321,28 @@ def run_self_check(framework_root: Path, *, urlopen_fn=None, registry_path: Path
         return SELF_CHECK_UPDATE_AVAILABLE
     print("Status: UP_TO_DATE")
     return 0
+
+
+def finish_update(version, templates, *, project=None, align=None, stale_check=None, out=print):
+    """Align the plugin and present the project follow-up checklist."""
+    if align is None:
+        out(terminal.skipped(terminal.step(4, 4, "Align Claude Code plugin")))
+    else:
+        align(version, out=lambda line: out(terminal.note(line)))
+        out(terminal.done(terminal.step(4, 4, "Align Claude Code plugin")))
+    out(terminal.section("Next steps"))
+    out("1. Restart running Claude Code and Codex sessions.")
+    out("2. In each project that uses Cardine:")
+    out(terminal.command("   cardine authorize --check --project <checkout>"))
+    out(terminal.command("   cardine authorize --apply --project <checkout>"))
+    if project is not None:
+        stale = stale_check(project, out=lambda line: None) if stale_check else False
+        out(terminal.note(f"{Path(project).resolve()}: " + ("accepted runtime was replaced" if stale else "no accepted runtime found")))
+    number = 3
+    if templates == "template-changing":
+        out("3. In each project, review and commit the managed files after:")
+        out(terminal.command("   cardine upgrade --check --project <checkout>"))
+        out(terminal.command("   cardine upgrade --apply --project <checkout>"))
+        number = 4
+    out(f"{number}. Confirm each project:")
+    out(terminal.command("   cardine doctor --project <checkout>"))

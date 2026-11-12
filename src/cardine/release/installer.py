@@ -49,7 +49,7 @@ def run_installer_update(kind: str, installed: str, *, apply: bool, target_tag: 
 
     A preview resolves the target and prints the command without running anything. A failed
     resolution or reinstall raises before any plugin alignment, so a retry starts clean."""
-    from cardine.release.update import explain_unknown_release, fetch_latest_release
+    from cardine.release.update import explain_unknown_release, fetch_latest_release, finish_update
     if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
         raise CardineError("--to requires a release tag v<version>")
     try:
@@ -111,28 +111,3 @@ def stale_runtime_report(project: Path | None, *, out=print) -> bool:
     out(f"Stale accepted runtime: {root}")
     out(f"Run: cardine authorize --apply --project {shlex.quote(str(root))}")
     return True
-
-
-def finish_update(version, templates, *, project=None, align=None, out=print):
-    """Align the plugin and present the project follow-up checklist."""
-    if align is None:
-        out(terminal.skipped(terminal.step(4, 4, "Align Claude Code plugin")))
-    else:
-        align(version, out=lambda line: out(terminal.note(line)))
-        out(terminal.done(terminal.step(4, 4, "Align Claude Code plugin")))
-    out(terminal.section("Next steps"))
-    out("1. Restart running Claude Code and Codex sessions.")
-    out("2. In each project that uses Cardine:")
-    out(terminal.command("   cardine authorize --check --project <checkout>"))
-    out(terminal.command("   cardine authorize --apply --project <checkout>"))
-    if project is not None:
-        stale = stale_runtime_report(project, out=lambda line: None)
-        out(terminal.note(f"{Path(project).resolve()}: " + ("accepted runtime was replaced" if stale else "no accepted runtime found")))
-    number = 3
-    if templates == "template-changing":
-        out("3. In each project, review and commit the managed files after:")
-        out(terminal.command("   cardine upgrade --check --project <checkout>"))
-        out(terminal.command("   cardine upgrade --apply --project <checkout>"))
-        number = 4
-    out(f"{number}. Confirm each project:")
-    out(terminal.command("   cardine doctor --project <checkout>"))

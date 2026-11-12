@@ -260,7 +260,7 @@ class InstallerUpdateTest(unittest.TestCase):
         self.assertIn('failure output', '\n'.join(lines))
 
     def test_runtime_release_omits_upgrade(self):
-        from cardine.release.installer import finish_update
+        from cardine.release.update import finish_update
         lines = []
         finish_update('1.0.1', 'runtime-only', out=lines.append)
         self.assertNotIn('cardine upgrade', '\n'.join(lines))
