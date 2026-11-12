@@ -41,7 +41,9 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         if state['status'] != 'in_review' and (not saved or saved['binding']['source'] != head):
             raise stop_error('TASK_STATE_INVALID', 'review status: allowed in_review', task_id=task_id, project=root)
         missing_ci = None
-        if verdict == 'APPROVE':
+        # An owned replay resumes the already gated decision; its exact inputs
+        # and authorization are checked below before the intent is consumed.
+        if verdict == 'APPROVE' and not pending:
             from cardine.integration.ci import ci_policy, require_ci_pass
             from cardine.shared.errors import CardineStop
             policy = ci_policy(state['contract'])

@@ -280,6 +280,33 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
         self.assertEqual(engine.run_validation_step(locations)['step'], 'review')
         self.assertEqual(self.push_count(), 2)
 
+    def interrupted_ci_approval(self, point):
+        from cardine.review.progress import prepare_review
+        from cardine.review.verdict import record_review_verdict
+        from control_support import adapter
+        locations = self.ready(review=True)
+        self.checks(self.head())
+        self.gate(locations)
+        prepare_review(self.worker, '056')
+        def interrupt(name):
+            if name == point:
+                raise RuntimeError('interrupted approval')
+        with mock.patch.object(receipts, 'boundary', side_effect=interrupt):
+            with self.assertRaisesRegex(RuntimeError, 'interrupted approval'):
+                record_review_verdict(self.worker, '056', 'APPROVE', owner=True, adapter=adapter())
+        self.assertIsNotNone(engine_state(self.worker)[1])
+        state = record_review_verdict(self.worker, '056', 'APPROVE', owner=True, adapter=adapter())
+        self.assertEqual(state['review']['verdict'], 'APPROVE')
+        self.assertEqual(len(state['review_history']), 1)
+        self.assertIsNone(engine_state(self.worker)[1])
+        self.assertEqual(self.push_count(), 1)
+
+    def test_ci_approval_replays_after_intent(self):
+        self.interrupted_ci_approval('after_intent')
+
+    def test_ci_approval_replays_after_result_receipt(self):
+        self.interrupted_ci_approval('after_result_receipt')
+
     def test_approval_reuses_ci_pass_across_review_attempt_change(self):
         locations = self.ready(review=True)
         self.checks(self.head())
