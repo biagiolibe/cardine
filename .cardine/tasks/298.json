@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "297"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/hosts/setup.py",
+      "tests/test_host_worktree_setup.py",
+      "changelog.d/298.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/298.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 298 \u2014 Make cardine setup --check list each change once and separate status, diffs and warnings",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_host_worktree_setup --module test_setup_local_ignore --module test_host_doctor --module test_terminal_style --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "9320b72a5f5e0e4c9d0a7b1f46b00d78ca1e1f46f40efb5207dd4f6e9b0ca894",
+        "digest": "c1d6748647df2ca642fcf67814303be83ebcfb5368422772efc813633e7232e9",
+        "inputs": {
+          ".cardine/tasks/298.json": null,
+          "tasks/298.md": null
+        },
+        "kind": "creation",
+        "operation_id": "c5e99d30d07747eba6b4228fd088da55",
+        "outputs": {
+          ".cardine/tasks/298.json": "d373a15d203a774087541502e4fec42f80d03b4243ed878c7237f32dbd1a98c9",
+          "tasks/298.md": "1f31fb529bb00db935acc43a539e76f1ad24f9d66405144f2d507843ae64f750"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "05c1a31d1be37fea48b54259e4219d8ac4d022c7",
+        "task_id": "298",
+        "tree": "760fae1d51ce5ed6c17e207661161ca56c474dc4",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "298",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
