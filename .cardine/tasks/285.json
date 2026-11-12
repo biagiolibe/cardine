@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/integration/cleanup.py",
+      "src/cardine/console/snapshot.py",
+      "tests/test_run_cleanup.py",
+      "tests/test_run_console.py",
+      "tests/test_run_delivery_disposable.py",
+      "docs/ENGINE_STOP_CLASSIFICATION.md",
+      "changelog.d/285.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/285.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 285 \u2014 Prove a finished cleanup from Git and receipts, without a placeholder directory",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_cleanup --module test_run_console --module test_run_delivery_disposable --module test_run_recovery --module test_run_end_to_end --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "6976d4aca67d5babb1169ad2dd333a823a216738c9c31075cbfee5600d2285c8",
+        "digest": "16e4b4bbd52e3269440b147ce8bcdc1d8b2e29b3460564c9dbea1ee4138d0523",
+        "inputs": {
+          ".cardine/tasks/285.json": null,
+          "tasks/285.md": null
+        },
+        "kind": "creation",
+        "operation_id": "58edb41c70934915bcac07bc5f50be52",
+        "outputs": {
+          ".cardine/tasks/285.json": "5e6a0601ffd6ba844272705fca571dbd0b001a9ea994cdf752319dddbcc9873d",
+          "tasks/285.md": "d1afe915b1ed9b0414c4bfd5638adedc2163482dc6e449a42f932300e5d99eba"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "07f40f62973a2e50f30172927a5cf2278795d9c2",
+        "task_id": "285",
+        "tree": "0d24f0f13c8e3465a77b4a1501e5cc88355976b6",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "285",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
