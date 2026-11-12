@@ -267,11 +267,7 @@ def _is_cardine(argv: list[str]) -> bool:
 def _cardine_action(argv: list[str], role: str) -> Decision:
     words = _positional(argv[1:])
     if _subsequence(VERDICT, words):
-        if role == "implementer":
-            return _deny("an implementer cannot submit a review result")
-        if "--owner" in argv or not any(token == "--request-id" or token.startswith("--request-id=") for token in argv):
-            return _deny("developer verdict recording is not a role action")
-        return ALLOW
+        return _deny("verdicts are recorded by cardine run or by the developer with --owner")
     for action in DEVELOPER_ONLY + INTEGRATION:
         if _subsequence(action, words):
             return _deny("developer or integration operation: " + " ".join(action))
@@ -534,12 +530,11 @@ def _base_probe_matrix(role: str) -> dict[str, tuple]:
     if role == "implementer":
         controls["task-close"] = ("Bash", {"command": "cardine task close 001"}, "allow")
         controls["push-task-branch"] = ("Bash", {"command": "git push origin task-1"}, "allow")
-        deny["review-submission"] = ("Bash", {"command": "cardine review verdict 001 APPROVE --request-id r"}, "deny")
+        deny["review-submission"] = ("Bash", {"command": "cardine review verdict 001 APPROVE"}, "deny")
     else:
         deny["edit-source"] = ("Edit", {"file_path": "src/module.py"}, "deny")
         deny["push-task-branch"] = ("Bash", {"command": "git push origin task-1"}, "deny")
         deny["commit"] = ("Bash", {"command": "git commit -m message"}, "deny")
-        controls["review-submission"] = ("Bash", {"command": "cardine review verdict 001 APPROVE --request-id r"}, "allow")
         del controls["edit-source"], controls["commit"]
     return {**deny, **controls}
 
@@ -554,7 +549,7 @@ class RolePolicy:
 
 
 def policy_digest(host: str, role: str, settings: dict) -> str:
-    body = json.dumps([host, role, settings], sort_keys=True, separators=(",", ":"))
+    body = json.dumps([host, role, settings, probe_matrix(role, host)], sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(body.encode()).hexdigest()
 
 

@@ -156,7 +156,7 @@ class PathActionMatrixTest(Fixture):
     def test_developer_integration_and_review_actions_by_role(self) -> None:
         for command in (
             "cardine review verdict 001 APPROVE --owner", "cardine review verdict 001 APPROVE --body x",
-            "cardine --project . review verdict 001 CHANGES_REQUESTED --owner --request-id r",
+            "cardine --project . review verdict 001 CHANGES_REQUESTED --owner",
             "cardine cancel 001 --reason x", "cardine --project . abort 001", "cardine task contract update 001",
             "cardine task transition 001 done", "cardine worktree integrate stage 001",
             "cardine --format json worktree --project . cleanup 001", "cardine worktree advance 001 --format json",
@@ -166,10 +166,14 @@ class PathActionMatrixTest(Fixture):
             for role in permissions.ROLES:
                 with self.subTest(role=role, command=command):
                     self.assertFalse(self.decide(role, command))
-        implementer_only = "cardine review verdict 001 APPROVE --request-id r"
-        self.assertFalse(self.decide("implementer", implementer_only))
-        self.assertTrue(self.decide("reviewer", implementer_only))
-        self.assertTrue(self.decide("reviewer", "cardine --project . review verdict 001 BLOCKED --request-id=r --body ok"))
+        for role in permissions.ROLES:
+            for suffix in ("", " --" + "request" + "-id r", " --owner"):
+                decision = permissions.evaluate_command(
+                    "cardine review verdict 001 APPROVE" + suffix,
+                    role=role, roots=self.roots, cwd=self.external,
+                )
+                self.assertFalse(decision.allowed)
+                self.assertEqual(decision.reason, "verdicts are recorded by cardine run or by the developer with --owner")
         self.assertFalse(self.decide("reviewer", "cardine task close 001"))
         self.assertFalse(self.decide("reviewer", "cardine execution deliver 001"))
 
@@ -375,6 +379,17 @@ class ClaudePolicyInstallationTest(Fixture):
 
 
 class RolePolicyTest(Fixture):
+    def test_policy_digests_pin_role_probes(self) -> None:
+        expected = {
+            ("claude", "implementer"): "9511c48d57a04e0f48b5e8ef25cce316d147432e4a53b624d2643e0d7e2ac942",
+            ("claude", "reviewer"): "d58efc980be99a551d664f6f173d621a3d3f49ae9a59a922551ab05f5d78f309",
+            ("codex", "implementer"): "b2c1d655b7a3ee80df72f59db3534eedbb7897aadeefc1ec3167dec840445b50",
+            ("codex", "reviewer"): "25ae53b7ace4c4d579fc9c79233f3730ae261626b02d8feff9770473f1b069e8",
+        }
+        for (host, role), digest in expected.items():
+            with self.subTest(host=host, role=role):
+                self.assertEqual(permissions.policy_digest(host, role, {}), digest)
+
     def policy(self, role: str, worktree: Path | None = None):
         return claude.claude_role_policy(role, self.project, worktree or self.external, self.common)
 
