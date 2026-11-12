@@ -685,12 +685,11 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
                 source=git_output(root, 'rev-parse', 'HEAD'), source_digest=source_digest(root, task_id))))
             head = git_output(root, 'rev-parse', 'HEAD')
             if reviewer:
-                from cardine.stops.render import stop_error
                 for other in state.get('run', {}).get('hostLaunches', {}).values():
                     request_host = other['request']
                     if (request_host['role'] == 'reviewer' and request_host['source'] == head
                             and request_host['host'] != reviewer):
-                        raise stop_error('COMMAND_REFUSED', (
+                        raise CardineError((
                             f"a reviewer launch on {request_host['host']} already exists for {head}; "
                             f"rerun without --reviewer or with --reviewer {request_host['host']}"))
             record = launch_run_work(locations, facts.review_work, attempt=attempt,
