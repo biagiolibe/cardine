@@ -20,7 +20,7 @@ def review_progress(root, task_id, state):
         from cardine.shared.layout import names
         allowed.add(names().execution_evidence_path(task_id).as_posix())
         reviewed = state['review']['reviewed_commit']
-        from cardine.integration.refresh import changes_after_review
+        from cardine.integration.merge import changes_after_review
         changed, refreshed = changes_after_review(root, identity, reviewed, head)
         dirty = set(git_output(root, 'diff', 'HEAD', '--name-only').splitlines())
         dirty.update(git_output(root, 'ls-files', '--others', '--exclude-standard').splitlines())
