@@ -1,0 +1,107 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "scripts/check_repository.py",
+      "tests/test_check_repository.py",
+      "docs/RELEASING.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/296.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 296 \u2014 Allow a template-changing release without migrations before 1.0",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_prepare_release --module test_release --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "d9c03f7512ea3bba48cb51f5ceee3c86e1cf09595e525bf40f616ffd9ddbc771",
+        "digest": "1d22bc33fb0e0605c1a943b068dedffcf2acf2b5929eb0ad93c8ff0bbef8d716",
+        "inputs": {
+          ".cardine/tasks/296.json": null,
+          "tasks/296.md": null
+        },
+        "kind": "creation",
+        "operation_id": "3cccdf56d95e4aa9b9da67346eed14f0",
+        "outputs": {
+          ".cardine/tasks/296.json": "7bb0917ce3c0c8836e391ee17f11daa951acbe8fc794f075414d1be92a345ddb",
+          "tasks/296.md": "7599dd5f255373313444a43aee83ea088c9cf2c9179378ec65656604093e08e1"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "36f1da21210e905c190dd317c2fea3a856200b10",
+        "task_id": "296",
+        "tree": "e829e08cd138ab3d99de8bb9020b2a95bf2a7c4c",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "296",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
