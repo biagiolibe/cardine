@@ -156,8 +156,153 @@
         "task_id": "282",
         "tree": "06650df4aecf86c0314df8cac5253b0a4793aebd",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "9a962e1e340c97e00157e3adfb44e5c7d11480a3b993b344a1b63fbd32612ae3",
+        "digest": "7937e040075d4cdd07039dd4f6057aaff6229480fa9f0b06a7c1b692ac4f76b9",
+        "inputs": {
+          ".cardine/evidence/282.json": null,
+          ".cardine/tasks/282.json": "486136ab13ddbed311955b21ff8d4d09674a4c2dc3b968872f4f250451f161ed",
+          "tasks/handoffs/282.md": null
+        },
+        "kind": "task-validation",
+        "operation_id": "a0cc0f674bb543cfaa2f4dc96d3d3337",
+        "outputs": {
+          ".cardine/evidence/282.json": "5eaecb80d92059240b16d5525fddcd43da9f6e4a00cb748e00bdfd7408bf698b",
+          ".cardine/tasks/282.json": "cd5d9bc839b351587450d51e4829ab6df23964db05f0486e9e46bfb70e7919d4",
+          "tasks/handoffs/282.md": "e8d9b2bd8fcd50c5286c30d0cfc362adc1c1c7162e34323b5f2088b771ca741b"
+        },
+        "predecessor": "c6f428ad3c9aa64dc1adbd939d5d3e16a36fce72d889247cf9ae831b45f6a9c5",
+        "result": "verified",
+        "source": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+        "task_id": "282",
+        "tree": "6380aca8fda066480e18c55b747ce2e527c163d8",
+        "version": 1
       }
-    ]
+    ],
+    "validation": {
+      "acceptanceReferences": [],
+      "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+      "consecutiveFailures": 1,
+      "evidence": ".cardine/evidence/282.json",
+      "hostObservations": [],
+      "inputs": {
+        "commandDigest": "4f290458ebca6a47f78203989e51903c18f62ca01ed76c067556c0c05450b828",
+        "commands": {
+          "adopt-466c2f308b48c766": "git diff --check",
+          "repository-check": "python3 scripts/check_repository.py",
+          "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_host_roles --module test_single_workflow_config --module test_run_required_review --module test_review_verdict --module test_run_ci --module test_run_end_to_end --module test_host_transports --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+        },
+        "contractDigest": "9a962e1e340c97e00157e3adfb44e5c7d11480a3b993b344a1b63fbd32612ae3",
+        "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-282",
+        "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
+        "skips": [],
+        "source": "bf8788c38d265779451945bfe9b9f7ca73c65a31",
+        "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+        "sourceTree": "06650df4aecf86c0314df8cac5253b0a4793aebd"
+      },
+      "intermittent": [],
+      "lastFailed": [
+        "task-tests"
+      ],
+      "phase": "failed",
+      "quickFailures": 0,
+      "quickRounds": 0,
+      "runs": [
+        [
+          {
+            "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/282.json#c6d41748ceee46f8aa0072e334cc9db9/1/repository-check",
+            "round": 1,
+            "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_host_roles --module test_single_workflow_config --module test_run_required_review --module test_review_verdict --module test_run_ci --module test_run_end_to_end --module test_host_transports --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface",
+            "commit": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/282.json#c6d41748ceee46f8aa0072e334cc9db9/1/task-tests",
+            "round": 1,
+            "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+            "stderr": "run_tests: 267 tests in 8 shards\nrun_tests: shard 1/8 finished in 57.5s: exit 0 ran=34 failures=0 errors=0\nrun_tests: shard 7/8 finished in 69.7s: exit 1 ran=33 failures=1 errors=0\nrun_tests: shard 8/8 finished in 71.8s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 5/8 finished in 88.4s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 2/8 finished in 92.2s: exit 0 ran=34 failures=0 errors=0\nrun_tests: shard 4/8 finished in 104.6s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 6/8 finished in 116.2s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 3/8 finished in 120.0s: exit 0 ran=34 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=267 selected=33 digest=10a98cdc1ff5a27569234223ca9eb2b9b1ac837fded2fd3664bed0890dbf6dd3\ntest_capability_catalog_rejects_an_unresolved_dependency (test_check_repository.CapabilityMarkerBaselineTest.test_capability_catalog_rejects_an_unresolved_dependency) ... ok\ntest_optional_capability_is_ignored (test_check_repository.CapabilityRequiredVersionsTest.test_optional_capability_is_ignored) ... ok\ntest_migration_to_tagged_version_requires_its_release_ledger_entry (test_check_repository.CheckMigrationsVersionGateTest.test_migration_to_tagged_version_requires_its_release_ledger_entry) ... ok\ntest_filename_version_mismatch_fails (test_check_repository.CheckReleasesTest.test_filename_version_mismatch_fails) ... ok\ntest_absent_manifest_does_not_require_installed_records (test_check_repository.ConditionalInstallationChecksTest.test_absent_manifest_does_not_require_installed_records) ... ok\ntest_a_reviewer_author_override_anywhere_fails (test_check_repository.GovernedLifecycleTextTest.test_a_reviewer_author_override_anywhere_fails) ... ok\ntest_missing_targets_still_fail (test_check_repository.LocalMarkdownLinksTest.test_missing_targets_still_fail) ... ok\ntest_matching_plugin_version_passes (test_check_repository.PluginVersionTest.test_matching_plugin_version_passes) ... ok\ntest_listing_handles_deleted_and_unusual_paths (test_check_repository.RepositoryFilesTest.test_listing_handles_deleted_and_unusual_paths) ... ok\ntest_the_check_is_read_only_and_independent_of_the_working_directory (test_check_repository.RouterRoutesTest.test_the_check_is_read_only_and_independent_of_the_working_directory) ... ok\ntest_repository_passes (test_check_repository.StopCodeRegistryCheckTest.test_repository_passes) ... ok\ntest_adapter_factory_binds_transport_to_its_own_host (test_host_transports.HostTransportsTest.test_adapter_factory_binds_transport_to_its_own_host) ... ok\ntest_missing_or_partial_proof_refuses_without_any_host_effect (test_host_transports.HostTransportsTest.test_missing_or_partial_proof_refuses_without_any_host_effect) ... ok\ntest_context_configuration_and_references_use_selected_directory (test_layout.LayoutTest.test_context_configuration_and_references_use_selected_directory) ... ok\ntest_manifest_and_baseline_use_selected_directory (test_layout.LayoutTest.test_manifest_and_baseline_use_selected_directory) ... ok\ntest_task_state_path_changes_only_inside_context (test_layout.LayoutTest.test_task_state_path_changes_only_inside_context) ... ok\ntest_historical_profile_is_allowed_only_in_the_migration_expression (test_no_meridian_identifiers.IdentifierGuardTest.test_historical_profile_is_allowed_only_in_the_migration_expression) ... ok\ntest_attempts_and_existing_prose_are_preserved (test_review_verdict.ReviewVerdictTest.test_attempts_and_existing_prose_are_preserved) ... ok\ntest_noop_does_not_hide_modified_outputs_or_unrelated_dirt (test_review_verdict.ReviewVerdictTest.test_noop_does_not_hide_modified_outputs_or_unrelated_dirt) ... ok\ntest_changed_delivery_during_wait_cannot_publish_old_result (test_run_ci.CiTest.test_changed_delivery_during_wait_cannot_publish_old_result) ... ok\ntest_fabricated_records_and_tracking_refs_have_no_authority (test_run_ci.CiTest.test_fabricated_records_and_tracking_refs_have_no_authority) ... ok\ntest_kill_at_before_ci_push_1_converges (test_run_ci.CiTest.test_kill_at_before_ci_push_1_converges) ... ok\ntest_pending_failed_and_wrong_sha_checks_never_pass (test_run_ci.CiTest.test_pending_failed_and_wrong_sha_checks_never_pass) ... ok\ntest_run_command_emits_a_valid_waiting_envelope_from_an_unrelated_directory (test_run_ci.CiTest.test_run_command_emits_a_valid_waiting_envelope_from_an_unrelated_directory) ... ok\ntest_kill_around_the_landing_restore_converges_without_losing_work (test_run_end_to_end.AbortLandingRestoreTest.test_kill_around_the_landing_restore_converges_without_losing_work) ... ok\ntest_every_cardine_resume_parses_from_a_metacharacter_project (test_run_end_to_end.RegistryAuditTest.test_every_cardine_resume_parses_from_a_metacharacter_project) ... ok\ntest_emitted_next_command_runs_unchanged_from_an_unrelated_directory (test_run_end_to_end.UnrelatedDirectoryTest.test_emitted_next_command_runs_unchanged_from_an_unrelated_directory) ... ok\ntest_foreign_session_and_response_cannot_exchange_role_tokens (test_run_host_roles.RunHostRolesTest.test_foreign_session_and_response_cannot_exchange_role_tokens) ... ok\ntest_waiting_polls_same_session_and_never_reissues_request (test_run_host_roles.RunHostRolesTest.test_waiting_polls_same_session_and_never_reissues_request) ... ok\ntest_direct_only_never_probes_a_forge (test_single_workflow_config.SingleWorkflowConfigTest.test_direct_only_never_probes_a_forge) ... ok\ntest_retry_variants_require_known_ids_and_nonempty_commands (test_single_workflow_config.SingleWorkflowConfigTest.test_retry_variants_require_known_ids_and_nonempty_commands) ... ok\ntest_retired_codes_have_no_static_dynamic_or_judgment_emitter (test_stop_registry.StopRegistryTest.test_retired_codes_have_no_static_dynamic_or_judgment_emitter) ... FAIL\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\n\n======================================================================\n\nRan 33 tests in 69.278s\n\nFAILED (failures=1)\nFAIL: invalid capability catalog: capability read-guard has an unresolved dependency context-reading v999\nFAIL: templates/single/docs/workflows/REVIEW.md instructs a reviewer author override\nFAIL: templates/single/docs/workflows/IMPLEMENTATION.md instructs a reviewer author override\nFAIL: test_retired_codes_have_no_static_dynamic_or_judgment_emitter (test_stop_registry.StopRegistryTest.test_retired_codes_have_no_static_dynamic_or_judgment_emitter)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-282/tests/test_stop_registry.py\", line 46, in test_retired_codes_have_no_static_dynamic_or_judgment_emitter\n    self.assertEqual(found, expected)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\nAssertionError: {('sr[89 chars]tion/merge.py', 'REVIEW_NOT_APPROVED'): 4, ('s[193 chars]): 7} != {('sr[89 chars]tion/evidence.py', 'UNDECLARED_VALIDATION_COMM[130 chars]): 7}\n  {('src/cardine/integration/evidence.py', 'UNDECLARED_VALIDATION_COMMANDS'): 1,\n   ('src/cardine/integration/merge.py', 'REVIEW_NOT_APPROVED'): 4,\n-  ('src/cardine/lifecycle/engine.py', 'REVIEW_NOT_APPROVED'): 1,\n   ('src/cardine/review/verdict.py', 'REVIEW_NOT_APPROVED'): 7,\n   ('src/cardine/tasks/contract.py', 'UNDECLARED_VALIDATION_COMMANDS'): 1}\n\n----------------------------------------------------------------------\nresult ran=33 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_host_roles,test_single_workflow_config,test_run_required_review,test_review_verdict,test_run_ci,test_run_end_to_end,test_host_transports,test_stop_registry,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_public_surface ran=267 total=2288 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+            "command": "git diff --check",
+            "commit": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/282.json#c6d41748ceee46f8aa0072e334cc9db9/1/adopt-466c2f308b48c766",
+            "round": 1,
+            "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ],
+        [
+          {
+            "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+            "command": "python3 scripts/check_repository.py",
+            "commit": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+            "exitStatus": 0,
+            "id": "repository-check",
+            "log": ".cardine/evidence/282.json#c6d41748ceee46f8aa0072e334cc9db9/2/repository-check",
+            "round": 2,
+            "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "Cardine repository checks passed.\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+            "command": "python3 scripts/run_tests.py --parallel --module test_run_host_roles --module test_single_workflow_config --module test_run_required_review --module test_review_verdict --module test_run_ci --module test_run_end_to_end --module test_host_transports --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface",
+            "commit": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+            "exitStatus": 1,
+            "id": "task-tests",
+            "log": ".cardine/evidence/282.json#c6d41748ceee46f8aa0072e334cc9db9/2/task-tests",
+            "round": 2,
+            "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+            "stderr": "run_tests: 267 tests in 8 shards\nrun_tests: shard 1/8 finished in 54.3s: exit 0 ran=34 failures=0 errors=0\nrun_tests: shard 7/8 finished in 65.6s: exit 1 ran=33 failures=1 errors=0\nrun_tests: shard 8/8 finished in 67.4s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 5/8 finished in 82.9s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 2/8 finished in 85.9s: exit 0 ran=34 failures=0 errors=0\nrun_tests: shard 4/8 finished in 98.1s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 6/8 finished in 110.5s: exit 0 ran=33 failures=0 errors=0\nrun_tests: shard 3/8 finished in 114.5s: exit 0 ran=34 failures=0 errors=0\n",
+            "stderrTruncated": false,
+            "stdout": "--- shard 7/8 (exit 1) ---\nshard=7/8 total=267 selected=33 digest=10a98cdc1ff5a27569234223ca9eb2b9b1ac837fded2fd3664bed0890dbf6dd3\ntest_capability_catalog_rejects_an_unresolved_dependency (test_check_repository.CapabilityMarkerBaselineTest.test_capability_catalog_rejects_an_unresolved_dependency) ... ok\ntest_optional_capability_is_ignored (test_check_repository.CapabilityRequiredVersionsTest.test_optional_capability_is_ignored) ... ok\ntest_migration_to_tagged_version_requires_its_release_ledger_entry (test_check_repository.CheckMigrationsVersionGateTest.test_migration_to_tagged_version_requires_its_release_ledger_entry) ... ok\ntest_filename_version_mismatch_fails (test_check_repository.CheckReleasesTest.test_filename_version_mismatch_fails) ... ok\ntest_absent_manifest_does_not_require_installed_records (test_check_repository.ConditionalInstallationChecksTest.test_absent_manifest_does_not_require_installed_records) ... ok\ntest_a_reviewer_author_override_anywhere_fails (test_check_repository.GovernedLifecycleTextTest.test_a_reviewer_author_override_anywhere_fails) ... ok\ntest_missing_targets_still_fail (test_check_repository.LocalMarkdownLinksTest.test_missing_targets_still_fail) ... ok\ntest_matching_plugin_version_passes (test_check_repository.PluginVersionTest.test_matching_plugin_version_passes) ... ok\ntest_listing_handles_deleted_and_unusual_paths (test_check_repository.RepositoryFilesTest.test_listing_handles_deleted_and_unusual_paths) ... ok\ntest_the_check_is_read_only_and_independent_of_the_working_directory (test_check_repository.RouterRoutesTest.test_the_check_is_read_only_and_independent_of_the_working_directory) ... ok\ntest_repository_passes (test_check_repository.StopCodeRegistryCheckTest.test_repository_passes) ... ok\ntest_adapter_factory_binds_transport_to_its_own_host (test_host_transports.HostTransportsTest.test_adapter_factory_binds_transport_to_its_own_host) ... ok\ntest_missing_or_partial_proof_refuses_without_any_host_effect (test_host_transports.HostTransportsTest.test_missing_or_partial_proof_refuses_without_any_host_effect) ... ok\ntest_context_configuration_and_references_use_selected_directory (test_layout.LayoutTest.test_context_configuration_and_references_use_selected_directory) ... ok\ntest_manifest_and_baseline_use_selected_directory (test_layout.LayoutTest.test_manifest_and_baseline_use_selected_directory) ... ok\ntest_task_state_path_changes_only_inside_context (test_layout.LayoutTest.test_task_state_path_changes_only_inside_context) ... ok\ntest_historical_profile_is_allowed_only_in_the_migration_expression (test_no_meridian_identifiers.IdentifierGuardTest.test_historical_profile_is_allowed_only_in_the_migration_expression) ... ok\ntest_attempts_and_existing_prose_are_preserved (test_review_verdict.ReviewVerdictTest.test_attempts_and_existing_prose_are_preserved) ... ok\ntest_noop_does_not_hide_modified_outputs_or_unrelated_dirt (test_review_verdict.ReviewVerdictTest.test_noop_does_not_hide_modified_outputs_or_unrelated_dirt) ... ok\ntest_changed_delivery_during_wait_cannot_publish_old_result (test_run_ci.CiTest.test_changed_delivery_during_wait_cannot_publish_old_result) ... ok\ntest_fabricated_records_and_tracking_refs_have_no_authority (test_run_ci.CiTest.test_fabricated_records_and_tracking_refs_have_no_authority) ... ok\ntest_kill_at_before_ci_push_1_converges (test_run_ci.CiTest.test_kill_at_before_ci_push_1_converges) ... ok\ntest_pending_failed_and_wrong_sha_checks_never_pass (test_run_ci.CiTest.test_pending_failed_and_wrong_sha_checks_never_pass) ... ok\ntest_run_command_emits_a_valid_waiting_envelope_from_an_unrelated_directory (test_run_ci.CiTest.test_run_command_emits_a_valid_waiting_envelope_from_an_unrelated_directory) ... ok\ntest_kill_around_the_landing_restore_converges_without_losing_work (test_run_end_to_end.AbortLandingRestoreTest.test_kill_around_the_landing_restore_converges_without_losing_work) ... ok\ntest_every_cardine_resume_parses_from_a_metacharacter_project (test_run_end_to_end.RegistryAuditTest.test_every_cardine_resume_parses_from_a_metacharacter_project) ... ok\ntest_emitted_next_command_runs_unchanged_from_an_unrelated_directory (test_run_end_to_end.UnrelatedDirectoryTest.test_emitted_next_command_runs_unchanged_from_an_unrelated_directory) ... ok\ntest_foreign_session_and_response_cannot_exchange_role_tokens (test_run_host_roles.RunHostRolesTest.test_foreign_session_and_response_cannot_exchange_role_tokens) ... ok\ntest_waiting_polls_same_session_and_never_reissues_request (test_run_host_roles.RunHostRolesTest.test_waiting_polls_same_session_and_never_reissues_request) ... ok\ntest_direct_only_never_probes_a_forge (test_single_workflow_config.SingleWorkflowConfigTest.test_direct_only_never_probes_a_forge) ... ok\ntest_retry_variants_require_known_ids_and_nonempty_commands (test_single_workflow_config.SingleWorkflowConfigTest.test_retry_variants_require_known_ids_and_nonempty_commands) ... ok\ntest_retired_codes_have_no_static_dynamic_or_judgment_emitter (test_stop_registry.StopRegistryTest.test_retired_codes_have_no_static_dynamic_or_judgment_emitter) ... FAIL\ntest_new_reader_fails_in_synthetic_tree (test_text_gates.TextGateScannerTest.test_new_reader_fails_in_synthetic_tree) ... ok\n\n======================================================================\n\nRan 33 tests in 65.190s\n\nFAILED (failures=1)\nFAIL: invalid capability catalog: capability read-guard has an unresolved dependency context-reading v999\nFAIL: templates/single/docs/workflows/REVIEW.md instructs a reviewer author override\nFAIL: templates/single/docs/workflows/IMPLEMENTATION.md instructs a reviewer author override\nFAIL: test_retired_codes_have_no_static_dynamic_or_judgment_emitter (test_stop_registry.StopRegistryTest.test_retired_codes_have_no_static_dynamic_or_judgment_emitter)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-282/tests/test_stop_registry.py\", line 46, in test_retired_codes_have_no_static_dynamic_or_judgment_emitter\n    self.assertEqual(found, expected)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\nAssertionError: {('sr[89 chars]tion/merge.py', 'REVIEW_NOT_APPROVED'): 4, ('s[193 chars]): 7} != {('sr[89 chars]tion/evidence.py', 'UNDECLARED_VALIDATION_COMM[130 chars]): 7}\n  {('src/cardine/integration/evidence.py', 'UNDECLARED_VALIDATION_COMMANDS'): 1,\n   ('src/cardine/integration/merge.py', 'REVIEW_NOT_APPROVED'): 4,\n-  ('src/cardine/lifecycle/engine.py', 'REVIEW_NOT_APPROVED'): 1,\n   ('src/cardine/review/verdict.py', 'REVIEW_NOT_APPROVED'): 7,\n   ('src/cardine/tasks/contract.py', 'UNDECLARED_VALIDATION_COMMANDS'): 1}\n\n----------------------------------------------------------------------\nresult ran=33 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_run_host_roles,test_single_workflow_config,test_run_required_review,test_review_verdict,test_run_ci,test_run_end_to_end,test_host_transports,test_stop_registry,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_public_surface ran=267 total=2288 failures=1 errors=0\n",
+            "stdoutTruncated": false
+          },
+          {
+            "attemptId": "c6d41748ceee46f8aa0072e334cc9db9",
+            "command": "git diff --check",
+            "commit": "f44ad72f7b5e4800b8af3b804012adf2f6661e23",
+            "exitStatus": 0,
+            "id": "adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/282.json#c6d41748ceee46f8aa0072e334cc9db9/2/adopt-466c2f308b48c766",
+            "round": 2,
+            "sourceDigest": "265903e92a20d8f62767acda0034e58b64a07c93f856783f27398b060c623563",
+            "stderr": "",
+            "stderrTruncated": false,
+            "stdout": "",
+            "stdoutTruncated": false
+          }
+        ]
+      ]
+    }
   },
   "status": "in_progress",
   "task_id": "282",
