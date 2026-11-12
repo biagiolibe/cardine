@@ -733,8 +733,17 @@ def check_releases(root: Path = ROOT) -> None:
         migrations = data["migrations"]
         if not isinstance(migrations, list):
             fail(f"{relative}: migrations must be a list")
-        if data["baselineChanged"] is not bool(migrations):
+        pre_one_zero = cardine_cli.version_key(data["version"]) < cardine_cli.version_key("1.0.0")
+        if migrations and data["baselineChanged"] is not True:
             fail(f"{relative}: baselineChanged must be true iff migrations is non-empty")
+        if not migrations and data["baselineChanged"] is not False:
+            if not pre_one_zero or data["baselineChanged"] is not True:
+                fail(f"{relative}: baselineChanged must be true iff migrations is non-empty")
+            if data["workflowBaselineVersion"] != data["version"]:
+                fail(
+                    f"{relative}: a pre-1.0 template-changing release without migrations "
+                    "must set workflowBaselineVersion to its own version"
+                )
         # Ledgers for releases that predate the empty chain name migration
         # records that no longer exist; they are checked against the chain
         # only while the chain still carries the record.

@@ -777,6 +777,26 @@ class CheckReleasesTest(unittest.TestCase):
 
         self.assert_fails("baselineChanged")
 
+    def test_pre_one_zero_template_release_without_migrations_passes(self) -> None:
+        (self.root / "migrations/001-step.json").unlink()
+        (self.root / "VERSION").write_text("0.10.0\n", encoding="utf-8")
+        self.write_release("0.10.0", baselineChanged=True, workflowBaselineVersion="0.10.0")
+
+        cr.check_releases(self.root)
+
+    def test_pre_one_zero_template_release_with_other_baseline_fails(self) -> None:
+        (self.root / "migrations/001-step.json").unlink()
+        (self.root / "VERSION").write_text("0.10.0\n", encoding="utf-8")
+        self.write_release("0.10.0", baselineChanged=True, workflowBaselineVersion="0.9.2")
+
+        self.assert_fails("workflowBaselineVersion")
+
+    def test_one_zero_template_release_without_migrations_fails(self) -> None:
+        self.write_release("1.0.1", baselineChanged=True)
+        self.write_release("1.0.2")
+
+        self.assert_fails("baselineChanged")
+
     def test_prerelease_suffix_fails(self) -> None:
         (self.root / "VERSION").write_text("1.0.2-rc.1\n", encoding="utf-8")
         self.write_release("1.0.2-rc.1")
