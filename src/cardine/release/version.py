@@ -99,8 +99,8 @@ def semver_precedence_key(version: SemVer) -> tuple[object, ...]:
 
 def release_kind_from_body(body: str) -> str:
     first_line = next((line.strip() for line in body.splitlines() if line.strip()), "")
-    if first_line.startswith("CLI-only release:"):
+    if first_line.startswith(("CLI-only release:", "CLI-only release.")):
         return "CLI-only"
-    if first_line.startswith("Template-changing release:"):
+    if first_line.startswith(("Template-changing release:", "Template-changing release.")):
         return "template-changing"
     raise ValueError("release body has no recognized kind line")

@@ -19,6 +19,18 @@ from cardine.release import update as owner_release_update
 import cardine.shared.constants as shared_constants
 
 
+class ReleaseKindLineTest(unittest.TestCase):
+    def test_both_punctuations_and_rejection(self) -> None:
+        from cardine.release.version import release_kind_from_body
+        for body, kind in (("CLI-only release. x", "CLI-only"), ("CLI-only release: x", "CLI-only"),
+                           ("\nTemplate-changing release. x", "template-changing"),
+                           ("Template-changing release: x", "template-changing")):
+            self.assertEqual(release_kind_from_body(body), kind)
+        for body in ("", "CLI-only release x", "Release: x"):
+            with self.assertRaises(ValueError):
+                release_kind_from_body(body)
+
+
 class FakeLatestReleaseResponse:
     def __init__(self, payload: bytes):
         self.payload = payload

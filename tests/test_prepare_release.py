@@ -54,6 +54,14 @@ class ExtractChangelogSectionTest(unittest.TestCase):
             pr.extract_changelog_section("## [1.0.0]\n\n## [0.9.0]\nx\n", "1.0.0")
 
 
+class KindLineContractTest(unittest.TestCase):
+    def test_colon_required(self) -> None:
+        pr.check_release_notes_contract("CLI-only release: x", "1.0.0", False)
+        with self.assertRaises(pr.ReleaseError) as error:
+            pr.check_release_notes_contract("CLI-only release. x", "1.0.0", False)
+        self.assertIn("CLI-only release:", str(error.exception))
+
+
 class ReleaseConsistencyTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()

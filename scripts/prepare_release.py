@@ -56,14 +56,14 @@ def check_release_notes_contract(section: str, version: str, baseline_changed: o
     if not isinstance(baseline_changed, bool):
         raise ReleaseError(f"releases/{version}.json baselineChanged must be true or false")
     first_line = section.lstrip().splitlines()[0]
-    if first_line.startswith(CLI_ONLY_KIND):
+    if first_line.startswith(f"{CLI_ONLY_KIND}:"):
         declared = False
-    elif first_line.startswith(TEMPLATE_CHANGING_KIND):
+    elif first_line.startswith(f"{TEMPLATE_CHANGING_KIND}:"):
         declared = True
     else:
         raise ReleaseError(
             f"CHANGELOG.md section '## [{version}]' must start with "
-            f"'{CLI_ONLY_KIND}' or '{TEMPLATE_CHANGING_KIND}'"
+            f"'{CLI_ONLY_KIND}:' or '{TEMPLATE_CHANGING_KIND}:' (with the colon)"
         )
     if declared != baseline_changed:
         kind = TEMPLATE_CHANGING_KIND if declared else CLI_ONLY_KIND
