@@ -122,7 +122,7 @@ record_launched_verdict(root, '001', sys.argv[3])
                     self.assertEqual((self.root/'tasks/reviews/001.md').read_text().count('## Attempt '), 1)
                     self.assertEqual(self.git('rev-parse', 'HEAD'), head)
 
-    def test_agent_credentials_cannot_record_owner_or_command_line_verdicts(self):
+    def test_implementer_owner_spoof_and_exchanged_reviewer_session_write_nothing(self):
         before = self.state()
         for credential, owner in [('implementer-channel', False), ('implementer-channel', True),
                                   ('codex:foreign', False), ('coordinator-channel', True)]:
@@ -132,6 +132,16 @@ record_launched_verdict(root, '001', sys.argv[3])
             self.assertEqual(self.state(), before)
         with patch('cardine.lifecycle.control._interactive', return_value=False), self.assertRaises(CardineError):
             record_review_verdict(self.root, '001', 'APPROVE', owner=True)
+        updated = deepcopy(before)
+        response = updated['run']['hostLaunches'][self.key]['response']
+        response['session'] = dict(response['session'], session_id='foreign-session')
+        with receipts.task_lock(self.root, '001'):
+            receipts.write_operation(self.root, '001', updated, previous=before, kind='fixture-issued-review')
+        before = self.state()
+        with self.assertRaises(CardineStop) as caught:
+            record_launched_verdict(self.root, '001', self.key)
+        self.assertEqual(caught.exception.code, 'REVIEW_NOT_APPROVED')
+        self.assertEqual(self.state(), before)
         developer = CodexProfileAdapter(self.host, 'developer-channel')
         result = record_review_verdict(self.root, '001', 'APPROVE', owner=True, adapter=developer)
         self.assertEqual(result['review']['approved_by'], 'owner')
