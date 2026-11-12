@@ -1,0 +1,107 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "spike",
+    "deliverables": [
+      "docs/ADR_SPEC_KIT_INTEROP.md"
+    ],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "docs/ADR_SPEC_KIT_INTEROP.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/295.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 295 \u2014 Decide how Cardine interoperates with Spec Kit",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_public_surface --module test_text_gates --module test_module_inventory --module test_layout --module test_no_meridian_identifiers"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "1169d482d8344076c50382f605fdb8953e5c6f3d9597e334219db088dfd2b95c",
+        "digest": "d3aa70e73a9aefa16df3c2e74c493c8e59e867cb4a2b845493968e90ced3bb5d",
+        "inputs": {
+          ".cardine/tasks/295.json": null,
+          "tasks/295.md": null
+        },
+        "kind": "creation",
+        "operation_id": "63b3d2e32cdb4756a625251da647c018",
+        "outputs": {
+          ".cardine/tasks/295.json": "946aa7030bd6080e357a4d34712d5357b2382d3cc0834386f3d5996030a1b3b6",
+          "tasks/295.md": "1a9ef2f875025c5c1fcdac2a0b1a61c8194980972f29cac05f6a1d3b40f318ea"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "448dc22db663df5df6a69eea56688ad8a06075e0",
+        "task_id": "295",
+        "tree": "cdb4d0791bff8cf12dfc1a2d591741b65be91412",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "295",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

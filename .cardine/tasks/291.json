@@ -1,0 +1,105 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "README.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/291.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 291 \u2014 Position the README as the delivery layer that works with spec tools",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_public_surface --module test_text_gates --module test_module_inventory --module test_layout --module test_no_meridian_identifiers"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "cb404229912a8f86e8787350a7e2d07227e0f6401787b66102d46eb689644635",
+        "digest": "cee5ee508a333ff85d5389ad84c6e965e956d423ddf5e278edceb8bc009479e1",
+        "inputs": {
+          ".cardine/tasks/291.json": null,
+          "tasks/291.md": null
+        },
+        "kind": "creation",
+        "operation_id": "dc85dbdb408f4b948a37e02e69638276",
+        "outputs": {
+          ".cardine/tasks/291.json": "8bb2dbf216bb62d76ff9e05f97be1a8e9daa22a3faba53c8ec42c7a0be7cfe18",
+          "tasks/291.md": "297e078c85efc9f6f5a5c74a8756cbd77c9c387f70150733a75b9afe2840accd"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "448dc22db663df5df6a69eea56688ad8a06075e0",
+        "task_id": "291",
+        "tree": "cdb4d0791bff8cf12dfc1a2d591741b65be91412",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "291",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

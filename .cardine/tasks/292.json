@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "291"
+    ],
+    "expectedCodeSurface": [
+      "docs/TROUBLESHOOTING.md",
+      "README.md",
+      "docs/QUICKSTART.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/292.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 292 \u2014 Write a troubleshooting guide for the stops users meet",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_public_surface --module test_text_gates --module test_project_guide --module test_module_inventory --module test_layout --module test_no_meridian_identifiers"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "55b96d6648298898377e3a2744b8bde82803d6b50e5387b3181d8d34c54de468",
+        "digest": "55ea8090d367a22fd11bf526bbfdf1cb88c5ca618c9eeeab363a6677770c0c10",
+        "inputs": {
+          ".cardine/tasks/292.json": null,
+          "tasks/292.md": null
+        },
+        "kind": "creation",
+        "operation_id": "eb3e996e664f4d66b5911f8191695886",
+        "outputs": {
+          ".cardine/tasks/292.json": "2e91acd9f4c91db6e000405de82522ba155a6e41a44c2750258de71721c25c56",
+          "tasks/292.md": "92f30fb6372df3b588aea9cf5b7b0228ea95e0f4b71d39d3dd6e186c066096cd"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "448dc22db663df5df6a69eea56688ad8a06075e0",
+        "task_id": "292",
+        "tree": "cdb4d0791bff8cf12dfc1a2d591741b65be91412",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "292",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
