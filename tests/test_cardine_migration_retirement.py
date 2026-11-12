@@ -149,7 +149,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=review-policy v3 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v4 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -174,7 +174,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "removes": [
                         {
                             "capability": "review-policy",
-                            "capabilityVersion": 3,
+                            "capabilityVersion": 4,
                             "supersededBy": "role-scoped-agent-rules",
                         }
                     ],
@@ -188,7 +188,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
 
         local_policy = self.project / "PROJECT_WORKFLOW.md"
         local_text = local_policy.read_text(encoding="utf-8")
-        self.assertIn("CARDINE:BEGIN capability=review-policy v3", local_text)
+        self.assertIn("CARDINE:BEGIN capability=review-policy v4", local_text)
         local_policy.write_text(
             local_text.replace("## Task contract", "## Task contract (project wording)"),
             encoding="utf-8",
@@ -221,7 +221,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=review-policy v3 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v4 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -240,7 +240,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                     "from": "1.1.0",
                     "to": "1.1.1",
                     "description": "test-only retirement",
-                    "removes": [{"capability": "review-policy", "capabilityVersion": 3}],
+                    "removes": [{"capability": "review-policy", "capabilityVersion": 4}],
                     "managedPaths": ["PROJECT_WORKFLOW.md"],
                     "verification": ["test-only"],
                 }
@@ -276,7 +276,7 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
         source = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         source_text = source.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=review-policy v3 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v4 -->\n?.*?"
             r"<!-- CARDINE:END -->",
             source_text,
             re.DOTALL,
@@ -308,13 +308,13 @@ class MigrationRetirementTest(CardineCliFixtureMixin, unittest.TestCase):
                             "source": {
                                 "path": "PROJECT_WORKFLOW.md",
                                 "capability": "review-policy",
-                                "capabilityVersion": 3,
+                                "capabilityVersion": 4,
                                 "markerSha256": digest,
                             },
                             "target": {
                                 "path": "docs/ROUTED_STATUS_RULE.md",
                                 "capability": "review-policy",
-                                "capabilityVersion": 3,
+                                "capabilityVersion": 4,
                                 "markerSha256": digest,
                             },
                         }

@@ -61,7 +61,7 @@ class CapabilityMarkerTest(unittest.TestCase):
         text = (self.WORKFLOW / "docs/REVIEW_RECORD_TEMPLATE.md").read_text(encoding="utf-8")
         self.assertEqual(
             self.marker_pairs(text),
-            [("review-remediation-record", "3"), ("manual-verification-record", "2")],
+            [("review-remediation-record", "4"), ("manual-verification-record", "2")],
         )
 
     def test_lifecycle_orchestration_carries_its_own_marker(self) -> None:
@@ -213,7 +213,7 @@ class CapabilityMarkerTest(unittest.TestCase):
     def test_agents_and_claude_carry_the_five_residual_capabilities(self) -> None:
         self.assertIn(("command-triggers", "3"), self.marker_pairs((self.WORKFLOW / "AGENTS.md").read_text(encoding="utf-8")))
         review = self.marker_pairs((self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8"))
-        self.assertEqual(review, [("task-worktree-review-procedure", "5")])
+        self.assertEqual(review, [("task-worktree-review-procedure", "6")])
     def test_review_hands_off_through_the_command_before_substantive_inspection(self) -> None:
         review = (self.WORKFLOW / "docs/workflows/REVIEW.md").read_text(encoding="utf-8")
         handoff = review.index("Run `cardine review <TASK-ID> --project <primary-checkout>`")
