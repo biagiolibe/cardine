@@ -143,7 +143,7 @@ class NonrunCausesTest(unittest.TestCase):
                     with self.assertRaises(CardineStop) as error:
                         updater.owner_release_update.run_self_update(root, apply=True)
                     self.assertEqual(error.exception.code, 'SELF_UPDATE_PLUGIN_CACHE')
-                    self.assertTrue(str(error.exception).endswith('resume: ' + updater.owner_release_update.PLUGIN_UPDATE_COMMAND))
+                    self.assertTrue(str(error.exception).endswith('resume: claude plugin marketplace remove cardine && claude plugin marketplace add biagiolibe/cardine#v<version> && claude plugin install cardine@cardine'))
                     git.assert_not_called()
                 self.assertFalse(root.exists())
 

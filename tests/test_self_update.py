@@ -140,9 +140,9 @@ class SelfUpdateTest(unittest.TestCase):
 
     def test_plugin_cache(self):
         with self.assertRaises(shared_errors.CardineStop) as error:
-            owner_release_update.run_self_update(self.base / '.claude/plugins/cache/meridian/1.3.0', apply=True)
+            owner_release_update.run_self_update(self.base / '.claude/plugins/cache/cardine/1.3.0', apply=True)
         self.assertEqual(error.exception.code, 'SELF_UPDATE_PLUGIN_CACHE')
-        self.assertIn('/plugin marketplace update meridian', str(error.exception))
+        self.assertTrue(str(error.exception).endswith('resume: claude plugin marketplace remove cardine && claude plugin marketplace add biagiolibe/cardine#v<version> && claude plugin install cardine@cardine'))
 
     def test_post_apply_verification(self):
         original = cardine_cli.read_raw_version

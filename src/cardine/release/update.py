@@ -5,6 +5,7 @@ from __future__ import annotations
 from cardine.shared.git import _run_git, scoped_command, invalidate_facts
 from cardine.lifecycle import receipts
 from cardine.release import update_operation
+from cardine.hosts.claude import plugin_alignment_commands
 from contextlib import nullcontext
 
 from cardine.release.version import parse_semver
@@ -36,7 +37,9 @@ def urlopen(*args, **kwargs):
     return open_url(*args, **kwargs)
 
 
-PLUGIN_UPDATE_COMMAND = "/plugin marketplace update meridian"
+PLUGIN_UPDATE_COMMAND = " && ".join(
+    " ".join(command) for command in plugin_alignment_commands("mismatch", "<version>")
+)
 
 def fetch_latest_release(
     installed_version: str,
@@ -213,59 +216,58 @@ def _run_self_update(framework_root: Path, *, apply: bool = False,
         refuse("SELF_UPDATE_VERIFY", f"Git operation failed: {error}; inspect checkout and retry cardine self-update --check")
 
 
-def claude_user_settings_path() -> Path:
+def claude_plugin_registry_path() -> Path:
     configured = os.environ.get("CLAUDE_CONFIG_DIR")
-    return (Path(configured) if configured else Path.home() / ".claude") / "settings.json"
+    return (Path(configured) if configured else Path.home() / ".claude") / "plugins/installed_plugins.json"
 
 
-def plugin_marketplace_ref(settings_path: Path) -> tuple[str | None, str]:
-    """Read extraKnownMarketplaces.meridian.source.ref; return (ref, reason when unknown)."""
+def installed_plugin_versions(registry_path: Path) -> tuple[list[str] | None, str]:
+    """Read installed Cardine versions without changing the Claude registry."""
     try:
-        document = json.loads(settings_path.read_text(encoding="utf-8"))
+        document = json.loads(registry_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return None, f"no user settings at {settings_path}"
+        return [], ""
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        return None, f"user settings at {settings_path} are unreadable"
-    marketplaces = document.get("extraKnownMarketplaces") if isinstance(document, dict) else None
-    entry = marketplaces.get("meridian") if isinstance(marketplaces, dict) else None
-    source = entry.get("source") if isinstance(entry, dict) else None
-    ref = source.get("ref") if isinstance(source, dict) else None
-    if not isinstance(ref, str) or not ref:
-        return None, "no extraKnownMarketplaces.meridian.source.ref declared"
-    return ref, ""
-
-
-def plugin_ref_report(settings_path: Path, latest_version: str | None) -> str:
-    """Describe the Claude Code marketplace ref without writing settings."""
-    ref, reason = plugin_marketplace_ref(settings_path)
-    if ref is None:
-        return f"Plugin ref: unknown ({reason})"
-    if ref == "stable":
-        return "Plugin ref: stable"
+        return None, f"plugin registry at {registry_path} is unreadable"
     try:
-        pinned = parse_semver(ref[1:]) if ref.startswith("v") else None
-    except CardineError:
-        pinned = None
-    if pinned is None:
-        return f"Plugin ref: {ref} (neither stable nor a release tag)"
+        entries = document.get("plugins", {}).get("cardine@cardine", [])
+        if not isinstance(entries, list):
+            raise ValueError("plugin entries must be a list")
+        versions = sorted({entry["version"] for entry in entries})
+        for version in versions:
+            parse_semver(version)
+    except (AttributeError, KeyError, TypeError, ValueError, CardineError):
+        return None, f"plugin registry at {registry_path} has invalid Cardine entries"
+    return versions, ""
+
+
+def installed_plugin_report(registry_path: Path, latest_version: str | None) -> str:
+    """Describe the installed Claude Code plugin without writing files."""
+    versions, reason = installed_plugin_versions(registry_path)
+    if versions is None:
+        return f"Plugin: unknown ({reason})"
+    if not versions:
+        return "Plugin: not installed"
+    label = ", ".join(versions)
     if latest_version is None:
-        return f"Plugin ref: {ref} (latest release unknown)"
-    if semver_precedence_key(pinned) >= semver_precedence_key(parse_semver(latest_version)):
-        return f"Plugin ref: {ref} (latest release)"
+        return f"Plugin: {label} (latest release unknown)"
+    latest = semver_precedence_key(parse_semver(latest_version))
+    if all(semver_precedence_key(parse_semver(version)) >= latest for version in versions):
+        return f"Plugin: {label} (latest release)"
     return (
-        f"Plugin ref: {ref} (older than latest release {latest_version}; "
-        f'set "ref" to "stable" or "v{latest_version}" in extraKnownMarketplaces.meridian.source)'
+        f"Plugin: {label} (older than latest release {latest_version}; "
+        "run cardine self-update --apply)"
     )
 
 
-def run_self_check(framework_root: Path, *, urlopen_fn=None, settings_path: Path | None = None) -> int:
+def run_self_check(framework_root: Path, *, urlopen_fn=None, registry_path: Path | None = None) -> int:
     """Print the installed/latest comparison without mutating local state."""
     from http.client import HTTPException
     from urllib.error import HTTPError, URLError
 
     installed_version = read_raw_version(framework_root)
     installed = parse_semver(installed_version)
-    settings = claude_user_settings_path() if settings_path is None else settings_path
+    registry = claude_plugin_registry_path() if registry_path is None else registry_path
     print(f"Installed: {installed_version}")
     try:
         latest_version, release_kind = fetch_latest_release(
@@ -276,23 +278,23 @@ def run_self_check(framework_root: Path, *, urlopen_fn=None, settings_path: Path
     except HTTPError as error:
         print("Status: UNKNOWN")
         print(f"Reason: GitHub returned HTTP {error.code}")
-        print(plugin_ref_report(settings, None))
+        print(installed_plugin_report(registry, None))
         return SELF_CHECK_UNKNOWN
     except (HTTPException, URLError, TimeoutError, OSError) as error:
         reason = getattr(error, "reason", error)
         print("Status: UNKNOWN")
         print(f"Reason: network error: {reason}")
-        print(plugin_ref_report(settings, None))
+        print(installed_plugin_report(registry, None))
         return SELF_CHECK_UNKNOWN
     except (CardineError, ValueError) as error:
         print("Status: UNKNOWN")
         print(f"Reason: malformed response: {error}")
-        print(plugin_ref_report(settings, None))
+        print(installed_plugin_report(registry, None))
         return SELF_CHECK_UNKNOWN
 
     print(f"Latest: {latest_version}")
     print(f"Kind: {release_kind}")
-    print(plugin_ref_report(settings, latest_version))
+    print(installed_plugin_report(registry, latest_version))
     if semver_precedence_key(latest) > semver_precedence_key(installed):
         print("Status: UPDATE_AVAILABLE")
         return SELF_CHECK_UPDATE_AVAILABLE
