@@ -27,6 +27,11 @@ def snapshot(root: Path) -> dict[str, bytes | None]:
 
 class HostDoctorTest(unittest.TestCase):
     def setUp(self) -> None:
+        real_which = shutil.which  # no test may reach the real claude: only a fake one is ever used
+        patcher = mock.patch("cardine.hosts.setup.shutil.which",
+                             side_effect=lambda name, *a, **k: None if name == "claude" else real_which(name, *a, **k))
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name).resolve()
         self.home = self.root / "home"
@@ -286,8 +291,20 @@ class HostDoctorTest(unittest.TestCase):
         plan = owner_hosts_claude.plan_claude_project_allowlist(self.project)
         self.assertTrue(owner_hosts_claude.apply_claude_project_allowlist(plan))
         report = owner_hosts_setup.host_doctor("claude", self.project, self.config, self.worktrees, home=self.home)
-        for role in permissions.ROLES:
-            self.assertEqual(report["role-launch-" + role], "unsupported (D3): no host decision probe")
+        self.assertEqual(report["role-launch-implementer"], "unsupported (D3): no host decision probe")
+        self.assertEqual(report["role-launch-reviewer"], "unverified: claude is not on PATH")
+
+    def test_claude_reviewer_launch_is_proved_from_help_flags_only(self) -> None:
+        flags = ["--tools", "--add-dir", "--strict-mcp-config", "--no-session-persistence", "--json-schema"]
+        for missing in (None, "--tools"):
+            executable = self.root / "fake-claude"
+            shown = "\n".join(flag for flag in flags if flag != missing)
+            executable.write_text(f"#!/bin/sh\n[ \"$1\" = --help ] || exit 9\ncat <<'EOF'\n{shown}\nEOF\n")
+            executable.chmod(0o755)
+            result = owner_hosts_setup.role_launch_states("claude", self.project, self.home, self.home,
+                                                         executable=str(executable))
+            self.assertEqual(result["role-launch-reviewer"],
+                             "ready" if missing is None else "unsupported (D3): missing flag --tools")
 
     def test_review_verdict_fact_names_who_records_verdicts(self) -> None:
         report = owner_hosts_setup.host_doctor("claude", self.project, self.config, self.worktrees, home=self.home)

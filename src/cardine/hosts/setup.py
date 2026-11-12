@@ -840,7 +840,8 @@ def codex_doctor(
     return result
 
 
-def claude_doctor(project_root: Path, *, home: Path | None = None, framework_root: Path | None = None) -> dict[str, str]:
+def claude_doctor(project_root: Path, *, home: Path | None = None, framework_root: Path | None = None,
+                  executable: str | None = None) -> dict[str, str]:
     """Claude has no host command-decision probe, so enforcement is never inferred from settings."""
     home = (home or Path.home()).expanduser().resolve()
     plan = plan_claude_project_allowlist(project_root)
@@ -849,7 +850,8 @@ def claude_doctor(project_root: Path, *, home: Path | None = None, framework_roo
         "claude-command-policy": "unverified",
         "claude-plugin": claude_plugin_state(home, framework_root),
         "hook-invocation": probe_hook_invocation("claude", home),
-        **role_launch_states("claude", project_root, home, home),
+        **role_launch_states("claude", project_root, home, home,
+                             executable=executable or shutil.which("claude")),
     }
 
 
@@ -870,7 +872,8 @@ def review_verdict_fact(states: dict[str, str], project_root: Path) -> str:
 
 def host_doctor(host: str, project_root: Path, config_path: Path, worktree_root: Path, **options) -> dict[str, str]:
     if host == "claude":
-        report = claude_doctor(project_root, home=options.get("home"), framework_root=options.get("framework_root"))
+        report = claude_doctor(project_root, home=options.get("home"), framework_root=options.get("framework_root"),
+                               executable=options.get("claude_executable"))
     else:
         report = codex_doctor(project_root, config_path, worktree_root, **options)
     report["review-verdict"] = review_verdict_fact(report, project_root)
@@ -1031,6 +1034,8 @@ def role_launch_states(host: str, project_root: Path, worktree_root: Path, home:
                 states[key] = "unverified: codex is not on PATH"
             else:
                 states[key] = prove_role_policy(policy, codex_sandbox_evaluator(executable)).state
+        elif host == "claude" and role == "reviewer":
+            states[key] = claude_reviewer_launch_state(policy, executable)
         elif host == "claude":
             # Claude exposes no host decision probe: never inferred from settings text.
             states[key] = "unsupported (D3): no host decision probe"
@@ -1045,6 +1050,30 @@ def role_launch_states(host: str, project_root: Path, worktree_root: Path, home:
             else:
                 states[key] = prove_role_policy(policy, codex_decision_evaluator(executable, layers)).state
     return states
+
+
+CLAUDE_REVIEWER_FLAGS = ("--tools", "--add-dir", "--strict-mcp-config", "--no-session-persistence", "--json-schema")
+
+
+def claude_reviewer_launch_state(policy: permissions.RolePolicy, executable: str | None) -> str:
+    """Structural proof: the installed help lists the launch flags and the policy holds only read tools.
+
+    Runs `claude --help` only, never a model. No write or command tool exists in
+    the session, so every write probe is denied by construction.
+    """
+    if not executable:
+        return "unverified: claude is not on PATH"
+    try:
+        completed = subprocess.run([executable, "--help"], capture_output=True, text=True, timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return "unverified: claude --help did not run"
+    gaps = [f"missing flag {flag}" for flag in CLAUDE_REVIEWER_FLAGS if flag not in completed.stdout]
+    tools = policy.settings.get("tools")
+    writers = [tool for tool in (tools if isinstance(tools, list) else ["?"]) if tool not in ("Read", "Grep", "Glob")]
+    gaps += [f"tool {tool} may write or run commands" for tool in writers]
+    if gaps:
+        return "unsupported (D3): " + ", ".join(gaps[:4]) + _more(tuple(gaps))
+    return "ready"
 
 
 _PROBE_LINES = 2000

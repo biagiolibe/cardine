@@ -104,7 +104,7 @@ class HostTransportsTest(unittest.TestCase):
                 lines = self.runs()
                 self.assertEqual(len(lines), 2)
                 self.assertIn(flag, lines[0])
-                self.assertIn("--sandbox read-only" if name == "codex" else flag, lines[1])
+                self.assertIn("--sandbox read-only" if name == "codex" else "--tools Read,Grep,Glob", lines[1])
                 if name == 'codex':
                     self.assertIn('cardine-implementer', lines[0])
                     self.assertIn('--ephemeral', lines[1])
@@ -124,6 +124,26 @@ class HostTransportsTest(unittest.TestCase):
         for value in ('001', 'tasks/001.md', record['request']['source'], 'review.diff', 'evidence', 'CI result'):
             self.assertIn(value, argv[-1])
         self.assertTrue((directory / 'review.diff').is_file())
+
+    def test_claude_reviewer_argv_and_structured_answer_are_pinned(self):
+        host = self.transport('claude')
+        record = self.settle(host)
+        directory = host.directory / record['request']['request_id']
+        argv = json.loads((directory / 'launch.json').read_text())['argv']
+        schema = json.dumps(json.loads((Path(__file__).resolve().parents[1] / 'schemas/review-answer-v1.schema.json').read_text()),
+                            separators=(',', ':'))
+        self.assertEqual(argv[:2], [str(self.executable), '-p'])
+        self.assertEqual(argv[3:], ['--tools', 'Read,Grep,Glob', '--add-dir', str(directory), '--strict-mcp-config',
+                                    '--no-session-persistence', '--output-format', 'json', '--json-schema', schema])
+        self.assertIn('review.diff', argv[2])
+        self.assertFalse((directory / 'settings.json').exists())
+        session = record['response']['session']
+        answer = {'verdict': 'APPROVE', 'findings': 'OK'}
+        for printed, expected in ((json.dumps({'type': 'result', 'structured_output': answer}), answer),
+                                  (json.dumps({'type': 'result', 'result': 'text'}), None),
+                                  ('not json', None)):
+            (directory / 'host.log').write_text(printed)
+            self.assertEqual(host.poll(session)['output'], expected)
 
     def test_wrapper_collects_only_json_objects_and_issues_no_verdict_action(self):
         for index, content in enumerate((None, 'invalid', '[]', '{"verdict":"APPROVE","findings":"OK"}')):

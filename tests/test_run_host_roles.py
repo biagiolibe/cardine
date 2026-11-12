@@ -235,8 +235,8 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
     def test_complete_claude_policy_without_a_host_proof_denies_role_activation(self):
         host = self.claude_host()
         host.observe = False
-        for role in permissions.ROLES:
-            self.assertTrue(host.policies[role].settings['permissions']['deny'])  # fully installed text
+        self.assertTrue(host.policies['implementer'].settings['permissions']['deny'])  # fully installed text
+        self.assertEqual(host.policies['reviewer'].settings['tools'], ['Read', 'Grep', 'Glob'])
         before = self.fixture.state()
         with self.assertRaises(CardineStop) as caught:
             self.launch(host=host)

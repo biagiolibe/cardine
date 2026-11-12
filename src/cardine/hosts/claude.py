@@ -233,6 +233,9 @@ def apply_claude_project_allowlist(plan: ClaudeConfigurationPlan, operation: Ope
         return True
 
 
+CLAUDE_REVIEWER_TOOLS = ("Read", "Grep", "Glob")  # read-only: nothing writes or runs commands
+
+
 def _edit_rule(tool: str, root: Path) -> str:
     return f"{tool}(/{root.as_posix()})"  # `//path` is an absolute path in Claude rule syntax
 
@@ -245,19 +248,19 @@ def claude_role_policy(role: str, project_root: Path, worktree: Path, common_dir
     """
     if role not in permissions.ROLES:
         raise CardineError(f"unknown Claude role: {role}")
+    if role == "reviewer":
+        # No write or command tool exists in the session, so no deny rule is needed.
+        settings = {"tools": list(CLAUDE_REVIEWER_TOOLS), "strict_mcp": True, "session_persistence": False,
+                    "answer_schema": "review-answer-v1"}
+        return permissions.RolePolicy("claude", role, f"cardine-{role}", settings,
+                                      permissions.policy_digest("claude", role, settings))
     roots = permissions.protected_roots((project_root, worktree), common_dir)
     deny = [_edit_rule(CLAUDE_EDIT_RULE_TOOL, path) for root in roots for path in (root, root / "**")]
     deny += [f"Bash(cardine {' '.join(action)}:*)" for action in permissions.DEVELOPER_ONLY + permissions.INTEGRATION]
     deny += ["Bash(git push origin main:*)", "Bash(git push origin HEAD:main:*)",
              "Bash(git push origin +main:*)", "Bash(git push origin HEAD:refs/heads/main:*)",
              "Bash(git push origin master:*)", "Bash(git push origin HEAD:master:*)"]
-    if role == "implementer":
-        deny.append("Bash(cardine review verdict:*)")
-    else:
-        deny.append(CLAUDE_EDIT_RULE_TOOL)
-        deny += ["Bash(git push:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git merge:*)",
-                 "Bash(rm:*)", "Bash(mv:*)", "Bash(cp:*)", "Bash(tee:*)", "Bash(sed -i:*)", "Bash(ln:*)"]
-        deny += [f"Bash(cardine {' '.join(action)}:*)" for action in permissions.REVIEWER_DENIED]
+    deny.append("Bash(cardine review verdict:*)")
     settings = {"permissions": {"deny": list(dict.fromkeys(deny))}}
     return permissions.RolePolicy("claude", role, f"cardine-{role}", settings,
                                   permissions.policy_digest("claude", role, settings))
