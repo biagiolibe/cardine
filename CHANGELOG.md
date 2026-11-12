@@ -15,6 +15,84 @@ records which release moved it.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-12
+
+Template-changing release: the managed review blocks and `docs/OPERATOR_PROMPTS.md`
+changed, so run `cardine upgrade --check`, then `cardine upgrade --apply`, in each project.
+Required review no longer needs a terminal step on every task: `cardine run` runs CI on
+the delivered head first, then launches a reviewer on Claude Code or Codex that cannot
+write, and records its verdict.
+
+### Added
+
+- With `review.sources` containing `launched` and `review.reviewer` set to `codex` or
+  `claude`, `cardine run` launches a read-only reviewer and records its verdict from its
+  structured answer, with source `launched`.
+- Codex reviewer sessions run in a read-only sandbox, and `cardine doctor` proves it with
+  real write attempts. Claude Code reviewer sessions run with read-only tools, and
+  `cardine doctor` reports them ready.
+- `cardine run --reviewer codex|claude` picks the reviewer's host for one run, and
+  `Proceed with <ID> reviewer codex|claude` passes it. By default the agent's own host
+  reviews. The console's launch panel offers the same choice.
+- The project declaration accepts `review.sources`, frozen into each new task contract.
+  `cardine review verdict --owner` refuses when the task's sources exclude `owner`.
+
+### Changed
+
+- With required review and `ciBeforeLanding`, `cardine run` runs CI on the delivered head
+  before the review step, and `APPROVE` requires the pass.
+- The review templates say that reviewers read the measured evidence and the CI result,
+  that `cardine run` records a launched reviewer's verdict, and that the developer
+  records a manual one with `--owner`. `cardine doctor` reports who can record verdicts.
+- Agent role permissions deny every `cardine review verdict` command.
+- `cardine self-update` prints a plan, numbered progress steps and a next-steps
+  checklist. `cardine guide`, `cardine init` and `cardine setup` print sectioned output
+  with numbered next steps. All of them use color on terminals and plain text otherwise.
+- `docs/OPERATOR_PROMPTS.md` lists everyday requests and plans a milestone through draft
+  task records that you approve.
+- The `/cardine-init` command and the project skill follow `cardine init`'s proposed
+  defaults and commit the configuration after your approval.
+
+### Removed
+
+- `cardine review verdict --request-id`. No host could launch the session it required;
+  `cardine run` now records a launched reviewer's verdict.
+
+### Fixed
+
+- `cardine self-update` recognizes release notes whose kind line ends with a period, and
+  release preparation requires the colon form that every runtime reads.
+- `cardine run` stops with `CI_NOT_STARTED` when the provider never starts a run for the
+  delivered commit, instead of waiting forever.
+- A clean refresh from `main` after approval no longer makes the approval stale.
+- A landed task no longer shows as closing when the operating system writes a file such
+  as `.DS_Store` into its old worktree path, and cleanup no longer leaves an empty
+  directory per task.
+- `cardine status` and the per-turn briefing show a task that `cardine run` started in its
+  worktree as in progress, not as startable.
+- `cardine setup --check` counts the Claude Code plugin alignment as a change, and
+  `setup --apply` names no single host in its result.
+- `cardine self-check`, the plugin-cache stop of `cardine self-update`, and the release
+  and project upgrade scripts name the Cardine plugin and `cardine self-update` instead
+  of the Meridian marketplace.
+
+### Documentation
+
+- The project declaration guide and the project skill describe how to change
+  `.cardine/project.json` while tasks are queued or open.
+
+### Upgrade notes
+
+- Run `cardine self-update --apply`, then `cardine authorize --apply` in each project.
+- Run `cardine upgrade --check`, then `cardine upgrade --apply`, in each project, to
+  receive the review blocks and `docs/OPERATOR_PROMPTS.md`. Review and commit them.
+- `cardine review verdict --request-id` is gone. To review without a terminal step, set
+  `"review": {"sources": ["owner", "launched"], "reviewer": "codex"}` in
+  `.cardine/project.json`, commit it, run `cardine authorize --apply`, and check that
+  `cardine doctor` reports `role-launch-reviewer: ready`.
+- Empty `task-*` directories left under the worktree root by earlier cleanups can be
+  deleted.
+
 ## [0.9.2] - 2026-11-11
 
 CLI-only release. Managed project templates are unchanged. New projects get shorter

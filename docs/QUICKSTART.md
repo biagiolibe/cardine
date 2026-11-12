@@ -9,7 +9,7 @@ create and push a first commit before you start.
 ## Install
 
 ```sh
-pipx install git+https://github.com/biagiolibe/cardine@v0.9.2
+pipx install git+https://github.com/biagiolibe/cardine@v0.10.0
 ```
 
 Run `cardine guide` in your project checkout at any time. It says where the checkout
@@ -48,8 +48,8 @@ project checkout, before installing anything, and ask:
 
 ```text
 I want to use Cardine here. Install it with pipx from
-https://github.com/biagiolibe/cardine at tag v0.9.2, then follow
-https://github.com/biagiolibe/cardine/blob/v0.9.2/docs/QUICKSTART.md
+https://github.com/biagiolibe/cardine at tag v0.10.0, then follow
+https://github.com/biagiolibe/cardine/blob/v0.10.0/docs/QUICKSTART.md
 to the first integrated task. Ask before you write or publish anything.
 ```
 

@@ -7,7 +7,7 @@ cardine self-update --check --project .
 cardine self-update --apply --project .
 ```
 
-Add `--to v0.9.2` to select a particular release. The Plan shows the current
+Add `--to v0.10.0` to select a particular release. The Plan shows the current
 and target versions, release kind, notes, and the Git operation or installer.
 The Apply section reports progress as Cardine updates and aligns the Claude
 Code plugin. Installer output is displayed if the reinstall fails.

@@ -1,0 +1,9 @@
+{
+  "version": "0.10.0",
+  "releaseDate": "2026-11-12",
+  "gitTag": "v0.10.0",
+  "protocolVersion": 2,
+  "workflowBaselineVersion": "0.10.0",
+  "baselineChanged": true,
+  "migrations": []
+}
