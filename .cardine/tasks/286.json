@@ -1,0 +1,110 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/cli.py",
+      "src/cardine/lifecycle/engine.py",
+      "docs/RUN_COMMANDS.md",
+      "tests/test_run_host_roles.py",
+      "tests/test_run_output.py",
+      "changelog.d/286.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/286.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 286 \u2014 Choose the reviewer host for one run with cardine run --reviewer",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_host_roles --module test_run_output --module test_run_required_review --module test_run_ci --module test_stop_registry --module test_public_surface --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "340e9ce86c7e619959bde5c4bf4d54844a1d1e8d33d7558d0e53915cc61a41e1",
+        "digest": "aa89730aabe64e8fa86d41b54e6dc898ba7f62bf4df05eb1c036e1e3a652782e",
+        "inputs": {
+          ".cardine/tasks/286.json": null,
+          "tasks/286.md": null
+        },
+        "kind": "creation",
+        "operation_id": "f913ee8c27344d3fa889149b6c1fd76e",
+        "outputs": {
+          ".cardine/tasks/286.json": "3eda1d3ffe389ae0017f1dc4a20196d9e33048f93bad987c7f4f018ea2b9ceb2",
+          "tasks/286.md": "68a0a7dd787ce6f47669a6f737cb9d6412d414c8d90835b579096d0661f59313"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "5706d06584fd058ba1f0aba32eb8dfad91982465",
+        "task_id": "286",
+        "tree": "b2c2f845af29ef292647762bc6878be7b6b4bf3c",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "286",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
