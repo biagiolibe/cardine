@@ -1,0 +1,110 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "282"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/hosts/permissions.py",
+      "tests/test_host_permissions.py",
+      "tests/test_host_hooks.py",
+      "changelog.d/284.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/284.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 284 \u2014 Deny every agent verdict command now that --request-id is gone",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_host_permissions --module test_host_hooks --module test_host_doctor --module test_run_host_roles --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "7fc1d4fd379807bfa28bdda19d85d42488cbe8279b9c7bb43da95b543d4095f5",
+        "digest": "861f006d3112243dbae31d911250cc3f3585376c4806d789eb3efb172c632797",
+        "inputs": {
+          ".cardine/tasks/284.json": null,
+          "tasks/284.md": null
+        },
+        "kind": "creation",
+        "operation_id": "d5cf774f696f46848760ddd73ab00033",
+        "outputs": {
+          ".cardine/tasks/284.json": "c9035c052e1e698a58b08a27bd652312d7cf7272beab1f958daacb6422270ca1",
+          "tasks/284.md": "80b7f9f87d7d910119bc8f56e98b13b1bb6cf9d2b6b4026aa56ad403bf32cc61"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "31046d27c08aa1e47b4f45f6a32ca438cc2ba488",
+        "task_id": "284",
+        "tree": "6d36f3810ca02f8d71639afbaaa7125ac9e0a4bc",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "284",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
