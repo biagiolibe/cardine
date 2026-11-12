@@ -429,6 +429,11 @@ def _draw_header(screen, state: ConsoleState, palette: dict[str, int],
     left = f"Project command center  {framework}  {project_name}  {branch}"
     if snapshot and snapshot.preset:
         left += f"  {snapshot.preset}"
+    from cardine.release.notice import notice as update_notice
+    update = update_notice(Path.home(), state.framework.version)
+    if update:
+        latest = update.split(" ", 2)[1]
+        left += f"  ↑ {latest} available"
     _put(screen, 0, 1, left, width - 2, palette["text"])
     ahead = re.search(r"\[ahead (\d+)", snapshot.branch) if snapshot else None
     local = f"↑ {ahead.group(1)} local · " if ahead else ""

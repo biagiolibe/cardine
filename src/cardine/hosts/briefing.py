@@ -54,7 +54,20 @@ def render_briefing(project_root: Path, payload: str) -> str:
     """Ignore caller prose; only project files contribute output."""
     model = apply_task_branch_observations(project_root, load_task_status(project_root))
     prefix = f"Preset: {model['preset']}\n" if model["preset"] is not None else ""
-    return _language_line(project_root) + prefix + _status_lines(model)
+    from cardine.release import notice
+    from cardine.release.version import read_raw_version
+    from cardine.shared.paths import framework_root
+
+    output = _language_line(project_root) + prefix + _status_lines(model)
+    try:
+        installed = read_raw_version(framework_root())
+        update = notice.notice(Path.home(), installed)
+        if update:
+            output += f"Cardine update: {update}; tell the developer once in this session.\n"
+        notice.refresh_in_background(Path.home(), installed)
+    except (CardineError, OSError, ValueError):
+        pass
+    return output
 
 
 def _payload_project(payload: str, host: str) -> Path | None:

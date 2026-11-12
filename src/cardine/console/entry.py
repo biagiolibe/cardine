@@ -304,6 +304,8 @@ def main(argv: list[str] | None = None) -> int:
     if not 0.2 <= args.interval <= 60:
         parser.error("--interval must be between 0.2 and 60 seconds")
     state = ConsoleState(args.project)
+    from cardine.release.notice import refresh_in_background
+    refresh_in_background(Path.home(), state.framework.version)
     if args.once:
         state.refresh()
         print(one_shot(state))

@@ -43,10 +43,24 @@ def run_host_briefing(project, host, *, payload=None, discover=True):
 
 class HostBriefingTest(unittest.TestCase):
     def setUp(self):
+        environment = patch.dict(os.environ, {"CI": "1"})
+        environment.start()
+        self.addCleanup(environment.stop)
         self.temp = tempfile.TemporaryDirectory(prefix="Developer's project 雪 $ ")
         self.addCleanup(self.temp.cleanup)
         self.project = Path(self.temp.name)
         write_project_config(self.project)
+
+    def test_update_notice_is_cached_and_refresh_is_background(self):
+        with patch.dict(os.environ, {}, clear=True), \
+             patch("cardine.release.notice.notice", return_value="Cardine 2.0.0 is available") as cached, \
+             patch("cardine.release.notice.refresh_in_background") as background, \
+             patch("cardine.release.update.fetch_latest_release") as fetch:
+            output = render_briefing(self.project, "")
+        self.assertIn("Cardine update: Cardine 2.0.0 is available; tell the developer once in this session.", output)
+        cached.assert_called_once()
+        background.assert_called_once()
+        fetch.assert_not_called()
 
     def snapshot(self):
         return {str(path.relative_to(self.project)): path.read_bytes()

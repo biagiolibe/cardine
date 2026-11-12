@@ -50,6 +50,21 @@ class ShowVersionAction(argparse.Action):
         parser.exit()
 
 
+def _update_notice(root: Path) -> None:
+    if not sys.stderr.isatty():
+        return
+    from cardine.release import notice
+    from cardine.shared import terminal
+    try:
+        installed = read_raw_version(root)
+        update = notice.notice(Path.home(), installed)
+        if update:
+            print(terminal.note(update), file=sys.stderr)
+        notice.refresh_in_background(Path.home(), installed)
+    except (CardineError, OSError, ValueError):
+        pass
+
+
 def main() -> int:
     # Pure run previews must not create best-effort journal entries.
     preview_args = sys.argv[1:]
@@ -85,6 +100,8 @@ def main() -> int:
         try:
             guide = project_guide(args.project, args.framework_root)
             print(json.dumps(guide, sort_keys=True) if args.format == "json" else render_project_guide(guide))
+            if args.format != "json":
+                _update_notice(args.framework_root)
             return 0
         except (CardineError, OSError, ValueError) as error:
             print(f"error: {error}", file=sys.stderr)
@@ -103,6 +120,13 @@ def main() -> int:
     journal = LifecycleJournalEntry()
     exit_code = _run_cli(journal)
     journal.write(exit_code)
+    if preview_args[:1] in (["status"], ["doctor"]) and not (
+        "--format=json" in preview_args or "--format" in preview_args and "json" in preview_args
+    ):
+        try:
+            _update_notice(build_parser().parse_args().framework_root)
+        except (CardineError, OSError, ValueError):
+            pass
     return exit_code
 
 
