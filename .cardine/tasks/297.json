@@ -1,0 +1,109 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/cli.py",
+      "src/cardine/lifecycle/engine.py",
+      "tests/test_host_doctor.py",
+      "tests/test_run_host_roles.py",
+      "changelog.d/297.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/297.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 297 \u2014 Let cardine doctor run without --host and check both hosts",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_host_doctor --module test_run_host_roles --module test_cli_install --module test_public_surface --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "5a0aa796102e4a7748a9d5032db3cd4338ff8c15dedd89086f145cb3135f3f02",
+        "digest": "b480e66fc2285f9bf5bd3f983ba3667fa7187442fe401ec2fff4e993d72919ea",
+        "inputs": {
+          ".cardine/tasks/297.json": null,
+          "tasks/297.md": null
+        },
+        "kind": "creation",
+        "operation_id": "65078d955ca343c4943e2f534614002f",
+        "outputs": {
+          ".cardine/tasks/297.json": "278854817557e2ecb15223bcea2fc86e813a5a8eb1634b0e8c1c959a3a7504bb",
+          "tasks/297.md": "d90873659432b6fc41557c3d05fbbd70651ca2429d87e796690a0d5e499fbf1f"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "2bb755ed3220b102eedb1f255f6de435d78357d2",
+        "task_id": "297",
+        "tree": "cac461169e0fd93efe73d68dbe68124a70ef8b8b",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "297",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
