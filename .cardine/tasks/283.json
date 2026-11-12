@@ -22,6 +22,7 @@
       "tests/test_cardine_migration_retirement.py",
       "tests/test_cardine_upgrade_lifecycle.py",
       "tests/test_cardine_upgrade_merge.py",
+      "tests/test_task_identity_project.py",
       "tests/test_integration_projections.py",
       "changelog.d/283.md"
     ],
@@ -88,9 +89,39 @@
       "changedFields": [
         "expectedCodeSurface"
       ]
+    },
+    {
+      "after": "sha256:68311868d6135a9117d441cd08e9932a8a46c03ea97c9538586eccf53a8f05d7",
+      "at": "2026-11-12T10:53:05.694797Z",
+      "before": "sha256:e9187fa126f3e3002d59d356d87d79d63085a95b55542c7634b126123e1d7f47",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
     }
   ],
   "run": {
+    "ci": {
+      "binding": {
+        "attempt": 1,
+        "checks": [
+          "validate"
+        ],
+        "contract": "9d8b9f7a20cf3094d8fbfac187696ce9ad178b0475f2a6bfcf01e2f4f01b1741",
+        "head": "b3c1522e12dde3d8ddaeace913d1e71abad7953b",
+        "origin": "https://github.com/biagiolibe/cardine.git",
+        "provider": "github",
+        "ref": "refs/heads/task-283",
+        "repository": "github.com/biagiolibe/cardine",
+        "task_id": "283"
+      },
+      "checks": [],
+      "phase": "pushed",
+      "push": {
+        "owned": true,
+        "ref": "refs/heads/task-283",
+        "sha": "b3c1522e12dde3d8ddaeace913d1e71abad7953b"
+      }
+    },
     "delivery": {
       "base": "a45279a896c10351fcf582fd8c800123b46be066",
       "contractDigest": "9d8b9f7a20cf3094d8fbfac187696ce9ad178b0475f2a6bfcf01e2f4f01b1741",
@@ -239,12 +270,84 @@
         "task_id": "283",
         "tree": "116b1f7d0c3fd67dcd73148404c25649bdfa767f",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "9d8b9f7a20cf3094d8fbfac187696ce9ad178b0475f2a6bfcf01e2f4f01b1741",
+        "digest": "a1e89d2a11ff6b11a98bcd2476e87cd1237dac97d02f14eb2703100b81c5f82c",
+        "inputs": {
+          ".cardine/evidence/283.json": "aac7d89b5ec02436c3db0d3c4e2ab26de3d13c1fe07d39e859d59fea69ec05a2",
+          ".cardine/tasks/283.json": "f840fdd2f446ef3cbbc8ad161976ca0b81b6b1ee3c1fba3621f9eab386d8ec5d",
+          "tasks/handoffs/283.md": "804e2277712825bbdc3fd756b57187efa950ac57fc8f0f14a0cefa6b2c2821d6"
+        },
+        "kind": "task-validation",
+        "operation_id": "93efb1a90af54781a81732eec706fd84",
+        "outputs": {
+          ".cardine/evidence/283.json": "feb422d6102cd962f571429e6c4799cde1c26ebf5e2348fb18a1f7437c4a4952",
+          ".cardine/tasks/283.json": "65446afe77d24de17dc03c58324f7f3b5bfa3a4ffbf6db370c9d950bb8a8a801",
+          "tasks/handoffs/283.md": "edb7c518a0fd216576af5e1c9d9bb40235e13e6d436c90cb32d24394b96557b0"
+        },
+        "predecessor": "c204cd51ab2d9a4b4d819c5ce5cef1385b0b0ff6ee3e46d87fcef3f702e2e8f7",
+        "result": "verified",
+        "source": "30620d68189123ad3b701f1cb9aee36a1021096e",
+        "task_id": "283",
+        "tree": "a9aa1f3b26bca5398626358317e665a3f6cbd77c",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "9d8b9f7a20cf3094d8fbfac187696ce9ad178b0475f2a6bfcf01e2f4f01b1741",
+        "digest": "8cb8cd50c4e4d1d9b0c06f80f097f540fef584f45c5cc5afbae9f647f926a715",
+        "inputs": {
+          ".cardine/tasks/283.json": "d4542a0df30883156b12e2521bf1fbcda0bbb1896f6a47b0d26af0a7270fb8e3"
+        },
+        "kind": "ci-push",
+        "operation_id": "5a8626578263405a994bb33d4a570056",
+        "outputs": {
+          ".cardine/tasks/283.json": "4a2dbb3b19f2ef7404e66d63692086d7f5d0dc374192ca772a81661177b05e83"
+        },
+        "predecessor": "a1e89d2a11ff6b11a98bcd2476e87cd1237dac97d02f14eb2703100b81c5f82c",
+        "result": "verified",
+        "source": "30620d68189123ad3b701f1cb9aee36a1021096e",
+        "task_id": "283",
+        "tree": "a9aa1f3b26bca5398626358317e665a3f6cbd77c",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "6f233057586565a5db9f6c0191136074bcf4c508194eb8135169b2816b99aebd",
+        "digest": "cfb83346339b6342bcb22cbd53c034e8c732bb8fe81c875bbe8606f7f2624188",
+        "inputs": {
+          ".cardine/tasks/283.json": "c8364a8ab7ba164c415a8f09f762c2b174a7e7d65867d1500422ed97deb03677",
+          "tasks/283.md": "5164aef7bedb226ec30c8f7a9258f777e2b719f93417d24399eb2cb9d7ec53c5"
+        },
+        "kind": "contract_revision",
+        "operation_id": "1f2c2dad9e3142fa8864a9c86480bbe5",
+        "outputs": {
+          ".cardine/tasks/283.json": "915888e5b87fdd5874bd0184f9e7bf4abfd82b6c829449cce4463e23d535a3ca",
+          "tasks/283.md": "5164aef7bedb226ec30c8f7a9258f777e2b719f93417d24399eb2cb9d7ec53c5"
+        },
+        "predecessor": "8cb8cd50c4e4d1d9b0c06f80f097f540fef584f45c5cc5afbae9f647f926a715",
+        "result": "verified",
+        "source": "30620d68189123ad3b701f1cb9aee36a1021096e",
+        "task_id": "283",
+        "tree": "a9aa1f3b26bca5398626358317e665a3f6cbd77c",
+        "version": 1
       }
     ],
     "validation": {
       "acceptanceReferences": [],
-      "attemptId": "f906a2baaf024df98e7d053f34f049b2",
-      "consecutiveFailures": 1,
+      "attemptId": "1674f2a2f9094eb09a77835e266ad3a4",
+      "consecutiveFailures": 0,
       "evidence": ".cardine/evidence/283.json",
       "hostObservations": [],
       "inputs": {
@@ -254,104 +357,58 @@
           "repository-check": "python3 scripts/check_repository.py",
           "task-tests": "python3 scripts/run_tests.py --parallel --module test_template_entry_actions --module test_template_marker_heading --module test_cardine_migration_retirement --module test_cardine_upgrade_lifecycle --module test_cardine_upgrade_merge --module test_integration_projections --module test_single_workflow_capabilities --module test_template_word_budget --module test_context_size --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
         },
-        "contractDigest": "22ecfae267369b8566c7629e83aa195e56068afce7dd549438cfc1f0cd96514e",
+        "contractDigest": "9d8b9f7a20cf3094d8fbfac187696ce9ad178b0475f2a6bfcf01e2f4f01b1741",
         "cwd": "/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-283",
         "environmentDigest": "57e36c8fc41161e47c3b125f2d9a87c37610245ac56dc0967e1cd6c5a5d37097",
         "skips": [],
-        "source": "9ac5df1a93ad345c94b2a437b977e4bbd0c2d6fd",
-        "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
-        "sourceTree": "646756e9ef5a46da847ae2390faad4bd2d2b85d1"
+        "source": "b3c1522e12dde3d8ddaeace913d1e71abad7953b",
+        "sourceDigest": "c138c48db21248c74f33fbb2bc33e27f9efff3413307d250475408ce9548e4e4",
+        "sourceTree": "116b1f7d0c3fd67dcd73148404c25649bdfa767f"
       },
       "intermittent": [],
-      "lastFailed": [
-        "task-tests"
-      ],
-      "phase": "failed",
+      "lastFailed": [],
+      "phase": "passed",
       "quickFailures": 0,
       "quickRounds": 0,
       "runs": [
         [
           {
-            "attemptId": "f906a2baaf024df98e7d053f34f049b2",
+            "attemptId": "1674f2a2f9094eb09a77835e266ad3a4",
             "command": "python3 scripts/check_repository.py",
-            "commit": "ae88d685ff2e057a110a1ddadb9037bfef4e9dee",
+            "commit": "30620d68189123ad3b701f1cb9aee36a1021096e",
             "exitStatus": 0,
             "id": "repository-check",
-            "log": ".cardine/evidence/283.json#f906a2baaf024df98e7d053f34f049b2/1/repository-check",
+            "log": ".cardine/evidence/283.json#1674f2a2f9094eb09a77835e266ad3a4/1/repository-check",
             "round": 1,
-            "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
+            "sourceDigest": "c138c48db21248c74f33fbb2bc33e27f9efff3413307d250475408ce9548e4e4",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "Cardine repository checks passed.\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "f906a2baaf024df98e7d053f34f049b2",
+            "attemptId": "1674f2a2f9094eb09a77835e266ad3a4",
             "command": "python3 scripts/run_tests.py --parallel --module test_template_entry_actions --module test_template_marker_heading --module test_cardine_migration_retirement --module test_cardine_upgrade_lifecycle --module test_cardine_upgrade_merge --module test_integration_projections --module test_single_workflow_capabilities --module test_template_word_budget --module test_context_size --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface",
-            "commit": "ae88d685ff2e057a110a1ddadb9037bfef4e9dee",
-            "exitStatus": 1,
+            "commit": "30620d68189123ad3b701f1cb9aee36a1021096e",
+            "exitStatus": 0,
             "id": "task-tests",
-            "log": ".cardine/evidence/283.json#f906a2baaf024df98e7d053f34f049b2/1/task-tests",
+            "log": ".cardine/evidence/283.json#1674f2a2f9094eb09a77835e266ad3a4/1/task-tests",
             "round": 1,
-            "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
-            "stderr": "run_tests: 255 tests in 8 shards\nrun_tests: shard 8/8 finished in 8.6s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 7/8 finished in 12.3s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 6/8 finished in 13.0s: exit 1 ran=32 failures=1 errors=0\nrun_tests: shard 4/8 finished in 13.3s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 2/8 finished in 13.7s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 5/8 finished in 15.2s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 1/8 finished in 16.6s: exit 1 ran=32 failures=1 errors=0\nrun_tests: shard 3/8 finished in 17.6s: exit 0 ran=32 failures=0 errors=0\n",
+            "sourceDigest": "c138c48db21248c74f33fbb2bc33e27f9efff3413307d250475408ce9548e4e4",
+            "stderr": "run_tests: 255 tests in 8 shards\nrun_tests: shard 8/8 finished in 7.9s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 7/8 finished in 11.3s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 4/8 finished in 12.3s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 2/8 finished in 12.7s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 6/8 finished in 12.8s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 5/8 finished in 14.1s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 1/8 finished in 15.4s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 3/8 finished in 16.5s: exit 0 ran=32 failures=0 errors=0\n",
             "stderrTruncated": false,
-            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=255 selected=32 digest=c08486e47adcfc674da494325023f7b3e82f2d2f4fe95ef6e009bd92100a936b\ntest_migration_upgrade_advances_and_rekeys_workflow_baseline (test_cardine_migration_retirement.MigrationRetirementTest.test_migration_upgrade_advances_and_rekeys_workflow_baseline) ... ok\ntest_upgrade_retires_reasoning_contract_alongside_a_marker_supersession (test_cardine_migration_retirement.MigrationRetirementTest.test_upgrade_retires_reasoning_contract_alongside_a_marker_supersession)\nA migration that both supersedes bounded-context-readers v1 and ... ok\ntest_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules) ... ok\ntest_upgrade_installs_self_referential_handoff_rules_and_preserves_consumer_text (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_upgrade_installs_self_referential_handoff_rules_and_preserves_consumer_text) ... ok\ntest_marker_deduplication_removes_only_identical_template_copies (test_cardine_upgrade_merge.UpgradeMergeTest.test_marker_deduplication_removes_only_identical_template_copies) ... ok\ntest_upgrade_crosses_a_long_lag_capability_move_and_preserves_entry_points (test_cardine_upgrade_merge.UpgradeMergeTest.test_upgrade_crosses_a_long_lag_capability_move_and_preserves_entry_points) ... ok\ntest_a_version_bump_without_regenerating_the_baseline_still_fails (test_check_repository.CapabilityMarkerBaselineTest.test_a_version_bump_without_regenerating_the_baseline_still_fails)\nBumping the version *and* changing the content is the legitimate ... ok\ntest_every_marker_in_a_file_must_match (test_check_repository.CapabilityRequiredVersionsTest.test_every_marker_in_a_file_must_match) ... ok\ntest_malformed_adopt_existing_paths_declaration_fails (test_check_repository.CheckMigrationsVersionGateTest.test_malformed_adopt_existing_paths_declaration_fails) ... ok\ntest_baseline_changed_inconsistent_with_migrations_fails (test_check_repository.CheckReleasesTest.test_baseline_changed_inconsistent_with_migrations_fails) ... ok\ntest_release_ledger_may_name_a_migration_the_empty_chain_no_longer_carries (test_check_repository.CheckReleasesTest.test_release_ledger_may_name_a_migration_the_empty_chain_no_longer_carries) ... ok\ntest_fenced_bash_commands_use_parser_paths (test_check_repository.DocumentCommandsTest.test_fenced_bash_commands_use_parser_paths) ... ok\ntest_review_procedure_block_is_required (test_check_repository.GovernedReviewWorktreeContractTest.test_review_procedure_block_is_required) ... ok\ntest_repository_has_no_machine_paths (test_check_repository.MachinePathTest.test_repository_has_no_machine_paths) ... ok\ntest_invalid_repository_json_and_bash_fail (test_check_repository.RepositoryFilesTest.test_invalid_repository_json_and_bash_fail) ... ok\ntest_routers_with_different_trigger_blocks_fail (test_check_repository.RouterRoutesTest.test_routers_with_different_trigger_blocks_fail) ... ok\ntest_registered_code_mentioned_nowhere_fails (test_check_repository.StopCodeRegistryCheckTest.test_registered_code_mentioned_nowhere_fails) ... ok\ntest_unregistered_token_in_a_stop_code_list_fails (test_check_repository.StopCodeRegistryCheckTest.test_unregistered_token_in_a_stop_code_list_fails) ... ok\ntest_phase_reads_outside_a_managed_block_stay_startup_reads (test_context_size.ContextSizeTest.test_phase_reads_outside_a_managed_block_stay_startup_reads) ... ok\ntest_governed_spike_integrates_declared_validation_evidence (test_integration_projections.GovernedCompletionRowsTest.test_governed_spike_integrates_declared_validation_evidence) ... ok\ntest_console_identity_cache_observes_context_switch (test_layout.LayoutTest.test_console_identity_cache_observes_context_switch) ... ok\ntest_lifecycle_directory_lease_and_state_change_together (test_layout.LayoutTest.test_lifecycle_directory_lease_and_state_change_together) ... ok\ntest_task_audit_reads_selected_state_directory (test_layout.LayoutTest.test_task_audit_reads_selected_state_directory) ... ok\ntest_product_modules_do_not_import_unittest (test_module_inventory.ModuleInventoryTest.test_product_modules_do_not_import_unittest) ... ok\ntest_catalog_and_dependencies_use_the_reading_policy (test_single_workflow_capabilities.SingleWorkflowCapabilitiesTest.test_catalog_and_dependencies_use_the_reading_policy) ... ok\ntest_no_template_carries_a_retired_capability_marker (test_template_entry_actions.NoOrphanInstructionTest.test_no_template_carries_a_retired_capability_marker) ... ok\ntest_kept_rules_are_stated_and_advice_is_labelled (test_template_entry_actions.TemplateEntryActionTest.test_kept_rules_are_stated_and_advice_is_labelled) ... \n  test_kept_rules_are_stated_and_advice_is_labelled (test_template_entry_actions.TemplateEntryActionTest.test_kept_rules_are_stated_and_advice_is_labelled) (entry='IP-08') ... FAIL\ntest_host_impact_declaration_has_both_governed_shapes_and_evidence_routing (test_template_marker_heading.CapabilityMarkerTest.test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing) ... ok\ntest_review_hands_off_through_the_command_before_substantive_inspection (test_template_marker_heading.CapabilityMarkerTest.test_review_hands_off_through_the_command_before_substantive_inspection) ... ok\ntest_a_missing_budgeted_document_is_a_finding_not_a_crash (test_template_word_budget.TemplateWordBudgetTest.test_a_missing_budgeted_document_is_a_finding_not_a_crash) ... ok\ntest_the_language_policy_is_still_counted_in_the_always_read_set (test_template_word_budget.TemplateWordBudgetTest.test_the_language_policy_is_still_counted_in_the_always_read_set) ... ok\ntest_disk_rules_cover_every_path_word_and_read_form (test_text_gates.TextGateScannerTest.test_disk_rules_cover_every_path_word_and_read_form) ... ok\n\n======================================================================\n\nRan 32 tests in 16.150s\n\nFAILED (failures=1)\nFAIL: templates/single/AGENTS.md: capability=command-triggers v4 does not match its recorded baseline; run `python3 scripts/check_repository.py --write-marker-baselines` to record this deliberate change\nFAIL: review procedure is missing its managed block\nFAIL: the routers carry different command-triggers blocks\nFAIL: test_kept_rules_are_stated_and_advice_is_labelled (test_template_entry_actions.TemplateEntryActionTest.test_kept_rules_are_stated_and_advice_is_labelled) (entry='IP-08')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-283/tests/test_template_entry_actions.py\", line 186, in test_kept_rules_are_stated_and_advice_is_labelled\n    self.assertIn(phrase, text)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^\nAssertionError: 'completed CI run for this exact commit' not found in '# Review Procedure\\n\\nUse this procedure only for `Review <TASK-ID>`.\\n\\n<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v6 -->\\n## Review\\n\\nReview in a fresh session that did not write the implementation. Run `cardine review <TASK-ID> --project <primary-checkout>`; it hands off only a committed `in_review` delivery with a clean worktree, apart from the task state, handoff and evidence file that `cardine run` keeps uncommitted until landing. Never stage, commit or edit them. Read the task contract, its cited authority, and the exact diff against the recorded base in the `work.worktree` it names. Re-derive the evidence; do not trust the implementer\\'s report.\\n\\nCheck scope, dependencies, non-goals, acceptance criteria, project invariants, and unrelated changes. Read the measured validation evidence and the required CI result for this exact commit; with `ciBeforeLanding`, review starts only after CI passed. Rerun a project command only to confirm a specific finding, never `cardine execution validate`; never accept a bare \"tests passed\".\\n\\nAdvice: if `Manual verification: required`, confirm its rationale names a perceptual property and the evidence gathered matches it; apply every item of a `## Project review checklist` after this block as extra scope; report only actionable findings, each with `P0`, `P1`, or `P2` priority and file and line evidence (`P0` and `P1` block approval); omit style commentary; keep the final report within ten lines.\\n\\nEnd with the verdict, `APPROVE`, `CHANGES_REQUESTED` or `BLOCKED`, and its evidence. A launched reviewer returns it as the answer Cardine requests, and `cardine run` records it. In a manual session the developer records it from an interactive terminal with `cardine review verdict <TASK-ID> <VERDICT> --owner --project <work.worktree> --body <review-evidence>`, which binds it to the reviewed HEAD. Commit nothing. Edit no implementation file, never push, and never edit a status or verdict by hand. After `APPROVE`, `cardine run` lands the task: do not merge, push, or touch the integration lease yourself. Two consecutive `CHANGES_REQUESTED` verdicts end in `REVIEW_LOOP_EXHAUSTED`.\\n<!-- CARDINE:END -->\\n'\n\n----------------------------------------------------------------------\nresult ran=32 failures=1 errors=0 skipped=0\n--- shard 6/8 (exit 1) ---\nshard=6/8 total=255 selected=32 digest=c08486e47adcfc674da494325023f7b3e82f2d2f4fe95ef6e009bd92100a936b\ntest_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract (test_cardine_migration_retirement.MigrationRetirementTest.test_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract) ... ok\ntest_pristine_1_2_15_lean_upgrade_installs_task_close (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_pristine_1_2_15_lean_upgrade_installs_task_close) ... ok\ntest_upgrade_installs_lean_lifecycle_document_from_1_2_5 (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_upgrade_installs_lean_lifecycle_document_from_1_2_5) ... ok\ntest_check_reports_multiple_merge_conflicts (test_cardine_upgrade_merge.UpgradeMergeTest.test_check_reports_multiple_merge_conflicts) ... ok\ntest_upgrade_appends_new_marker_when_existing_marker_was_moved (test_cardine_upgrade_merge.UpgradeMergeTest.test_upgrade_appends_new_marker_when_existing_marker_was_moved)\nA new protected capability must not conflict solely because a project ... FAIL\ntest_a_capability_retired_in_the_catalog_passes_without_a_migration (test_check_repository.CapabilityMarkerBaselineTest.test_a_capability_retired_in_the_catalog_passes_without_a_migration) ... ok\ntest_write_marker_baselines_makes_a_deliberate_change_pass_again (test_check_repository.CapabilityMarkerBaselineTest.test_write_marker_baselines_makes_a_deliberate_change_pass_again) ... ok\ntest_retired_capability_is_ignored_even_if_required (test_check_repository.CapabilityRequiredVersionsTest.test_retired_capability_is_ignored_even_if_required) ... ok\ntest_version_ahead_of_last_migration_passes_for_cli_only_release (test_check_repository.CheckMigrationsVersionGateTest.test_version_ahead_of_last_migration_passes_for_cli_only_release) ... ok\ntest_non_monotonic_versions_fail (test_check_repository.CheckReleasesTest.test_non_monotonic_versions_fail) ... ok\ntest_manifest_selects_the_installation_check (test_check_repository.ConditionalInstallationChecksTest.test_manifest_selects_the_installation_check) ... ok\ntest_repository_copy_must_not_keep_the_smoke_line (test_check_repository.GovernedLifecycleTextTest.test_repository_copy_must_not_keep_the_smoke_line) ... ok\ntest_cardine_task_state_may_record_its_authority_paths (test_check_repository.MachinePathTest.test_cardine_task_state_may_record_its_authority_paths) ... ok\ntest_plain_identifier_and_path_matches_include_task_archives (test_check_repository.PrivateNameGuardTest.test_plain_identifier_and_path_matches_include_task_archives) ... ok\ntest_tracked_and_untracked_files_are_checked (test_check_repository.RepositoryFilesTest.test_tracked_and_untracked_files_are_checked) ... ok\ntest_code_emitted_only_by_the_cli_is_not_dead (test_check_repository.StopCodeRegistryCheckTest.test_code_emitted_only_by_the_cli_is_not_dead) ... ok\ntest_unchanged_installed_copy_uses_its_installed_registry (test_check_repository.StopCodeRegistryCheckTest.test_unchanged_installed_copy_uses_its_installed_registry) ... ok\ntest_governed_roles_and_missing_citation (test_context_size.ContextSizeTest.test_governed_roles_and_missing_citation) ... ok\ntest_inline_citations_resolve_from_the_project_root (test_context_size.ReferenceResolutionTest.test_inline_citations_resolve_from_the_project_root) ... ok\ntest_owner_accept_text_uses_command_and_legacy_approve_attempt_is_supported (test_integration_projections.GovernedCompletionRowsTest.test_owner_accept_text_uses_command_and_legacy_approve_attempt_is_supported) ... ok\ntest_flow_targets_read_selected_directory (test_layout.LayoutTest.test_flow_targets_read_selected_directory) ... ok\ntest_product_defaults_use_cardine_layout (test_layout.LayoutTest.test_product_defaults_use_cardine_layout) ... ok\ntest_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) ... ok\ntest_inventory_matches_every_parser_command_exactly_once (test_public_surface.PublicSurfaceTest.test_inventory_matches_every_parser_command_exactly_once) ... ok\ntest_reading_policy_retains_read_guards_and_evidence_without_counters (test_single_workflow_capabilities.SingleWorkflowCapabilitiesTest.test_reading_policy_retains_read_guards_and_evidence_without_counters) ... ok\ntest_deferred_entries_keep_the_structure_their_row_needs (test_template_entry_actions.TemplateEntryActionTest.test_deferred_entries_keep_the_structure_their_row_needs) ... ok\ntest_context_budget_policy_carries_its_capability_markers (test_template_marker_heading.CapabilityMarkerTest.test_context_budget_policy_carries_its_capability_markers) ... ok\ntest_operator_prompts_resolve_locations_and_bound_framework_maintenance (test_template_marker_heading.CapabilityMarkerTest.test_operator_prompts_resolve_locations_and_bound_framework_maintenance) ... ok\ntest_does_not_flag_the_same_capability_under_the_same_heading_name_across_files (test_template_marker_heading.DuplicateHeadingAuditTest.test_does_not_flag_the_same_capability_under_the_same_heading_name_across_files) ... ok\ntest_shipped_templates_hold_every_budget_on_both_routes (test_template_word_budget.TemplateWordBudgetTest.test_shipped_templates_hold_every_budget_on_both_routes) ... ok\ntest_residual_set_is_work_item_nine_only (test_text_gates.ResidualRatchetTest.test_residual_set_is_work_item_nine_only) ... ok\ntest_unknown_inventory_id_fails_with_matching_reader (test_text_gates.TextGateScannerTest.test_unknown_inventory_id_fails_with_matching_reader) ... ok\n\n======================================================================\n\nRan 32 tests in 12.576s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/IMPLEMENTATION.md: capability=spike-routing v2 \u2014 protected content changed without a version bump; restore the released text or bump the version as a deliberate template change\nFAIL: PROJECT_WORKFLOW.md contains retired text: Project integration smoke command\nFAIL: test_upgrade_appends_new_marker_when_existing_marker_was_moved (test_cardine_upgrade_merge.UpgradeMergeTest.test_upgrade_appends_new_marker_when_existing_marker_was_moved)\nA new protected capability must not conflict solely because a project\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-283/tests/test_cardine_upgrade_merge.py\", line 212, in test_upgrade_appends_new_marker_when_existing_marker_was_moved\n    self.assertIsNotNone(marker)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^\nAssertionError: unexpectedly None\n\n----------------------------------------------------------------------\nresult ran=32 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_entry_actions,test_template_marker_heading,test_cardine_migration_retirement,test_cardine_upgrade_lifecycle,test_cardine_upgrade_merge,test_integration_projections,test_single_workflow_capabilities,test_template_word_budget,test_context_size,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_public_surface ran=255 total=2288 failures=2 errors=0\n",
+            "stdout": "PARTIAL selection=module:test_template_entry_actions,test_template_marker_heading,test_cardine_migration_retirement,test_cardine_upgrade_lifecycle,test_cardine_upgrade_merge,test_integration_projections,test_single_workflow_capabilities,test_template_word_budget,test_context_size,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_public_surface ran=255 total=2288 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
             "stdoutTruncated": false
           },
           {
-            "attemptId": "f906a2baaf024df98e7d053f34f049b2",
+            "attemptId": "1674f2a2f9094eb09a77835e266ad3a4",
             "command": "git diff --check",
-            "commit": "ae88d685ff2e057a110a1ddadb9037bfef4e9dee",
+            "commit": "30620d68189123ad3b701f1cb9aee36a1021096e",
             "exitStatus": 0,
             "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/283.json#f906a2baaf024df98e7d053f34f049b2/1/adopt-466c2f308b48c766",
+            "log": ".cardine/evidence/283.json#1674f2a2f9094eb09a77835e266ad3a4/1/adopt-466c2f308b48c766",
             "round": 1,
-            "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "",
-            "stdoutTruncated": false
-          }
-        ],
-        [
-          {
-            "attemptId": "f906a2baaf024df98e7d053f34f049b2",
-            "command": "python3 scripts/check_repository.py",
-            "commit": "ae88d685ff2e057a110a1ddadb9037bfef4e9dee",
-            "exitStatus": 0,
-            "id": "repository-check",
-            "log": ".cardine/evidence/283.json#f906a2baaf024df98e7d053f34f049b2/2/repository-check",
-            "round": 2,
-            "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
-            "stderr": "",
-            "stderrTruncated": false,
-            "stdout": "Cardine repository checks passed.\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "f906a2baaf024df98e7d053f34f049b2",
-            "command": "python3 scripts/run_tests.py --parallel --module test_template_entry_actions --module test_template_marker_heading --module test_cardine_migration_retirement --module test_cardine_upgrade_lifecycle --module test_cardine_upgrade_merge --module test_integration_projections --module test_single_workflow_capabilities --module test_template_word_budget --module test_context_size --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface",
-            "commit": "ae88d685ff2e057a110a1ddadb9037bfef4e9dee",
-            "exitStatus": 1,
-            "id": "task-tests",
-            "log": ".cardine/evidence/283.json#f906a2baaf024df98e7d053f34f049b2/2/task-tests",
-            "round": 2,
-            "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
-            "stderr": "run_tests: 255 tests in 8 shards\nrun_tests: shard 8/8 finished in 8.1s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 7/8 finished in 11.6s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 4/8 finished in 12.5s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 6/8 finished in 12.5s: exit 1 ran=32 failures=1 errors=0\nrun_tests: shard 2/8 finished in 12.9s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 5/8 finished in 14.4s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 1/8 finished in 15.8s: exit 1 ran=32 failures=1 errors=0\nrun_tests: shard 3/8 finished in 16.9s: exit 0 ran=32 failures=0 errors=0\n",
-            "stderrTruncated": false,
-            "stdout": "--- shard 1/8 (exit 1) ---\nshard=1/8 total=255 selected=32 digest=c08486e47adcfc674da494325023f7b3e82f2d2f4fe95ef6e009bd92100a936b\ntest_migration_upgrade_advances_and_rekeys_workflow_baseline (test_cardine_migration_retirement.MigrationRetirementTest.test_migration_upgrade_advances_and_rekeys_workflow_baseline) ... ok\ntest_upgrade_retires_reasoning_contract_alongside_a_marker_supersession (test_cardine_migration_retirement.MigrationRetirementTest.test_upgrade_retires_reasoning_contract_alongside_a_marker_supersession)\nA migration that both supersedes bounded-context-readers v1 and ... ok\ntest_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_upgrade_installs_closure_command_policy_for_lean_and_keeps_local_rules) ... ok\ntest_upgrade_installs_self_referential_handoff_rules_and_preserves_consumer_text (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_upgrade_installs_self_referential_handoff_rules_and_preserves_consumer_text) ... ok\ntest_marker_deduplication_removes_only_identical_template_copies (test_cardine_upgrade_merge.UpgradeMergeTest.test_marker_deduplication_removes_only_identical_template_copies) ... ok\ntest_upgrade_crosses_a_long_lag_capability_move_and_preserves_entry_points (test_cardine_upgrade_merge.UpgradeMergeTest.test_upgrade_crosses_a_long_lag_capability_move_and_preserves_entry_points) ... ok\ntest_a_version_bump_without_regenerating_the_baseline_still_fails (test_check_repository.CapabilityMarkerBaselineTest.test_a_version_bump_without_regenerating_the_baseline_still_fails)\nBumping the version *and* changing the content is the legitimate ... ok\ntest_every_marker_in_a_file_must_match (test_check_repository.CapabilityRequiredVersionsTest.test_every_marker_in_a_file_must_match) ... ok\ntest_malformed_adopt_existing_paths_declaration_fails (test_check_repository.CheckMigrationsVersionGateTest.test_malformed_adopt_existing_paths_declaration_fails) ... ok\ntest_baseline_changed_inconsistent_with_migrations_fails (test_check_repository.CheckReleasesTest.test_baseline_changed_inconsistent_with_migrations_fails) ... ok\ntest_release_ledger_may_name_a_migration_the_empty_chain_no_longer_carries (test_check_repository.CheckReleasesTest.test_release_ledger_may_name_a_migration_the_empty_chain_no_longer_carries) ... ok\ntest_fenced_bash_commands_use_parser_paths (test_check_repository.DocumentCommandsTest.test_fenced_bash_commands_use_parser_paths) ... ok\ntest_review_procedure_block_is_required (test_check_repository.GovernedReviewWorktreeContractTest.test_review_procedure_block_is_required) ... ok\ntest_repository_has_no_machine_paths (test_check_repository.MachinePathTest.test_repository_has_no_machine_paths) ... ok\ntest_invalid_repository_json_and_bash_fail (test_check_repository.RepositoryFilesTest.test_invalid_repository_json_and_bash_fail) ... ok\ntest_routers_with_different_trigger_blocks_fail (test_check_repository.RouterRoutesTest.test_routers_with_different_trigger_blocks_fail) ... ok\ntest_registered_code_mentioned_nowhere_fails (test_check_repository.StopCodeRegistryCheckTest.test_registered_code_mentioned_nowhere_fails) ... ok\ntest_unregistered_token_in_a_stop_code_list_fails (test_check_repository.StopCodeRegistryCheckTest.test_unregistered_token_in_a_stop_code_list_fails) ... ok\ntest_phase_reads_outside_a_managed_block_stay_startup_reads (test_context_size.ContextSizeTest.test_phase_reads_outside_a_managed_block_stay_startup_reads) ... ok\ntest_governed_spike_integrates_declared_validation_evidence (test_integration_projections.GovernedCompletionRowsTest.test_governed_spike_integrates_declared_validation_evidence) ... ok\ntest_console_identity_cache_observes_context_switch (test_layout.LayoutTest.test_console_identity_cache_observes_context_switch) ... ok\ntest_lifecycle_directory_lease_and_state_change_together (test_layout.LayoutTest.test_lifecycle_directory_lease_and_state_change_together) ... ok\ntest_task_audit_reads_selected_state_directory (test_layout.LayoutTest.test_task_audit_reads_selected_state_directory) ... ok\ntest_product_modules_do_not_import_unittest (test_module_inventory.ModuleInventoryTest.test_product_modules_do_not_import_unittest) ... ok\ntest_catalog_and_dependencies_use_the_reading_policy (test_single_workflow_capabilities.SingleWorkflowCapabilitiesTest.test_catalog_and_dependencies_use_the_reading_policy) ... ok\ntest_no_template_carries_a_retired_capability_marker (test_template_entry_actions.NoOrphanInstructionTest.test_no_template_carries_a_retired_capability_marker) ... ok\ntest_kept_rules_are_stated_and_advice_is_labelled (test_template_entry_actions.TemplateEntryActionTest.test_kept_rules_are_stated_and_advice_is_labelled) ... \n  test_kept_rules_are_stated_and_advice_is_labelled (test_template_entry_actions.TemplateEntryActionTest.test_kept_rules_are_stated_and_advice_is_labelled) (entry='IP-08') ... FAIL\ntest_host_impact_declaration_has_both_governed_shapes_and_evidence_routing (test_template_marker_heading.CapabilityMarkerTest.test_host_impact_declaration_has_both_governed_shapes_and_evidence_routing) ... ok\ntest_review_hands_off_through_the_command_before_substantive_inspection (test_template_marker_heading.CapabilityMarkerTest.test_review_hands_off_through_the_command_before_substantive_inspection) ... ok\ntest_a_missing_budgeted_document_is_a_finding_not_a_crash (test_template_word_budget.TemplateWordBudgetTest.test_a_missing_budgeted_document_is_a_finding_not_a_crash) ... ok\ntest_the_language_policy_is_still_counted_in_the_always_read_set (test_template_word_budget.TemplateWordBudgetTest.test_the_language_policy_is_still_counted_in_the_always_read_set) ... ok\ntest_disk_rules_cover_every_path_word_and_read_form (test_text_gates.TextGateScannerTest.test_disk_rules_cover_every_path_word_and_read_form) ... ok\n\n======================================================================\n\nRan 32 tests in 15.338s\n\nFAILED (failures=1)\nFAIL: templates/single/AGENTS.md: capability=command-triggers v4 does not match its recorded baseline; run `python3 scripts/check_repository.py --write-marker-baselines` to record this deliberate change\nFAIL: review procedure is missing its managed block\nFAIL: the routers carry different command-triggers blocks\nFAIL: test_kept_rules_are_stated_and_advice_is_labelled (test_template_entry_actions.TemplateEntryActionTest.test_kept_rules_are_stated_and_advice_is_labelled) (entry='IP-08')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-283/tests/test_template_entry_actions.py\", line 186, in test_kept_rules_are_stated_and_advice_is_labelled\n    self.assertIn(phrase, text)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^\nAssertionError: 'completed CI run for this exact commit' not found in '# Review Procedure\\n\\nUse this procedure only for `Review <TASK-ID>`.\\n\\n<!-- CARDINE:BEGIN capability=task-worktree-review-procedure v6 -->\\n## Review\\n\\nReview in a fresh session that did not write the implementation. Run `cardine review <TASK-ID> --project <primary-checkout>`; it hands off only a committed `in_review` delivery with a clean worktree, apart from the task state, handoff and evidence file that `cardine run` keeps uncommitted until landing. Never stage, commit or edit them. Read the task contract, its cited authority, and the exact diff against the recorded base in the `work.worktree` it names. Re-derive the evidence; do not trust the implementer\\'s report.\\n\\nCheck scope, dependencies, non-goals, acceptance criteria, project invariants, and unrelated changes. Read the measured validation evidence and the required CI result for this exact commit; with `ciBeforeLanding`, review starts only after CI passed. Rerun a project command only to confirm a specific finding, never `cardine execution validate`; never accept a bare \"tests passed\".\\n\\nAdvice: if `Manual verification: required`, confirm its rationale names a perceptual property and the evidence gathered matches it; apply every item of a `## Project review checklist` after this block as extra scope; report only actionable findings, each with `P0`, `P1`, or `P2` priority and file and line evidence (`P0` and `P1` block approval); omit style commentary; keep the final report within ten lines.\\n\\nEnd with the verdict, `APPROVE`, `CHANGES_REQUESTED` or `BLOCKED`, and its evidence. A launched reviewer returns it as the answer Cardine requests, and `cardine run` records it. In a manual session the developer records it from an interactive terminal with `cardine review verdict <TASK-ID> <VERDICT> --owner --project <work.worktree> --body <review-evidence>`, which binds it to the reviewed HEAD. Commit nothing. Edit no implementation file, never push, and never edit a status or verdict by hand. After `APPROVE`, `cardine run` lands the task: do not merge, push, or touch the integration lease yourself. Two consecutive `CHANGES_REQUESTED` verdicts end in `REVIEW_LOOP_EXHAUSTED`.\\n<!-- CARDINE:END -->\\n'\n\n----------------------------------------------------------------------\nresult ran=32 failures=1 errors=0 skipped=0\n--- shard 6/8 (exit 1) ---\nshard=6/8 total=255 selected=32 digest=c08486e47adcfc674da494325023f7b3e82f2d2f4fe95ef6e009bd92100a936b\ntest_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract (test_cardine_migration_retirement.MigrationRetirementTest.test_upgrade_refuses_to_retire_a_locally_edited_reasoning_contract) ... ok\ntest_pristine_1_2_15_lean_upgrade_installs_task_close (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_pristine_1_2_15_lean_upgrade_installs_task_close) ... ok\ntest_upgrade_installs_lean_lifecycle_document_from_1_2_5 (test_cardine_upgrade_lifecycle.UpgradeLifecycleTest.test_upgrade_installs_lean_lifecycle_document_from_1_2_5) ... ok\ntest_check_reports_multiple_merge_conflicts (test_cardine_upgrade_merge.UpgradeMergeTest.test_check_reports_multiple_merge_conflicts) ... ok\ntest_upgrade_appends_new_marker_when_existing_marker_was_moved (test_cardine_upgrade_merge.UpgradeMergeTest.test_upgrade_appends_new_marker_when_existing_marker_was_moved)\nA new protected capability must not conflict solely because a project ... FAIL\ntest_a_capability_retired_in_the_catalog_passes_without_a_migration (test_check_repository.CapabilityMarkerBaselineTest.test_a_capability_retired_in_the_catalog_passes_without_a_migration) ... ok\ntest_write_marker_baselines_makes_a_deliberate_change_pass_again (test_check_repository.CapabilityMarkerBaselineTest.test_write_marker_baselines_makes_a_deliberate_change_pass_again) ... ok\ntest_retired_capability_is_ignored_even_if_required (test_check_repository.CapabilityRequiredVersionsTest.test_retired_capability_is_ignored_even_if_required) ... ok\ntest_version_ahead_of_last_migration_passes_for_cli_only_release (test_check_repository.CheckMigrationsVersionGateTest.test_version_ahead_of_last_migration_passes_for_cli_only_release) ... ok\ntest_non_monotonic_versions_fail (test_check_repository.CheckReleasesTest.test_non_monotonic_versions_fail) ... ok\ntest_manifest_selects_the_installation_check (test_check_repository.ConditionalInstallationChecksTest.test_manifest_selects_the_installation_check) ... ok\ntest_repository_copy_must_not_keep_the_smoke_line (test_check_repository.GovernedLifecycleTextTest.test_repository_copy_must_not_keep_the_smoke_line) ... ok\ntest_cardine_task_state_may_record_its_authority_paths (test_check_repository.MachinePathTest.test_cardine_task_state_may_record_its_authority_paths) ... ok\ntest_plain_identifier_and_path_matches_include_task_archives (test_check_repository.PrivateNameGuardTest.test_plain_identifier_and_path_matches_include_task_archives) ... ok\ntest_tracked_and_untracked_files_are_checked (test_check_repository.RepositoryFilesTest.test_tracked_and_untracked_files_are_checked) ... ok\ntest_code_emitted_only_by_the_cli_is_not_dead (test_check_repository.StopCodeRegistryCheckTest.test_code_emitted_only_by_the_cli_is_not_dead) ... ok\ntest_unchanged_installed_copy_uses_its_installed_registry (test_check_repository.StopCodeRegistryCheckTest.test_unchanged_installed_copy_uses_its_installed_registry) ... ok\ntest_governed_roles_and_missing_citation (test_context_size.ContextSizeTest.test_governed_roles_and_missing_citation) ... ok\ntest_inline_citations_resolve_from_the_project_root (test_context_size.ReferenceResolutionTest.test_inline_citations_resolve_from_the_project_root) ... ok\ntest_owner_accept_text_uses_command_and_legacy_approve_attempt_is_supported (test_integration_projections.GovernedCompletionRowsTest.test_owner_accept_text_uses_command_and_legacy_approve_attempt_is_supported) ... ok\ntest_flow_targets_read_selected_directory (test_layout.LayoutTest.test_flow_targets_read_selected_directory) ... ok\ntest_product_defaults_use_cardine_layout (test_layout.LayoutTest.test_product_defaults_use_cardine_layout) ... ok\ntest_baseline_bindings_have_exactly_one_definition (test_module_inventory.ModuleInventoryTest.test_baseline_bindings_have_exactly_one_definition) ... ok\ntest_inventory_matches_every_parser_command_exactly_once (test_public_surface.PublicSurfaceTest.test_inventory_matches_every_parser_command_exactly_once) ... ok\ntest_reading_policy_retains_read_guards_and_evidence_without_counters (test_single_workflow_capabilities.SingleWorkflowCapabilitiesTest.test_reading_policy_retains_read_guards_and_evidence_without_counters) ... ok\ntest_deferred_entries_keep_the_structure_their_row_needs (test_template_entry_actions.TemplateEntryActionTest.test_deferred_entries_keep_the_structure_their_row_needs) ... ok\ntest_context_budget_policy_carries_its_capability_markers (test_template_marker_heading.CapabilityMarkerTest.test_context_budget_policy_carries_its_capability_markers) ... ok\ntest_operator_prompts_resolve_locations_and_bound_framework_maintenance (test_template_marker_heading.CapabilityMarkerTest.test_operator_prompts_resolve_locations_and_bound_framework_maintenance) ... ok\ntest_does_not_flag_the_same_capability_under_the_same_heading_name_across_files (test_template_marker_heading.DuplicateHeadingAuditTest.test_does_not_flag_the_same_capability_under_the_same_heading_name_across_files) ... ok\ntest_shipped_templates_hold_every_budget_on_both_routes (test_template_word_budget.TemplateWordBudgetTest.test_shipped_templates_hold_every_budget_on_both_routes) ... ok\ntest_residual_set_is_work_item_nine_only (test_text_gates.ResidualRatchetTest.test_residual_set_is_work_item_nine_only) ... ok\ntest_unknown_inventory_id_fails_with_matching_reader (test_text_gates.TextGateScannerTest.test_unknown_inventory_id_fails_with_matching_reader) ... ok\n\n======================================================================\n\nRan 32 tests in 12.027s\n\nFAILED (failures=1)\nFAIL: templates/single/docs/workflows/IMPLEMENTATION.md: capability=spike-routing v2 \u2014 protected content changed without a version bump; restore the released text or bump the version as a deliberate template change\nFAIL: PROJECT_WORKFLOW.md contains retired text: Project integration smoke command\nFAIL: test_upgrade_appends_new_marker_when_existing_marker_was_moved (test_cardine_upgrade_merge.UpgradeMergeTest.test_upgrade_appends_new_marker_when_existing_marker_was_moved)\nA new protected capability must not conflict solely because a project\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/Users/biagioliberto/.cardine/worktrees/github.com/biagiolibe/cardine/task-283/tests/test_cardine_upgrade_merge.py\", line 212, in test_upgrade_appends_new_marker_when_existing_marker_was_moved\n    self.assertIsNotNone(marker)\n    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^\nAssertionError: unexpectedly None\n\n----------------------------------------------------------------------\nresult ran=32 failures=1 errors=0 skipped=0\nPARTIAL selection=module:test_template_entry_actions,test_template_marker_heading,test_cardine_migration_retirement,test_cardine_upgrade_lifecycle,test_cardine_upgrade_merge,test_integration_projections,test_single_workflow_capabilities,test_template_word_budget,test_context_size,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates,test_public_surface ran=255 total=2288 failures=2 errors=0\n",
-            "stdoutTruncated": false
-          },
-          {
-            "attemptId": "f906a2baaf024df98e7d053f34f049b2",
-            "command": "git diff --check",
-            "commit": "ae88d685ff2e057a110a1ddadb9037bfef4e9dee",
-            "exitStatus": 0,
-            "id": "adopt-466c2f308b48c766",
-            "log": ".cardine/evidence/283.json#f906a2baaf024df98e7d053f34f049b2/2/adopt-466c2f308b48c766",
-            "round": 2,
-            "sourceDigest": "0aa4bea4c2ce7f88be810cf5fce1c45c874215c2230c5c30fceb1b439136d842",
+            "sourceDigest": "c138c48db21248c74f33fbb2bc33e27f9efff3413307d250475408ce9548e4e4",
             "stderr": "",
             "stderrTruncated": false,
             "stdout": "",
