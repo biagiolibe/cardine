@@ -177,6 +177,34 @@ class RepositoryFilesTest(RepositoryCheckTest):
         cr.check_local_markdown_links()
 
 
+class DocsIndexTest(RepositoryCheckTest):
+    def git(self, *arguments: str) -> None:
+        subprocess.run(["git", "-C", str(self.root), *arguments], check=True,
+                       capture_output=True)
+
+    def test_tracked_documents_must_be_linked(self) -> None:
+        self.write("docs/README.md", "[Guide](GUIDE.md)\n[Workflow](workflows/FLOW.md)\n")
+        self.write("docs/GUIDE.md")
+        self.write("docs/workflows/FLOW.md")
+        self.write("docs/untracked.md")
+        self.git("add", "docs/README.md", "docs/GUIDE.md", "docs/workflows/FLOW.md")
+        cr.check_docs_index()
+        self.write("docs/README.md", "[Guide](GUIDE.md)\n")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+            cr.check_docs_index()
+        self.assertIn("docs/workflows/FLOW.md is not listed in docs/README.md", output.getvalue())
+
+    def test_filename_in_prose_is_not_a_link(self) -> None:
+        self.write("docs/README.md", "GUIDE.md\n")
+        self.write("docs/GUIDE.md")
+        self.git("add", "docs/GUIDE.md")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), self.assertRaises(SystemExit):
+            cr.check_docs_index()
+        self.assertIn("docs/GUIDE.md is not listed in docs/README.md", output.getvalue())
+
+
 class PluginVersionTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
