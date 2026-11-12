@@ -83,6 +83,48 @@
       "stderrTruncated": false,
       "stdout": "",
       "stdoutTruncated": false
+    },
+    {
+      "attemptId": "76540f39f5b54f998878c047e94dbb89",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "da6110bc746e23c5091e9257c1dfbcbd5d5fb7e2",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/285.json#76540f39f5b54f998878c047e94dbb89/1/repository-check",
+      "round": 1,
+      "sourceDigest": "a5e94d7783e777d99d9108e5a5a9b051ed5fbc1bb742d751e8fd47359f88885f",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "76540f39f5b54f998878c047e94dbb89",
+      "command": "python3 scripts/run_tests.py --parallel --module test_run_cleanup --module test_run_console --module test_run_delivery_disposable --module test_run_recovery --module test_run_end_to_end --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "da6110bc746e23c5091e9257c1dfbcbd5d5fb7e2",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/285.json#76540f39f5b54f998878c047e94dbb89/1/task-tests",
+      "round": 1,
+      "sourceDigest": "a5e94d7783e777d99d9108e5a5a9b051ed5fbc1bb742d751e8fd47359f88885f",
+      "stderr": "run_tests: 253 tests in 8 shards\nrun_tests: shard 7/8 finished in 70.4s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 8/8 finished in 76.0s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 1/8 finished in 80.1s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 5/8 finished in 81.9s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 2/8 finished in 89.5s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 4/8 finished in 89.8s: exit 0 ran=32 failures=0 errors=0\nrun_tests: shard 6/8 finished in 114.2s: exit 0 ran=31 failures=0 errors=0\nrun_tests: shard 3/8 finished in 138.8s: exit 0 ran=32 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_run_cleanup,test_run_console,test_run_delivery_disposable,test_run_recovery,test_run_end_to_end,test_stop_registry,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=253 total=2286 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "76540f39f5b54f998878c047e94dbb89",
+      "command": "git diff --check",
+      "commit": "da6110bc746e23c5091e9257c1dfbcbd5d5fb7e2",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/285.json#76540f39f5b54f998878c047e94dbb89/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "a5e94d7783e777d99d9108e5a5a9b051ed5fbc1bb742d751e8fd47359f88885f",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
     }
   ]
 }
