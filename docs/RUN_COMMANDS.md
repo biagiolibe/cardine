@@ -9,7 +9,7 @@ is not a template: no installed router or role read set includes it.
 
 | Command | Effect |
 | --- | --- |
-| `cardine run <TASK-ID> [--project <path>]` | Resolve the earliest unsatisfied step from the task state, perform it (it changes the repository: worktree, commits, state, merge, push), and print one JSON object. It is not a preview. `cardine review <TASK-ID>` runs the same step. |
+| `cardine run <TASK-ID> [--project <path>] [--reviewer codex\|claude]` | Resolve the earliest unsatisfied step from the task state, perform it (it changes the repository: worktree, commits, state, merge, push), and print one JSON object. It is not a preview. `cardine review <TASK-ID>` runs the same step. |
 | `cardine status [--project <path>] [--all] [--write] [--format text\|json]` | Read-only view of every task; `--write` regenerates the status views. |
 | `cardine review verdict <TASK-ID> {APPROVE,CHANGES_REQUESTED,BLOCKED} [--owner] [--body <markdown>] [--project <path>]` | Record the developer's own verdict with `--owner`. Cardine records launched reviewer answers internally. `--owner` is the developer channel: it needs an interactive terminal and a typed confirmation (see below). |
 | `cardine cancel <TASK-ID> --reason <text> [--project <path>]` | Record a terminal cancelled state. It deletes no work and satisfies no dependency. |
@@ -54,7 +54,7 @@ Both presets (`lean` and `governed`) use the same steps.
 | invalid invocation | 64 | The arguments were wrong; no task was touched. |
 
 For direct landing with required CI, `run` waits up to 900 seconds for checks.
-With required review, CI runs on the delivered head before the review step, and `APPROVE` requires the pass. With `launched`, `cardine run` launches the reviewer, returns `waiting` while it works, and records its verdict.
+With required review, CI runs on the delivered head before the review step, and `APPROVE` requires the pass. With `launched`, `cardine run` launches the reviewer, returns `waiting` while it works, and records its verdict. `--reviewer` picks the reviewer host for this run in place of `review.reviewer`, needs that host to be `ready` in `cardine doctor`, and does not change a launch already in progress.
 A clean refresh from main after approval keeps the approval and runs CI again on the merged head before preparing the candidate.
 Use `--ci-wait-seconds <seconds>` to change the nonnegative budget; zero
 queries once. On timeout, `next.command` retains the budget. Rerunning it
