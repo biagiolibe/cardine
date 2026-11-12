@@ -111,8 +111,13 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         raise stop_error("SELF_UPDATE_VERIFY", str(error)) from error
 
 
+def explain_unknown_release(reason: object, manual: str, *, out=print) -> None:
+    out(f"Latest: unknown ({reason})")
+    out("Exit 11 means the latest release could not be determined; nothing was changed.")
+    out(f"Manual update: see https://github.com/biagiolibe/cardine/releases, then run: {manual}")
+
+
 def _explain_unknown(root: Path, error: object, target_tag: str | None) -> None:
-    from cardine.release.installer import explain_unknown_release
     tag = target_tag or "v<version>"
     remote = git_output(root, "remote", "get-url", "origin")
     fetch = shlex.join(["git", "fetch", "--no-tags", "--", remote, f"refs/tags/{tag}:refs/tags/{tag}"])

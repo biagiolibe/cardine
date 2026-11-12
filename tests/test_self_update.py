@@ -255,7 +255,7 @@ class InstallerUpdateTest(unittest.TestCase):
         text = '\n'.join(lines)
         self.assertIn('Latest: unknown (release body has no recognized kind line)', text)
         self.assertIn('Exit 11 means', text)
-        self.assertIn('pipx install --force git+https://github.com/biagiolibe/cardine@v<version>', text)
+        self.assertIn("pipx install --force 'git+https://github.com/biagiolibe/cardine@v<version>'", text)
 
     def test_stale_runtime_report_is_read_only(self):
         from cardine.release.installer import stale_runtime_report

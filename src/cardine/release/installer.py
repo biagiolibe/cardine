@@ -42,19 +42,13 @@ class ReleaseUnresolved(CardineError):
     """The latest release could not be resolved; the explanation was already printed."""
 
 
-def explain_unknown_release(reason: object, manual: str, *, out=print) -> None:
-    out(f"Latest: unknown ({reason})")
-    out("Exit 11 means the latest release could not be determined; nothing was changed.")
-    out(f"Manual update: see https://github.com/biagiolibe/cardine/releases, then run: {manual}")
-
-
 def run_installer_update(kind: str, installed: str, *, apply: bool, target_tag: str | None = None,
                          urlopen_fn=None, runner=None, out=print) -> str | None:
     """Plan or apply a pipx/uv reinstall; returns the target version after apply, else None.
 
     A preview resolves the target and prints the command without running anything. A failed
     resolution or reinstall raises before any plugin alignment, so a retry starts clean."""
-    from cardine.release.update import fetch_latest_release
+    from cardine.release.update import explain_unknown_release, fetch_latest_release
     if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
         raise CardineError("--to requires a release tag v<version>")
     try:
