@@ -16,7 +16,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/biagiolibe/cardine" alt="MIT License"></a>
 </p>
 
-> **Status: 0.10.0, before 1.0.** Install the CLI from the `v0.10.0` tag; see [Get started](#get-started).
+> **Status: 0.11.0, before 1.0.** Install the CLI from the `v0.11.0` tag; see [Get started](#get-started).
 > The scope of 1.0 is
 > [docs/ADR_CARDINE_1_0.md](docs/ADR_CARDINE_1_0.md); what is proven today is
 > listed under [Status and evidence](#status-and-evidence).
@@ -116,7 +116,7 @@ Those stay with you.
 Install Cardine on macOS or Linux with Python 3.12 or later, Git, and pipx:
 
 ```sh
-pipx install git+https://github.com/biagiolibe/cardine@v0.10.0
+pipx install git+https://github.com/biagiolibe/cardine@v0.11.0
 ```
 
 Then, from your project checkout:

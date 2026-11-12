@@ -15,6 +15,36 @@ records which release moved it.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-12
+
+CLI-only release: managed project templates are unchanged, so `cardine upgrade` has
+nothing to apply. Cardine now tells you when a release is available, a policy change
+refreshes queued tasks in one step, and `cardine doctor` works without `--host`.
+
+### Added
+
+- Cardine tells you when a new release is available, in the agent's per-turn briefing,
+  after interactive commands, and in the console. It checks at most once a day, in the
+  background. Set `CARDINE_NO_UPDATE_NOTICE=1` to turn it off.
+- `cardine authorize --apply --update-queued` refreshes the contracts of queued tasks
+  after a declaration change, and `cardine authorize --check` lists them.
+
+### Changed
+
+- `cardine setup --check` lists each change once and separates next steps, status, diffs
+  and warnings. It warns about allowlist entries that Cardine did not write.
+
+### Fixed
+
+- `cardine doctor` without `--host` checks both hosts, so the commands that
+  `self-update`, `setup` and the upgrade guide print now work.
+- A spike without an outcome stops with `SPIKE_OUTCOME_REQUIRED` before integration and
+  names the `cardine task outcome` command.
+
+### Upgrade notes
+
+- Run `cardine self-update --apply`, then `cardine authorize --apply` in each project.
+
 ## [0.10.0] - 2026-11-12
 
 Template-changing release: the managed review blocks and `docs/OPERATOR_PROMPTS.md`
