@@ -1,0 +1,114 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "302"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/release/update_command.py",
+      "src/cardine/cli.py",
+      "src/cardine/release/update.py",
+      "docs/HOW_TO_UPGRADE.md",
+      "docs/RUN_COMMANDS.md",
+      "docs/PUBLIC_SURFACE.md",
+      "tests/test_update_command.py",
+      "changelog.d/303.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/303.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 303 \u2014 Update Cardine and every project with one guided cardine update",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_update_command --module test_self_update --module test_authorization --module test_cardine_upgrade_lifecycle --module test_projects_registry --module test_terminal_style --module test_public_surface --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "d740a4f02054cb3045a72bbb0b392729315b6ac1a5269132e47f9daa43108a86",
+        "digest": "6376c0f625b41f5d51ce8ecd9727edf1fcef393df03cb7298142b2e4813bfb2a",
+        "inputs": {
+          ".cardine/tasks/303.json": null,
+          "tasks/303.md": null
+        },
+        "kind": "creation",
+        "operation_id": "13b03c8890aa4217918553f16088367b",
+        "outputs": {
+          ".cardine/tasks/303.json": "6160c22d5820c90c40bb8e52a3f27905411a8d9568590c4a3f16b0ed7ac72709",
+          "tasks/303.md": "1b51e6e313407a046c7676da4245ef4e4ee7301e6873b686831da0c53e5528e3"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "8dbf3ab7413d925009e9cb4ef7be7bc5590a1acb",
+        "task_id": "303",
+        "tree": "493f8b4e528b7b551b4013379a3133d5d8c0bd0e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "303",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

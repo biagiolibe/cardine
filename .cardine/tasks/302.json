@@ -1,0 +1,111 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/shared/projects_registry.py",
+      "src/cardine/cli.py",
+      "src/cardine/templates/interactive_init.py",
+      "docs/RUN_COMMANDS.md",
+      "docs/PUBLIC_SURFACE.md",
+      "tests/test_projects_registry.py",
+      "changelog.d/302.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/302.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 302 \u2014 Remember the checkouts that use Cardine on this machine",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_projects_registry --module test_authorization --module test_interactive_init --module test_init --module test_adopt_apply --module test_public_surface --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "b7fdf28dfb98e82ccd59f4c8731bf77e8bf1afe4dedb171a7afea57c0c05f70d",
+        "digest": "b0b5a2b30476fe480ac92e9b3b002b3ada857217a2dae0790926ef1a2d339bd1",
+        "inputs": {
+          ".cardine/tasks/302.json": null,
+          "tasks/302.md": null
+        },
+        "kind": "creation",
+        "operation_id": "8176b078dfbc4feeadbae2e1d0ae8d0b",
+        "outputs": {
+          ".cardine/tasks/302.json": "7915161de04d1c4744ef02576318435288e19ea1a4b4eec9d3d698c876688521",
+          "tasks/302.md": "4876fa56a4cf49d5ada06d526f15183cca39fc2f569596192df85077e3c91180"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "8dbf3ab7413d925009e9cb4ef7be7bc5590a1acb",
+        "task_id": "302",
+        "tree": "493f8b4e528b7b551b4013379a3133d5d8c0bd0e",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "302",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
