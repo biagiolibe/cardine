@@ -383,7 +383,10 @@ class RolePolicyTest(Fixture):
         self.assertEqual(implementer, self.policy("implementer"))
         self.assertNotEqual((implementer.identity, implementer.digest), (reviewer.identity, reviewer.digest))
         self.assertEqual({implementer.identity, reviewer.identity}, {"cardine-implementer", "cardine-reviewer"})
-        for policy in (implementer, reviewer):
+        self.assertEqual(reviewer.settings, {"tools": ["Read", "Grep", "Glob"], "strict_mcp": True,
+                                             "session_persistence": False, "answer_schema": "review-answer-v1"})
+        self.assertEqual(reviewer.digest, permissions.policy_digest("claude", "reviewer", reviewer.settings))
+        for policy in (implementer,):
             text = json.dumps(policy.settings).lower()
             for secret in ("token", "credential", "secret", "password", "api_key", "env"):
                 self.assertNotIn(secret, text)
@@ -395,8 +398,6 @@ class RolePolicyTest(Fixture):
             self.assertTrue(any(rule.startswith(f"Edit(//{self.external.as_posix().lstrip('/')}") or rule.startswith("Edit(//")
                                 for rule in deny))
         self.assertIn("Bash(cardine review verdict:*)", implementer.settings["permissions"]["deny"])
-        self.assertNotIn("Bash(cardine review verdict:*)", reviewer.settings["permissions"]["deny"])
-        self.assertIn("Edit", reviewer.settings["permissions"]["deny"])
         self.assertNotIn("Edit", implementer.settings["permissions"]["deny"])
 
     def test_the_policy_changes_with_the_checkout_and_rejects_unknown_roles(self) -> None:

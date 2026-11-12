@@ -238,9 +238,29 @@ class ClaudeTransport(HostSessionTransport):
         return claude_role_profile(policy, self.proofs.get(role)) if policy else None
 
     def argv(self, request, path):
+        if request['role'] == 'reviewer':
+            from cardine.shared.paths import framework_root
+            text = (framework_root() / 'schemas/review-answer-v1.schema.json').read_text(encoding='utf-8')
+            schema = json.dumps(json.loads(text), separators=(',', ':'))  # one line, same schema
+            return [self.executable, '-p', self.prompt(request), '--tools', ','.join(self.policies['reviewer'].settings['tools']),
+                    '--add-dir', str(path), '--strict-mcp-config', '--no-session-persistence',
+                    '--output-format', 'json', '--json-schema', schema]
         settings = path / 'settings.json'
         _write_atomic(settings, self.policies[request['role']].settings)
         return [self.executable, '-p', self.prompt(request), '--settings', str(settings)]
+
+    def poll(self, session):
+        """Add the reviewer's structured answer, read from the JSON that Claude printed into host.log."""
+        result = super().poll(session)
+        if result and session.get('role') == 'reviewer' and result.get('output') is None:
+            try:
+                printed = json.loads((self.directory / session['request_id'] / 'host.log').read_bytes())
+            except (OSError, ValueError):
+                return result
+            answer = printed.get('structured_output') if isinstance(printed, dict) else None
+            if isinstance(answer, dict):
+                result = dict(result, output=answer)
+        return result
 
 
 class CodexTransport(HostSessionTransport):
