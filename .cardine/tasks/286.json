@@ -16,6 +16,8 @@
       "docs/RUN_COMMANDS.md",
       "tests/test_run_host_roles.py",
       "tests/test_run_output.py",
+      "skills/cardine-delivery/SKILL.md",
+      "tests/test_execution_boundaries.py",
       "changelog.d/286.md"
     ],
     "hostImpact": {
@@ -68,11 +70,22 @@
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_host_roles --module test_run_output --module test_run_required_review --module test_run_ci --module test_stop_registry --module test_public_surface --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_host_roles --module test_run_output --module test_execution_boundaries --module test_run_required_review --module test_run_ci --module test_stop_registry --module test_public_surface --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:6390eb248e3e920973f3a797af9e5d7694ca5575c768783d486065005328007a",
+      "at": "2026-11-12T11:52:22.758220Z",
+      "before": "sha256:b87bfd039b08d424651914a25eaa67ea491fc226fdcea13f9f7874bc32d9cb54",
+      "changedFields": [
+        "expectedCodeSurface",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -98,6 +111,30 @@
         "source": "5706d06584fd058ba1f0aba32eb8dfad91982465",
         "task_id": "286",
         "tree": "b2c2f845af29ef292647762bc6878be7b6b4bf3c",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "c8ec36181ed0e48435de449d3f63ea5023a7a29faf446d6309549afb34e1f0e8",
+        "digest": "ba2041a9af8a8099cdba25187b5909906aea0d2fa498d4d8b9cf926e609712be",
+        "inputs": {
+          ".cardine/tasks/286.json": "c5adb9e0249fc37781cbbd6f3c6c43e1373d2808092f34e733609e9e54128989",
+          "tasks/286.md": "239e9ecccb3dc5a0e3de5f13e6aca1d5c5fb96ef35012af70a1d6b36dfd55f03"
+        },
+        "kind": "contract_revision",
+        "operation_id": "7d4cd0b51ccd48da91862ea12134d27d",
+        "outputs": {
+          ".cardine/tasks/286.json": "0dda1e48c5873f5f71b031cc9424899fcb44a83abe753db8a0bd02d236cbbd48",
+          "tasks/286.md": "239e9ecccb3dc5a0e3de5f13e6aca1d5c5fb96ef35012af70a1d6b36dfd55f03"
+        },
+        "predecessor": "aa89730aabe64e8fa86d41b54e6dc898ba7f62bf4df05eb1c036e1e3a652782e",
+        "result": "verified",
+        "source": "a48c72582e037d6cb41cc0d3900c113b9bc780b3",
+        "task_id": "286",
+        "tree": "af84b29e35c7441a9f02972a90e1b1e240ed0695",
         "version": 1
       }
     ]
