@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from cardine.shared.layout import names
-from cardine.shared import atomic
+from cardine.shared import atomic, terminal
 
 from cardine.worktree.paths import repository_identity
 
@@ -457,20 +457,47 @@ def _plugin_state(home: Path, framework_root: Path) -> str:
         return f"unknown ({error})"
 
 
+def _color_diff(diff: str) -> str:
+    return "".join(terminal._style(line.rstrip("\n"), "32" if line.startswith("+") else "31")
+                   + ("\n" if line.endswith("\n") else "")
+                   if line.startswith(("+", "-")) else line for line in diff.splitlines(keepends=True))
+
+
 def print_setup_plan(plan: SetupPlan) -> None:
     changes = [change for change in plan.changes if change != "none"]
     count = 0 if changes == ["none; setup is blocked before mutation"] else len(changes)
+    print(terminal.section("Summary"))
     print(f"changes on --apply: {count}")
+    groups = {name: [] for name in ("Claude Code", "Codex", "This project", "Cardine home")}
+    project = plan.project_declaration_path.parent.parent
+    home = Path.home()
+    for change in changes:
+        lower = change.lower()
+        target = ("This project" if any(str(path) in change for path in
+                  (project, plan.project_declaration_path, plan.candidate_validation_path, plan.task_identity_path))
+                  else "Claude Code" if "claude" in lower else "Codex" if "codex" in lower
+                  else "Cardine home")
+        groups[target].append(change.replace(str(project) + "/", "").replace(str(home) + "/", "~/"))
+    for target, items in groups.items():
+        if items:
+            print(f"{target}: " + "; ".join(items))
+    # Preserve the existing machine-consumed lines verbatim.
     for change in changes:
         print(f"- {change}")
+    print(terminal.section("Next steps"))
     print("next: cardine setup --apply" if count else "nothing to change")
+    if count:
+        print("1. " + terminal.command("cardine setup --apply"))
+    print("2. Restart the agent")
+    print("3. " + terminal.command("cardine doctor"))
+    print(terminal.section("Planned file changes"))
     print(f"codex-user-rules: {plan.user_rules.status} ({plan.user_rules.path})")
     if plan.user_rules.proposed_text is not None:
-        print("".join(difflib.unified_diff(
+        print(_color_diff("".join(difflib.unified_diff(
             plan.user_rules.current_text.splitlines(keepends=True),
             plan.user_rules.proposed_text.splitlines(keepends=True),
             fromfile=str(plan.user_rules.path), tofile=str(plan.user_rules.path) + " (planned)",
-        )), end="")
+        ))), end="")
     print(f"worktree-root: {plan.resolution.path}")
     print(f"worktree-root-source: {plan.resolution.source}")
     print(f"directory-exists: {'no' if plan.directory_state == 'missing' else 'yes'}")
@@ -480,10 +507,10 @@ def print_setup_plan(plan: SetupPlan) -> None:
     print(f"codex-detail: {plan.codex_detail}")
     if plan.codex_plan is not None and plan.codex_plan.proposed_text is not None:
         print("codex-proposed-change:")
-        print("".join(difflib.unified_diff(
+        print(_color_diff("".join(difflib.unified_diff(
             (plan.codex_plan.current_text or "").splitlines(keepends=True),
             plan.codex_plan.proposed_text.splitlines(keepends=True),
-            fromfile=str(plan.codex_config), tofile=str(plan.codex_config) + " (planned)")), end="")
+            fromfile=str(plan.codex_config), tofile=str(plan.codex_config) + " (planned)"))), end="")
     hooks = getattr(plan, "hooks", None)
     if hooks is not None:
         for registry in hooks.registries:
@@ -661,6 +688,12 @@ def apply_setup(plan: SetupPlan) -> bool:
         result = wrote or bool(missing_links) or removed or active.resumed
         receipts.boundary("before_setup_result")
     receipts.boundary("after_setup_result")
+    changes = [change for change in plan.changes if change != "none" and not change.startswith("none;")
+               and not change.startswith("align the Claude Code plugin")]
+    if changes:
+        print(terminal.section("Apply"))
+        for index, change in enumerate(changes, 1):
+            print(terminal.done(f"[{index}/{len(changes)}] {change}"))
     return result
 
 

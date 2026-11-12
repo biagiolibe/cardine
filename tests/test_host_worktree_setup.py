@@ -83,7 +83,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     with redirect_stdout(output):
                         owner_hosts_setup.print_setup_plan(plan)
                     lines = output.getvalue().splitlines()
-                    self.assertEqual(lines[0], f"changes on --apply: {int(expected)}")
+                    self.assertIn(f"changes on --apply: {int(expected)}", lines)
                     self.assertEqual(lines.count(f"- {change}"), int(expected))
                     self.assertNotIn("changes:", lines)
                     self.assertIn("next: cardine setup --apply" if expected else "nothing to change", lines)
@@ -683,7 +683,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             text=True, capture_output=True, check=False,
             env={**os.environ, "HOME": str(self.home)},
         )
-        self.assertTrue(checked.stdout.startswith("changes on --apply: "), checked.stdout + checked.stderr)
+        self.assertIn("changes on --apply: ", checked.stdout)
         self.assertIn("project-declaration: missing; run cardine init first", checked.stdout)
         self.assertNotIn("project-declaration-proposal", checked.stdout)
 

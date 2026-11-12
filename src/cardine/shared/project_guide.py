@@ -2,6 +2,9 @@
 
 from pathlib import Path
 import shlex
+import re
+
+from cardine.shared import terminal
 
 from cardine.shared.errors import CardineError
 from cardine.shared.git import _run_git
@@ -93,8 +96,12 @@ _TITLES = {'bootstrap': 'Next steps', 'first_task': 'Next steps', 'choices': 'Th
 
 
 def render_project_guide(guide: dict) -> str:
-    lines = [f"Cardine guide: {guide['project']}"]
+    lines = [terminal.section(f"Cardine guide: {guide['project']}"),
+             terminal.done("Where you are: " + ("not configured" if guide["facts"].get("configuration") == "missing" else "configured"))]
     for key, entries in guide['sections'].items():
-        lines.append(f"\n{_TITLES.get(key, key.replace('_', ' ').title())}:")
-        lines.extend(f'- {entry}' for entry in entries)
+        lines.append("\n" + terminal.section(f"{_TITLES.get(key, key.replace('_', ' ').title())}:"))
+        for index, entry in enumerate(entries, 1):
+            entry = re.sub(r"cardine [^,;.]+", lambda match: terminal.command(match.group()), entry)
+            prefix = f"{index}." if key in ("bootstrap", "first_task") else "-"
+            lines.append(f"{prefix} {entry}")
     return '\n'.join(lines)
