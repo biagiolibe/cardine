@@ -7,7 +7,6 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 import threading
 
 from cardine.release.version import parse_semver, semver_precedence_key
@@ -50,14 +49,8 @@ def refresh(home, installed):
     directory = Path(home) / ".cardine"
     try:
         directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-        fd, temporary = tempfile.mkstemp(prefix=".update-check-", dir=directory)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as stream:
-                json.dump(data, stream)
-            os.replace(temporary, directory / "update-check.json")
-        finally:
-            if os.path.exists(temporary):
-                os.unlink(temporary)
+        from cardine.shared.atomic import replace_bytes
+        replace_bytes(directory / "update-check.json", json.dumps(data).encode("utf-8"), mode=0o600)
     except OSError:
         pass
 
