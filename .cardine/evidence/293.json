@@ -1,0 +1,46 @@
+{
+  "293": [
+    {
+      "attemptId": "09d073df8a9047fc9f213ab78abc1725",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "d9dd754351c0f4bf6f575e2ccc9ff7ea1053f6d3",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/293.json#09d073df8a9047fc9f213ab78abc1725/1/repository-check",
+      "round": 1,
+      "sourceDigest": "599286c70714c5d159d3ae431ce489a550e7bb4f28b7b6573e89814f21d43dad",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "09d073df8a9047fc9f213ab78abc1725",
+      "command": "python3 scripts/run_tests.py --parallel --module test_authorization --module test_single_workflow_contract --module test_public_surface --module test_cli_install --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "d9dd754351c0f4bf6f575e2ccc9ff7ea1053f6d3",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/293.json#09d073df8a9047fc9f213ab78abc1725/1/task-tests",
+      "round": 1,
+      "sourceDigest": "599286c70714c5d159d3ae431ce489a550e7bb4f28b7b6573e89814f21d43dad",
+      "stderr": "run_tests: 176 tests in 8 shards\nrun_tests: shard 4/8 finished in 5.1s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 3/8 finished in 5.9s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 6/8 finished in 6.0s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 5/8 finished in 6.3s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 7/8 finished in 6.4s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 1/8 finished in 8.2s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 2/8 finished in 8.2s: exit 0 ran=22 failures=0 errors=0\nrun_tests: shard 8/8 finished in 10.2s: exit 0 ran=22 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_authorization,test_single_workflow_contract,test_public_surface,test_cli_install,test_check_repository,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=176 total=2313 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "09d073df8a9047fc9f213ab78abc1725",
+      "command": "git diff --check",
+      "commit": "d9dd754351c0f4bf6f575e2ccc9ff7ea1053f6d3",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/293.json#09d073df8a9047fc9f213ab78abc1725/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "599286c70714c5d159d3ae431ce489a550e7bb4f28b7b6573e89814f21d43dad",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
