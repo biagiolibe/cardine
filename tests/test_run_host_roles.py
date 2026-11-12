@@ -462,3 +462,80 @@ class ZLaunchedRunReviewTest(unittest.TestCase):
                 fixture.deliver()
                 result = fixture.run()
                 self.assertEqual(result['stop']['code'], 'REVIEW_LOOP_EXHAUSTED')
+
+
+class ZReviewerOptionTest(unittest.TestCase):
+    @staticmethod
+    def configure(root):
+        path = root / '.cardine/project.json'
+        config = json.loads(path.read_text())
+        config['review'] = {'sources': ['launched'], 'reviewer': 'codex'}
+        path.write_text(json.dumps(config))
+        subprocess.run(['git', '-C', str(root), 'add', '.cardine/project.json'], check=True)
+        subprocess.run(['git', '-C', str(root), 'commit', '-qm', 'Configure reviewer'], check=True)
+
+    def adapters(self, fixture):
+        from cardine.lifecycle.engine import concrete_host_adapter
+        hosts = {}
+        for name in ('codex', 'claude'):
+            hosts[name] = FakeHost(fixture.directory / ('fake-' + name), name)
+            hosts[name].ready = False
+        built = []
+        def factory(locations, host=None):
+            chosen = host or 'codex'
+            built.append(chosen)
+            return concrete_host_adapter(chosen, hosts[chosen], 'coordinator-channel')
+        return hosts, built, factory
+
+    def test_option_selects_host_and_default_keeps_declaration(self):
+        from run_delivery_support import DisposableDelivery
+        from cardine.lifecycle.engine import dispatch_run
+        with DisposableDelivery(review=True, setup=self.configure) as fixture:
+            hosts, built, factory = self.adapters(fixture)
+            with patch('cardine.lifecycle.engine.launched_reviewer_adapter', side_effect=factory):
+                fixture.run()
+                fixture.run()
+                fixture.implement()
+                result = dispatch_run(fixture.locations, reviewer='claude')
+                self.assertEqual(result['outcome'], 'waiting')
+                self.assertEqual(built, ['claude'])
+                self.assertEqual(len(list(hosts['claude'].directory.iterdir())), 1)
+                self.assertEqual(list(hosts['codex'].directory.iterdir()), [])
+                # A launch in progress keeps its host.
+                refused = dispatch_run(fixture.locations, reviewer='codex')
+                self.assertEqual(refused['stop']['code'], 'COMMAND_REFUSED')
+                self.assertIn('a reviewer launch on claude already exists for', str(refused['stop']))
+                self.assertIn('rerun without --reviewer or with --reviewer claude', str(refused['stop']))
+                self.assertEqual(list(hosts['codex'].directory.iterdir()), [])
+                self.assertEqual(dispatch_run(fixture.locations, reviewer='claude')['outcome'], 'waiting')
+
+    def test_default_run_launches_declared_host(self):
+        from run_delivery_support import DisposableDelivery
+        with DisposableDelivery(review=True, setup=self.configure) as fixture:
+            hosts, built, factory = self.adapters(fixture)
+            with patch('cardine.lifecycle.engine.launched_reviewer_adapter', side_effect=factory):
+                fixture.run()
+                fixture.run()
+                fixture.implement()
+                fixture.run()
+            self.assertEqual(built, ['codex'])
+            self.assertEqual(len(list(hosts['codex'].directory.iterdir())), 1)
+
+    def test_unready_chosen_host_names_that_host(self):
+        from run_delivery_support import DisposableDelivery
+        from cardine.lifecycle.engine import launched_reviewer_adapter
+        from cardine.hosts import setup
+        with DisposableDelivery(review=True, setup=self.configure) as fixture:
+            with patch.object(setup, 'role_launch_states', return_value={'role-launch-reviewer': 'unavailable'}) as states:
+                with self.assertRaisesRegex(CardineError, 'launched reviewer unavailable'):
+                    launched_reviewer_adapter(fixture.locations, 'claude')
+            self.assertEqual(states.call_args.args[0], 'claude')
+
+    def test_option_is_ignored_without_launched_source(self):
+        from run_delivery_support import DisposableDelivery
+        from cardine.lifecycle.engine import dispatch_run
+        with DisposableDelivery() as fixture:
+            fixture.run()
+            result = dispatch_run(fixture.locations, reviewer='claude')
+            codes = [item['code'] for item in result.get('diagnostics', [])]
+            self.assertIn('REVIEWER_OPTION_UNUSED', codes)

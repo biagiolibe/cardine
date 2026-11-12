@@ -215,7 +215,7 @@ def concrete_host_adapter(host: str, transport, credential: str):
     return host_adapter(host, transport, credential)
 
 
-def launched_reviewer_adapter(locations):
+def launched_reviewer_adapter(locations, host=None):
     """Build a reviewer channel only after the host's read-only proof succeeds."""
     import shutil
     from cardine.shared.git import git_output
@@ -225,7 +225,7 @@ def launched_reviewer_adapter(locations):
     from cardine.hosts.transports import ClaudeTransport, CodexTransport
     declaration = parse_project_declaration(json.loads(git_output(
         locations.primary, 'show', 'main:' + names().project_declaration_path.as_posix())))
-    host = declaration.get('review', {}).get('reviewer')
+    host = host or declaration.get('review', {}).get('reviewer')
     if host not in ('codex', 'claude'):
         raise CardineError('launched reviewer unavailable: review.reviewer is missing on main')
     executable = shutil.which(host)
@@ -316,6 +316,7 @@ def run_preview_cli(argv: list[str]) -> int:
     parser.add_argument("--project", type=Path)
     parser.add_argument("--ci-wait-seconds", type=int)
     parser.add_argument("--lease-wait-seconds", type=int)
+    parser.add_argument("--reviewer", choices=("codex", "claude"))
     from cardine.shared.errors import CardineStop
     from cardine.stops.render import emit_run
     locations = None
@@ -334,7 +335,7 @@ def run_preview_cli(argv: list[str]) -> int:
     lease_seconds = 180 if args.lease_wait_seconds is None else args.lease_wait_seconds
     deadline = time.monotonic() + lease_seconds
     while True:
-        result = dispatch_run(locations, ci_wait_seconds=ci_seconds, lease_seconds=0)
+        result = dispatch_run(locations, ci_wait_seconds=ci_seconds, lease_seconds=0, reviewer=args.reviewer)
         if result['outcome'] != 'waiting' or result['action'] != 'wait-for-lease':
             break
         from cardine.integration.candidate import wait_for_lease
@@ -354,7 +355,8 @@ def run_preview_cli(argv: list[str]) -> int:
     reference = result['next']
     if reference and reference['argv'][:2] == ['cardine', 'run']:
         argv = reference['argv']
-        for flag, value in (('--ci-wait-seconds', args.ci_wait_seconds), ('--lease-wait-seconds', args.lease_wait_seconds)):
+        for flag, value in (('--ci-wait-seconds', args.ci_wait_seconds), ('--lease-wait-seconds', args.lease_wait_seconds),
+                            ('--reviewer', args.reviewer)):
             if flag in argv:
                 index = argv.index(flag)
                 del argv[index:index + 2]
@@ -417,7 +419,7 @@ def registration_recovery(locations):
 
 
 @scoped_command
-def dispatch_run(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60) -> dict:
+def dispatch_run(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60, reviewer=None) -> dict:
     """Execute one Stable engine step; console actions share this entry point."""
     from cardine.tasks.state import read_task_state
     from cardine.stops.render import stop_error
@@ -461,7 +463,7 @@ def dispatch_run(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60
             result = _integration_wait(locations, seconds=lease_seconds) or run_worktree_step(locations, active)
         if result is None and active['status'] != 'cancelled':
             stage = "validation"
-            result = _integration_wait(locations, seconds=lease_seconds) or run_validation_step(locations, ci_wait_seconds=ci_wait_seconds, lease_seconds=lease_seconds)
+            result = _integration_wait(locations, seconds=lease_seconds) or run_validation_step(locations, ci_wait_seconds=ci_wait_seconds, lease_seconds=lease_seconds, reviewer=reviewer)
         stage = "contract"
         if result is None:
             result = resolve_run(RunFacts(locations.task_id, locations.primary, state["status"]))
@@ -471,6 +473,9 @@ def dispatch_run(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60
         # An unknown failure carries no ownership proof and must never suggest
         # successful progress or an automatic repair inferred from its prose.
         result = diagnostic_result(locations, stop_error("COMMAND_REFUSED", str(error)), step=stage)
+    if reviewer and 'launched' not in state.get('contract', {}).get('reviewSources', ['owner']):
+        result.setdefault('diagnostics', []).append(dict(code='REVIEWER_OPTION_UNUSED',
+            message="--reviewer has no effect: this task's reviewSources do not contain launched"))
     live.note(run_summary(result))
     return result
 
@@ -576,7 +581,7 @@ def run_worktree_step(locations: RunLocations, active: dict) -> dict | None:
 
 
 @scoped_command
-def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60) -> dict | None:
+def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_seconds=60, reviewer=None) -> dict | None:
     """Recover missing task evidence and return the review or C6 boundary."""
     from cardine.lifecycle.validation import byproducts_path, operation_path, run_task_validation
     from cardine.lifecycle.execution import _execution_state
@@ -678,8 +683,18 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
             from cardine.lifecycle.control import source_digest
             attempt = receipts.digest(receipts.encoded(dict(role='reviewer', contract=request.snapshot_digest,
                 source=git_output(root, 'rev-parse', 'HEAD'), source_digest=source_digest(root, task_id))))
+            head = git_output(root, 'rev-parse', 'HEAD')
+            if reviewer:
+                from cardine.stops.render import stop_error
+                for other in state.get('run', {}).get('hostLaunches', {}).values():
+                    request_host = other['request']
+                    if (request_host['role'] == 'reviewer' and request_host['source'] == head
+                            and request_host['host'] != reviewer):
+                        raise stop_error('COMMAND_REFUSED', (
+                            f"a reviewer launch on {request_host['host']} already exists for {head}; "
+                            f"rerun without --reviewer or with --reviewer {request_host['host']}"))
             record = launch_run_work(locations, facts.review_work, attempt=attempt,
-                                     adapter=launched_reviewer_adapter(locations))
+                                     adapter=launched_reviewer_adapter(locations, reviewer) if reviewer else launched_reviewer_adapter(locations))
             if record['response'] is None:
                 argv = ['cardine', 'run', task_id, '--project', str(locations.primary)]
                 return add_byproducts(envelope(task_id, str(locations.primary), step='review', outcome='waiting',
