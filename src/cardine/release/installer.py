@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 from cardine.shared.errors import CardineError
+from cardine.shared import terminal
 
 REPOSITORY_URL = "git+https://github.com/biagiolibe/cardine"
 
@@ -43,16 +44,17 @@ class ReleaseUnresolved(CardineError):
 
 
 def run_installer_update(kind: str, installed: str, *, apply: bool, target_tag: str | None = None,
-                         urlopen_fn=None, runner=None, out=print) -> str | None:
+                         urlopen_fn=None, runner=None, out=print, finish=None) -> str | None:
     """Plan or apply a pipx/uv reinstall; returns the target version after apply, else None.
 
     A preview resolves the target and prints the command without running anything. A failed
     resolution or reinstall raises before any plugin alignment, so a retry starts clean."""
-    from cardine.release.update import explain_unknown_release, fetch_latest_release
+    from cardine.release.update import explain_unknown_release, fetch_latest_release, finish_update
     if target_tag is not None and not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", target_tag):
         raise CardineError("--to requires a release tag v<version>")
     try:
-        version, _templates = fetch_latest_release(installed, urlopen_fn=urlopen_fn, target_tag=target_tag)
+        with terminal.spinner("Resolving release"):
+            version, templates = fetch_latest_release(installed, urlopen_fn=urlopen_fn, target_tag=target_tag)
     except (OSError, ValueError, CardineError) as error:
         tag_hint = target_tag or "v<version>"
         spec = f"{REPOSITORY_URL}@{tag_hint}"
@@ -64,16 +66,31 @@ def run_installer_update(kind: str, installed: str, *, apply: bool, target_tag: 
     if target_tag is not None and tag != target_tag:
         raise CardineError("release response does not identify the requested release tag")
     command = reinstall_command(kind, tag)
+    out(terminal.section("Plan"))
     out(f"Installer: {kind}")
     out(f"Current: {installed}")
     out(f"Target: {version}")
+    out(f"Release kind: {templates}")
+    out(f"Release notes: https://github.com/biagiolibe/cardine/releases/tag/{tag}")
     out(f"Reinstall: {shlex.join(command)}")
     if not apply:
+        out(terminal.note("Run cardine self-update --apply to update"))
         return None
-    code = (runner or (lambda argv: subprocess.run(argv, check=False).returncode))(command)
+    out(terminal.section("Apply"))
+    out(terminal.done(terminal.step(1, 4, "Resolve release")))
+    with terminal.spinner("Reinstalling"):
+        result = (runner or (lambda argv: subprocess.run(argv, check=False, capture_output=True, text=True)))(command)
+    code = result if isinstance(result, int) else result.returncode
     if code:
+        if not isinstance(result, int):
+            for output in (result.stdout, result.stderr):
+                if output:
+                    out(output.rstrip())
+        out(terminal.failed(terminal.step(2, 4, "Reinstall")))
         raise CardineError(f"{shlex.join(command)} failed with exit {code}; rerun cardine self-update --apply")
-    out(f"Updated to {tag}. Restart running Codex and Claude Code sessions.")
+    out(terminal.done(terminal.step(2, 4, "Reinstall")))
+    out(terminal.done(terminal.step(3, 4, "Verify installer result")))
+    (finish or finish_update)(version, templates, out=out)
     return version
 
 
