@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import argparse
 import curses
 import sys
 import time
 
-from cardine.console.launch import _set_terminal_title
+from cardine.console.launch import _offers_reviewer_choice, _set_terminal_title
 from cardine.console.models import Task
 from cardine.console.render import OutputView, _draw_output, _action_hit, _copy_to_clipboard, _detail_view, _draw_detail, _draw_header, _draw_launch_prompt, _draw_list, _palette, _put, _scroll_detail, _visible_tasks
 from cardine.console.state import ConsoleState, one_shot
@@ -42,6 +43,8 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
     launch_task: Task | None = None
     launch_confirmation = 0
     launch_action = 'run'
+    reviewer_choice = False
+    reviewer_other = False
     while True:
         now = time.monotonic()
         state.apply_pending()
@@ -111,7 +114,8 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                     action_bounds = (detail_x, width - 3, action_rows)
             _draw_launch_prompt(screen, width, height, launch_task, launch_confirmation,
                                 state.project,
-                                state.agent_defaults, palette, action=launch_action)
+                                state.agent_defaults, palette, action=launch_action,
+                                reviewer_choice=reviewer_choice, reviewer_other=reviewer_other)
             if notice and time.monotonic() < notice_until:
                 footer = notice
             elif state.launching:
@@ -142,9 +146,13 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
             elif launch_confirmation < launch_task.resume_confirmations:
                 if key in (ord("y"), ord("Y")):
                     launch_confirmation += 1
+            elif key == 9 and reviewer_choice and launch_action == 'run':
+                reviewer_other = not reviewer_other
             elif key in (ord("1"), ord("2")):
                 selected = "claude" if key == ord("1") else "codex"
                 task_to_launch = launch_task
+                if reviewer_choice and reviewer_other and launch_action == 'run':
+                    task_to_launch = replace(task_to_launch, reviewer_other=True)
                 launch_task = None
                 if state.start_launch(
                     task_to_launch, selected,
@@ -278,6 +286,8 @@ def run_terminal(screen, state: ConsoleState, interval: float) -> None:
                 launch_task = selected_task
                 launch_confirmation = 0
                 launch_action = 'run'
+                reviewer_other = False
+                reviewer_choice = _offers_reviewer_choice(state.project, selected_task.task_id)
             else:
                 notice, notice_until = "No eligible directive for this task", time.monotonic() + 2
         elif key == ord("?"):
