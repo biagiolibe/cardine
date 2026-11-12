@@ -30,7 +30,7 @@ def adapter(role='developer'):
     return ProfileAdapter('fixture', ControlHost(), role)
 
 
-def issue_fixture_review(root, task_id):
+def issue_fixture_review(root, task_id, verdict='APPROVE', body=''):
     """Issue fixture provenance explicitly, then exercise the real guarded writer.
 
     Run-engine tests use launch_work instead; legacy isolated verdict fixtures
@@ -51,29 +51,34 @@ def issue_fixture_review(root, task_id):
     session = dict(request_id=key, role='reviewer', host='fixture', profile='fixture-reviewer', session_id=key)
     updated = deepcopy(state)
     updated.setdefault('run', {}).setdefault('hostLaunches', {})[key] = dict(request=request,
-         session=session, response=dict(session=session, result='completed'))
+         session=session, response=dict(session=session, result='completed',
+                                      output=dict(verdict=verdict, findings=body)))
     with receipts.task_lock(root, task_id):
         receipts.write_operation(root, task_id, updated, previous=state, kind='fixture-issued-review')
     return key
 
 
 def issued_verdict(root, task_id, verdict, **kwargs):
-    from cardine.review.verdict import record_review_verdict
+    from cardine.review.verdict import record_review_verdict, record_launched_verdict, _clean_review_outputs
     from cardine.lifecycle.control import operation_state
     from cardine.tasks.identity import resolve_task_identity
     from cardine.shared.git import current_branch
+    from cardine.stops.render import stop_error
+    if kwargs.get('owner', False):
+        return record_review_verdict(root, task_id, verdict, adapter=adapter(), **kwargs)
     identity = resolve_task_identity(root, task_id, 'existing')
+    key = 'fixture-review-' + git_output(root, 'rev-parse', 'HEAD')
     if current_branch(root) != identity.branch_name:
-        return record_review_verdict(root, task_id, verdict, **kwargs)
+        return record_launched_verdict(root, task_id, key)
     state, pending = operation_state(root, task_id)
     if not state['contract']['options']['review'] == 'required':
-        return record_review_verdict(root, task_id, verdict, **kwargs)
-    owner = kwargs.get('owner', False)
-    key = 'fixture-review-' + git_output(root, 'rev-parse', 'HEAD')
-    if not owner and key not in state.get('run', {}).get('hostLaunches', {}) and state['status'] == 'in_review':
-        from cardine.stops.render import stop_error
-        if git_output(root, 'status', '--porcelain', '--untracked-files=all'):
-            raise stop_error('TASK_STATE_INVALID', 'worktree: unexpected uncommitted changes', task_id=task_id, project=root)
+        return record_review_verdict(root, task_id, verdict, owner=True, adapter=adapter())
+    saved = state.get('run', {}).get('reviewDecision')
+    if state['status'] != 'in_review' and (not saved or saved['binding']['source'] != git_output(root, 'rev-parse', 'HEAD')):
+        raise stop_error('TASK_STATE_INVALID', 'review status: allowed in_review', task_id=task_id, project=root)
+    if not pending and not saved:
+        _clean_review_outputs(root, task_id, identity, initial=True)
+    if key not in state.get('run', {}).get('hostLaunches', {}) and state['status'] == 'in_review':
         if verdict == 'APPROVE':
             submitted = state['transitions'][-1]['commit']
             allowed = {p.relative_to(root).as_posix() for p in
@@ -81,9 +86,16 @@ def issued_verdict(root, task_id, verdict, **kwargs):
             changed = set(git_output(root, 'log', '--format=', '--name-only', f'{submitted}..HEAD').splitlines()) - {''}
             if changed - allowed:
                 raise stop_error('REVIEW_NOT_APPROVED', 'cause: stale; implementation changed after submission', task_id=task_id, project=root)
-        key = issue_fixture_review(root, task_id)
-    return record_review_verdict(root, task_id, verdict, adapter=adapter('developer' if owner else 'reviewer'),
-                                 request_id=None if owner else key, **kwargs)
+        key = issue_fixture_review(root, task_id, verdict, kwargs.get('body', ''))
+        state, pending = operation_state(root, task_id)
+    output = dict(verdict=verdict, findings=kwargs.get('body', ''))
+    consumed = any(item['binding'].get('request_id') == key for item in state.get('run', {}).get('reviewDecisions', []))
+    if not pending and not consumed and state['run']['hostLaunches'][key]['response'].get('output') != output:
+        updated = deepcopy(state)
+        updated['run']['hostLaunches'][key]['response']['output'] = output
+        with receipts.task_lock(root, task_id):
+            receipts.write_operation(root, task_id, updated, previous=state, kind='fixture-issued-review')
+    return record_launched_verdict(root, task_id, key)
 
 
 def bind_fixture_approval(root, task_id):

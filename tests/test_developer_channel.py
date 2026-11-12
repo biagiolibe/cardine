@@ -39,7 +39,7 @@ try:
         record_review_verdict(project, '001', 'APPROVE', owner=True)
     else:
         from cardine.review.verdict import record_review_verdict
-        record_review_verdict(project, '001', 'APPROVE', request_id=sys.argv[4])
+        record_review_verdict(project, '001', 'APPROVE')
 except Exception as error:
     print(type(error).__name__ + ': ' + str(error), file=sys.stderr)
     sys.exit(3)
@@ -236,7 +236,7 @@ class DeveloperChannelTest(Terminal):
         key = self.fixture.key
         code, output, error = self.terminal(self.child('reviewer', project, '', key), project, answer=None)
         self.assertEqual(code, 3, output + error)
-        self.assertIn('host role boundary unavailable', error)
+        self.assertIn("a launched reviewer's verdict is recorded by cardine run; use --owner", error)
         self.assertNotIn('Developer confirmation', output)
         self.assertEqual(self.before(), before)
 

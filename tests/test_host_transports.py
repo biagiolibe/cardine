@@ -110,6 +110,44 @@ class HostTransportsTest(unittest.TestCase):
                 self.assertEqual(self.settle(host, 'reviewer', name), reviewer)
                 self.assertEqual(len(self.runs()), 2)
 
+    def test_wrapper_collects_only_json_objects_and_issues_no_verdict_action(self):
+        for index, content in enumerate((None, 'invalid', '[]', '{"verdict":"APPROVE","findings":"OK"}')):
+            with self.subTest(content=content):
+                host = self.transport('claude')
+                attempt = 'answer-' + str(index)
+                record = self.launch(host, attempt=attempt)
+                directory = host.directory / record['request']['request_id']
+                if content is not None:
+                    (directory / 'output.json').write_text(content)
+                record = self.settle(host, attempt=attempt)
+                expected = json.loads(content) if index == 3 else None
+                self.assertEqual(record['response']['output'], expected)
+                token = json.loads((directory / 'launch.json').read_text())['credential']
+                self.assertFalse(host.authorize(token, 'verdict'))
+                self.release.unlink()
+
+    def test_reviewer_launch_needs_only_its_own_enforced_profile(self):
+        from cardine.hosts.launch import RoleProfile
+        host = self.transport('claude')
+        reviewer = host.profile('reviewer')
+        for implementer in (None, RoleProfile('ordinary', 'implementer', False)):
+            with patch.object(host, 'profile', side_effect=lambda role: reviewer if role == 'reviewer' else implementer):
+                with self.assertRaises(CardineStop):
+                    self.launch(host, role='implementer')
+                self.assertEqual(self.settle(host)['response']['result'], 'completed')
+
+    def test_old_response_without_output_is_accepted(self):
+        host = self.transport('claude')
+        original = host.poll
+        def old_poll(session):
+            value = original(session)
+            if value:
+                value.pop('output', None)
+            return value
+        with patch.object(host, 'poll', side_effect=old_poll):
+            record = self.settle(host)
+        self.assertEqual(set(record['response']), {'session', 'result'})
+
     def test_credentials_bind_owner_and_action(self):
         for name in ('claude', 'codex'):
             with self.subTest(host=name):

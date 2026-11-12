@@ -43,16 +43,23 @@ try:
                               stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT).returncode
 except OSError:
     code = 127
+try:
+    with open(os.path.join(directory, "output.json"), "rb") as stream:
+        output = json.load(stream)
+    if not isinstance(output, dict):
+        output = None
+except (OSError, ValueError, UnicodeError):
+    output = None
 result = os.path.join(directory, "result.json")
 with open(result + ".tmp", "w") as stream:
-    json.dump({"session": session, "result": "completed" if code == 0 else "failed"}, stream)
+    json.dump({"session": session, "result": "completed" if code == 0 else "failed", "output": output}, stream)
     stream.flush()
     os.fsync(stream.fileno())
 os.replace(result + ".tmp", result)
 '''
 
 _SESSION_KEYS = ('request_id', 'role', 'profile', 'host')
-_ROLE_ACTIONS = {'implementer': ('implementation',), 'reviewer': ('verdict',)}
+_ROLE_ACTIONS = {'implementer': ('implementation',), 'reviewer': ()}
 
 
 def _digest(value: str) -> str:

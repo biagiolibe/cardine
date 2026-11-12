@@ -224,7 +224,7 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
             host.enforced = True
             with patch.object(host, 'profile', side_effect=lambda role: RoleProfile('shared', role, True)):
                 with self.assertRaises(CardineStop):
-                    self.launch(host=host)
+                    self.launch(role='implementer', host=host)
         self.assertEqual(list(self.host_root.iterdir()), [])
 
     def claude_host(self):

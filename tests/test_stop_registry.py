@@ -31,7 +31,7 @@ class StopRegistryTest(unittest.TestCase):
             ("src/cardine/tasks/contract.py", "UNDECLARED_VALIDATION_COMMANDS"): 1,  # execution-profile
             ("src/cardine/integration/evidence.py", "UNDECLARED_VALIDATION_COMMANDS"): 1,  # candidate policy
             ("src/cardine/integration/merge.py", "REVIEW_NOT_APPROVED"): 4,  # missing verdict/issued decision, stale ancestor/tree
-            ("src/cardine/review/verdict.py", "REVIEW_NOT_APPROVED"): 4,  # missing issued session, stale issued inputs/submission, excluded source
+            ("src/cardine/review/verdict.py", "REVIEW_NOT_APPROVED"): 7,  # owner-only command, missing/invalid answer, stale issued inputs/submission, excluded source
         }
         found = {}
         for path in (ROOT / "src/cardine").rglob("*.py"):

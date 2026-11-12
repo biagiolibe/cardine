@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
+import json
 
 from cardine.lifecycle import receipts
 from cardine.lifecycle.control import (authorize, operation_state, source_digest,
@@ -16,17 +17,59 @@ from cardine.templates.mode import detect_mode
 
 @scoped_command
 def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, owner: bool = False,
-                          body: str = '', adapter=None, request_id=None) -> dict:
-    """Authorize before replay, preserving the first verdict/time across interruption."""
+                          body: str = '', adapter=None) -> dict:
+    """Record only the developer's own verdict through the owner channel."""
+    if not owner:
+        raise stop_error('REVIEW_NOT_APPROVED',
+                         "a launched reviewer's verdict is recorded by cardine run; use --owner to record your own",
+                         task_id=task_id, project=project_root)
+    return _record_verdict(project_root, task_id, verdict, body=body, adapter=adapter)
+
+
+@scoped_command
+def record_launched_verdict(root: Path, task_id: str, request_id: str) -> dict:
+    """Collect an issued reviewer's structured answer without a child credential."""
+    if not isinstance(request_id, str) or not request_id:
+        raise stop_error('REVIEW_NOT_APPROVED',
+                         'cause: missing; the launched reviewer returned no valid answer',
+                         task_id=task_id, project=root)
+    return _record_verdict(root, task_id, request_id=request_id)
+
+
+def _launched_answer(root, task_id, state, request_id):
+    from cardine.shared.paths import framework_root
+    from cardine.tasks.state_core import TaskStateInvalid, _validate_schema
+    record = state.get('run', {}).get('hostLaunches', {}).get(request_id)
+    response = record.get('response') if record else None
+    output = response.get('output') if response else None
+    try:
+        schema = json.loads((framework_root() / 'schemas/review-answer-v1.schema.json').read_text())
+        _validate_schema(output, schema, 'review answer')
+    except TaskStateInvalid:
+        output = None
+    if not response or response.get('result') != 'completed' or output is None:
+        raise stop_error('REVIEW_NOT_APPROVED',
+                         'cause: missing; the launched reviewer returned no valid answer',
+                         task_id=task_id, project=root)
+    return record, output
+
+
+def _record_verdict(project_root, task_id, verdict=None, *, body='', adapter=None, request_id=None):
+    """Share the receipt, budget, history and replay path for both verdict sources."""
+    owner = request_id is None
     root = Path(project_root).resolve()
     identity = resolve_task_identity(root, task_id, 'existing')
     task_id = identity.canonical_id
     if current_branch(root) != identity.branch_name:
         raise stop_error('TASK_STATE_INVALID', 'review requires the task branch', task_id=task_id, project=root)
-    if verdict not in ('APPROVE', 'CHANGES_REQUESTED', 'BLOCKED'):
+    if owner and verdict not in ('APPROVE', 'CHANGES_REQUESTED', 'BLOCKED'):
         raise CardineError('invalid verdict')
     with receipts.task_lock(root, task_id):
         state, pending = operation_state(root, task_id)
+        record = None
+        if not owner:
+            record, output = _launched_answer(root, task_id, state, request_id)
+            verdict, body = output['verdict'], output['findings']
         if not review_is_required(state):
             raise stop_error('TASK_STATE_INVALID', 'review requires a required-review task', task_id=task_id, project=root)
         if not pending and (not state.get('run', {}).get('reviewDecision')
@@ -61,7 +104,6 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
             raise stop_error('REVIEW_NOT_APPROVED',
                              f"cause: source; the task contract's reviewSources ({', '.join(sources)}) exclude owner; project key review.sources",
                              task_id=task_id, project=root)
-        record = state.get('run', {}).get('hostLaunches', {}).get(request_id) if not owner else None
         if missing_ci or not owner and (not record or not record['session'] or not record['response']):
             raise stop_error('REVIEW_NOT_APPROVED', missing_ci or 'cause: missing; no completed issued independent review',
                              task_id=task_id, project=root)
@@ -79,7 +121,8 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
                         other['response'] is None or other['request']['profile'] == session['profile']
                         or other['session'] and other['session']['session_id'] == session['session_id']):
                     raise CardineError('review is not independent of the implementer')
-        principal = authorize(adapter, 'owner-verdict' if owner else 'verdict', binding, session=session)
+        principal = (authorize(adapter, 'owner-verdict', binding) if owner else
+                     {key: session[key] for key in ('host', 'profile', 'session_id', 'role')})
         verify_control_inputs(root, task_id, state, pending, binding)
         command = dict(binding=binding, principal=principal)
         kind = 'review_verdict:' + receipts.digest(receipts.encoded(command))
@@ -118,7 +161,8 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         from cardine.tasks.preflight import check_dependencies
         check_dependencies(root, task_id, '')
         at = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
-        updated = _review_verdict_projection(state, verdict, head, 'owner' if owner else 'reviewer', at)
+        updated = _review_verdict_projection(state, verdict, head, 'owner' if owner else 'reviewer', at,
+                                             source='local' if owner else 'launched')
         updated.setdefault('run', {})['reviewDecision'] = command
         updated['run'].setdefault('reviewDecisions', []).append(command)
         updated['run']['reviewRecordedAt'] = at
@@ -154,11 +198,11 @@ def _clean_review_outputs(root, task_id, identity, initial=False):
             raise stop_error('TASK_STATE_INVALID', 'worktree: unexpected uncommitted changes', task_id=task_id, project=root)
 
 
-def _review_verdict_projection(state, verdict, head, approved_by, at):
+def _review_verdict_projection(state, verdict, head, approved_by, at, source="local"):
     state = deepcopy(state)
     attempt = state.get('review', {}).get('attempt', 0) + 1
     state['review'] = dict(required=True, verdict=verdict, attempt=attempt,
-                           reviewed_commit=head, approved_by=approved_by, source='local')
+                           reviewed_commit=head, approved_by=approved_by, source=source)
     state.setdefault('review_history', []).append(dict(state['review']))
     if verdict != 'BLOCKED':
         state['transitions'].append({'from': state['status'], 'to': 'in_progress', 'commit': head, 'at': at})
