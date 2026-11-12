@@ -121,6 +121,8 @@ def main_ahead_of_origin(project_root: Path) -> bool:
 # real authority negative, `passthrough` forwards a code chosen elsewhere, and
 # `deferred` names the later row that owns the audit.
 EMITTER_CAUSES: dict[tuple[str, str, str], tuple[str, str]] = {
+    ("src/cardine/lifecycle/engine.py", "run_validation_step", "SPIKE_OUTCOME_REQUIRED"): ("split", "the developer must judge the spike outcome"),
+    ("src/cardine/integration/merge.py", "_integration_task_state", "SPIKE_OUTCOME_REQUIRED"): ("split", "the developer must judge the spike outcome"),
     ("src/cardine/integration/ci.py", "ci_gate", "<dynamic>"): ("guardrail", "no required check run exists after a wait of at least 300 seconds; the developer must trigger CI for the delivered SHA"),
     ("src/cardine/lifecycle/engine.py", "run_integration_step", "LEASE_HELD"): ("split", "a lease lost to the coherent integration of another task waits for its release; an unverified or own lease stays a stop"),
     ("src/cardine/lifecycle/engine.py", "_cleanup_wait", "CLEANUP_BLOCKED"): ("split", "a cleanup stop raised during the coherent integration of another task waits for its lease; the same checks run again after release"),

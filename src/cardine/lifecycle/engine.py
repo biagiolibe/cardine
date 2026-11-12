@@ -716,6 +716,11 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
             facts = replace(facts, review_approved=True)
     result = resolve_run(facts)
     if result['step'] == 'candidate':
+        if state['contract']['class'] == 'spike' and not state.get('outcome'):
+            from cardine.stops.render import stop_error
+            from cardine.integration.merge import spike_outcome_detail
+            raise stop_error('SPIKE_OUTCOME_REQUIRED', spike_outcome_detail(task_id, root),
+                             task_id=task_id, project=locations.primary)
         if before_validation != progress:
             result['action'] = 'C6'
             result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]

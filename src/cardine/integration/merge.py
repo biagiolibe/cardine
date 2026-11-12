@@ -91,6 +91,11 @@ def changes_after_review(root, identity, reviewed, head):
     return changed, refreshed
 
 
+def spike_outcome_detail(task_id: str, worktree: Path) -> str:
+    return (f"spike {task_id} needs your judgment: does the committed deliverable answer its Question within its Timebox? "
+            f"Record it with cardine task outcome {task_id} ANSWERED --project {worktree}, or INCONCLUSIVE")
+
+
 def _integration_task_state(
     project_root: Path, identity: ResolvedTaskIdentity, task_commit: str, worktree: Path,
     *, require_tracked: bool = False,
@@ -126,7 +131,9 @@ def _integration_task_state(
             task_id=identity.canonical_id, project=project_root,
         )
     if spike and state.get("outcome") not in ("ANSWERED", "INCONCLUSIVE"):
-        raise stop_error("TASK_STATE_INVALID", "spike landing requires an outcome", task_id=identity.canonical_id, project=project_root)
+        from cardine.lifecycle.context import resolve_run_locations
+        worktree = resolve_run_locations(identity.canonical_id, project_root).worktree
+        raise stop_error("SPIKE_OUTCOME_REQUIRED", spike_outcome_detail(identity.canonical_id, worktree), task_id=identity.canonical_id, project=project_root)
     if required:
         if review.get("verdict") != "APPROVE":
             raise stop_error(

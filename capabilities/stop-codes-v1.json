@@ -822,6 +822,22 @@
       "summary": "the provider has not started required CI for the delivered commit",
       "test": "tests.test_run_ci.CiTest.test_missing_ci_stops_after_300_seconds",
       "resolution": "recoverable"
+    },
+    {
+      "code": "SPIKE_OUTCOME_REQUIRED",
+      "class": "tool",
+      "workflows": [
+        "lean-delivery",
+        "governed-sdd"
+      ],
+      "step": "C6",
+      "emitter": "cardine.lifecycle.engine.run_validation_step; cardine.integration.merge._integration_task_state",
+      "human_decision": true,
+      "resume": "cardine run {task_id} --project {project}",
+      "kind": "stop",
+      "summary": "a validated spike needs the developer outcome before integration",
+      "test": "tests.test_run_end_to_end.SpikeOutcomeTest.test_outcome_stop_and_resume",
+      "resolution": "recoverable"
     }
   ]
 }

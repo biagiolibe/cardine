@@ -57,7 +57,7 @@ class RegistryAuditTest(unittest.TestCase):
         for code, entry in load_stop_registry().items():
             with self.subTest(code=code):
                 blocked = outcome_for_code(code) == "blocked"
-                self.assertEqual(blocked, entry["resolution"] == "guardrail" or code == "CI_NOT_STARTED")
+                self.assertEqual(blocked, entry["resolution"] == "guardrail" or code in ("CI_NOT_STARTED", "SPIKE_OUTCOME_REQUIRED"))
                 self.assertEqual(blocked, entry["human_decision"])
 
     def test_every_recoverable_entry_has_an_executable_progress_proof(self) -> None:
@@ -431,3 +431,26 @@ class RunCommandsDocumentTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpikeOutcomeTest(unittest.TestCase):
+    def test_outcome_stop_and_resume(self):
+        from run_delivery_support import DisposableDelivery, TASK
+        from cardine.tasks.transitions import record_spike_outcome
+        from cardine.shared.errors import CardineError
+        from cardine.integration.candidate import operation_path
+        with DisposableDelivery(spike=True, surface='- `docs/**`', files={'docs/result.md': 'Answer\n'}) as project:
+            project.run()
+            project.run()
+            with self.assertRaises(CardineError):
+                record_spike_outcome(project.locations.worktree, TASK, 'ANSWERED')
+            project.implement()
+            stopped = project.run()
+            self.assertEqual((stopped['outcome'], stopped['stop']['code']), ('blocked', 'SPIKE_OUTCOME_REQUIRED'))
+            self.assertIn(f'cardine task outcome {TASK} ANSWERED --project {project.locations.worktree}', stopped['stop']['detail'])
+            self.assertFalse(operation_path(project.locations, 'candidate').exists())
+            record_spike_outcome(project.locations.worktree, TASK, 'ANSWERED')
+            self.assertEqual(project.git('log', '-1', '--format=%s', cwd=project.locations.worktree), f'Record spike {TASK} outcome')
+            result = project.run()
+            self.assertNotEqual(result['outcome'], 'blocked', result)
+            self.assertEqual(project.drive()[-1], ('landing', 'cleanup', 'done'))

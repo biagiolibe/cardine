@@ -66,6 +66,18 @@ Replace `<TASK-ID>`, `<primary-checkout>`, and other placeholders with the value
 
 ## Integration
 
+### Spike outcome required
+
+`SPIKE_OUTCOME_REQUIRED` asks the developer to judge the committed deliverable. Run:
+
+```sh
+cardine task outcome <ID> ANSWERED --project <worktree>
+cardine run <ID> --project <primary>
+```
+
+Use `INCONCLUSIVE` instead of `ANSWERED` when appropriate.
+
+
 ### Refresh from main conflicts
 
 **What you see:** `INTEGRATION_CONFLICT` during refresh from main.

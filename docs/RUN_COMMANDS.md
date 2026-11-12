@@ -22,6 +22,8 @@ Pass `--project` as either checkout of the repository. The command resolves the
 primary checkout and the canonical task worktree itself, so every emitted
 command works from any directory, including after the worktree is removed.
 
+For a validated spike, record the developer judgment with `cardine task outcome <ID> ANSWERED --project <worktree>` (or `INCONCLUSIVE`), then resume `cardine run`.
+
 ## The seven steps
 
 `run` chooses the earliest unsatisfied step; a caller never names the phase.
