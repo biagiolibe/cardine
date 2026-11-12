@@ -40,6 +40,20 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         saved = state.get('run', {}).get('reviewDecision')
         if state['status'] != 'in_review' and (not saved or saved['binding']['source'] != head):
             raise stop_error('TASK_STATE_INVALID', 'review status: allowed in_review', task_id=task_id, project=root)
+        if verdict == 'APPROVE':
+            from cardine.integration.ci import ci_policy, require_ci_pass
+            from cardine.shared.errors import CardineStop
+            policy = ci_policy(state['contract'])
+            if policy is not None:
+                try:
+                    require_ci_pass(root, root, task_id, state)
+                except CardineStop as error:
+                    if error.code != 'EVIDENCE_INCOMPLETE':
+                        raise
+                    raise stop_error('REVIEW_NOT_APPROVED',
+                        f'cause: missing; required checks have not passed for {head}; run cardine run '
+                        f'{task_id} first; required checks: {", ".join(policy["checks"])}',
+                        task_id=task_id, project=root) from error
         session = None
         sources = state['contract'].get('reviewSources', ['owner'])
         if owner and 'owner' not in sources:

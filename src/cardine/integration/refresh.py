@@ -160,3 +160,24 @@ def policy_refresh_blocked(locations) -> bool:
     return (lease.exists() or staged.exists() or operation_path(locations, 'cleanup').exists()
             or operation_path(locations, 'finalize').exists()
             or bool(receipts.pending_operation(locations.worktree, locations.task_id)))
+
+
+def changes_after_review(root, identity, reviewed, head):
+    """Paths changed since review, excluding commits from the recorded merged main.
+
+    The recorded base must be reachable from the task head. A base already
+    reachable from the reviewed commit grants no exception to the source digest.
+    Remerge diffs retain paths changed by conflict resolution or manual edits
+    to a merge. Callers also check for uncommitted implementation changes.
+    """
+    path = _lifecycle_paths(root, identity)[0]
+    revisions = [f'{reviewed}..{head}']
+    refreshed = False
+    if path.exists():
+        from cardine.shared.jsonio import _read_json_object
+        base = _read_json_object(path, 'worktree lifecycle state')['base_commit']
+        if _run_git(root, 'merge-base', '--is-ancestor', base, head).returncode == 0:
+            revisions.append('^' + base)
+            refreshed = _run_git(root, 'merge-base', '--is-ancestor', base, reviewed).returncode != 0
+    changed = set(git_output(root, 'log', '--remerge-diff', '--format=', '--name-only', *revisions).splitlines()) - {''}
+    return changed, refreshed

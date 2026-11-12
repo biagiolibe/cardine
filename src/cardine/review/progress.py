@@ -20,8 +20,12 @@ def review_progress(root, task_id, state):
         from cardine.shared.layout import names
         allowed.add(names().execution_evidence_path(task_id).as_posix())
         reviewed = state['review']['reviewed_commit']
-        changed = set(git_output(root, 'log', '--format=', '--name-only', f'{reviewed}..{head}').splitlines()) - {''}
-        approved = (bound.get('contract') == contract and bound.get('source_digest') == source
+        from cardine.integration.refresh import changes_after_review
+        changed, refreshed = changes_after_review(root, identity, reviewed, head)
+        dirty = set(git_output(root, 'diff', 'HEAD', '--name-only').splitlines())
+        dirty.update(git_output(root, 'ls-files', '--others', '--exclude-standard').splitlines())
+        approved = (bound.get('contract') == contract
+                    and (bound.get('source_digest') == source or refreshed and not dirty - allowed)
                     and bound.get('source') == reviewed and bound.get('verdict') == 'APPROVE'
                     and not _run_git(root, 'merge-base', '--is-ancestor', reviewed, head).returncode
                     and not changed - allowed)

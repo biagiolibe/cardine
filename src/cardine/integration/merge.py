@@ -133,7 +133,8 @@ def _integration_task_state(
             identity.review_path.relative_to(project_root).as_posix(),
             relative.as_posix(), names().execution_evidence_path(identity.canonical_id).as_posix(),
         }
-        changed = git_output(project_root, "log", "--format=", "--name-only", f"{reviewed}..{task_commit}").splitlines()
+        from cardine.integration.refresh import changes_after_review
+        changed, _ = changes_after_review(project_root, identity, reviewed, task_commit)
         offending = sorted(set(filter(None, changed)) - allowed)
         if offending:
             raise stop_error(
