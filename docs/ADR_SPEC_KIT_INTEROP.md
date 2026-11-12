@@ -1,6 +1,6 @@
 # ADR: Spec Kit interoperability
 
-Status: Proposed
+Status: Accepted
 
 *Spike 295. Researched on 2026-11-12 against Spec Kit `v1.4.0` (published 2026-11-10).*
 
@@ -182,6 +182,23 @@ the checkbox of lines in landed groups, because `converge` leaves a converged
   failed on, never a partial import.
 - Because `tasks.md` is agent-written prose (fact 7), dependencies other than the phase
   order are best effort and always shown in the preview for confirmation.
+
+## Amendment (2026-11-12)
+
+The developer accepted this ADR with two changes.
+
+1. **Validation.** The import never proposes the project's baseline commands as a
+   record's Validation: the baseline already runs on every task, so repeating it adds
+   time and no evidence. The import asks for a targeted command with
+   `--validation ID=COMMAND`. Without one, it uses a default command that the project
+   declares for imported tasks, if it declares one. Otherwise it refuses with the flag
+   to add. The declaration key is decided by work item 2.
+2. **Order.** Work items 1 to 3 (parser, mapping and preview, command) come first and
+   are useful alone. Work items 4 to 6 (the extension package, the `converge` spike, and
+   `cardine-state.md` with checkbox write-back) wait until the import has been used on
+   a real project.
+
+None of the work items is scheduled yet. They are planned when the developer decides.
 
 ## Consequences
 
