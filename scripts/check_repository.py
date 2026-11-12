@@ -820,6 +820,23 @@ def check_local_markdown_links() -> None:
                 )
 
 
+def check_docs_index() -> None:
+    listed = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z", "--cached"],
+        capture_output=True, check=False,
+    )
+    if listed.returncode:
+        fail("cannot list repository files: git ls-files failed")
+    index = (ROOT / "docs/README.md").read_text(encoding="utf-8")
+    targets = {target.split("#", 1)[0] for target in MARKDOWN_LINK.findall(index)}
+    for name in sorted(os.fsdecode(item) for item in listed.stdout.split(b"\0") if item):
+        path = Path(name)
+        if (path.parent in (Path("docs"), Path("docs/workflows"))
+                and path.suffix == ".md" and path != Path("docs/README.md")
+                and path.relative_to("docs").as_posix() not in targets):
+            fail(f"{name} is not listed in docs/README.md")
+
+
 def current_marker_baselines(root: Path = ROOT) -> dict[str, dict[str, dict[str, object]]]:
     """capability marker content, by managed template file, for every preset.
 
@@ -1068,6 +1085,7 @@ def main() -> None:
     check_releases()
     check_bash()
     check_local_markdown_links()
+    check_docs_index()
     check_capability_marker_baselines()
     check_capability_required_versions()
     check_managed_digests()

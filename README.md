@@ -211,8 +211,9 @@ Not yet proven or measured:
   [agent operations](docs/AGENT_OPERATIONS.md),
   [upgrade guide](docs/HOW_TO_UPGRADE.md),
   [platform support](docs/PLATFORM_SUPPORT.md).
-- **Design:** [design decisions](docs/ADR_CARDINE_1_0.md),
-  [public surface](docs/PUBLIC_SURFACE.md).
+- **Design:** [design records](docs/README.md#design-records),
+  [Cardine 1.0 decisions](docs/ADR_CARDINE_1_0.md).
+- **All documentation:** [documentation index](docs/README.md).
 - **Contributing:** [contributing](CONTRIBUTING.md).
 
 Tooling must read `--format json` output; human-readable output is never
