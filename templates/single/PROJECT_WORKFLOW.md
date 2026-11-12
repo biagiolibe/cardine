@@ -29,10 +29,10 @@ any open state:       queued | in_progress | in_review -> cancelled
 `.cardine/tasks/<TASK-ID>.json` is the only status and verdict authority: never edit it, or a verdict, by hand. Read status with `cardine status`; the queue and the plan are generated views.
 <!-- CARDINE:END -->
 
-<!-- CARDINE:BEGIN capability=review-policy v3 -->
+<!-- CARDINE:BEGIN capability=review-policy v4 -->
 ## Review policy
 
-A session other than the implementer's reviews; the developer records the verdict with `cardine review verdict --owner`; nobody approves their own work. A spike without review is `ANSWERED` only when its committed deliverable answers its `Question` within its `Timebox`, otherwise `INCONCLUSIVE`.
+A session other than the implementer's reviews; `cardine run` records a launched verdict, else the developer's `--owner`; nobody approves their own work. A spike without review is `ANSWERED` only when its committed deliverable answers its `Question` within its `Timebox`, otherwise `INCONCLUSIVE`.
 <!-- CARDINE:END -->
 
 <!-- CARDINE:BEGIN capability=git-workflow v4 -->

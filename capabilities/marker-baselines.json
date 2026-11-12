@@ -23,8 +23,8 @@
       "version": 4
     },
     "review-policy": {
-      "sha256": "df54031753969c2f00e3fcc4ed8ad17214faa7fd352f44bc55ce7d436ff74539",
-      "version": 3
+      "sha256": "a61dfedd3dc2cd6b9944654b25a4de14a8b3b68377b69ce3d6c10ddcdd6582f7",
+      "version": 4
     },
     "task-lifecycle": {
       "sha256": "6a488685dfd000a06555547384b7d570ecd1abb193b9d3d908f7c9bf688be514",
@@ -85,8 +85,8 @@
       "version": 2
     },
     "review-remediation-record": {
-      "sha256": "d2d1410dcda131beac125c4e9ac8ba6a94a45e6078f1c65181082ad214aeec7e",
-      "version": 3
+      "sha256": "48b6650b3e7dc0ac571e468ec579098edd59d83e043e2863eb5b1f11869155be",
+      "version": 4
     }
   },
   "templates/single/docs/WORKTREE_LIFECYCLE.md": {
@@ -121,8 +121,8 @@
   },
   "templates/single/docs/workflows/REVIEW.md": {
     "task-worktree-review-procedure": {
-      "sha256": "bc723bffbb347de79bf0adef739b3cdaa1ec9aa6943dabab49ba9a24d7718a52",
-      "version": 5
+      "sha256": "7ae6267bfa1214d670e22efbcd060bbd542002f3562b0390a12c25034587225c",
+      "version": 6
     }
   },
   "templates/single/tasks/TASK_BLUEPRINT.md": {
