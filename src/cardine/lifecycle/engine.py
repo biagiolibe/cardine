@@ -232,13 +232,13 @@ def launched_reviewer_adapter(locations, host=None):
     status = setup.role_launch_states(host, locations.primary, locations.worktree, Path.home(),
                                       executable=executable)['role-launch-reviewer']
     if status != 'ready':
-        raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner')
+        raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor --host {host}, or record the verdict with --owner when reviewSources allow owner')
     common = locations.common_dir
     if host == 'codex':
         policy = setup.codex_role_policy('reviewer', locations.primary, locations.worktree, locations.primary, common)
         proof_result = setup.prove_role_policy(policy, setup.codex_sandbox_evaluator(executable))
         if proof_result.state != 'ready':
-            raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {proof_result.state}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner')
+            raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {proof_result.state}; run cardine doctor --host {host}, or record the verdict with --owner when reviewSources allow owner')
         proof = proof_result.proof
         transport = CodexTransport(common / 'cardine-hosts' / host, executable,
                                    policies={'reviewer': policy}, proofs={'reviewer': proof}, plan=None)
@@ -246,7 +246,7 @@ def launched_reviewer_adapter(locations, host=None):
         policy = setup.claude_role_policy('reviewer', locations.primary, locations.worktree, common)
         status = setup.claude_reviewer_launch_state(policy, executable)
         if status != 'ready':
-            raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner')
+            raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor --host {host}, or record the verdict with --owner when reviewSources allow owner')
         # Claude exposes only read tools; the read probe maps to its Read tool.
         def structural_probe(tool, tool_input):
             if tool == 'Bash' and tool_input.get('command') == 'cat tracked.txt':

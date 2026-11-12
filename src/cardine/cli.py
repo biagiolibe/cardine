@@ -311,8 +311,8 @@ def build_parser() -> CardineArgumentParser:
     codex_path.add_argument("task_id")
     codex_path.add_argument("--project", type=Path, default=Path.cwd())
     codex_path.add_argument("--worktree-root", type=Path)
-    doctor = subparsers.add_parser("doctor", help="report host capabilities separately for one host")
-    doctor.add_argument("--host", choices=("claude", "codex"), required=True)
+    doctor = subparsers.add_parser("doctor", help="report host capabilities")
+    doctor.add_argument("--host", choices=("claude", "codex"))
     doctor.add_argument("--project", type=Path, default=Path.cwd())
     doctor.add_argument("--worktree-root", type=Path)
     doctor.add_argument("--config", type=Path, default=Path.home() / ".codex/config.toml", help=argparse.SUPPRESS)
@@ -750,16 +750,19 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                       if changed or plugin_result == "aligned" else "result: no-op")
                 print("Restart the agent to load the changes.")
         elif arguments.command == "doctor":
-            report = host_doctor(
-                arguments.host,
-                project_root,
-                arguments.config.expanduser().resolve(),
-                resolve_worktree_root(arguments.worktree_root).path,
-                framework_root=framework_root,
-                home=arguments.home,
-            )
-            for capability, status in report.items():
-                print(f"{capability}: {status}")
+            for host in (arguments.host,) if arguments.host else ("claude", "codex"):
+                if arguments.host is None:
+                    print(f"host: {host}")
+                report = host_doctor(
+                    host,
+                    project_root,
+                    arguments.config.expanduser().resolve(),
+                    resolve_worktree_root(arguments.worktree_root).path,
+                    framework_root=framework_root,
+                    home=arguments.home,
+                )
+                for capability, status in report.items():
+                    print(f"{capability}: {status}")
         elif arguments.command == "codex":
             resolved_root = resolve_worktree_root(arguments.worktree_root)
             path = task_worktree_path(project_root, resolved_root.path, arguments.task_id)

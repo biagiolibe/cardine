@@ -206,6 +206,22 @@ class HostDoctorTest(unittest.TestCase):
         self.assertIn("hook-invocation: ready", done.stdout)
         self.assertEqual(snapshot(self.root), before)
 
+    def test_doctor_without_host_combines_the_individual_reports(self) -> None:
+        self.register("claude")
+        self.register("codex")
+        command = [sys.executable, str(CLI), "doctor", "--project", str(self.project),
+                   "--home", str(self.home), "--config", str(self.config),
+                   "--worktree-root", str(self.worktrees)]
+        reports = {}
+        for host in ("claude", "codex"):
+            result = subprocess.run(command + ["--host", host], text=True, capture_output=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("host: ", result.stdout)
+            reports[host] = result.stdout
+        combined = subprocess.run(command, text=True, capture_output=True, check=False)
+        self.assertEqual(combined.returncode, 0, combined.stderr)
+        self.assertEqual(combined.stdout, f"host: claude\n{reports['claude']}host: codex\n{reports['codex']}")
+
     # -- runtime role proofs (D3) -------------------------------------------------
 
     def policy(self, host: str, role: str) -> permissions.RolePolicy:

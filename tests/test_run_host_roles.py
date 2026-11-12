@@ -527,9 +527,11 @@ class ZReviewerOptionTest(unittest.TestCase):
         from cardine.hosts import setup
         with DisposableDelivery(review=True, setup=self.configure) as fixture:
             with patch.object(setup, 'role_launch_states', return_value={'role-launch-reviewer': 'unavailable'}) as states:
-                with self.assertRaisesRegex(CardineError, 'launched reviewer unavailable'):
-                    launched_reviewer_adapter(fixture.locations, 'claude')
-            self.assertEqual(states.call_args.args[0], 'claude')
+                for host in ('claude', 'codex'):
+                    with self.subTest(host=host):
+                        with self.assertRaisesRegex(CardineError, f'run cardine doctor --host {host}'):
+                            launched_reviewer_adapter(fixture.locations, host)
+                        self.assertEqual(states.call_args.args[0], host)
 
     def test_option_is_ignored_without_launched_source(self):
         from run_delivery_support import DisposableDelivery
