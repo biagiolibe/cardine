@@ -11,7 +11,7 @@ from unittest.mock import patch
 from cardine.hosts.launch import CodexProfileAdapter, launch_work
 from cardine.lifecycle import receipts
 from cardine.lifecycle.control import require_review_budget
-from cardine.review.verdict import record_review_verdict
+from cardine.review.verdict import record_launched_verdict, record_review_verdict
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.tasks.transitions import transition_task_state
 import test_run_delivery
@@ -24,10 +24,9 @@ POINTS = ('after_intent',) + tuple(prefix + name for name in
 
 
 class BoundHost(FakeHost):
-    def authorize(self, credential, action):
-        if action == 'verdict':
-            return credential.startswith('codex:')
-        return super().authorize(credential, action)
+    def poll(self, session):
+        response = super().poll(session)
+        return dict(response, output=dict(verdict='APPROVE', findings='')) if response else None
 
     def authorize_operation(self, credential, action, binding, session):
         if session:
@@ -64,29 +63,38 @@ class RunReviewTest(unittest.TestCase):
                           adapter=CodexProfileAdapter(self.host, 'coordinator-channel'))
         self.key = self.record['request']['request_id']
 
-    def verdict(self, verdict='APPROVE', credential=None, **kwargs):
-        return record_review_verdict(self.root, '001', verdict,
-            adapter=CodexProfileAdapter(self.host, credential or self.record['session']['session_id']),
-            request_id=self.key, **kwargs)
+    def answer(self, verdict='APPROVE'):
+        if receipts.pending_operation(self.root, '001'):
+            return
+        state = self.state()
+        if any(
+                item['binding']['request_id'] == self.key for item in state.get('run', {}).get('reviewDecisions', [])):
+            return
+        updated = deepcopy(state)
+        updated['run']['hostLaunches'][self.key]['response']['output'] = dict(verdict=verdict, findings='')
+        if updated != state:
+            with receipts.task_lock(self.root, '001'):
+                receipts.write_operation(self.root, '001', updated, previous=state, kind='fixture-issued-review')
+
+    def verdict(self, verdict='APPROVE'):
+        self.answer(verdict)
+        return record_launched_verdict(self.root, '001', self.key)
 
     def kill(self, point, verdict='APPROVE'):
+        self.answer(verdict)
         script = '''
-import os,sys,json
+import os,sys
 from pathlib import Path
 from cardine.lifecycle import receipts
-from cardine.review.verdict import record_review_verdict
-from cardine.hosts.launch import CodexProfileAdapter
-from test_run_review import BoundHost
+from cardine.review.verdict import record_launched_verdict
 root = Path(sys.argv[1])
 def kill(name):
-    if name == sys.argv[3]: os._exit(77)
+    if name == sys.argv[2]: os._exit(77)
 receipts.boundary = kill
-record = json.loads(Path(sys.argv[2], sys.argv[4]).read_bytes())
-record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
-    adapter=CodexProfileAdapter(BoundHost(sys.argv[2], 'codex'), record['session']['session_id']))
+record_launched_verdict(root, '001', sys.argv[3])
 '''
-        result = subprocess.run([sys.executable, '-c', script, str(self.root), str(self.host_root), point,
-             self.key, verdict], cwd=self.root, capture_output=True, text=True,
+        result = subprocess.run([sys.executable, '-c', script, str(self.root), point, self.key],
+             cwd=self.root, capture_output=True, text=True,
              env={**os.environ, 'PYTHONPATH': os.pathsep.join([str(ROOT/'src'), str(ROOT/'tests')])})
         self.assertEqual(result.returncode, 77, result.stderr)
 
@@ -114,12 +122,13 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
                     self.assertEqual((self.root/'tasks/reviews/001.md').read_text().count('## Attempt '), 1)
                     self.assertEqual(self.git('rev-parse', 'HEAD'), head)
 
-    def test_implementer_owner_spoof_and_exchanged_reviewer_session_write_nothing(self):
+    def test_agent_credentials_cannot_record_owner_or_command_line_verdicts(self):
         before = self.state()
         for credential, owner in [('implementer-channel', False), ('implementer-channel', True),
                                   ('codex:foreign', False), ('coordinator-channel', True)]:
             with self.subTest(credential=credential, owner=owner), self.assertRaises(CardineError):
-                self.verdict(credential=credential, owner=owner)
+                record_review_verdict(self.root, '001', 'APPROVE', owner=owner,
+                    adapter=CodexProfileAdapter(self.host, credential))
             self.assertEqual(self.state(), before)
         with patch('cardine.lifecycle.control._interactive', return_value=False), self.assertRaises(CardineError):
             record_review_verdict(self.root, '001', 'APPROVE', owner=True)
@@ -127,9 +136,9 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
         result = record_review_verdict(self.root, '001', 'APPROVE', owner=True, adapter=developer)
         self.assertEqual(result['review']['approved_by'], 'owner')
 
-    def test_stale_review_and_pending_changed_inputs_or_owner_preserve_intent(self):
+    def test_stale_review_and_pending_changed_source_or_request_preserve_intent(self):
         for point in ('after_intent', 'after_review_state', 'after_review_projection', 'after_result_receipt'):
-            for change in ('source', 'owner', 'body'):
+            for change in ('source', 'request'):
                 self.doCleanups()
                 self.setUp()
                 self.kill(point)
@@ -138,8 +147,7 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
                 if change == 'source':
                     (self.root/'src/result.py').write_text('changed\n')
                 with self.assertRaises(CardineError):
-                    self.verdict(credential='codex:foreign' if change == 'owner' else None,
-                                 body='changed' if change == 'body' else '')
+                    record_launched_verdict(self.root, '001', 'foreign' if change == 'request' else self.key)
                 self.assertEqual(intent.read_bytes(), before)
         self.doCleanups()
         self.setUp()
@@ -173,22 +181,13 @@ record_review_verdict(root, '001', sys.argv[5], request_id=sys.argv[4],
             transition_task_state(self.root, '001', 'in_review')
         self.assertEqual(self.state(), before)
 
-    def test_unavailable_profile_and_source_change_during_authorization_refuse(self):
-        before = self.state()
+    def test_recording_uses_the_receipt_without_a_child_credential_or_host_callback(self):
         self.host.enforced = False
-        with self.assertRaises(CardineError):
-            self.verdict()
-        self.assertEqual(self.state(), before)
-        self.host.enforced = True
-        authorize = self.host.authorize_operation
-        def changed(*args):
-            result = authorize(*args)
-            self.git('commit', '--allow-empty', '-m', 'Concurrent source commit')
-            return result
-        with patch.object(self.host, 'authorize_operation', side_effect=changed):
-            with self.assertRaisesRegex(CardineError, 'inputs changed'):
-                self.verdict()
-        self.assertEqual(self.state(), before)
+        with patch.object(self.host, 'authorize_operation', side_effect=AssertionError('no host callback')):
+            state = self.verdict()
+        self.assertEqual(state['review']['source'], 'launched')
+        self.assertEqual(state['review']['approved_by'], 'reviewer')
+        self.assertEqual(state['run']['reviewDecision']['principal']['session_id'], self.record['session']['session_id'])
 
     def test_cli_owner_flag_cannot_create_developer_authority(self):
         before = self.state()
@@ -227,8 +226,7 @@ class RunReviewFlowTest(unittest.TestCase):
                                  adapter=CodexProfileAdapter(host, 'coordinator-channel'))
         waiting = run_validation_step(locations)
         self.assertEqual(waiting['outcome'], 'waiting')
-        state = record_review_verdict(root, '001', 'APPROVE', request_id=record['request']['request_id'],
-            adapter=CodexProfileAdapter(host, record['session']['session_id']))
+        state = record_launched_verdict(root, '001', record['request']['request_id'])
         before = deepcopy(state)
         self.assertTrue(review_progress(root, '001', state)[0])
         candidate = run_validation_step(locations)

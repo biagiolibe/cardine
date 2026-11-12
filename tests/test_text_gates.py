@@ -224,7 +224,7 @@ ALLOWLIST = {
             # T-25: the review Markdown is an append-only projection of the
             # state-first verdict. The text is read only to append the next
             # attempt heading; no decision, count or status derives from it.
-            ("src/cardine/review/verdict.py", "record_review_verdict", "disk-text", "read_text:review_path"),
+            ("src/cardine/review/verdict.py", "_record_verdict", "disk-text", "read_text:review_path"),
         },
     },
     "legacy": {"files": {"src/cardine/legacy/**"}, "functions": set(), "keys": set()},
