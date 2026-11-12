@@ -7,7 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 from urllib.error import URLError, HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -82,13 +82,18 @@ class SelfUpdateTest(unittest.TestCase):
                          'releases/tag/v1.3.0', 'git fetch --no-tags'):
                 self.assertIn(text, self.output)
             self.assertIn('switch --detach' if detached else 'merge --ff-only', self.output)
+            self.assertIn('Plan\n', self.output)
+            self.assertNotIn('Next steps', self.output)
+            self.assertNotIn('\x1b', self.output)
 
     def test_apply_stable(self):
         self.assertEqual(self.run_update(apply=True), 0)
         self.assertEqual(self.git(self.root, 'branch', '--show-current'), 'stable')
         self.assertEqual(self.git(self.root, 'rev-parse', 'HEAD'), self.git(self.remote, 'rev-parse', 'v1.3.0'))
-        self.assertIn('Restart running Codex and Claude Code', self.output)
-        self.assertIn('cardine upgrade --check', self.output)
+        self.assertIn('Restart running Claude Code and Codex', self.output)
+        for text in ('Apply', 'Next steps', 'authorize --check', 'authorize --apply', 'upgrade --check', 'upgrade --apply', 'commit', 'doctor --project'):
+            self.assertIn(text, self.output)
+        self.assertNotIn('\x1b', self.output)
 
     def test_apply_tag_and_rollback(self):
         self.detach()
@@ -191,7 +196,7 @@ class SelfUpdateTest(unittest.TestCase):
                 owner_release_update, 'run_self_update', return_value=0) as update:
             self.assertEqual(owner_cli._run_cli(owner_shared_journal.LifecycleJournalEntry()), 0)
         update.assert_called_once_with(Path(cardine_cli.__file__).resolve().parents[1],
-                                       apply=False, target_tag=None)
+                                       apply=False, target_tag=None, finish=ANY)
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             owner_cli.build_parser().parse_args(['self-update'])
 
@@ -232,6 +237,34 @@ class InstallerUpdateTest(unittest.TestCase):
                 result, _ = self.update(kind, lambda argv: calls.append(argv) or 0, apply=True, target_tag=target)
                 self.assertEqual(result, tag[1:])
                 self.assertEqual(calls, [prefix + [f'git+https://github.com/biagiolibe/cardine@{tag}']])
+
+    def test_plain_output_and_captured_installer_output(self):
+        from cardine.release.installer import run_installer_update
+        from cardine.shared.errors import CardineError
+        for apply in (False, True):
+            lines = []
+            run_installer_update('pipx', '1.0.0', apply=apply, urlopen_fn=self.opener,
+                runner=lambda argv: subprocess.CompletedProcess(argv, 0, 'hidden output', ''), out=lines.append)
+            text = '\n'.join(lines)
+            self.assertIn('Plan', text)
+            self.assertNotIn('hidden output', text)
+            self.assertNotIn('\x1b', text)
+            self.assertEqual('Next steps' in text, apply)
+            if apply:
+                for phrase in ('Apply', 'authorize --check', 'authorize --apply', 'upgrade --check', 'upgrade --apply', 'commit', 'doctor --project'):
+                    self.assertIn(phrase, text)
+        lines = []
+        with self.assertRaises(CardineError):
+            run_installer_update('pipx', '1.0.0', apply=True, urlopen_fn=self.opener,
+                runner=lambda argv: subprocess.CompletedProcess(argv, 3, 'failure output', ''), out=lines.append)
+        self.assertIn('failure output', '\n'.join(lines))
+
+    def test_runtime_release_omits_upgrade(self):
+        from cardine.release.installer import finish_update
+        lines = []
+        finish_update('1.0.1', 'runtime-only', out=lines.append)
+        self.assertNotIn('cardine upgrade', '\n'.join(lines))
+        self.assertIn('cardine doctor', '\n'.join(lines))
 
     def test_failures_precede_alignment(self):
         from cardine.shared.errors import CardineError

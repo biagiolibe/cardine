@@ -605,22 +605,20 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
 
             # Environment and --framework-root select upgrade inputs, never the
             # checkout that owns this running executable.
+            def finish(version, templates, *, out=print):
+                installer.finish_update(version, templates, project=project_root,
+                    align=lambda value, out: align_claude_plugin(Path.home(), value, out=out), out=out)
+
             kind = installer.detect_installer()
             if kind in ("pipx", "uv"):
                 try:
                     updated = installer.run_installer_update(
-                        kind, read_version(framework_root), apply=arguments.apply, target_tag=arguments.target_tag)
+                        kind, read_version(framework_root), apply=arguments.apply, target_tag=arguments.target_tag, finish=finish)
                 except installer.ReleaseUnresolved:
                     return SELF_CHECK_UNKNOWN
-                if updated is not None:
-                    align_claude_plugin(Path.home(), updated)
-                    installer.stale_runtime_report(project_root or Path.cwd())
                 return 0
             checkout = source_checkout() or PACKAGE_ROOT
-            result = run_self_update(checkout, apply=arguments.apply, target_tag=arguments.target_tag)
-            if result == 0 and arguments.apply:
-                align_claude_plugin(Path.home(), read_version(checkout))
-                installer.stale_runtime_report(project_root or Path.cwd())
+            result = run_self_update(checkout, apply=arguments.apply, target_tag=arguments.target_tag, finish=finish)
             return result
         if arguments.command == "self-check":
             from cardine.release.update import run_self_check
@@ -984,6 +982,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
                 arguments.stop_before_retirement,
             )
     except CardineStop as error:
+        if arguments.command == "self-update":
+            from cardine.shared import terminal
+            print(terminal.error(error.detail or str(error)))
+            if error.resume:
+                print(terminal.command(error.resume()))
         if getattr(error, "recovery_worktree", None) is not None:
             # Preserve the exact invocation, including optional flags and values.
             rerun = []
@@ -1001,6 +1004,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             error = stop_error(error.code, detail, resume=shlex.join(("cardine", *rerun)))
         return emit_diagnostic(error, journal)
     except CardineError as error:
+        if arguments.command == "self-update":
+            from cardine.shared import terminal
+            print(terminal.error(str(error)))
+            if "rerun cardine self-update --apply" in str(error):
+                print(terminal.command("cardine self-update --apply"))
         refused = stop_error("COMMAND_REFUSED", str(error))
         return emit_diagnostic(refused, journal)
     except OSError as error:

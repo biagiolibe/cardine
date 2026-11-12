@@ -17,6 +17,7 @@ from cardine.shared.constants import LATEST_RELEASE_TIMEOUT_SECONDS
 from cardine.shared.constants import LATEST_RELEASE_URL
 from cardine.shared.constants import SELF_CHECK_UNKNOWN
 from cardine.shared.constants import SELF_CHECK_UPDATE_AVAILABLE
+from cardine.shared import terminal
 from cardine.shared.errors import CardineError
 from cardine.shared.errors import CardineStop
 from cardine.shared.git import git_output
@@ -82,7 +83,7 @@ def fetch_latest_release(
 
 @scoped_command
 def run_self_update(framework_root: Path, *, apply: bool = False,
-                    target_tag: str | None = None, urlopen_fn=None) -> int:
+                    target_tag: str | None = None, urlopen_fn=None, finish=None) -> int:
     """Serialize apply and keep recovery metadata outside the tracked checkout."""
     root = framework_root.resolve()
     try:
@@ -101,7 +102,7 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
             if apply:
                 invalidate_facts()
             return _run_self_update(root, apply=apply, target_tag=target_tag,
-                                    urlopen_fn=urlopen_fn, receipt_path=path)
+                                    urlopen_fn=urlopen_fn, receipt_path=path, finish=finish)
     except CardineStop:
         raise
     except OSError as error:
@@ -112,9 +113,10 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
 
 
 def explain_unknown_release(reason: object, manual: str, *, out=print) -> None:
-    out(f"Latest: unknown ({reason})")
+    out(terminal.error(f"Latest: unknown ({reason})"))
     out("Exit 11 means the latest release could not be determined; nothing was changed.")
-    out(f"Manual update: see https://github.com/biagiolibe/cardine/releases, then run: {manual}")
+    out("Manual update: see https://github.com/biagiolibe/cardine/releases, then run:")
+    out(terminal.command(manual))
 
 
 def _explain_unknown(root: Path, error: object, target_tag: str | None) -> None:
@@ -125,7 +127,7 @@ def _explain_unknown(root: Path, error: object, target_tag: str | None) -> None:
 
 
 def _run_self_update(framework_root: Path, *, apply: bool = False,
-                    target_tag: str | None = None, urlopen_fn=None, receipt_path=None) -> int:
+                    target_tag: str | None = None, urlopen_fn=None, receipt_path=None, finish=None) -> int:
     """Plan in an isolated object store; mutate only the CLI checkout on apply."""
     from http.client import HTTPException
     from urllib.error import HTTPError, URLError
@@ -147,6 +149,7 @@ def _run_self_update(framework_root: Path, *, apply: bool = False,
         current = read_raw_version(root)
         if not branch and git_output(root, "rev-parse", "HEAD") != git_output(root, "rev-parse", f"refs/tags/v{current}^{{commit}}"):
             refuse("SELF_UPDATE_TARGET", "detached HEAD is not its VERSION release tag")
+        print(terminal.section("Plan"))
         print(f"Checkout: {root}")
         print(f"Current: {current}")
         binding = update_operation.owner(root, target_tag)
@@ -156,7 +159,8 @@ def _run_self_update(framework_root: Path, *, apply: bool = False,
             version, templates = intent['version'], intent['templates']
         else:
             try:
-                version, templates = fetch_latest_release(current, urlopen_fn=urlopen_fn, target_tag=target_tag)
+                with terminal.spinner("Resolving release"):
+                    version, templates = fetch_latest_release(current, urlopen_fn=urlopen_fn, target_tag=target_tag)
             except HTTPError as error:
                 if target_tag is not None and error.code == 404:
                     refuse("SELF_UPDATE_TARGET", f"{target_tag} is not a published release")
@@ -204,16 +208,21 @@ def _run_self_update(framework_root: Path, *, apply: bool = False,
                      if branch else f"{fetch}; git switch --detach {target}")
         print(f"Git operation (in checkout): {operation}")
         if not apply:
+            print(terminal.note("Run cardine self-update --apply to update"))
             return 0
-        intent = update_operation.apply_update(root, receipt_path, binding, source, version,
-                                               templates, target, tag, intent)
+        print(terminal.section("Apply"))
+        print(terminal.done(terminal.step(1, 4, "Resolve release")))
+        with terminal.spinner("Fetching release"):
+            intent = update_operation.apply_update(root, receipt_path, binding, source, version,
+                                                   templates, target, tag, intent)
+        print(terminal.done(terminal.step(2, 4, "Fetch and update checkout")))
         if git_output(root, "rev-parse", "HEAD") != target or read_raw_version(root) != version:
             refuse("SELF_UPDATE_VERIFY", f"post-apply HEAD/VERSION verification failed; recovery: git -C {shlex.quote(str(root))} switch --detach {tag}")
         intent['result'] = dict(head=target, version=version, verified=True)
         receipts._save_intent(receipt_path, intent)
-        print(f"Updated to {tag}. Restart running Codex and Claude Code sessions.")
-        if templates == "template-changing":
-            print("Run cardine upgrade --check in each project.")
+        print(terminal.done(terminal.step(3, 4, "Verify checkout")))
+        from cardine.release.installer import finish_update
+        (finish or finish_update)(version, templates)
         return 0
     except CardineStop:
         raise
