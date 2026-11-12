@@ -70,6 +70,27 @@ def _spike_disallowed_paths(
     return tuple(path for path in changed if path not in allowed and not re.fullmatch(r"changelog\.d/[^/]+\.md", path))
 
 
+def changes_after_review(root, identity, reviewed, head):
+    """Paths changed since review, excluding commits from the recorded merged main.
+
+    The recorded base must be reachable from the task head. A base already
+    reachable from the reviewed commit grants no exception to the source digest.
+    Remerge diffs retain paths changed by conflict resolution or manual edits
+    to a merge. Callers also check for uncommitted implementation changes.
+    """
+    path = _lifecycle_paths(root, identity)[0]
+    revisions = [f'{reviewed}..{head}']
+    refreshed = False
+    if path.exists():
+        from cardine.shared.jsonio import _read_json_object
+        base = _read_json_object(path, 'worktree lifecycle state')['base_commit']
+        if _run_git(root, 'merge-base', '--is-ancestor', base, head).returncode == 0:
+            revisions.append('^' + base)
+            refreshed = _run_git(root, 'merge-base', '--is-ancestor', base, reviewed).returncode != 0
+    changed = set(git_output(root, 'log', '--remerge-diff', '--format=', '--name-only', *revisions).splitlines()) - {''}
+    return changed, refreshed
+
+
 def _integration_task_state(
     project_root: Path, identity: ResolvedTaskIdentity, task_commit: str, worktree: Path,
     *, require_tracked: bool = False,
@@ -133,7 +154,7 @@ def _integration_task_state(
             identity.review_path.relative_to(project_root).as_posix(),
             relative.as_posix(), names().execution_evidence_path(identity.canonical_id).as_posix(),
         }
-        changed = git_output(project_root, "log", "--format=", "--name-only", f"{reviewed}..{task_commit}").splitlines()
+        changed, _ = changes_after_review(project_root, identity, reviewed, task_commit)
         offending = sorted(set(filter(None, changed)) - allowed)
         if offending:
             raise stop_error(

@@ -62,10 +62,15 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
         environment.start()
         self.addCleanup(environment.stop)
 
-    def ready(self, *, enabled=True):
+    def ready(self, *, enabled=True, review=False):
         if enabled:
-            write_project_config(self.primary, validation=VALIDATION, taskDefaults=dict(ciBeforeLanding=True),
+            write_project_config(self.primary, validation=VALIDATION, taskDefaults=dict(ciBeforeLanding=True, review="required" if review else "not_required"),
                                  ci=dict(provider='github', requiredChecks=['validate', 'lint']))
+            if review:
+                path = state_path(self.primary, '056')
+                state = json.loads(path.read_text())
+                state['review']['required'] = True
+                path.write_text(json.dumps(state))
             freeze_record(self.primary, '056', self.primary / 'tasks/056-lifecycle.md')
             self.git('add', '.')
             self.git('commit', '-m', 'require CI')
@@ -111,6 +116,206 @@ class CiTest(support.BoundedWorktreeLifecycleFixture):
 
     def no_writes(self):
         return mock.patch.object(receipts, '_durable', side_effect=AssertionError('repeated resolution wrote'))
+
+    def approve(self):
+        from control_support import issued_verdict
+        from cardine.review.progress import prepare_review
+        prepare_review(self.worker, '056')
+        issued_verdict(self.worker, '056', 'APPROVE', owner=True)
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'Record approval', cwd=self.worker)
+
+    def approved_with_main_advanced(self, *, conflicting=False):
+        lines = ''.join(f'line {n}\n' for n in range(30))
+        (self.primary / 'README.md').write_text(lines)
+        self.git('add', '.')
+        self.git('commit', '-m', 'Readme base')
+        locations = self.ready(review=True)
+        (self.worker / 'README.md').write_text(lines.replace('line 0\n', 'task line\n'))
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'Task readme', cwd=self.worker)
+        self.measure(self.worker)
+        self.checks(self.head())
+        self.gate(locations)
+        self.approve()
+        attempt = self.state()['review']['attempt']
+        (self.primary / 'README.md').write_text(lines.replace('line 0\n' if conflicting else 'line 29\n', 'main line\n'))
+        (self.primary / 'other.txt').write_text('from main\n')
+        self.git('add', '.')
+        self.git('commit', '-m', 'Advance main')
+        return locations, attempt
+
+    def test_clean_refresh_after_approval_keeps_review_and_lands(self):
+        from cardine.integration import merge
+        from cardine.tasks.identity import resolve_task_identity
+        locations, attempt = self.approved_with_main_advanced()
+        refreshed = engine.run_validation_step(locations)
+        self.assertEqual(refreshed['action'], 'refresh-from-main')
+        head = self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip()
+        identity = resolve_task_identity(self.primary, '056', 'existing')
+        merge._integration_task_state(self.primary, identity, head, self.worker)
+        actions = []
+        for _ in range(12):
+            result = engine.run_validation_step(locations)
+            actions.append(result['action'])
+            self.assertNotEqual(result['step'], 'review', result)
+            if result['action'] == 'poll-ci':
+                self.checks(self.head())
+            if result['action'] == 'validate-candidate':
+                break
+        self.assertIn('ci-passed', actions)
+        self.assertIn('validate-candidate', actions)
+        self.assertEqual(self.state()['review']['attempt'], attempt)
+        self.assertNotEqual(self.head(), self.state()['review']['reviewed_commit'])
+        self.assertEqual(self.remote_tip(), self.head())
+        for _ in range(12):
+            result = engine.run_integration_step(locations)
+            if result['outcome'] == 'done':
+                break
+        self.assertEqual(result['outcome'], 'done', result)
+
+    def test_conflicting_refresh_after_approval_stops_without_consuming_review(self):
+        locations, attempt = self.approved_with_main_advanced(conflicting=True)
+        head = self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip()
+        with self.assertRaises(CardineStop) as raised:
+            engine.run_validation_step(locations)
+        self.assertEqual(raised.exception.code, 'INTEGRATION_CONFLICT')
+        self.assertEqual(self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip(), head)
+        self.assertEqual(self.state()['review']['attempt'], attempt)
+
+    def test_resolved_refresh_conflict_requires_another_review(self):
+        from cardine.integration import refresh, merge
+        from cardine.review.progress import review_progress
+        from cardine.tasks.identity import resolve_task_identity
+        locations, _ = self.approved_with_main_advanced(conflicting=True)
+        main = self.git('rev-parse', 'main').stdout.strip()
+        conflict = self.git('merge', '--no-ff', main, cwd=self.worker, check=False)
+        self.assertNotEqual(conflict.returncode, 0)
+        (self.worker / 'README.md').write_text('Resolved by implementer\n')
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'Resolve refresh conflict', cwd=self.worker)
+        refresh.record_base(locations, main)
+        self.assertFalse(review_progress(self.worker, '056', self.state())[0])
+        identity = resolve_task_identity(self.primary, '056', 'existing')
+        head = self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip()
+        with self.assertRaises(CardineStop) as raised:
+            merge._integration_task_state(self.primary, identity, head, self.worker)
+        self.assertEqual(raised.exception.code, 'REVIEW_NOT_APPROVED')
+        self.assertIn('README.md', raised.exception.detail)
+
+    def test_refresh_does_not_cover_later_implementation_changes(self):
+        from cardine.integration import merge
+        from cardine.review.progress import review_progress
+        from cardine.tasks.identity import resolve_task_identity
+        locations, _ = self.approved_with_main_advanced()
+        self.assertEqual(engine.run_validation_step(locations)['action'], 'refresh-from-main')
+        (self.worker / 'feature.txt').write_text('unreviewed change')
+        self.assertFalse(review_progress(self.worker, '056', self.state())[0])
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'Unreviewed implementation', cwd=self.worker)
+        head = self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip()
+        identity = resolve_task_identity(self.primary, '056', 'existing')
+        with self.assertRaises(CardineStop) as raised:
+            merge._integration_task_state(self.primary, identity, head, self.worker)
+        self.assertEqual(raised.exception.code, 'REVIEW_NOT_APPROVED')
+        self.assertIn('feature.txt', raised.exception.detail)
+        self.assertFalse(review_progress(self.worker, '056', self.state())[0])
+
+    def test_required_review_waits_for_ci_and_failure_does_not_consume_attempt(self):
+        locations = self.ready(review=True)
+        before = self.state().get('review', {}).get('attempt', 0)
+        from cardine.lifecycle.preview import preview_run
+        with self.no_writes():
+            preview = preview_run(locations)
+        self.assertEqual((preview['step'], preview['outcome']), ('candidate', 'waiting'))
+        waiting = engine.run_validation_step(locations)
+        self.assertEqual((waiting['step'], waiting['action']), ('candidate', 'poll-ci'))
+        self.assertNotEqual(self.state()['status'], 'in_review')
+        self.checks(self.head(), conclusion='failure')
+        failed = engine.run_validation_step(locations)
+        self.assertEqual((failed['outcome'], failed['action']), ('iterate', 'ci-failed'))
+        self.assertEqual(self.state().get('review', {}).get('attempt', 0), before)
+        self.assertFalse(self.state().get('review_history'))
+        self.checks(self.head())
+        passed = engine.run_validation_step(locations)
+        self.assertEqual((passed['step'], passed['action']), ('review', 'ci-passed'))
+        self.assertIn('--owner', passed['next']['argv'])
+        self.assertEqual(self.state()['status'], 'in_review')
+        with self.no_writes():
+            self.assertEqual(preview_run(locations)['step'], 'review')
+        self.assertEqual(self.push_count(), 1)
+
+    def test_approval_needs_receipt_covered_ci_but_changes_requested_does_not(self):
+        from cardine.review.progress import prepare_review
+        from cardine.review.verdict import record_review_verdict
+        from control_support import adapter
+        self.ready(review=True)
+        prepare_review(self.worker, '056')
+        with self.assertRaises(CardineStop) as raised:
+            record_review_verdict(self.worker, '056', 'APPROVE', owner=True, adapter=adapter())
+        self.assertEqual(raised.exception.code, 'REVIEW_NOT_APPROVED')
+        self.assertIn('cause: missing', raised.exception.detail)
+        self.assertIn(self.git('rev-parse', 'HEAD', cwd=self.worker).stdout.strip(), raised.exception.detail)
+        self.assertIn('lint, validate', raised.exception.detail)
+        state = record_review_verdict(self.worker, '056', 'CHANGES_REQUESTED', owner=True, adapter=adapter())
+        self.assertEqual(state['review']['verdict'], 'CHANGES_REQUESTED')
+        self.assertEqual(self.gh_calls(), 0)
+
+    def test_changes_requested_needs_ci_on_the_next_delivery(self):
+        from control_support import issued_verdict
+        locations = self.ready(review=True)
+        old = self.head()
+        self.checks(old)
+        self.assertEqual(engine.run_validation_step(locations)['step'], 'review')
+        issued_verdict(self.worker, '056', 'CHANGES_REQUESTED', owner=True)
+        self.git('add', '.', cwd=self.worker)
+        self.git('commit', '-m', 'Record requested changes', cwd=self.worker)
+        self.implement('remediated')
+        self.assertNotEqual(self.head(), old)
+        attempt = self.state()['review']['attempt']
+        waiting = engine.run_validation_step(locations)
+        self.assertEqual((waiting['step'], waiting['action']), ('candidate', 'poll-ci'))
+        self.assertEqual(self.state()['review']['attempt'], attempt)
+        self.checks(self.head())
+        self.assertEqual(engine.run_validation_step(locations)['step'], 'review')
+        self.assertEqual(self.push_count(), 2)
+
+    def interrupted_ci_approval(self, point):
+        from cardine.review.progress import prepare_review
+        from cardine.review.verdict import record_review_verdict
+        from control_support import adapter
+        locations = self.ready(review=True)
+        self.checks(self.head())
+        self.gate(locations)
+        prepare_review(self.worker, '056')
+        def interrupt(name):
+            if name == point:
+                raise RuntimeError('interrupted approval')
+        with mock.patch.object(receipts, 'boundary', side_effect=interrupt):
+            with self.assertRaisesRegex(RuntimeError, 'interrupted approval'):
+                record_review_verdict(self.worker, '056', 'APPROVE', owner=True, adapter=adapter())
+        self.assertIsNotNone(engine_state(self.worker)[1])
+        state = record_review_verdict(self.worker, '056', 'APPROVE', owner=True, adapter=adapter())
+        self.assertEqual(state['review']['verdict'], 'APPROVE')
+        self.assertEqual(len(state['review_history']), 1)
+        self.assertIsNone(engine_state(self.worker)[1])
+        self.assertEqual(self.push_count(), 1)
+
+    def test_ci_approval_replays_after_intent(self):
+        self.interrupted_ci_approval('after_intent')
+
+    def test_ci_approval_replays_after_result_receipt(self):
+        self.interrupted_ci_approval('after_result_receipt')
+
+    def test_approval_reuses_ci_pass_across_review_attempt_change(self):
+        locations = self.ready(review=True)
+        self.checks(self.head())
+        self.gate(locations)
+        self.approve()
+        calls = self.gh_calls()
+        self.assertFalse(self.gate(locations)['changed'])
+        self.assertEqual(self.gh_calls(), calls)
+        self.assertNotIn('attempt', self.state()['run']['ci']['binding'])
 
     def test_disabled_ci_runs_no_gh_and_no_git(self):
         locations = self.ready(enabled=False)

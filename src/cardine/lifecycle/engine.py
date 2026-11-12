@@ -169,6 +169,8 @@ def resolve_run(facts: RunFacts) -> dict:
         return result("implementation", "Make and commit the change in the task worktree, then run this command again")
     if not facts.validation_passed:
         return result("validation", "Run the complete current validation command set")
+    if facts.ci_pending:
+        return result("candidate", "Poll required CI checks for the delivered source", outcome="waiting", poll=10)
     if facts.review_required and not facts.review_approved:
         review_root = facts.review_work.worktree if facts.review_work else facts.project
         review_argv = ["cardine", "review", "verdict", facts.task_id, "APPROVE", "--owner",
@@ -179,8 +181,6 @@ def resolve_run(facts: RunFacts) -> dict:
                         next_command=command_reference(review_argv,
                             "Developer: choose APPROVE, CHANGES_REQUESTED or BLOCKED after review"),
                         work=facts.review_work.as_json() if facts.review_work else None)
-    if facts.ci_pending:
-        return result("candidate", "Poll required CI checks for the delivered source", outcome="waiting", poll=10)
     if not facts.candidate_validated:
         reason = "Prepare and validate the current direct candidate"
         if not facts.review_required:
@@ -615,8 +615,6 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
     from cardine.lifecycle.control import require_review_budget
     require_review_budget(root, task_id, state)
     approved, review_pending = review_progress(root, task_id, state)
-    if passed and state['contract']['options']['review'] == 'required' and not approved:
-        state = prepare_review(root, task_id, context=locations)
     facts = RunFacts(task_id, locations.primary, state['status'],
         review_approved=approved, review_pending=review_pending,
         contract_ready=True, worktree_ready=True, implementation_delivered=True,
@@ -626,15 +624,18 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
             request.expected_surface, request.acceptance_references,
             request.validation_references, ('independent source-bound review',)),
         review_required=state['contract']['options']['review'] == 'required')
+    if passed:
+        gated = run_ci_step(locations, facts, request, state, wait_seconds=ci_wait_seconds)
+        if gated is not None:
+            return add_byproducts(gated)
+    if passed and facts.review_required and not approved:
+        state = prepare_review(root, task_id, context=locations)
     result = resolve_run(facts)
     if result['step'] == 'candidate':
         if before_validation != progress:
             result['action'] = 'C6'
             result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
             return add_byproducts(result)
-        gated = run_ci_step(locations, facts, request, state, wait_seconds=ci_wait_seconds)
-        if gated is not None:
-            return add_byproducts(gated)
         return add_byproducts(run_integration_step(locations, prepare=True, lease_seconds=lease_seconds))
     result['action'] = 'task-validation'
     result['evidence'] = [dict(kind='task-validation', path=progress['evidence'], identity=progress['attemptId'])]
@@ -669,7 +670,7 @@ def run_policy_refresh(locations: RunLocations) -> dict | None:
 
 @scoped_command
 def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict, *, wait_seconds=0) -> dict | None:
-    """Gate the direct candidate on CI for the delivered head when the contract requires it."""
+    """Gate review and the direct candidate on CI for the current delivered head."""
     from dataclasses import replace
     from cardine.integration import ci
     if ci.ci_policy(state['contract']) is None:
@@ -699,6 +700,9 @@ def run_ci_step(locations: RunLocations, facts: RunFacts, request, state: dict, 
         result['diagnostics'] = [dict(code=outcome.get('diagnostic', 'CI_PENDING'), message=outcome['detail'])]
         result['next'] = command_reference([*argv, '--ci-wait-seconds', str(wait_seconds)], 'Wait for required CI')
     else:
+        if facts.review_required and not facts.review_approved:
+            from cardine.review.progress import prepare_review
+            prepare_review(locations.worktree, locations.task_id, context=locations)
         result = resolve_run(facts)
     result['action'] = 'poll-ci' if outcome['phase'] == 'waiting' else 'ci-passed'
     result['evidence'] = evidence

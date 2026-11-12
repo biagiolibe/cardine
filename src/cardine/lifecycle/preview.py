@@ -172,14 +172,14 @@ def observe_run(locations):
     approved, pending = review_progress(root, task, state)
     facts = replace(facts, review_approved=approved, review_pending=pending,
         review_changes_requested=state.get('review', {}).get('verdict') == 'CHANGES_REQUESTED')
-    if facts.review_required and not approved:
-        return facts
     from cardine.integration.ci import ci_policy, ci_binding
     policy = ci_policy(contract)
     if policy:
         cached = state['run'].get('ci')
         if not cached or cached['phase'] != 'passed' or cached['binding'] != ci_binding(locations, state, policy):
             return replace(facts, ci_pending=True)
+    if facts.review_required and not approved:
+        return facts
     from cardine.integration.candidate import verified_candidate
     candidate = verified_candidate(locations, read_only=True)
     return replace(facts, candidate_validated=bool(candidate and candidate['phase'] == 'passed'))

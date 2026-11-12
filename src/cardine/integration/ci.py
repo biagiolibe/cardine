@@ -5,7 +5,7 @@ once with a plain non-force push, then reads the check runs the provider
 reports for that exact repository and SHA. Nothing a caller or an editable file
 declares is evidence: the remote ref comes from ``ls-remote`` (never a local
 tracking ref), and only a terminal pass is cached, as a receipt-covered ``run.ci``
-result bound to repository, ref, head, review attempt, contract and checks.
+result bound to repository, ref, head, contract and checks.
 
 Receipts detect uncovered edits within the same-user boundary; they are neither
 signatures nor proof of authorship. When the contract does not enable CI, this
@@ -124,7 +124,7 @@ def ci_binding(locations, state, policy):
     host, owner, name = remote_repository(worker)
     return dict(task_id=task_id, repository=f'{host}/{owner}/{name}',
                 origin=remote_transport(worker), ref=f'refs/heads/{identity.branch_name}',
-                head=delivery['source'], attempt=state.get('review', {}).get('attempt', 1),
+                head=delivery['source'],
                 contract=receipts.digest(receipts.encoded(state['contract'])),
                 provider=policy['provider'], checks=policy['checks'])
 
@@ -326,7 +326,7 @@ def require_ci_pass(worker, project, task_id, task_state):
     Every route to a direct candidate, including the Internal ``worktree advance``
     and ``integrate stage`` adapters, passes here. The contract is the committed
     one; the result must be a receipt-covered pass bound to the current delivered
-    head, repository, ref, review attempt, contract and required checks.
+    head, repository, ref, contract and required checks.
     """
     policy = ci_policy(task_state['contract'])
     if policy is None:

@@ -40,17 +40,32 @@ def record_review_verdict(project_root: Path, task_id: str, verdict: str, *, own
         saved = state.get('run', {}).get('reviewDecision')
         if state['status'] != 'in_review' and (not saved or saved['binding']['source'] != head):
             raise stop_error('TASK_STATE_INVALID', 'review status: allowed in_review', task_id=task_id, project=root)
+        missing_ci = None
+        # An owned replay resumes the already gated decision; its exact inputs
+        # and authorization are checked below before the intent is consumed.
+        if verdict == 'APPROVE' and not pending:
+            from cardine.integration.ci import ci_policy, require_ci_pass
+            from cardine.shared.errors import CardineStop
+            policy = ci_policy(state['contract'])
+            if policy is not None:
+                try:
+                    require_ci_pass(root, root, task_id, state)
+                except CardineStop as error:
+                    if error.code != 'EVIDENCE_INCOMPLETE':
+                        raise
+                    missing_ci = (f'cause: missing; required checks have not passed for {head}; '
+                                  f'run cardine run {task_id} first; required checks: {", ".join(policy["checks"])}')
         session = None
         sources = state['contract'].get('reviewSources', ['owner'])
         if owner and 'owner' not in sources:
             raise stop_error('REVIEW_NOT_APPROVED',
                              f"cause: source; the task contract's reviewSources ({', '.join(sources)}) exclude owner; project key review.sources",
                              task_id=task_id, project=root)
+        record = state.get('run', {}).get('hostLaunches', {}).get(request_id) if not owner else None
+        if missing_ci or not owner and (not record or not record['session'] or not record['response']):
+            raise stop_error('REVIEW_NOT_APPROVED', missing_ci or 'cause: missing; no completed issued independent review',
+                             task_id=task_id, project=root)
         if not owner:
-            record = state.get('run', {}).get('hostLaunches', {}).get(request_id)
-            if not record or not record['session'] or not record['response']:
-                raise stop_error('REVIEW_NOT_APPROVED', 'cause: missing; no completed issued independent review',
-                                 task_id=task_id, project=root)
             request, session = record['request'], record['session']
             if (request['role'] != 'reviewer' or session['role'] != 'reviewer'
                     or request['task_id'] != task_id or request['root'] != str(root)
