@@ -1,0 +1,46 @@
+{
+  "296": [
+    {
+      "attemptId": "c3718b825ba549e8acda730b6a1b5c65",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "65977bfa59f3da31721865a3b7ba5a2f0ff867a9",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/296.json#c3718b825ba549e8acda730b6a1b5c65/1/repository-check",
+      "round": 1,
+      "sourceDigest": "a8c0d590efdfd404a6c0d95a6091a309ee43e6b1366848ba3e3ab3d7ad75f05e",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "c3718b825ba549e8acda730b6a1b5c65",
+      "command": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_prepare_release --module test_release --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates",
+      "commit": "65977bfa59f3da31721865a3b7ba5a2f0ff867a9",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/296.json#c3718b825ba549e8acda730b6a1b5c65/1/task-tests",
+      "round": 1,
+      "sourceDigest": "a8c0d590efdfd404a6c0d95a6091a309ee43e6b1366848ba3e3ab3d7ad75f05e",
+      "stderr": "run_tests: 214 tests in 8 shards\nrun_tests: shard 1/8 finished in 4.7s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 4/8 finished in 5.7s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 6/8 finished in 6.0s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 3/8 finished in 6.4s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 7/8 finished in 6.5s: exit 0 ran=26 failures=0 errors=0\nrun_tests: shard 2/8 finished in 6.6s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 5/8 finished in 7.6s: exit 0 ran=27 failures=0 errors=0\nrun_tests: shard 8/8 finished in 11.7s: exit 0 ran=26 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_check_repository,test_prepare_release,test_release,test_module_inventory,test_layout,test_no_meridian_identifiers,test_text_gates ran=214 total=2310 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "c3718b825ba549e8acda730b6a1b5c65",
+      "command": "git diff --check",
+      "commit": "65977bfa59f3da31721865a3b7ba5a2f0ff867a9",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/296.json#c3718b825ba549e8acda730b6a1b5c65/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "a8c0d590efdfd404a6c0d95a6091a309ee43e6b1366848ba3e3ab3d7ad75f05e",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}
