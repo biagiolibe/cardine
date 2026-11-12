@@ -73,9 +73,9 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
         self.assertTrue((self.primary / "feature.txt").is_file())
         cleaned = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertEqual(cleaned["status"], "cleaned")
-        self.assertTrue(task_worktree.is_dir())
-        self.assertEqual(list(task_worktree.iterdir()), [])
+        self.assertFalse(task_worktree.exists())
         self.assertNotIn(str(task_worktree), self.git("worktree", "list", "--porcelain").stdout)
+        task_worktree.mkdir()
         for hook in ("read-guard", "stop-audit"):
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts/cardine_cli.py"), "hook", hook, "--host", "codex"],
@@ -86,6 +86,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
             )
             self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
         self.assertEqual(list(task_worktree.iterdir()), [])
+        task_worktree.rmdir()
         self.assertNotEqual(self.git("show-ref", "--verify", "refs/heads/task-056", check=False).returncode, 0)
         repeated = owner_integration_merge.cleanup_task_worktree("056", self.worktree_root, self.primary)
         self.assertTrue(repeated["already_cleaned"])
@@ -212,8 +213,7 @@ class WorktreeCleanupTest(support.BoundedWorktreeLifecycleFixture):
                                 env={**os.environ, "CARDINE_WORKTREE_ROOT": str(self.worktree_root)})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["recovered_from"], "registered-directory-missing")
-        self.assertTrue(worktree.is_dir())
-        self.assertEqual(list(worktree.iterdir()), [])
+        self.assertFalse(worktree.exists())
 
 
     def test_abort_requires_owned_state_and_preserves_task(self) -> None:

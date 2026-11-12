@@ -240,8 +240,7 @@ class BoundedWorktreeLifecycleFixture(unittest.TestCase):
         self.assertEqual(result["status"], "cleaned")
         self.assertEqual(result["recovered_from"], recovered_from)
         worktree = Path(prepared["worktree"])
-        self.assertTrue(worktree.is_dir())
-        self.assertEqual(list(worktree.iterdir()), [])
+        self.assertFalse(worktree.exists())
         self.assertNotIn(str(worktree), self.git("worktree", "list", "--porcelain").stdout)
         self.assertNotEqual(self.git("rev-parse", "--verify", "task-056", check=False).returncode, 0)
         state, _, _ = owner_worktree_storage._lifecycle_paths(
