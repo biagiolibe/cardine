@@ -83,7 +83,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     with redirect_stdout(output):
                         owner_hosts_setup.print_setup_plan(plan)
                     lines = output.getvalue().splitlines()
-                    self.assertEqual(lines[0], f"changes on --apply: {int(expected)}")
+                    self.assertIn(f"changes on --apply: {int(expected)}", lines)
                     self.assertEqual(lines.count(f"- {change}"), int(expected))
                     self.assertNotIn("changes:", lines)
                     self.assertIn("next: cardine setup --apply" if expected else "nothing to change", lines)
@@ -109,7 +109,19 @@ class WorktreeRootSetupTest(unittest.TestCase):
                         self.assertEqual(cli._run_cli(mock.Mock()), 0)
                     result = ("result: updated; restart your agent so it loads the changes"
                               if changed or plugin_result == "aligned" else "result: no-op")
-                    self.assertEqual(output.getvalue().splitlines(), [f"claude-plugin: {plugin_result}", result])
+                    self.assertEqual(output.getvalue().splitlines(), ["Apply", f"claude-plugin: {plugin_result}", result,
+                                                                        "Restart the agent to load the changes."])
+
+    def test_diff_colors_respect_no_color(self) -> None:
+        from cardine.shared import terminal
+        diff = "--- old\n+++ new\n-old\n+new\n context\n"
+        with mock.patch.object(terminal.sys.stdout, "isatty", return_value=True), \
+                mock.patch.dict(os.environ, {"TERM": "xterm"}, clear=True):
+            colored = owner_hosts_setup._color_diff(diff)
+            self.assertIn("\x1b[31m-old", colored)
+            self.assertIn("\x1b[32m+new", colored)
+            with mock.patch.dict(os.environ, {"NO_COLOR": "1"}):
+                self.assertEqual(owner_hosts_setup._color_diff(diff), diff)
 
     def resolve(self, explicit: Path | None = None, **environment: str) -> cardine_cli.ResolvedWorktreeRoot:
         return owner_worktree_storage.resolve_worktree_root(
@@ -683,7 +695,7 @@ class WorktreeRootSetupTest(unittest.TestCase):
             text=True, capture_output=True, check=False,
             env={**os.environ, "HOME": str(self.home)},
         )
-        self.assertTrue(checked.stdout.startswith("changes on --apply: "), checked.stdout + checked.stderr)
+        self.assertIn("changes on --apply: ", checked.stdout)
         self.assertIn("project-declaration: missing; run cardine init first", checked.stdout)
         self.assertNotIn("project-declaration-proposal", checked.stdout)
 

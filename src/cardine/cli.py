@@ -717,12 +717,32 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             )
             print_setup_plan(plan)
             if arguments.apply:
-                changed = apply_setup(plan)
+                from cardine.shared import terminal
                 from cardine.hosts.claude import align_claude_plugin
                 from cardine.release.version import read_version
-                plugin_result = align_claude_plugin(Path.home(), read_version(framework_root))
+                changes = [change for change in plan.changes
+                           if change != "none" and not change.startswith("none;")]
+                print(terminal.section("Apply"))
+                try:
+                    changed = apply_setup(plan)
+                except CardineError:
+                    print(terminal.failed("Setup changes could not be completed"))
+                    raise
+                regular = [change for change in changes if not change.startswith("align the Claude Code plugin")]
+                for index, change in enumerate(regular, 1):
+                    print(terminal.done(f"[{index}/{len(changes)}] {change}"))
+                try:
+                    plugin_result = align_claude_plugin(Path.home(), read_version(framework_root))
+                except CardineError:
+                    if len(regular) < len(changes):
+                        print(terminal.failed(f"[{len(changes)}/{len(changes)}] {changes[-1]}"))
+                    raise
+                if len(regular) < len(changes):
+                    label = f"[{len(changes)}/{len(changes)}] {changes[-1]}"
+                    print(terminal.done(label) if plugin_result in ("aligned", "match") else terminal.failed(label))
                 print("result: updated; restart your agent so it loads the changes"
                       if changed or plugin_result == "aligned" else "result: no-op")
+                print("Restart the agent to load the changes.")
         elif arguments.command == "doctor":
             report = host_doctor(
                 arguments.host,
