@@ -20,6 +20,7 @@
       "tests/test_host_permissions.py",
       "tests/test_host_transports.py",
       "tests/test_host_doctor.py",
+      "tests/test_run_host_roles.py",
       "changelog.d/281.md"
     ],
     "hostImpact": {
@@ -77,6 +78,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:b2ffc22919758cfdbaa1bf5945b13edb0b4ea04c5114161cffadc735aaac9c59",
+      "at": "2026-11-12T09:51:20.876708Z",
+      "before": "sha256:0f58f8eb82a4a966aefd8946715b48437f46ef627dc0f5b2b4a7c3a3d9c08e01",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -124,6 +135,30 @@
         "source": "bcbc282f29eaa2ddca507dd4160bf7e5dcf1e537",
         "task_id": "281",
         "tree": "fc6dc7fed8fcbc2f7a6e148672a57a242915ee75",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "11a00c4509b4246a7f8ef33b6bfb6a4eff1c72a0a18b533364fcdc9b75f618a6",
+        "digest": "367f73eccd7822913af2578a661964e46509a48c2e3acfd0fcb33016edda0117",
+        "inputs": {
+          ".cardine/tasks/281.json": "c6de0f50442cf5213f7effcb30d0ed69f08827ec50cf01407fce7ae3bc87c70a",
+          "tasks/281.md": "db173d0575a2cba74e825e2a8ac78e370632e6b6ff4cc3e150b5873f590e1da1"
+        },
+        "kind": "contract_revision",
+        "operation_id": "4a6f45f2ba1f4222ba05bfdea8b533a1",
+        "outputs": {
+          ".cardine/tasks/281.json": "77331bd5a2daf385e5b8a53d6df130f13bc045f46a4b8395212e9cb5e7fa73a7",
+          "tasks/281.md": "db173d0575a2cba74e825e2a8ac78e370632e6b6ff4cc3e150b5873f590e1da1"
+        },
+        "predecessor": "5ded105b07def3bf1424de49deef0b2d471621b7d77c599b4e6a41f0108ace98",
+        "result": "verified",
+        "source": "c4b2d5da7488f0119462a67704d2d55455cb0312",
+        "task_id": "281",
+        "tree": "8200823be6410a3a7bb9e303dcfd2aa549ae70a2",
         "version": 1
       }
     ]
