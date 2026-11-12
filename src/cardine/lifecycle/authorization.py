@@ -26,6 +26,7 @@ class AuthorizationPlan:
     changes: tuple[str, ...]
     detail: str
     task_policies: tuple[str, ...] = ()
+    stale_contracts: tuple[str, ...] = ()
 
 
 def _task_states(root: Path):
@@ -54,6 +55,43 @@ def _task_policy_lines(root: Path, policy: str) -> tuple[str, ...]:
     return tuple(lines)
 
 
+def stale_queued_contracts(root: Path) -> tuple[str, ...]:
+    """IDs of queued tasks whose contract was frozen under a different declaration."""
+    import hashlib
+    from cardine.shared.project import read_project_declaration
+    digest = 'sha256:' + hashlib.sha256(json.dumps(
+        read_project_declaration(root), sort_keys=True, separators=(',', ':')).encode('utf-8')).hexdigest()
+    stale = []
+    for task_id, path in _task_states(root):
+        try:
+            state = json.loads(path.read_bytes())
+            if state.get('status') == 'queued' and state['contract']['projectDigest'] != digest:
+                stale.append(task_id)
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            continue
+    return tuple(stale)
+
+
+def update_queued_contracts(root: Path, task_ids: tuple[str, ...]) -> bool:
+    """Refresh each stale queued contract; print one line per task. Returns True when none failed."""
+    from cardine.tasks.contract_update import update_task_contract
+    ok, changed = True, []
+    for task_id in task_ids:
+        try:
+            result = update_task_contract(root, task_id)
+        except (CardineError, OSError, ValueError) as error:
+            ok = False
+            print(f'task-contract: {task_id} failed: {error}')
+            continue
+        print(f"task-contract: {task_id} {'updated' if result['updated'] else 'unchanged'}")
+        changed.append(result['state'])
+    if changed:
+        print('commit the changed state files:')
+        print('  git add ' + ' '.join(changed))
+        print("  git commit -m 'Refresh queued task contracts'")
+    return ok
+
+
 def plan_authorization(project: Path) -> AuthorizationPlan:
     """Read-only: what re-acceptance would write, after verifying every task state."""
     plan = _plan_authorization(project)
@@ -65,7 +103,11 @@ def plan_authorization(project: Path) -> AuthorizationPlan:
         lines = _task_policy_lines(root, receipts.observed_authority(root)['policy'])
     except (CardineError, OSError):
         lines = ()
-    return AuthorizationPlan(plan.status, plan.path, plan.accepted, plan.changes, plan.detail, lines)
+    try:
+        stale = stale_queued_contracts(root)
+    except (CardineError, OSError):
+        stale = ()
+    return AuthorizationPlan(plan.status, plan.path, plan.accepted, plan.changes, plan.detail, lines, stale)
 
 
 def _plan_authorization(project: Path) -> AuthorizationPlan:
@@ -153,3 +195,6 @@ def print_authorization_plan(plan: AuthorizationPlan) -> None:
     print(f"detail: {plan.detail}")
     for line in plan.task_policies:
         print(line)
+    for task_id in plan.stale_contracts:
+        print(f'task-contract: {task_id} was frozen under an older declaration; '
+              'authorize --apply --update-queued refreshes it')

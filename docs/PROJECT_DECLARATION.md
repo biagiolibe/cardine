@@ -95,11 +95,15 @@ not yet available. When the frozen sources exclude `owner`,
 2. Then the developer runs `cardine authorize --check --project .` and
    `cardine authorize --apply --project .` from their own terminal. Until
    reauthorization, every task operation stops with "developer reauthorization required".
-3. Queued tasks keep their frozen contract. To use the new declaration, run
-   `cardine task contract update <ID>`: it rebuilds the contract from the task
-   record and the new declaration, preserves the status, transitions, and record
-   path, and adds a `contract_history` entry. The `projectDigest` field records
-   provenance only; nothing compares it.
+3. Queued tasks keep their frozen contract. `authorize --check` lists each one as
+   `task-contract: <ID> was frozen under an older declaration; authorize --apply
+   --update-queued refreshes it`. Run `cardine authorize --apply --update-queued`
+   to rebuild those contracts from the task records and the new declaration. It
+   prints one line per task and the `git add` and `git commit` commands for the
+   changed state files; Cardine does not commit. A failing task is listed with its
+   error and the exit status is 1, while the others still update. Tasks in
+   progress are not touched. Without `--update-queued`, `--apply` changes no task
+   state.
 4. Prepared tasks need no action. `authorize --check` lists each task whose
    declaration predates `main` as
    `task-policy: <ID> predates main; cardine run <ID> will merge main`.

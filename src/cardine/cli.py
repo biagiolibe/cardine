@@ -289,6 +289,8 @@ def build_parser() -> CardineArgumentParser:
     authorize_group = authorize.add_mutually_exclusive_group(required=True)
     authorize_group.add_argument("--check", action="store_true")
     authorize_group.add_argument("--apply", action="store_true")
+    authorize.add_argument("--update-queued", action="store_true",
+                           help="with --apply, refresh the contracts of queued tasks (does not commit)")
     authorize.add_argument("--project", type=Path, default=Path.cwd())
     setup = subparsers.add_parser("setup", help="plan or apply worktree, Codex, and project Claude Code setup")
     setup_group = setup.add_mutually_exclusive_group(required=True)
@@ -705,6 +707,10 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             print_authorization_plan(plan)
             if arguments.apply:
                 print("result: accepted" if apply_authorization(plan) else "result: no-op")
+                if arguments.update_queued:
+                    from cardine.lifecycle.authorization import update_queued_contracts
+                    if not update_queued_contracts(Path(arguments.project).resolve(), plan.stale_contracts):
+                        return 1
             elif plan.status == "blocked":
                 return 1
         elif arguments.command == "setup":
