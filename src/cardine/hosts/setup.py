@@ -8,7 +8,7 @@ from cardine.shared import atomic, terminal
 from cardine.worktree.paths import repository_identity
 
 from cardine.hosts import permissions
-from cardine.hosts.claude import apply_claude_project_allowlist
+from cardine.hosts.claude import CLAUDE_PROJECT_ALLOWLIST, apply_claude_project_allowlist
 from cardine.hosts.claude import claude_plugin_state, claude_role_policy
 from cardine.hosts.effects import host_operation
 from cardine.hosts.hooks import HooksPlan, _commands, apply_hooks, owns, plan_hooks, registry_path
@@ -480,24 +480,19 @@ def print_setup_plan(plan: SetupPlan) -> None:
         groups[target].append(change.replace(str(project) + "/", "").replace(str(home) + "/", "~/"))
     for target, items in groups.items():
         if items:
-            print(f"{target}: " + "; ".join(items))
-    # Preserve the existing machine-consumed lines verbatim.
-    for change in changes:
-        print(f"- {change}")
+            print(f"{target}:")
+            for item in items:
+                print(f"- {item}")
     print(terminal.section("Next steps"))
-    print("next: cardine setup --apply" if count else "nothing to change")
     if count:
         print("1. " + terminal.command("cardine setup --apply"))
-    print("2. Restart the agent")
-    print("3. " + terminal.command("cardine doctor"))
-    print(terminal.section("Planned file changes"))
+        print("2. Restart the agent")
+        print("3. " + terminal.command("cardine doctor"))
+    else:
+        print("1. Nothing to change")
+        print("2. " + terminal.command("cardine doctor"))
+    print(terminal.section("Status"))
     print(f"codex-user-rules: {plan.user_rules.status} ({plan.user_rules.path})")
-    if plan.user_rules.proposed_text is not None:
-        print(_color_diff("".join(difflib.unified_diff(
-            plan.user_rules.current_text.splitlines(keepends=True),
-            plan.user_rules.proposed_text.splitlines(keepends=True),
-            fromfile=str(plan.user_rules.path), tofile=str(plan.user_rules.path) + " (planned)",
-        ))), end="")
     print(f"worktree-root: {plan.resolution.path}")
     print(f"worktree-root-source: {plan.resolution.source}")
     print(f"directory-exists: {'no' if plan.directory_state == 'missing' else 'yes'}")
@@ -505,12 +500,6 @@ def print_setup_plan(plan: SetupPlan) -> None:
     print(f"directory: {plan.directory_state}")
     print(f"codex-profile: {plan.codex_state}")
     print(f"codex-detail: {plan.codex_detail}")
-    if plan.codex_plan is not None and plan.codex_plan.proposed_text is not None:
-        print("codex-proposed-change:")
-        print(_color_diff("".join(difflib.unified_diff(
-            (plan.codex_plan.current_text or "").splitlines(keepends=True),
-            plan.codex_plan.proposed_text.splitlines(keepends=True),
-            fromfile=str(plan.codex_config), tofile=str(plan.codex_config) + " (planned)"))), end="")
     hooks = getattr(plan, "hooks", None)
     if hooks is not None:
         for registry in hooks.registries:
@@ -520,7 +509,7 @@ def print_setup_plan(plan: SetupPlan) -> None:
         for advisory in hooks.advisories:
             print(f"hook-duplicate: {advisory}")
     print(f"claude-project-allowlist: {plan.claude_state}")
-    print(f"claude-detail: {plan.claude_detail}")
+    print(f"claude-detail: {plan.claude_detail.split('; kept entries of unprovable ownership')[0]}")
     print(f"claude-plugin: {getattr(plan, 'claude_plugin', 'absent').split(';')[0]}")
     local_ignore = getattr(plan, "local_ignore", None)
     if local_ignore is not None:
@@ -567,8 +556,39 @@ def print_setup_plan(plan: SetupPlan) -> None:
     if _is_checkout_root(plan.framework_root):
         print(f"shell-profile-CARDINE_ROOT: export CARDINE_ROOT={plan.framework_root}")
         print('shell-profile-PATH: export PATH="$CARDINE_ROOT/bin:$PATH"')
-    for warning in plan.warnings:
-        print(f"warning: {warning}")
+    diffs = (plan.user_rules.proposed_text is not None or
+             plan.codex_plan is not None and plan.codex_plan.proposed_text is not None)
+    if diffs:
+        print(terminal.section("Planned file changes"))
+    if plan.user_rules.proposed_text is not None:
+        print(f"{plan.user_rules.path}:")
+        print(_color_diff("".join(difflib.unified_diff(
+            plan.user_rules.current_text.splitlines(keepends=True),
+            plan.user_rules.proposed_text.splitlines(keepends=True),
+            fromfile=str(plan.user_rules.path), tofile=str(plan.user_rules.path) + " (planned)",
+        ))), end="")
+    if plan.codex_plan is not None and plan.codex_plan.proposed_text is not None:
+        print(f"{plan.codex_config}:")
+        print(_color_diff("".join(difflib.unified_diff(
+            (plan.codex_plan.current_text or "").splitlines(keepends=True),
+            plan.codex_plan.proposed_text.splitlines(keepends=True),
+            fromfile=str(plan.codex_config), tofile=str(plan.codex_config) + " (planned)"))), end="")
+    extra_allow = []
+    try:
+        settings = json.loads(plan.claude_plan.current_text or "{}")
+        allow = settings.get("permissions", {}).get("allow", [])
+        if isinstance(allow, list):
+            extra_allow = [entry for entry in allow if isinstance(entry, str) and entry not in CLAUDE_PROJECT_ALLOWLIST]
+    except (ValueError, AttributeError):
+        pass
+    warnings = list(plan.warnings) + [
+        f"project allowlist keeps {entry}, which Cardine did not write; remove it from "
+        ".claude/settings.local.json if unwanted" for entry in extra_allow
+    ]
+    if warnings:
+        print(terminal.section("Warnings"))
+        for warning in warnings:
+            print(terminal.warn(warning))
 
 
 def apply_setup(plan: SetupPlan) -> bool:
