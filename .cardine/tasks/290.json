@@ -1,0 +1,113 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "289"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/shared/project_guide.py",
+      "src/cardine/templates/interactive_init.py",
+      "src/cardine/hosts/setup.py",
+      "tests/test_project_guide.py",
+      "tests/test_interactive_init.py",
+      "tests/test_host_worktree_setup.py",
+      "changelog.d/290.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/290.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 290 \u2014 Give guide, init and setup the same structured terminal output",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_project_guide --module test_interactive_init --module test_init --module test_host_worktree_setup --module test_setup_local_ignore --module test_terminal_style --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "7028b48e232626297a8201e9173e923849082d3e573b95ad27c44ebfa28fc027",
+        "digest": "84cdae5a3fd54cf65b5c6888c8b3e88eaac003182dedee4002e719b5d17c5e61",
+        "inputs": {
+          ".cardine/tasks/290.json": null,
+          "tasks/290.md": null
+        },
+        "kind": "creation",
+        "operation_id": "18a58718ae294eec91d9d3a6d16b3dd0",
+        "outputs": {
+          ".cardine/tasks/290.json": "4b47b8778562d26ea6907ef3e11ddd28e22a90223523542298afe28c79181d93",
+          "tasks/290.md": "381e3b8683ea776ce783070c31f2ec3292a4308cc7a5bb8261f801cc0c1fbbd0"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "d3369d026e1dc938b70b0a93655b7bb338c45c8f",
+        "task_id": "290",
+        "tree": "56d57473d2199f8d4fb14b55d365d5d5966ab8ee",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "290",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
