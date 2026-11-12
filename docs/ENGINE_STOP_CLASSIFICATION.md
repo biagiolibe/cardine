@@ -227,8 +227,7 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `cleanup.py:112` | reused or changed task branch preserved | `T` | Branch tip is not the task tip, or the branch returned after its deletion effect. |
 | `cleanup.py:115` | reused task branch reflog preserved | `T` | Branch reflog differs. |
 | `cleanup.py:123` | foreign or dirty task worktree preserved | `T+D` | T: registration differs. D: dirty worktree after landing (data loss risk). |
-| `cleanup.py:126` | reused placeholder path preserved | `T` | Placeholder path identity differs. |
-| `cleanup.py:128` | reused worktree path preserved | `T` | Worktree path is not an empty directory. |
+| `cleanup.py:128` | reused worktree path preserved | `T` | Worktree path contains something other than OS metadata. |
 | `cleanup.py:132` | foreign lifecycle registration preserved | `T` | Lifecycle file bytes differ. |
 | `cleanup.py:141` | locations, done.stderr.strip() or 'branch deletion refused', code) (computed) | `A+D` | `cleanup_branch_stop_code`: `CLEANUP_PARTIAL` is A (retry); unmerged branch is D. |
 | `cleanup.py:146` | locations, detail) (computed) | `A+D` | `worktree remove` partial (A, the message already says `registered-directory-present`/`missing`), or no write access to `.git` (D). |

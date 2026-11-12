@@ -86,13 +86,15 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
         self.assertEqual(self.finish()['status'], 'cleaned')
         self.assertEqual(self.remote(), self.landed)
         self.assertFalse(self.git('branch', '--list', 'task-056').stdout)
-        self.assertEqual(list(self.worker.iterdir()), [])
+        self.assertFalse(self.worker.exists())
         with mock.patch.object(receipts, '_durable', side_effect=AssertionError('repeat wrote')):
             self.assertEqual(self.finish()['status'], 'cleaned')
         self.assertEqual(self.git('rev-list', '--count', 'main').stdout, count)
         result = engine.run_integration_step(self.locations)
         self.assertEqual(result['outcome'], 'done')
         engine.validate_output(result)
+        self.worker.mkdir()
+        (self.worker / '.DS_Store').write_text('metadata')
         done = subprocess.run([sys.executable, '-m', 'cardine.cli', 'run', '056', '--project', str(self.primary)],
                               cwd=self.root, capture_output=True, text=True,
                               env={**os.environ, 'PYTHONPATH': str(ROOT / 'src')})
@@ -182,6 +184,7 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
         from cardine.lifecycle.preview import observe_run
         facts = observe_run(self.locations)
         self.assertEqual((facts.cleanup_pending, facts.landing_complete), (False, True))
+        self.worker.mkdir()
         (self.worker / 'foreign').write_text('keep')
         with self.assertRaises(CardineError):
             self.finish()
@@ -214,9 +217,11 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
 
     def test_reused_path_and_branch_are_preserved_after_completion(self):
         self.finish()
+        self.worker.mkdir()
         (self.worker / 'foreign').write_text('keep')
-        with self.assertRaises(CardineError):
+        with self.assertRaisesRegex(CardineError, 'reused worktree path preserved'):
             self.finish()
+        self.assertEqual((self.worker / 'foreign').read_text(), 'keep')
         (self.worker / 'foreign').unlink()
         self.git('branch', 'task-056', self.landed)
         with self.assertRaises(CardineError):
@@ -382,7 +387,7 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
         self.addCleanup(snapshot.close)
         self.addCleanup(os.chdir, self.previous_cwd)
         first = True
-        for label in ('cleanup_push', 'cleanup_remote', 'cleanup_worktree', 'cleanup_placeholder',
+        for label in ('cleanup_push', 'cleanup_remote', 'cleanup_worktree',
                       'cleanup_branch', 'cleanup_lifecycle'):
             for side in ('before', 'after'):
                 with self.subTest(point=side + '_' + label):
@@ -412,6 +417,7 @@ finish_delivery(locations_for('056', Path(sys.argv[1])))
                     self.assertEqual(self.remote(), self.landed)
                     self.assertIsNone(self.remote('task-056'))
                     self.assertFalse(self.git('branch', '--list', 'task-056').stdout)
+                    self.assertFalse(self.worker.exists())
 
 
 if __name__ == '__main__':

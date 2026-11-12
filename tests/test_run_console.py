@@ -312,7 +312,10 @@ launch_run_request(locations, request,
         fixture.finish()
         path = operation_path(fixture.locations, 'cleanup')
         intent = receipts._load_intent(path)
-        intent['placeholder'][0] += 1
+        fixture.worker.mkdir()
+        (fixture.worker / '.DS_Store').write_text('metadata')
+        intent['placeholder'] = [1, 2, 3]
+        intent['effects']['cleanup_placeholder'] = 'done'
         intent['binding']['authority'] = {}
         receipts._save_intent(path, intent)
         before = path.read_bytes()
@@ -322,9 +325,9 @@ launch_run_request(locations, request,
             self.assertNotIn('056', [task.task_id for task in snapshot.tasks])
             self.assertEqual(load_snapshot(fixture.primary), snapshot)
         self.assertEqual(path.read_bytes(), before)
-        self.assertEqual(fixture.worker.stat(), worker_stat)
-        with self.assertRaises(CardineError):
-            fixture.finish()
+        self.assertEqual((fixture.worker.stat().st_ino, fixture.worker.stat().st_mtime_ns),
+                         (worker_stat.st_ino, worker_stat.st_mtime_ns))
+        self.assertEqual(fixture.finish()['status'], 'cleaned')
         (fixture.worker / 'foreign').write_text('keep')
         task = next(task for task in load_snapshot(fixture.primary).tasks if task.task_id == '056')
         self.assertEqual(task.lifecycle, 'closing')
