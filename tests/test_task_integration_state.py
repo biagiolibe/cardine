@@ -321,7 +321,7 @@ class TaskIntegrationStateTest(unittest.TestCase):
     def test_spike_cannot_integrate_with_accepted_status(self):
         self.start(spike=True)
         self.write_state(required=False)
-        self.assert_stop("TASK_STATE_INVALID", "spike landing requires an outcome")
+        self.assert_stop("SPIKE_OUTCOME_REQUIRED", "needs your judgment")
 
     def test_lean_done_projection(self):
         self.start(workflow="single", preset="lean")

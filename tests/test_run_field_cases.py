@@ -50,8 +50,6 @@ class SpikeFieldCaseTest(unittest.TestCase):
     def finish(self, project, outcome):
         worker = project.commit_implementation()
         record_spike_outcome(worker, TASK, outcome)
-        project.git('add', '.', cwd=worker)
-        project.git('commit', '-m', 'Record outcome', cwd=worker)
         project.deliver()
         self.assertEqual(project.drive()[-1], ('landing', 'cleanup', 'done'))
         return json.loads(project.git('show', 'main:.cardine/tasks/' + TASK + '.json'))
@@ -82,10 +80,9 @@ class SpikeFieldCaseTest(unittest.TestCase):
         with DisposableDelivery(**SPIKE) as project:
             self.start(project)
             project.implement()
-            self.assertEqual(project.run()['step'], 'candidate')
             stopped = project.run()
-            self.assertEqual((stopped['outcome'], stopped['stop']['code']), ('blocked', 'TASK_STATE_INVALID'))
-            self.assertEqual(stopped['diagnostics'][0]['message'], 'spike landing requires an outcome')
+            self.assertEqual((stopped['outcome'], stopped['stop']['code']), ('blocked', 'SPIKE_OUTCOME_REQUIRED'))
+            self.assertIn('needs your judgment', stopped['diagnostics'][0]['message'])
             self.assertNotEqual(project.git('branch', '--list', 'task-' + TASK), '')
 
     def test_work_request_does_not_name_the_outcome_command(self):

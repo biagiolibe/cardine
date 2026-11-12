@@ -38,8 +38,14 @@ def _receipted(kind):
             operation = kind + ':' + digest(encoded(dict(target=target, **kwargs)))
             with task_lock(project_root, task_id):
                 if pending_operation(project_root, task_id):
-                    return replay_operation(project_root, task_id, kind=operation)
-                return function(project_root, task_id, target, **kwargs, _operation=operation)
+                    result = replay_operation(project_root, task_id, kind=operation)
+                else:
+                    result = function(project_root, task_id, target, **kwargs, _operation=operation)
+                if kind == 'spike_outcome':
+                    relative = state_path(project_root, task_id).relative_to(project_root).as_posix()
+                    if git_output(project_root, 'status', '--porcelain', '--', relative):
+                        git_output(project_root, 'commit', '-q', '-m', f'Record spike {task_id} outcome', '--', relative)
+                return result
         return execute
     return decorate
 

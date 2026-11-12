@@ -21,6 +21,9 @@ from cardine.shared.models import ResolvedTaskIdentity
 from cardine.worktree.storage import _merge_head_path
 
 
+SPIKE_OUTCOME_CAUSE = "the developer must judge the spike outcome"
+
+
 @dataclass(frozen=True)
 class LeaseFacts:
     readable: bool = True

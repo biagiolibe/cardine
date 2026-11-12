@@ -43,6 +43,8 @@ class MachineTaskStateTest(unittest.TestCase):
         self.path = task_state.state_path(self.root, "001")
         self.write(self.state())
         freeze_record(self.root, "001", self.record)
+        self.git("config", "user.name", "Test")
+        self.git("config", "user.email", "test@example.test")
         self.git("add", ".")
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.test", "commit", "-qm", "Initial")
 

@@ -402,7 +402,6 @@ class ExecutionBoundariesTest(unittest.TestCase):
         self.commit('Declare Lean review-required spike')
         self.implemented(deliverable=True)
         owner_tasks_transitions.record_spike_outcome(self.worker, '001', 'ANSWERED')
-        self.commit('Record research result')
         # The outcome is metadata and does not waive the task's required review.
         self.assertEqual(self.state()['status'], 'in_progress')
         self.assertEqual(self.state()['contract']['preset'], 'lean')

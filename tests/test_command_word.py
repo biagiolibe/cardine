@@ -63,6 +63,7 @@ class CommandWordTest(unittest.TestCase):
         baseline["INTEGRITY_MISMATCH"] = {"human_decision": True, "resolution": "guardrail"}
         # Task 274 stops for a recoverable provider condition requiring human action.
         baseline["CI_NOT_STARTED"] = {"human_decision": True, "resolution": "recoverable"}
+        baseline["SPIKE_OUTCOME_REQUIRED"] = {"human_decision": True, "resolution": "recoverable"}
         self.assertEqual(len(entries), len(baseline))
         self.assertEqual({s["code"]: {k: s[k] for k in ("human_decision", "resolution")} for s in entries}, baseline)
         commands = []
