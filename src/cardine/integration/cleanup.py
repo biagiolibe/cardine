@@ -74,7 +74,7 @@ def completed(locations, intent):
 
     Every effect the intent requires is recorded done, and Git still shows the
     result: `main` contains the landed commit, the branch, the registration, and the
-    lifecycle file are gone, and the placeholder is the one cleanup created. A later
+    lifecycle file are gone, and the old path is absent or contains only OS metadata. A later
     `cardine authorize` changes the accepted authority, not this landed fact. Any
     other observation falls through to the full replay, which preserves reused paths.
     """
@@ -92,17 +92,14 @@ def ambiguous_completion(locations):
 
 def _completed_observation(locations, intent, *, historical):
     binding, effects = intent['binding'], intent.get('effects', {})
-    required = ['cleanup_worktree', 'cleanup_placeholder', 'cleanup_branch', 'cleanup_lifecycle']
+    required = ['cleanup_worktree', 'cleanup_branch', 'cleanup_lifecycle']
+    if 'cleanup_placeholder' in effects or 'placeholder' in intent:
+        required.append('cleanup_placeholder')
     if binding.get('finalDigest') is not None:
         required.append('cleanup_push')
     if binding.get('remote') is not None:
         required.append('cleanup_remote')
     root, worker = locations.primary, locations.worktree
-    def same_placeholder():
-        recorded, actual = intent.get('placeholder'), _file_identity(worker)
-        return (recorded == actual if not historical else
-                isinstance(recorded, list) and len(recorded) == 3
-                and actual is not None and recorded[1:] == actual[1:])
     return (all(effects.get(name) == 'done' for name in required)
             and binding['task'] == locations.task_id and binding['project'] == str(root)
             and binding['worker'] == str(worker)
@@ -110,8 +107,7 @@ def _completed_observation(locations, intent, *, historical):
             and _branch_commit(root, binding['branch']) is None
             and not any(Path(item['worktree']).resolve() == worker for item in _git_worktrees(root))
             and not Path(binding['lifecycle']).exists()
-            and same_placeholder()
-            and worker.is_dir() and not any(worker.iterdir()))
+            and (not worker.exists() and not worker.is_symlink() or _only_os_metadata(worker)))
 
 
 def _inactive(locations):
@@ -149,6 +145,16 @@ def _file_identity(path):
     return [stat.st_dev, stat.st_ino, stat.st_ctime_ns]
 
 
+def _only_os_metadata(path):
+    if path.is_symlink() or not path.is_dir():
+        return False
+    names = {'.DS_Store', '.localized', 'Thumbs.db', 'desktop.ini', '.Spotlight-V100', '.fseventsd'}
+    return all(not entry.is_symlink() and (
+        (entry.is_file() and (entry.name in names or entry.name.startswith('._')))
+        or (entry.is_dir() and entry.name in {'.Spotlight-V100', '.fseventsd'}))
+        for entry in path.iterdir())
+
+
 def _local(locations, intent):
     _remote(locations, intent)
     root, worker, binding = locations.primary, locations.worktree, intent['binding']
@@ -167,10 +173,8 @@ def _local(locations, intent):
                 or ((worker / '.git').exists() and receipts.digest((worker / '.git').read_bytes()) != binding['registrationDigest'])
                 or (worker.exists() and git_output(worker, 'status', '--porcelain'))):
             _fail(locations, 'foreign or dirty task worktree preserved')
-    elif worker.exists():
-        if intent.get('placeholder') is not None and _file_identity(worker) != intent['placeholder']:
-            _fail(locations, 'reused placeholder path preserved')
-        if worker.is_symlink() or not worker.is_dir() or any(worker.iterdir()):
+    elif worker.exists() or worker.is_symlink():
+        if not _only_os_metadata(worker):
             _fail(locations, 'reused worktree path preserved')
     state = Path(binding['lifecycle'])
     receipts.safe_path(state.parent, state.name)
@@ -219,7 +223,7 @@ def _new_intent(locations, *, delivery):
     recoverable = {'missing-worktree', 'unregistered-worktree'}
     if not ready and (delivery or set(inspected['errors']) - recoverable):
         _fail(locations, 'cleanup preflight failed: ' + ', '.join(inspected['errors']))
-    if not ready and worker.exists() and (worker.is_symlink() or not worker.is_dir() or any(worker.iterdir())):
+    if not ready and (worker.exists() or worker.is_symlink()) and not _only_os_metadata(worker):
         _fail(locations, 'reused worktree path preserved')
     tip = _branch_commit(root, identity.branch_name)
     if tip is None:
@@ -328,10 +332,16 @@ def finish_delivery(locations, *, delivery=True):
         def effect(name, apply, complete):
             receipts.external_effect(path, intent, name, lambda: _local(locations, intent), apply, complete)
         effect('cleanup_worktree', lambda: _command(locations, 'worktree', 'remove', str(worker)), lambda: not registered())
-        effect('cleanup_placeholder', lambda: worker.mkdir(parents=True, exist_ok=True), lambda: worker.is_dir())
-        if 'placeholder' not in intent:
-            intent['placeholder'] = _file_identity(worker)
-            receipts._save_intent(path, intent)
+        if 'cleanup_placeholder' in intent.get('effects', {}) and intent['effects']['cleanup_placeholder'] != 'done':
+            effect('cleanup_placeholder', lambda: None, lambda: True)
+        if _only_os_metadata(worker):
+            for entry in worker.iterdir():
+                if entry.is_symlink() or entry.is_file():
+                    entry.unlink()
+                elif entry.is_dir() and not any(entry.iterdir()):
+                    entry.rmdir()
+            if not any(worker.iterdir()):
+                worker.rmdir()
         branch = intent['binding']['branch']
         effect('cleanup_branch', lambda: _command(locations, 'branch', '-d', branch),
                lambda: _branch_commit(root, branch) is None)

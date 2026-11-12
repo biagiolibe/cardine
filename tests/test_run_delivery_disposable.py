@@ -20,9 +20,9 @@ class DisposableDeliveryTest(unittest.TestCase):
     def assert_landed(self, project):
         branches = project.git('branch', '--list', 'task-' + TASK)
         self.assertEqual(branches, '')
-        # Cleanup unregisters the worktree and keeps only an empty placeholder directory.
+        # Cleanup unregisters and removes the worktree.
         self.assertEqual(project.git('worktree', 'list', '--porcelain').count('worktree '), 1)
-        self.assertEqual(list(project.locations.worktree.iterdir()), [])
+        self.assertFalse(project.locations.worktree.exists())
         self.assertEqual(project.remote_main(), project.git('rev-parse', 'main'))
         self.assertEqual(project.git('status', '--porcelain'), '')
         self.assertEqual(project.git('show', 'main:src/result.py'), 'result = 1')
