@@ -121,7 +121,7 @@
   },
   "templates/single/docs/workflows/REVIEW.md": {
     "task-worktree-review-procedure": {
-      "sha256": "c41a323b6625ed783af0e6e5bef8ea822e579588053e6817fb1edbc606ac53ef",
+      "sha256": "7ae6267bfa1214d670e22efbcd060bbd542002f3562b0390a12c25034587225c",
       "version": 6
     }
   },
