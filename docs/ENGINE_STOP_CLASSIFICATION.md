@@ -252,7 +252,7 @@ Of the 170 sites, 106 raise a plain `CardineError` (reported as `COMMAND_REFUSED
 | `merge.py:81` | TASK_STATE_INVALID: {relative}: expected readable UTF-8 JSON; found {error} | `T` | Task state at the task commit is not UTF-8 JSON. |
 | `merge.py:86` | TASK_STATE_MISSING: {relative}: expected tracked state at {task_commit}; found missing | `T` | No tracked state at the task commit. |
 | `merge.py:102` | TASK_STATE_INVALID: {relative}: status expected {terminal}; found {state['status']!r} | `T` | State at the task commit is not `in_progress`. |
-| `merge.py:107` | TASK_STATE_INVALID: spike landing requires an outcome | `W` | A landed spike needs an `outcome`; the agent records it. |
+| `merge.py` | SPIKE_OUTCOME_REQUIRED: spike needs a developer judgment | `W` | The developer records the outcome before integration. |
 | `merge.py:110` | REVIEW_NOT_APPROVED: cause: missing; {relative}: review.verdict expected APPROVE; found {review... | `D` | `REVIEW_NOT_APPROVED`: verdict missing. |
 | `merge.py:121` | REVIEW_NOT_APPROVED: cause: missing; no issued review decision receipt | `T` | Verdict has no issued decision receipt. |
 | `merge.py:125` | REVIEW_NOT_APPROVED: cause: stale; | `T` | Reviewed commit is not an ancestor of the task commit. |

@@ -19,7 +19,12 @@
       "tests/test_run_end_to_end.py",
       "docs/TROUBLESHOOTING.md",
       "docs/RUN_COMMANDS.md",
-      "changelog.d/300.md"
+      "changelog.d/300.md",
+      "src/cardine/stops/registry.py",
+      "scripts/check_repository.py",
+      "tests/test_run_field_cases.py",
+      "tests/test_task_integration_state.py",
+      "docs/ENGINE_STOP_CLASSIFICATION.md"
     ],
     "hostImpact": {
       "classification": null,
@@ -71,11 +76,22 @@
         "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
         "repository-check": "python3 scripts/check_repository.py",
         "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
-        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_end_to_end --module test_machine_task_state --module test_integration_projections --module test_stop_registry --module test_run_nonrun_causes --module test_task_integration_state --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_run_end_to_end --module test_run_field_cases --module test_machine_task_state --module test_integration_projections --module test_stop_registry --module test_run_nonrun_causes --module test_task_integration_state --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
       }
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:64487fcdfd6c6d696387779e0c63cc6e90968f9ecc6c402b89f6db457bea0493",
+      "at": "2026-11-12T16:28:17.303493Z",
+      "before": "sha256:9c8e9ea5693e2fcaa5d97826928dc00dc8acd6ae6347c0faabde98bcdb8f9922",
+      "changedFields": [
+        "expectedCodeSurface",
+        "validation"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -123,6 +139,30 @@
         "source": "8d06a4328940c2bd75b8815bd2c2d885764ff148",
         "task_id": "300",
         "tree": "9222707e1c3d54de3a030ff240659e1b523098d8",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "9fcf7e1aa44ea913c294e566a253592697dc7949610f7fc1b9df6bf2e046a54a",
+        "digest": "738e25e06bebb5146719e7a817ffe21c4f822ac5cf9c3685e8cc7c6e5ec03015",
+        "inputs": {
+          ".cardine/tasks/300.json": "570389ce24e262b628f281902451360b851e513ae7323bae979f2e60ef2959f5",
+          "tasks/300.md": "2b458712adfbf91aa037bc02bf2d1fc2d0464728b8a5466fa84c296fa5df30cd"
+        },
+        "kind": "contract_revision",
+        "operation_id": "78c79816577f421596057e59071afb5d",
+        "outputs": {
+          ".cardine/tasks/300.json": "31b5b1a797f8f7cd0f4f308406677049dee6bfbbc7bb41c90d5888ae724539a9",
+          "tasks/300.md": "2b458712adfbf91aa037bc02bf2d1fc2d0464728b8a5466fa84c296fa5df30cd"
+        },
+        "predecessor": "6300a9ab1df0e2a70ba052e262ad1360ebff47a030e1e131fd6f9ee808ac7e38",
+        "result": "verified",
+        "source": "0b2fa80bbf4786c600eb20932af666c48bfc8e5d",
+        "task_id": "300",
+        "tree": "732e1b47cd6cd29e0b295338b0f9c611155c4b11",
         "version": 1
       }
     ]
