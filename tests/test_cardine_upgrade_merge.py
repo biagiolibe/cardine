@@ -204,7 +204,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         policy = self.framework / "templates/single/PROJECT_WORKFLOW.md"
         incoming_policy = policy.read_text(encoding="utf-8")
         marker = re.search(
-            r"<!-- CARDINE:BEGIN capability=review-policy v3 -->\n?.*?"
+            r"<!-- CARDINE:BEGIN capability=review-policy v4 -->\n?.*?"
             r"<!-- CARDINE:END -->\n?",
             incoming_policy,
             re.DOTALL,
@@ -247,7 +247,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         )
         self.assertIsNotNone(appended)
         self.assertIn("## Project validation baseline", appended)
-        self.assertIn("capability=review-policy v3", appended)
+        self.assertIn("capability=review-policy v4", appended)
 
         checked = self.run_cli("upgrade", "--check")
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
@@ -258,7 +258,7 @@ class UpgradeMergeTest(SyntheticUpgradeFixtureMixin, unittest.TestCase):
         upgraded = local_policy.read_text(encoding="utf-8")
         self.assertIn("## Project validation baseline", upgraded)
         self.assertIn("capability=validation-scoping v2", upgraded)
-        self.assertIn("capability=review-policy v3", upgraded)
+        self.assertIn("capability=review-policy v4", upgraded)
 
     def test_marker_insertion_promotes_an_identical_unmarked_local_rule(self) -> None:
         template = (
