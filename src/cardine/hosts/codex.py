@@ -668,6 +668,10 @@ def codex_role_policy(role: str, project_root: Path, worktree_root: Path, worktr
     Holds rules and paths only; no credential, token, or environment value.
     """
     identity = _role_identity(role)
+    if role == "reviewer":
+        settings = {"sandbox": "read-only", "ephemeral": True, "answer_schema": "review-answer-v1"}
+        return permissions.RolePolicy("codex", role, identity, settings,
+                                      permissions.policy_digest("codex", role, settings))
     root = _bounded_root(worktree_root)
     roots = permissions.protected_roots((project_root, worktree), common_dir)
     settings = {"profile": {"name": identity, **_role_profile_table(role, root)},

@@ -18,8 +18,10 @@ import subprocess
 import sys
 
 from cardine.hosts.claude import claude_role_profile
-from cardine.hosts.codex import codex_role_profiles
+from cardine.hosts.codex import codex_role_profile, codex_role_profiles
 from cardine.shared.errors import CardineError
+from cardine.shared import atomic
+from cardine.shared.git import _run_git
 
 # Runs once per request inside its own process: the exclusive `started` marker
 # guarantees that a replayed spawn never runs the host twice, and `result.json`
@@ -89,6 +91,24 @@ def _read(path: Path):
         return json.loads(path.read_bytes())
     except FileNotFoundError:
         return None
+
+
+def reviewer_prompt(request) -> str:
+    """Shared review instructions; all inputs are files readable without commands."""
+    root = Path(request['root'])
+    from cardine.shared.layout import names
+    from cardine.tasks.state_core import state_path
+    state = _read(state_path(root, request['task_id']))
+    record = state['contract']['recordPath']
+    evidence = names().execution_evidence_path(request['task_id'])
+    ci = state.get('run', {}).get('ci', {})
+    ci_result = ci.get('phase', 'not recorded')
+    return (f"Review task {request['task_id']}, record {root / record}, commit {request['source']}. "
+            f"Read the complete diff in {request['review_diff']}. "
+            f"Read measured evidence in {root / evidence}; CI result: {ci_result}. "
+            "Check correctness, scope, and missing tests against the task acceptance criteria. "
+            "Edit nothing. End with the JSON answer required by review-answer-v1: "
+            "verdict (APPROVE, CHANGES_REQUESTED, or BLOCKED) and findings.")
 
 
 class HostSessionTransport:
@@ -165,6 +185,8 @@ class HostSessionTransport:
         raise NotImplementedError
 
     def prompt(self, request) -> str:
+        if request['role'] == 'reviewer':
+            return reviewer_prompt(dict(request, review_diff=str(self._path(request) / 'review.diff')))
         work = request['work']
         return (f"Cardine {request['role']} session for task {request['task_id']}. "
                 f"Contract digest {request['contract']}. Work only within {work['worktree']}.")
@@ -187,6 +209,12 @@ class HostSessionTransport:
             _write_atomic(path / 'session.json', session)
         session = _read(path / 'session.json')
         if not (path / 'started').exists() and not (path / 'launch.json').exists():
+            if request['role'] == 'reviewer':
+                from cardine.lifecycle.execution import _execution_location
+                base = _execution_location(Path(request['root']), request['task_id'])['base_commit']
+                diff = _run_git(Path(request['root']), 'diff', f"{base}..{request['source']}", text=False)
+                diff.check_returncode()
+                atomic.replace_bytes(path / 'review.diff', diff.stdout)
             credential = self.issue(_ROLE_ACTIONS[request['role']], binding=session)
             _write_atomic(path / 'launch.json', dict(argv=self.argv(request, path), cwd=request['root'],
                           env={**os.environ, **self.environment}, credential=credential), exclusive=True)
@@ -225,8 +253,17 @@ class CodexTransport(HostSessionTransport):
     def profile(self, role):
         if role not in self.policies:
             return None
+        if role == 'reviewer':
+            return codex_role_profile(self.policies[role], self.proofs.get(role))
         return codex_role_profiles(self.plan, self.policies, self.proofs).get(role)
 
     def argv(self, request, path):
+        if request['role'] == 'reviewer':
+            from cardine.shared.paths import framework_root
+            schema = framework_root() / 'schemas/review-answer-v1.schema.json'
+            prompt = reviewer_prompt(dict(request, review_diff=str(path / 'review.diff')))
+            return [self.executable, 'exec', '--sandbox', 'read-only', '--ephemeral',
+                    '--skip-git-repo-check', '--output-schema', str(schema),
+                    '-o', str(path / 'output.json'), prompt]
         return [self.executable, 'exec', '--profile', self.policies[request['role']].identity,
                 self.prompt(request)]

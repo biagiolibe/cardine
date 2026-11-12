@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cardine.shared.layout import names
+from cardine.shared import atomic
 
 from cardine.worktree.paths import repository_identity
 
@@ -925,6 +926,51 @@ def codex_decision_evaluator(codex_executable: str, rules: tuple[Path, ...], *, 
     return evaluate
 
 
+def codex_sandbox_evaluator(codex_executable: str, *, timeout: int = 30):
+    """Execute real commands in an isolated read-only sandbox, never in the project.
+
+    A fresh minimal Git repository and isolated Codex home belong to each probe.
+    A failed command counts as a denial only when its target remains unchanged.
+    """
+    def evaluate(tool: str, tool_input: dict) -> str | None:
+        if tool != permissions.CODEX_SHELL:
+            return None
+        with tempfile.TemporaryDirectory(prefix="cardine-review-proof-") as directory:
+            root = Path(directory)
+            home = root / 'codex-home'
+            home.mkdir()
+            atomic.replace_bytes(home / 'config.toml',
+                                 b'[permissions.cardine-review-proof]\nextends = ":read-only"\n')
+            repo = root / 'repo'
+            repo.mkdir()
+            try:
+                _run_git(repo, 'init', '-b', 'task-001', timeout=timeout).check_returncode()
+                atomic.replace_bytes(repo / 'tracked.txt', b'read-control\n')
+                state = repo / '.cardine/tasks/001.json'
+                state.parent.mkdir(parents=True)
+                atomic.replace_bytes(state, b'{}\n')
+                atomic.replace_bytes(repo / '.cardine/project.json', b'{"version": 1, "preset": "lean"}')
+                (repo / 'tasks').mkdir()
+                atomic.replace_bytes(repo / 'tasks/001.md', b'# Task 001\n')
+                _run_git(repo, 'add', '.', timeout=timeout).check_returncode()
+                def snapshot():
+                    return {str(p.relative_to(repo)): p.read_bytes()
+                            for p in repo.rglob('*') if p.is_file()}
+                before = snapshot()
+                result = subprocess.run(
+                    [codex_executable, 'sandbox', '-P', 'cardine-review-proof', '-C', str(repo),
+                     '/bin/sh', '-c', tool_input['command']], cwd=repo,
+                    env={**os.environ, 'CODEX_HOME': str(home)}, text=True,
+                    capture_output=True, check=False, timeout=timeout)
+                unchanged = snapshot() == before
+            except (OSError, subprocess.SubprocessError) as error:
+                raise ProbeInterrupted(type(error).__name__) from error
+            if tool_input['command'] == 'cat tracked.txt':
+                return 'allow' if result.returncode == 0 and result.stdout == 'read-control\n' and unchanged else 'deny'
+            return 'deny' if result.returncode != 0 and unchanged else 'allow'
+    return evaluate
+
+
 def prove_role_policy(policy: permissions.RolePolicy, evaluate) -> RoleProofResult:
     """Run the whole probe matrix through `evaluate(tool, input) -> 'deny' | 'allow' | None`.
 
@@ -980,6 +1026,11 @@ def role_launch_states(host: str, project_root: Path, worktree_root: Path, home:
             continue
         if evaluate is not None:
             states[key] = prove_role_policy(policy, evaluate).state
+        elif host == "codex" and role == "reviewer":
+            if not executable:
+                states[key] = "unverified: codex is not on PATH"
+            else:
+                states[key] = prove_role_policy(policy, codex_sandbox_evaluator(executable)).state
         elif host == "claude":
             # Claude exposes no host decision probe: never inferred from settings text.
             states[key] = "unsupported (D3): no host decision probe"

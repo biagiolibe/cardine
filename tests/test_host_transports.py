@@ -103,12 +103,27 @@ class HostTransportsTest(unittest.TestCase):
                 self.assertEqual(reviewer['response']['result'], 'completed')
                 lines = self.runs()
                 self.assertEqual(len(lines), 2)
-                self.assertTrue(all(flag in line for line in lines))
+                self.assertIn(flag, lines[0])
+                self.assertIn("--sandbox read-only" if name == "codex" else flag, lines[1])
                 if name == 'codex':
                     self.assertIn('cardine-implementer', lines[0])
-                    self.assertIn('cardine-reviewer', lines[1])
+                    self.assertIn('--ephemeral', lines[1])
                 self.assertEqual(self.settle(host, 'reviewer', name), reviewer)
                 self.assertEqual(len(self.runs()), 2)
+
+    def test_codex_reviewer_argv_and_diff_are_pinned(self):
+        host = self.transport('codex')
+        record = self.settle(host)
+        directory = host.directory / record['request']['request_id']
+        argv = json.loads((directory / 'launch.json').read_text())['argv']
+        schema = Path(__file__).resolve().parents[1] / 'schemas/review-answer-v1.schema.json'
+        self.assertEqual(argv[:-1], [str(self.executable), 'exec', '--sandbox', 'read-only',
+                         '--ephemeral', '--skip-git-repo-check', '--output-schema', str(schema),
+                         '-o', str(directory / 'output.json')])
+        self.assertLess(len(argv[-1].split()), 250)
+        for value in ('001', 'tasks/001.md', record['request']['source'], 'review.diff', 'evidence', 'CI result'):
+            self.assertIn(value, argv[-1])
+        self.assertTrue((directory / 'review.diff').is_file())
 
     def test_wrapper_collects_only_json_objects_and_issues_no_verdict_action(self):
         for index, content in enumerate((None, 'invalid', '[]', '{"verdict":"APPROVE","findings":"OK"}')):
@@ -208,16 +223,16 @@ class HostTransportsTest(unittest.TestCase):
             host = self.transport(name)
             cases = (
                 ('complete', self.doctor_proofs(host.policies), {'implementer': True, 'reviewer': True}),
-                ('wrong decision', self.doctor_proofs(host.policies, wrong=('reviewer', 'push-main')),
+                ('wrong decision', self.doctor_proofs(host.policies, wrong=('reviewer', 'write-worktree')),
                  {'implementer': name == 'claude', 'reviewer': False}),
                 ('unobserved probe', self.doctor_proofs(host.policies, hidden=('implementer', 'edit-state')),
-                 {'implementer': False, 'reviewer': name == 'claude'}),
+                 {'implementer': False, 'reviewer': True}),
             )
             for label, proofs, expected in cases:
                 host.proofs = proofs
                 with self.subTest(host=name, case=label):
                     self.assertEqual({role: host.profile(role).enforced for role in permissions.ROLES}, expected)
-            host.proofs = self.doctor_proofs(host.policies, wrong=('reviewer', 'push-main'))
+            host.proofs = self.doctor_proofs(host.policies, wrong=('reviewer', 'write-worktree'))
             with self.assertRaises(CardineStop) as caught:
                 self.launch(host)
             self.assertEqual(caught.exception.code, 'COMMAND_REFUSED')

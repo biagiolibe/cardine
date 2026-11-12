@@ -494,6 +494,14 @@ def probe_matrix(role: str, host: str = "claude") -> dict[str, tuple]:
 
 
 def _base_probe_matrix(role: str) -> dict[str, tuple]:
+    if role == "reviewer":
+        return {
+            "write-worktree": ("Bash", {"command": "echo changed > tracked.txt", "target": "tracked.txt"}, "deny"),
+            "write-state": ("Bash", {"command": "echo changed > .cardine/tasks/001.json", "target": ".cardine/tasks/001.json"}, "deny"),
+            "write-git": ("Bash", {"command": "echo changed > .git/config", "target": ".git/config"}, "deny"),
+            "verdict-developer": ("Bash", {"command": "cardine review verdict 001 APPROVE --owner"}, "deny"),
+            "read-tracked": ("Bash", {"command": "cat tracked.txt"}, "allow"),
+        }
     state, evidence = ".cardine/tasks/001.json", ".cardine/evidence/001.json"
     deny = {
         "push-main": ("Bash", {"command": "git push origin main"}, "deny"),
