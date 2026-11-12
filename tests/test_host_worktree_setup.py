@@ -61,8 +61,9 @@ class WorktreeRootSetupTest(unittest.TestCase):
                 owner_hosts_setup.print_setup_plan(initial)
             lines = output.getvalue().splitlines()
             self.assertNotIn("changes:", lines)
-            for change in initial.changes:
-                self.assertEqual(lines.count(f"- {change}"), 1)
+            self.assertEqual(sum(line.startswith("- ") for line in lines), len(initial.changes))
+            headings = ["Summary", "Next steps", "Status", "Planned file changes", "Warnings"]
+            self.assertEqual(sorted(headings, key=lines.index), headings)
             owner_hosts_setup.apply_setup(initial)
         for state in ("absent", "mismatch: plugin 0.9.1, CLI 0.9.2", "match"):
             for executable in (None, "/fake/claude"):
@@ -86,7 +87,22 @@ class WorktreeRootSetupTest(unittest.TestCase):
                     self.assertIn(f"changes on --apply: {int(expected)}", lines)
                     self.assertEqual(lines.count(f"- {change}"), int(expected))
                     self.assertNotIn("changes:", lines)
-                    self.assertIn("next: cardine setup --apply" if expected else "nothing to change", lines)
+                    self.assertIn("1. cardine setup --apply" if expected else "1. Nothing to change", lines)
+                    self.assertEqual("2. Restart the agent" in lines, expected)
+                    self.assertNotIn("Planned file changes", lines if not expected else [])
+
+    def test_setup_warns_about_unmanaged_project_allowlist_entries(self) -> None:
+        settings = self.home / ".claude/settings.local.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(json.dumps({"permissions": {"allow": ["Bash(git push origin main)"]}}))
+        plan = owner_hosts_setup.plan_setup(None, self.codex_config, environment=self.environment, home=self.home)
+        output = io.StringIO()
+        with redirect_stdout(output):
+            owner_hosts_setup.print_setup_plan(plan)
+        lines = output.getvalue().splitlines()
+        self.assertIn("Warning: project allowlist keeps Bash(git push origin main), which Cardine did not write; "
+                      "remove it from .claude/settings.local.json if unwanted", lines)
+        self.assertNotIn("kept entries of unprovable ownership", next(line for line in lines if line.startswith("claude-detail:")))
 
     def test_setup_result_follows_plugin_alignment_and_combines_both_changes(self) -> None:
         from cardine import cli
