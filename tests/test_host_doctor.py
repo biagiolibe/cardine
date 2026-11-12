@@ -44,6 +44,15 @@ class HostDoctorTest(unittest.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         self.addCleanup(self.temporary.cleanup)
+        # All doctor calls resolve a disposable host; no test invokes the real Codex.
+        host = self.bin / 'codex'
+        host.write_text("#!/usr/bin/env python3\nimport json, sys\n"
+                        "if sys.argv[1] != 'execpolicy': sys.exit(1)\n"
+                        "command = sys.argv[sys.argv.index('--') + 1:]\n"
+                        "decision = ('forbidden' if command[:2] == ['git', 'push'] and '--force' in command "
+                        "else 'allow' if command[:2] == ['cardine', 'worktree'] else None)\n"
+                        "print(json.dumps({'decision': decision}))\n", encoding='utf-8')
+        host.chmod(0o755)
 
     def register(self, host: str, *, names: tuple[str, ...] = ("read-guard",)) -> Path:
         path = owner_hosts_hooks.registry_path(self.home, host)
@@ -137,7 +146,6 @@ class HostDoctorTest(unittest.TestCase):
         report = owner_hosts_setup.host_doctor("codex", self.project, self.config, self.worktrees, home=self.home)
         self.assertNotIn("validation-command-policy", report)
 
-    @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_host_evaluates_the_installed_user_policy_and_adopter_tests_are_undecided(self) -> None:
         rules = self.home / ".codex/rules/cardine.rules"
         rules.parent.mkdir(parents=True)
@@ -156,7 +164,6 @@ class HostDoctorTest(unittest.TestCase):
         self.assertIsNone(decision("python3", "scripts/check_repository.py"))
         self.assertIsNone(decision("python3", "scripts/run_tests.py", "--parallel"))
 
-    @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
     def test_codex_doctor_evaluates_the_combined_installed_policy(self) -> None:
         rules = self.home / ".codex/rules/cardine.rules"
         rules.parent.mkdir(parents=True)
@@ -296,8 +303,8 @@ class HostDoctorTest(unittest.TestCase):
 
     def test_codex_without_installed_role_rules_is_not_ready(self) -> None:
         report = owner_hosts_setup.host_doctor("codex", self.project, self.config, self.worktrees, home=self.home)
-        for role in permissions.ROLES:
-            self.assertEqual(report["role-launch-" + role], "approval-required: role rules not installed")
+        self.assertEqual(report["role-launch-implementer"], "approval-required: role rules not installed")
+        self.assertEqual(report["role-launch-reviewer"], "unsupported (D3): false deny read-tracked")
 
     def fake_codex(self, body: str) -> str:
         path = self.bin / "fake-codex"
@@ -319,29 +326,29 @@ class HostDoctorTest(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(owner_hosts_setup.ProbeInterrupted):
                 evaluate("shell", {"command": "git status"})
 
-    @unittest.skipUnless(shutil.which("codex"), "codex is not on PATH; cannot evaluate execpolicy decisions")
-    def test_real_codex_policy_is_declared_unsupported_with_its_gaps_named(self) -> None:
-        for role in permissions.ROLES:
-            path = owner_hosts_codex.role_rules_path(self.home / ".codex", role)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(owner_hosts_codex._role_rules_text(role), encoding="utf-8")
-        before = snapshot(self.root)
-        report = owner_hosts_setup.host_doctor("codex", self.project, self.config, self.worktrees, home=self.home)
-        self.assertEqual(snapshot(self.root), before)
-        for role in permissions.ROLES:
-            self.assertTrue(report["role-launch-" + role].startswith("unsupported (D3): "), report["role-launch-" + role])
-        policy = self.policy("codex", "implementer")
-        layers = (owner_hosts_codex.role_rules_path(self.home / ".codex", "implementer"),)
-        evaluate = owner_hosts_setup.codex_decision_evaluator(shutil.which("codex"), layers)
-        matrix = permissions.probe_matrix("implementer", "codex")
-        for name in ("push-main", "verdict-developer", "cancel"):
-            self.assertEqual(evaluate(*matrix[name][:2]), "deny", name)
-        for name in ("inspect-status", "commit", "task-close"):
-            self.assertEqual(evaluate(*matrix[name][:2]), "allow", name)
-        result = owner_hosts_setup.prove_role_policy(policy, evaluate)
-        self.assertFalse(permissions.proof_enforces(policy, result.proof))
-        self.assertIn("unobserved edit-state", result.gaps)
-        self.assertIn("not denied redirect", result.gaps)  # a host fact: execpolicy has no redirect rule
+    def test_codex_reviewer_sandbox_proof_executes_only_in_temporary_repositories(self):
+        for allow_write in (False, True):
+            executable = self.root / 'sandbox-host'
+            executable.write_text("#!/usr/bin/env python3\n" +
+                "import pathlib, subprocess, sys\n" +
+                "assert sys.argv[1:4] == ['sandbox', '-P', 'cardine-review-proof']\n" +
+                "repo = pathlib.Path(sys.argv[5])\n" +
+                "assert repo != pathlib.Path(" + repr(str(self.project)) + ")\n" +
+                "assert (repo / '.git').is_dir()\n" +
+                "command = sys.argv[-1]\n" +
+                ("if command == 'echo changed > tracked.txt':\n"
+                 "    sys.exit(subprocess.call(command, shell=True, cwd=repo))\n" if allow_write else "") +
+                "if command == 'cat tracked.txt':\n"
+                "    sys.exit(subprocess.call(command, shell=True, cwd=repo))\n"
+                "sys.exit(1)\n")
+            executable.chmod(0o755)
+            before = snapshot(self.project)
+            result = owner_hosts_setup.role_launch_states('codex', self.project, self.worktrees,
+                                                         self.home, executable=str(executable))
+            self.assertEqual(snapshot(self.project), before)
+            self.assertEqual(result['role-launch-reviewer'],
+                             'unsupported (D3): not denied write-worktree' if allow_write else 'ready')
+
 
 
 if __name__ == "__main__":

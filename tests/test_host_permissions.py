@@ -224,7 +224,7 @@ class PathActionMatrixTest(Fixture):
     def test_the_probe_matrix_agrees_with_the_guard_for_both_roles(self) -> None:
         for role in permissions.ROLES:
             probes = permissions.probe_matrix(role)
-            self.assertGreaterEqual(len(probes), 20)
+            self.assertGreaterEqual(len(probes), 20 if role == "implementer" else 5)
             self.assertIn("allow", {expected for _t, _i, expected in probes.values()})
             for name, (tool, tool_input, expected) in probes.items():
                 with self.subTest(role=role, probe=name):
@@ -426,7 +426,7 @@ class RolePolicyTest(Fixture):
             self.assertFalse(permissions.proof_enforces(policy, self.host_proof(policy, host="codex")))
             self.assertFalse(permissions.proof_enforces(policy, self.host_proof(policy, decisions={"push-main": "allow"})))
             partial = self.host_proof(policy)
-            partial.decisions.pop("inspect-status")
+            partial.decisions.pop("inspect-status" if role == "implementer" else "read-tracked")
             self.assertFalse(permissions.proof_enforces(policy, partial))
             self.assertFalse(permissions.proof_enforces(policy, self.host_proof(policy, decisions={"inspect-status": "deny"})))
             self.assertFalse(permissions.proof_enforces(policy, policy.settings))  # settings text is not a proof
@@ -466,7 +466,7 @@ class CodexRolePolicyTest(Fixture):
             claude_matrix, codex_matrix = permissions.probe_matrix(role), permissions.probe_matrix(role, "codex")
             self.assertEqual(claude_matrix, permissions.probe_matrix(role, "claude"))
             self.assertEqual(set(claude_matrix), set(codex_matrix))
-            self.assertEqual({tool for tool, _i, _v in codex_matrix.values()}, {"shell", "apply_patch"})
+            self.assertEqual({tool for tool, _i, _v in codex_matrix.values()}, {"shell", "apply_patch"} if role == "implementer" else {"shell"})
             for name, (tool, tool_input, verdict) in claude_matrix.items():
                 self.assertEqual((codex_matrix[name][1], codex_matrix[name][2]), (tool_input, verdict))
             for name, (tool, tool_input, verdict) in codex_matrix.items():
@@ -481,7 +481,8 @@ class CodexRolePolicyTest(Fixture):
         self.assertEqual({implementer.identity, reviewer.identity}, {"cardine-implementer", "cardine-reviewer"})
         self.assertNotEqual(implementer.digest, reviewer.digest)
         self.assertNotEqual(implementer.digest, self.policy("implementer", self.base / "elsewhere/task-002").digest)
-        for policy in (implementer, reviewer):
+        self.assertEqual(reviewer.settings, {"sandbox": "read-only", "ephemeral": True, "answer_schema": "review-answer-v1"})
+        for policy in (implementer,):
             self.assertEqual(policy.settings["profile"]["workspace_roots"], {str(self.worktrees.resolve()): True})
             self.assertEqual(policy.settings["profile"]["extends"], ":workspace")
             text = json.dumps(policy.settings).lower()
@@ -615,7 +616,7 @@ class CodexRolePolicyTest(Fixture):
             self.assertFalse(codex.codex_role_profile(policy, self.host_proof(policy, digest="0" * 64)).enforced)
             self.assertFalse(codex.codex_role_profile(policy, self.host_proof(policy, decisions={"push-main": "allow"})).enforced)
             partial = self.host_proof(policy)
-            partial.decisions.pop("push-reordered")
+            partial.decisions.pop(next(iter(partial.decisions)))
             self.assertFalse(codex.codex_role_profile(policy, partial).enforced)
             self.assertFalse(permissions.proof_enforces(policy, self.host_proof(policy, host="claude")))
 

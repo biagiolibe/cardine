@@ -365,8 +365,8 @@ only a host-evaluated observation promotes `unverified` to `enforced`:
 |---|---|
 | Source of proof | `cardine doctor` asks the host to evaluate every probe of the shared matrix (`permissions.probe_matrix`): direct main push, reordered options, developer verdict, implementer review submission, protected-path writes through native tools, redirects, chains, pipes, interpreter writes, wrappers and symlink destinations, plus false-deny controls (inspection, source edits, commit, task close). Reading rule, policy or settings text is never a proof. |
 | Completeness | A proof exists only when the host observed every probe. A probe the host cannot evaluate, or an interrupted run, yields no proof. A proof enforces only when each decision equals the expected one and its digest equals the digest of the policy being launched. |
-| Persistence | Doctor persists nothing. Probes are read-only and repeat against the same policy digest with the same result; an interrupted run leaves no state that a later run could mistake for success. |
-| Activation | The launch adapter refuses a role whose profile is not enforced (`COMMAND_REFUSED`). Codex enforces both role profiles or neither. |
+| Persistence | Doctor persists no proof. Reviewer write probes run only in disposable minimal Git repositories; other probes are read-only. Probes repeat against the same policy digest; an interrupted run leaves no state that a later run could mistake for success. |
+| Activation | The launch adapter refuses a role whose profile is not enforced (`COMMAND_REFUSED`). The Codex reviewer needs only its own complete proof; the implementer retains its existing profile requirements. |
 | D3 | A host whose native policy doctor cannot show to enforce the protected paths and role actions is `unsupported` for role launches. No guarded transport adapter is built. Doctor reports `role-launch-<role>` as `ready`, `unsupported (D3): <gaps>`, `unverified: <reason>` or `approval-required: <reason>`. |
 
 Observed on 2026-11-03 (disposable home, Codex CLI 0.165.0, Claude Code
@@ -376,8 +376,15 @@ Observed on 2026-11-03 (disposable home, Codex CLI 0.165.0, Claude Code
 |---|---|---|
 | Codex 0.165.0, `execpolicy check`, role rules | Forbidden decisions for `git push origin main`, `+main` and `HEAD:main`, `cardine cancel`, and, in the implementer rules only, the developer verdict and review submission. No decision for reordered push options (`git -C . push --force ...`), `cardine --project . worktree integrate ...`, or any redirect, chain, pipe, copy, move, remove, in-place edit, symlink, interpreter or wrapper probe. Native file writes (`apply_patch`) have no execpolicy decision. | Role launches `unsupported` (D3): prefix rules alone do not enforce the protected paths. |
 | Claude Code 2.1.316 | No deterministic host decision probe exists; a model-driven session is not a probe. | Role launches `unsupported` (D3); never inferred from settings. |
+| 2026-11-12, Codex CLI 0.167.1 | Local trials without a model: `sandbox -c sandbox_mode="read-only"` alone refused to start because `--permission-profile` is required. `sandbox -P cardine-review-proof -C <temporary repository>` with `[permissions.cardine-review-proof]` and `extends = ":read-only"` refused a working-directory write (`Operation not permitted`, exit 1) and allowed a file read (exit 0), including with `sandbox_mode = "danger-full-access"` in the temporary user config. The nested sandbox initially could not start; the trials were repeated outside it. | Reviewer doctor executes this selection in disposable minimal Git repositories and checks unchanged files for denied writes. Whether user `~/.codex/config.toml` containing `sandbox_mode = "danger-full-access"` can widen `codex exec --sandbox read-only`: **to verify by the developer** (requires a model call; not run). |
+
 
 Both hosts keep their role profiles unenforced until a complete proof exists.
+For the Codex reviewer, the policy is the launch selection (`read-only`,
+`ephemeral`, `review-answer-v1`), rather than a command deny-list. Its matrix
+requires refused writes to the worktree, task state and Git metadata, a refused
+owner verdict command, and a successful tracked-file read. The implementer
+matrix and policy are unchanged.
 Two command lines assumed by `hosts/transports.py` remain unverified: Claude
 accepts `-p` and `--settings <file>` (present in `claude --help`), but Codex
 0.165.0 documents `--profile` as a `$CODEX_HOME/<name>.config.toml` layer, not
