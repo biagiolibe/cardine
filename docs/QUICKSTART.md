@@ -79,3 +79,5 @@ validation settings, see `cardine init --help`.
 ## Project console
 
 Run `cardine console` to see task status and the current step.
+
+For common stops and recovery commands, see [troubleshooting](TROUBLESHOOTING.md).

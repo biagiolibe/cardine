@@ -206,6 +206,7 @@ Not yet proven or measured:
 
 - **Using Cardine:** [quick start](docs/QUICKSTART.md),
   [run commands](docs/RUN_COMMANDS.md),
+  [troubleshooting](docs/TROUBLESHOOTING.md),
   [converting an existing project](docs/ADOPT_COMMANDS.md),
   [agent operations](docs/AGENT_OPERATIONS.md),
   [upgrade guide](docs/HOW_TO_UPGRADE.md),
