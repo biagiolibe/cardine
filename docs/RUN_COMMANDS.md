@@ -54,7 +54,7 @@ Both presets (`lean` and `governed`) use the same steps.
 | invalid invocation | 64 | The arguments were wrong; no task was touched. |
 
 For direct landing with required CI, `run` waits up to 900 seconds for checks.
-With required review, CI runs on the delivered head before the review step, and `APPROVE` requires the pass.
+With required review, CI runs on the delivered head before the review step, and `APPROVE` requires the pass. With `launched`, `cardine run` launches the reviewer, returns `waiting` while it works, and records its verdict.
 A clean refresh from main after approval keeps the approval and runs CI again on the merged head before preparing the candidate.
 Use `--ci-wait-seconds <seconds>` to change the nonnegative budget; zero
 queries once. On timeout, `next.command` retains the budget. Rerunning it

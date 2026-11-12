@@ -215,6 +215,52 @@ def concrete_host_adapter(host: str, transport, credential: str):
     return host_adapter(host, transport, credential)
 
 
+def launched_reviewer_adapter(locations):
+    """Build a reviewer channel only after the host's read-only proof succeeds."""
+    import shutil
+    from cardine.shared.git import git_output
+    from cardine.shared.layout import names
+    from cardine.shared.project import parse_project_declaration
+    from cardine.hosts import setup
+    from cardine.hosts.transports import ClaudeTransport, CodexTransport
+    from cardine.stops.render import stop_error
+    declaration = parse_project_declaration(json.loads(git_output(
+        locations.primary, 'show', 'main:' + names().project_declaration_path.as_posix())))
+    host = declaration.get('review', {}).get('reviewer')
+    if host not in ('codex', 'claude'):
+        raise stop_error('COMMAND_REFUSED', 'launched reviewer unavailable: review.reviewer is missing on main',
+                         task_id=locations.task_id, project=locations.primary)
+    executable = shutil.which(host)
+    status = setup.role_launch_states(host, locations.primary, locations.worktree, Path.home(),
+                                      executable=executable)['role-launch-reviewer']
+    if status != 'ready':
+        raise stop_error('COMMAND_REFUSED', f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner',
+                         task_id=locations.task_id, project=locations.primary)
+    common = locations.common_dir
+    if host == 'codex':
+        policy = setup.codex_role_policy('reviewer', locations.primary, locations.worktree, locations.primary, common)
+        proof_result = setup.prove_role_policy(policy, setup.codex_sandbox_evaluator(executable))
+        if proof_result.state != 'ready':
+            raise stop_error('COMMAND_REFUSED', f'launched reviewer unavailable: role-launch-reviewer is {proof_result.state}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner', task_id=locations.task_id, project=locations.primary)
+        proof = proof_result.proof
+        transport = CodexTransport(common / 'cardine-hosts' / host, executable,
+                                   policies={'reviewer': policy}, proofs={'reviewer': proof}, plan=None)
+    else:
+        policy = setup.claude_role_policy('reviewer', locations.primary, locations.worktree, common)
+        status = setup.claude_reviewer_launch_state(policy, executable)
+        if status != 'ready':
+            raise stop_error('COMMAND_REFUSED', f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner', task_id=locations.task_id, project=locations.primary)
+        # Claude exposes only read tools; the read probe maps to its Read tool.
+        def structural_probe(tool, tool_input):
+            if tool == 'Bash' and tool_input.get('command') == 'cat tracked.txt':
+                return 'allow' if 'Read' in policy.settings['tools'] else 'deny'
+            return 'allow' if tool in policy.settings['tools'] else 'deny'
+        proof = setup.prove_role_policy(policy, structural_probe).proof
+        transport = ClaudeTransport(common / 'cardine-hosts' / host, executable,
+                                    policies={'reviewer': policy}, proofs={'reviewer': proof})
+    return concrete_host_adapter(host, transport, transport.issue(['launch']))
+
+
 @scoped_command
 def implementation_delivery(locations: RunLocations) -> dict | None:
     """Read verified step-three progress; no prose, writes or caller pass flags."""
@@ -630,6 +676,33 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
             return add_byproducts(gated)
     if passed and facts.review_required and not approved:
         state = prepare_review(root, task_id, context=locations)
+        if 'launched' in state['contract'].get('reviewSources', ['owner']):
+            from cardine.shared.git import git_output
+            from cardine.lifecycle.control import source_digest
+            attempt = receipts.digest(receipts.encoded(dict(role='reviewer', contract=request.snapshot_digest,
+                source=git_output(root, 'rev-parse', 'HEAD'), source_digest=source_digest(root, task_id))))
+            record = launch_run_work(locations, facts.review_work, attempt=attempt,
+                                     adapter=launched_reviewer_adapter(locations))
+            if record['response'] is None:
+                argv = ['cardine', 'run', task_id, '--project', str(locations.primary)]
+                return add_byproducts(envelope(task_id, str(locations.primary), step='review', outcome='waiting',
+                    retry_after_seconds=30, next_command=command_reference(argv, 'Poll the launched reviewer')))
+            from cardine.review.verdict import record_launched_verdict
+            state = record_launched_verdict(root, task_id, record['request']['request_id'])
+            verdict = state['review']['verdict']
+            findings = record['response']['output']['findings']
+            if verdict == 'CHANGES_REQUESTED':
+                require_review_budget(root, task_id, state)
+                result = resolve_run(RunFacts(task_id, locations.primary, state['status'],
+                    contract_ready=True, worktree_ready=True, review_changes_requested=True, implementation_work=request))
+                result['diagnostics'] = [dict(code='REVIEW_CHANGES_REQUESTED', message=findings)]
+                return add_byproducts(result)
+            if verdict == 'BLOCKED':
+                from cardine.stops.render import stop_error
+                raise stop_error('REVIEW_NOT_APPROVED', 'cause: blocked; ' + findings,
+                                 task_id=task_id, project=locations.primary)
+            from dataclasses import replace
+            facts = replace(facts, review_approved=True)
     result = resolve_run(facts)
     if result['step'] == 'candidate':
         if before_validation != progress:

@@ -405,3 +405,60 @@ launch_work(root, '001', request(root, 'reviewer'), attempt='attempt-1',
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ZLaunchedRunReviewTest(unittest.TestCase):
+    def test_wait_replay_and_approval(self):
+        from run_delivery_support import DisposableDelivery
+        from cardine.lifecycle.engine import concrete_host_adapter
+        def setup(root):
+            path = root / '.cardine/project.json'
+            config = json.loads(path.read_text())
+            config['review'] = {'sources': ['launched'], 'reviewer': 'codex'}
+            path.write_text(json.dumps(config))
+            subprocess.run(['git', '-C', str(root), 'add', '.cardine/project.json'], check=True)
+            subprocess.run(['git', '-C', str(root), 'commit', '-qm', 'Configure reviewer'], check=True)
+        with DisposableDelivery(review=True, setup=setup) as fixture:
+            host = FakeHost(fixture.directory / 'fake-host', 'codex')
+            host.ready = False
+            adapter = concrete_host_adapter('codex', host, 'coordinator-channel')
+            with patch('cardine.lifecycle.engine.launched_reviewer_adapter', return_value=adapter):
+                fixture.run()
+                fixture.run()
+                fixture.implement()
+                first = fixture.run()
+                self.assertEqual((first['step'], first['outcome'], first['retry_after_seconds']), ('review', 'waiting', 30))
+                self.assertEqual(fixture.run()['outcome'], 'waiting')
+                self.assertEqual(len(list(host.directory.iterdir())), 1)
+                host.poll = lambda session: dict(session=session, result='completed', output=dict(verdict='APPROVE', findings='Approved'))
+                self.assertEqual(fixture.run()['step'], 'candidate')
+                state = json.loads((fixture.locations.worktree / '.cardine/tasks/001.json').read_text())
+                self.assertEqual(state['review']['source'], 'launched')
+                self.assertEqual(state['review']['verdict'], 'APPROVE')
+
+    def test_changes_requested_exhausts_review_budget(self):
+        from run_delivery_support import DisposableDelivery
+        from cardine.lifecycle.engine import concrete_host_adapter
+        def setup(root):
+            path = root / '.cardine/project.json'
+            config = json.loads(path.read_text())
+            config['review'] = {'sources': ['launched'], 'reviewer': 'codex'}
+            path.write_text(json.dumps(config))
+            subprocess.run(['git', '-C', str(root), 'add', '.cardine/project.json'], check=True)
+            subprocess.run(['git', '-C', str(root), 'commit', '-qm', 'Configure reviewer'], check=True)
+        with DisposableDelivery(review=True, setup=setup) as fixture:
+            host = FakeHost(fixture.directory / 'fake-host', 'codex')
+            host.poll = lambda session: dict(session=session, result='completed', output=dict(
+                verdict='CHANGES_REQUESTED', findings='Repair the result'))
+            adapter = concrete_host_adapter('codex', host, 'coordinator-channel')
+            with patch('cardine.lifecycle.engine.launched_reviewer_adapter', return_value=adapter):
+                fixture.run()
+                fixture.run()
+                fixture.implement()
+                result = fixture.run()
+                self.assertEqual(result['outcome'], 'iterate')
+                self.assertIn('Repair the result', str(result['diagnostics']))
+                fixture.commit_implementation('result = 2\n')
+                fixture.deliver()
+                result = fixture.run()
+                self.assertEqual(result['stop']['code'], 'REVIEW_LOOP_EXHAUSTED')

@@ -79,9 +79,11 @@ without spend counters.
 An optional `review` object, `{"sources": ["owner"]}`, names which sources may
 record a review verdict. An absent key means `["owner"]`. The list is frozen
 into each new task contract as `reviewSources`, like the other options, so a
-change affects new tasks only. Only `owner` is available in this version;
-`forge` and `launched` are known names that the declaration refuses until a
-command can record them. When the frozen sources exclude `owner`,
+change affects new tasks only. Use `{"sources": ["owner", "launched"], "reviewer": "codex"}`
+to enable a launched reviewer (also supported: `claude`). The reviewer has no write
+capability, and `cardine doctor` must report `role-launch-reviewer: ready`. The
+reviewer host is read from the declaration on main at each launch; `forge` is
+not yet available. When the frozen sources exclude `owner`,
 `cardine review verdict --owner` stops with `REVIEW_NOT_APPROVED` and
 `cause: source`. `docs/ADR_REVIEW_VERDICT_SOURCES.md` is the reference.
 
