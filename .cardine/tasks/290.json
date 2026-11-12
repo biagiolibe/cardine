@@ -13,6 +13,7 @@
       "289"
     ],
     "expectedCodeSurface": [
+      "src/cardine/cli.py",
       "src/cardine/shared/project_guide.py",
       "src/cardine/templates/interactive_init.py",
       "src/cardine/hosts/setup.py",
@@ -76,6 +77,16 @@
     },
     "validationScoping": []
   },
+  "contract_history": [
+    {
+      "after": "sha256:8ec7b7990153401df534c1972b5ead63216d1aa02a6be39ee25b980319b40314",
+      "at": "2026-11-12T13:12:54.770765Z",
+      "before": "sha256:cbf3cf2992e30c1678d6170808ea7ac58bfb53478716d7df7a07d42006aa395b",
+      "changedFields": [
+        "expectedCodeSurface"
+      ]
+    }
+  ],
   "run": {
     "pending": null,
     "receipts": [
@@ -123,6 +134,30 @@
         "source": "c1f782982408eb7aebaff9fc1cc2f64b6404bb6e",
         "task_id": "290",
         "tree": "4ea54fc15e12f3686f69dccfea9a7c430ac6a0a8",
+        "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "75bf502466c8b198312790d5b2206f8b9f0b29f4d82a47342e58c990677b546a",
+        "digest": "6ddebd21a2825f0d7c69207cf2254cea4655871e47366fbb84f8aba1689fcd8b",
+        "inputs": {
+          ".cardine/tasks/290.json": "4274771842594cd87cd21614b14025617ca309812144a8ddafd9efa3edd32989",
+          "tasks/290.md": "9fd359d98c3b23b80751b92143bc33ccabb6b41c47b44c833daf521e6c62a59f"
+        },
+        "kind": "contract_revision",
+        "operation_id": "9913ea209a80462f985376d79fc016d8",
+        "outputs": {
+          ".cardine/tasks/290.json": "7eb917369f420979e00b0fd7b4b3056f8580692dba5b532a6ca6a60a871b182d",
+          "tasks/290.md": "9fd359d98c3b23b80751b92143bc33ccabb6b41c47b44c833daf521e6c62a59f"
+        },
+        "predecessor": "456badec200e22c3d551eac955f46aa72809bd88069b4f11c594a7b13089259d",
+        "result": "verified",
+        "source": "16ccae1ef24a838b57f3b2439504cc6b4b818ff4",
+        "task_id": "290",
+        "tree": "2854d868ee8ceae5c9151c4083233472c72fd562",
         "version": 1
       }
     ]

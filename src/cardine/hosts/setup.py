@@ -688,12 +688,6 @@ def apply_setup(plan: SetupPlan) -> bool:
         result = wrote or bool(missing_links) or removed or active.resumed
         receipts.boundary("before_setup_result")
     receipts.boundary("after_setup_result")
-    changes = [change for change in plan.changes if change != "none" and not change.startswith("none;")
-               and not change.startswith("align the Claude Code plugin")]
-    if changes:
-        print(terminal.section("Apply"))
-        for index, change in enumerate(changes, 1):
-            print(terminal.done(f"[{index}/{len(changes)}] {change}"))
     return result
 
 

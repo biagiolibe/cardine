@@ -109,7 +109,19 @@ class WorktreeRootSetupTest(unittest.TestCase):
                         self.assertEqual(cli._run_cli(mock.Mock()), 0)
                     result = ("result: updated; restart your agent so it loads the changes"
                               if changed or plugin_result == "aligned" else "result: no-op")
-                    self.assertEqual(output.getvalue().splitlines(), [f"claude-plugin: {plugin_result}", result])
+                    self.assertEqual(output.getvalue().splitlines(), ["Apply", f"claude-plugin: {plugin_result}", result,
+                                                                        "Restart the agent to load the changes."])
+
+    def test_diff_colors_respect_no_color(self) -> None:
+        from cardine.shared import terminal
+        diff = "--- old\n+++ new\n-old\n+new\n context\n"
+        with mock.patch.object(terminal.sys.stdout, "isatty", return_value=True), \
+                mock.patch.dict(os.environ, {"TERM": "xterm"}, clear=True):
+            colored = owner_hosts_setup._color_diff(diff)
+            self.assertIn("\x1b[31m-old", colored)
+            self.assertIn("\x1b[32m+new", colored)
+            with mock.patch.dict(os.environ, {"NO_COLOR": "1"}):
+                self.assertEqual(owner_hosts_setup._color_diff(diff), diff)
 
     def resolve(self, explicit: Path | None = None, **environment: str) -> cardine_cli.ResolvedWorktreeRoot:
         return owner_worktree_storage.resolve_worktree_root(
