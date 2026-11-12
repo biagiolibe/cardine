@@ -32,6 +32,8 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         # Pin a real main before receipt creation; a later git-init changes the
         # project/common-directory authority and correctly requires acceptance.
         subprocess.run(['git', 'init', '-q', '-b', 'main', str(self.root)], check=True)
+        self.git('config', 'user.name', 'Test')
+        self.git('config', 'user.email', 'test@example.test')
         self.git('add', '.')
         self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Fixture policy')
         create_task(self.root, '002', contract_record('002').replace('P1', 'P2'))
@@ -141,11 +143,11 @@ class ContractSnapshotReadersTest(unittest.TestCase):
         self.git('add', 'docs/b.md')
         self.git('-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '-qm', 'Second deliverable')
         self.assertEqual(record_spike_outcome(self.root, '003', 'ANSWERED')['outcome'], 'ANSWERED')
+        self.assertEqual(record_spike_outcome(self.root, '003', 'INCONCLUSIVE')['outcome'], 'INCONCLUSIVE')
         self.git('switch', 'main')
         with self.assertRaises(CardineStop) as caught:
             record_spike_outcome(self.root, '003', 'ANSWERED')
-        self.assertIn('task branch', str(caught.exception))
-        self.assertEqual(record_spike_outcome(self.root, '003', 'INCONCLUSIVE')['outcome'], 'INCONCLUSIVE')
+        self.assertIn('in_progress spike', str(caught.exception))
 
     def test_spike_landing_paths_use_snapshot_even_after_class_and_deliverable_edits(self):
         from cardine.integration.merge import _spike_disallowed_paths
