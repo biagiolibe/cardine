@@ -1,0 +1,108 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "docs/README.md",
+      "README.md",
+      "scripts/check_repository.py",
+      "tests/test_check_repository.py"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe1 P3",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/301.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 301 \u2014 Index the documentation by reader instead of moving files",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_public_surface --module test_text_gates --module test_module_inventory --module test_layout --module test_no_meridian_identifiers"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "6cd973aa386cfd8bf63a8173ad5efa1db65c488cbf8d1e45aa5ad84cacaf4b69",
+        "digest": "263390f614ec56a8f2db186b03eb2a3497d31d03a31c111ba400d3baa0c54903",
+        "inputs": {
+          ".cardine/tasks/301.json": null,
+          "tasks/301.md": null
+        },
+        "kind": "creation",
+        "operation_id": "dd56f7083c074bcbbe51a8a8fad8b8a4",
+        "outputs": {
+          ".cardine/tasks/301.json": "bfd14ed4d90cc3efcb447a50d68989b1268cb043d06611d294844858ee695426",
+          "tasks/301.md": "c1938877e2e1ce3565e250e086b1df61f33085a1d4864a4f6b036e5e6d4c5e8a"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "8d06a4328940c2bd75b8815bd2c2d885764ff148",
+        "task_id": "301",
+        "tree": "9222707e1c3d54de3a030ff240659e1b523098d8",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "301",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
