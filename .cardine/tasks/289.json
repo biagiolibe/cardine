@@ -1,0 +1,114 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "288"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/shared/terminal.py",
+      "src/cardine/release/update.py",
+      "src/cardine/release/installer.py",
+      "src/cardine/cli.py",
+      "docs/HOW_TO_UPGRADE.md",
+      "tests/test_self_update.py",
+      "tests/test_terminal_style.py",
+      "changelog.d/289.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udfe0 P2",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/289.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 289 \u2014 Give cardine self-update a structured terminal experience and a clear next-steps checklist",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_terminal_style --module test_self_update --module test_release_self_check --module test_run_nonrun_causes --module test_cli_install --module test_host_worktree_setup --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "4dec7599a91b1dddbb5e18873ed4b1fbb284c46d73c207457ba5ce3a35b339b4",
+        "digest": "0856591d85adf6ad4584e6b38ae3d47913b8de3cf79e4d5bba8bc9e250502341",
+        "inputs": {
+          ".cardine/tasks/289.json": null,
+          "tasks/289.md": null
+        },
+        "kind": "creation",
+        "operation_id": "96f1e1b8f8aa47b8bdf8b6bfab21aa52",
+        "outputs": {
+          ".cardine/tasks/289.json": "eb3757a2bee85e9f45257813003f61459b6bdcce7ab1bb47d0b5c5b8992e795d",
+          "tasks/289.md": "85e60c93d36c4d63c50698de04bc113a3c06c3dc032047c3ea02ec588ba34869"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "55a81b1e9e70dfe4efb33090f52ee9bd19c8057c",
+        "task_id": "289",
+        "tree": "364e04d7a14d0d7354153adc4a78033d96552bc9",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "289",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

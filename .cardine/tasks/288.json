@@ -1,0 +1,113 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [],
+    "expectedCodeSurface": [
+      "src/cardine/release/version.py",
+      "scripts/prepare_release.py",
+      "src/cardine/release/update.py",
+      "src/cardine/release/installer.py",
+      "docs/RELEASING.md",
+      "tests/test_release_self_check.py",
+      "tests/test_prepare_release.py",
+      "tests/test_self_update.py",
+      "changelog.d/288.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "friction",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/288.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 288 \u2014 Make self-update recognize every published release kind line",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_release_self_check --module test_prepare_release --module test_self_update --module test_release --module test_run_nonrun_causes --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_public_surface"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "000cbeb2f304de434abee17626fd7246f740ee737971d5995bfc3137743388e7",
+        "digest": "779a6118748a56900c656a073df348ee5ee421ba2ff0a1422025959f7f780f4d",
+        "inputs": {
+          ".cardine/tasks/288.json": null,
+          "tasks/288.md": null
+        },
+        "kind": "creation",
+        "operation_id": "909ab83917bc4b91a4123efa6e823b42",
+        "outputs": {
+          ".cardine/tasks/288.json": "b1e4cdf8391da245d5a1ecfbccdedf5374ca9564a0da7effc8aa6a4d48ced043",
+          "tasks/288.md": "cfda138fabbcb60c729564b1c62707f7751e0b5d0790a560c56fdc141ee5309e"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "55a81b1e9e70dfe4efb33090f52ee9bd19c8057c",
+        "task_id": "288",
+        "tree": "364e04d7a14d0d7354153adc4a78033d96552bc9",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "288",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}
