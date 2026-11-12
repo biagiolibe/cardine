@@ -223,25 +223,22 @@ def launched_reviewer_adapter(locations):
     from cardine.shared.project import parse_project_declaration
     from cardine.hosts import setup
     from cardine.hosts.transports import ClaudeTransport, CodexTransport
-    from cardine.stops.render import stop_error
     declaration = parse_project_declaration(json.loads(git_output(
         locations.primary, 'show', 'main:' + names().project_declaration_path.as_posix())))
     host = declaration.get('review', {}).get('reviewer')
     if host not in ('codex', 'claude'):
-        raise stop_error('COMMAND_REFUSED', 'launched reviewer unavailable: review.reviewer is missing on main',
-                         task_id=locations.task_id, project=locations.primary)
+        raise CardineError('launched reviewer unavailable: review.reviewer is missing on main')
     executable = shutil.which(host)
     status = setup.role_launch_states(host, locations.primary, locations.worktree, Path.home(),
                                       executable=executable)['role-launch-reviewer']
     if status != 'ready':
-        raise stop_error('COMMAND_REFUSED', f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner',
-                         task_id=locations.task_id, project=locations.primary)
+        raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner')
     common = locations.common_dir
     if host == 'codex':
         policy = setup.codex_role_policy('reviewer', locations.primary, locations.worktree, locations.primary, common)
         proof_result = setup.prove_role_policy(policy, setup.codex_sandbox_evaluator(executable))
         if proof_result.state != 'ready':
-            raise stop_error('COMMAND_REFUSED', f'launched reviewer unavailable: role-launch-reviewer is {proof_result.state}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner', task_id=locations.task_id, project=locations.primary)
+            raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {proof_result.state}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner')
         proof = proof_result.proof
         transport = CodexTransport(common / 'cardine-hosts' / host, executable,
                                    policies={'reviewer': policy}, proofs={'reviewer': proof}, plan=None)
@@ -249,7 +246,7 @@ def launched_reviewer_adapter(locations):
         policy = setup.claude_role_policy('reviewer', locations.primary, locations.worktree, common)
         status = setup.claude_reviewer_launch_state(policy, executable)
         if status != 'ready':
-            raise stop_error('COMMAND_REFUSED', f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner', task_id=locations.task_id, project=locations.primary)
+            raise CardineError(f'launched reviewer unavailable: role-launch-reviewer is {status}; run cardine doctor, or record the verdict with --owner when reviewSources allow owner')
         # Claude exposes only read tools; the read probe maps to its Read tool.
         def structural_probe(tool, tool_input):
             if tool == 'Bash' and tool_input.get('command') == 'cat tracked.txt':
@@ -698,9 +695,9 @@ def run_validation_step(locations: RunLocations, *, ci_wait_seconds=0, lease_sec
                 result['diagnostics'] = [dict(code='REVIEW_CHANGES_REQUESTED', message=findings)]
                 return add_byproducts(result)
             if verdict == 'BLOCKED':
-                from cardine.stops.render import stop_error
-                raise stop_error('REVIEW_NOT_APPROVED', 'cause: blocked; ' + findings,
-                                 task_id=task_id, project=locations.primary)
+                result = resolve_run(facts)
+                result['diagnostics'] = [dict(code='REVIEW_BLOCKED', message=findings)]
+                return add_byproducts(result)
             from dataclasses import replace
             facts = replace(facts, review_approved=True)
     result = resolve_run(facts)
