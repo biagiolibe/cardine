@@ -43,20 +43,36 @@ orchestrator: it is the lifecycle your agent follows.
 > Specs say what to build. Orchestrators run the agents. Cardine makes sure
 > what lands on main is right.
 
+Use it with the spec tool you already have.
+
+## Works with your spec tool
+
+Spec Kit, Kiro and BMAD turn an idea into requirements, a plan and tasks.
+Write the tasks there, then register each one with `cardine task new`. Cardine
+takes one task at a time and lands it with measured validation, CI, independent
+review and integration, as configured for the task. An
+[import is planned](docs/ADR_PRODUCT_DIRECTION.md#work-items).
+
+| Tool | Structures | Enforced by | Lands on main |
+| --- | --- | --- | --- |
+| [Spec Kit](https://github.com/github/spec-kit) | Spec, plan, tasks | Convention in prompts | No |
+| [Kiro](https://kiro.dev/) | Requirements, design, tasks | IDE workflow and hooks | No |
+| [Superpowers](https://github.com/obra/superpowers) | Development workflow and skills | Agent skills | No |
+| [Agent OS](https://buildermethods.com/agent-os) | Standards and specs | Instructions in agent context | No |
+| [Cardine](https://github.com/biagiolibe/cardine) | Task delivery | CLI gates and measured evidence | Yes |
+
 ## How a task lands
 
-`cardine run` moves a task through seven steps:
+`cardine run` moves a task through eight steps:
 
 1. **Contract.** Check the task contract that `cardine task new` froze.
 2. **Worktree.** Prepare one branch and one linked worktree for the task.
 3. **Implementation.** The agent makes the change and commits it.
 4. **Validation.** Cardine runs the task's validation commands itself.
-5. **Review**, when the task requires it.
-6. **Candidate.** Validate `main` plus the task before merging.
-7. **Landing.** Merge, push `main`, clean up the worktree and branch.
-
-A project can also require CI to pass on the task branch before landing, with the
-`ciBeforeLanding` task default. See the [project declaration](docs/PROJECT_DECLARATION.md).
+5. **CI**, when `ciBeforeLanding` is set. Required checks pass on the delivered head before review.
+6. **Review**, when required: a reviewer launched by `cardine run` with no write capability, or the developer’s own verdict.
+7. **Candidate.** Validate `main` plus the task before merging.
+8. **Landing.** Merge, push `main`, clean up the worktree and branch.
 
 Every outcome falls into one of three classes:
 
@@ -138,6 +154,14 @@ can raise or lower them.
 A `spike` task class for exploratory work, with an `ANSWERED` or
 `INCONCLUSIVE` outcome, is available in both.
 
+## When not to use Cardine
+
+- Exploration and throwaway prototypes.
+- A repository without a test command.
+- Work that cannot be split into tasks of about ten files.
+
+For a small change, a task record can set `Options: {"review": "not_required", "ciBeforeLanding": false}` for a quick path; see the [project declaration](docs/PROJECT_DECLARATION.md).
+
 ## What Cardine is not
 
 - **Not an agent.** Your host (Claude Code or Codex) does the work.
@@ -148,8 +172,7 @@ A `spike` task class for exploratory work, with an `ANSWERED` or
   rules catch mistakes and refuse shortcuts, but an agent that deliberately
   bypasses the host's permissions could rewrite them. Cardine does not claim
   otherwise.
-- **Not yet for team workflows.** Landing through pull requests is planned
-  for 1.1.
+- **Not yet for team workflows.** [Pull request approvals as a review source](docs/ADR_REVIEW_VERDICT_SOURCES.md) and landing through pull requests are planned.
 
 The project console, `cardine console`, is experimental.
 
