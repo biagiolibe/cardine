@@ -586,7 +586,8 @@ def _draw_detail(screen, task: Task | None, x: int, top: int, width: int,
 def _draw_launch_prompt(screen, width: int, height: int, task: Task | None,
                         confirmation: int,
                         project: Path, defaults: dict[str, AgentDefaults],
-                        palette: dict[str, int], *, action: str = 'run') -> None:
+                        palette: dict[str, int], *, action: str = 'run',
+                        reviewer_choice: bool = False, reviewer_other: bool = False) -> None:
     """Draw an opaque, single-choice launch panel over the console."""
     if task is None:
         return
@@ -607,6 +608,9 @@ def _draw_launch_prompt(screen, width: int, height: int, task: Task | None,
             ("Press y again to continue or Esc to cancel.", "muted"),
         )
     else:
+        reviewer_line = () if not (reviewer_choice and action == 'run') else ((
+            "Reviewer: the other host    Tab: same as agent" if reviewer_other
+            else "Reviewer: same as agent    Tab: the other host", "text"),)
         lines = (
             ("Launch agent" if action == 'run' else f"Confirm task {action}", "title"),
             ("This starts an agent that may modify the project." if action == 'run'
@@ -616,6 +620,7 @@ def _draw_launch_prompt(screen, width: int, height: int, task: Task | None,
             (f"Project: {project.name}", "text"),
             (f"1 Claude Code — {defaults['claude'].label}", "text"),
             (f"2 Codex — {defaults['codex'].label}", "text"),
+            *reviewer_line,
             ("Esc cancels. Nothing has started.", "muted"),
         )
     panel_width = min(width - 4, max(len(value) for value, _ in lines) + 4)

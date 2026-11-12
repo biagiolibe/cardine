@@ -239,6 +239,71 @@ class AgentLaunchTest(unittest.TestCase):
         lines = [value for value, _style in owner_console_render._detail_lines(task, 80, palette)]
         self.assertIn(f"{task.launch_command}  [copy]  [l Resume]", lines)
 
+    def test_reviewer_choice_line_is_shown_only_when_offered(self) -> None:
+        palette = {name: 0 for name in (
+            "base", "text", "title", "ready", "muted", "line", "action", "blocked",
+        )}
+        defaults = {"claude": owner_console_models.AgentDefaults("c", "m"),
+                    "codex": owner_console_models.AgentDefaults("x", "h")}
+
+        def rendered(**options) -> str:
+            screen = FakeScreen(20, 100)
+            owner_console_render._draw_launch_prompt(
+                screen, 100, 20, self.task(), 0, Path("/project"), defaults, palette, **options)
+            return "\n".join(screen.row(y) for y in range(20))
+
+        self.assertNotIn("Reviewer:", rendered())
+        self.assertIn("Reviewer: same as agent", rendered(reviewer_choice=True))
+        self.assertIn("Reviewer: the other host",
+                      rendered(reviewer_choice=True, reviewer_other=True))
+
+    def test_reviewer_choice_requires_launched_review_source(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            project = Path(raw)
+            (project / ".cardine" / "tasks").mkdir(parents=True)
+
+            def write(sources) -> None:
+                contract = {} if sources is None else {"reviewSources": sources}
+                (project / ".cardine" / "tasks" / "001.json").write_text(
+                    json.dumps({"contract": contract}), encoding="utf-8")
+
+            self.assertFalse(owner_console_launch._offers_reviewer_choice(project, "001"))
+            write(None)
+            self.assertFalse(owner_console_launch._offers_reviewer_choice(project, "001"))
+            write(["owner"])
+            self.assertFalse(owner_console_launch._offers_reviewer_choice(project, "001"))
+            write(["owner", "launched"])
+            self.assertTrue(owner_console_launch._offers_reviewer_choice(project, "001"))
+
+    def test_other_reviewer_host_is_appended_to_the_launched_directive(self) -> None:
+        with mock.patch.dict(os.environ, {"ITERM_SESSION_ID": self.SESSION_ID}), \
+             mock.patch.object(owner_console_launch, "_primary_checkout",
+                               return_value=(Path("/project"), None)):
+            plain, _ = owner_console_launch._launch_request(self.task(), Path("/project"), "claude")
+            other = self.task(reviewer_other=True)
+            from_claude, _ = owner_console_launch._launch_request(other, Path("/project"), "claude")
+            from_codex, _ = owner_console_launch._launch_request(other, Path("/project"), "codex")
+        self.assertEqual(plain.directive, "Proceed with 001")
+        self.assertEqual(from_claude.directive, "Proceed with 001 reviewer codex")
+        self.assertEqual(from_codex.directive, "Proceed with 001 reviewer claude")
+        self.assertEqual(other.launch_command, "Proceed with 001")
+
+    def test_reviewer_choice_survives_revalidation_and_directive_change_is_refused(self) -> None:
+        task = self.task(reviewer_other=True)
+        state = mock.Mock(project=Path("/project"))
+        with mock.patch.object(owner_console_launch, "load_task", return_value=self.task()), \
+             mock.patch.object(owner_console_launch, "_launch_request") as request, \
+             mock.patch.object(owner_console_launch, "_start_launch", return_value=(True, "ok")):
+            request.return_value = (object(), None)
+            owner_console_launch._launch_selected(state, task, "codex")
+        self.assertTrue(request.call_args.args[0].reviewer_other)
+        with mock.patch.object(owner_console_launch, "load_task",
+                               return_value=self.task(lifecycle="in_progress")), \
+             mock.patch.object(owner_console_launch, "_start_launch") as start:
+            result = owner_console_launch._launch_selected(state, task, "codex")
+        self.assertFalse(result[0])
+        start.assert_not_called()
+
     def test_agent_selection_revalidates_and_launches_without_enter(self) -> None:
         task = self.task()
         state = mock.Mock(project=Path("/project"))

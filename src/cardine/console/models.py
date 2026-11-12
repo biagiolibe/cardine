@@ -88,6 +88,7 @@ class Task:
     live_command: LiveCommand | None = None
     live_log: Path | None = None
     loading: bool = False
+    reviewer_other: bool = False
 
     @property
     def is_resume(self) -> bool:

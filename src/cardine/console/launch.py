@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+from dataclasses import replace
 from pathlib import Path
 
 from cardine.console.models import AgentDefaults, LaunchRequest, Task
@@ -61,6 +62,17 @@ def _set_terminal_title(project: Path) -> None:
         pass
 
 
+def _offers_reviewer_choice(project: Path, task_id: str) -> bool:
+    """Whether the task's frozen reviewSources contain launched, so the reviewer host is a choice."""
+    if not ID_PATTERN.fullmatch(task_id):
+        return False
+    try:
+        state = json.loads((project / ".cardine" / "tasks" / f"{task_id}.json").read_text(encoding="utf-8"))
+        return "launched" in state["contract"]["reviewSources"]
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError):
+        return False
+
+
 def _launch_request(task: Task, project: Path, agent: str) -> tuple[LaunchRequest | None, str | None]:
     """Revalidate a selected task and console session before offering a launch."""
     if agent not in ("claude", "codex"):
@@ -70,6 +82,8 @@ def _launch_request(task: Task, project: Path, agent: str) -> tuple[LaunchReques
     directive = task.launch_command
     if not directive:
         return None, "This task is not eligible to launch; use [copy] if a directive is shown"
+    if task.reviewer_other:
+        directive += f" reviewer {'codex' if agent == 'claude' else 'claude'}"
     directory, error = _primary_checkout(project)
     if error:
         return None, error
@@ -156,6 +170,8 @@ def _launch_selected(state: "ConsoleState", task: Task, agent: str,
         return False, f"Launch revalidation failed: {error}"
     if current is None or current.launch_command != expected_directive or current.is_resume != expected_resume:
         return False, "Task state changed; review the refreshed task before launching"
+    if task.reviewer_other:
+        current = replace(current, reviewer_other=True)
     if current.is_resume and current.active_writer and not dirty_confirmed:
         return False, "Task worktree became dirty; confirm Resume again before launching"
     if not current.legacy:
