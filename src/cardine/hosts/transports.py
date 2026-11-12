@@ -20,6 +20,8 @@ import sys
 from cardine.hosts.claude import claude_role_profile
 from cardine.hosts.codex import codex_role_profile, codex_role_profiles
 from cardine.shared.errors import CardineError
+from cardine.shared import atomic
+from cardine.shared.git import _run_git
 
 # Runs once per request inside its own process: the exclusive `started` marker
 # guarantees that a replayed spawn never runs the host twice, and `result.json`
@@ -210,9 +212,9 @@ class HostSessionTransport:
             if request['role'] == 'reviewer':
                 from cardine.lifecycle.execution import _execution_location
                 base = _execution_location(Path(request['root']), request['task_id'])['base_commit']
-                diff = subprocess.run(['git', 'diff', f"{base}..{request['source']}"],
-                                      cwd=request['root'], capture_output=True, check=True).stdout
-                (path / 'review.diff').write_bytes(diff)
+                diff = _run_git(Path(request['root']), 'diff', f"{base}..{request['source']}", text=False)
+                diff.check_returncode()
+                atomic.replace_bytes(path / 'review.diff', diff.stdout)
             credential = self.issue(_ROLE_ACTIONS[request['role']], binding=session)
             _write_atomic(path / 'launch.json', dict(argv=self.argv(request, path), cwd=request['root'],
                           env={**os.environ, **self.environment}, credential=credential), exclusive=True)

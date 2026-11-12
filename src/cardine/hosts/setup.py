@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from cardine.shared.layout import names
+from cardine.shared import atomic
 
 from cardine.worktree.paths import repository_identity
 
@@ -938,23 +939,20 @@ def codex_sandbox_evaluator(codex_executable: str, *, timeout: int = 30):
             root = Path(directory)
             home = root / 'codex-home'
             home.mkdir()
-            (home / 'config.toml').write_text(
-                '[permissions.cardine-review-proof]\nextends = ":read-only"\n', encoding='utf-8')
+            atomic.replace_bytes(home / 'config.toml',
+                                 b'[permissions.cardine-review-proof]\nextends = ":read-only"\n')
             repo = root / 'repo'
             repo.mkdir()
             try:
-                subprocess.run(['git', 'init', '-b', 'task-001', str(repo)], check=True,
-                               capture_output=True, timeout=timeout)
-                (repo / 'tracked.txt').write_text('read-control\n', encoding='utf-8')
+                _run_git(repo, 'init', '-b', 'task-001', timeout=timeout).check_returncode()
+                atomic.replace_bytes(repo / 'tracked.txt', b'read-control\n')
                 state = repo / '.cardine/tasks/001.json'
                 state.parent.mkdir(parents=True)
-                state.write_text('{}\n', encoding='utf-8')
-                (repo / '.cardine/project.json').write_text(
-                    '{"version": 1, "preset": "lean"}', encoding='utf-8')
+                atomic.replace_bytes(state, b'{}\n')
+                atomic.replace_bytes(repo / '.cardine/project.json', b'{"version": 1, "preset": "lean"}')
                 (repo / 'tasks').mkdir()
-                (repo / 'tasks/001.md').write_text('# Task 001\n', encoding='utf-8')
-                subprocess.run(['git', 'add', '.'], cwd=repo, check=True,
-                               capture_output=True, timeout=timeout)
+                atomic.replace_bytes(repo / 'tasks/001.md', b'# Task 001\n')
+                _run_git(repo, 'add', '.', timeout=timeout).check_returncode()
                 def snapshot():
                     return {str(p.relative_to(repo)): p.read_bytes()
                             for p in repo.rglob('*') if p.is_file()}
