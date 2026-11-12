@@ -142,7 +142,8 @@
         "source": {
           "enum": [
             "local",
-            "external"
+            "external",
+            "launched"
           ]
         }
       }
@@ -502,7 +503,8 @@
           "source": {
             "enum": [
               "local",
-              "external"
+              "external",
+              "launched"
             ]
           }
         }
@@ -1327,6 +1329,12 @@
                       },
                       "result": {
                         "type": "string"
+                      },
+                      "output": {
+                        "anyOf": [
+                          {"type": "object", "additionalProperties": {}},
+                          {"type": "null"}
+                        ]
                       }
                     }
                   }

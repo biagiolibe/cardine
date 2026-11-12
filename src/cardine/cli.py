@@ -399,7 +399,6 @@ def build_parser() -> CardineArgumentParser:
     verdict = review_sub.add_parser("verdict", help="record a verdict and its task-state transition")
     verdict.add_argument("task_id")
     verdict.add_argument("verdict", choices=("APPROVE", "CHANGES_REQUESTED", "BLOCKED"))
-    verdict.add_argument("--request-id", help="issued independent review request identity")
     verdict.add_argument("--owner", action="store_true", help="developer verdict; requires an interactive terminal and typed confirmation")
     verdict.add_argument("--body", default="", help="free-form review Markdown")
     verdict.add_argument("--project", type=Path, default=Path.cwd())
@@ -870,7 +869,7 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             print(json.dumps(result, sort_keys=True))
         elif arguments.command == "review":
             print(json.dumps(record_review_verdict(project_root, arguments.task_id, arguments.verdict,
-                                                   owner=arguments.owner, body=arguments.body, request_id=arguments.request_id), sort_keys=True))
+                                                   owner=arguments.owner, body=arguments.body), sort_keys=True))
         elif arguments.command == "task":
             if arguments.task_command == "new":
                 from cardine.tasks.creation import create_task

@@ -11,7 +11,7 @@ is not a template: no installed router or role read set includes it.
 | --- | --- |
 | `cardine run <TASK-ID> [--project <path>]` | Resolve the earliest unsatisfied step from the task state, perform it (it changes the repository: worktree, commits, state, merge, push), and print one JSON object. It is not a preview. `cardine review <TASK-ID>` runs the same step. |
 | `cardine status [--project <path>] [--all] [--write] [--format text\|json]` | Read-only view of every task; `--write` regenerates the status views. |
-| `cardine review verdict <TASK-ID> {APPROVE,CHANGES_REQUESTED,BLOCKED} [--request-id <id>] [--owner] [--body <markdown>] [--project <path>]` | Record a verdict bound to the issued reviewer request. `--owner` is the developer channel: it needs an interactive terminal and a typed confirmation (see below). |
+| `cardine review verdict <TASK-ID> {APPROVE,CHANGES_REQUESTED,BLOCKED} [--owner] [--body <markdown>] [--project <path>]` | Record the developer's own verdict with `--owner`. Cardine records launched reviewer answers internally. `--owner` is the developer channel: it needs an interactive terminal and a typed confirmation (see below). |
 | `cardine cancel <TASK-ID> --reason <text> [--project <path>]` | Record a terminal cancelled state. It deletes no work and satisfies no dependency. |
 | `cardine abort <TASK-ID> [--project <path>]` | Restore only the caller-owned integration candidate and lease. The task stays resumable. |
 

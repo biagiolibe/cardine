@@ -53,12 +53,13 @@ class ProfileAdapter:
         if not self.transport.authorize(self.credential, action):
             raise CardineError('host denied ' + action)
 
-    def profiles(self):
+    def profiles(self, role="implementer"):
         self.require('launch')
-        profiles = {role: self.transport.profile(role) for role in ('implementer', 'reviewer')}
+        roles = ('reviewer',) if role == 'reviewer' else ('implementer', 'reviewer')
+        profiles = {role: self.transport.profile(role) for role in roles}
         if (any(p is None or p.role != role or not p.identity or not p.enforced
                 for role, p in profiles.items())
-                or profiles['implementer'].identity == profiles['reviewer'].identity):
+                or role != 'reviewer' and profiles['implementer'].identity == profiles['reviewer'].identity):
             raise stop_error('COMMAND_REFUSED',
                              'host role boundary unavailable: distinct enforced profiles required')
         return profiles
@@ -126,7 +127,7 @@ def launch_work(root, task_id, work, *, attempt, adapter, context=None):
     if (work.role not in ('implementer', 'reviewer') or work.worktree != root
             or not isinstance(attempt, str) or not attempt):
         raise CardineError('launch requires a role, canonical worktree and attempt identity')
-    profiles = adapter.profiles()
+    profiles = adapter.profiles(work.role)
     from cardine.lifecycle.execution import _execution_location, _execution_owned_paths
     from cardine.lifecycle.scope import enforce_scope
     inspection = _execution_location(root, task_id, context=context)
@@ -212,7 +213,7 @@ def launch_work(root, task_id, work, *, attempt, adapter, context=None):
             invalidate_facts()
             receipts.boundary('after_host_response')
             if response is not None:
-                if (not isinstance(response, dict) or set(response) != {'session', 'result'}
+                if (not isinstance(response, dict) or set(response) not in ({'session', 'result'}, {'session', 'result', 'output'})
                         or response['session'] != session or not isinstance(response['result'], str)):
                     raise CardineError('host returned a foreign session response')
                 publish(dict(record, response=deepcopy(response)), 'response_receipt')

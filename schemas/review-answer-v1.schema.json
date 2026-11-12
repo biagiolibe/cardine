@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "review-answer-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "findings"
+  ],
+  "properties": {
+    "verdict": {
+      "enum": [
+        "APPROVE",
+        "CHANGES_REQUESTED",
+        "BLOCKED"
+      ]
+    },
+    "findings": {
+      "type": "string"
+    }
+  }
+}

@@ -75,6 +75,86 @@ class ReviewVerdictTest(unittest.TestCase):
     def snapshot(self):
         return {str(p.relative_to(self.root)): p.read_bytes() for p in (self.path, self.record, self.review) if p.exists()}
 
+    def answer(self, output, *, result='completed', role='reviewer'):
+        from copy import deepcopy
+        from control_support import issue_fixture_review
+        from cardine.lifecycle import receipts
+        from cardine.lifecycle.control import operation_state
+        key = issue_fixture_review(self.root, '001')
+        state, _ = operation_state(self.root, '001')
+        updated = deepcopy(state)
+        record = updated['run']['hostLaunches'][key]
+        record['request']['role'] = record['session']['role'] = role
+        record['response'] = dict(session=record['session'], result=result, output=output)
+        with receipts.task_lock(self.root, '001'):
+            receipts.write_operation(self.root, '001', updated, previous=state, kind='fixture-issued-review')
+        return key
+
+    def test_launched_answer_records_receipt_findings_and_replays(self):
+        from cardine.review.verdict import record_launched_verdict
+        from cardine.lifecycle import receipts
+        key = self.answer(dict(verdict='APPROVE', findings='Structured findings'))
+        state = record_launched_verdict(self.root, '001', key)
+        self.assertEqual(state['review']['approved_by'], 'reviewer')
+        self.assertEqual(state['review']['source'], 'launched')
+        self.assertEqual(state['review_history'][-1], state['review'])
+        self.assertIn('Structured findings', self.review.read_text())
+        receipts.verify_receipts(self.root, state)
+        self.assertTrue(state['run']['receipts'][-1]['kind'].startswith('review_verdict:'))
+        self.assertEqual(record_launched_verdict(self.root, '001', key), state)
+
+    def test_launched_invalid_failed_foreign_and_stale_answers_write_nothing(self):
+        from cardine.review.verdict import record_launched_verdict
+        from cardine.shared.errors import CardineStop
+        for output, result, role, moved in (
+                (None, 'completed', 'reviewer', False),
+                ({}, 'completed', 'reviewer', False),
+                (dict(verdict='UNKNOWN', findings=''), 'completed', 'reviewer', False),
+                (dict(verdict='APPROVE', findings=3), 'completed', 'reviewer', False),
+                (dict(verdict='APPROVE', findings='', extra=True), 'completed', 'reviewer', False),
+                (dict(verdict='APPROVE', findings=''), 'failed', 'reviewer', False),
+                (dict(verdict='APPROVE', findings=''), 'completed', 'implementer', False),
+                (dict(verdict='APPROVE', findings=''), 'completed', 'reviewer', True)):
+            with self.subTest(output=output, result=result, role=role, moved=moved):
+                self.setUp()
+                key = self.answer(output, result=result, role=role)
+                if moved:
+                    self.commit()
+                before = self.snapshot()
+                with self.assertRaises(CardineStop) as caught:
+                    record_launched_verdict(self.root, '001', key)
+                self.assertEqual(caught.exception.code, 'REVIEW_NOT_APPROVED')
+                self.assertEqual(self.snapshot(), before)
+
+    def test_two_launched_changes_requested_exhaust_the_budget(self):
+        from cardine.review.verdict import record_launched_verdict
+        from cardine.lifecycle.control import require_review_budget
+        from cardine.shared.errors import CardineStop
+        for attempt in range(2):
+            if attempt:
+                self.commit()
+                with mock.patch.object(owner_tasks_transitions, 'delivery_readiness'):
+                    owner_tasks_transitions.transition_task_state(self.root, '001', 'in_review')
+                self.commit()
+            key = self.answer(dict(verdict='CHANGES_REQUESTED', findings='Fix this'))
+            state = record_launched_verdict(self.root, '001', key)
+        self.assertEqual(len(state['review_history']), 2)
+        with self.assertRaises(CardineStop) as caught:
+            require_review_budget(self.root, '001', state)
+        self.assertEqual(caught.exception.code, 'REVIEW_LOOP_EXHAUSTED')
+
+    def test_command_requires_owner_and_rejects_request_id(self):
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
+                                 'review', 'verdict', '001', 'APPROVE', '--project', str(self.root)],
+                                capture_output=True, text=True)
+        self.assertIn("a launched reviewer's verdict is recorded by cardine run; use --owner to record your own",
+                      result.stderr + result.stdout)
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/cardine_cli.py'),
+                                 'review', 'verdict', '001', 'APPROVE', '--request-id', 'anything'],
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('unrecognized arguments: --request-id', result.stderr)
+
     def test_each_verdict_commit_binding_body_and_projection(self):
         for verdict, status in (("APPROVE", "in_progress"), ("CHANGES_REQUESTED", "in_progress"),
                                 ("BLOCKED", "in_review")):
@@ -89,7 +169,7 @@ class ReviewVerdictTest(unittest.TestCase):
                 self.assertEqual(state, json.loads(self.path.read_text()))
                 self.assertEqual(state["status"], status)
                 self.assertEqual(state["review"], {"required": True, "verdict": verdict, "attempt": 1,
-                                                 "reviewed_commit": head, "approved_by": "reviewer", "source": "local"})
+                                                 "reviewed_commit": head, "approved_by": "reviewer", "source": "launched"})
                 self.assertEqual(len(state["transitions"]), 2 if verdict == "BLOCKED" else 3)
                 self.assertIn("Status: queued", self.record.read_text())
                 self.assertIn(f"## Attempt 1 — {verdict}\n\nFree-form findings.", self.review.read_text())
