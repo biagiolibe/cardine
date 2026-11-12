@@ -1,0 +1,46 @@
+{
+  "291": [
+    {
+      "attemptId": "6f378994023849e0bd53d2a5862fdec1",
+      "command": "python3 scripts/check_repository.py",
+      "commit": "efc78a014e043eada8b974718c54684360c527ff",
+      "exitStatus": 0,
+      "id": "repository-check",
+      "log": ".cardine/evidence/291.json#6f378994023849e0bd53d2a5862fdec1/1/repository-check",
+      "round": 1,
+      "sourceDigest": "0f5a37b094159fdbecd99d5040b9526c7ed3779d221c91ce1d253b2dd9c34724",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "Cardine repository checks passed.\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6f378994023849e0bd53d2a5862fdec1",
+      "command": "python3 scripts/run_tests.py --parallel --module test_check_repository --module test_public_surface --module test_text_gates --module test_module_inventory --module test_layout --module test_no_meridian_identifiers",
+      "commit": "efc78a014e043eada8b974718c54684360c527ff",
+      "exitStatus": 0,
+      "id": "task-tests",
+      "log": ".cardine/evidence/291.json#6f378994023849e0bd53d2a5862fdec1/1/task-tests",
+      "round": 1,
+      "sourceDigest": "0f5a37b094159fdbecd99d5040b9526c7ed3779d221c91ce1d253b2dd9c34724",
+      "stderr": "run_tests: 141 tests in 8 shards\nrun_tests: shard 1/8 finished in 1.4s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 4/8 finished in 1.6s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 8/8 finished in 1.8s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 6/8 finished in 2.2s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 3/8 finished in 2.7s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 7/8 finished in 3.7s: exit 0 ran=17 failures=0 errors=0\nrun_tests: shard 2/8 finished in 4.0s: exit 0 ran=18 failures=0 errors=0\nrun_tests: shard 5/8 finished in 4.8s: exit 0 ran=18 failures=0 errors=0\n",
+      "stderrTruncated": false,
+      "stdout": "PARTIAL selection=module:test_check_repository,test_public_surface,test_text_gates,test_module_inventory,test_layout,test_no_meridian_identifiers ran=141 total=2310 failures=0 errors=0\npython3 scripts/run_tests.py --parallel --clean-clone\n",
+      "stdoutTruncated": false
+    },
+    {
+      "attemptId": "6f378994023849e0bd53d2a5862fdec1",
+      "command": "git diff --check",
+      "commit": "efc78a014e043eada8b974718c54684360c527ff",
+      "exitStatus": 0,
+      "id": "adopt-466c2f308b48c766",
+      "log": ".cardine/evidence/291.json#6f378994023849e0bd53d2a5862fdec1/1/adopt-466c2f308b48c766",
+      "round": 1,
+      "sourceDigest": "0f5a37b094159fdbecd99d5040b9526c7ed3779d221c91ce1d253b2dd9c34724",
+      "stderr": "",
+      "stderrTruncated": false,
+      "stdout": "",
+      "stdoutTruncated": false
+    }
+  ]
+}

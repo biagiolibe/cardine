@@ -177,6 +177,62 @@ class AuthorizationTest(unittest.TestCase):
         ready = authorization.plan_authorization(self.root)
         self.assertEqual((ready.status, ready.task_policies), ('ready', plan.task_policies))
 
+    def changed_declaration(self):
+        path = self.root / '.cardine/project.json'
+        declaration = json.loads(path.read_bytes())
+        declaration['validation']['commands']['lint'] = 'true'
+        declaration['validation']['baseline'].append('lint')
+        path.write_text(json.dumps(declaration, indent=2) + '\n')
+        self.git(self.root, 'commit', '-q', '-am', 'Change declaration')
+
+    def stale_lines(self):
+        return [line for line in authorization.plan_authorization(self.root).stale_contracts]
+
+    def test_check_lists_stale_queued_contracts_and_apply_refreshes_them(self):
+        self.assertEqual(self.stale_lines(), [])
+        self.changed_declaration()
+        self.assertEqual(self.stale_lines(), ['001'])
+        plan = authorization.plan_authorization(self.root)
+        with patch('builtins.print') as shown:
+            authorization.print_authorization_plan(plan)
+        self.assertIn('task-contract: 001 was frozen under an older declaration; '
+                      'authorize --apply --update-queued refreshes it',
+                      [call.args[0] for call in shown.call_args_list if call.args])
+        # Without --update-queued, applying changes no task state.
+        before = (self.root / '.cardine/tasks/001.json').read_bytes()
+        authorization.apply_authorization(plan, confirm=accept)
+        self.assertEqual((self.root / '.cardine/tasks/001.json').read_bytes(), before)
+        self.assertEqual(self.stale_lines(), ['001'])
+        with patch('builtins.print') as shown:
+            self.assertTrue(authorization.update_queued_contracts(self.root, ('001',)))
+        output = [call.args[0] for call in shown.call_args_list]
+        self.assertIn('task-contract: 001 updated', output)
+        self.assertTrue(any(line.startswith('  git add .cardine/tasks/001.json') for line in output))
+        self.assertEqual(self.stale_lines(), [])
+
+    def test_a_failing_task_is_reported_and_the_others_update(self):
+        create_task(self.root, '002', contract_record('002'))
+        self.git(self.root, 'add', '.')
+        self.git(self.root, 'commit', '-q', '-m', 'Task 002')
+        self.changed_declaration()
+        self.assertEqual(self.stale_lines(), ['001', '002'])
+        authorization.apply_authorization(authorization.plan_authorization(self.root), confirm=accept)
+        (self.root / 'tasks/001.md').unlink()
+        with patch('builtins.print') as shown:
+            self.assertFalse(authorization.update_queued_contracts(self.root, ('001', '002')))
+        output = [call.args[0] for call in shown.call_args_list]
+        self.assertTrue(any(line.startswith('task-contract: 001 failed: ') for line in output))
+        self.assertIn('task-contract: 002 updated', output)
+        self.assertEqual(self.stale_lines(), ['001'])
+
+    def test_a_task_in_progress_is_not_listed(self):
+        path = self.root / '.cardine/tasks/001.json'
+        state = json.loads(path.read_bytes())
+        state['status'] = 'in_progress'
+        path.write_text(json.dumps(state))
+        self.changed_declaration()
+        self.assertEqual(self.stale_lines(), [])
+
     def test_a_recorded_policy_is_covered_only_by_main_history(self):
         earlier = receipts.require_authority(self.root)
         self.changed_policy()
