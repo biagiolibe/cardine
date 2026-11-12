@@ -126,12 +126,41 @@
         "task_id": "288",
         "tree": "5cb4d84b1e3e1709d28067e021bede5b24003e94",
         "version": 1
+      },
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "000cbeb2f304de434abee17626fd7246f740ee737971d5995bfc3137743388e7",
+        "digest": "5cd771bc741ce7a02918a04a66890086ee260541d6753de8a576e7dd785714b2",
+        "inputs": {
+          ".cardine/tasks/288.json": "f4ae61fefda739ce0230e1cf7b900f275519a90d985db58c5711f8b7671bc30a"
+        },
+        "kind": "transition:d5e5ee87c83dffc39a04ff4ac07052132fc65c27920b5e438331787904029908",
+        "operation_id": "c059654344c24b9c80a7c89211778079",
+        "outputs": {
+          ".cardine/tasks/288.json": "76b075b148cf7261409b52e912815746a734728b8f8961ca9c03d54bc805c749"
+        },
+        "predecessor": "904473a107924620e1c40ab1d696a53fe2bab8ffc0cf5d0bcb06aee72fc1b208",
+        "result": "verified",
+        "source": "251426b58ede9082d1fc1e7cbff1fe4ca88094c1",
+        "task_id": "288",
+        "tree": "a32f57f8c5b63f50ea016a0b7d023b8385ed0384",
+        "version": 1
       }
     ]
   },
-  "status": "queued",
+  "status": "in_progress",
   "task_id": "288",
-  "transitions": [],
+  "transitions": [
+    {
+      "at": "2026-11-12T12:14:06.798696Z",
+      "commit": "251426b58ede9082d1fc1e7cbff1fe4ca88094c1",
+      "from": "queued",
+      "to": "in_progress"
+    }
+  ],
   "version": 1,
   "workflow": "single"
 }
