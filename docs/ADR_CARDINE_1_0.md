@@ -712,6 +712,9 @@ Five rules follow:
    proves its role profile. `docs/ADR_REVIEW_VERDICT_SOURCES.md` (Accepted)
    defines each source, what it records, and its declared limit. The developer
    channel above stays the only source until work items of that ADR ship.
+   Amended on 2026-11-12: the launched reviewer is built first, with no write
+   capability, and only the reviewer's profile must be enforced (that ADR's
+   amendment).
 
    The installation surface (the manifest, marker baselines, and capability
    evidence) is outside this boundary until after 1.0. Those files describe

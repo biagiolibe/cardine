@@ -1,0 +1,116 @@
+{
+  "contract": {
+    "authority": [],
+    "ci": {
+      "provider": "github",
+      "requiredChecks": [
+        "validate"
+      ]
+    },
+    "class": "standard",
+    "deliverables": [],
+    "dependencies": [
+      "278"
+    ],
+    "expectedCodeSurface": [
+      "src/cardine/hosts/transports.py",
+      "src/cardine/hosts/launch.py",
+      "src/cardine/review/verdict.py",
+      "src/cardine/cli.py",
+      "schemas/review-answer-v1.schema.json",
+      "schemas/task-state-v1.schema.json",
+      "docs/RUN_COMMANDS.md",
+      "tests/test_review_verdict.py",
+      "tests/test_host_transports.py",
+      "changelog.d/279.md"
+    ],
+    "hostImpact": {
+      "classification": null,
+      "profiles": {}
+    },
+    "options": {
+      "authorityRequired": false,
+      "ciBeforeLanding": true,
+      "expectedCodeSurfaceRequired": false,
+      "landingMode": "direct",
+      "quickFailureLimit": 10,
+      "review": "not_required",
+      "validationRetryLimit": 3
+    },
+    "origin": "plan",
+    "phase": "",
+    "preset": "lean",
+    "priority": "\ud83d\udd34 P1",
+    "projectDigest": "sha256:9c1f6b02e1ce10ff17feb2dfaa370eb73617879a73c6763a20c15eadc0987cb7",
+    "recordPath": "tasks/279.md",
+    "taskValidation": [
+      "task-tests",
+      "adopt-466c2f308b48c766"
+    ],
+    "title": "Task 279 \u2014 Record a launched reviewer's verdict from its output",
+    "validation": {
+      "baseline": [
+        "repository-check",
+        "task-tests",
+        "adopt-466c2f308b48c766"
+      ],
+      "candidate": {
+        "BOUNDED": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "FULL": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ],
+        "REUSE": [
+          "adopt-2a6132d9dfc5a78d",
+          "repository-guards"
+        ]
+      },
+      "commands": {
+        "adopt-2a6132d9dfc5a78d": "python3 scripts/check_repository.py",
+        "adopt-466c2f308b48c766": "git diff --check",
+        "adopt-ae1cbbf1076d9cc4": "python3 scripts/run_tests.py --parallel",
+        "repository-check": "python3 scripts/check_repository.py",
+        "repository-guards": "python3 scripts/run_tests.py --parallel --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word",
+        "task-tests": "python3 scripts/run_tests.py --parallel --module test_review_verdict --module test_host_transports --module test_run_host_roles --module test_run_required_review --module test_console_launch --module test_public_surface --module test_cli_install --module test_stop_registry --module test_check_repository --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates"
+      }
+    },
+    "validationScoping": []
+  },
+  "run": {
+    "pending": null,
+    "receipts": [
+      {
+        "authority": {
+          "accepted_main": "cea04b1529f778101f23e93697c24c29411723c3",
+          "policy": "147cfa8baf31ac2a5c1cf41adae75584385164682dd01cc5e77150bab95c8814"
+        },
+        "contract_digest": "b8ce90114a36c327bce49ce3f4659a171fd8185334c372505e173f87eadc90ce",
+        "digest": "5d92acb6746277b3a0a776acd943be9b728c56b01ed32e03f820a88c2070c067",
+        "inputs": {
+          ".cardine/tasks/279.json": null,
+          "tasks/279.md": null
+        },
+        "kind": "creation",
+        "operation_id": "d3acb497dd92475e9b6c4c4fbb7dee09",
+        "outputs": {
+          ".cardine/tasks/279.json": "022d90c6420e5a60ccf141306c234e8a246d374ae960881a02494a20be462d5f",
+          "tasks/279.md": "663e319695ebd21e46e709d63b4653a6618156c3f3cbef4ee00744ebd9632e92"
+        },
+        "predecessor": null,
+        "result": "verified",
+        "source": "2c07e9aec0648f5c2d7dc6aeb79511ebf8cb1352",
+        "task_id": "279",
+        "tree": "eca199e43d04832f0849843711ceb7194b86731d",
+        "version": 1
+      }
+    ]
+  },
+  "status": "queued",
+  "task_id": "279",
+  "transitions": [],
+  "version": 1,
+  "workflow": "single"
+}

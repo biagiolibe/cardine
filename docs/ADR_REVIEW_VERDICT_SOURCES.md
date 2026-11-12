@@ -244,3 +244,58 @@ alone; item 1 needs nothing else.
 7. **Launch adapter, second host.** Codex, after probe X2.
 8. **Optional: pull-request landing mode.** A separate ADR first; this ADR
    does not require it.
+
+## Amendment (2026-11-12): launched reviewer first, without write capability
+
+Developer decision of 2026-11-12. Two facts changed the order of work:
+
+- The forge probe (`docs/FORGE_PROBE.md`) confirmed G5. The account that opens
+  a pull request cannot approve it. `cardine run` opens it with the developer's
+  own token, so a solo developer needs a second person for every forge
+  verdict. A bot account whose token sits on the same machine as the
+  implementer agent proves nothing beyond the same-user limit.
+- The role policies of `src/cardine/hosts/permissions.py` are deny-lists over
+  a session that may write. No host can prove them complete: Claude has no
+  decision probe without a model call, and Codex cannot observe native writes.
+  So `role-launch-reviewer` can never become `ready` under section 4 as
+  written.
+
+The launched reviewer therefore changes as follows, and is built before the
+forge source.
+
+1. **No write capability, instead of denied commands.** The reviewer process
+   has no way to write:
+   - Codex runs `codex exec --sandbox read-only --ephemeral`, so the operating
+     system sandbox refuses every write;
+   - Claude Code runs `claude -p --tools "Read,Grep,Glob"`, so no tool that
+     writes or runs commands exists in the session.
+
+   Cardine passes the task diff and the measured evidence in the prompt. The
+   tests have already run on CI before review (task 278).
+2. **Cardine records the verdict from the child's output.** The child returns
+   a structured final answer, `{verdict, findings}`, through `--output-schema`
+   (Codex) or `--json-schema` (Claude). Cardine reads it in the parent process
+   and records the verdict through the single write path, with
+   `approved_by: reviewer` and `source: launched`. No credential to write a
+   verdict is ever issued to a child. `cardine review verdict --request-id` is
+   removed, so no session can claim a launched verdict.
+3. **Only the reviewer profile must be enforced.** The implementer is the
+   developer's ordinary agent session. It cannot produce a launched verdict,
+   by point 2. The declared limit of decision 14 still applies: an agent of the
+   same user can forge files on disk, and receipts detect changes but are not
+   signatures.
+4. **Doctor proof.**
+   - Codex: `codex sandbox` runs a real write attempt under the reviewer's
+     sandbox, without a model call, and the attempt must fail.
+   - Claude Code: the restriction is structural, because Cardine passes the
+     flags itself. Doctor checks that the installed CLI supports them. A
+     one-time probe with a model call, run by the developer, confirms that
+     `--tools` removes the write tools in headless mode.
+
+Work items 6 and 7 are replaced by, in order:
+- the launched verdict core;
+- the Codex reviewer adapter;
+- the Claude Code reviewer adapter;
+- `cardine run` integration.
+
+Work items 3 to 5 (forge) follow them.
