@@ -164,6 +164,19 @@ class SelfUpdateTest(unittest.TestCase):
         self.assertIn('Latest: unknown', self.output)
         self.assertEqual(self.git(self.root, 'show-ref'), before)
 
+    def test_unrecognized_kind_line_explains_exit(self):
+        def opener(request, timeout):
+            return io.BytesIO(json.dumps({'tag_name': 'v1.3.0', 'body': 'No kind here'}).encode())
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            result = owner_release_update.run_self_update(self.root, urlopen_fn=opener)
+        self.assertEqual(result, 11)
+        text = output.getvalue()
+        self.assertIn('Latest: unknown (release body has no recognized kind line)', text)
+        self.assertIn('Exit 11 means', text)
+        self.assertIn('releases', text)
+        self.assertIn('git switch --detach v<version>', text)
+
     def test_unpublished_tag(self):
         self.detach()
         with patch.object(self, 'opener', side_effect=HTTPError('url', 404, 'missing', {}, None)):
@@ -231,6 +244,18 @@ class InstallerUpdateTest(unittest.TestCase):
         with patch.object(self, 'opener', side_effect=URLError('offline')), self.assertRaises(CardineError):
             run_installer_update('uv', '1.0.0', apply=True, urlopen_fn=self.opener, runner=calls.append, out=print)
         self.assertEqual(calls, [])
+
+    def test_unrecognized_kind_line_explains_exit(self):
+        from cardine.release.installer import ReleaseUnresolved, run_installer_update
+        def opener(request, timeout):
+            return io.BytesIO(json.dumps({'tag_name': 'v2.0.0', 'body': 'No kind here'}).encode())
+        lines = []
+        with self.assertRaises(ReleaseUnresolved):
+            run_installer_update('pipx', '1.0.0', apply=False, urlopen_fn=opener, out=lines.append)
+        text = '\n'.join(lines)
+        self.assertIn('Latest: unknown (release body has no recognized kind line)', text)
+        self.assertIn('Exit 11 means', text)
+        self.assertIn('pipx install --force git+https://github.com/biagiolibe/cardine@v<version>', text)
 
     def test_stale_runtime_report_is_read_only(self):
         from cardine.release.installer import stale_runtime_report

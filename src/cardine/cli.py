@@ -11,7 +11,7 @@ import shlex
 import sys
 
 from cardine.release.version import parse_semver, read_raw_version
-from cardine.shared.constants import USAGE_HOSTS
+from cardine.shared.constants import SELF_CHECK_UNKNOWN, USAGE_HOSTS
 from cardine.shared.errors import CardineError, CardineStop
 from cardine.shared.paths import PACKAGE_ROOT, framework_root as resolve_framework_root, source_checkout
 
@@ -606,8 +606,11 @@ def _run_cli(journal: LifecycleJournalEntry) -> int:
             # checkout that owns this running executable.
             kind = installer.detect_installer()
             if kind in ("pipx", "uv"):
-                updated = installer.run_installer_update(
-                    kind, read_version(framework_root), apply=arguments.apply, target_tag=arguments.target_tag)
+                try:
+                    updated = installer.run_installer_update(
+                        kind, read_version(framework_root), apply=arguments.apply, target_tag=arguments.target_tag)
+                except installer.ReleaseUnresolved:
+                    return SELF_CHECK_UNKNOWN
                 if updated is not None:
                     align_claude_plugin(Path.home(), updated)
                     installer.stale_runtime_report(project_root or Path.cwd())

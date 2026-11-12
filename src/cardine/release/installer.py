@@ -38,6 +38,16 @@ def reinstall_command(kind: str, tag: str) -> list[str]:
     raise CardineError(f"cannot reinstall an installation owned by {kind!r}")
 
 
+class ReleaseUnresolved(CardineError):
+    """The latest release could not be resolved; the explanation was already printed."""
+
+
+def explain_unknown_release(reason: object, manual: str, *, out=print) -> None:
+    out(f"Latest: unknown ({reason})")
+    out("Exit 11 means the latest release could not be determined; nothing was changed.")
+    out(f"Manual update: see https://github.com/biagiolibe/cardine/releases, then run: {manual}")
+
+
 def run_installer_update(kind: str, installed: str, *, apply: bool, target_tag: str | None = None,
                          urlopen_fn=None, runner=None, out=print) -> str | None:
     """Plan or apply a pipx/uv reinstall; returns the target version after apply, else None.
@@ -50,7 +60,12 @@ def run_installer_update(kind: str, installed: str, *, apply: bool, target_tag: 
     try:
         version, _templates = fetch_latest_release(installed, urlopen_fn=urlopen_fn, target_tag=target_tag)
     except (OSError, ValueError, CardineError) as error:
-        raise CardineError(f"cannot resolve the release: {error}") from error
+        tag_hint = target_tag or "v<version>"
+        spec = f"{REPOSITORY_URL}@{tag_hint}"
+        manual = shlex.join(["pipx", "install", "--force", spec] if kind == "pipx"
+                            else ["uv", "tool", "install", "--force", spec])
+        explain_unknown_release(error, manual, out=out)
+        raise ReleaseUnresolved(f"cannot resolve the release: {error}") from error
     tag = f"v{version}"
     if target_tag is not None and tag != target_tag:
         raise CardineError("release response does not identify the requested release tag")

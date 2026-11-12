@@ -111,6 +111,14 @@ def run_self_update(framework_root: Path, *, apply: bool = False,
         raise stop_error("SELF_UPDATE_VERIFY", str(error)) from error
 
 
+def _explain_unknown(root: Path, error: object, target_tag: str | None) -> None:
+    from cardine.release.installer import explain_unknown_release
+    tag = target_tag or "v<version>"
+    remote = git_output(root, "remote", "get-url", "origin")
+    fetch = shlex.join(["git", "fetch", "--no-tags", "--", remote, f"refs/tags/{tag}:refs/tags/{tag}"])
+    explain_unknown_release(error, f"{fetch}; git switch --detach {tag}")
+
+
 def _run_self_update(framework_root: Path, *, apply: bool = False,
                     target_tag: str | None = None, urlopen_fn=None, receipt_path=None) -> int:
     """Plan in an isolated object store; mutate only the CLI checkout on apply."""
@@ -147,10 +155,10 @@ def _run_self_update(framework_root: Path, *, apply: bool = False,
             except HTTPError as error:
                 if target_tag is not None and error.code == 404:
                     refuse("SELF_UPDATE_TARGET", f"{target_tag} is not a published release")
-                print(f"Latest: unknown ({error})")
+                _explain_unknown(root, error, target_tag)
                 return SELF_CHECK_UNKNOWN
             except (HTTPException, URLError, TimeoutError, OSError, ValueError, CardineError) as error:
-                print(f"Latest: unknown ({error})")
+                _explain_unknown(root, error, target_tag)
                 return SELF_CHECK_UNKNOWN
         tag = f"v{version}"
         if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) or (target_tag and tag != target_tag):
