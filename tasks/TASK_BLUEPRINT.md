@@ -1,73 +1,115 @@
-# Task [ID] — [Task Title]
+# Task [ID] — [Title]
 
+<!-- CARDINE:BEGIN capability=task-blueprint v10 -->
 > **ID**: `[NNN]`
-> **Category**: [Architecture / Feature / Bugfix / Refactor / etc.]
-> **Priority**: [🔴 P1 / 🟡 P2 / 🟢 P3]
+> **Category**: [Architecture / Feature / Bugfix / Refactor / Quick / etc.]
+> **Priority**: [P0 / P1 / P2]
 > **Estimate**: [~1h / ~2h / etc.]
-> **Assigned to**: [Claude CLI / unassigned]
+> **Assigned to**: [agent or owner / unassigned]
 > **Session**: [conversation ID or temporal reference]
-> **Origin**: [optional: capability / friction / maintenance / release — `friction` fixes a problem caused by Meridian's own rules or tools]
+> **Phase**: [optional delivery phase]
+> **Origin**: [optional: capability / friction / maintenance / release]
 
-## 🎯 Objective
+Class: [omit for a standard task / SPIKE]
+Review: [omit to inherit the project default / required / not_required]
+Options: [omit, or a JSON object with any `taskDefaults` key, for example `{"authorityRequired": true}`]
+Manual verification: [none / required]
+Manual verification rationale: [mandatory when required, otherwise omitted; name the tier-3 (perceptual) property that no tier-1 (structural: counts, presence, identity, ordering) or tier-2 (derived value the program can read back) check can express]
 
-[What needs to be done?]
-[Why is it needed?]
+An omitted option inherits the project default. Creation freezes the resolved options, dependencies, and metadata in the task's state file; after editing the record, run `cardine task contract update <ID> --project .`. A quick task (`Category: Quick`) keeps only an objective, acceptance criteria, validation, and dependencies. A record carries no status line; `cardine status` reports it.
 
-## 📋 Acceptance Criteria
+## Spike shape
 
-[A task is complete when:]
+A `Class: SPIKE` task replaces `Objective` and `Acceptance criteria` with:
 
-- [ ] The code compiles without errors.
-- [ ] Feature X works as described.
-- [ ] [Add specific criteria...]
-
-## 📁 Relevant Files
-
-| File | Role |
-|------|------|
-| `src/module/file.ts` | Role description. |
-
-## 🧩 Technical Context
-
-[Paste type definitions, interfaces, or describe the current code state here.]
-
-- **Current behavior**: [What happens now?]
-- **Desired behavior**: [What should happen afterward?]
-
-## 🔨 Suggested Implementation
-
-[Suggested steps for the AI agent]
-
-1. [Step 1]
-2. [Step 2]
-
-```
-// Optional example snippet
+```text
+Class:       SPIKE
+Question:    [the thing that is not known]
+Timebox:     [max iterations / max wall time]
+Deliverable: an ADR or a documented reference value — not production code
 ```
 
-## ⚠️ Constraints and Considerations
+The deliverable lands on the task branch through the ordinary worktree closure and integration, never directly on `main`; the task diff may add only its record, handoff, named documentation, changelog fragments, and evidence ledger.
 
-- **Style**: Follow the conventions defined in `TECH_DESIGN.md`.
-- **Performance**: [Any specific constraints]
+Advice: keep any probe branch a local throwaway; probe code is never merged or pushed.
 
-## 🔗 Dependencies
+## Objective
 
-- **Depends on**: [previous task ID or none]
-- **Blocks**: [next task ID or none]
+[Concrete outcome and why.]
 
-## 🤖 How to delegate this task to Claude CLI
+## Authority
 
-```bash
-claude "$(cat tasks/[NNN]-name.md)"$'\n\nExecute this task in the current project.'
+- [Path to the governing ADR or specification; required when `authorityRequired` is true.]
+
+## Host impact
+
+Keep exactly one shape: `REQUIRED` when the task changes a workflow instruction, generated entry point, hook, command, skill, permission policy, CLI bootstrap, or host adapter; otherwise `NOT_APPLICABLE`.
+
+```text
+Classification: NOT_APPLICABLE
+Rationale: [why this change cannot alter any host-facing surface]
 ```
+
+```text
+Classification: REQUIRED
+Policy outcome: [host-independent behavior protected]
+
+| Profile | Before | Intended after | Activation preconditions | Fallback |
+|---|---|---|---|---|
+| [host/version/invocation/config layer] | [state] | [state] | [facts] | [safe behavior] |
+
+Evidence plan:
+- Static: [fixture or deterministic check]
+- Host execution: [command/tool fixture and expected outcome]
+- Manual activation: [trust, install, or UI observation when needed]
+
+Completion evidence:
+- [profile]: [source, observed result, or explicitly retained `unverified` state]
+```
+
+`Before` and `Intended after` take only `enforced`, `advisory`, `unsupported`, or `unverified`.
+
+## Expected code surface
+
+[One repository-relative path or glob per bullet; `*` matches one segment, `**` nested ones. Creation or `cardine task contract update` freezes these paths and the engine refuses work outside them. Replace the examples.]
+
+- `src/example/**`
+- `tests/test_example.py`
+
+## Acceptance Criteria
+
+- [ ] [Measurable observable outcome.]
+- [ ] [Measurable invariant or test condition.]
+
+## Relevant Files
+
+- `[path]` — [role]
+
+## Technical Context
+
+[Constraints and decisions that bound the work.]
+
+## Out of scope
+
+[Adjacent work that must not be implemented.]
+
+## Dependencies
+
+- **Depends on**: [none / TASK-ID, ...]
+- **Blocks**: [none / TASK-ID, ...]
 
 ## Validation
 
-Before registering the task, search the tests for the behavior or text you
-plan to change. Check callers and shared checks, including tests in modules
-with different names. Choose the relevant modules and add each to `task-tests`
-with a separate `--module` flag alongside the feature tests and standard
-guards. The planner owns the selection. The full suite runs in CI.
+- `<validation-id>`: `<complete literal command, including its output bound and exit-status handling>`
 
-- `task-tests`: `python3 scripts/run_tests.py --parallel --module <touched test modules> --module test_module_inventory --module test_layout --module test_no_meridian_identifiers --module test_text_gates --module test_stop_registry --module test_command_word`
-- `adopt-466c2f308b48c766`: `git diff --check`
+Declare every command that proves a criterion, one per ID, with fixed output paths such as `target/<TASK-ID>/` and no `mktemp`, `$(...)`, or time-based paths. Run them only with `cardine execution validate <TASK-ID> <validation-id> --project .`, which records the exit status. Baseline commands apply too.
+
+## Execution contract — resolved
+
+<!-- Generated by `cardine execution contract <TASK-ID> --project .`; do not edit. -->
+
+- Profile source: `docs/EXECUTION_EVIDENCE_PROFILE.md`
+- Profile revision: `sha256:<generated profile digest>`
+- Validation IDs: `<generated IDs>`
+- Execution commands: `required via cardine execution`
+<!-- CARDINE:END -->
