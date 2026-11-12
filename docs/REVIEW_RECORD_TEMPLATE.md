@@ -1,9 +1,9 @@
 # Review Record
 
-<!-- CARDINE:BEGIN capability=review-remediation-record v3 -->
+<!-- CARDINE:BEGIN capability=review-remediation-record v4 -->
 Keep one durable review record per required-review task at the location `cardine locations` resolves. It is a summary for the implementer; machine state and the issued review operation decide the verdict.
 
-Record each verdict with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --body <review-evidence>` on the clean reviewed HEAD; the owner adds `--owner`. The command writes the attempt heading and status; never edit either by hand. During remediation append a resolution section and leave prior findings unchanged. Commit the fixes and measured validation, run `cardine execution deliver <TASK-ID> --project .` last, and stop writing.
+`cardine run` records a launched reviewer's verdict; the developer records a manual one with `cardine review verdict <TASK-ID> APPROVE|CHANGES_REQUESTED|BLOCKED --owner --body <review-evidence>` on the clean reviewed HEAD. The command writes the attempt heading and status; never edit either by hand. During remediation append a resolution section and leave prior findings unchanged. Commit the fixes and measured validation, run `cardine execution deliver <TASK-ID> --project .` last, and stop writing.
 
 ```md
 # Review Record — <TASK-ID>

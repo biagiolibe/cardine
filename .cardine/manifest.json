@@ -153,27 +153,29 @@
       "profileVersion": 1
     }
   },
-  "frameworkVersion": "0.9.0",
+  "frameworkVersion": "0.10.0",
   "managedFiles": {
     ".codex/rules/cardine.rules": "bcdcfd0cbda37457338f97a7b738b6a2c39322f516e1d315e9edb039d778cbf3",
-    "AGENTS.md": "d1eec58f259d07f9c618db29e7df29570bc658359d575a82bdf18b65dd3c53d8",
-    "CLAUDE.md": "f5bbd2643f6f4673034605526086ab13572dad3108aa93f33c862bdf43622d7e",
+    "AGENTS.md": "a5d3eabe46e9493ba78ff088516cf87993c072489cecaca34f32846acf07cc30",
+    "CLAUDE.md": "2a7ccff2792f78b1b2669ffa8466f806e6ca67288aeb89c84f013da4ae255cf8",
     "LANGUAGE_POLICY.md": "306ca679c116aaf1e6bb8aec61e449c582b1b9717a9b0f879678fc460a3547f1",
-    "PROJECT_WORKFLOW.md": "be207786ffab7a12b37be345554eea0300fe140646a5792fd0d0f11f13c7a42f",
+    "PROJECT_WORKFLOW.md": "8f052c1a9d3e2c5f706a0c55856c34b0c1e1b3517f6d8f79cb32459e0f2b0879",
+    "docs/ARCHITECTURE_DECISIONS.md": "f1c8ac93f71917511db6b4a0b5ff3fe2e4c733416c30287166015ec101a4010a",
     "docs/AUDIT_PROMPT_READ_ONLY.md": "7c4240d0be05edbefa5b0146092aacf2ab219822bb18be79fcbdb00e23b68508",
     "docs/CODE_ORGANIZATION.md": "b077c31c4052c0dd298f852c0c76ce1f24f6af1c8d434078b01557dc71bb5192",
     "docs/COMPLETION_REPORT_TEMPLATE.md": "201272c016cb6d91bd8968d24ddbc2c9ec3daf7deb870336012a5aaf429e7804",
     "docs/CONTEXT_READING_POLICY.md": "c2cde99a337c4d8d193ca019a691c9065afb825e57953695eea181607805e88f",
     "docs/EXECUTION_EVIDENCE_PROFILE.md": "18c0c290487b0b8b9992181600d19ffac16f8c3958d5adbbd48f91724d713df0",
     "docs/LIFECYCLE_ORCHESTRATION.md": "37399fa3c3aaf7733a82c3f240a6335d38afd92d5b806c0625fc2073dca4854c",
-    "docs/OPERATOR_PROMPTS.md": "057c1ee4210bc3dec5814ddaba79e55562035ff31aec9a7564fd09ca9640d91a",
-    "docs/REVIEW_RECORD_TEMPLATE.md": "2eb608a2b0ca7a779f4225d06bba772ea0e82a48b350e2d6d08e3705df72d0f0",
+    "docs/OPERATOR_PROMPTS.md": "a6076f026387632c7b9510f77439ab41d64b562a97cff30e2ce85b3851db07f9",
+    "docs/REVIEW_RECORD_TEMPLATE.md": "69dda5dad5a895c49f46b96574abc73661dd578cfe20e1395045ba49432d1577",
     "docs/WORKTREE_LIFECYCLE.md": "98c8a36e26d21706150e1290276240021905295c2cca77060cc1055399e79a87",
     "docs/workflows/IMPLEMENTATION.md": "883c4dc68e9c424cfbaee2e1883391485ed03f0e9f517ead50858aa1cfc69909",
     "docs/workflows/REMEDIATION.md": "4709f4dc7aba590f43e902a691489670d4a93189a384473baa93da32b314c432",
-    "docs/workflows/REVIEW.md": "7eef675f0cb8573b43ed93330ca1eea28e5d9dd531a756b07135c89a616ca208"
+    "docs/workflows/REVIEW.md": "3f4a45e6beb870cc6ef2b723bdc46d7858652ddc7f1d418cb35bab9e6fcf1f2e",
+    "tasks/TASK_BLUEPRINT.md": "0a193d972b2ad54e9fd835605dfd40d5ec958443df4693f6f60ce95a9ea4b149"
   },
   "protocolVersion": 2,
-  "workflowBaselineVersion": "0.9.0",
+  "workflowBaselineVersion": "0.10.0",
   "workflowMode": "single"
 }

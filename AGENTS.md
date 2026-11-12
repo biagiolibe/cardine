@@ -1,8 +1,8 @@
 # Cardine — Agent Router
 
-Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before responding or acting; both are binding. If either is missing or they contradict, return `BLOCKED RULE_CONFLICT`.
+Read `PROJECT_WORKFLOW.md` and `LANGUAGE_POLICY.md` before acting or responding. Both bind; if missing or contradictory, return `BLOCKED RULE_CONFLICT`.
 
-Work only on assigned tasks or authorized read-only requests. Read the task and `git status --short`; preserve unrelated changes. For mixed requests, ask.
+Work only on assigned tasks or authorized read-only requests. Read the task and `git status --short`; preserve unrelated changes. Ask for mixed requests.
 
 <!-- CARDINE:BEGIN capability=command-triggers v3 -->
 ## Command triggers
@@ -15,4 +15,6 @@ Work only on assigned tasks or authorized read-only requests. Read the task and 
 - Explicit audit — read `docs/AUDIT_PROMPT_READ_ONLY.md`.
 <!-- CARDINE:END -->
 
-Advice: follow `docs/CODE_ORGANIZATION.md` for production-source changes.
+Cardine usage: `cardine guide --project <checkout>`.
+
+Production: follow `docs/CODE_ORGANIZATION.md` (advice).
