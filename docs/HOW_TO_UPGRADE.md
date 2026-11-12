@@ -35,3 +35,10 @@ Release notes: https://github.com/biagiolibe/cardine/releases/tag/v2.0.0
 Reinstall: pipx install --force git+https://github.com/biagiolibe/cardine@v2.0.0
 Note: Run cardine self-update --apply to update
 ```
+
+## Update notices
+
+Cardine shows update notices in the agent's per-turn briefing, after interactive
+`guide`, `status`, and `doctor` commands, and in the console. It checks at most
+once every 24 hours with a single request to the GitHub latest release API. Set
+`CARDINE_NO_UPDATE_NOTICE=1` to turn off checks and notices.
