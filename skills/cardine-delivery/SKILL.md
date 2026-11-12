@@ -24,8 +24,8 @@ before claiming completion, and keep an unverified task open.
 
 ## Routing
 
-- `Proceed with <TASK-ID>`: run the assigned engine action that `PROJECT_WORKFLOW.md` describes through `cardine run <TASK-ID> --project <primary-checkout>`, and perform exactly the step it returns. The authority stays within the limits that file states.
-- `Address review <TASK-ID>`: resume the implementer from the durable review record, not from copied chat findings.
+- `Proceed with <TASK-ID>`: run the assigned engine action that `PROJECT_WORKFLOW.md` describes through `cardine run <TASK-ID> --project <primary-checkout>`, and perform exactly the step it returns. The authority stays within the limits that file states. The directive may end with ` reviewer codex` or ` reviewer claude`, for example `Proceed with 290 reviewer codex`. Pass `--reviewer <host>` on every `cardine run` of that task in the session: `<host>` is the one the directive names, otherwise the host you run in (`claude` in Claude Code, `codex` in Codex).
+- `Address review <TASK-ID>`: resume the implementer from the durable review record, not from copied chat findings. The same ` reviewer codex|claude` suffix and `--reviewer <host>` default apply.
 - `Review <TASK-ID>`: independent review as the project's review procedure describes it, in a fresh session that did not write the implementation. It is read-only unless the developer separately authorizes a fix; report findings.
 - `Accept <TASK-ID>` and `Run lifecycle <TASK-ID>`: follow `docs/LIFECYCLE_ORCHESTRATION.md` and the engine's authorized next step. Acceptance is the developer's own act through the authorized developer channel, never a role label in a prompt. Never merge manually and never follow any other lifecycle document.
 

@@ -165,6 +165,22 @@ class RunOutputTests(unittest.TestCase):
                 with redirect_stdout(StringIO()):
                     self.assertEqual(run_preview_cli(['001', flag, value]), 64)
 
+    def test_reviewer_option_is_validated_and_kept_in_continuations(self):
+        from cardine.lifecycle import engine
+        from types import SimpleNamespace
+        location = SimpleNamespace(task_id='001', primary=Path('/project'))
+        base = envelope('001', '/project', step='review', outcome='waiting', action='none',
+                        retry_after_seconds=30, next_command=command_reference(
+                            ['cardine', 'run', '001', '--project', '/project'], 'retry'))
+        with patch.object(engine, 'resolve_run_locations', return_value=location), \
+                patch.object(engine, 'dispatch_run', return_value=__import__('copy').deepcopy(base)) as dispatch, \
+                redirect_stdout(StringIO()) as output:
+            self.assertEqual(run_preview_cli(['001', '--reviewer', 'claude']), 0)
+        self.assertEqual(dispatch.call_args.kwargs['reviewer'], 'claude')
+        self.assertEqual(json.loads(output.getvalue())['next']['argv'][-2:], ['--reviewer', 'claude'])
+        with redirect_stdout(StringIO()):
+            self.assertEqual(run_preview_cli(['001', '--reviewer', 'gemini']), 64)
+
     def test_lease_release_resumes_same_invocation(self):
         from cardine.lifecycle import engine
         from types import SimpleNamespace
