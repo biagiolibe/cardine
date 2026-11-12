@@ -74,6 +74,15 @@ From the first release after this ADR is accepted:
   - narrowing the upgrade window of Decision 6;
   - any change that requires adopter action beyond `upgrade --apply`.
 
+Amended on 2026-11-12: Cardine restarted its version line at `0.9.0`, so the
+rules above take full effect at Cardine `1.0.0`. Until then, a release that removes a
+stable surface is a minor release, not a major one, when its changelog has an
+`Upgrade notes` subsection naming the replacement. The first such release is `0.10.0`.
+It removes `cardine review verdict --request-id`, which no host could use, and
+`cardine run` now records a launched reviewer's verdict instead
+(`docs/ADR_REVIEW_VERDICT_SOURCES.md`). The other rules, including patch releases and
+the deprecation warning, apply unchanged.
+
 ### 3. Deprecate before removing
 
 A stable surface is deprecated in a minor release. That release lists it in
