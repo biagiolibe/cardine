@@ -114,17 +114,20 @@ def _safe_project_path(value: object, key: str) -> Path:
 
 
 KNOWN_REVIEW_SOURCES = ("owner", "forge", "launched")
-AVAILABLE_REVIEW_SOURCES = frozenset({"owner"})
+AVAILABLE_REVIEW_SOURCES = frozenset({"owner", "launched"})
 
 
 def _validate_review_sources(review: object) -> None:
     """Accept only distinct known sources that this version can record."""
     sources = review.get("sources") if isinstance(review, dict) else None
-    if (not isinstance(review, dict) or set(review) != {"sources"} or not isinstance(sources, list)
+    if (not isinstance(review, dict) or not {"sources"} <= set(review) or set(review) - {"sources", "reviewer"} or not isinstance(sources, list)
             or not sources or len(sources) != len(set(map(str, sources)))
             or not all(isinstance(item, str) and item in KNOWN_REVIEW_SOURCES for item in sources)):
         raise CardineError("project declaration key 'review.sources' must be a nonempty list of distinct values from "
                            + ", ".join(KNOWN_REVIEW_SOURCES))
+    reviewer = review.get("reviewer")
+    if ("launched" in sources) != ("reviewer" in review) or ("reviewer" in review and reviewer not in ("codex", "claude")):
+        raise CardineError("review.reviewer must be codex or claude exactly when review.sources contains launched")
     for item in sources:
         if item not in AVAILABLE_REVIEW_SOURCES:
             raise CardineError(f"project declaration key 'review.sources': source '{item}' is not available in this version")
